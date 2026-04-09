@@ -1,0 +1,344 @@
+"""Contact management routes."""
+
+import logging
+import uuid
+from datetime import datetime, timedelta, timezone
+from typing import Any
+
+from app.core.config import settings as app_settings
+from arq.connections import RedisSettings
+from fastapi import APIRouter, BackgroundTasks, HTTPException
+from sqlalchemy.orm import selectinload
+from sqlmodel import col, func, select
+
+from app.api.deps import CurrentUser, SessionDep
+from app.models import (
+    Contact,
+    ContactCreate,
+    ContactGroup,
+    ContactPublic,
+    ContactTag,
+    ContactUpdate,
+    ContactsPublic,
+    Group,
+    GroupPublic,
+    Tag,
+    TagPublic,
+)
+
+logger = logging.getLogger(__name__)
+
+router = APIRouter(prefix="/contacts", tags=["contacts"])
+
+
+_arq_pool = None
+
+
+async def _get_arq_pool():
+    """Get or create a shared ARQ pool."""
+    global _arq_pool
+    if _arq_pool is None:
+        from arq.connections import create_pool
+        _arq_pool = await create_pool(RedisSettings.from_dsn(app_settings.REDIS_URL))
+    return _arq_pool
+
+
+async def _enqueue_contact_index(contact: Contact) -> None:
+    """Enqueue contact indexing in background (non-blocking)."""
+    try:
+        pool = await _get_arq_pool()
+        await pool.enqueue_job("index_contact_in_search", str(contact.id), {
+            "first_name": contact.first_name,
+            "last_name": contact.last_name or "",
+            "nickname": contact.nickname or "",
+            "company": contact.company or "",
+            "title": contact.title or "",
+            "notes": contact.notes or "",
+            "how_we_met": contact.how_we_met or "",
+            "owner_id": str(contact.owner_id),
+            "is_favorite": contact.is_favorite,
+            "is_archived": contact.is_archived,
+            "created_at": contact.created_at.isoformat(),
+            "last_contacted_at": contact.last_contacted_at.isoformat() if contact.last_contacted_at else None,
+        })
+    except Exception as e:
+        logger.warning(f"Failed to enqueue search indexing for contact {contact.id}: {e}")
+
+
+async def _enqueue_contact_removal(contact_id: str) -> None:
+    """Enqueue contact removal from search index (non-blocking)."""
+    try:
+        pool = await _get_arq_pool()
+        await pool.enqueue_job("remove_contact_from_search", contact_id)
+    except Exception as e:
+        logger.warning(f"Failed to enqueue search removal for contact {contact_id}: {e}")
+
+
+def _remove_contact_safe(contact_id: str) -> None:
+    """Remove a contact from Meilisearch, failing silently if unavailable."""
+    try:
+        from app.search import remove_contact
+        remove_contact(contact_id)
+    except Exception as e:
+        logger.warning(f"Meilisearch removal failed: {e}")
+
+
+@router.get("/", response_model=ContactsPublic)
+def list_contacts(
+    session: SessionDep,
+    current_user: CurrentUser,
+    skip: int = 0,
+    limit: int = 100,
+    search: str | None = None,
+    tag_id: uuid.UUID | None = None,
+    group_id: uuid.UUID | None = None,
+    is_favorite: bool | None = None,
+    is_archived: bool | None = None,
+    stage: str | None = None,
+) -> Any:
+    """List contacts with filtering."""
+    # Build base query
+    statement = select(Contact).where(Contact.owner_id == current_user.id)
+
+    # Apply filters
+    if is_archived is not None:
+        statement = statement.where(Contact.is_archived == is_archived)
+    else:
+        # Default: exclude archived
+        statement = statement.where(Contact.is_archived == False)
+
+    if is_favorite is not None:
+        statement = statement.where(Contact.is_favorite == is_favorite)
+
+    if stage is not None:
+        statement = statement.where(Contact.stage == stage)
+
+    if search:
+        search_filter = f"%{search}%"
+        statement = statement.where(
+            col(Contact.first_name).ilike(search_filter)
+            | col(Contact.last_name).ilike(search_filter)
+            | col(Contact.nickname).ilike(search_filter)
+            | col(Contact.company).ilike(search_filter)
+        )
+
+    if tag_id:
+        statement = statement.join(ContactTag).where(ContactTag.tag_id == tag_id)
+
+    if group_id:
+        statement = statement.join(ContactGroup).where(ContactGroup.group_id == group_id)
+
+    # Count (before pagination)
+    count_statement = select(func.count()).select_from(statement.subquery())
+    count = session.exec(count_statement).one()
+
+    # Apply eager loading for relationships
+    statement = statement.options(
+        selectinload(Contact.tags),
+        selectinload(Contact.groups),
+    )
+
+    # Apply ordering and pagination
+    statement = (
+        statement.order_by(col(Contact.first_name).asc(), col(Contact.last_name).asc())
+        .offset(skip)
+        .limit(limit)
+    )
+    contacts = session.exec(statement).all()
+
+    # Convert to response model
+    result = [
+        ContactPublic.model_validate(contact)
+        for contact in contacts
+    ]
+
+    return ContactsPublic(data=result, count=count)
+
+
+@router.get("/losing-touch", response_model=ContactsPublic)
+def list_losing_touch(
+    session: SessionDep,
+    current_user: CurrentUser,
+    limit: int = 20,
+) -> Any:
+    """Return contacts whose cadence has been exceeded.
+
+    A contact is 'losing touch' if:
+    - contact_frequency_days is set
+    - last_contacted_at is NULL or older than contact_frequency_days ago
+    """
+    now = datetime.now(timezone.utc)
+    statement = (
+        select(Contact)
+        .where(
+            Contact.owner_id == current_user.id,
+            Contact.is_archived == False,
+            Contact.contact_frequency_days.is_not(None),
+        )
+        .options(
+            selectinload(Contact.tags),
+            selectinload(Contact.groups),
+        )
+    )
+    contacts = session.exec(statement).all()
+
+    overdue = []
+    for contact in contacts:
+        if contact.last_contacted_at is None:
+            overdue.append(contact)
+        else:
+            deadline = contact.last_contacted_at + timedelta(days=contact.contact_frequency_days)
+            if now > deadline:
+                overdue.append(contact)
+
+    # Sort by most overdue first
+    overdue.sort(
+        key=lambda c: c.last_contacted_at or datetime.min.replace(tzinfo=timezone.utc)
+    )
+
+    # Convert to response model
+    result = [
+        ContactPublic.model_validate(contact)
+        for contact in overdue[:limit]
+    ]
+
+    return ContactsPublic(data=result, count=len(overdue))
+
+
+@router.get("/{contact_id}", response_model=ContactPublic)
+def get_contact(
+    session: SessionDep,
+    current_user: CurrentUser,
+    contact_id: uuid.UUID,
+) -> Any:
+    """Get a single contact by ID."""
+    statement = select(Contact).where(Contact.id == contact_id).options(
+        selectinload(Contact.tags),
+        selectinload(Contact.groups),
+    )
+    contact = session.exec(statement).first()
+    if not contact:
+        raise HTTPException(status_code=404, detail="Contact not found")
+    if contact.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
+    return ContactPublic.model_validate(contact)
+
+
+@router.post("/", response_model=ContactPublic)
+def create_contact(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    contact_in: ContactCreate,
+    background_tasks: BackgroundTasks,
+) -> Any:
+    """Create a new contact."""
+    contact = Contact.model_validate(contact_in, update={"owner_id": current_user.id})
+    session.add(contact)
+    session.flush()  # Flush to get contact.id without committing
+
+    # Handle tag associations
+    if contact_in.tag_ids:
+        for tag_id in contact_in.tag_ids:
+            session.add(ContactTag(contact_id=contact.id, tag_id=tag_id))
+
+    # Handle group associations
+    if contact_in.group_ids:
+        for group_id in contact_in.group_ids:
+            session.add(ContactGroup(contact_id=contact.id, group_id=group_id))
+
+    session.commit()
+
+    # Reload contact with eager-loaded relationships
+    statement = select(Contact).where(Contact.id == contact.id).options(
+        selectinload(Contact.tags),
+        selectinload(Contact.groups),
+    )
+    contact = session.exec(statement).first()
+
+    # Enqueue indexing in background (non-blocking)
+    background_tasks.add_task(_enqueue_contact_index, contact)
+    return ContactPublic.model_validate(contact)
+
+
+@router.patch("/{contact_id}", response_model=ContactPublic)
+def update_contact(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    contact_id: uuid.UUID,
+    contact_in: ContactUpdate,
+    background_tasks: BackgroundTasks,
+) -> Any:
+    """Update a contact."""
+    statement = select(Contact).where(Contact.id == contact_id).options(
+        selectinload(Contact.tags),
+        selectinload(Contact.groups),
+    )
+    contact = session.exec(statement).first()
+    if not contact:
+        raise HTTPException(status_code=404, detail="Contact not found")
+    if contact.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
+    update_data = contact_in.model_dump(exclude_unset=True)
+    tag_ids = update_data.pop("tag_ids", None)
+    group_ids = update_data.pop("group_ids", None)
+
+    contact.sqlmodel_update(update_data)
+    session.add(contact)
+
+    # Update tag associations if provided
+    if tag_ids is not None:
+        # Remove existing
+        existing = session.exec(select(ContactTag).where(ContactTag.contact_id == contact.id)).all()
+        for ct in existing:
+            session.delete(ct)
+        # Add new
+        for tag_id in tag_ids:
+            session.add(ContactTag(contact_id=contact.id, tag_id=tag_id))
+
+    # Update group associations if provided
+    if group_ids is not None:
+        existing = session.exec(
+            select(ContactGroup).where(ContactGroup.contact_id == contact.id)
+        ).all()
+        for cg in existing:
+            session.delete(cg)
+        for group_id in group_ids:
+            session.add(ContactGroup(contact_id=contact.id, group_id=group_id))
+
+    session.commit()
+
+    # Reload with eager loading
+    statement = select(Contact).where(Contact.id == contact.id).options(
+        selectinload(Contact.tags),
+        selectinload(Contact.groups),
+    )
+    contact = session.exec(statement).first()
+
+    # Enqueue indexing in background (non-blocking)
+    background_tasks.add_task(_enqueue_contact_index, contact)
+    return ContactPublic.model_validate(contact)
+
+
+@router.delete("/{contact_id}")
+def delete_contact(
+    session: SessionDep,
+    current_user: CurrentUser,
+    contact_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
+) -> Any:
+    """Delete a contact."""
+    contact = session.get(Contact, contact_id)
+    if not contact:
+        raise HTTPException(status_code=404, detail="Contact not found")
+    if contact.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
+    # Enqueue removal from search index (non-blocking)
+    background_tasks.add_task(_enqueue_contact_removal, str(contact_id))
+    session.delete(contact)
+    session.commit()
+    return {"ok": True}
