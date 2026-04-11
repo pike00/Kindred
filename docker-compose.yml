@@ -7,6 +7,8 @@ services:
     networks:
       - pikenet-private
       - pikenet-internal-crm
+    dns:
+      - 172.20.2.253
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.crm-api.rule=Host(`crm.${DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/docs`) || PathPrefix(`/dav`) || PathPrefix(`/.well-known`))"
@@ -46,6 +48,8 @@ services:
         VITE_API_URL: https://crm.${DOMAIN}
     networks:
       - pikenet-private
+    dns:
+      - 172.20.2.253
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.crm.rule=Host(`crm.${DOMAIN}`)"
