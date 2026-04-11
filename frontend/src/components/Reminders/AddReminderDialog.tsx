@@ -56,7 +56,8 @@ export const AddReminderDialog = () => {
       showSuccessToast("Reminder created successfully")
       form.reset()
       setOpen(false)
-      queryClient.invalidateQueries({ queryKey: ["reminders"] })
+      // Refetch reminders list to show newly created reminder
+      queryClient.refetchQueries({ queryKey: ["reminders"] })
     },
     onError: () => {
       showErrorToast("Failed to create reminder")
