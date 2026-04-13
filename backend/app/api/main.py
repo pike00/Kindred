@@ -10,7 +10,6 @@ from app.api.routes import (
     groups,
     import_export,
     interactions,
-    items,
     journal,
     life_events,
     login,
@@ -44,7 +43,6 @@ api_router.include_router(interactions.router)
 api_router.include_router(reminders.router)
 api_router.include_router(gifts.router)
 api_router.include_router(debts.router)
-api_router.include_router(items.router)
 api_router.include_router(life_events.router)
 api_router.include_router(notes.router)
 api_router.include_router(journal.router)
