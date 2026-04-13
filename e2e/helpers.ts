@@ -4,7 +4,7 @@ export const BASE_URL = "http://localhost:5173";
 export const API_URL = "http://localhost:8001";
 export const TEST_USER = {
   email: "admin@example.com",
-  password: "changethis",
+  password: "changeme",
   fullName: "Admin",
 };
 
@@ -143,35 +143,50 @@ export async function fillInputByLabel(
   labelText: string,
   value: string,
 ): Promise<void> {
-  const found = await page.evaluate((label: string, val: string) => {
-    const labels = Array.from(document.querySelectorAll("label"));
-    const l = labels.find((el) => el.textContent?.includes(label));
-    if (!l) return false;
-
-    // Try to find input within or after the label
-    let input = l.querySelector("input, textarea");
-    if (!input) {
-      const parent = l.parentElement;
-      if (parent) {
-        input = parent.querySelector("input, textarea");
+  // React controlled inputs ignore direct `.value =` assignments unless you use
+  // the native setter — React patches the prototype to detect programmatic sets.
+  // We locate the input by label, tag it with a unique data attribute, then drive
+  // it through page.focus + page.keyboard.type so CDP fires real keyboard events.
+  const tag = `__e2e_${Math.random().toString(36).slice(2)}`;
+  const found = await page.evaluate(
+    (label: string, t: string) => {
+      const labels = Array.from(document.querySelectorAll("label"));
+      const l = labels.find((el) => el.textContent?.includes(label));
+      if (!l) return false;
+      let input = l.querySelector("input, textarea") as
+        | HTMLInputElement
+        | HTMLTextAreaElement
+        | null;
+      if (!input) {
+        const parent = l.parentElement;
+        if (parent)
+          input = parent.querySelector("input, textarea") as
+            | HTMLInputElement
+            | HTMLTextAreaElement
+            | null;
       }
-    }
-
-    if (input) {
-      const el = input as HTMLInputElement | HTMLTextAreaElement;
-      el.click();
-      // Clear and set value
-      el.value = val;
-      el.dispatchEvent(new Event("input", { bubbles: true }));
-      el.dispatchEvent(new Event("change", { bubbles: true }));
+      if (!input) {
+        const forId = l.getAttribute("for");
+        if (forId) input = document.getElementById(forId) as any;
+      }
+      if (!input) return false;
+      input.setAttribute("data-e2e-tag", t);
       return true;
-    }
-    return false;
-  }, labelText, value);
+    },
+    labelText,
+    tag,
+  );
+  if (!found) throw new Error(`Input for label "${labelText}" not found`);
 
-  if (!found) {
-    throw new Error(`Input for label "${labelText}" not found`);
-  }
+  const selector = `[data-e2e-tag="${tag}"]`;
+  await page.focus(selector);
+  // Select all existing content, then type — works for both inputs and textareas
+  await page.evaluate((s: string) => {
+    const el = document.querySelector(s) as HTMLInputElement | HTMLTextAreaElement;
+    if (el) el.select?.();
+  }, selector);
+  await page.keyboard.press("Backspace");
+  await page.keyboard.type(value);
 }
 
 export async function selectOption(
@@ -220,17 +235,16 @@ export async function clickTab(
   page: Page,
   tabText: string,
 ): Promise<void> {
-  // Use evaluate with inline click for Radix UI tabs
-  const found = await page.evaluate((text: string) => {
+  // Radix Tabs needs real pointer events — compute the tab center and click via mouse
+  const box = await page.evaluate((text: string) => {
     const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
     const tab = tabs.find((t) => t.textContent?.includes(text));
-    if (tab) {
-      (tab as HTMLElement).click();
-      return true;
-    }
-    return false;
+    if (!tab) return null;
+    const r = tab.getBoundingClientRect();
+    return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
   }, tabText);
-  if (!found) throw new Error(`Tab "${tabText}" not found`);
+  if (!box) throw new Error(`Tab "${tabText}" not found`);
+  await page.mouse.click(box.x, box.y);
   await sleep(500);
 }
 
@@ -248,6 +262,30 @@ export async function getToastText(page: Page): Promise<string | null> {
 
 export async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export async function setDateTimeLocal(
+  page: Page,
+  value: string,
+  selector = 'input[type="datetime-local"]',
+): Promise<void> {
+  // datetime-local inputs ignore page.keyboard.type because they have segment-based
+  // editing. Use React's native setter so the controlled input accepts the write.
+  await page.evaluate(
+    (sel: string, val: string) => {
+      const el = document.querySelector(sel) as HTMLInputElement | null;
+      if (!el) return;
+      const setter = Object.getOwnPropertyDescriptor(
+        window.HTMLInputElement.prototype,
+        "value",
+      )?.set;
+      setter?.call(el, val);
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+      el.dispatchEvent(new Event("change", { bubbles: true }));
+    },
+    selector,
+    value,
+  );
 }
 
 export async function screenshotOnFail(

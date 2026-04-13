@@ -12,6 +12,7 @@ import {
   navigateTo,
   clickButton,
   fillInputByLabel,
+  setDateTimeLocal,
 } from "./helpers.js";
 
 async function getAuthToken(): Promise<string> {
@@ -78,14 +79,8 @@ async function main() {
         await fillInputByLabel(p, "Title", "Call Mom");
         await fillInputByLabel(p, "Description", "Weekly check-in call");
 
-        // Set datetime
-        const dateInput = await p.$('input[type="datetime-local"]');
-        if (dateInput) {
-          await dateInput.click({ count: 3 });
-          const future = new Date(Date.now() + 86400000); // tomorrow
-          const dateStr = future.toISOString().slice(0, 16);
-          await dateInput.type(dateStr);
-        }
+        const future = new Date(Date.now() + 86400000); // tomorrow
+        await setDateTimeLocal(p, future.toISOString().slice(0, 16));
 
         await clickButton(p, "Create Reminder");
         await sleep(2000);
@@ -110,13 +105,8 @@ async function main() {
         await sleep(500);
         await fillInputByLabel(p, "Title", "Send birthday card");
 
-        const dateInput = await p.$('input[type="datetime-local"]');
-        if (dateInput) {
-          await dateInput.click({ count: 3 });
-          const future = new Date(Date.now() + 172800000); // 2 days
-          const dateStr = future.toISOString().slice(0, 16);
-          await dateInput.type(dateStr);
-        }
+        const future = new Date(Date.now() + 172800000); // 2 days
+        await setDateTimeLocal(p, future.toISOString().slice(0, 16));
 
         await clickButton(p, "Create Reminder");
         await sleep(2000);
