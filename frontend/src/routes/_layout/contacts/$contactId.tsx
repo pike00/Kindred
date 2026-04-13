@@ -95,35 +95,33 @@ function ContactDetailPage() {
     queryFn: () => ContactsService.getContact({ contactId }),
   })
 
-  const { data: contactFields, isLoading: fieldsLoading } = useQuery({
+  const { data: contactFieldsResp, isLoading: fieldsLoading } = useQuery({
     queryKey: ["contact-fields", contactId],
-    queryFn: () =>
-      ContactFieldsService.listContactFields({ contactId }) as Promise<
-        ContactFieldPublic[]
-      >,
+    queryFn: () => ContactFieldsService.listContactFields({ contactId }),
   })
+  const contactFields = (contactFieldsResp as
+    | { data?: ContactFieldPublic[] }
+    | undefined)?.data
 
-  const { data: addresses, isLoading: addressesLoading } = useQuery({
+  const { data: addressesResp, isLoading: addressesLoading } = useQuery({
     queryKey: ["addresses", contactId],
-    queryFn: () =>
-      AddressesService.listAddresses({ contactId }) as Promise<
-        AddressPublic[]
-      >,
+    queryFn: () => AddressesService.listAddresses({ contactId }),
   })
+  const addresses = (addressesResp as { data?: AddressPublic[] } | undefined)?.data
 
-  const { data: relationships, isLoading: relsLoading } = useQuery({
+  const { data: relationshipsResp, isLoading: relsLoading } = useQuery({
     queryKey: ["relationships", contactId],
-    queryFn: () =>
-      RelationshipsService.listRelationships({ contactId }) as Promise<
-        RelationshipPublic[]
-      >,
+    queryFn: () => RelationshipsService.listRelationships({ contactId }),
   })
+  const relationships = (relationshipsResp as
+    | { data?: RelationshipPublic[] }
+    | undefined)?.data
 
-  const { data: pets, isLoading: petsLoading } = useQuery({
+  const { data: petsResp, isLoading: petsLoading } = useQuery({
     queryKey: ["pets", contactId],
-    queryFn: () =>
-      PetsService.listPets({ contactId }) as Promise<PetPublic[]>,
+    queryFn: () => PetsService.listPets({ contactId }),
   })
+  const pets = (petsResp as { data?: PetPublic[] } | undefined)?.data
 
   const { data: interactionsData, isLoading: interactionsLoading } = useQuery({
     queryKey: ["interactions", contactId],
