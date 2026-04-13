@@ -2186,9 +2186,9 @@ Expected: no TypeScript errors, build succeeds.
 
 ## Step 13: Docker Compose and Deployment
 
-### File: `docker-compose.yml` (in `/home/will/Documents/Homelab/personal-crm/`)
+### File: `compose.prod.yml`
 
-This is the homelab deployment compose file, separate from the template's development compose.
+This is the homelab deployment compose file, separate from the template's development compose (`compose.yml` + `compose.override.yml`). Deploy with `docker compose -f compose.prod.yml up -d`.
 
 ```yaml
 services:
@@ -2714,7 +2714,7 @@ uv run pytest tests/ -x -q 2>&1 | tail -5
 personal-crm/
 ├── PLAN.md                              # High-level feature plan
 ├── HANDOFF.md                           # This file
-├── docker-compose.yml                   # Homelab deployment compose
+├── compose.prod.yml                     # Homelab deployment compose
 ├── .env.sops                            # Encrypted secrets
 └── app/                                 # Cloned from FastAPI template
     ├── compose.yml                      # Template's compose (dev reference)

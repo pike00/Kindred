@@ -113,6 +113,8 @@ There is a main `compose.yml` file with all the configurations that apply to the
 
 And there's also a `compose.override.yml` with overrides for development, for example to mount the source code as a volume. It is used automatically by `docker compose` to apply overrides on top of `compose.yml`.
 
+For the homelab production deployment there is a separate `compose.prod.yml` that wires the stack into the `pikenet-*` networks, Meilisearch, Redis, and the ARQ worker. Start it explicitly with `docker compose -f compose.prod.yml up -d`.
+
 These Docker Compose files use the `.env` file containing configurations to be injected as environment variables in the containers.
 
 They also use some additional configurations taken from environment variables set in the scripts before calling the `docker compose` command.
