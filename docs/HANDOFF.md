@@ -155,7 +155,7 @@ docker compose ps  # All services healthy
 | [app/backend/app/worker.py](../app/backend/app/worker.py) | ARQ background worker tasks |
 | [app/frontend/src/components/Contacts/](../app/frontend/src/components/Contacts/) | Contact CRUD components (now with EditContactDialog) |
 | [app/frontend/src/routes/](../app/frontend/src/routes/) | Page routes (TanStack Router) |
-| [docker-compose.yml](../docker-compose.yml) | Prod deployment config (ready) |
+| [compose.prod.yml](../compose.prod.yml) | Prod deployment config (ready) |
 | [DB_SCHEMA.md](DB_SCHEMA.md) | Database documentation |
 | [architecture.md](architecture.md) | Full implementation guide |
 
