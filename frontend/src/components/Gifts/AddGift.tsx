@@ -102,7 +102,7 @@ export function AddGift({ contactId }: AddGiftProps) {
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <Plus className="mr-1 size-3.5" /> Gift
+          <Plus className="mr-1 size-3.5" /> Add Gift
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">

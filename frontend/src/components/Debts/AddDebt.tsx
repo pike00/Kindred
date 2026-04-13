@@ -89,7 +89,7 @@ export function AddDebt({ contactId }: AddDebtProps) {
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <Plus className="mr-1 size-3.5" /> Debt
+          <Plus className="mr-1 size-3.5" /> Add Debt
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">

@@ -175,47 +175,23 @@ async function main() {
         await runTest(page, "Logout functionality", async (p) => {
           await login(p);
 
-          // Find and click user menu button (contains email or user info)
-          const menuClicked = await p.evaluate(() => {
-            const buttons = Array.from(document.querySelectorAll("button"));
-            const userBtn = buttons.find(
-              (b) => b.textContent?.includes("admin@example.com") || b.getAttribute("data-testid") === "user-menu"
-            );
-            if (userBtn) {
-              (userBtn as HTMLButtonElement).click();
-              return true;
-            }
-            return false;
-          });
-
-          if (!menuClicked) {
-            console.log("  [info] Logout button not found in UI");
-            return;
-          }
-
-          // Wait for menu to open
+          // Radix DropdownMenuTrigger requires real pointer events — use page.click, not evaluate()
+          await p.click('[data-testid="user-menu"]');
           await sleep(500);
 
-          // Click the logout menu item
-          const logoutClicked = await p.evaluate(() => {
+          // Locate the Log Out menu item and click it via CDP so Radix fires onSelect
+          const logoutBox = await p.evaluate(() => {
             const items = Array.from(
-              document.querySelectorAll('[role="menuitem"], button')
+              document.querySelectorAll('[role="menuitem"]'),
             );
-            const logoutItem = items.find(
-              (i) => i.textContent?.includes("Log Out") || i.textContent?.includes("Log out")
-            );
-            if (logoutItem) {
-              (logoutItem as HTMLElement).click();
-              return true;
-            }
-            return false;
+            const item = items.find((i) => i.textContent?.includes("Log Out"));
+            if (!item) return null;
+            const rect = item.getBoundingClientRect();
+            return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
           });
+          if (!logoutBox) throw new Error("Logout menu item not found");
+          await p.mouse.click(logoutBox.x, logoutBox.y);
 
-          if (!logoutClicked) {
-            throw new Error("Logout menu item not found");
-          }
-
-          // Wait for navigation to complete
           await sleep(2000);
           const url = p.url();
           if (!url.includes("/login"))
