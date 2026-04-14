@@ -1,40 +1,25 @@
-import { createFileRoute, Link } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
 import { useSuspenseQuery, useQuery } from "@tanstack/react-query"
-import {
-  Star,
-  Archive,
-  Mail,
-  Phone,
-  Globe,
-  MessageCircle,
-  MapPin,
-  PawPrint,
-  Users,
-  Calendar,
-  Clock,
-  Hash,
-} from "lucide-react"
+import { Star, Archive, Calendar, Clock, Users } from "lucide-react"
 
 import {
   ContactsService,
-  ContactFieldsService,
-  AddressesService,
-  RelationshipsService,
-  PetsService,
   InteractionsService,
   NotesService,
   GiftsService,
   DebtsService,
 } from "@/client"
 import { EditContactDialog } from "@/components/Contacts/EditContactDialog"
+import { AddressesCard } from "@/components/Contacts/AddressesCard"
+import { ContactFieldsCard } from "@/components/Contacts/ContactFieldsCard"
+import { CustomFieldsCard } from "@/components/Contacts/CustomFieldsCard"
+import { LifeEventsCard } from "@/components/Contacts/LifeEventsCard"
+import { PetsCard } from "@/components/Contacts/PetsCard"
+import { RelationshipsCard } from "@/components/Contacts/RelationshipsCard"
 import { AddInteractionDialog } from "@/components/Interactions/AddInteractionDialog"
 import { AddGift } from "@/components/Gifts/AddGift"
 import { AddDebt } from "@/components/Debts/AddDebt"
 import type {
-  ContactFieldPublic,
-  AddressPublic,
-  RelationshipPublic,
-  PetPublic,
   InteractionPublic,
   NotePublic,
   GiftPublic,
@@ -51,15 +36,6 @@ export const Route = createFileRoute("/_layout/contacts/$contactId")({
   },
   component: ContactDetailPage,
 })
-
-const fieldTypeIcon: Record<string, React.ReactNode> = {
-  email: <Mail className="size-4" />,
-  phone: <Phone className="size-4" />,
-  url: <Globe className="size-4" />,
-  social: <Hash className="size-4" />,
-  im: <MessageCircle className="size-4" />,
-  custom: null,
-}
 
 const channelLabels: Record<string, string> = {
   call: "Call",
@@ -95,38 +71,9 @@ function ContactDetailPage() {
     queryFn: () => ContactsService.getContact({ contactId }),
   })
 
-  const { data: contactFieldsResp, isLoading: fieldsLoading } = useQuery({
-    queryKey: ["contact-fields", contactId],
-    queryFn: () => ContactFieldsService.listContactFields({ contactId }),
-  })
-  const contactFields = (contactFieldsResp as
-    | { data?: ContactFieldPublic[] }
-    | undefined)?.data
-
-  const { data: addressesResp, isLoading: addressesLoading } = useQuery({
-    queryKey: ["addresses", contactId],
-    queryFn: () => AddressesService.listAddresses({ contactId }),
-  })
-  const addresses = (addressesResp as { data?: AddressPublic[] } | undefined)?.data
-
-  const { data: relationshipsResp, isLoading: relsLoading } = useQuery({
-    queryKey: ["relationships", contactId],
-    queryFn: () => RelationshipsService.listRelationships({ contactId }),
-  })
-  const relationships = (relationshipsResp as
-    | { data?: RelationshipPublic[] }
-    | undefined)?.data
-
-  const { data: petsResp, isLoading: petsLoading } = useQuery({
-    queryKey: ["pets", contactId],
-    queryFn: () => PetsService.listPets({ contactId }),
-  })
-  const pets = (petsResp as { data?: PetPublic[] } | undefined)?.data
-
   const { data: interactionsData, isLoading: interactionsLoading } = useQuery({
     queryKey: ["interactions", contactId],
-    queryFn: () =>
-      InteractionsService.listInteractions({ contactId }),
+    queryFn: () => InteractionsService.listInteractions({ contactId }),
   })
 
   const { data: notesData, isLoading: notesLoading } = useQuery({
@@ -153,16 +100,6 @@ function ContactDetailPage() {
   ]
     .filter(Boolean)
     .join(" ")
-
-  // Group contact fields by type
-  const fieldsByType: Record<string, ContactFieldPublic[]> = {}
-  if (contactFields) {
-    for (const f of contactFields) {
-      const key = f.field_type
-      if (!fieldsByType[key]) fieldsByType[key] = []
-      fieldsByType[key].push(f)
-    }
-  }
 
   const interactions = interactionsData?.data ?? []
   const notes = notesData?.data ?? []
@@ -220,149 +157,11 @@ function ContactDetailPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Left column (2/3 width) */}
         <div className="md:col-span-2 space-y-6">
-          {/* Contact Fields */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Contact Information</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {fieldsLoading ? (
-                <SectionSkeleton />
-              ) : contactFields && contactFields.length > 0 ? (
-                <div className="space-y-4">
-                  {Object.entries(fieldsByType).map(([type, fields]) => (
-                    <div key={type}>
-                      <h4 className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">
-                        {type}
-                      </h4>
-                      <div className="space-y-1">
-                        {fields.map((f) => (
-                          <div
-                            key={f.id}
-                            className="flex items-center gap-2 text-sm"
-                          >
-                            {fieldTypeIcon[f.field_type] ?? null}
-                            <span className="text-muted-foreground">
-                              {f.label}:
-                            </span>
-                            <span>
-                              {f.field_type === "email" ? (
-                                <a
-                                  href={`mailto:${f.value}`}
-                                  className="underline"
-                                >
-                                  {f.value}
-                                </a>
-                              ) : f.field_type === "phone" ? (
-                                <a
-                                  href={`tel:${f.value}`}
-                                  className="underline"
-                                >
-                                  {f.value}
-                                </a>
-                              ) : f.field_type === "url" ? (
-                                <a
-                                  href={f.value}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="underline"
-                                >
-                                  {f.value}
-                                </a>
-                              ) : (
-                                f.value
-                              )}
-                            </span>
-                            {f.is_primary && (
-                              <Badge variant="secondary" className="text-[10px]">
-                                primary
-                              </Badge>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  No contact fields
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Addresses */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin className="size-4" /> Addresses
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {addressesLoading ? (
-                <SectionSkeleton />
-              ) : addresses && addresses.length > 0 ? (
-                <div className="space-y-3">
-                  {addresses.map((addr) => (
-                    <div key={addr.id} className="text-sm">
-                      <span className="font-medium">{addr.label}</span>
-                      <p className="text-muted-foreground">
-                        {[
-                          addr.street,
-                          addr.extended,
-                          addr.city,
-                          addr.region,
-                          addr.postal_code,
-                          addr.country,
-                        ]
-                          .filter(Boolean)
-                          .join(", ")}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">No addresses</p>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Pets */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <PawPrint className="size-4" /> Pets
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {petsLoading ? (
-                <SectionSkeleton />
-              ) : pets && pets.length > 0 ? (
-                <div className="space-y-2">
-                  {pets.map((pet) => (
-                    <div key={pet.id} className="text-sm">
-                      <span className="font-medium">{pet.name}</span>
-                      {(pet.species || pet.breed) && (
-                        <span className="text-muted-foreground">
-                          {" "}
-                          &mdash;{" "}
-                          {[pet.species, pet.breed].filter(Boolean).join(", ")}
-                        </span>
-                      )}
-                      {pet.notes && (
-                        <p className="text-muted-foreground text-xs mt-0.5">
-                          {pet.notes}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">No pets</p>
-              )}
-            </CardContent>
-          </Card>
+          <ContactFieldsCard contactId={contactId} />
+          <AddressesCard contactId={contactId} />
+          <PetsCard contactId={contactId} />
+          <LifeEventsCard contactId={contactId} />
+          <CustomFieldsCard contactId={contactId} />
         </div>
 
         {/* Right column (1/3 width) */}
@@ -403,46 +202,7 @@ function ContactDetailPage() {
             </Card>
           )}
 
-          {/* Relationships */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Relationships</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {relsLoading ? (
-                <SectionSkeleton />
-              ) : relationships && relationships.length > 0 ? (
-                <div className="space-y-2">
-                  {relationships.map((rel) => (
-                    <div key={rel.id} className="text-sm">
-                      <Link
-                        to="/contacts/$contactId"
-                        params={{ contactId: rel.related_contact_id }}
-                        className="underline font-medium"
-                      >
-                        {rel.relationship_type}
-                      </Link>
-                      <Badge
-                        variant="secondary"
-                        className="ml-2 text-[10px]"
-                      >
-                        {rel.relationship_group}
-                      </Badge>
-                      {rel.notes && (
-                        <p className="text-muted-foreground text-xs mt-0.5">
-                          {rel.notes}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  No relationships
-                </p>
-              )}
-            </CardContent>
-          </Card>
+          <RelationshipsCard contactId={contactId} />
 
           {/* Quick info from contact record */}
           {contact.notes && (
