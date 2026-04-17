@@ -1,5 +1,5 @@
 {
-  "name": "fastapi-full-stack-template",
+  "name": "personal-crm",
   "private": true,
   "workspaces": [
     "frontend"

@@ -40,8 +40,6 @@ from app.models import (
     CustomFieldDefinitionCreate,
     CustomFieldValue,
     CustomFieldValueCreate,
-    Item,
-    ItemCreate,
     JournalEntry,
     JournalEntryCreate,
 )
@@ -98,16 +96,6 @@ def authenticate(*, session: Session, email: str, password: str) -> User | None:
         session.commit()
         session.refresh(db_user)
     return db_user
-
-
-# ─── Item CRUD ────────────────────────────────────────────────────────────────
-
-def create_item(*, session: Session, item_in: ItemCreate, owner_id: uuid.UUID) -> Item:
-    db_obj = Item.model_validate(item_in, update={"owner_id": owner_id})
-    session.add(db_obj)
-    session.commit()
-    session.refresh(db_obj)
-    return db_obj
 
 
 # ─── Contact CRUD ─────────────────────────────────────────────────────────────
