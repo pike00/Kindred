@@ -668,39 +668,6 @@ class DebtsPublic(SQLModel):
     count: int
 
 
-# ─── Item ─────────────────────────────────────────────────────────────────────
-
-class ItemBase(SQLModel):
-    title: str = Field(min_length=1, max_length=500)
-    description: str | None = Field(default=None, max_length=2000)
-
-
-class ItemCreate(ItemBase):
-    pass
-
-
-class ItemUpdate(SQLModel):
-    title: str | None = None
-    description: str | None = None
-
-
-class Item(ItemBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    owner_id: uuid.UUID = Field(foreign_key="user.id", nullable=False, ondelete="CASCADE")
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
-
-
-class ItemPublic(ItemBase):
-    id: uuid.UUID
-    owner_id: uuid.UUID
-    created_at: datetime
-
-
-class ItemsPublic(SQLModel):
-    data: list[ItemPublic]
-    count: int
-
-
 # ─── LifeEvent ────────────────────────────────────────────────────────────────
 
 class LifeEventBase(SQLModel):
