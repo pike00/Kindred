@@ -1,6 +1,6 @@
-# Multi-User Personal-CRM with Provider-Agnostic OIDC
+# Multi-User Personal-CRM with Cloudflare Zero Trust
 
-**Status:** Design — awaiting user review
+**Status:** Design — revised 2026-04-18 after Zitadel → Cloudflare Access pivot
 **Date:** 2026-04-18
 **Origin:** User scratch notes at `docs/superpowers/specs/multi-users` ("Husband/Wife — share all contacts / share by groups / share by tag")
 **Supersedes:** Single-user password-login model in current codebase
@@ -9,7 +9,7 @@
 
 Turn personal-crm from a single-superuser app into a small household CRM (2–5 users) where:
 
-1. Users authenticate via any OIDC-compliant identity provider (initial: Zitadel Cloud; swappable: Auth0, Authelia, Authentik, Keycloak, …).
+1. Users authenticate at the edge via **Cloudflare Access (Zero Trust)**; the app verifies CF's signed JWT on every request. The verifier is written as a generic JWT-over-JWKS module so swapping CF Access for another JWT-issuing IdP later is config-only.
 2. Data is private to each user by default.
 3. Users share data by marking **tags** as shared with specific household members (read + write).
 4. Permissions are decided entirely at the app level — the IdP is treated as a black-box authenticator, not a source of authorization policy.
@@ -20,8 +20,8 @@ Non-goals: multi-tenancy (households as isolated silos), in-app invitations, SCI
 
 | Decision | Choice | Rationale |
 |---|---|---|
-| IdP stack | Zitadel Cloud (free tier) initially, code is OIDC-generic | 2–5 users inside free tier; no homelab ops burden; swappable later |
-| Protocol | OpenID Connect (OIDC) on top of OAuth 2.0 | Universal; no provider SDK on backend |
+| IdP stack | Cloudflare Access (already in front of the homelab); code remains provider-generic JWT+JWKS | Leverages existing CF Zero Trust footprint; no new IdP to run; zero-cost up to 50 users |
+| Protocol | JWT (RS256) over JWKS, delivered via `Cf-Access-Jwt-Assertion` request header (also `CF_Authorization` cookie) | Cloudflare-specific delivery; verification semantics are pure JWT/JWKS |
 | Authn surface | Single `get_current_user` FastAPI dependency | Minimizes token-parsing surface |
 | Authz model | App-level only; `visible_filter(user)` on every query | Portable; does not depend on IdP role features |
 | Sharing unit | **Tags** | User preference; unifies "groups" and "tags" concerns |
@@ -35,47 +35,61 @@ Non-goals: multi-tenancy (households as isolated silos), in-app invitations, SCI
 ## 3. Architecture
 
 ```
-┌──────────────┐     OIDC (authcode+PKCE)     ┌────────────────┐
-│  React SPA   │ ───────────────────────────▶ │ Zitadel Cloud  │
-│  (frontend)  │ ◀─────── id+access+refresh ──│  (initial IdP) │
-└──────┬───────┘                              └────────────────┘
-       │  Authorization: Bearer <access_token>        ▲
-       ▼                                              │ JWKS fetch
-┌──────────────┐                                      │
-│ FastAPI API  │ ─────────────────────────────────────┘
-│   (backend)  │   verify JWT  → map (iss,sub) → User row
-│              │   apply visible_filter(user) on every query
-└──────┬───────┘
-       ▼
-┌──────────────┐
-│  Postgres    │   Users, Contacts, Tags, TagShare, …
-└──────────────┘
+  Browser ─────────▶ Cloudflare Edge ───────▶ crm.${DOMAIN}  (Traefik → frontend)
+                    (Access policy:            │
+                     login with Google/        │  every subsequent request carries
+                     email OTP/etc.)           ▼  Cf-Access-Jwt-Assertion: <JWT>
+                                              ┌──────────────┐
+                                              │  React SPA   │
+                                              │  (frontend)  │   no login page;
+                                              └──────┬───────┘   fetch("/api/…")
+                                                     │
+                                                     ▼
+                                              ┌──────────────┐
+                                              │ FastAPI API  │  verify CF JWT
+                                              │   (backend)  │  → map (iss,sub) → User row
+                                              │              │  → visible_filter(user)
+                                              └──────┬───────┘
+                                                     ▼
+                                              ┌──────────────┐
+                                              │  Postgres    │
+                                              └──────────────┘
 ```
 
 Three pieces:
 
-1. **Frontend (React + Vite):** uses `oidc-client-ts` for the auth-code+PKCE flow. Stores access token in memory; silently renews via refresh token. Attaches bearer to every `/api/*` call.
-2. **Backend (FastAPI):** verifies access tokens locally against cached JWKS. JIT-creates `User` rows on first sight of a new `(iss, sub)`. Applies `visible_filter(user)` to every list/detail query.
-3. **IdP (Zitadel Cloud initially):** issues tokens. Zero personal-crm code is provider-specific — swapping to Auth0 is three env-var changes + a test.
+1. **Cloudflare Access (edge IdP):** an Access Application scoped to `crm.${DOMAIN}` with an email-allowlist policy (you + wife). CF handles the full login dance (Google / email OTP / whatever IdP you federate) before any request reaches Traefik. Every request CF proxies onward carries `Cf-Access-Jwt-Assertion: <JWT>` and a `CF_Authorization` cookie. The JWT is signed by CF with a key fetched from `https://<team>.cloudflareaccess.com/cdn-cgi/access/certs`.
+2. **Frontend (React + Vite):** does nothing OIDC-specific. No login page (CF edge handles it). No PKCE library. No access-token storage. Just makes fetch calls to `/api/*` — CF headers ride along automatically. A tiny `auth.ts` helper provides `getIdentity()` (calls `/api/v1/users/me`) and `logout()` (redirect to CF's logout URL).
+3. **Backend (FastAPI):** reads `Cf-Access-Jwt-Assertion` (header) or `CF_Authorization` (cookie fallback), verifies signature + `iss` + `aud` + `exp` against CF's cached JWKS, JIT-creates `User` rows keyed by `(iss, sub)`, and applies `visible_contact_ids(user)` to every list/detail query.
 
-### 3.1 OIDC env contract (provider-neutral)
+The backend's verifier is written as a generic JWT-over-JWKS module. Swapping CF Access for any other JWT-issuing gateway (Authelia OIDC, Pomerium, Auth0, …) is a config-only change.
+
+### 3.1 Env contract
 
 ```
-OIDC_ISSUER_URL       # e.g. https://<tenant>.zitadel.cloud
-OIDC_AUDIENCE         # the API resource identifier
-OIDC_CLIENT_ID_SPA    # public PKCE client for the frontend
+OIDC_ISSUER_URL       # https://<team>.cloudflareaccess.com
+OIDC_AUDIENCE         # CF Access Application AUD (hex string from Zero Trust dashboard)
+OIDC_JIT_ACTIVE       # true: auto-admit new CF-authenticated users; false: require superuser approval
 AUTH_MODE             # local | oidc | both
+OIDC_TOKEN_SOURCE     # header=Cf-Access-Jwt-Assertion (default) | cookie=CF_Authorization
 ```
 
-No `ZITADEL_*` variables. No provider SDK.
+No `CLOUDFLARE_*` variables — the code path is provider-generic. `OIDC_CLIENT_ID_SPA` (added in Task 1) is unused for CF Access and can stay empty; kept in the schema because another IdP might need it later.
 
 ### 3.2 Token model
 
-- **ID token** — JWT, consumed by frontend for "who am I" state. Never sent to the API.
-- **Access token** — JWT (Zitadel/Auth0/Keycloak) or opaque (Authelia default). Sent as `Authorization: Bearer`. Backend verifies locally if JWT, via `/userinfo` or introspection if opaque.
-- **Refresh token** — opaque; lives in the frontend OIDC library's session store; used for silent renewal.
+CF Access issues a single JWT per authenticated browser session and attaches it to every proxied request. The JWT contains:
 
-Personal-crm's initial provider (Zitadel Cloud) issues JWT access tokens, so the hot path is local verification. Opaque-token adapter is an implementation detail, documented but not built in v1.
+- `iss` — `https://<team>.cloudflareaccess.com`
+- `aud` — Application AUD (one per CF Access Application)
+- `sub` — stable CF identity ID (different per user, opaque to us)
+- `email` — user's email
+- `identity_nonce` — rotates on token refresh
+- `iat`, `exp` — standard
+
+The backend verifies this JWT on every request. There is **no refresh-token flow in the app** — CF handles renewal transparently at the edge. The token lives in `CF_Authorization` (cookie) and is re-injected as `Cf-Access-Jwt-Assertion` (header) for proxied requests.
+
+Local dev: without CF in front, no header is injected. The app supports this via `AUTH_MODE=local` (existing password login) until Phase 4 removes local auth. For CI (Phase 3), we mint a fake CF-shaped JWT with a test JWKS, set the `Cf-Access-Jwt-Assertion` header on each test request, and configure `OIDC_ISSUER_URL` to the mock server.
 
 ## 4. Data model
 
@@ -205,42 +219,51 @@ Controlled by `OIDC_JIT_ACTIVE=true|false` (default `true`).
 
 ### 6.1 Login (browser)
 
-1. User hits `/`. Frontend has no valid access token → redirect to `OIDC_ISSUER_URL/oauth/v2/authorize?...` with PKCE challenge.
-2. IdP authenticates (password + TOTP / passkey, whatever the IdP enforces).
-3. IdP redirects to `https://crm.${DOMAIN}/auth/callback?code=...&state=...`.
-4. Frontend posts `code + code_verifier` to the IdP's token endpoint → gets `{id_token, access_token, refresh_token}`.
-5. Frontend stores tokens in-memory (via `oidc-client-ts`), sets user state from ID token claims, redirects to originally-requested route.
+1. User hits `https://crm.${DOMAIN}`.
+2. Cloudflare edge intercepts. If no valid `CF_Authorization` cookie, CF renders its own login page (per the Access policy — Google, email OTP, whatever IdP you federate).
+3. User authenticates at CF.
+4. CF sets `CF_Authorization` cookie, redirects back to `https://crm.${DOMAIN}`, and forwards the request onward to Traefik.
+5. SPA HTML loads. No client-side login work in the app.
 
 ### 6.2 API call
 
-1. Frontend's axios interceptor attaches `Authorization: Bearer <access_token>`.
-2. Backend `get_current_user` dependency:
-   - Reads header.
+1. SPA does `fetch("/api/v1/contacts")`. Browser auto-sends `CF_Authorization` cookie.
+2. Cloudflare edge revalidates the cookie, injects `Cf-Access-Jwt-Assertion: <JWT>` header, proxies to Traefik → backend.
+3. Backend `get_current_user` dependency:
+   - Reads `Cf-Access-Jwt-Assertion` header (falls back to `CF_Authorization` cookie if header absent).
    - Decodes JWT header to get `kid`.
-   - Looks up key in JWKS cache (TTL 1h; refresh on `kid` miss).
-   - Verifies `signature, iss, aud, exp, nbf`; tolerates 60 s clock skew.
-   - Extracts `sub`.
-   - `SELECT user WHERE oidc_iss=<iss> AND oidc_sub=<sub>`; if miss, INSERT with `email`/`name` from claims.
+   - Looks up key in JWKS cache (TTL 1 h; refresh on `kid` miss).
+   - Verifies `signature, iss, aud, exp`; tolerates 60 s clock skew.
+   - Extracts `sub` and `email`.
+   - `SELECT user WHERE oidc_iss=<iss> AND oidc_sub=<sub>`; if miss, INSERT (JIT).
    - Returns `User`.
-3. Route handler calls CRUD functions that apply `visible_filter(current_user)`.
+4. Route handler calls CRUD functions that apply `visible_contact_ids(current_user)`.
 
 ### 6.3 Logout
 
-Frontend clears its OIDC session and redirects to `OIDC_ISSUER_URL/oidc/v1/end_session`. The access token remains cryptographically valid until `exp` — we do not maintain a revocation list. Mitigation: short access-token TTL (15 min default); silent renewal via refresh token.
+Client-side: redirect browser to `https://<team>.cloudflareaccess.com/cdn-cgi/access/logout?returnTo=${returnUrl}`. CF clears its cookie; user must re-auth to reach the app again. The app has nothing to revoke — CF is the authority.
 
 ### 6.4 Dual-mode decision tree (`get_current_user`)
 
 ```
 if AUTH_MODE == "local":
-    verify as local HS256 JWT → existing code path
+    verify as local HS256 JWT from Authorization: Bearer → existing code path
 elif AUTH_MODE == "oidc":
-    verify as OIDC JWT via JWKS → new path
+    extract token from Cf-Access-Jwt-Assertion (or CF_Authorization cookie)
+    verify as JWT via CF JWKS → new path
 else:  # "both"
-    try OIDC path; on verify failure, try local path; 401 if both fail
+    try OIDC (CF header/cookie) path; on miss-or-failure, try local Bearer path
     emit structured log: which path succeeded
 ```
 
 Local path stays 100% untouched until Phase 4.
+
+### 6.5 First-time admission
+
+CF Access's own policy is the first gate: only allowed emails can reach the app's login. The second gate is our JIT provisioning:
+
+- `OIDC_JIT_ACTIVE=true` (default for personal tenant): any CF-authenticated request JIT-creates a `User(is_active=true)`. Safe because CF Access already restricted admission to your whitelist.
+- `OIDC_JIT_ACTIVE=false`: JIT row created with `is_active=false`; superuser flips the flag. Use if you widen the CF policy and want an app-side second gate.
 
 ## 7. Migration strategy
 
@@ -283,18 +306,20 @@ Merge target: `AUTH_MODE=local` in prod. Nothing visible changes; tests prove pa
 
 **Exit criteria:** all existing tests pass; new tests pass; prod behavior unchanged.
 
-### Phase 1 — IdP tenant setup + dev-side OIDC
+### Phase 1 — CF Access app setup + minimal frontend
 
-- Create Zitadel Cloud tenant; document tenant URL in handoff.
-- Create Project `personal-crm`.
-- Create SPA client (PKCE, redirect URIs: `http://localhost:5173/auth/callback`, `https://crm.${DOMAIN}/auth/callback`).
-- Create API resource (audience identifier).
-- Create user for superuser; create user for wife (invite by email).
-- Frontend: add `oidc-client-ts`, login button, callback route, axios interceptor, logout.
-- Dev env: `AUTH_MODE=both`, superuser logs in via OIDC at localhost, confirms JIT provisioning updates the existing superuser row (`SELECT ... WHERE email=<super>` on first OIDC login merges `oidc_sub` onto the existing row instead of creating a second).
-- `SELECT ... WHERE email=<claim>` identity merge rule: if a `User` with matching email exists and has `oidc_sub IS NULL`, populate it rather than INSERT. This is a **one-time migration** pattern; after Phase 3 it's disabled.
+- In Cloudflare Zero Trust dashboard, create Access Application for `crm.${DOMAIN}`:
+  - Type: Self-hosted
+  - Session duration: 24 h (tune later)
+  - Identity providers: your existing federation (Google / email OTP / ... — whatever the rest of the homelab uses)
+  - Policy: Include → Emails → your email + wife's email
+  - Record the Application AUD → `OIDC_AUDIENCE`
+  - Team domain is the `https://<team>.cloudflareaccess.com` URL → `OIDC_ISSUER_URL`
+- Frontend: add minimal `auth.ts` with `getIdentity()` and `logout()`. No `oidc-client-ts`. Delete the existing email+password login form (Phase 4 anyway; doing it here saves a frontend deploy).
+- Dev env: `AUTH_MODE=both`. Local dev without CF in front uses local password login; to exercise the CF path locally, either (a) run through `cloudflared` with a dev CF Access policy allowing localhost, or (b) use the Phase 3 mock-JWT fixture for backend tests.
+- Identity merge rule: if a `User` with `email == claim.email` exists and `oidc_sub IS NULL`, populate `oidc_iss/oidc_sub` rather than INSERT. One-time migration pattern; drops out in Phase 4.
 
-**Exit criteria:** superuser can log in via OIDC in dev; local login still works; all tests pass.
+**Exit criteria:** superuser can log in through CF Access in prod (no code-side login UI); local login still works for dev; all tests pass.
 
 ### Phase 2 — Prod dual-mode
 
@@ -328,10 +353,10 @@ Merge target: `AUTH_MODE=local` in prod. Nothing visible changes; tests prove pa
 
 ### 9.1 Backend unit
 
-- **JWKS verifier:** stub `httpx_mock` to serve a fake `/.well-known/openid-configuration` and JWKS backed by an in-test RS256 key. Generate tokens with claims; assert valid/expired/wrong-aud/wrong-iss outcomes.
-- **`visible_filter`:** two-user fixture (alice, bob). Create contacts owned by each. Create tags, share a subset. Assert alice's list/detail returns only her owned + bob-shared-via-tag rows.
+- **JWKS verifier:** stub `httpx_mock` to serve a fake JWKS backed by an in-test RS256 key. Generate tokens with claims (including CF-shaped `email`, `sub`, `iss=https://<team>.cloudflareaccess.com`); assert valid / expired / wrong-aud / wrong-iss / malformed / missing-kid outcomes. Test both header source (`Cf-Access-Jwt-Assertion`) and cookie source (`CF_Authorization`).
+- **`visible_contact_ids`:** two-user fixture (alice, bob). Create contacts owned by each. Create tags, share a subset. Assert alice's list/detail returns only her owned + bob-shared-via-tag rows.
 - **TagShare CRUD:** create, delete, cascade-on-tag-delete, idempotent upsert.
-- **JIT provisioning:** token with new `(iss, sub)` → user created with claims; token with existing `(iss, sub)` → no insert; email-merge path (Phase 1–3 only) covered.
+- **JIT provisioning:** token with new `(iss, sub)` → user created with claims; token with existing `(iss, sub)` → no insert; email-merge path (Phases 1–3 only) covered.
 
 ### 9.2 Integration
 
