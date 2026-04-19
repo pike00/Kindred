@@ -125,16 +125,17 @@ class Settings(BaseSettings):
     AUTH_MODE: Literal["local", "oidc", "both"] = "local"
     OIDC_ISSUER_URL: str = ""
     OIDC_AUDIENCE: str = ""
+    OIDC_JWKS_URL: str = ""
     OIDC_CLIENT_ID_SPA: str = ""
     OIDC_JIT_ACTIVE: bool = True
 
     @model_validator(mode="after")
     def _check_oidc_config(self) -> Self:
         if self.AUTH_MODE in ("oidc", "both") and not (
-            self.OIDC_ISSUER_URL and self.OIDC_AUDIENCE
+            self.OIDC_ISSUER_URL and self.OIDC_AUDIENCE and self.OIDC_JWKS_URL
         ):
             raise ValueError(
-                "AUTH_MODE=oidc or both requires OIDC_ISSUER_URL and OIDC_AUDIENCE"
+                "AUTH_MODE=oidc or both requires OIDC_ISSUER_URL, OIDC_AUDIENCE, and OIDC_JWKS_URL"
             )
         return self
 
