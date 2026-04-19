@@ -7,9 +7,8 @@ from fastapi import APIRouter, HTTPException
 from sqlmodel import func, select
 
 from app.api.deps import CurrentUser, SessionDep
-from app.crud import create_contact_field
+from app.crud import contact_visible, create_contact_field
 from app.models import (
-    Contact,
     ContactField,
     ContactFieldCreate,
     ContactFieldPublic,
@@ -17,6 +16,11 @@ from app.models import (
 )
 
 router = APIRouter(prefix="/contact-fields", tags=["contact-fields"])
+
+
+def _require_contact_visible(session: Any, user: Any, contact_id: uuid.UUID) -> None:
+    if not contact_visible(session=session, user=user, contact_id=contact_id):
+        raise HTTPException(status_code=404, detail="Contact not found")
 
 
 @router.get("/contact/{contact_id}")
@@ -28,11 +32,7 @@ def list_contact_fields(
     limit: int = 100,
 ) -> Any:
     """List all fields for a contact."""
-    contact = session.get(Contact, contact_id)
-    if not contact:
-        raise HTTPException(status_code=404, detail="Contact not found")
-    if contact.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
+    _require_contact_visible(session, current_user, contact_id)
 
     statement = (
         select(ContactField)
@@ -62,11 +62,7 @@ def create_contact_field_route(
     field_in: ContactFieldCreate,
 ) -> Any:
     """Create a new contact field."""
-    contact = session.get(Contact, field_in.contact_id)
-    if not contact:
-        raise HTTPException(status_code=404, detail="Contact not found")
-    if contact.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
+    _require_contact_visible(session, current_user, field_in.contact_id)
 
     field = create_contact_field(session=session, field_in=field_in)
     return ContactFieldPublic.model_validate(field)
@@ -82,12 +78,9 @@ def update_contact_field(
 ) -> Any:
     """Update a contact field."""
     field = session.get(ContactField, field_id)
-    if not field:
+    if field is None:
         raise HTTPException(status_code=404, detail="Field not found")
-
-    contact = session.get(Contact, field.contact_id)
-    if contact.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
+    _require_contact_visible(session, current_user, field.contact_id)
 
     update_data = field_in.model_dump(exclude_unset=True)
     field.sqlmodel_update(update_data)
@@ -105,12 +98,9 @@ def delete_contact_field(
 ) -> Any:
     """Delete a contact field."""
     field = session.get(ContactField, field_id)
-    if not field:
+    if field is None:
         raise HTTPException(status_code=404, detail="Field not found")
-
-    contact = session.get(Contact, field.contact_id)
-    if contact.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
+    _require_contact_visible(session, current_user, field.contact_id)
 
     session.delete(field)
     session.commit()
