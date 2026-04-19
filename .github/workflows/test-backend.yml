@@ -30,17 +30,20 @@ jobs:
           docker volume create crm-db || true
           docker volume create crm-redis || true
           docker volume create crm-meili || true
-      - run: docker compose down -v --remove-orphans
-      - run: docker compose up -d db
+      - run: docker compose -f compose.yml -f compose.ci.yml down -v --remove-orphans
+      - run: docker compose -f compose.yml -f compose.ci.yml up -d db
       - name: Migrate DB
+        env:
+          POSTGRES_SERVER: localhost
         run: uv run bash scripts/prestart.sh
         working-directory: backend
       - name: Run tests
         env:
           SHA: ${{ github.sha }}
+          POSTGRES_SERVER: localhost
         run: uv run bash scripts/tests-start.sh "Coverage for $SHA"
         working-directory: backend
-      - run: docker compose down -v --remove-orphans
+      - run: docker compose -f compose.yml -f compose.ci.yml down -v --remove-orphans
       - name: Store coverage files
         uses: actions/upload-artifact@v7
         with:
