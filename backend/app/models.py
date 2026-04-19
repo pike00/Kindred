@@ -1,10 +1,9 @@
 import enum
 import uuid
 from datetime import date, datetime, timezone
-from typing import Optional, Union
 
-from pydantic import EmailStr
 import sqlalchemy as sa
+from pydantic import EmailStr
 from sqlalchemy import DateTime
 from sqlmodel import Field, Relationship, SQLModel
 
@@ -77,6 +76,7 @@ class UsersPublic(SQLModel):
 
 # ─── Enums ────────────────────────────────────────────────────────────────────
 
+
 class ContactFieldType(str, enum.Enum):
     EMAIL = "email"
     PHONE = "phone"
@@ -123,7 +123,17 @@ class DebtDirection(str, enum.Enum):
     THEY_OWE = "they_owe"
 
 
+class MediaCategory(str, enum.Enum):
+    MOVIE = "movie"
+    TV_SHOW = "tv_show"
+    PODCAST = "podcast"
+    MUSICIAN = "musician"
+    BOOK = "book"
+    OTHER = "other"
+
+
 # ─── Tag ──────────────────────────────────────────────────────────────────────
+
 
 class TagBase(SQLModel):
     name: str = Field(min_length=1, max_length=100)
@@ -141,8 +151,12 @@ class TagUpdate(SQLModel):
 
 class Tag(TagBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    owner_id: uuid.UUID = Field(foreign_key="user.id", nullable=False, ondelete="CASCADE")
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc), nullable=False
+    )
 
 
 class TagPublic(TagBase):
@@ -157,13 +171,19 @@ class TagsPublic(SQLModel):
 
 # ─── ContactTag (junction) ───────────────────────────────────────────────────
 
+
 class ContactTag(SQLModel, table=True):
     __tablename__ = "contact_tag"
-    contact_id: uuid.UUID = Field(foreign_key="contact.id", primary_key=True, ondelete="CASCADE")
-    tag_id: uuid.UUID = Field(foreign_key="tag.id", primary_key=True, ondelete="CASCADE")
+    contact_id: uuid.UUID = Field(
+        foreign_key="contact.id", primary_key=True, ondelete="CASCADE"
+    )
+    tag_id: uuid.UUID = Field(
+        foreign_key="tag.id", primary_key=True, ondelete="CASCADE"
+    )
 
 
 # ─── TagShare (grant access to rows bearing a tag) ───────────────────────────────
+
 
 class TagShare(SQLModel, table=True):
     __tablename__ = "tag_share"
@@ -193,6 +213,7 @@ class TagSharesPublic(SQLModel):
 
 # ─── Group ────────────────────────────────────────────────────────────────────
 
+
 class GroupBase(SQLModel):
     name: str = Field(min_length=1, max_length=255)
     description: str | None = Field(default=None, max_length=1000)
@@ -209,8 +230,12 @@ class GroupUpdate(SQLModel):
 
 class Group(GroupBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    owner_id: uuid.UUID = Field(foreign_key="user.id", nullable=False, ondelete="CASCADE")
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc), nullable=False
+    )
 
 
 class GroupPublic(GroupBase):
@@ -225,13 +250,19 @@ class GroupsPublic(SQLModel):
 
 # ─── ContactGroup (junction) ─────────────────────────────────────────────────
 
+
 class ContactGroup(SQLModel, table=True):
     __tablename__ = "contact_group"
-    contact_id: uuid.UUID = Field(foreign_key="contact.id", primary_key=True, ondelete="CASCADE")
-    group_id: uuid.UUID = Field(foreign_key="group.id", primary_key=True, ondelete="CASCADE")
+    contact_id: uuid.UUID = Field(
+        foreign_key="contact.id", primary_key=True, ondelete="CASCADE"
+    )
+    group_id: uuid.UUID = Field(
+        foreign_key="group.id", primary_key=True, ondelete="CASCADE"
+    )
 
 
 # ─── Contact ─────────────────────────────────────────────────────────────────
+
 
 class ContactBase(SQLModel):
     first_name: str = Field(min_length=1, max_length=255)
@@ -285,7 +316,9 @@ class ContactUpdate(SQLModel):
 
 class Contact(ContactBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    owner_id: uuid.UUID = Field(foreign_key="user.id", nullable=False, ondelete="CASCADE")
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
     # Raw vCard text for CardDAV round-trip fidelity
     vcard_raw: str | None = Field(default=None)
     vcard_etag: str | None = Field(default=None, max_length=255)
@@ -293,7 +326,9 @@ class Contact(ContactBase, table=True):
     avatar_url: str | None = Field(default=None, max_length=2048)
     # Computed: last time any interaction was logged with this contact
     last_contacted_at: datetime | None = None
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc), nullable=False
+    )
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
         sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
@@ -327,6 +362,7 @@ class ContactsPublic(SQLModel):
 
 # ─── ContactField ────────────────────────────────────────────────────────────
 
+
 class ContactFieldBase(SQLModel):
     field_type: ContactFieldType
     label: str = Field(max_length=100)  # e.g. "home", "work", "cell", "twitter"
@@ -350,7 +386,9 @@ class ContactFieldUpdate(SQLModel):
 class ContactField(ContactFieldBase, table=True):
     __tablename__ = "contact_field"
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    contact_id: uuid.UUID = Field(foreign_key="contact.id", nullable=False, ondelete="CASCADE")
+    contact_id: uuid.UUID = Field(
+        foreign_key="contact.id", nullable=False, ondelete="CASCADE"
+    )
 
 
 class ContactFieldPublic(ContactFieldBase):
@@ -359,6 +397,7 @@ class ContactFieldPublic(ContactFieldBase):
 
 
 # ─── Address ─────────────────────────────────────────────────────────────────
+
 
 class AddressBase(SQLModel):
     label: str = Field(max_length=100, default="home")  # home, work, other
@@ -390,7 +429,9 @@ class AddressUpdate(SQLModel):
 
 class Address(AddressBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    contact_id: uuid.UUID = Field(foreign_key="contact.id", nullable=False, ondelete="CASCADE")
+    contact_id: uuid.UUID = Field(
+        foreign_key="contact.id", nullable=False, ondelete="CASCADE"
+    )
 
 
 class AddressPublic(AddressBase):
@@ -400,8 +441,11 @@ class AddressPublic(AddressBase):
 
 # ─── Relationship ────────────────────────────────────────────────────────────
 
+
 class RelationshipBase(SQLModel):
-    relationship_type: str = Field(max_length=100)  # spouse, child, parent, friend, colleague, etc.
+    relationship_type: str = Field(
+        max_length=100
+    )  # spouse, child, parent, friend, colleague, etc.
     relationship_group: RelationshipGroup
     notes: str | None = Field(default=None, max_length=1000)
 
@@ -419,8 +463,12 @@ class RelationshipUpdate(SQLModel):
 
 class Relationship(RelationshipBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    contact_id: uuid.UUID = Field(foreign_key="contact.id", nullable=False, ondelete="CASCADE")
-    related_contact_id: uuid.UUID = Field(foreign_key="contact.id", nullable=False, ondelete="CASCADE")
+    contact_id: uuid.UUID = Field(
+        foreign_key="contact.id", nullable=False, ondelete="CASCADE"
+    )
+    related_contact_id: uuid.UUID = Field(
+        foreign_key="contact.id", nullable=False, ondelete="CASCADE"
+    )
 
 
 class RelationshipPublic(RelationshipBase):
@@ -430,6 +478,7 @@ class RelationshipPublic(RelationshipBase):
 
 
 # ─── Pet ──────────────────────────────────────────────────────────────────────
+
 
 class PetBase(SQLModel):
     name: str = Field(min_length=1, max_length=255)
@@ -451,7 +500,9 @@ class PetUpdate(SQLModel):
 
 class Pet(PetBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    contact_id: uuid.UUID = Field(foreign_key="contact.id", nullable=False, ondelete="CASCADE")
+    contact_id: uuid.UUID = Field(
+        foreign_key="contact.id", nullable=False, ondelete="CASCADE"
+    )
 
 
 class PetPublic(PetBase):
@@ -461,13 +512,17 @@ class PetPublic(PetBase):
 
 # ─── CustomFieldDefinition ───────────────────────────────────────────────────
 
+
 class CustomFieldDefinitionBase(SQLModel):
     """Defines a custom field type that can be attached to any contact.
     Example: name="Dietary Restrictions", field_type="text"
     Example: name="Preferred Filament", field_type="text"
     """
+
     name: str = Field(min_length=1, max_length=255)
-    field_type: str = Field(max_length=50, default="text")  # text, number, date, boolean, select
+    field_type: str = Field(
+        max_length=50, default="text"
+    )  # text, number, date, boolean, select
     description: str | None = Field(default=None, max_length=500)
     # For "select" type: comma-separated options
     options: str | None = Field(default=None, max_length=2000)
@@ -489,8 +544,12 @@ class CustomFieldDefinitionUpdate(SQLModel):
 class CustomFieldDefinition(CustomFieldDefinitionBase, table=True):
     __tablename__ = "custom_field_definition"
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    owner_id: uuid.UUID = Field(foreign_key="user.id", nullable=False, ondelete="CASCADE")
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc), nullable=False
+    )
 
 
 class CustomFieldDefinitionPublic(CustomFieldDefinitionBase):
@@ -499,6 +558,7 @@ class CustomFieldDefinitionPublic(CustomFieldDefinitionBase):
 
 
 # ─── CustomFieldValue ────────────────────────────────────────────────────────
+
 
 class CustomFieldValueBase(SQLModel):
     value: str = Field(max_length=5000)
@@ -516,7 +576,9 @@ class CustomFieldValueUpdate(SQLModel):
 class CustomFieldValue(CustomFieldValueBase, table=True):
     __tablename__ = "custom_field_value"
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    contact_id: uuid.UUID = Field(foreign_key="contact.id", nullable=False, ondelete="CASCADE")
+    contact_id: uuid.UUID = Field(
+        foreign_key="contact.id", nullable=False, ondelete="CASCADE"
+    )
     field_definition_id: uuid.UUID = Field(
         foreign_key="custom_field_definition.id", nullable=False, ondelete="CASCADE"
     )
@@ -530,6 +592,7 @@ class CustomFieldValuePublic(CustomFieldValueBase):
 
 
 # ─── Interaction ──────────────────────────────────────────────────────────────
+
 
 class InteractionBase(SQLModel):
     channel: InteractionChannel
@@ -553,9 +616,15 @@ class InteractionUpdate(SQLModel):
 
 class Interaction(InteractionBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    contact_id: uuid.UUID = Field(foreign_key="contact.id", nullable=False, ondelete="CASCADE")
-    owner_id: uuid.UUID = Field(foreign_key="user.id", nullable=False, ondelete="CASCADE")
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+    contact_id: uuid.UUID = Field(
+        foreign_key="contact.id", nullable=False, ondelete="CASCADE"
+    )
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc), nullable=False
+    )
 
 
 class InteractionPublic(InteractionBase):
@@ -570,6 +639,7 @@ class InteractionsPublic(SQLModel):
 
 
 # ─── Reminder ─────────────────────────────────────────────────────────────────
+
 
 class ReminderBase(SQLModel):
     title: str = Field(min_length=1, max_length=500)
@@ -593,11 +663,17 @@ class ReminderUpdate(SQLModel):
 
 class Reminder(ReminderBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    contact_id: uuid.UUID | None = Field(default=None, foreign_key="contact.id", ondelete="CASCADE")
-    owner_id: uuid.UUID = Field(foreign_key="user.id", nullable=False, ondelete="CASCADE")
+    contact_id: uuid.UUID | None = Field(
+        default=None, foreign_key="contact.id", ondelete="CASCADE"
+    )
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
     last_sent_at: datetime | None = None
     snoozed_until: datetime | None = None
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc), nullable=False
+    )
 
 
 class ReminderPublic(ReminderBase):
@@ -614,6 +690,7 @@ class RemindersPublic(SQLModel):
 
 
 # ─── Gift ─────────────────────────────────────────────────────────────────────
+
 
 class GiftBase(SQLModel):
     name: str = Field(min_length=1, max_length=500)
@@ -643,10 +720,18 @@ class GiftUpdate(SQLModel):
 
 class Gift(GiftBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    contact_id: uuid.UUID = Field(foreign_key="contact.id", nullable=False, ondelete="CASCADE")
-    owner_id: uuid.UUID = Field(foreign_key="user.id", nullable=False, ondelete="CASCADE")
-    gift_date: date | None = Field(default=None, sa_column=sa.Column("date", sa.Date, nullable=True))
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+    contact_id: uuid.UUID = Field(
+        foreign_key="contact.id", nullable=False, ondelete="CASCADE"
+    )
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    gift_date: date | None = Field(
+        default=None, sa_column=sa.Column("date", sa.Date, nullable=True)
+    )
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc), nullable=False
+    )
 
 
 class GiftPublic(GiftBase):
@@ -661,6 +746,7 @@ class GiftsPublic(SQLModel):
 
 
 # ─── Debt ─────────────────────────────────────────────────────────────────────
+
 
 class DebtBase(SQLModel):
     direction: DebtDirection
@@ -686,9 +772,15 @@ class DebtUpdate(SQLModel):
 
 class Debt(DebtBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    contact_id: uuid.UUID = Field(foreign_key="contact.id", nullable=False, ondelete="CASCADE")
-    owner_id: uuid.UUID = Field(foreign_key="user.id", nullable=False, ondelete="CASCADE")
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+    contact_id: uuid.UUID = Field(
+        foreign_key="contact.id", nullable=False, ondelete="CASCADE"
+    )
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc), nullable=False
+    )
 
 
 class DebtPublic(DebtBase):
@@ -704,8 +796,11 @@ class DebtsPublic(SQLModel):
 
 # ─── LifeEvent ────────────────────────────────────────────────────────────────
 
+
 class LifeEventBase(SQLModel):
-    event_type: str = Field(max_length=100)  # job_change, move, wedding, baby, graduation, etc.
+    event_type: str = Field(
+        max_length=100
+    )  # job_change, move, wedding, baby, graduation, etc.
     title: str = Field(min_length=1, max_length=500)
     description: str | None = Field(default=None, max_length=2000)
     occurred_at: date
@@ -727,9 +822,15 @@ class LifeEventUpdate(SQLModel):
 class LifeEvent(LifeEventBase, table=True):
     __tablename__ = "life_event"
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    contact_id: uuid.UUID = Field(foreign_key="contact.id", nullable=False, ondelete="CASCADE")
-    owner_id: uuid.UUID = Field(foreign_key="user.id", nullable=False, ondelete="CASCADE")
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+    contact_id: uuid.UUID = Field(
+        foreign_key="contact.id", nullable=False, ondelete="CASCADE"
+    )
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc), nullable=False
+    )
 
 
 class LifeEventPublic(LifeEventBase):
@@ -745,6 +846,7 @@ class LifeEventsPublic(SQLModel):
 
 # ─── Note (per-contact timestamped notes) ────────────────────────────────────
 
+
 class NoteBase(SQLModel):
     body: str = Field(min_length=1, max_length=50000)
 
@@ -759,9 +861,15 @@ class NoteUpdate(SQLModel):
 
 class Note(NoteBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    contact_id: uuid.UUID = Field(foreign_key="contact.id", nullable=False, ondelete="CASCADE")
-    owner_id: uuid.UUID = Field(foreign_key="user.id", nullable=False, ondelete="CASCADE")
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+    contact_id: uuid.UUID = Field(
+        foreign_key="contact.id", nullable=False, ondelete="CASCADE"
+    )
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc), nullable=False
+    )
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
         sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
@@ -781,7 +889,62 @@ class NotesPublic(SQLModel):
     count: int
 
 
+# ─── MediaRecommendation (per-contact media suggestions) ─────────────────────
+
+
+class MediaRecommendationBase(SQLModel):
+    category: MediaCategory
+    title: str = Field(min_length=1, max_length=500)
+    creator: str | None = Field(default=None, max_length=500)
+    note: str | None = Field(default=None, max_length=5000)
+    recommended_at: date | None = Field(default=None)
+
+
+class MediaRecommendationCreate(MediaRecommendationBase):
+    contact_id: uuid.UUID
+
+
+class MediaRecommendationUpdate(SQLModel):
+    category: MediaCategory | None = None
+    title: str | None = None
+    creator: str | None = None
+    note: str | None = None
+    recommended_at: date | None = None
+
+
+class MediaRecommendation(MediaRecommendationBase, table=True):
+    __tablename__ = "media_recommendation"
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    contact_id: uuid.UUID = Field(
+        foreign_key="contact.id", nullable=False, ondelete="CASCADE"
+    )
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc), nullable=False
+    )
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
+        nullable=False,
+    )
+
+
+class MediaRecommendationPublic(MediaRecommendationBase):
+    id: uuid.UUID
+    contact_id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
+
+
+class MediaRecommendationsPublic(SQLModel):
+    data: list[MediaRecommendationPublic]
+    count: int
+
+
 # ─── JournalEntry (not tied to a contact) ────────────────────────────────────
+
 
 class JournalEntryBase(SQLModel):
     body: str = Field(min_length=1, max_length=50000)
@@ -802,8 +965,12 @@ class JournalEntryUpdate(SQLModel):
 class JournalEntry(JournalEntryBase, table=True):
     __tablename__ = "journal_entry"
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    owner_id: uuid.UUID = Field(foreign_key="user.id", nullable=False, ondelete="CASCADE")
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc), nullable=False
+    )
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
         sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
@@ -824,6 +991,7 @@ class JournalEntriesPublic(SQLModel):
 
 # ─── WebhookEndpoint (for inbound/outbound webhooks) ─────────────────────────
 
+
 class WebhookEndpointBase(SQLModel):
     name: str = Field(min_length=1, max_length=255)
     url: str | None = Field(default=None, max_length=2048)  # outbound target URL
@@ -836,9 +1004,13 @@ class WebhookEndpointBase(SQLModel):
 class WebhookEndpoint(WebhookEndpointBase, table=True):
     __tablename__ = "webhook_endpoint"
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    owner_id: uuid.UUID = Field(foreign_key="user.id", nullable=False, ondelete="CASCADE")
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
     api_key: str = Field(max_length=255)  # for authenticating inbound webhooks
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc), nullable=False
+    )
 
 
 # Generic message

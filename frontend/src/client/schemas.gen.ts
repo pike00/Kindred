@@ -1811,7 +1811,7 @@ export const GiftCreateSchema = {
             ],
             title: 'Occasion'
         },
-        date: {
+        gift_date: {
             anyOf: [
                 {
                     type: 'string',
@@ -1821,7 +1821,7 @@ export const GiftCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Date'
+            title: 'Gift Date'
         },
         value_amount: {
             anyOf: [
@@ -1899,7 +1899,7 @@ export const GiftPublicSchema = {
             ],
             title: 'Occasion'
         },
-        date: {
+        gift_date: {
             anyOf: [
                 {
                     type: 'string',
@@ -1909,7 +1909,7 @@ export const GiftPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Date'
+            title: 'Gift Date'
         },
         value_amount: {
             anyOf: [
@@ -2012,7 +2012,7 @@ export const GiftUpdateSchema = {
             ],
             title: 'Occasion'
         },
-        date: {
+        gift_date: {
             anyOf: [
                 {
                     type: 'string',
@@ -2022,7 +2022,7 @@ export const GiftUpdateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Date'
+            title: 'Gift Date'
         },
         value_amount: {
             anyOf: [
@@ -2418,116 +2418,6 @@ export const InteractionsPublicSchema = {
     title: 'InteractionsPublic'
 } as const;
 
-export const ItemCreateSchema = {
-    properties: {
-        title: {
-            type: 'string',
-            maxLength: 500,
-            minLength: 1,
-            title: 'Title'
-        },
-        description: {
-            anyOf: [
-                {
-                    type: 'string',
-                    maxLength: 2000
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Description'
-        }
-    },
-    type: 'object',
-    required: ['title'],
-    title: 'ItemCreate'
-} as const;
-
-export const ItemPublicSchema = {
-    properties: {
-        title: {
-            type: 'string',
-            maxLength: 500,
-            minLength: 1,
-            title: 'Title'
-        },
-        description: {
-            anyOf: [
-                {
-                    type: 'string',
-                    maxLength: 2000
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Description'
-        },
-        id: {
-            type: 'string',
-            format: 'uuid',
-            title: 'Id'
-        },
-        created_at: {
-            type: 'string',
-            format: 'date-time',
-            title: 'Created At'
-        }
-    },
-    type: 'object',
-    required: ['title', 'id', 'created_at'],
-    title: 'ItemPublic'
-} as const;
-
-export const ItemUpdateSchema = {
-    properties: {
-        title: {
-            anyOf: [
-                {
-                    type: 'string'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Title'
-        },
-        description: {
-            anyOf: [
-                {
-                    type: 'string'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Description'
-        }
-    },
-    type: 'object',
-    title: 'ItemUpdate'
-} as const;
-
-export const ItemsPublicSchema = {
-    properties: {
-        data: {
-            items: {
-                '$ref': '#/components/schemas/ItemPublic'
-            },
-            type: 'array',
-            title: 'Data'
-        },
-        count: {
-            type: 'integer',
-            title: 'Count'
-        }
-    },
-    type: 'object',
-    required: ['data', 'count'],
-    title: 'ItemsPublic'
-} as const;
-
 export const JournalEntriesPublicSchema = {
     properties: {
         data: {
@@ -2847,6 +2737,224 @@ export const LifeEventsPublicSchema = {
     type: 'object',
     required: ['data', 'count'],
     title: 'LifeEventsPublic'
+} as const;
+
+export const MediaCategorySchema = {
+    type: 'string',
+    enum: ['movie', 'tv_show', 'podcast', 'musician', 'book', 'other'],
+    title: 'MediaCategory'
+} as const;
+
+export const MediaRecommendationCreateSchema = {
+    properties: {
+        category: {
+            '$ref': '#/components/schemas/MediaCategory'
+        },
+        title: {
+            type: 'string',
+            maxLength: 500,
+            minLength: 1,
+            title: 'Title'
+        },
+        creator: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 500
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Creator'
+        },
+        note: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 5000
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Note'
+        },
+        recommended_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Recommended At'
+        },
+        contact_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Contact Id'
+        }
+    },
+    type: 'object',
+    required: ['category', 'title', 'contact_id'],
+    title: 'MediaRecommendationCreate'
+} as const;
+
+export const MediaRecommendationPublicSchema = {
+    properties: {
+        category: {
+            '$ref': '#/components/schemas/MediaCategory'
+        },
+        title: {
+            type: 'string',
+            maxLength: 500,
+            minLength: 1,
+            title: 'Title'
+        },
+        creator: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 500
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Creator'
+        },
+        note: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 5000
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Note'
+        },
+        recommended_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Recommended At'
+        },
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        contact_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Contact Id'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        },
+        updated_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Updated At'
+        }
+    },
+    type: 'object',
+    required: ['category', 'title', 'id', 'contact_id', 'created_at', 'updated_at'],
+    title: 'MediaRecommendationPublic'
+} as const;
+
+export const MediaRecommendationUpdateSchema = {
+    properties: {
+        category: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/MediaCategory'
+                },
+                {
+                    type: 'null'
+                }
+            ]
+        },
+        title: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Title'
+        },
+        creator: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Creator'
+        },
+        note: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Note'
+        },
+        recommended_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Recommended At'
+        }
+    },
+    type: 'object',
+    title: 'MediaRecommendationUpdate'
+} as const;
+
+export const MediaRecommendationsPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/MediaRecommendationPublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'MediaRecommendationsPublic'
 } as const;
 
 export const MessageSchema = {
@@ -3575,6 +3683,52 @@ export const TagPublicSchema = {
     title: 'TagPublic'
 } as const;
 
+export const TagSharePublicSchema = {
+    properties: {
+        tag_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Tag Id'
+        },
+        grantee_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Grantee Id'
+        },
+        grantee_email: {
+            type: 'string',
+            title: 'Grantee Email'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        }
+    },
+    type: 'object',
+    required: ['tag_id', 'grantee_id', 'grantee_email', 'created_at'],
+    title: 'TagSharePublic'
+} as const;
+
+export const TagSharesPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/TagSharePublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'TagSharesPublic'
+} as const;
+
 export const TagUpdateSchema = {
     properties: {
         name: {
@@ -3990,4 +4144,22 @@ export const WebhookEndpointBaseSchema = {
     type: 'object',
     required: ['name', 'direction'],
     title: 'WebhookEndpointBase'
+} as const;
+
+export const _ShareInSchema = {
+    properties: {
+        tag_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Tag Id'
+        },
+        grantee_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Grantee Id'
+        }
+    },
+    type: 'object',
+    required: ['tag_id', 'grantee_id'],
+    title: '_ShareIn'
 } as const;
