@@ -24,6 +24,8 @@ from app.models import (
     InteractionCreate,
     LifeEvent,
     LifeEventCreate,
+    MediaRecommendation,
+    MediaRecommendationCreate,
     Note,
     NoteCreate,
     Pet,
@@ -285,6 +287,18 @@ def create_life_event(
     *, session: Session, life_event_in: LifeEventCreate, owner_id: uuid.UUID
 ) -> LifeEvent:
     db_obj = LifeEvent.model_validate(life_event_in, update={"owner_id": owner_id})
+    session.add(db_obj)
+    session.commit()
+    session.refresh(db_obj)
+    return db_obj
+
+
+# ─── MediaRecommendation CRUD ─────────────────────────────────────────────────
+
+def create_media_recommendation(
+    *, session: Session, rec_in: MediaRecommendationCreate, owner_id: uuid.UUID
+) -> MediaRecommendation:
+    db_obj = MediaRecommendation.model_validate(rec_in, update={"owner_id": owner_id})
     session.add(db_obj)
     session.commit()
     session.refresh(db_obj)

@@ -123,6 +123,15 @@ class DebtDirection(str, enum.Enum):
     THEY_OWE = "they_owe"
 
 
+class MediaCategory(str, enum.Enum):
+    MOVIE = "movie"
+    TV_SHOW = "tv_show"
+    PODCAST = "podcast"
+    MUSICIAN = "musician"
+    BOOK = "book"
+    OTHER = "other"
+
+
 # ─── Tag ──────────────────────────────────────────────────────────────────────
 
 class TagBase(SQLModel):
@@ -778,6 +787,53 @@ class NotePublic(NoteBase):
 
 class NotesPublic(SQLModel):
     data: list[NotePublic]
+    count: int
+
+
+# ─── MediaRecommendation (per-contact media suggestions) ─────────────────────
+
+class MediaRecommendationBase(SQLModel):
+    category: MediaCategory
+    title: str = Field(min_length=1, max_length=500)
+    creator: str | None = Field(default=None, max_length=500)
+    note: str | None = Field(default=None, max_length=5000)
+    recommended_at: date | None = Field(default=None)
+
+
+class MediaRecommendationCreate(MediaRecommendationBase):
+    contact_id: uuid.UUID
+
+
+class MediaRecommendationUpdate(SQLModel):
+    category: MediaCategory | None = None
+    title: str | None = None
+    creator: str | None = None
+    note: str | None = None
+    recommended_at: date | None = None
+
+
+class MediaRecommendation(MediaRecommendationBase, table=True):
+    __tablename__ = "media_recommendation"
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    contact_id: uuid.UUID = Field(foreign_key="contact.id", nullable=False, ondelete="CASCADE")
+    owner_id: uuid.UUID = Field(foreign_key="user.id", nullable=False, ondelete="CASCADE")
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
+        nullable=False,
+    )
+
+
+class MediaRecommendationPublic(MediaRecommendationBase):
+    id: uuid.UUID
+    contact_id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
+
+
+class MediaRecommendationsPublic(SQLModel):
+    data: list[MediaRecommendationPublic]
     count: int
 
 
