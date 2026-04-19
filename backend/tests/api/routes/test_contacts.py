@@ -288,3 +288,80 @@ def test_losing_touch(
     # Should include our contact (never contacted + has cadence)
     names = [c["first_name"] for c in content["data"]]
     assert "LosingTouch" in names
+
+
+def test_contact_isolation_between_users(client: TestClient, db: Session) -> None:
+    from tests.utils.user import (
+        authentication_token_from_email,
+        create_random_user,
+    )
+
+    alice = create_random_user(db)
+    bob = create_random_user(db)
+    alice_h = authentication_token_from_email(
+        client=client, email=alice.email, db=db
+    )
+    bob_h = authentication_token_from_email(
+        client=client, email=bob.email, db=db
+    )
+
+    r = client.post(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=alice_h,
+        json={"first_name": "Private"},
+    )
+    assert r.status_code == 200
+    alice_cid = r.json()["id"]
+
+    r = client.get(f"{settings.API_V1_STR}/contacts/", headers=bob_h)
+    assert r.status_code == 200
+    ids = [c["id"] for c in r.json()["data"]]
+    assert alice_cid not in ids
+
+    r = client.get(
+        f"{settings.API_V1_STR}/contacts/{alice_cid}", headers=bob_h
+    )
+    assert r.status_code == 404
+
+
+def test_shared_tag_exposes_contact(client: TestClient, db: Session) -> None:
+    from tests.utils.user import (
+        authentication_token_from_email,
+        create_random_user,
+    )
+
+    alice = create_random_user(db)
+    bob = create_random_user(db)
+    alice_h = authentication_token_from_email(
+        client=client, email=alice.email, db=db
+    )
+    bob_h = authentication_token_from_email(
+        client=client, email=bob.email, db=db
+    )
+
+    tag = client.post(
+        f"{settings.API_V1_STR}/tags/",
+        headers=alice_h,
+        json={"name": "joint"},
+    ).json()
+    contact = client.post(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=alice_h,
+        json={"first_name": "Joint", "tag_ids": [tag["id"]]},
+    ).json()
+
+    r = client.post(
+        f"{settings.API_V1_STR}/tag-shares/",
+        headers=alice_h,
+        json={"tag_id": tag["id"], "grantee_id": str(bob.id)},
+    )
+    assert r.status_code == 200
+
+    r = client.get(f"{settings.API_V1_STR}/contacts/", headers=bob_h)
+    assert r.status_code == 200
+    assert contact["id"] in [c["id"] for c in r.json()["data"]]
+
+    r = client.get(
+        f"{settings.API_V1_STR}/contacts/{contact['id']}", headers=bob_h
+    )
+    assert r.status_code == 200
