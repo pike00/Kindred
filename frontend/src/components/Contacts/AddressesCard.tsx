@@ -4,9 +4,8 @@ import { MapPin, MoreHorizontal, Plus } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-
-import { AddressesService } from "@/client"
 import type { AddressCreate, AddressPublic, AddressUpdate } from "@/client"
+import { AddressesService } from "@/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -198,11 +197,16 @@ function AddAddressDialog({ contactId }: { contactId: string }) {
       queryClient.invalidateQueries({ queryKey: ["addresses", contactId] })
     },
     onError: (err) =>
-      showErrorToast(err instanceof Error ? err.message : "Failed to add address"),
+      showErrorToast(
+        err instanceof Error ? err.message : "Failed to add address",
+      ),
   })
 
   const onSubmit = (data: FormData) => {
-    mutation.mutate({ ...toPayload(data), contact_id: contactId } as AddressCreate)
+    mutation.mutate({
+      ...toPayload(data),
+      contact_id: contactId,
+    } as AddressCreate)
   }
 
   return (
@@ -215,7 +219,9 @@ function AddAddressDialog({ contactId }: { contactId: string }) {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Add address</DialogTitle>
-          <DialogDescription>Attach a physical address to this contact.</DialogDescription>
+          <DialogDescription>
+            Attach a physical address to this contact.
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -278,17 +284,25 @@ function EditAddressDialog({
 
   const mutation = useMutation({
     mutationFn: (data: AddressUpdate) =>
-      AddressesService.updateAddress({ addressId: address.id, requestBody: data }),
+      AddressesService.updateAddress({
+        addressId: address.id,
+        requestBody: data,
+      }),
     onSuccess: () => {
       showSuccessToast("Address updated")
       onOpenChange(false)
-      queryClient.invalidateQueries({ queryKey: ["addresses", address.contact_id] })
+      queryClient.invalidateQueries({
+        queryKey: ["addresses", address.contact_id],
+      })
     },
     onError: (err) =>
-      showErrorToast(err instanceof Error ? err.message : "Failed to update address"),
+      showErrorToast(
+        err instanceof Error ? err.message : "Failed to update address",
+      ),
   })
 
-  const onSubmit = (data: FormData) => mutation.mutate(toPayload(data) as AddressUpdate)
+  const onSubmit = (data: FormData) =>
+    mutation.mutate(toPayload(data) as AddressUpdate)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -326,10 +340,14 @@ function AddressRow({ address }: { address: AddressPublic }) {
     mutationFn: () => AddressesService.deleteAddress({ addressId: address.id }),
     onSuccess: () => {
       showSuccessToast("Address deleted")
-      queryClient.invalidateQueries({ queryKey: ["addresses", address.contact_id] })
+      queryClient.invalidateQueries({
+        queryKey: ["addresses", address.contact_id],
+      })
     },
     onError: (err) =>
-      showErrorToast(err instanceof Error ? err.message : "Failed to delete address"),
+      showErrorToast(
+        err instanceof Error ? err.message : "Failed to delete address",
+      ),
   })
 
   const lines = [address.street, address.extended].filter(Boolean)
@@ -348,7 +366,9 @@ function AddressRow({ address }: { address: AddressPublic }) {
             </p>
           ))}
           {cityLine && <p className="text-muted-foreground">{cityLine}</p>}
-          {address.country && <p className="text-muted-foreground">{address.country}</p>}
+          {address.country && (
+            <p className="text-muted-foreground">{address.country}</p>
+          )}
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -357,11 +377,14 @@ function AddressRow({ address }: { address: AddressPublic }) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setEditOpen(true)}>Edit</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setEditOpen(true)}>
+              Edit
+            </DropdownMenuItem>
             <DropdownMenuItem
               className="text-destructive"
               onClick={() => {
-                if (window.confirm("Delete this address?")) deleteMutation.mutate()
+                if (window.confirm("Delete this address?"))
+                  deleteMutation.mutate()
               }}
             >
               Delete
@@ -369,7 +392,11 @@ function AddressRow({ address }: { address: AddressPublic }) {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <EditAddressDialog address={address} open={editOpen} onOpenChange={setEditOpen} />
+      <EditAddressDialog
+        address={address}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+      />
     </>
   )
 }

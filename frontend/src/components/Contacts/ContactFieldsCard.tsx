@@ -12,14 +12,13 @@ import {
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-
-import { ContactFieldsService } from "@/client"
 import type {
   ContactFieldCreate,
   ContactFieldPublic,
   ContactFieldType,
   ContactFieldUpdate,
 } from "@/client"
+import { ContactFieldsService } from "@/client"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -188,7 +187,9 @@ function AddContactFieldDialog({ contactId }: { contactId: string }) {
       queryClient.invalidateQueries({ queryKey: ["contact-fields", contactId] })
     },
     onError: (err) =>
-      showErrorToast(err instanceof Error ? err.message : "Failed to add field"),
+      showErrorToast(
+        err instanceof Error ? err.message : "Failed to add field",
+      ),
   })
 
   const onSubmit = (data: FormData) => {
@@ -275,10 +276,14 @@ function EditContactFieldDialog({
     onSuccess: () => {
       showSuccessToast("Field updated")
       onOpenChange(false)
-      queryClient.invalidateQueries({ queryKey: ["contact-fields", cf.contact_id] })
+      queryClient.invalidateQueries({
+        queryKey: ["contact-fields", cf.contact_id],
+      })
     },
     onError: (err) =>
-      showErrorToast(err instanceof Error ? err.message : "Failed to update field"),
+      showErrorToast(
+        err instanceof Error ? err.message : "Failed to update field",
+      ),
   })
 
   const onSubmit = (data: FormData) => {
@@ -327,10 +332,14 @@ function FieldRow({ field: cf }: { field: ContactFieldPublic }) {
       ContactFieldsService.deleteContactField({ fieldId: cf.id }),
     onSuccess: () => {
       showSuccessToast("Field deleted")
-      queryClient.invalidateQueries({ queryKey: ["contact-fields", cf.contact_id] })
+      queryClient.invalidateQueries({
+        queryKey: ["contact-fields", cf.contact_id],
+      })
     },
     onError: (err) =>
-      showErrorToast(err instanceof Error ? err.message : "Failed to delete field"),
+      showErrorToast(
+        err instanceof Error ? err.message : "Failed to delete field",
+      ),
   })
 
   return (
@@ -373,11 +382,14 @@ function FieldRow({ field: cf }: { field: ContactFieldPublic }) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setEditOpen(true)}>Edit</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setEditOpen(true)}>
+                Edit
+              </DropdownMenuItem>
               <DropdownMenuItem
                 className="text-destructive"
                 onClick={() => {
-                  if (window.confirm("Delete this field?")) deleteMutation.mutate()
+                  if (window.confirm("Delete this field?"))
+                    deleteMutation.mutate()
                 }}
               >
                 Delete
@@ -386,7 +398,11 @@ function FieldRow({ field: cf }: { field: ContactFieldPublic }) {
           </DropdownMenu>
         </div>
       </div>
-      <EditContactFieldDialog field={cf} open={editOpen} onOpenChange={setEditOpen} />
+      <EditContactFieldDialog
+        field={cf}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+      />
     </>
   )
 }
@@ -396,7 +412,8 @@ export function ContactFieldsCard({ contactId }: { contactId: string }) {
     queryKey: ["contact-fields", contactId],
     queryFn: () => ContactFieldsService.listContactFields({ contactId }),
   })
-  const fields = (data as { data?: ContactFieldPublic[] } | undefined)?.data ?? []
+  const fields =
+    (data as { data?: ContactFieldPublic[] } | undefined)?.data ?? []
 
   const byType: Record<string, ContactFieldPublic[]> = {}
   for (const f of fields) {

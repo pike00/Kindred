@@ -1,6 +1,6 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { MoreHorizontal, Trash2 } from "lucide-react"
 import { useState } from "react"
-
 import type { JournalEntryPublic } from "@/client"
 import { JournalService } from "@/client"
 import { Button } from "@/components/ui/button"
@@ -11,7 +11,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import useCustomToast from "@/hooks/useCustomToast"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 
 interface JournalActionsMenuProps {
   entry: JournalEntryPublic
@@ -23,8 +22,7 @@ export const JournalActionsMenu = ({ entry }: JournalActionsMenuProps) => {
   const [open, setOpen] = useState(false)
 
   const deleteEntryMutation = useMutation({
-    mutationFn: () =>
-      JournalService.deleteJournalEntry({ entryId: entry.id }),
+    mutationFn: () => JournalService.deleteJournalEntry({ entryId: entry.id }),
     onSuccess: () => {
       showSuccessToast("Entry deleted")
       queryClient.invalidateQueries({ queryKey: ["journal"] })

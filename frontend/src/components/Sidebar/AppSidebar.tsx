@@ -1,4 +1,12 @@
-import { Home, Users, Tag, FolderOpen, Bell, BookOpen, MessageCircle } from "lucide-react"
+import {
+  Bell,
+  BookOpen,
+  FolderOpen,
+  Home,
+  MessageCircle,
+  Tag,
+  Users,
+} from "lucide-react"
 
 import { SidebarAppearance } from "@/components/Common/Appearance"
 import { Logo } from "@/components/Common/Logo"

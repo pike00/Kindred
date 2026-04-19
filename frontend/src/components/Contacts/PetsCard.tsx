@@ -4,9 +4,8 @@ import { MoreHorizontal, PawPrint, Plus } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-
-import { PetsService } from "@/client"
 import type { PetCreate, PetPublic, PetUpdate } from "@/client"
+import { PetsService } from "@/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -168,7 +167,9 @@ function AddPetDialog({ contactId }: { contactId: string }) {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Add pet</DialogTitle>
-          <DialogDescription>Track a pet belonging to this contact.</DialogDescription>
+          <DialogDescription>
+            Track a pet belonging to this contact.
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -232,10 +233,13 @@ function EditPetDialog({
       queryClient.invalidateQueries({ queryKey: ["pets", pet.contact_id] })
     },
     onError: (err) =>
-      showErrorToast(err instanceof Error ? err.message : "Failed to update pet"),
+      showErrorToast(
+        err instanceof Error ? err.message : "Failed to update pet",
+      ),
   })
 
-  const onSubmit = (data: FormData) => mutation.mutate(toPayload(data) as PetUpdate)
+  const onSubmit = (data: FormData) =>
+    mutation.mutate(toPayload(data) as PetUpdate)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -276,7 +280,9 @@ function PetRow({ pet }: { pet: PetPublic }) {
       queryClient.invalidateQueries({ queryKey: ["pets", pet.contact_id] })
     },
     onError: (err) =>
-      showErrorToast(err instanceof Error ? err.message : "Failed to delete pet"),
+      showErrorToast(
+        err instanceof Error ? err.message : "Failed to delete pet",
+      ),
   })
 
   return (
@@ -303,7 +309,9 @@ function PetRow({ pet }: { pet: PetPublic }) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setEditOpen(true)}>Edit</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setEditOpen(true)}>
+              Edit
+            </DropdownMenuItem>
             <DropdownMenuItem
               className="text-destructive"
               onClick={() => {

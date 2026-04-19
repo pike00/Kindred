@@ -2,8 +2,8 @@ import { useSuspenseQuery } from "@tanstack/react-query"
 
 import { JournalService } from "@/client"
 import { DataTable } from "@/components/Common/DataTable"
-import { columns } from "./columns"
 import { AddJournalDialog } from "./AddJournalDialog"
+import { columns } from "./columns"
 
 export const JournalList = () => {
   const { data } = useSuspenseQuery({

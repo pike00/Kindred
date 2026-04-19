@@ -13,17 +13,25 @@ export const columns: ColumnDef<ContactPublic>[] = [
     header: "Name",
     cell: ({ row }) => {
       const contact = row.original
-      const fullName = [contact.prefix, contact.first_name, contact.middle_name, contact.last_name, contact.suffix]
+      const fullName = [
+        contact.prefix,
+        contact.first_name,
+        contact.middle_name,
+        contact.last_name,
+        contact.suffix,
+      ]
         .filter(Boolean)
         .join(" ")
       const initials = getInitials(fullName || "Unknown")
 
       return (
         <div className="flex items-center gap-3">
-          <div className={cn(
-            "flex items-center justify-center size-8 rounded-full font-semibold text-white",
-            "bg-blue-500"
-          )}>
+          <div
+            className={cn(
+              "flex items-center justify-center size-8 rounded-full font-semibold text-white",
+              "bg-blue-500",
+            )}
+          >
             {initials}
           </div>
           <div>

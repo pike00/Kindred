@@ -25,7 +25,8 @@ export const columns: ColumnDef<ReminderPublic>[] = [
       return (
         <div className="flex items-center gap-1 text-sm">
           <Clock className="h-3 w-3" />
-          {d.toLocaleDateString()} {d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+          {d.toLocaleDateString()}{" "}
+          {d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
         </div>
       )
     },

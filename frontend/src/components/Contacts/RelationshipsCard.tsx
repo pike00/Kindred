@@ -5,8 +5,6 @@ import { MoreHorizontal, Plus } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-
-import { ContactsService, RelationshipsService } from "@/client"
 import type {
   ContactPublic,
   RelationshipCreate,
@@ -14,6 +12,7 @@ import type {
   RelationshipPublic,
   RelationshipUpdate,
 } from "@/client"
+import { ContactsService, RelationshipsService } from "@/client"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -157,7 +156,8 @@ function AddRelationshipDialog({ contactId }: { contactId: string }) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Related contact <span className="text-destructive">*</span>
+                      Related contact{" "}
+                      <span className="text-destructive">*</span>
                     </FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
@@ -290,7 +290,9 @@ function EditRelationshipDialog({
     onSuccess: () => {
       showSuccessToast("Relationship updated")
       onOpenChange(false)
-      queryClient.invalidateQueries({ queryKey: ["relationships", rel.contact_id] })
+      queryClient.invalidateQueries({
+        queryKey: ["relationships", rel.contact_id],
+      })
     },
     onError: (err) =>
       showErrorToast(
@@ -396,7 +398,9 @@ function RelationshipRow({ rel }: { rel: RelationshipPublic }) {
       RelationshipsService.deleteRelationship({ relId: rel.id }),
     onSuccess: () => {
       showSuccessToast("Relationship deleted")
-      queryClient.invalidateQueries({ queryKey: ["relationships", rel.contact_id] })
+      queryClient.invalidateQueries({
+        queryKey: ["relationships", rel.contact_id],
+      })
     },
     onError: (err) =>
       showErrorToast(
@@ -407,7 +411,8 @@ function RelationshipRow({ rel }: { rel: RelationshipPublic }) {
   // Fetch the related contact lazily so we can show its name.
   const { data: relatedContact } = useQuery({
     queryKey: ["contacts", rel.related_contact_id],
-    queryFn: () => ContactsService.getContact({ contactId: rel.related_contact_id }),
+    queryFn: () =>
+      ContactsService.getContact({ contactId: rel.related_contact_id }),
     staleTime: 30_000,
   })
 
@@ -427,7 +432,9 @@ function RelationshipRow({ rel }: { rel: RelationshipPublic }) {
             >
               {relatedName}
             </Link>
-            <span className="text-muted-foreground">&mdash; {rel.relationship_type}</span>
+            <span className="text-muted-foreground">
+              &mdash; {rel.relationship_type}
+            </span>
             <Badge variant="secondary" className="text-[10px]">
               {rel.relationship_group}
             </Badge>
@@ -445,11 +452,14 @@ function RelationshipRow({ rel }: { rel: RelationshipPublic }) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setEditOpen(true)}>Edit</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setEditOpen(true)}>
+              Edit
+            </DropdownMenuItem>
             <DropdownMenuItem
               className="text-destructive"
               onClick={() => {
-                if (window.confirm("Delete this relationship?")) deleteMutation.mutate()
+                if (window.confirm("Delete this relationship?"))
+                  deleteMutation.mutate()
               }}
             >
               Delete
@@ -457,7 +467,11 @@ function RelationshipRow({ rel }: { rel: RelationshipPublic }) {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <EditRelationshipDialog rel={rel} open={editOpen} onOpenChange={setEditOpen} />
+      <EditRelationshipDialog
+        rel={rel}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+      />
     </>
   )
 }

@@ -1,40 +1,43 @@
-import { useSuspenseQuery } from "@tanstack/react-query"
 import {
-  Phone,
-  Users,
-  MessageCircle,
-  Mail,
-  Video,
-  Hash,
-  MoreHorizontal,
-  Trash2,
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query"
+import {
   Clock,
+  Hash,
+  Mail,
+  MessageCircle,
+  MoreHorizontal,
+  Phone,
+  Trash2,
+  Users,
+  Video,
 } from "lucide-react"
-
-import { InteractionsService } from "@/client"
 import type { InteractionPublic } from "@/client"
+import { InteractionsService } from "@/client"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { AddInteractionDialog } from "./AddInteractionDialog"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 import useCustomToast from "@/hooks/useCustomToast"
+import { AddInteractionDialog } from "./AddInteractionDialog"
 
-const channelConfig: Record<string, { label: string; icon: React.ReactNode }> = {
-  call: { label: "Call", icon: <Phone className="size-4" /> },
-  in_person: { label: "In Person", icon: <Users className="size-4" /> },
-  text: { label: "Text", icon: <MessageCircle className="size-4" /> },
-  email: { label: "Email", icon: <Mail className="size-4" /> },
-  video: { label: "Video", icon: <Video className="size-4" /> },
-  social: { label: "Social", icon: <Hash className="size-4" /> },
-  other: { label: "Other", icon: <MessageCircle className="size-4" /> },
-}
+const channelConfig: Record<string, { label: string; icon: React.ReactNode }> =
+  {
+    call: { label: "Call", icon: <Phone className="size-4" /> },
+    in_person: { label: "In Person", icon: <Users className="size-4" /> },
+    text: { label: "Text", icon: <MessageCircle className="size-4" /> },
+    email: { label: "Email", icon: <Mail className="size-4" /> },
+    video: { label: "Video", icon: <Video className="size-4" /> },
+    social: { label: "Social", icon: <Hash className="size-4" /> },
+    other: { label: "Other", icon: <MessageCircle className="size-4" /> },
+  }
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, {
@@ -51,7 +54,9 @@ function formatTime(iso: string) {
   })
 }
 
-function groupByDate(interactions: InteractionPublic[]): Record<string, InteractionPublic[]> {
+function groupByDate(
+  interactions: InteractionPublic[],
+): Record<string, InteractionPublic[]> {
   const groups: Record<string, InteractionPublic[]> = {}
   for (const ix of interactions) {
     const date = new Date(ix.occurred_at).toISOString().split("T")[0]
@@ -100,7 +105,11 @@ export const InteractionTimeline = () => {
   )
 }
 
-function InteractionCard({ interaction: ix }: { interaction: InteractionPublic }) {
+function InteractionCard({
+  interaction: ix,
+}: {
+  interaction: InteractionPublic
+}) {
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
   const channel = channelConfig[ix.channel] || channelConfig.other
@@ -132,7 +141,11 @@ function InteractionCard({ interaction: ix }: { interaction: InteractionPublic }
                 {ix.duration_minutes}m
               </span>
             )}
-            {ix.mood && <Badge variant="secondary" className="text-xs">{ix.mood}</Badge>}
+            {ix.mood && (
+              <Badge variant="secondary" className="text-xs">
+                {ix.mood}
+              </Badge>
+            )}
           </div>
           {ix.notes && (
             <p className="text-sm mt-1 whitespace-pre-wrap">{ix.notes}</p>

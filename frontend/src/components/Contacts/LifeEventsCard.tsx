@@ -4,13 +4,12 @@ import { CalendarDays, MoreHorizontal, Plus } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-
-import { LifeEventsService } from "@/client"
 import type {
   LifeEventCreate,
   LifeEventPublic,
   LifeEventUpdate,
 } from "@/client"
+import { LifeEventsService } from "@/client"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -195,7 +194,9 @@ function AddLifeEventDialog({ contactId }: { contactId: string }) {
       queryClient.invalidateQueries({ queryKey: ["life-events", contactId] })
     },
     onError: (err) =>
-      showErrorToast(err instanceof Error ? err.message : "Failed to add event"),
+      showErrorToast(
+        err instanceof Error ? err.message : "Failed to add event",
+      ),
   })
 
   const onSubmit = (data: FormData) => {
@@ -287,10 +288,14 @@ function EditLifeEventDialog({
     onSuccess: () => {
       showSuccessToast("Life event updated")
       onOpenChange(false)
-      queryClient.invalidateQueries({ queryKey: ["life-events", event.contact_id] })
+      queryClient.invalidateQueries({
+        queryKey: ["life-events", event.contact_id],
+      })
     },
     onError: (err) =>
-      showErrorToast(err instanceof Error ? err.message : "Failed to update event"),
+      showErrorToast(
+        err instanceof Error ? err.message : "Failed to update event",
+      ),
   })
 
   const onSubmit = (data: FormData) => {
@@ -339,10 +344,14 @@ function LifeEventRow({ event }: { event: LifeEventPublic }) {
     mutationFn: () => LifeEventsService.deleteLifeEvent({ eventId: event.id }),
     onSuccess: () => {
       showSuccessToast("Life event deleted")
-      queryClient.invalidateQueries({ queryKey: ["life-events", event.contact_id] })
+      queryClient.invalidateQueries({
+        queryKey: ["life-events", event.contact_id],
+      })
     },
     onError: (err) =>
-      showErrorToast(err instanceof Error ? err.message : "Failed to delete event"),
+      showErrorToast(
+        err instanceof Error ? err.message : "Failed to delete event",
+      ),
   })
 
   return (
@@ -372,11 +381,14 @@ function LifeEventRow({ event }: { event: LifeEventPublic }) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setEditOpen(true)}>Edit</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setEditOpen(true)}>
+              Edit
+            </DropdownMenuItem>
             <DropdownMenuItem
               className="text-destructive"
               onClick={() => {
-                if (window.confirm("Delete this event?")) deleteMutation.mutate()
+                if (window.confirm("Delete this event?"))
+                  deleteMutation.mutate()
               }}
             >
               Delete
@@ -384,7 +396,11 @@ function LifeEventRow({ event }: { event: LifeEventPublic }) {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <EditLifeEventDialog event={event} open={editOpen} onOpenChange={setEditOpen} />
+      <EditLifeEventDialog
+        event={event}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+      />
     </>
   )
 }

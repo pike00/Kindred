@@ -26,6 +26,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { LoadingButton } from "@/components/ui/loading-button"
 import {
   Select,
   SelectContent,
@@ -34,7 +35,6 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { LoadingButton } from "@/components/ui/loading-button"
 import useCustomToast from "@/hooks/useCustomToast"
 
 const schema = z.object({
@@ -79,7 +79,10 @@ export function AddGift({ contactId }: AddGiftProps) {
       form.reset()
       setIsOpen(false)
     },
-    onError: (error) => showErrorToast(error instanceof Error ? error.message : "Failed to add gift"),
+    onError: (error) =>
+      showErrorToast(
+        error instanceof Error ? error.message : "Failed to add gift",
+      ),
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["gifts", contactId] })
     },

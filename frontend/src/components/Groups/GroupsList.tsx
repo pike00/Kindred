@@ -2,8 +2,8 @@ import { useSuspenseQuery } from "@tanstack/react-query"
 
 import { GroupsService } from "@/client"
 import { DataTable } from "@/components/Common/DataTable"
-import { columns } from "./columns"
 import { AddGroupDialog } from "./AddGroupDialog"
+import { columns } from "./columns"
 
 export const GroupsList = () => {
   const { data } = useSuspenseQuery({

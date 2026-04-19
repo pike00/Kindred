@@ -4,14 +4,13 @@ import { MoreHorizontal, Plus, Sparkles } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-
-import { CustomFieldsService } from "@/client"
 import type {
   CustomFieldDefinitionPublic,
   CustomFieldValueCreate,
   CustomFieldValuePublic,
   CustomFieldValueUpdate,
 } from "@/client"
+import { CustomFieldsService } from "@/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -78,7 +77,8 @@ function AddCustomFieldValueDialog({
     enabled: open,
   })
   const definitions =
-    (defsResp as { data?: CustomFieldDefinitionPublic[] } | undefined)?.data ?? []
+    (defsResp as { data?: CustomFieldDefinitionPublic[] } | undefined)?.data ??
+    []
 
   const availableDefs = useMemo(
     () => definitions.filter((d) => !existingDefIds.has(d.id)),
@@ -97,10 +97,14 @@ function AddCustomFieldValueDialog({
       showSuccessToast("Custom field set")
       form.reset({ field_definition_id: "", value: "" })
       setOpen(false)
-      queryClient.invalidateQueries({ queryKey: ["custom-field-values", contactId] })
+      queryClient.invalidateQueries({
+        queryKey: ["custom-field-values", contactId],
+      })
     },
     onError: (err) =>
-      showErrorToast(err instanceof Error ? err.message : "Failed to save value"),
+      showErrorToast(
+        err instanceof Error ? err.message : "Failed to save value",
+      ),
   })
 
   const onSubmit = (data: CreateFormData) => {
@@ -122,8 +126,8 @@ function AddCustomFieldValueDialog({
         <DialogHeader>
           <DialogTitle>Add custom field</DialogTitle>
           <DialogDescription>
-            Set a value for one of your custom field definitions. Manage definitions in
-            Settings.
+            Set a value for one of your custom field definitions. Manage
+            definitions in Settings.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -233,10 +237,13 @@ function EditCustomFieldValueDialog({
       })
     },
     onError: (err) =>
-      showErrorToast(err instanceof Error ? err.message : "Failed to update value"),
+      showErrorToast(
+        err instanceof Error ? err.message : "Failed to update value",
+      ),
   })
 
-  const onSubmit = (data: UpdateFormData) => mutation.mutate({ value: data.value })
+  const onSubmit = (data: UpdateFormData) =>
+    mutation.mutate({ value: data.value })
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -293,14 +300,18 @@ function ValueRow({ value: cfv }: { value: CustomFieldValuePublic }) {
       })
     },
     onError: (err) =>
-      showErrorToast(err instanceof Error ? err.message : "Failed to delete value"),
+      showErrorToast(
+        err instanceof Error ? err.message : "Failed to delete value",
+      ),
   })
 
   return (
     <>
       <div className="flex items-center justify-between gap-2 text-sm">
         <div className="min-w-0">
-          <span className="text-muted-foreground">{cfv.field_name ?? "—"}:</span>{" "}
+          <span className="text-muted-foreground">
+            {cfv.field_name ?? "—"}:
+          </span>{" "}
           <span className="truncate">{cfv.value}</span>
         </div>
         <DropdownMenu>
@@ -310,7 +321,9 @@ function ValueRow({ value: cfv }: { value: CustomFieldValuePublic }) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setEditOpen(true)}>Edit</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setEditOpen(true)}>
+              Edit
+            </DropdownMenuItem>
             <DropdownMenuItem
               className="text-destructive"
               onClick={() => {
@@ -323,7 +336,11 @@ function ValueRow({ value: cfv }: { value: CustomFieldValuePublic }) {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <EditCustomFieldValueDialog value={cfv} open={editOpen} onOpenChange={setEditOpen} />
+      <EditCustomFieldValueDialog
+        value={cfv}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+      />
     </>
   )
 }
