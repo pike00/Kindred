@@ -3,41 +3,61 @@ import {
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query"
+
+import type { InteractionPublic } from "@/client"
+import { InteractionsService } from "@/client"
+import { EmptyState } from "@/components/Common/EmptyState"
+import { RowActionsMenu } from "@/components/Common/RowActionsMenu"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/components/ui/card"
+import useCustomToast from "@/hooks/useCustomToast"
 import {
+  AtSign,
   Clock,
-  Hash,
+  Coffee,
+  type LucideIcon,
   Mail,
-  MessageCircle,
+  MessageSquare,
+  MessagesSquare,
   MoreHorizontal,
   Phone,
   Trash2,
-  Users,
   Video,
-} from "lucide-react"
-import type { InteractionPublic } from "@/client"
-import { InteractionsService } from "@/client"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import useCustomToast from "@/hooks/useCustomToast"
+} from "@/lib/icons"
+import { cn } from "@/lib/utils"
 import { AddInteractionDialog } from "./AddInteractionDialog"
 
-const channelConfig: Record<string, { label: string; icon: React.ReactNode }> =
-  {
-    call: { label: "Call", icon: <Phone className="size-4" /> },
-    in_person: { label: "In Person", icon: <Users className="size-4" /> },
-    text: { label: "Text", icon: <MessageCircle className="size-4" /> },
-    email: { label: "Email", icon: <Mail className="size-4" /> },
-    video: { label: "Video", icon: <Video className="size-4" /> },
-    social: { label: "Social", icon: <Hash className="size-4" /> },
-    other: { label: "Other", icon: <MessageCircle className="size-4" /> },
-  }
+type ChannelTone =
+  | "blue"
+  | "amber"
+  | "green"
+  | "rose"
+  | "purple"
+  | "teal"
+  | "neutral"
+
+const channelConfig: Record<
+  string,
+  { label: string; icon: LucideIcon; tone: ChannelTone }
+> = {
+  call: { label: "Call", icon: Phone, tone: "blue" },
+  in_person: { label: "In person", icon: Coffee, tone: "amber" },
+  text: { label: "Text", icon: MessageSquare, tone: "green" },
+  email: { label: "Email", icon: Mail, tone: "rose" },
+  video: { label: "Video", icon: Video, tone: "purple" },
+  social: { label: "Social", icon: AtSign, tone: "teal" },
+  other: { label: "Other", icon: MoreHorizontal, tone: "neutral" },
+}
+
+const toneClasses: Record<ChannelTone, string> = {
+  blue: "bg-accent-blue text-accent-blue-fg",
+  amber: "bg-accent-amber text-accent-amber-fg",
+  green: "bg-accent-green text-accent-green-fg",
+  rose: "bg-accent-rose text-accent-rose-fg",
+  purple: "bg-accent-purple text-accent-purple-fg",
+  teal: "bg-accent-teal text-accent-teal-fg",
+  neutral: "bg-muted text-muted-foreground",
+}
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, {
@@ -79,12 +99,17 @@ export const InteractionTimeline = () => {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Interactions</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">Interactions</h1>
         <AddInteractionDialog />
       </div>
 
       {interactions.length === 0 ? (
-        <p className="text-muted-foreground">No interactions logged yet.</p>
+        <EmptyState
+          icon={MessagesSquare}
+          title="No interactions logged yet"
+          description="Log a call, meeting, or message to start your timeline."
+          action={<AddInteractionDialog />}
+        />
       ) : (
         <div className="space-y-6">
           {sortedDates.map((date) => (
@@ -113,6 +138,7 @@ function InteractionCard({
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
   const channel = channelConfig[ix.channel] || channelConfig.other
+  const ChannelIcon = channel.icon
 
   const deleteMutation = useMutation({
     mutationFn: () =>
@@ -128,12 +154,19 @@ function InteractionCard({
     <Card className="relative py-3">
       <div className="absolute -left-[1.65rem] top-4 size-3 rounded-full bg-primary border-2 border-background" />
       <CardContent className="flex items-start gap-3">
-        <Badge variant="outline" className="shrink-0 gap-1">
-          {channel.icon}
-          {channel.label}
-        </Badge>
+        <div
+          className={cn(
+            "flex size-7 items-center justify-center rounded-md shrink-0",
+            toneClasses[channel.tone],
+          )}
+          title={channel.label}
+        >
+          <ChannelIcon className="size-4" />
+        </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="font-medium text-foreground">{channel.label}</span>
+            <span>·</span>
             <span>{formatTime(ix.occurred_at)}</span>
             {ix.duration_minutes != null && (
               <span className="flex items-center gap-0.5">
@@ -151,22 +184,16 @@ function InteractionCard({
             <p className="text-sm mt-1 whitespace-pre-wrap">{ix.notes}</p>
           )}
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0 shrink-0">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={() => deleteMutation.mutate()}
-              className="text-red-600"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <RowActionsMenu
+          items={[
+            {
+              label: "Delete",
+              icon: Trash2,
+              variant: "destructive",
+              onSelect: () => deleteMutation.mutate(),
+            },
+          ]}
+        />
       </CardContent>
     </Card>
   )
