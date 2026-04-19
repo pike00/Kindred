@@ -1,5 +1,8 @@
 # Secrets
 .env
+.env.*
+!.env.sops
+!.env.example
 
 .vscode/*
 !.vscode/extensions.json
