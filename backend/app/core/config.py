@@ -121,5 +121,22 @@ class Settings(BaseSettings):
     MEILI_URL: str = "http://meilisearch:7700"
     MEILI_MASTER_KEY: str = ""
 
+    # OIDC / multi-user (Phase 0+)
+    AUTH_MODE: Literal["local", "oidc", "both"] = "local"
+    OIDC_ISSUER_URL: str = ""
+    OIDC_AUDIENCE: str = ""
+    OIDC_CLIENT_ID_SPA: str = ""
+    OIDC_JIT_ACTIVE: bool = True
+
+    @model_validator(mode="after")
+    def _check_oidc_config(self) -> Self:
+        if self.AUTH_MODE in ("oidc", "both") and not (
+            self.OIDC_ISSUER_URL and self.OIDC_AUDIENCE
+        ):
+            raise ValueError(
+                "AUTH_MODE=oidc or both requires OIDC_ISSUER_URL and OIDC_AUDIENCE"
+            )
+        return self
+
 
 settings = Settings()  # type: ignore
