@@ -1,6 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Edit } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -26,6 +25,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import useCustomToast from "@/hooks/useCustomToast"
+import { Pencil } from "@/lib/icons"
 
 const contactUpdateSchema = z.object({
   first_name: z.string().min(1, "First name is required"),
@@ -121,7 +121,7 @@ export const EditContactDialog = ({ contact }: EditContactDialogProps) => {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-2">
-          <Edit className="h-4 w-4" />
+          <Pencil className="h-4 w-4" />
           Edit
         </Button>
       </DialogTrigger>

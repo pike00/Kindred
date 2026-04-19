@@ -1,6 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { MoreHorizontal, Plus, Sparkles } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -11,6 +10,8 @@ import type {
   CustomFieldValueUpdate,
 } from "@/client"
 import { CustomFieldsService } from "@/client"
+import { EmptyState } from "@/components/Common/EmptyState"
+import { RowActionsMenu } from "@/components/Common/RowActionsMenu"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -23,12 +24,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import {
   Form,
   FormControl,
@@ -48,6 +43,7 @@ import {
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import useCustomToast from "@/hooks/useCustomToast"
+import { ListPlus, Pencil, Plus, Trash2 } from "@/lib/icons"
 
 const createSchema = z.object({
   field_definition_id: z.string().min(1, "Field is required"),
@@ -314,27 +310,24 @@ function ValueRow({ value: cfv }: { value: CustomFieldValuePublic }) {
           </span>{" "}
           <span className="truncate">{cfv.value}</span>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="size-7 p-0">
-              <MoreHorizontal className="size-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setEditOpen(true)}>
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-destructive"
-              onClick={() => {
+        <RowActionsMenu
+          items={[
+            {
+              label: "Edit",
+              icon: Pencil,
+              onSelect: () => setEditOpen(true),
+            },
+            {
+              label: "Delete",
+              icon: Trash2,
+              variant: "destructive",
+              onSelect: () => {
                 if (window.confirm("Delete this custom field value?"))
                   deleteMutation.mutate()
-              }}
-            >
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              },
+            },
+          ]}
+        />
       </div>
       <EditCustomFieldValueDialog
         value={cfv}
@@ -358,7 +351,7 @@ export function CustomFieldsCard({ contactId }: { contactId: string }) {
     <Card>
       <CardHeader className="flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2">
-          <Sparkles className="size-4" /> Custom fields
+          <ListPlus className="size-4" /> Custom fields
         </CardTitle>
         <AddCustomFieldValueDialog
           contactId={contactId}
@@ -375,7 +368,11 @@ export function CustomFieldsCard({ contactId }: { contactId: string }) {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">No custom fields</p>
+          <EmptyState
+            icon={ListPlus}
+            title="No custom fields"
+            description="Define custom fields in Settings, then set values per contact here."
+          />
         )}
       </CardContent>
     </Card>
