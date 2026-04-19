@@ -1,11 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { MapPin, MoreHorizontal, Plus } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import type { AddressCreate, AddressPublic, AddressUpdate } from "@/client"
 import { AddressesService } from "@/client"
+import { EmptyState } from "@/components/Common/EmptyState"
+import { RowActionsMenu } from "@/components/Common/RowActionsMenu"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -19,12 +20,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
   Form,
   FormControl,
   FormField,
@@ -36,6 +31,7 @@ import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { Skeleton } from "@/components/ui/skeleton"
 import useCustomToast from "@/hooks/useCustomToast"
+import { MapPin, Pencil, Plus, Trash2 } from "@/lib/icons"
 
 const schema = z.object({
   label: z.string().optional(),
@@ -370,27 +366,24 @@ function AddressRow({ address }: { address: AddressPublic }) {
             <p className="text-muted-foreground">{address.country}</p>
           )}
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="size-7 p-0">
-              <MoreHorizontal className="size-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setEditOpen(true)}>
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-destructive"
-              onClick={() => {
+        <RowActionsMenu
+          items={[
+            {
+              label: "Edit",
+              icon: Pencil,
+              onSelect: () => setEditOpen(true),
+            },
+            {
+              label: "Delete",
+              icon: Trash2,
+              variant: "destructive",
+              onSelect: () => {
                 if (window.confirm("Delete this address?"))
                   deleteMutation.mutate()
-              }}
-            >
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              },
+            },
+          ]}
+        />
       </div>
       <EditAddressDialog
         address={address}
@@ -426,7 +419,11 @@ export function AddressesCard({ contactId }: { contactId: string }) {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">No addresses</p>
+          <EmptyState
+            icon={MapPin}
+            title="No addresses"
+            description="Track home, work, or mailing addresses for this contact."
+          />
         )}
       </CardContent>
     </Card>

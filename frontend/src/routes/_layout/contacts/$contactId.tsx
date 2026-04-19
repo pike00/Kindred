@@ -1,6 +1,6 @@
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
-import { Archive, Calendar, Clock, Star, Users } from "lucide-react"
+
 import type {
   DebtPublic,
   GiftPublic,
@@ -14,6 +14,7 @@ import {
   InteractionsService,
   NotesService,
 } from "@/client"
+import { EmptyState } from "@/components/Common/EmptyState"
 import { AddressesCard } from "@/components/Contacts/AddressesCard"
 import { ContactFieldsCard } from "@/components/Contacts/ContactFieldsCard"
 import { CustomFieldsCard } from "@/components/Contacts/CustomFieldsCard"
@@ -28,6 +29,14 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  Archive,
+  Cake,
+  Clock,
+  MessagesSquare,
+  Star,
+  UserRoundSearch,
+} from "@/lib/icons"
 
 export const Route = createFileRoute("/_layout/contacts/$contactId")({
   loader: async ({ params }) => {
@@ -111,7 +120,7 @@ function ContactDetailPage() {
       <div className="space-y-2">
         <div className="flex items-center gap-3">
           <EditContactDialog contact={contact} />
-          <h1 className="text-3xl font-bold">{fullName}</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">{fullName}</h1>
           {contact.is_favorite && (
             <Badge variant="secondary">
               <Star className="size-3" /> Favorite
@@ -135,12 +144,12 @@ function ContactDetailPage() {
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
           {contact.birthday && (
             <span className="flex items-center gap-1">
-              <Calendar className="size-3.5" /> Birthday: {contact.birthday}
+              <Cake className="size-3.5" /> Birthday: {contact.birthday}
             </span>
           )}
           {contact.how_we_met && (
             <span className="flex items-center gap-1">
-              <Users className="size-3.5" /> Met: {contact.how_we_met}
+              <UserRoundSearch className="size-3.5" /> Met: {contact.how_we_met}
             </span>
           )}
           {contact.last_contacted_at && (
@@ -220,24 +229,24 @@ function ContactDetailPage() {
       </div>
 
       {/* Tabbed section: Interactions & Notes */}
-      <div className="flex justify-end mb-2">
-        <AddInteractionDialog contactId={contactId} />
-      </div>
       <Tabs defaultValue="interactions">
-        <TabsList>
-          <TabsTrigger value="interactions">
-            Interactions {!interactionsLoading && `(${interactions.length})`}
-          </TabsTrigger>
-          <TabsTrigger value="notes">
-            Notes {!notesLoading && `(${notes.length})`}
-          </TabsTrigger>
-          <TabsTrigger value="gifts">
-            Gifts {!giftsLoading && `(${gifts.length})`}
-          </TabsTrigger>
-          <TabsTrigger value="debts">
-            Debts {!debtsLoading && `(${debts.length})`}
-          </TabsTrigger>
-        </TabsList>
+        <div className="flex items-center justify-between mb-2 gap-2">
+          <TabsList>
+            <TabsTrigger value="interactions">
+              Interactions {!interactionsLoading && `(${interactions.length})`}
+            </TabsTrigger>
+            <TabsTrigger value="notes">
+              Notes {!notesLoading && `(${notes.length})`}
+            </TabsTrigger>
+            <TabsTrigger value="gifts">
+              Gifts {!giftsLoading && `(${gifts.length})`}
+            </TabsTrigger>
+            <TabsTrigger value="debts">
+              Debts {!debtsLoading && `(${debts.length})`}
+            </TabsTrigger>
+          </TabsList>
+          <AddInteractionDialog contactId={contactId} />
+        </div>
 
         <TabsContent value="interactions" className="mt-4">
           {interactionsLoading ? (
@@ -269,7 +278,12 @@ function ContactDetailPage() {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">No interactions yet</p>
+            <EmptyState
+              icon={MessagesSquare}
+              title="No interactions yet"
+              description="Log a call, meeting, or message to start your timeline."
+              action={<AddInteractionDialog contactId={contactId} />}
+            />
           )}
         </TabsContent>
 
@@ -292,85 +306,103 @@ function ContactDetailPage() {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">No notes yet</p>
+            <EmptyState
+              icon={MessagesSquare}
+              title="No notes yet"
+              description="Capture quick observations or context about this contact."
+            />
           )}
         </TabsContent>
 
         <TabsContent value="gifts" className="mt-4">
-          <div className="flex justify-end mb-2">
-            <AddGift contactId={contactId} />
-          </div>
           {giftsLoading ? (
             <SectionSkeleton />
           ) : gifts.length > 0 ? (
-            <div className="space-y-3">
-              {gifts.map((gift: GiftPublic) => (
-                <Card key={gift.id} className="py-4">
-                  <CardContent>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="font-medium text-sm">{gift.name}</p>
-                        {gift.description && (
-                          <p className="text-sm text-muted-foreground">
-                            {gift.description}
+            <>
+              <div className="flex justify-end mb-2">
+                <AddGift contactId={contactId} />
+              </div>
+              <div className="space-y-3">
+                {gifts.map((gift: GiftPublic) => (
+                  <Card key={gift.id} className="py-4">
+                    <CardContent>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-medium text-sm">{gift.name}</p>
+                          {gift.description && (
+                            <p className="text-sm text-muted-foreground">
+                              {gift.description}
+                            </p>
+                          )}
+                        </div>
+                        {gift.value_amount && (
+                          <p className="text-sm font-medium">
+                            ${gift.value_amount.toFixed(2)}
                           </p>
                         )}
                       </div>
-                      {gift.value_amount && (
-                        <p className="text-sm font-medium">
-                          ${gift.value_amount.toFixed(2)}
-                        </p>
-                      )}
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {gift.status} {gift.occasion && `— ${gift.occasion}`}
-                    </p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {gift.status} {gift.occasion && `— ${gift.occasion}`}
+                      </p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </>
           ) : (
-            <p className="text-sm text-muted-foreground">No gifts tracked</p>
+            <EmptyState
+              icon={MessagesSquare}
+              title="No gifts tracked"
+              description="Track gifts you've given or plan to give to this contact."
+              action={<AddGift contactId={contactId} />}
+            />
           )}
         </TabsContent>
 
         <TabsContent value="debts" className="mt-4">
-          <div className="flex justify-end mb-2">
-            <AddDebt contactId={contactId} />
-          </div>
           {debtsLoading ? (
             <SectionSkeleton />
           ) : debts.length > 0 ? (
-            <div className="space-y-3">
-              {debts.map((debt: DebtPublic) => (
-                <Card key={debt.id} className="py-4">
-                  <CardContent>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="font-medium text-sm">
-                          {debt.reason || "Debt"}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {debt.direction === "they_owe"
-                            ? "They owe me"
-                            : "I owe them"}
+            <>
+              <div className="flex justify-end mb-2">
+                <AddDebt contactId={contactId} />
+              </div>
+              <div className="space-y-3">
+                {debts.map((debt: DebtPublic) => (
+                  <Card key={debt.id} className="py-4">
+                    <CardContent>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-medium text-sm">
+                            {debt.reason || "Debt"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {debt.direction === "they_owe"
+                              ? "They owe me"
+                              : "I owe them"}
+                          </p>
+                        </div>
+                        <p className="text-sm font-medium">
+                          ${debt.amount.toFixed(2)}
                         </p>
                       </div>
-                      <p className="text-sm font-medium">
-                        ${debt.amount.toFixed(2)}
-                      </p>
-                    </div>
-                    {debt.settled_at && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Settled: {formatDate(debt.settled_at)}
-                      </p>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                      {debt.settled_at && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Settled: {formatDate(debt.settled_at)}
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </>
           ) : (
-            <p className="text-sm text-muted-foreground">No debts tracked</p>
+            <EmptyState
+              icon={MessagesSquare}
+              title="No debts tracked"
+              description="Track money you owe or are owed by this contact."
+              action={<AddDebt contactId={contactId} />}
+            />
           )}
         </TabsContent>
       </Tabs>
