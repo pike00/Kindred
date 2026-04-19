@@ -11,6 +11,17 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  server: {
+    host: true,
+    allowedHosts: true,
+    hmr: process.env.VITE_PUBLIC_HOST
+      ? {
+          host: process.env.VITE_PUBLIC_HOST,
+          clientPort: 443,
+          protocol: "wss",
+        }
+      : undefined,
+  },
   plugins: [
     tanstackRouter({
       target: "react",
