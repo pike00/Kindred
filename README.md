@@ -81,11 +81,11 @@ Backend (inside the running stack):
 docker compose exec backend bash scripts/tests-start.sh
 ```
 
-End-to-end (requires a running stack):
+End-to-end (Puppeteer, requires a running stack):
 
 ```bash
 bun install
-for f in e2e/*.test.ts; do bun run "$f"; done
+bun run e2e
 ```
 
 ## Secrets
