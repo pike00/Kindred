@@ -1,14 +1,6 @@
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute, Link } from "@tanstack/react-router"
-import {
-  AlertTriangle,
-  Bell,
-  BookOpen,
-  FolderOpen,
-  MessageCircle,
-  Tag,
-  Users,
-} from "lucide-react"
+
 import {
   ContactsService,
   GroupsService,
@@ -17,8 +9,20 @@ import {
   RemindersService,
   TagsService,
 } from "@/client"
+import { EmptyState } from "@/components/Common/EmptyState"
+import { SectionHeading } from "@/components/Common/SectionHeading"
+import { StatTile } from "@/components/Common/StatTile"
 import { Badge } from "@/components/ui/badge"
 import useAuth from "@/hooks/useAuth"
+import {
+  Bell,
+  Clock,
+  MessagesSquare,
+  NotebookPen,
+  Tag,
+  Users,
+  UsersRound,
+} from "@/lib/icons"
 
 export const Route = createFileRoute("/_layout/")({
   component: Dashboard,
@@ -62,48 +66,10 @@ function Dashboard() {
     queryFn: () => InteractionsService.listInteractions({ limit: 5 }),
   })
 
-  const stats = [
-    {
-      icon: Users,
-      label: "Contacts",
-      value: contacts?.count || 0,
-      color: "bg-blue-100 text-blue-600",
-      to: "/contacts",
-    },
-    {
-      icon: Tag,
-      label: "Tags",
-      value: tags?.count || 0,
-      color: "bg-purple-100 text-purple-600",
-      to: "/tags",
-    },
-    {
-      icon: FolderOpen,
-      label: "Groups",
-      value: groups?.count || 0,
-      color: "bg-green-100 text-green-600",
-      to: "/groups",
-    },
-    {
-      icon: Bell,
-      label: "Reminders",
-      value: reminders?.count || 0,
-      color: "bg-orange-100 text-orange-600",
-      to: "/reminders",
-    },
-    {
-      icon: BookOpen,
-      label: "Entries",
-      value: journal?.count || 0,
-      color: "bg-indigo-100 text-indigo-600",
-      to: "/journal",
-    },
-  ] as const
-
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold">
+        <h1 className="text-3xl font-semibold tracking-tight">
           Hi, {currentUser?.full_name || currentUser?.email} 👋
         </h1>
         <p className="text-muted-foreground mt-2">
@@ -112,36 +78,52 @@ function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        {stats.map((stat) => {
-          const Icon = stat.icon
-          return (
-            <Link
-              key={stat.label}
-              to={stat.to}
-              className="rounded-lg border bg-card p-6 hover:bg-accent transition-colors"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">{stat.label}</p>
-                  <p className="text-3xl font-bold mt-2">{stat.value}</p>
-                </div>
-                <div className={`${stat.color} p-3 rounded-lg`}>
-                  <Icon className="h-6 w-6" />
-                </div>
-              </div>
-            </Link>
-          )
-        })}
+        <StatTile
+          icon={Users}
+          label="Contacts"
+          value={contacts?.count || 0}
+          tone="blue"
+          to="/contacts"
+        />
+        <StatTile
+          icon={Tag}
+          label="Tags"
+          value={tags?.count || 0}
+          tone="purple"
+          to="/tags"
+        />
+        <StatTile
+          icon={UsersRound}
+          label="Groups"
+          value={groups?.count || 0}
+          tone="green"
+          to="/groups"
+        />
+        <StatTile
+          icon={Bell}
+          label="Reminders"
+          value={reminders?.count || 0}
+          tone="amber"
+          to="/reminders"
+        />
+        <StatTile
+          icon={NotebookPen}
+          label="Entries"
+          value={journal?.count || 0}
+          tone="teal"
+          to="/journal"
+        />
       </div>
 
-      {/* Losing Touch + Recent Interactions */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {losingTouch?.data && losingTouch.data.length > 0 && (
-          <div>
-            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-orange-500" />
-              Losing Touch ({losingTouch.count})
-            </h2>
+        <div>
+          <SectionHeading
+            icon={Clock}
+            title="Losing touch"
+            count={losingTouch?.count}
+            className="mb-4"
+          />
+          {losingTouch?.data && losingTouch.data.length > 0 ? (
             <div className="space-y-2">
               {losingTouch.data.map((contact) => {
                 const fullName = [contact.first_name, contact.last_name]
@@ -159,14 +141,11 @@ function Dashboard() {
                     key={contact.id}
                     to="/contacts/$contactId"
                     params={{ contactId: contact.id }}
-                    className="block rounded-lg border bg-card p-3 hover:bg-accent transition-colors"
+                    className="block rounded-xl border bg-card p-3 shadow-xs transition-colors hover:bg-accent/50"
                   >
                     <div className="flex justify-between items-center">
                       <p className="font-medium text-sm">{fullName}</p>
-                      <Badge
-                        variant="outline"
-                        className="text-orange-600 border-orange-300"
-                      >
+                      <Badge className="bg-accent-amber text-accent-amber-fg border-transparent">
                         {daysSince != null ? `${daysSince}d ago` : "Never"}
                       </Badge>
                     </div>
@@ -179,18 +158,29 @@ function Dashboard() {
                 )
               })}
             </div>
-          </div>
-        )}
+          ) : (
+            <EmptyState
+              icon={Clock}
+              title="Everyone's caught up"
+              description="No contacts you're at risk of losing touch with."
+            />
+          )}
+        </div>
 
-        {recentInteractions?.data && recentInteractions.data.length > 0 && (
-          <div>
-            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-              <MessageCircle className="h-5 w-5 text-blue-500" />
-              Recent Interactions
-            </h2>
+        <div>
+          <SectionHeading
+            icon={MessagesSquare}
+            title="Recent interactions"
+            count={recentInteractions?.count}
+            className="mb-4"
+          />
+          {recentInteractions?.data && recentInteractions.data.length > 0 ? (
             <div className="space-y-2">
               {recentInteractions.data.map((ix) => (
-                <div key={ix.id} className="rounded-lg border bg-card p-3">
+                <div
+                  key={ix.id}
+                  className="rounded-xl border bg-card p-3 shadow-xs"
+                >
                   <div className="flex justify-between items-center">
                     <Badge variant="outline" className="text-xs">
                       {ix.channel}
@@ -207,13 +197,21 @@ function Dashboard() {
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          ) : (
+            <EmptyState
+              icon={MessagesSquare}
+              title="No interactions yet"
+              description="Log a call, meeting, or message to start your timeline."
+            />
+          )}
+        </div>
       </div>
 
       {contacts?.data && contacts.data.length > 0 && (
         <div>
-          <h2 className="text-xl font-semibold mb-4">Recent Contacts</h2>
+          <h2 className="text-xl font-semibold tracking-tight mb-4">
+            Recent contacts
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {contacts.data.slice(0, 3).map((contact) => {
               const fullName = [
@@ -226,7 +224,10 @@ function Dashboard() {
                 .filter(Boolean)
                 .join(" ")
               return (
-                <div key={contact.id} className="rounded-lg border bg-card p-4">
+                <div
+                  key={contact.id}
+                  className="rounded-xl border bg-card p-4 shadow-xs"
+                >
                   <p className="font-medium">{fullName}</p>
                   {contact.company && (
                     <p className="text-sm text-muted-foreground">
