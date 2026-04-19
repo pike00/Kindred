@@ -4,20 +4,24 @@ import uuid
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
-from sqlmodel import func, select
+from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
-from app.crud import create_life_event
+from app.crud import contact_visible, create_life_event
 from app.models import (
-    Contact,
     LifeEvent,
     LifeEventCreate,
     LifeEventPublic,
-    LifeEventUpdate,
     LifeEventsPublic,
+    LifeEventUpdate,
 )
 
 router = APIRouter(prefix="/life-events", tags=["life-events"])
+
+
+def _require_contact_visible(session: Any, user: Any, contact_id: uuid.UUID) -> None:
+    if not contact_visible(session=session, user=user, contact_id=contact_id):
+        raise HTTPException(status_code=404, detail="Contact not found")
 
 
 @router.get("/contact/{contact_id}", response_model=LifeEventsPublic)
@@ -27,11 +31,7 @@ def list_life_events(
     contact_id: uuid.UUID,
 ) -> Any:
     """List life events for a contact."""
-    contact = session.get(Contact, contact_id)
-    if not contact:
-        raise HTTPException(status_code=404, detail="Contact not found")
-    if contact.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
+    _require_contact_visible(session, current_user, contact_id)
 
     statement = select(LifeEvent).where(LifeEvent.contact_id == contact_id)
     events = session.exec(statement).all()
@@ -50,13 +50,11 @@ def create_life_event_route(
     event_in: LifeEventCreate,
 ) -> Any:
     """Create a new life event."""
-    contact = session.get(Contact, event_in.contact_id)
-    if not contact:
-        raise HTTPException(status_code=404, detail="Contact not found")
-    if contact.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
+    _require_contact_visible(session, current_user, event_in.contact_id)
 
-    event = create_life_event(session=session, life_event_in=event_in, owner_id=current_user.id)
+    event = create_life_event(
+        session=session, life_event_in=event_in, owner_id=current_user.id
+    )
     return LifeEventPublic.model_validate(event)
 
 
@@ -70,10 +68,9 @@ def update_life_event(
 ) -> Any:
     """Update a life event."""
     event = session.get(LifeEvent, event_id)
-    if not event:
+    if event is None:
         raise HTTPException(status_code=404, detail="Life event not found")
-    if event.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
+    _require_contact_visible(session, current_user, event.contact_id)
 
     update_data = event_in.model_dump(exclude_unset=True)
     event.sqlmodel_update(update_data)
@@ -91,10 +88,9 @@ def delete_life_event(
 ) -> Any:
     """Delete a life event."""
     event = session.get(LifeEvent, event_id)
-    if not event:
+    if event is None:
         raise HTTPException(status_code=404, detail="Life event not found")
-    if event.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
+    _require_contact_visible(session, current_user, event.contact_id)
 
     session.delete(event)
     session.commit()
