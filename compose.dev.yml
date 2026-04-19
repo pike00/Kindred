@@ -41,6 +41,8 @@ services:
     environment:
       - VITE_API_URL=https://crm.${DOMAIN}
       - VITE_PUBLIC_HOST=crm.${DOMAIN}
+      - VITE_AUTH_MODE=${AUTH_MODE:-local}
+      - VITE_CF_LOGOUT_URL=${VITE_CF_LOGOUT_URL:-}
     volumes:
       - ./package.json:/app/package.json:ro
       - ./bun.lock:/app/bun.lock:ro
