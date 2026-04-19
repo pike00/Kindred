@@ -1,6 +1,7 @@
 import uuid
 from typing import Any
 
+from sqlalchemy import union
 from sqlmodel import Session, select
 
 from app.core.security import get_password_hash, verify_password
@@ -33,6 +34,7 @@ from app.models import (
     ReminderCreate,
     Tag,
     TagCreate,
+    TagShare,
     User,
     UserCreate,
     UserUpdate,
@@ -285,3 +287,62 @@ def create_journal_entry(
     session.commit()
     session.refresh(db_obj)
     return db_obj
+
+
+# ─── Visibility helpers ───────────────────────────────────────────────────────
+
+def visible_contact_ids(user: User) -> "sqlalchemy.sql.selectable.CompoundSelect":
+    """Subquery: contact IDs visible to user (owned OR tag-shared)."""
+    owned = select(Contact.id).where(Contact.owner_id == user.id)
+    shared = (
+        select(ContactTag.contact_id)
+        .join(TagShare, TagShare.tag_id == ContactTag.tag_id)  # type: ignore[arg-type]
+        .where(TagShare.grantee_id == user.id)
+    )
+    return union(owned, shared)
+
+
+def get_or_create_user_from_claims(
+    *, session: Session, claims: dict[str, object]
+) -> User:
+    """Resolve (iss, sub) to a User row; JIT-create on first sight.
+
+    During Phase 1-3 migration, merge onto an existing local User matching
+    `email` if `oidc_sub` is still NULL. After Phase 4 this branch is moot.
+    """
+    iss = str(claims["iss"])
+    sub = str(claims["sub"])
+    email = str(claims.get("email", "")) or None
+
+    existing = session.exec(
+        select(User).where(User.oidc_iss == iss, User.oidc_sub == sub)
+    ).first()
+    if existing:
+        return existing
+
+    if email:
+        merge = session.exec(
+            select(User).where(User.email == email, User.oidc_sub.is_(None))  # type: ignore[attr-defined]
+        ).first()
+        if merge:
+            merge.oidc_iss = iss
+            merge.oidc_sub = sub
+            session.add(merge)
+            session.commit()
+            session.refresh(merge)
+            return merge
+
+    from app.core.config import settings
+
+    new_user = User(
+        email=email or f"{sub}@oidc.invalid",
+        full_name=str(claims.get("name", "")) or None,
+        is_active=settings.OIDC_JIT_ACTIVE,
+        is_superuser=False,
+        oidc_iss=iss,
+        oidc_sub=sub,
+    )
+    session.add(new_user)
+    session.commit()
+    session.refresh(new_user)
+    return new_user
