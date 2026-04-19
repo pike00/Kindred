@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router"
 
+import { KindredMark } from "@/components/Common/KindredMark"
 import { useTheme } from "@/components/theme-provider"
 import { cn } from "@/lib/utils"
 import logo from "/assets/images/kindred-logo.png"
@@ -19,21 +20,42 @@ export function Logo({
   const { resolvedTheme } = useTheme()
   const src = resolvedTheme === "dark" ? logoDark : logo
 
-  // Per spec §6 (option B): no icon-only variant exists, so render nothing
-  // when only the icon would be visible. The collapsed sidebar header stays empty.
+  const mark = (
+    <KindredMark
+      className={cn("h-7 w-7 text-foreground", className)}
+      aria-label="Kindred"
+    />
+  )
+
   if (variant === "icon") {
-    return null
+    return asLink ? <Link to="/">{mark}</Link> : mark
+  }
+
+  if (variant === "responsive") {
+    const content = (
+      <>
+        <img
+          src={src}
+          alt="Kindred"
+          className={cn(
+            "h-7 w-auto group-data-[collapsible=icon]:hidden",
+            className,
+          )}
+        />
+        <KindredMark
+          aria-hidden="true"
+          className="hidden h-7 w-7 text-foreground group-data-[collapsible=icon]:block"
+        />
+      </>
+    )
+    return asLink ? <Link to="/">{content}</Link> : content
   }
 
   const img = (
     <img
       src={src}
       alt="Kindred"
-      className={cn(
-        "h-7 w-auto",
-        variant === "responsive" && "group-data-[collapsible=icon]:hidden",
-        className,
-      )}
+      className={cn("h-7 w-auto", className)}
     />
   )
 
