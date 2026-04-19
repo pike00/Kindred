@@ -5,13 +5,29 @@ from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
-from sqlmodel import func, select
+from sqlmodel import func, or_, select
 
 from app.api.deps import CurrentUser, SessionDep
-from app.crud import create_reminder
-from app.models import Reminder, ReminderCreate, ReminderPublic, ReminderUpdate, RemindersPublic
+from app.crud import contact_visible, create_reminder, visible_contact_ids
+from app.models import (
+    Reminder,
+    ReminderCreate,
+    ReminderPublic,
+    RemindersPublic,
+    ReminderUpdate,
+)
 
 router = APIRouter(prefix="/reminders", tags=["reminders"])
+
+
+def _reminder_accessible(user: Any, reminder: Reminder, session: Any) -> bool:
+    if reminder.owner_id == user.id:
+        return True
+    if reminder.contact_id is None:
+        return False
+    return contact_visible(
+        session=session, user=user, contact_id=reminder.contact_id
+    )
 
 
 @router.get("/", response_model=RemindersPublic)
@@ -22,8 +38,13 @@ def list_reminders(
     limit: int = 100,
     is_active: bool | None = None,
 ) -> Any:
-    """List reminders for the current user."""
-    statement = select(Reminder).where(Reminder.owner_id == current_user.id)
+    """List reminders for the current user (owned + tied to visible contacts)."""
+    statement = select(Reminder).where(
+        or_(
+            Reminder.owner_id == current_user.id,
+            Reminder.contact_id.in_(visible_contact_ids(current_user)),
+        )
+    )
 
     if is_active is not None:
         statement = statement.where(Reminder.is_active == is_active)
@@ -48,7 +69,13 @@ def create_reminder_route(
     reminder_in: ReminderCreate,
 ) -> Any:
     """Create a new reminder."""
-    reminder = create_reminder(session=session, reminder_in=reminder_in, owner_id=current_user.id)
+    if reminder_in.contact_id is not None and not contact_visible(
+        session=session, user=current_user, contact_id=reminder_in.contact_id
+    ):
+        raise HTTPException(status_code=404, detail="Contact not found")
+    reminder = create_reminder(
+        session=session, reminder_in=reminder_in, owner_id=current_user.id
+    )
     return ReminderPublic.model_validate(reminder)
 
 
@@ -62,10 +89,8 @@ def update_reminder(
 ) -> Any:
     """Update a reminder."""
     reminder = session.get(Reminder, reminder_id)
-    if not reminder:
+    if reminder is None or not _reminder_accessible(current_user, reminder, session):
         raise HTTPException(status_code=404, detail="Reminder not found")
-    if reminder.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
 
     update_data = reminder_in.model_dump(exclude_unset=True)
     reminder.sqlmodel_update(update_data)
@@ -85,10 +110,8 @@ def snooze_reminder(
 ) -> Any:
     """Snooze a reminder."""
     reminder = session.get(Reminder, reminder_id)
-    if not reminder:
+    if reminder is None or not _reminder_accessible(current_user, reminder, session):
         raise HTTPException(status_code=404, detail="Reminder not found")
-    if reminder.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
 
     from datetime import timedelta
 
@@ -107,10 +130,8 @@ def delete_reminder(
 ) -> Any:
     """Delete a reminder."""
     reminder = session.get(Reminder, reminder_id)
-    if not reminder:
+    if reminder is None or not _reminder_accessible(current_user, reminder, session):
         raise HTTPException(status_code=404, detail="Reminder not found")
-    if reminder.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
 
     session.delete(reminder)
     session.commit()
