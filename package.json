@@ -10,9 +10,6 @@
     "test": "bun run --filter frontend test",
     "test:ui": "bun run --filter frontend test:ui"
   },
-  "dependencies": {
-    "vite": "8.0.7"
-  },
   "devDependencies": {
     "puppeteer": "^24.40.0"
   }

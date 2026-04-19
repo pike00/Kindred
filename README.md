@@ -47,37 +47,41 @@ The Copier template's `items` module has been **removed from the API router** (t
 ## Layout
 
 ```
-backend/              FastAPI app, Alembic migrations, pytest suite, Radicale CardDAV bridge
-frontend/             React app (Vite), generated OpenAPI client in src/client/
-e2e/                  Puppeteer end-to-end tests (bun run e2e/*.test.ts)
-docs/                 architecture.md, DB_SCHEMA.md, HANDOFF.md
-compose.yml           Base Docker Compose (template-style, shared between dev + prod scaffolding)
-compose.override.yml  Local dev overrides — auto-loaded by `docker compose`
-compose.prod.yml      Homelab production stack (pikenet networks, Meilisearch, Redis, ARQ worker)
-compose.traefik.yml   Standalone public Traefik (unused when deploying behind homelab Traefik)
-.env                  Local dev env vars (gitignored)
-.env.sops             Production secrets, encrypted with sops + age
+backend/       FastAPI app, Alembic migrations, pytest suite, Radicale CardDAV bridge
+frontend/      React app (Vite), generated OpenAPI client in src/client/
+e2e/           Puppeteer end-to-end tests (bun run e2e/*.test.ts)
+docs/          architecture.md, DB_SCHEMA.md, HANDOFF.md
+compose.yml    Homelab production stack (pikenet networks, Meilisearch, Redis, ARQ worker)
+compose.dev.yml Dev-against-homelab overlay (bind-mounted source, --reload, frontend dev server)
+.env           Runtime env vars (gitignored)
+.env.sops      Production secrets, encrypted with sops + age
 ```
 
-## Local development
+## Running the stack
+
+Production (homelab default):
 
 ```bash
-docker compose watch
+docker compose up -d --build
 ```
 
-Brings up db, backend (`:8001`), frontend (`:5173`), mailcatcher (`:1080`), and adminer (`:8081`). First boot runs Alembic migrations and creates the admin user from `FIRST_SUPERUSER` / `FIRST_SUPERUSER_PASSWORD` in `.env`.
+Dev against the homelab (bind-mounted source, live reload):
 
-See [development.md](development.md) for details and [deployment.md](deployment.md) for production deployment.
+```bash
+docker compose -f compose.dev.yml up -d --build
+```
+
+First boot runs Alembic migrations and creates the admin user from `FIRST_SUPERUSER` / `FIRST_SUPERUSER_PASSWORD` in `.env`.
 
 ## Testing
 
-Backend:
+Backend (inside the running stack):
 
 ```bash
 docker compose exec backend bash scripts/tests-start.sh
 ```
 
-End-to-end (requires the dev stack to be running):
+End-to-end (requires a running stack):
 
 ```bash
 bun install
@@ -98,4 +102,4 @@ After rotating `FIRST_SUPERUSER_PASSWORD`, the change only takes effect on fresh
 
 ## Origin
 
-This project was scaffolded from the [FastAPI full-stack template](https://github.com/fastapi/full-stack-fastapi-template) via Copier (see `copier.yml`, `.copier/`). Template update metadata and upstream docs (`deployment.md`, `development.md`, `CONTRIBUTING.md`) are retained mostly as-is — treat them as upstream reference, not project-specific documentation.
+This project was scaffolded from the [FastAPI full-stack template](https://github.com/fastapi/full-stack-fastapi-template) via Copier. The `backend/README.md` and `frontend/README.md` files are still mostly upstream template content — treat them as reference, not project-specific docs.
