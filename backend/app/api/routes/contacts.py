@@ -12,6 +12,7 @@ from sqlalchemy.orm import selectinload
 from sqlmodel import col, func, select
 
 from app.api.deps import CurrentUser, SessionDep
+from app.crud import visible_contact_ids
 from app.models import (
     Contact,
     ContactCreate,
@@ -98,7 +99,9 @@ def list_contacts(
 ) -> Any:
     """List contacts with filtering."""
     # Build base query
-    statement = select(Contact).where(Contact.owner_id == current_user.id)
+    statement = select(Contact).where(
+        Contact.id.in_(visible_contact_ids(current_user))
+    )
 
     # Apply filters
     if is_archived is not None:
@@ -171,7 +174,7 @@ def list_losing_touch(
     statement = (
         select(Contact)
         .where(
-            Contact.owner_id == current_user.id,
+            Contact.id.in_(visible_contact_ids(current_user)),
             Contact.is_archived == False,
             Contact.contact_frequency_days.is_not(None),
         )
@@ -212,15 +215,20 @@ def get_contact(
     contact_id: uuid.UUID,
 ) -> Any:
     """Get a single contact by ID."""
-    statement = select(Contact).where(Contact.id == contact_id).options(
-        selectinload(Contact.tags),
-        selectinload(Contact.groups),
+    statement = (
+        select(Contact)
+        .where(
+            Contact.id == contact_id,
+            Contact.id.in_(visible_contact_ids(current_user)),
+        )
+        .options(
+            selectinload(Contact.tags),
+            selectinload(Contact.groups),
+        )
     )
     contact = session.exec(statement).first()
     if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
-    if contact.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
 
     return ContactPublic.model_validate(contact)
 
