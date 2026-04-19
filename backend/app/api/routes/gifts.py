@@ -4,13 +4,18 @@ import uuid
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
-from sqlmodel import func, select
+from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
-from app.crud import create_gift
-from app.models import Contact, Gift, GiftCreate, GiftPublic, GiftUpdate, GiftsPublic
+from app.crud import contact_visible, create_gift
+from app.models import Gift, GiftCreate, GiftPublic, GiftUpdate, GiftsPublic
 
 router = APIRouter(prefix="/gifts", tags=["gifts"])
+
+
+def _require_contact_visible(session: Any, user: Any, contact_id: uuid.UUID) -> None:
+    if not contact_visible(session=session, user=user, contact_id=contact_id):
+        raise HTTPException(status_code=404, detail="Contact not found")
 
 
 @router.get("/contact/{contact_id}", response_model=GiftsPublic)
@@ -20,11 +25,7 @@ def list_gifts(
     contact_id: uuid.UUID,
 ) -> Any:
     """List gifts for a contact."""
-    contact = session.get(Contact, contact_id)
-    if not contact:
-        raise HTTPException(status_code=404, detail="Contact not found")
-    if contact.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
+    _require_contact_visible(session, current_user, contact_id)
 
     statement = select(Gift).where(Gift.contact_id == contact_id)
     gifts = session.exec(statement).all()
@@ -43,11 +44,7 @@ def create_gift_route(
     gift_in: GiftCreate,
 ) -> Any:
     """Create a new gift."""
-    contact = session.get(Contact, gift_in.contact_id)
-    if not contact:
-        raise HTTPException(status_code=404, detail="Contact not found")
-    if contact.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
+    _require_contact_visible(session, current_user, gift_in.contact_id)
 
     gift = create_gift(session=session, gift_in=gift_in, owner_id=current_user.id)
     return GiftPublic.model_validate(gift)
@@ -63,10 +60,9 @@ def update_gift(
 ) -> Any:
     """Update a gift."""
     gift = session.get(Gift, gift_id)
-    if not gift:
+    if gift is None:
         raise HTTPException(status_code=404, detail="Gift not found")
-    if gift.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
+    _require_contact_visible(session, current_user, gift.contact_id)
 
     update_data = gift_in.model_dump(exclude_unset=True)
     gift.sqlmodel_update(update_data)
@@ -84,10 +80,9 @@ def delete_gift(
 ) -> Any:
     """Delete a gift."""
     gift = session.get(Gift, gift_id)
-    if not gift:
+    if gift is None:
         raise HTTPException(status_code=404, detail="Gift not found")
-    if gift.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
+    _require_contact_visible(session, current_user, gift.contact_id)
 
     session.delete(gift)
     session.commit()

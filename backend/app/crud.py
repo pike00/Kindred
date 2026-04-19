@@ -102,7 +102,10 @@ def authenticate(*, session: Session, email: str, password: str) -> User | None:
 
 # ─── Contact CRUD ─────────────────────────────────────────────────────────────
 
-def create_contact(*, session: Session, contact_in: ContactCreate, owner_id: uuid.UUID) -> Contact:
+
+def create_contact(
+    *, session: Session, contact_in: ContactCreate, owner_id: uuid.UUID
+) -> Contact:
     db_obj = Contact.model_validate(contact_in, update={"owner_id": owner_id})
     session.add(db_obj)
     session.commit()
@@ -123,6 +126,7 @@ def create_contact(*, session: Session, contact_in: ContactCreate, owner_id: uui
 
 # ─── Tag CRUD ──────────────────────────────────────────────────────────────────
 
+
 def create_tag(*, session: Session, tag_in: TagCreate, owner_id: uuid.UUID) -> Tag:
     db_obj = Tag.model_validate(tag_in, update={"owner_id": owner_id})
     session.add(db_obj)
@@ -133,7 +137,10 @@ def create_tag(*, session: Session, tag_in: TagCreate, owner_id: uuid.UUID) -> T
 
 # ─── Group CRUD ────────────────────────────────────────────────────────────────
 
-def create_group(*, session: Session, group_in: GroupCreate, owner_id: uuid.UUID) -> Group:
+
+def create_group(
+    *, session: Session, group_in: GroupCreate, owner_id: uuid.UUID
+) -> Group:
     db_obj = Group.model_validate(group_in, update={"owner_id": owner_id})
     session.add(db_obj)
     session.commit()
@@ -143,7 +150,10 @@ def create_group(*, session: Session, group_in: GroupCreate, owner_id: uuid.UUID
 
 # ─── ContactField CRUD ────────────────────────────────────────────────────────
 
-def create_contact_field(*, session: Session, field_in: ContactFieldCreate) -> ContactField:
+
+def create_contact_field(
+    *, session: Session, field_in: ContactFieldCreate
+) -> ContactField:
     db_obj = ContactField.model_validate(field_in)
     session.add(db_obj)
     session.commit()
@@ -152,6 +162,7 @@ def create_contact_field(*, session: Session, field_in: ContactFieldCreate) -> C
 
 
 # ─── Address CRUD ─────────────────────────────────────────────────────────────
+
 
 def create_address(*, session: Session, address_in: AddressCreate) -> Address:
     db_obj = Address.model_validate(address_in)
@@ -162,6 +173,7 @@ def create_address(*, session: Session, address_in: AddressCreate) -> Address:
 
 
 # ─── Relationship CRUD ────────────────────────────────────────────────────────
+
 
 def create_relationship(
     *, session: Session, relationship_in: RelationshipCreate
@@ -175,6 +187,7 @@ def create_relationship(
 
 # ─── Pet CRUD ──────────────────────────────────────────────────────────────────
 
+
 def create_pet(*, session: Session, pet_in: PetCreate) -> Pet:
     db_obj = Pet.model_validate(pet_in)
     session.add(db_obj)
@@ -185,10 +198,13 @@ def create_pet(*, session: Session, pet_in: PetCreate) -> Pet:
 
 # ─── CustomFieldDefinition CRUD ────────────────────────────────────────────────
 
+
 def create_custom_field_definition(
     *, session: Session, field_def_in: CustomFieldDefinitionCreate, owner_id: uuid.UUID
 ) -> CustomFieldDefinition:
-    db_obj = CustomFieldDefinition.model_validate(field_def_in, update={"owner_id": owner_id})
+    db_obj = CustomFieldDefinition.model_validate(
+        field_def_in, update={"owner_id": owner_id}
+    )
     session.add(db_obj)
     session.commit()
     session.refresh(db_obj)
@@ -196,6 +212,7 @@ def create_custom_field_definition(
 
 
 # ─── CustomFieldValue CRUD ────────────────────────────────────────────────────
+
 
 def create_custom_field_value(
     *, session: Session, field_value_in: CustomFieldValueCreate
@@ -208,6 +225,7 @@ def create_custom_field_value(
 
 
 # ─── Interaction CRUD ────────────────────────────────────────────────────────
+
 
 def create_interaction(
     *, session: Session, interaction_in: InteractionCreate, owner_id: uuid.UUID
@@ -227,7 +245,10 @@ def create_interaction(
 
 # ─── Reminder CRUD ────────────────────────────────────────────────────────────
 
-def create_reminder(*, session: Session, reminder_in: ReminderCreate, owner_id: uuid.UUID) -> Reminder:
+
+def create_reminder(
+    *, session: Session, reminder_in: ReminderCreate, owner_id: uuid.UUID
+) -> Reminder:
     db_obj = Reminder.model_validate(reminder_in, update={"owner_id": owner_id})
     session.add(db_obj)
     session.commit()
@@ -236,6 +257,7 @@ def create_reminder(*, session: Session, reminder_in: ReminderCreate, owner_id: 
 
 
 # ─── Gift CRUD ─────────────────────────────────────────────────────────────────
+
 
 def create_gift(*, session: Session, gift_in: GiftCreate, owner_id: uuid.UUID) -> Gift:
     db_obj = Gift.model_validate(gift_in, update={"owner_id": owner_id})
@@ -247,6 +269,7 @@ def create_gift(*, session: Session, gift_in: GiftCreate, owner_id: uuid.UUID) -
 
 # ─── Debt CRUD ─────────────────────────────────────────────────────────────────
 
+
 def create_debt(*, session: Session, debt_in: DebtCreate, owner_id: uuid.UUID) -> Debt:
     db_obj = Debt.model_validate(debt_in, update={"owner_id": owner_id})
     session.add(db_obj)
@@ -256,6 +279,7 @@ def create_debt(*, session: Session, debt_in: DebtCreate, owner_id: uuid.UUID) -
 
 
 # ─── LifeEvent CRUD ────────────────────────────────────────────────────────────
+
 
 def create_life_event(
     *, session: Session, life_event_in: LifeEventCreate, owner_id: uuid.UUID
@@ -269,6 +293,7 @@ def create_life_event(
 
 # ─── Note CRUD ─────────────────────────────────────────────────────────────────
 
+
 def create_note(*, session: Session, note_in: NoteCreate, owner_id: uuid.UUID) -> Note:
     db_obj = Note.model_validate(note_in, update={"owner_id": owner_id})
     session.add(db_obj)
@@ -278,6 +303,7 @@ def create_note(*, session: Session, note_in: NoteCreate, owner_id: uuid.UUID) -
 
 
 # ─── JournalEntry CRUD ────────────────────────────────────────────────────────
+
 
 def create_journal_entry(
     *, session: Session, journal_in: JournalEntryCreate, owner_id: uuid.UUID
@@ -291,6 +317,7 @@ def create_journal_entry(
 
 # ─── Visibility helpers ───────────────────────────────────────────────────────
 
+
 def visible_contact_ids(user: User) -> Any:
     """Subquery: contact IDs visible to user (owned OR tag-shared)."""
     owned = select(Contact.id).where(Contact.owner_id == user.id)
@@ -300,6 +327,15 @@ def visible_contact_ids(user: User) -> Any:
         .where(TagShare.grantee_id == user.id)
     )
     return union(owned, shared)
+
+
+def contact_visible(*, session: Session, user: User, contact_id: uuid.UUID) -> bool:
+    """True if `user` may read/write the given contact via ownership or tag share."""
+    stmt = select(Contact.id).where(
+        Contact.id == contact_id,
+        Contact.id.in_(visible_contact_ids(user)),
+    )
+    return session.exec(stmt).first() is not None
 
 
 def get_or_create_user_from_claims(
