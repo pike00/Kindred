@@ -51,10 +51,16 @@ class UpdatePassword(SQLModel):
 # Database model, database table inferred from class name
 class User(UserBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    hashed_password: str
+    hashed_password: str | None = None  # nullable: OIDC users have no password
+    oidc_iss: str | None = Field(default=None, max_length=512, index=True)
+    oidc_sub: str | None = Field(default=None, max_length=255, index=True)
     created_at: datetime | None = Field(
         default_factory=get_datetime_utc,
         sa_type=DateTime(timezone=True),  # type: ignore
+    )
+
+    __table_args__ = (
+        sa.UniqueConstraint("oidc_iss", "oidc_sub", name="uq_user_oidc_identity"),
     )
 
 
@@ -155,6 +161,34 @@ class ContactTag(SQLModel, table=True):
     __tablename__ = "contact_tag"
     contact_id: uuid.UUID = Field(foreign_key="contact.id", primary_key=True, ondelete="CASCADE")
     tag_id: uuid.UUID = Field(foreign_key="tag.id", primary_key=True, ondelete="CASCADE")
+
+
+# ─── TagShare (grant access to rows bearing a tag) ───────────────────────────────
+
+class TagShare(SQLModel, table=True):
+    __tablename__ = "tag_share"
+    tag_id: uuid.UUID = Field(
+        foreign_key="tag.id", primary_key=True, ondelete="CASCADE"
+    )
+    grantee_id: uuid.UUID = Field(
+        foreign_key="user.id", primary_key=True, ondelete="CASCADE"
+    )
+    created_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+
+
+class TagSharePublic(SQLModel):
+    tag_id: uuid.UUID
+    grantee_id: uuid.UUID
+    grantee_email: str
+    created_at: datetime
+
+
+class TagSharesPublic(SQLModel):
+    data: list[TagSharePublic]
+    count: int
 
 
 # ─── Group ────────────────────────────────────────────────────────────────────
