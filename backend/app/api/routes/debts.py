@@ -4,13 +4,18 @@ import uuid
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
-from sqlmodel import func, select
+from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
-from app.crud import create_debt
-from app.models import Contact, Debt, DebtCreate, DebtPublic, DebtUpdate, DebtsPublic
+from app.crud import contact_visible, create_debt
+from app.models import Debt, DebtCreate, DebtPublic, DebtsPublic, DebtUpdate
 
 router = APIRouter(prefix="/debts", tags=["debts"])
+
+
+def _require_contact_visible(session: Any, user: Any, contact_id: uuid.UUID) -> None:
+    if not contact_visible(session=session, user=user, contact_id=contact_id):
+        raise HTTPException(status_code=404, detail="Contact not found")
 
 
 @router.get("/contact/{contact_id}", response_model=DebtsPublic)
@@ -20,11 +25,7 @@ def list_debts(
     contact_id: uuid.UUID,
 ) -> Any:
     """List debts for a contact."""
-    contact = session.get(Contact, contact_id)
-    if not contact:
-        raise HTTPException(status_code=404, detail="Contact not found")
-    if contact.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
+    _require_contact_visible(session, current_user, contact_id)
 
     statement = select(Debt).where(Debt.contact_id == contact_id)
     debts = session.exec(statement).all()
@@ -43,11 +44,7 @@ def create_debt_route(
     debt_in: DebtCreate,
 ) -> Any:
     """Create a new debt."""
-    contact = session.get(Contact, debt_in.contact_id)
-    if not contact:
-        raise HTTPException(status_code=404, detail="Contact not found")
-    if contact.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
+    _require_contact_visible(session, current_user, debt_in.contact_id)
 
     debt = create_debt(session=session, debt_in=debt_in, owner_id=current_user.id)
     return DebtPublic.model_validate(debt)
@@ -63,10 +60,9 @@ def update_debt(
 ) -> Any:
     """Update a debt."""
     debt = session.get(Debt, debt_id)
-    if not debt:
+    if debt is None:
         raise HTTPException(status_code=404, detail="Debt not found")
-    if debt.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
+    _require_contact_visible(session, current_user, debt.contact_id)
 
     update_data = debt_in.model_dump(exclude_unset=True)
     debt.sqlmodel_update(update_data)
@@ -84,10 +80,9 @@ def delete_debt(
 ) -> Any:
     """Delete a debt."""
     debt = session.get(Debt, debt_id)
-    if not debt:
+    if debt is None:
         raise HTTPException(status_code=404, detail="Debt not found")
-    if debt.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
+    _require_contact_visible(session, current_user, debt.contact_id)
 
     session.delete(debt)
     session.commit()
