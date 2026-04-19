@@ -8,7 +8,7 @@ from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.crud import contact_visible, create_gift
-from app.models import Gift, GiftCreate, GiftPublic, GiftUpdate, GiftsPublic
+from app.models import Gift, GiftCreate, GiftPublic, GiftsPublic, GiftUpdate
 
 router = APIRouter(prefix="/gifts", tags=["gifts"])
 
