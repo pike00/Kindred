@@ -14,6 +14,10 @@ from app.models import (
     ContactFieldCreate,
     ContactGroup,
     ContactTag,
+    CustomFieldDefinition,
+    CustomFieldDefinitionCreate,
+    CustomFieldValue,
+    CustomFieldValueCreate,
     Debt,
     DebtCreate,
     Gift,
@@ -22,6 +26,8 @@ from app.models import (
     GroupCreate,
     Interaction,
     InteractionCreate,
+    JournalEntry,
+    JournalEntryCreate,
     LifeEvent,
     LifeEventCreate,
     MediaRecommendation,
@@ -40,12 +46,6 @@ from app.models import (
     User,
     UserCreate,
     UserUpdate,
-    CustomFieldDefinition,
-    CustomFieldDefinitionCreate,
-    CustomFieldValue,
-    CustomFieldValueCreate,
-    JournalEntry,
-    JournalEntryCreate,
 )
 
 
@@ -294,6 +294,7 @@ def create_life_event(
 
 
 # ─── MediaRecommendation CRUD ─────────────────────────────────────────────────
+
 
 def create_media_recommendation(
     *, session: Session, rec_in: MediaRecommendationCreate, owner_id: uuid.UUID

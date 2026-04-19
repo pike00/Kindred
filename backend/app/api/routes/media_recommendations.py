@@ -13,8 +13,8 @@ from app.models import (
     MediaRecommendation,
     MediaRecommendationCreate,
     MediaRecommendationPublic,
-    MediaRecommendationUpdate,
     MediaRecommendationsPublic,
+    MediaRecommendationUpdate,
 )
 
 router = APIRouter(prefix="/media-recommendations", tags=["media-recommendations"])
