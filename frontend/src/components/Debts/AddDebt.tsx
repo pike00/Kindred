@@ -1,10 +1,8 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Plus } from "lucide-react"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-
 import { type DebtCreate, DebtsService } from "@/client"
 import { Button } from "@/components/ui/button"
 import {
@@ -35,6 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import useCustomToast from "@/hooks/useCustomToast"
+import { Plus } from "@/lib/icons"
 
 const schema = z.object({
   direction: z.enum(["i_owe", "they_owe"]),

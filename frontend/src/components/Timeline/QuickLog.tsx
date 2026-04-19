@@ -1,9 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Send } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-
 import { type InteractionCreate, InteractionsService } from "@/client"
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form"
@@ -16,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import useCustomToast from "@/hooks/useCustomToast"
+import { Send } from "@/lib/icons"
 
 const channels = [
   { value: "call", label: "Call" },

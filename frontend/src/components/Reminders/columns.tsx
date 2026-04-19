@@ -1,7 +1,7 @@
 import type { ColumnDef } from "@tanstack/react-table"
-import { Bell, Clock } from "lucide-react"
 
 import type { ReminderPublic } from "@/client"
+import { Bell, Clock } from "@/lib/icons"
 import { ReminderActionsMenu } from "./ReminderActionsMenu"
 
 export const columns: ColumnDef<ReminderPublic>[] = [
