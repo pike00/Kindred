@@ -1,4 +1,3 @@
-import { EllipsisVertical } from "lucide-react"
 import { useState } from "react"
 
 import type { UserPublic } from "@/client"
@@ -9,6 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import useAuth from "@/hooks/useAuth"
+import { MoreHorizontal } from "@/lib/icons"
 import DeleteUser from "./DeleteUser"
 import EditUser from "./EditUser"
 
@@ -27,8 +27,8 @@ export const UserActionsMenu = ({ user }: UserActionsMenuProps) => {
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon">
-          <EllipsisVertical />
+        <Button variant="ghost" size="icon" aria-label="Open user actions menu">
+          <MoreHorizontal />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">

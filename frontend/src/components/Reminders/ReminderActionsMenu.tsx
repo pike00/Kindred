@@ -1,16 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Clock, MoreHorizontal, Trash2 } from "lucide-react"
-import { useState } from "react"
+
 import type { ReminderPublic } from "@/client"
 import { RemindersService } from "@/client"
-import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { RowActionsMenu } from "@/components/Common/RowActionsMenu"
 import useCustomToast from "@/hooks/useCustomToast"
+import { Clock, Trash2 } from "@/lib/icons"
 
 interface ReminderActionsMenuProps {
   reminder: ReminderPublic
@@ -19,7 +13,6 @@ interface ReminderActionsMenuProps {
 export const ReminderActionsMenu = ({ reminder }: ReminderActionsMenuProps) => {
   const { showSuccessToast, showErrorToast } = useCustomToast()
   const queryClient = useQueryClient()
-  const [open, setOpen] = useState(false)
 
   const deleteReminderMutation = useMutation({
     mutationFn: () =>
@@ -49,32 +42,20 @@ export const ReminderActionsMenu = ({ reminder }: ReminderActionsMenuProps) => {
   })
 
   return (
-    <DropdownMenu open={open} onOpenChange={setOpen}>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          className="h-8 w-8 p-0"
-          onClick={(e) => {
-            e.stopPropagation()
-          }}
-        >
-          <MoreHorizontal className="h-4 w-4" />
-          <span className="sr-only">Open menu</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => snoozeReminderMutation.mutate()}>
-          <Clock className="mr-2 h-4 w-4" />
-          Snooze 1 hour
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => deleteReminderMutation.mutate()}
-          className="text-red-600"
-        >
-          <Trash2 className="mr-2 h-4 w-4" />
-          Delete
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <RowActionsMenu
+      items={[
+        {
+          label: "Snooze 1 hour",
+          icon: Clock,
+          onSelect: () => snoozeReminderMutation.mutate(),
+        },
+        {
+          label: "Delete",
+          icon: Trash2,
+          variant: "destructive",
+          onSelect: () => deleteReminderMutation.mutate(),
+        },
+      ]}
+    />
   )
 }

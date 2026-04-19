@@ -35,6 +35,7 @@ export function RowActionsMenu({
           size="sm"
           className={cn("size-8 p-0", triggerClassName)}
           aria-label={ariaLabel}
+          onClick={(e) => e.stopPropagation()}
         >
           <MoreHorizontal className="size-4" />
         </Button>
