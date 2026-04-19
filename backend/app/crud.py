@@ -291,7 +291,7 @@ def create_journal_entry(
 
 # ─── Visibility helpers ───────────────────────────────────────────────────────
 
-def visible_contact_ids(user: User) -> "sqlalchemy.sql.selectable.CompoundSelect":
+def visible_contact_ids(user: User) -> Any:
     """Subquery: contact IDs visible to user (owned OR tag-shared)."""
     owned = select(Contact.id).where(Contact.owner_id == user.id)
     shared = (
@@ -322,7 +322,7 @@ def get_or_create_user_from_claims(
 
     if email:
         merge = session.exec(
-            select(User).where(User.email == email, User.oidc_sub.is_(None))  # type: ignore[attr-defined]
+            select(User).where(User.email == email, User.oidc_sub.is_(None))  # type: ignore[union-attr]
         ).first()
         if merge:
             merge.oidc_iss = iss
