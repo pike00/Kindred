@@ -46,6 +46,8 @@ services:
       dockerfile: frontend/Dockerfile
       args:
         VITE_API_URL: https://crm.${DOMAIN}
+        VITE_AUTH_MODE: ${AUTH_MODE:-local}
+        VITE_CF_LOGOUT_URL: ${VITE_CF_LOGOUT_URL:-}
     networks:
       - pikenet-private
     dns:
