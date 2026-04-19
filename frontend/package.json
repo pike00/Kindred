@@ -43,7 +43,6 @@
     "react-dom": "^19.2.3",
     "react-error-boundary": "^6.0.0",
     "react-hook-form": "^7.68.0",
-    "react-icons": "^5.5.0",
     "rollup": "^4.60.1",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",

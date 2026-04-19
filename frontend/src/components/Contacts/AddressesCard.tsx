@@ -1,12 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { MapPin, MoreHorizontal, Plus } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-
-import { AddressesService } from "@/client"
 import type { AddressCreate, AddressPublic, AddressUpdate } from "@/client"
+import { AddressesService } from "@/client"
+import { EmptyState } from "@/components/Common/EmptyState"
+import { RowActionsMenu } from "@/components/Common/RowActionsMenu"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -20,12 +20,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
   Form,
   FormControl,
   FormField,
@@ -37,6 +31,7 @@ import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { Skeleton } from "@/components/ui/skeleton"
 import useCustomToast from "@/hooks/useCustomToast"
+import { MapPin, Pencil, Plus, Trash2 } from "@/lib/icons"
 
 const schema = z.object({
   label: z.string().optional(),
@@ -198,11 +193,16 @@ function AddAddressDialog({ contactId }: { contactId: string }) {
       queryClient.invalidateQueries({ queryKey: ["addresses", contactId] })
     },
     onError: (err) =>
-      showErrorToast(err instanceof Error ? err.message : "Failed to add address"),
+      showErrorToast(
+        err instanceof Error ? err.message : "Failed to add address",
+      ),
   })
 
   const onSubmit = (data: FormData) => {
-    mutation.mutate({ ...toPayload(data), contact_id: contactId } as AddressCreate)
+    mutation.mutate({
+      ...toPayload(data),
+      contact_id: contactId,
+    } as AddressCreate)
   }
 
   return (
@@ -215,7 +215,9 @@ function AddAddressDialog({ contactId }: { contactId: string }) {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Add address</DialogTitle>
-          <DialogDescription>Attach a physical address to this contact.</DialogDescription>
+          <DialogDescription>
+            Attach a physical address to this contact.
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -278,17 +280,25 @@ function EditAddressDialog({
 
   const mutation = useMutation({
     mutationFn: (data: AddressUpdate) =>
-      AddressesService.updateAddress({ addressId: address.id, requestBody: data }),
+      AddressesService.updateAddress({
+        addressId: address.id,
+        requestBody: data,
+      }),
     onSuccess: () => {
       showSuccessToast("Address updated")
       onOpenChange(false)
-      queryClient.invalidateQueries({ queryKey: ["addresses", address.contact_id] })
+      queryClient.invalidateQueries({
+        queryKey: ["addresses", address.contact_id],
+      })
     },
     onError: (err) =>
-      showErrorToast(err instanceof Error ? err.message : "Failed to update address"),
+      showErrorToast(
+        err instanceof Error ? err.message : "Failed to update address",
+      ),
   })
 
-  const onSubmit = (data: FormData) => mutation.mutate(toPayload(data) as AddressUpdate)
+  const onSubmit = (data: FormData) =>
+    mutation.mutate(toPayload(data) as AddressUpdate)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -326,10 +336,14 @@ function AddressRow({ address }: { address: AddressPublic }) {
     mutationFn: () => AddressesService.deleteAddress({ addressId: address.id }),
     onSuccess: () => {
       showSuccessToast("Address deleted")
-      queryClient.invalidateQueries({ queryKey: ["addresses", address.contact_id] })
+      queryClient.invalidateQueries({
+        queryKey: ["addresses", address.contact_id],
+      })
     },
     onError: (err) =>
-      showErrorToast(err instanceof Error ? err.message : "Failed to delete address"),
+      showErrorToast(
+        err instanceof Error ? err.message : "Failed to delete address",
+      ),
   })
 
   const lines = [address.street, address.extended].filter(Boolean)
@@ -348,28 +362,34 @@ function AddressRow({ address }: { address: AddressPublic }) {
             </p>
           ))}
           {cityLine && <p className="text-muted-foreground">{cityLine}</p>}
-          {address.country && <p className="text-muted-foreground">{address.country}</p>}
+          {address.country && (
+            <p className="text-muted-foreground">{address.country}</p>
+          )}
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="size-7 p-0">
-              <MoreHorizontal className="size-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setEditOpen(true)}>Edit</DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-destructive"
-              onClick={() => {
-                if (window.confirm("Delete this address?")) deleteMutation.mutate()
-              }}
-            >
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <RowActionsMenu
+          items={[
+            {
+              label: "Edit",
+              icon: Pencil,
+              onSelect: () => setEditOpen(true),
+            },
+            {
+              label: "Delete",
+              icon: Trash2,
+              variant: "destructive",
+              onSelect: () => {
+                if (window.confirm("Delete this address?"))
+                  deleteMutation.mutate()
+              },
+            },
+          ]}
+        />
       </div>
-      <EditAddressDialog address={address} open={editOpen} onOpenChange={setEditOpen} />
+      <EditAddressDialog
+        address={address}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+      />
     </>
   )
 }
@@ -399,7 +419,11 @@ export function AddressesCard({ contactId }: { contactId: string }) {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">No addresses</p>
+          <EmptyState
+            icon={MapPin}
+            title="No addresses"
+            description="Track home, work, or mailing addresses for this contact."
+          />
         )}
       </CardContent>
     </Card>

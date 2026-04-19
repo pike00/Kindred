@@ -1,12 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { MoreHorizontal, PawPrint, Plus } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-
-import { PetsService } from "@/client"
 import type { PetCreate, PetPublic, PetUpdate } from "@/client"
+import { PetsService } from "@/client"
+import { EmptyState } from "@/components/Common/EmptyState"
+import { RowActionsMenu } from "@/components/Common/RowActionsMenu"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -20,12 +20,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
   Form,
   FormControl,
   FormField,
@@ -38,6 +32,7 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import useCustomToast from "@/hooks/useCustomToast"
+import { PawPrint, Pencil, Plus, Trash2 } from "@/lib/icons"
 
 const schema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -168,7 +163,9 @@ function AddPetDialog({ contactId }: { contactId: string }) {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Add pet</DialogTitle>
-          <DialogDescription>Track a pet belonging to this contact.</DialogDescription>
+          <DialogDescription>
+            Track a pet belonging to this contact.
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -232,10 +229,13 @@ function EditPetDialog({
       queryClient.invalidateQueries({ queryKey: ["pets", pet.contact_id] })
     },
     onError: (err) =>
-      showErrorToast(err instanceof Error ? err.message : "Failed to update pet"),
+      showErrorToast(
+        err instanceof Error ? err.message : "Failed to update pet",
+      ),
   })
 
-  const onSubmit = (data: FormData) => mutation.mutate(toPayload(data) as PetUpdate)
+  const onSubmit = (data: FormData) =>
+    mutation.mutate(toPayload(data) as PetUpdate)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -276,7 +276,9 @@ function PetRow({ pet }: { pet: PetPublic }) {
       queryClient.invalidateQueries({ queryKey: ["pets", pet.contact_id] })
     },
     onError: (err) =>
-      showErrorToast(err instanceof Error ? err.message : "Failed to delete pet"),
+      showErrorToast(
+        err instanceof Error ? err.message : "Failed to delete pet",
+      ),
   })
 
   return (
@@ -296,24 +298,23 @@ function PetRow({ pet }: { pet: PetPublic }) {
             </p>
           )}
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="size-7 p-0">
-              <MoreHorizontal className="size-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setEditOpen(true)}>Edit</DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-destructive"
-              onClick={() => {
+        <RowActionsMenu
+          items={[
+            {
+              label: "Edit",
+              icon: Pencil,
+              onSelect: () => setEditOpen(true),
+            },
+            {
+              label: "Delete",
+              icon: Trash2,
+              variant: "destructive",
+              onSelect: () => {
                 if (window.confirm("Delete this pet?")) deleteMutation.mutate()
-              }}
-            >
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              },
+            },
+          ]}
+        />
       </div>
       <EditPetDialog pet={pet} open={editOpen} onOpenChange={setEditOpen} />
     </>
@@ -345,7 +346,11 @@ export function PetsCard({ contactId }: { contactId: string }) {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">No pets</p>
+          <EmptyState
+            icon={PawPrint}
+            title="No pets"
+            description="Track furry, feathered, or scaly companions for this contact."
+          />
         )}
       </CardContent>
     </Card>

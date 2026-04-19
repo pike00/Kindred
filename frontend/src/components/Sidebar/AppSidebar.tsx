@@ -1,5 +1,3 @@
-import { Home, Users, Tag, FolderOpen, Bell, BookOpen, MessageCircle } from "lucide-react"
-
 import { SidebarAppearance } from "@/components/Common/Appearance"
 import { Logo } from "@/components/Common/Logo"
 import {
@@ -9,24 +7,34 @@ import {
   SidebarHeader,
 } from "@/components/ui/sidebar"
 import useAuth from "@/hooks/useAuth"
+import {
+  Bell,
+  Home,
+  MessagesSquare,
+  NotebookPen,
+  ShieldCheck,
+  Tag,
+  Users,
+  UsersRound,
+} from "@/lib/icons"
 import { type Item, Main } from "./Main"
 import { User } from "./User"
 
 const baseItems: Item[] = [
   { icon: Home, title: "Dashboard", path: "/" },
   { icon: Users, title: "Contacts", path: "/contacts" },
-  { icon: MessageCircle, title: "Interactions", path: "/interactions" },
+  { icon: MessagesSquare, title: "Interactions", path: "/interactions" },
   { icon: Tag, title: "Tags", path: "/tags" },
-  { icon: FolderOpen, title: "Groups", path: "/groups" },
+  { icon: UsersRound, title: "Groups", path: "/groups" },
   { icon: Bell, title: "Reminders", path: "/reminders" },
-  { icon: BookOpen, title: "Journal", path: "/journal" },
+  { icon: NotebookPen, title: "Journal", path: "/journal" },
 ]
 
 export function AppSidebar() {
   const { user: currentUser } = useAuth()
 
   const items = currentUser?.is_superuser
-    ? [...baseItems, { icon: Users, title: "Admin", path: "/admin" }]
+    ? [...baseItems, { icon: ShieldCheck, title: "Admin", path: "/admin" }]
     : baseItems
 
   return (

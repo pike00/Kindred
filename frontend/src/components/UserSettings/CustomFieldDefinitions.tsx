@@ -1,16 +1,14 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { MoreHorizontal, Plus } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-
-import { CustomFieldsService } from "@/client"
 import type {
   CustomFieldDefinitionCreate,
   CustomFieldDefinitionPublic,
   CustomFieldDefinitionUpdate,
 } from "@/client"
+import { CustomFieldsService } from "@/client"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -41,6 +39,7 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import useCustomToast from "@/hooks/useCustomToast"
+import { MoreHorizontal, Plus } from "@/lib/icons"
 
 const schema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -151,7 +150,9 @@ function AddDefinitionDialog() {
       queryClient.invalidateQueries({ queryKey: ["custom-field-definitions"] })
     },
     onError: (err) =>
-      showErrorToast(err instanceof Error ? err.message : "Failed to add definition"),
+      showErrorToast(
+        err instanceof Error ? err.message : "Failed to add definition",
+      ),
   })
 
   const onSubmit = (data: FormData) => mutation.mutate(toCreatePayload(data))
@@ -253,7 +254,9 @@ function EditDefinitionDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Edit definition</DialogTitle>
-          <DialogDescription>Update the custom field definition.</DialogDescription>
+          <DialogDescription>
+            Update the custom field definition.
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -281,7 +284,8 @@ function DefinitionRow({ def }: { def: CustomFieldDefinitionPublic }) {
   const { showSuccessToast, showErrorToast } = useCustomToast()
 
   const deleteMutation = useMutation({
-    mutationFn: () => CustomFieldsService.deleteFieldDefinition({ defId: def.id }),
+    mutationFn: () =>
+      CustomFieldsService.deleteFieldDefinition({ defId: def.id }),
     onSuccess: () => {
       showSuccessToast("Definition deleted")
       queryClient.invalidateQueries({ queryKey: ["custom-field-definitions"] })
@@ -314,7 +318,9 @@ function DefinitionRow({ def }: { def: CustomFieldDefinitionPublic }) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setEditOpen(true)}>Edit</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setEditOpen(true)}>
+              Edit
+            </DropdownMenuItem>
             <DropdownMenuItem
               className="text-destructive"
               onClick={() => {
@@ -331,7 +337,11 @@ function DefinitionRow({ def }: { def: CustomFieldDefinitionPublic }) {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <EditDefinitionDialog def={def} open={editOpen} onOpenChange={setEditOpen} />
+      <EditDefinitionDialog
+        def={def}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+      />
     </>
   )
 }
@@ -350,8 +360,8 @@ export default function CustomFieldDefinitions() {
         <div>
           <h2 className="text-lg font-semibold">Custom field definitions</h2>
           <p className="text-sm text-muted-foreground">
-            Define arbitrary fields you want to track on contacts (coffee preference,
-            kid names, shirt size, ...).
+            Define arbitrary fields you want to track on contacts (coffee
+            preference, kid names, shirt size, ...).
           </p>
         </div>
         <AddDefinitionDialog />
@@ -366,7 +376,8 @@ export default function CustomFieldDefinitions() {
         </div>
       ) : (
         <p className="text-sm text-muted-foreground">
-          No definitions yet. Add one to start attaching custom fields to contacts.
+          No definitions yet. Add one to start attaching custom fields to
+          contacts.
         </p>
       )}
     </div>

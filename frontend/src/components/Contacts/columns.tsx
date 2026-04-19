@@ -1,9 +1,8 @@
 import type { ColumnDef } from "@tanstack/react-table"
-import { Heart } from "lucide-react"
 
 import type { ContactPublic } from "@/client"
 import { Badge } from "@/components/ui/badge"
-import { cn } from "@/lib/utils"
+import { Star } from "@/lib/icons"
 import { getInitials } from "@/utils"
 import { ContactActionsMenu } from "./ContactActionsMenu"
 
@@ -13,17 +12,20 @@ export const columns: ColumnDef<ContactPublic>[] = [
     header: "Name",
     cell: ({ row }) => {
       const contact = row.original
-      const fullName = [contact.prefix, contact.first_name, contact.middle_name, contact.last_name, contact.suffix]
+      const fullName = [
+        contact.prefix,
+        contact.first_name,
+        contact.middle_name,
+        contact.last_name,
+        contact.suffix,
+      ]
         .filter(Boolean)
         .join(" ")
       const initials = getInitials(fullName || "Unknown")
 
       return (
         <div className="flex items-center gap-3">
-          <div className={cn(
-            "flex items-center justify-center size-8 rounded-full font-semibold text-white",
-            "bg-blue-500"
-          )}>
+          <div className="flex items-center justify-center size-8 rounded-full font-semibold bg-primary text-primary-foreground text-xs">
             {initials}
           </div>
           <div>
@@ -85,7 +87,7 @@ export const columns: ColumnDef<ContactPublic>[] = [
       return (
         <div className="flex justify-end items-center gap-1">
           {contact.is_favorite && (
-            <Heart className="size-4 fill-red-500 text-red-500" />
+            <Star className="size-4 fill-amber-400 text-amber-400" />
           )}
         </div>
       )

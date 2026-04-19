@@ -1,25 +1,17 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import {
-  Globe,
-  Hash,
-  Mail,
-  MessageCircle,
-  MoreHorizontal,
-  Phone,
-  Plus,
-} from "lucide-react"
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-
-import { ContactFieldsService } from "@/client"
 import type {
   ContactFieldCreate,
   ContactFieldPublic,
   ContactFieldType,
   ContactFieldUpdate,
 } from "@/client"
+import { ContactFieldsService } from "@/client"
+import { EmptyState } from "@/components/Common/EmptyState"
+import { RowActionsMenu } from "@/components/Common/RowActionsMenu"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -33,12 +25,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import {
   Form,
   FormControl,
@@ -58,6 +44,16 @@ import {
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import useCustomToast from "@/hooks/useCustomToast"
+import {
+  AtSign,
+  Link as LinkIcon,
+  Mail,
+  MessageSquareText,
+  Pencil,
+  Phone,
+  Plus,
+  Trash2,
+} from "@/lib/icons"
 
 const FIELD_TYPES: ContactFieldType[] = [
   "email",
@@ -71,9 +67,9 @@ const FIELD_TYPES: ContactFieldType[] = [
 const fieldTypeIcon: Record<ContactFieldType, React.ReactNode> = {
   email: <Mail className="size-4" />,
   phone: <Phone className="size-4" />,
-  url: <Globe className="size-4" />,
-  social: <Hash className="size-4" />,
-  im: <MessageCircle className="size-4" />,
+  url: <LinkIcon className="size-4" />,
+  social: <AtSign className="size-4" />,
+  im: <MessageSquareText className="size-4" />,
   custom: null,
 }
 
@@ -159,7 +155,7 @@ function FieldFormFields({ form }: FieldFormProps) {
       <label className="flex items-center gap-2 text-sm">
         <input
           type="checkbox"
-          className="rounded border-gray-300"
+          className="rounded border-input"
           {...form.register("is_primary")}
         />
         <span>Primary</span>
@@ -188,7 +184,9 @@ function AddContactFieldDialog({ contactId }: { contactId: string }) {
       queryClient.invalidateQueries({ queryKey: ["contact-fields", contactId] })
     },
     onError: (err) =>
-      showErrorToast(err instanceof Error ? err.message : "Failed to add field"),
+      showErrorToast(
+        err instanceof Error ? err.message : "Failed to add field",
+      ),
   })
 
   const onSubmit = (data: FormData) => {
@@ -275,10 +273,14 @@ function EditContactFieldDialog({
     onSuccess: () => {
       showSuccessToast("Field updated")
       onOpenChange(false)
-      queryClient.invalidateQueries({ queryKey: ["contact-fields", cf.contact_id] })
+      queryClient.invalidateQueries({
+        queryKey: ["contact-fields", cf.contact_id],
+      })
     },
     onError: (err) =>
-      showErrorToast(err instanceof Error ? err.message : "Failed to update field"),
+      showErrorToast(
+        err instanceof Error ? err.message : "Failed to update field",
+      ),
   })
 
   const onSubmit = (data: FormData) => {
@@ -327,10 +329,14 @@ function FieldRow({ field: cf }: { field: ContactFieldPublic }) {
       ContactFieldsService.deleteContactField({ fieldId: cf.id }),
     onSuccess: () => {
       showSuccessToast("Field deleted")
-      queryClient.invalidateQueries({ queryKey: ["contact-fields", cf.contact_id] })
+      queryClient.invalidateQueries({
+        queryKey: ["contact-fields", cf.contact_id],
+      })
     },
     onError: (err) =>
-      showErrorToast(err instanceof Error ? err.message : "Failed to delete field"),
+      showErrorToast(
+        err instanceof Error ? err.message : "Failed to delete field",
+      ),
   })
 
   return (
@@ -366,27 +372,31 @@ function FieldRow({ field: cf }: { field: ContactFieldPublic }) {
           </Badge>
         )}
         <div className="ml-auto">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="size-7 p-0">
-                <MoreHorizontal className="size-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setEditOpen(true)}>Edit</DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-destructive"
-                onClick={() => {
-                  if (window.confirm("Delete this field?")) deleteMutation.mutate()
-                }}
-              >
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <RowActionsMenu
+            items={[
+              {
+                label: "Edit",
+                icon: Pencil,
+                onSelect: () => setEditOpen(true),
+              },
+              {
+                label: "Delete",
+                icon: Trash2,
+                variant: "destructive",
+                onSelect: () => {
+                  if (window.confirm("Delete this field?"))
+                    deleteMutation.mutate()
+                },
+              },
+            ]}
+          />
         </div>
       </div>
-      <EditContactFieldDialog field={cf} open={editOpen} onOpenChange={setEditOpen} />
+      <EditContactFieldDialog
+        field={cf}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+      />
     </>
   )
 }
@@ -396,7 +406,8 @@ export function ContactFieldsCard({ contactId }: { contactId: string }) {
     queryKey: ["contact-fields", contactId],
     queryFn: () => ContactFieldsService.listContactFields({ contactId }),
   })
-  const fields = (data as { data?: ContactFieldPublic[] } | undefined)?.data ?? []
+  const fields =
+    (data as { data?: ContactFieldPublic[] } | undefined)?.data ?? []
 
   const byType: Record<string, ContactFieldPublic[]> = {}
   for (const f of fields) {
@@ -429,7 +440,11 @@ export function ContactFieldsCard({ contactId }: { contactId: string }) {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">No contact fields</p>
+          <EmptyState
+            icon={Mail}
+            title="No contact info"
+            description="Add an email, phone, or social handle to reach this contact."
+          />
         )}
       </CardContent>
     </Card>
