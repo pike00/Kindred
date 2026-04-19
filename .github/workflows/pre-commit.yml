@@ -49,6 +49,10 @@ jobs:
             requirements**.txt
             pyproject.toml
             uv.lock
+      - name: Create .env from example
+        # Needed for the Generate Frontend SDK hook, which imports the FastAPI
+        # app to emit the OpenAPI schema; the Settings model requires .env.
+        run: cp .env.example .env
       - name: Install backend dependencies
         run: uv sync --all-packages
       - name: Install frontend dependencies
