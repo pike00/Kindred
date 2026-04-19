@@ -1,6 +1,6 @@
-import { MoreHorizontal, Trash2, Clock } from "lucide-react"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { Clock, MoreHorizontal, Trash2 } from "lucide-react"
 import { useState } from "react"
-
 import type { ReminderPublic } from "@/client"
 import { RemindersService } from "@/client"
 import { Button } from "@/components/ui/button"
@@ -11,7 +11,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import useCustomToast from "@/hooks/useCustomToast"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 
 interface ReminderActionsMenuProps {
   reminder: ReminderPublic
@@ -23,7 +22,8 @@ export const ReminderActionsMenu = ({ reminder }: ReminderActionsMenuProps) => {
   const [open, setOpen] = useState(false)
 
   const deleteReminderMutation = useMutation({
-    mutationFn: () => RemindersService.deleteReminder({ reminderId: reminder.id }),
+    mutationFn: () =>
+      RemindersService.deleteReminder({ reminderId: reminder.id }),
     onSuccess: () => {
       showSuccessToast("Reminder deleted")
       queryClient.invalidateQueries({ queryKey: ["reminders"] })

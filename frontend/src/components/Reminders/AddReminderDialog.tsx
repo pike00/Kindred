@@ -1,8 +1,10 @@
-import { useState } from "react"
+import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-
-import { RemindersService } from "@/client"
+import { useState } from "react"
+import { useForm } from "react-hook-form"
+import { z } from "zod"
 import type { ReminderCreate } from "@/client"
+import { RemindersService } from "@/client"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -23,9 +25,6 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import useCustomToast from "@/hooks/useCustomToast"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
-import { zodResolver } from "@hookform/resolvers/zod"
 
 const reminderCreateSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -132,7 +131,9 @@ export const AddReminderDialog = () => {
               disabled={addReminderMutation.isPending}
               className="w-full"
             >
-              {addReminderMutation.isPending ? "Creating..." : "Create Reminder"}
+              {addReminderMutation.isPending
+                ? "Creating..."
+                : "Create Reminder"}
             </Button>
           </form>
         </Form>

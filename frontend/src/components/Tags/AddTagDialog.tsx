@@ -1,8 +1,10 @@
-import { useState } from "react"
+import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-
-import { TagsService } from "@/client"
+import { useState } from "react"
+import { useForm } from "react-hook-form"
+import { z } from "zod"
 import type { TagCreate } from "@/client"
+import { TagsService } from "@/client"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -22,9 +24,6 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import useCustomToast from "@/hooks/useCustomToast"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
-import { zodResolver } from "@hookform/resolvers/zod"
 
 const tagCreateSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -85,7 +84,10 @@ export const AddTagDialog = () => {
                 <FormItem>
                   <FormLabel>Name *</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Close Friend, Colleague" {...field} />
+                    <Input
+                      placeholder="e.g., Close Friend, Colleague"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

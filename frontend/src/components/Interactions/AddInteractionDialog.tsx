@@ -1,8 +1,10 @@
-import { useState } from "react"
+import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-
-import { InteractionsService, ContactsService } from "@/client"
+import { useState } from "react"
+import { useForm } from "react-hook-form"
+import { z } from "zod"
 import type { InteractionCreate } from "@/client"
+import { ContactsService, InteractionsService } from "@/client"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -21,7 +23,6 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import {
   Select,
   SelectContent,
@@ -29,10 +30,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
 import useCustomToast from "@/hooks/useCustomToast"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
-import { zodResolver } from "@hookform/resolvers/zod"
 
 const channels = [
   { value: "call", label: "Call" },
@@ -59,7 +58,9 @@ interface AddInteractionDialogProps {
   contactId?: string
 }
 
-export const AddInteractionDialog = ({ contactId }: AddInteractionDialogProps) => {
+export const AddInteractionDialog = ({
+  contactId,
+}: AddInteractionDialogProps) => {
   const [open, setOpen] = useState(false)
   const { showSuccessToast, showErrorToast } = useCustomToast()
   const queryClient = useQueryClient()
@@ -85,7 +86,9 @@ export const AddInteractionDialog = ({ contactId }: AddInteractionDialogProps) =
       setOpen(false)
       queryClient.invalidateQueries({ queryKey: ["interactions"] })
       if (contactId) {
-        queryClient.invalidateQueries({ queryKey: ["contact-interactions", contactId] })
+        queryClient.invalidateQueries({
+          queryKey: ["contact-interactions", contactId],
+        })
       }
     },
     onError: (error: Error) => {
@@ -100,7 +103,9 @@ export const AddInteractionDialog = ({ contactId }: AddInteractionDialogProps) =
       occurred_at: new Date(data.occurred_at).toISOString(),
       notes: data.notes || null,
       mood: data.mood || null,
-      duration_minutes: data.duration_minutes ? parseInt(data.duration_minutes, 10) : null,
+      duration_minutes: data.duration_minutes
+        ? parseInt(data.duration_minutes, 10)
+        : null,
     } as unknown as InteractionCreate)
   }
 
@@ -118,16 +123,17 @@ export const AddInteractionDialog = ({ contactId }: AddInteractionDialogProps) =
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {!contactId && (
-              <ContactSelector control={form.control} />
-            )}
+            {!contactId && <ContactSelector control={form.control} />}
             <FormField
               control={form.control}
               name="channel"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Channel *</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="How did you interact?" />
@@ -165,12 +171,7 @@ export const AddInteractionDialog = ({ contactId }: AddInteractionDialogProps) =
                 <FormItem>
                   <FormLabel>Duration (minutes)</FormLabel>
                   <FormControl>
-                    <Input
-                      type="number"
-                      min="0"
-                      placeholder="30"
-                      {...field}
-                    />
+                    <Input type="number" min="0" placeholder="30" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -219,7 +220,11 @@ export const AddInteractionDialog = ({ contactId }: AddInteractionDialogProps) =
   )
 }
 
-function ContactSelector({ control }: { control: ReturnType<typeof useForm<InteractionCreateFormData>>["control"] }) {
+function ContactSelector({
+  control,
+}: {
+  control: ReturnType<typeof useForm<InteractionCreateFormData>>["control"]
+}) {
   const { data } = useQuery({
     queryKey: ["contacts"],
     queryFn: () => ContactsService.listContacts(),

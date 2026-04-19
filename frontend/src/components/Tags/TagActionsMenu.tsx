@@ -1,6 +1,6 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { MoreHorizontal, Trash2 } from "lucide-react"
 import { useState } from "react"
-
 import type { TagPublic } from "@/client"
 import { TagsService } from "@/client"
 import { Button } from "@/components/ui/button"
@@ -11,7 +11,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import useCustomToast from "@/hooks/useCustomToast"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 
 interface TagActionsMenuProps {
   tag: TagPublic

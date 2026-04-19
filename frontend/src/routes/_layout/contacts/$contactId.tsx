@@ -1,34 +1,33 @@
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
-import { useSuspenseQuery, useQuery } from "@tanstack/react-query"
-import { Star, Archive, Calendar, Clock, Users } from "lucide-react"
-
+import { Archive, Calendar, Clock, Star, Users } from "lucide-react"
+import type {
+  DebtPublic,
+  GiftPublic,
+  InteractionPublic,
+  NotePublic,
+} from "@/client"
 import {
   ContactsService,
+  DebtsService,
+  GiftsService,
   InteractionsService,
   NotesService,
-  GiftsService,
-  DebtsService,
 } from "@/client"
-import { EditContactDialog } from "@/components/Contacts/EditContactDialog"
 import { AddressesCard } from "@/components/Contacts/AddressesCard"
 import { ContactFieldsCard } from "@/components/Contacts/ContactFieldsCard"
 import { CustomFieldsCard } from "@/components/Contacts/CustomFieldsCard"
+import { EditContactDialog } from "@/components/Contacts/EditContactDialog"
 import { LifeEventsCard } from "@/components/Contacts/LifeEventsCard"
 import { PetsCard } from "@/components/Contacts/PetsCard"
 import { RelationshipsCard } from "@/components/Contacts/RelationshipsCard"
-import { AddInteractionDialog } from "@/components/Interactions/AddInteractionDialog"
-import { AddGift } from "@/components/Gifts/AddGift"
 import { AddDebt } from "@/components/Debts/AddDebt"
-import type {
-  InteractionPublic,
-  NotePublic,
-  GiftPublic,
-  DebtPublic,
-} from "@/client"
+import { AddGift } from "@/components/Gifts/AddGift"
+import { AddInteractionDialog } from "@/components/Interactions/AddInteractionDialog"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export const Route = createFileRoute("/_layout/contacts/$contactId")({
   loader: async ({ params }) => {
@@ -227,8 +226,7 @@ function ContactDetailPage() {
       <Tabs defaultValue="interactions">
         <TabsList>
           <TabsTrigger value="interactions">
-            Interactions{" "}
-            {!interactionsLoading && `(${interactions.length})`}
+            Interactions {!interactionsLoading && `(${interactions.length})`}
           </TabsTrigger>
           <TabsTrigger value="notes">
             Notes {!notesLoading && `(${notes.length})`}
@@ -312,9 +310,17 @@ function ContactDetailPage() {
                     <div className="flex justify-between items-start">
                       <div>
                         <p className="font-medium text-sm">{gift.name}</p>
-                        {gift.description && <p className="text-sm text-muted-foreground">{gift.description}</p>}
+                        {gift.description && (
+                          <p className="text-sm text-muted-foreground">
+                            {gift.description}
+                          </p>
+                        )}
                       </div>
-                      {gift.value_amount && <p className="text-sm font-medium">${gift.value_amount.toFixed(2)}</p>}
+                      {gift.value_amount && (
+                        <p className="text-sm font-medium">
+                          ${gift.value_amount.toFixed(2)}
+                        </p>
+                      )}
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
                       {gift.status} {gift.occasion && `— ${gift.occasion}`}
@@ -341,15 +347,23 @@ function ContactDetailPage() {
                   <CardContent>
                     <div className="flex justify-between items-start">
                       <div>
-                        <p className="font-medium text-sm">{debt.reason || "Debt"}</p>
+                        <p className="font-medium text-sm">
+                          {debt.reason || "Debt"}
+                        </p>
                         <p className="text-xs text-muted-foreground">
-                          {debt.direction === "they_owe" ? "They owe me" : "I owe them"}
+                          {debt.direction === "they_owe"
+                            ? "They owe me"
+                            : "I owe them"}
                         </p>
                       </div>
-                      <p className="text-sm font-medium">${debt.amount.toFixed(2)}</p>
+                      <p className="text-sm font-medium">
+                        ${debt.amount.toFixed(2)}
+                      </p>
                     </div>
                     {debt.settled_at && (
-                      <p className="text-xs text-muted-foreground mt-1">Settled: {formatDate(debt.settled_at)}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Settled: {formatDate(debt.settled_at)}
+                      </p>
                     )}
                   </CardContent>
                 </Card>

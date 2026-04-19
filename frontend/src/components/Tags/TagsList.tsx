@@ -2,8 +2,8 @@ import { useSuspenseQuery } from "@tanstack/react-query"
 
 import { TagsService } from "@/client"
 import { DataTable } from "@/components/Common/DataTable"
-import { columns } from "./columns"
 import { AddTagDialog } from "./AddTagDialog"
+import { columns } from "./columns"
 
 export const TagsList = () => {
   const { data } = useSuspenseQuery({

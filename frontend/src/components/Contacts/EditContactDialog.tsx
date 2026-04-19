@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react"
+import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Edit } from "lucide-react"
-
-import { ContactsService } from "@/client"
+import { useEffect, useState } from "react"
+import { useForm } from "react-hook-form"
+import { z } from "zod"
 import type { ContactPublic, ContactUpdate } from "@/client"
+import { ContactsService } from "@/client"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -24,9 +26,6 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import useCustomToast from "@/hooks/useCustomToast"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
-import { zodResolver } from "@hookform/resolvers/zod"
 
 const contactUpdateSchema = z.object({
   first_name: z.string().min(1, "First name is required"),
@@ -129,9 +128,7 @@ export const EditContactDialog = ({ contact }: EditContactDialogProps) => {
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Contact</DialogTitle>
-          <DialogDescription>
-            Update the contact information.
-          </DialogDescription>
+          <DialogDescription>Update the contact information.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -240,7 +237,9 @@ export const EditContactDialog = ({ contact }: EditContactDialogProps) => {
                       type="number"
                       placeholder="30"
                       {...field}
-                      onChange={(e) => field.onChange(e.target.valueAsNumber || null)}
+                      onChange={(e) =>
+                        field.onChange(e.target.valueAsNumber || null)
+                      }
                     />
                   </FormControl>
                   <FormMessage />
@@ -270,7 +269,9 @@ export const EditContactDialog = ({ contact }: EditContactDialogProps) => {
               disabled={updateContactMutation.isPending}
               className="w-full"
             >
-              {updateContactMutation.isPending ? "Updating..." : "Update Contact"}
+              {updateContactMutation.isPending
+                ? "Updating..."
+                : "Update Contact"}
             </Button>
           </form>
         </Form>

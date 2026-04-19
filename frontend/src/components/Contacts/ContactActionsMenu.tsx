@@ -1,7 +1,7 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useNavigate } from "@tanstack/react-router"
 import { MoreHorizontal, Trash2 } from "lucide-react"
 import { useState } from "react"
-import { useNavigate } from "@tanstack/react-router"
-
 import type { ContactPublic } from "@/client"
 import { ContactsService } from "@/client"
 import { Button } from "@/components/ui/button"
@@ -12,7 +12,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import useCustomToast from "@/hooks/useCustomToast"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 
 interface ContactActionsMenuProps {
   contact: ContactPublic
