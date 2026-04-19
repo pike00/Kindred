@@ -4,12 +4,15 @@ import uuid
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
-from sqlmodel import func, select
+from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
-from app.crud import create_custom_field_definition, create_custom_field_value
+from app.crud import (
+    contact_visible,
+    create_custom_field_definition,
+    create_custom_field_value,
+)
 from app.models import (
-    Contact,
     CustomFieldDefinition,
     CustomFieldDefinitionCreate,
     CustomFieldDefinitionPublic,
@@ -21,6 +24,11 @@ from app.models import (
 )
 
 router = APIRouter(prefix="/custom-fields", tags=["custom-fields"])
+
+
+def _require_contact_visible(session: Any, user: Any, contact_id: uuid.UUID) -> None:
+    if not contact_visible(session=session, user=user, contact_id=contact_id):
+        raise HTTPException(status_code=404, detail="Contact not found")
 
 
 # ─── Field Definitions ─────────────────────────────────────────────────────
@@ -106,11 +114,7 @@ def list_field_values(
     contact_id: uuid.UUID,
 ) -> Any:
     """List custom field values for a contact."""
-    contact = session.get(Contact, contact_id)
-    if not contact:
-        raise HTTPException(status_code=404, detail="Contact not found")
-    if contact.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
+    _require_contact_visible(session, current_user, contact_id)
 
     statement = select(CustomFieldValue).where(CustomFieldValue.contact_id == contact_id)
     values = session.exec(statement).all()
@@ -129,11 +133,7 @@ def create_field_value(
     value_in: CustomFieldValueCreate,
 ) -> Any:
     """Create a custom field value for a contact."""
-    contact = session.get(Contact, value_in.contact_id)
-    if not contact:
-        raise HTTPException(status_code=404, detail="Contact not found")
-    if contact.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
+    _require_contact_visible(session, current_user, value_in.contact_id)
 
     value = create_custom_field_value(session=session, field_value_in=value_in)
     return CustomFieldValuePublic.model_validate(value)
@@ -149,12 +149,9 @@ def update_field_value(
 ) -> Any:
     """Update a custom field value."""
     value = session.get(CustomFieldValue, value_id)
-    if not value:
+    if value is None:
         raise HTTPException(status_code=404, detail="Value not found")
-
-    contact = session.get(Contact, value.contact_id)
-    if contact.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
+    _require_contact_visible(session, current_user, value.contact_id)
 
     update_data = value_in.model_dump(exclude_unset=True)
     value.sqlmodel_update(update_data)
@@ -172,12 +169,9 @@ def delete_field_value(
 ) -> Any:
     """Delete a custom field value."""
     value = session.get(CustomFieldValue, value_id)
-    if not value:
+    if value is None:
         raise HTTPException(status_code=404, detail="Value not found")
-
-    contact = session.get(Contact, value.contact_id)
-    if contact.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
+    _require_contact_visible(session, current_user, value.contact_id)
 
     session.delete(value)
     session.commit()
