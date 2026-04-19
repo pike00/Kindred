@@ -1,16 +1,16 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { CalendarDays, MoreHorizontal, Plus } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-
-import { LifeEventsService } from "@/client"
 import type {
   LifeEventCreate,
   LifeEventPublic,
   LifeEventUpdate,
 } from "@/client"
+import { LifeEventsService } from "@/client"
+import { EmptyState } from "@/components/Common/EmptyState"
+import { RowActionsMenu } from "@/components/Common/RowActionsMenu"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -24,12 +24,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import {
   Form,
   FormControl,
@@ -50,6 +44,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import useCustomToast from "@/hooks/useCustomToast"
+import { CalendarHeart, Pencil, Plus, Trash2 } from "@/lib/icons"
 
 const EVENT_TYPES = [
   "birthday",
@@ -166,7 +161,7 @@ function LifeEventFormFields({
       <label className="flex items-center gap-2 text-sm">
         <input
           type="checkbox"
-          className="rounded border-gray-300"
+          className="rounded border-input"
           {...form.register("create_annual_reminder")}
         />
         <span>Create an annual reminder</span>
@@ -195,7 +190,9 @@ function AddLifeEventDialog({ contactId }: { contactId: string }) {
       queryClient.invalidateQueries({ queryKey: ["life-events", contactId] })
     },
     onError: (err) =>
-      showErrorToast(err instanceof Error ? err.message : "Failed to add event"),
+      showErrorToast(
+        err instanceof Error ? err.message : "Failed to add event",
+      ),
   })
 
   const onSubmit = (data: FormData) => {
@@ -287,10 +284,14 @@ function EditLifeEventDialog({
     onSuccess: () => {
       showSuccessToast("Life event updated")
       onOpenChange(false)
-      queryClient.invalidateQueries({ queryKey: ["life-events", event.contact_id] })
+      queryClient.invalidateQueries({
+        queryKey: ["life-events", event.contact_id],
+      })
     },
     onError: (err) =>
-      showErrorToast(err instanceof Error ? err.message : "Failed to update event"),
+      showErrorToast(
+        err instanceof Error ? err.message : "Failed to update event",
+      ),
   })
 
   const onSubmit = (data: FormData) => {
@@ -339,10 +340,14 @@ function LifeEventRow({ event }: { event: LifeEventPublic }) {
     mutationFn: () => LifeEventsService.deleteLifeEvent({ eventId: event.id }),
     onSuccess: () => {
       showSuccessToast("Life event deleted")
-      queryClient.invalidateQueries({ queryKey: ["life-events", event.contact_id] })
+      queryClient.invalidateQueries({
+        queryKey: ["life-events", event.contact_id],
+      })
     },
     onError: (err) =>
-      showErrorToast(err instanceof Error ? err.message : "Failed to delete event"),
+      showErrorToast(
+        err instanceof Error ? err.message : "Failed to delete event",
+      ),
   })
 
   return (
@@ -365,26 +370,30 @@ function LifeEventRow({ event }: { event: LifeEventPublic }) {
             </p>
           )}
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="size-7 p-0">
-              <MoreHorizontal className="size-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setEditOpen(true)}>Edit</DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-destructive"
-              onClick={() => {
-                if (window.confirm("Delete this event?")) deleteMutation.mutate()
-              }}
-            >
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <RowActionsMenu
+          items={[
+            {
+              label: "Edit",
+              icon: Pencil,
+              onSelect: () => setEditOpen(true),
+            },
+            {
+              label: "Delete",
+              icon: Trash2,
+              variant: "destructive",
+              onSelect: () => {
+                if (window.confirm("Delete this event?"))
+                  deleteMutation.mutate()
+              },
+            },
+          ]}
+        />
       </div>
-      <EditLifeEventDialog event={event} open={editOpen} onOpenChange={setEditOpen} />
+      <EditLifeEventDialog
+        event={event}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+      />
     </>
   )
 }
@@ -400,7 +409,7 @@ export function LifeEventsCard({ contactId }: { contactId: string }) {
     <Card>
       <CardHeader className="flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2">
-          <CalendarDays className="size-4" /> Life events
+          <CalendarHeart className="size-4" /> Life events
         </CardTitle>
         <AddLifeEventDialog contactId={contactId} />
       </CardHeader>
@@ -414,7 +423,11 @@ export function LifeEventsCard({ contactId }: { contactId: string }) {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">No life events</p>
+          <EmptyState
+            icon={CalendarHeart}
+            title="No life events"
+            description="Track birthdays, anniversaries, and milestones for this contact."
+          />
         )}
       </CardContent>
     </Card>

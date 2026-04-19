@@ -1,10 +1,10 @@
 import { useSuspenseQuery } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
 
-import { ContactsService, type ContactPublic } from "@/client"
+import { type ContactPublic, ContactsService } from "@/client"
 import { DataTable } from "@/components/Common/DataTable"
-import { columns } from "./columns"
 import { AddContactDialog } from "./AddContactDialog"
+import { columns } from "./columns"
 
 export const ContactsList = () => {
   const navigate = useNavigate()
@@ -23,7 +23,10 @@ export const ContactsList = () => {
         columns={columns}
         data={data?.data || []}
         onRowClick={(contact: ContactPublic) =>
-          navigate({ to: "/contacts/$contactId", params: { contactId: contact.id } })
+          navigate({
+            to: "/contacts/$contactId",
+            params: { contactId: contact.id },
+          })
         }
       />
     </div>

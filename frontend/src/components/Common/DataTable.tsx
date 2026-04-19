@@ -5,13 +5,6 @@ import {
   getPaginationRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import {
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-} from "lucide-react"
-
 import { Button } from "@/components/ui/button"
 import {
   Select,
@@ -28,6 +21,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+} from "@/lib/icons"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]

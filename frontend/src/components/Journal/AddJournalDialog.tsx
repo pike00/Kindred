@@ -1,8 +1,10 @@
-import { useState } from "react"
+import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-
-import { JournalService } from "@/client"
+import { useState } from "react"
+import { useForm } from "react-hook-form"
+import { z } from "zod"
 import type { JournalEntryCreate } from "@/client"
+import { JournalService } from "@/client"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -23,9 +25,6 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import useCustomToast from "@/hooks/useCustomToast"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
-import { zodResolver } from "@hookform/resolvers/zod"
 
 const journalCreateSchema = z.object({
   body: z.string().min(1, "Entry content is required"),
@@ -45,7 +44,7 @@ export const AddJournalDialog = () => {
     defaultValues: {
       body: "",
       mood: "",
-      entry_date: new Date().toISOString().split('T')[0],
+      entry_date: new Date().toISOString().split("T")[0],
     },
   })
 
@@ -118,10 +117,7 @@ export const AddJournalDialog = () => {
                 <FormItem>
                   <FormLabel>Mood</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="How are you feeling?"
-                      {...field}
-                    />
+                    <Input placeholder="How are you feeling?" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

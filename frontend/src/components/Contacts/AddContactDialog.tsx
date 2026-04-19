@@ -1,8 +1,10 @@
-import { useState } from "react"
+import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-
-import { ContactsService } from "@/client"
+import { useState } from "react"
+import { useForm } from "react-hook-form"
+import { z } from "zod"
 import type { ContactCreate } from "@/client"
+import { ContactsService } from "@/client"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -23,9 +25,6 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import useCustomToast from "@/hooks/useCustomToast"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
-import { zodResolver } from "@hookform/resolvers/zod"
 
 const contactCreateSchema = z.object({
   first_name: z.string().min(1, "First name is required"),

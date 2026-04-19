@@ -1,10 +1,8 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Plus } from "lucide-react"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-
 import { type DebtCreate, DebtsService } from "@/client"
 import { Button } from "@/components/ui/button"
 import {
@@ -26,6 +24,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { LoadingButton } from "@/components/ui/loading-button"
 import {
   Select,
   SelectContent,
@@ -33,8 +32,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { LoadingButton } from "@/components/ui/loading-button"
 import useCustomToast from "@/hooks/useCustomToast"
+import { Plus } from "@/lib/icons"
 
 const schema = z.object({
   direction: z.enum(["i_owe", "they_owe"]),
@@ -72,7 +71,10 @@ export function AddDebt({ contactId }: AddDebtProps) {
       form.reset()
       setIsOpen(false)
     },
-    onError: (error) => showErrorToast(error instanceof Error ? error.message : "Failed to add debt"),
+    onError: (error) =>
+      showErrorToast(
+        error instanceof Error ? error.message : "Failed to add debt",
+      ),
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["debts", contactId] })
     },
@@ -154,11 +156,7 @@ export function AddDebt({ contactId }: AddDebtProps) {
                     <FormItem>
                       <FormLabel>Currency</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="USD"
-                          maxLength={3}
-                          {...field}
-                        />
+                        <Input placeholder="USD" maxLength={3} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

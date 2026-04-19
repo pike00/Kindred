@@ -2,8 +2,8 @@ import { useSuspenseQuery } from "@tanstack/react-query"
 
 import { RemindersService } from "@/client"
 import { DataTable } from "@/components/Common/DataTable"
-import { columns } from "./columns"
 import { AddReminderDialog } from "./AddReminderDialog"
+import { columns } from "./columns"
 
 export const RemindersList = () => {
   const { data } = useSuspenseQuery({

@@ -1,17 +1,10 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Send } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-
 import { type InteractionCreate, InteractionsService } from "@/client"
 import { Button } from "@/components/ui/button"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-} from "@/components/ui/form"
+import { Form, FormControl, FormField, FormItem } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import {
   Select,
@@ -21,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import useCustomToast from "@/hooks/useCustomToast"
+import { Send } from "@/lib/icons"
 
 const channels = [
   { value: "call", label: "Call" },
@@ -59,7 +53,10 @@ export function QuickLog({ contactId }: QuickLogProps) {
       showSuccessToast("Interaction logged")
       form.reset()
     },
-    onError: (error) => showErrorToast(error instanceof Error ? error.message : "Failed to log interaction"),
+    onError: (error) =>
+      showErrorToast(
+        error instanceof Error ? error.message : "Failed to log interaction",
+      ),
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["interactions", contactId] })
       queryClient.invalidateQueries({ queryKey: ["contact", contactId] })
@@ -78,7 +75,10 @@ export function QuickLog({ contactId }: QuickLogProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-center gap-2">
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="flex items-center gap-2"
+      >
         <FormField
           control={form.control}
           name="channel"

@@ -1,12 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
-import { MoreHorizontal, Plus } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-
-import { ContactsService, RelationshipsService } from "@/client"
 import type {
   ContactPublic,
   RelationshipCreate,
@@ -14,6 +11,9 @@ import type {
   RelationshipPublic,
   RelationshipUpdate,
 } from "@/client"
+import { ContactsService, RelationshipsService } from "@/client"
+import { EmptyState } from "@/components/Common/EmptyState"
+import { RowActionsMenu } from "@/components/Common/RowActionsMenu"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -27,12 +27,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import {
   Form,
   FormControl,
@@ -53,6 +47,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import useCustomToast from "@/hooks/useCustomToast"
+import { HeartHandshake, Pencil, Plus, Trash2 } from "@/lib/icons"
 
 const RELATIONSHIP_GROUPS: RelationshipGroup[] = [
   "family",
@@ -157,7 +152,8 @@ function AddRelationshipDialog({ contactId }: { contactId: string }) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Related contact <span className="text-destructive">*</span>
+                      Related contact{" "}
+                      <span className="text-destructive">*</span>
                     </FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
@@ -290,7 +286,9 @@ function EditRelationshipDialog({
     onSuccess: () => {
       showSuccessToast("Relationship updated")
       onOpenChange(false)
-      queryClient.invalidateQueries({ queryKey: ["relationships", rel.contact_id] })
+      queryClient.invalidateQueries({
+        queryKey: ["relationships", rel.contact_id],
+      })
     },
     onError: (err) =>
       showErrorToast(
@@ -396,7 +394,9 @@ function RelationshipRow({ rel }: { rel: RelationshipPublic }) {
       RelationshipsService.deleteRelationship({ relId: rel.id }),
     onSuccess: () => {
       showSuccessToast("Relationship deleted")
-      queryClient.invalidateQueries({ queryKey: ["relationships", rel.contact_id] })
+      queryClient.invalidateQueries({
+        queryKey: ["relationships", rel.contact_id],
+      })
     },
     onError: (err) =>
       showErrorToast(
@@ -407,7 +407,8 @@ function RelationshipRow({ rel }: { rel: RelationshipPublic }) {
   // Fetch the related contact lazily so we can show its name.
   const { data: relatedContact } = useQuery({
     queryKey: ["contacts", rel.related_contact_id],
-    queryFn: () => ContactsService.getContact({ contactId: rel.related_contact_id }),
+    queryFn: () =>
+      ContactsService.getContact({ contactId: rel.related_contact_id }),
     staleTime: 30_000,
   })
 
@@ -427,7 +428,9 @@ function RelationshipRow({ rel }: { rel: RelationshipPublic }) {
             >
               {relatedName}
             </Link>
-            <span className="text-muted-foreground">&mdash; {rel.relationship_type}</span>
+            <span className="text-muted-foreground">
+              &mdash; {rel.relationship_type}
+            </span>
             <Badge variant="secondary" className="text-[10px]">
               {rel.relationship_group}
             </Badge>
@@ -438,26 +441,30 @@ function RelationshipRow({ rel }: { rel: RelationshipPublic }) {
             </p>
           )}
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="size-7 p-0">
-              <MoreHorizontal className="size-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setEditOpen(true)}>Edit</DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-destructive"
-              onClick={() => {
-                if (window.confirm("Delete this relationship?")) deleteMutation.mutate()
-              }}
-            >
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <RowActionsMenu
+          items={[
+            {
+              label: "Edit",
+              icon: Pencil,
+              onSelect: () => setEditOpen(true),
+            },
+            {
+              label: "Delete",
+              icon: Trash2,
+              variant: "destructive",
+              onSelect: () => {
+                if (window.confirm("Delete this relationship?"))
+                  deleteMutation.mutate()
+              },
+            },
+          ]}
+        />
       </div>
-      <EditRelationshipDialog rel={rel} open={editOpen} onOpenChange={setEditOpen} />
+      <EditRelationshipDialog
+        rel={rel}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+      />
     </>
   )
 }
@@ -473,7 +480,9 @@ export function RelationshipsCard({ contactId }: { contactId: string }) {
   return (
     <Card>
       <CardHeader className="flex-row items-center justify-between">
-        <CardTitle>Relationships</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <HeartHandshake className="size-4" /> Relationships
+        </CardTitle>
         <AddRelationshipDialog contactId={contactId} />
       </CardHeader>
       <CardContent>
@@ -486,7 +495,11 @@ export function RelationshipsCard({ contactId }: { contactId: string }) {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">No relationships</p>
+          <EmptyState
+            icon={HeartHandshake}
+            title="No relationships"
+            description="Link this contact to family members, partners, friends, or coworkers."
+          />
         )}
       </CardContent>
     </Card>

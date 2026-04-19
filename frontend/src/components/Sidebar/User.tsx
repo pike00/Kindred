@@ -1,5 +1,4 @@
 import { Link as RouterLink } from "@tanstack/react-router"
-import { ChevronsUpDown, LogOut, Settings } from "lucide-react"
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
@@ -17,6 +16,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import useAuth from "@/hooks/useAuth"
+import { ChevronsUpDown, LogOut, Settings } from "@/lib/icons"
 import { getInitials } from "@/utils"
 
 interface UserInfoProps {
@@ -28,7 +28,7 @@ function UserInfo({ fullName, email }: UserInfoProps) {
   return (
     <div className="flex items-center gap-2.5 w-full min-w-0">
       <Avatar className="size-8">
-        <AvatarFallback className="bg-zinc-600 text-white">
+        <AvatarFallback className="bg-primary text-primary-foreground text-xs font-medium">
           {getInitials(fullName || "User")}
         </AvatarFallback>
       </Avatar>
