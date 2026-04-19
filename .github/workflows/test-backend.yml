@@ -23,6 +23,13 @@ jobs:
         uses: astral-sh/setup-uv@v7
       - name: Create .env from example
         run: cp .env.example .env
+      - name: Pre-create external networks and volumes
+        run: |
+          docker network create pikenet-private || true
+          docker network create pikenet-internal-crm || true
+          docker volume create crm-db || true
+          docker volume create crm-redis || true
+          docker volume create crm-meili || true
       - run: docker compose down -v --remove-orphans
       - run: docker compose up -d db
       - name: Migrate DB
