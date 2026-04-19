@@ -18,6 +18,7 @@ from app.api.routes import (
     private,
     relationships,
     reminders,
+    tag_shares,
     tags,
     users,
     utils,
@@ -33,6 +34,7 @@ api_router.include_router(utils.router)
 # CRM routes
 api_router.include_router(contacts.router)
 api_router.include_router(tags.router)
+api_router.include_router(tag_shares.router)
 api_router.include_router(groups.router)
 api_router.include_router(contact_fields.router)
 api_router.include_router(addresses.router)
