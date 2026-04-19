@@ -24,12 +24,14 @@ jobs:
       - name: Create .env from example
         run: cp .env.example .env
       - run: docker compose down -v --remove-orphans
-      - run: docker compose up -d db mailcatcher
+      - run: docker compose up -d db
       - name: Migrate DB
         run: uv run bash scripts/prestart.sh
         working-directory: backend
       - name: Run tests
-        run: uv run bash scripts/tests-start.sh "Coverage for ${{ github.sha }}"
+        env:
+          SHA: ${{ github.sha }}
+        run: uv run bash scripts/tests-start.sh "Coverage for $SHA"
         working-directory: backend
       - run: docker compose down -v --remove-orphans
       - name: Store coverage files
