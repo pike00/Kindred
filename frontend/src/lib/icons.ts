@@ -28,6 +28,7 @@ export {
   // Forms / inputs
   Eye,
   EyeOff,
+  Film,
   HeartHandshake,
   // Sidebar nav
   Home,

@@ -52,11 +52,7 @@ export function Logo({
   }
 
   const img = (
-    <img
-      src={src}
-      alt="Kindred"
-      className={cn("h-7 w-auto", className)}
-    />
+    <img src={src} alt="Kindred" className={cn("h-7 w-auto", className)} />
   )
 
   return asLink ? <Link to="/">{img}</Link> : img
