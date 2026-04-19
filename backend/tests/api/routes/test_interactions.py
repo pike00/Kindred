@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime, timezone
 
 from fastapi.testclient import TestClient
+from sqlmodel import Session
 
 from app.core.config import settings
 
@@ -167,3 +168,85 @@ def test_delete_interaction_not_found(
         headers=superuser_token_headers,
     )
     assert r.status_code == 404
+
+
+def test_interaction_isolation_between_users(
+    client: TestClient, db: Session
+) -> None:
+    from tests.utils.user import (
+        authentication_token_from_email,
+        create_random_user,
+    )
+
+    alice = create_random_user(db)
+    bob = create_random_user(db)
+    alice_h = authentication_token_from_email(
+        client=client, email=alice.email, db=db
+    )
+    bob_h = authentication_token_from_email(
+        client=client, email=bob.email, db=db
+    )
+    alice_cid = _create_contact(client, alice_h)
+
+    ix = client.post(
+        f"{settings.API_V1_STR}/interactions/",
+        headers=alice_h,
+        json={
+            "contact_id": alice_cid,
+            "channel": "call",
+            "occurred_at": datetime.now(timezone.utc).isoformat(),
+        },
+    ).json()
+
+    r = client.get(f"{settings.API_V1_STR}/interactions/", headers=bob_h)
+    assert r.status_code == 200
+    assert ix["id"] not in [i["id"] for i in r.json()["data"]]
+
+    r = client.patch(
+        f"{settings.API_V1_STR}/interactions/{ix['id']}",
+        headers=bob_h,
+        json={"notes": "hacked"},
+    )
+    assert r.status_code == 404
+
+
+def test_shared_tag_exposes_interaction(
+    client: TestClient, db: Session
+) -> None:
+    from tests.utils.user import (
+        authentication_token_from_email,
+        create_random_user,
+    )
+
+    alice = create_random_user(db)
+    bob = create_random_user(db)
+    alice_h = authentication_token_from_email(
+        client=client, email=alice.email, db=db
+    )
+    bob_h = authentication_token_from_email(
+        client=client, email=bob.email, db=db
+    )
+
+    tag = client.post(
+        f"{settings.API_V1_STR}/tags/", headers=alice_h,
+        json={"name": f"share-{uuid.uuid4().hex[:6]}"},
+    ).json()
+    contact = client.post(
+        f"{settings.API_V1_STR}/contacts/", headers=alice_h,
+        json={"first_name": "Shared", "tag_ids": [tag["id"]]},
+    ).json()
+    ix = client.post(
+        f"{settings.API_V1_STR}/interactions/", headers=alice_h,
+        json={
+            "contact_id": contact["id"],
+            "channel": "call",
+            "occurred_at": datetime.now(timezone.utc).isoformat(),
+        },
+    ).json()
+    client.post(
+        f"{settings.API_V1_STR}/tag-shares/", headers=alice_h,
+        json={"tag_id": tag["id"], "grantee_id": str(bob.id)},
+    )
+
+    r = client.get(f"{settings.API_V1_STR}/interactions/", headers=bob_h)
+    assert ix["id"] in [i["id"] for i in r.json()["data"]]

@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException
 from sqlmodel import func, select
 
 from app.api.deps import CurrentUser, SessionDep
-from app.crud import create_interaction
+from app.crud import create_interaction, visible_contact_ids
 from app.models import (
     Contact,
     Interaction,
@@ -29,14 +29,15 @@ def list_interactions(
     limit: int = 100,
 ) -> Any:
     """List interactions (global or per-contact)."""
-    statement = select(Interaction).where(Interaction.owner_id == current_user.id)
+    visible = visible_contact_ids(current_user)
+    statement = select(Interaction).where(Interaction.contact_id.in_(visible))
 
     if contact_id:
-        contact = session.get(Contact, contact_id)
-        if not contact:
+        check_stmt = select(Contact.id).where(
+            Contact.id == contact_id, Contact.id.in_(visible)
+        )
+        if session.exec(check_stmt).first() is None:
             raise HTTPException(status_code=404, detail="Contact not found")
-        if contact.owner_id != current_user.id:
-            raise HTTPException(status_code=403, detail="Not enough permissions")
 
         statement = statement.where(Interaction.contact_id == contact_id)
 
@@ -62,11 +63,12 @@ def create_interaction_route(
     interaction_in: InteractionCreate,
 ) -> Any:
     """Create a new interaction."""
-    contact = session.get(Contact, interaction_in.contact_id)
-    if not contact:
+    visible = visible_contact_ids(current_user)
+    check_stmt = select(Contact.id).where(
+        Contact.id == interaction_in.contact_id, Contact.id.in_(visible)
+    )
+    if session.exec(check_stmt).first() is None:
         raise HTTPException(status_code=404, detail="Contact not found")
-    if contact.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
 
     interaction = create_interaction(
         session=session, interaction_in=interaction_in, owner_id=current_user.id
@@ -84,10 +86,14 @@ def update_interaction(
 ) -> Any:
     """Update an interaction."""
     interaction = session.get(Interaction, interaction_id)
-    if not interaction:
+    if interaction is None:
         raise HTTPException(status_code=404, detail="Interaction not found")
-    if interaction.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
+    check_stmt = select(Contact.id).where(
+        Contact.id == interaction.contact_id,
+        Contact.id.in_(visible_contact_ids(current_user)),
+    )
+    if session.exec(check_stmt).first() is None:
+        raise HTTPException(status_code=404, detail="Interaction not found")
 
     update_data = interaction_in.model_dump(exclude_unset=True)
     interaction.sqlmodel_update(update_data)
@@ -105,10 +111,14 @@ def delete_interaction(
 ) -> Any:
     """Delete an interaction."""
     interaction = session.get(Interaction, interaction_id)
-    if not interaction:
+    if interaction is None:
         raise HTTPException(status_code=404, detail="Interaction not found")
-    if interaction.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
+    check_stmt = select(Contact.id).where(
+        Contact.id == interaction.contact_id,
+        Contact.id.in_(visible_contact_ids(current_user)),
+    )
+    if session.exec(check_stmt).first() is None:
+        raise HTTPException(status_code=404, detail="Interaction not found")
 
     session.delete(interaction)
     session.commit()
