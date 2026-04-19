@@ -1,5 +1,3 @@
-import { Monitor, Moon, Sun } from "lucide-react"
-
 import { type Theme, useTheme } from "@/components/theme-provider"
 import { Button } from "@/components/ui/button"
 import {
@@ -13,6 +11,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { Monitor, Moon, Sun } from "@/lib/icons"
 
 type LucideIcon = React.FC<React.SVGProps<SVGSVGElement>>
 

@@ -251,7 +251,7 @@ export const EditContactDialog = ({ contact }: EditContactDialogProps) => {
                 <input
                   type="checkbox"
                   {...form.register("is_favorite")}
-                  className="rounded border-gray-300"
+                  className="rounded border-input"
                 />
                 <span>Favorite</span>
               </label>
@@ -259,7 +259,7 @@ export const EditContactDialog = ({ contact }: EditContactDialogProps) => {
                 <input
                   type="checkbox"
                   {...form.register("is_archived")}
-                  className="rounded border-gray-300"
+                  className="rounded border-input"
                 />
                 <span>Archived</span>
               </label>

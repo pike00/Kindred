@@ -1,7 +1,7 @@
 import type { ColumnDef } from "@tanstack/react-table"
-import { BookOpen } from "lucide-react"
 
 import type { JournalEntryPublic } from "@/client"
+import { NotebookPen } from "@/lib/icons"
 import { JournalActionsMenu } from "./JournalActionsMenu"
 
 export const columns: ColumnDef<JournalEntryPublic>[] = [
@@ -12,7 +12,7 @@ export const columns: ColumnDef<JournalEntryPublic>[] = [
       const entry = row.original
       return (
         <div className="flex items-start gap-3">
-          <BookOpen className="h-4 w-4 text-muted-foreground mt-1 flex-shrink-0" />
+          <NotebookPen className="h-4 w-4 text-muted-foreground mt-1 flex-shrink-0" />
           <div>
             <div className="text-sm text-muted-foreground line-clamp-2">
               {entry.body}

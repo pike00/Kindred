@@ -155,7 +155,7 @@ function FieldFormFields({ form }: FieldFormProps) {
       <label className="flex items-center gap-2 text-sm">
         <input
           type="checkbox"
-          className="rounded border-gray-300"
+          className="rounded border-input"
           {...form.register("is_primary")}
         />
         <span>Primary</span>
