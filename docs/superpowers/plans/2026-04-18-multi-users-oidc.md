@@ -10,6 +10,8 @@
 
 **Spec:** [docs/superpowers/specs/2026-04-18-multi-users-oidc-design.md](../specs/2026-04-18-multi-users-oidc-design.md) — authoritative for rationale and edge cases; this plan is the mechanical execution.
 
+> **Revision 2026-04-18 (after initial draft):** pivoted from Zitadel Cloud to **Cloudflare Access (Zero Trust)**. Impact is scoped: Tasks 2, 3, 5, 7–11 unchanged (model/visibility/CRUD/compose are IdP-agnostic). Task 4 (verifier), Task 6 (dispatch) adapt to read from `Cf-Access-Jwt-Assertion` header / `CF_Authorization` cookie and fetch JWKS directly from CF rather than via `.well-known/openid-configuration`. Tasks 12–14 are rewritten: Task 12 becomes CF Access Application setup; Task 13 collapses to a minimal `auth.ts` (no `oidc-client-ts`, no PKCE); Task 14 removes the login page and wires logout-to-CF. One new env var (`OIDC_JWKS_URL`) joins the ones added in Task 1.
+
 ---
 
 ## Phase 0 — Schema + dual-mode backend (no behavior change)
@@ -166,13 +168,38 @@ Run `uv run alembic downgrade -1 && uv run alembic upgrade head` from `backend/`
 
 ---
 
-### Task 4: OIDC token verifier (`core/oidc.py`)
+### Task 4: JWT + JWKS token verifier (`core/oidc.py`) — Cloudflare Access shaped
 
 **Files:**
+- Modify: `backend/app/core/config.py` (add `OIDC_JWKS_URL`)
 - Create: `backend/app/core/oidc.py`
 - Create: `backend/tests/core/__init__.py` and `backend/tests/core/test_oidc.py`
 
-- [ ] **Step 1: Write failing test with a stubbed JWKS**
+CF Access does not publish an OIDC discovery document at `.well-known/openid-configuration` for Access apps. It publishes a JWKS directly at `https://<team>.cloudflareaccess.com/cdn-cgi/access/certs`. The verifier therefore fetches JWKS from an explicit `OIDC_JWKS_URL` config value. That keeps the module provider-generic: any IdP whose JWKS URL you know will work.
+
+- [ ] **Step 1: Add `OIDC_JWKS_URL` setting**
+
+In `backend/app/core/config.py`, inside the `Settings` class add:
+
+```python
+    OIDC_JWKS_URL: str = ""
+```
+
+And extend the existing `_check_oidc_config` validator to also require `OIDC_JWKS_URL` when `AUTH_MODE` is `oidc` or `both`:
+
+```python
+    @model_validator(mode="after")
+    def _check_oidc_config(self) -> Self:
+        if self.AUTH_MODE in ("oidc", "both") and not (
+            self.OIDC_ISSUER_URL and self.OIDC_AUDIENCE and self.OIDC_JWKS_URL
+        ):
+            raise ValueError(
+                "AUTH_MODE=oidc or both requires OIDC_ISSUER_URL, OIDC_AUDIENCE, and OIDC_JWKS_URL"
+            )
+        return self
+```
+
+- [ ] **Step 2: Write failing test with a stubbed JWKS**
 
 Create `backend/tests/core/test_oidc.py`:
 
@@ -213,49 +240,75 @@ def _jwks(key) -> dict:
                       "alg": "RS256", "n": _b64(pn.n), "e": _b64(pn.e)}]}
 
 
-def _make_token(key, *, aud: str, iss: str, sub: str = "user-1", exp_offset: int = 300):
+def _make_token(key, *, aud: str, iss: str, sub: str = "user-1",
+                 email: str = "u@t.x", exp_offset: int = 300):
     now = int(time.time())
     return jwt.encode(
-        {"sub": sub, "aud": aud, "iss": iss, "iat": now, "exp": now + exp_offset},
+        {"sub": sub, "aud": aud, "iss": iss, "email": email,
+         "iat": now, "exp": now + exp_offset},
         _pem(key), algorithm="RS256", headers={"kid": "test-key"},
     )
 
 
+def _cf_env(monkeypatch):
+    monkeypatch.setattr(oidc.settings, "OIDC_ISSUER_URL",
+                        "https://team.cloudflareaccess.com")
+    monkeypatch.setattr(oidc.settings, "OIDC_AUDIENCE", "aud-hash-123")
+    monkeypatch.setattr(oidc.settings, "OIDC_JWKS_URL",
+                        "https://team.cloudflareaccess.com/cdn-cgi/access/certs")
+
+
 def test_verify_success(rsa_key, monkeypatch):
-    monkeypatch.setattr(oidc.settings, "OIDC_ISSUER_URL", "https://issuer.test")
-    monkeypatch.setattr(oidc.settings, "OIDC_AUDIENCE", "crm-api")
+    _cf_env(monkeypatch)
     oidc._reset_cache_for_tests()
-    token = _make_token(rsa_key, aud="crm-api", iss="https://issuer.test")
-    with patch("app.core.oidc._fetch_oidc_config") as fc, \
-         patch("app.core.oidc._fetch_jwks") as fj:
-        fc.return_value = {"jwks_uri": "https://issuer.test/jwks"}
-        fj.return_value = _jwks(rsa_key)
+    token = _make_token(rsa_key, aud="aud-hash-123",
+                         iss="https://team.cloudflareaccess.com")
+    with patch("app.core.oidc._fetch_jwks", return_value=_jwks(rsa_key)):
         payload = oidc.verify_oidc_token(token)
     assert payload["sub"] == "user-1"
+    assert payload["email"] == "u@t.x"
 
 
 def test_wrong_audience(rsa_key, monkeypatch):
-    monkeypatch.setattr(oidc.settings, "OIDC_ISSUER_URL", "https://issuer.test")
-    monkeypatch.setattr(oidc.settings, "OIDC_AUDIENCE", "crm-api")
+    _cf_env(monkeypatch)
     oidc._reset_cache_for_tests()
-    token = _make_token(rsa_key, aud="other", iss="https://issuer.test")
-    with patch("app.core.oidc._fetch_oidc_config") as fc, \
-         patch("app.core.oidc._fetch_jwks") as fj:
-        fc.return_value = {"jwks_uri": "https://issuer.test/jwks"}
-        fj.return_value = _jwks(rsa_key)
+    token = _make_token(rsa_key, aud="other-aud",
+                         iss="https://team.cloudflareaccess.com")
+    with patch("app.core.oidc._fetch_jwks", return_value=_jwks(rsa_key)):
+        with pytest.raises(oidc.OIDCError):
+            oidc.verify_oidc_token(token)
+
+
+def test_wrong_issuer(rsa_key, monkeypatch):
+    _cf_env(monkeypatch)
+    oidc._reset_cache_for_tests()
+    token = _make_token(rsa_key, aud="aud-hash-123",
+                         iss="https://attacker.example.com")
+    with patch("app.core.oidc._fetch_jwks", return_value=_jwks(rsa_key)):
         with pytest.raises(oidc.OIDCError):
             oidc.verify_oidc_token(token)
 
 
 def test_expired(rsa_key, monkeypatch):
-    monkeypatch.setattr(oidc.settings, "OIDC_ISSUER_URL", "https://issuer.test")
-    monkeypatch.setattr(oidc.settings, "OIDC_AUDIENCE", "crm-api")
+    _cf_env(monkeypatch)
     oidc._reset_cache_for_tests()
-    token = _make_token(rsa_key, aud="crm-api", iss="https://issuer.test", exp_offset=-60)
-    with patch("app.core.oidc._fetch_oidc_config") as fc, \
-         patch("app.core.oidc._fetch_jwks") as fj:
-        fc.return_value = {"jwks_uri": "https://issuer.test/jwks"}
-        fj.return_value = _jwks(rsa_key)
+    token = _make_token(rsa_key, aud="aud-hash-123",
+                         iss="https://team.cloudflareaccess.com", exp_offset=-60)
+    with patch("app.core.oidc._fetch_jwks", return_value=_jwks(rsa_key)):
+        with pytest.raises(oidc.OIDCError):
+            oidc.verify_oidc_token(token)
+
+
+def test_missing_kid(rsa_key, monkeypatch):
+    _cf_env(monkeypatch)
+    oidc._reset_cache_for_tests()
+    token = jwt.encode(
+        {"sub": "u", "aud": "aud-hash-123",
+         "iss": "https://team.cloudflareaccess.com",
+         "iat": int(time.time()), "exp": int(time.time()) + 300},
+        _pem(rsa_key), algorithm="RS256",  # no kid in header
+    )
+    with patch("app.core.oidc._fetch_jwks", return_value=_jwks(rsa_key)):
         with pytest.raises(oidc.OIDCError):
             oidc.verify_oidc_token(token)
 
@@ -269,18 +322,23 @@ def test_not_configured(monkeypatch):
 
 Also `touch backend/tests/core/__init__.py`.
 
-- [ ] **Step 2: Add dev dependency**
+- [ ] **Step 3: Add dev dependency**
 
 Run `uv add --dev cryptography` from `backend/`.
 
-- [ ] **Step 3: Run test, expect ImportError**
+- [ ] **Step 4: Run test, expect ImportError**
 
-Run `uv run pytest tests/core/test_oidc.py -q` from `backend/`. Expected: FAIL (`cannot import name 'oidc'`).
+Run `uv run pytest tests/core/test_oidc.py -q` from `backend/`. Expected: FAIL.
 
-- [ ] **Step 4: Implement `backend/app/core/oidc.py`**
+- [ ] **Step 5: Implement `backend/app/core/oidc.py`**
 
 ```python
-"""OIDC token verification. Provider-agnostic: any OIDC-compliant IdP works."""
+"""JWT verification against a remote JWKS. Provider-agnostic by design.
+
+Used here for Cloudflare Access JWT assertions but accepts any JWKS-backed
+issuer (Authelia, Auth0, Keycloak, Zitadel, ...). No OIDC discovery step;
+JWKS URL is supplied explicitly via OIDC_JWKS_URL.
+"""
 from __future__ import annotations
 
 import time
@@ -293,29 +351,19 @@ from app.core.config import settings
 
 
 class OIDCError(Exception):
-    """Raised when an OIDC token cannot be verified."""
+    """Raised when a token cannot be verified."""
 
 
-_CONFIG_TTL_SEC = 3600
 _JWKS_TTL_SEC = 3600
 _ALLOWED_ALGS = ["RS256", "RS384", "RS512", "ES256", "ES384", "ES512"]
 _LEEWAY_SEC = 60
 
-_config_cache: tuple[float, dict[str, Any]] | None = None
 _jwks_cache: tuple[float, dict[str, Any]] | None = None
 
 
 def _reset_cache_for_tests() -> None:
-    global _config_cache, _jwks_cache
-    _config_cache = None
+    global _jwks_cache
     _jwks_cache = None
-
-
-def _fetch_oidc_config() -> dict[str, Any]:
-    url = settings.OIDC_ISSUER_URL.rstrip("/") + "/.well-known/openid-configuration"
-    resp = httpx.get(url, timeout=5.0)
-    resp.raise_for_status()
-    return resp.json()
 
 
 def _fetch_jwks(jwks_uri: str) -> dict[str, Any]:
@@ -324,23 +372,12 @@ def _fetch_jwks(jwks_uri: str) -> dict[str, Any]:
     return resp.json()
 
 
-def _get_oidc_config() -> dict[str, Any]:
-    global _config_cache
-    now = time.time()
-    if _config_cache and (now - _config_cache[0]) < _CONFIG_TTL_SEC:
-        return _config_cache[1]
-    cfg = _fetch_oidc_config()
-    _config_cache = (now, cfg)
-    return cfg
-
-
 def _get_jwks() -> dict[str, Any]:
     global _jwks_cache
     now = time.time()
     if _jwks_cache and (now - _jwks_cache[0]) < _JWKS_TTL_SEC:
         return _jwks_cache[1]
-    cfg = _get_oidc_config()
-    jwks = _fetch_jwks(cfg["jwks_uri"])
+    jwks = _fetch_jwks(settings.OIDC_JWKS_URL)
     _jwks_cache = (now, jwks)
     return jwks
 
@@ -353,8 +390,9 @@ def _key_for_kid(jwks: dict[str, Any], kid: str) -> Any:
 
 
 def verify_oidc_token(token: str) -> dict[str, Any]:
-    """Verify token against the configured OIDC issuer. Returns decoded payload."""
-    if not settings.OIDC_ISSUER_URL or not settings.OIDC_AUDIENCE:
+    """Verify token against configured issuer/audience. Returns decoded payload."""
+    if not (settings.OIDC_ISSUER_URL and settings.OIDC_AUDIENCE
+            and settings.OIDC_JWKS_URL):
         raise OIDCError("OIDC not configured")
     try:
         header = jwt.get_unverified_header(token)
@@ -368,6 +406,7 @@ def verify_oidc_token(token: str) -> dict[str, Any]:
     try:
         key = _key_for_kid(_get_jwks(), kid)
     except OIDCError:
+        # refresh once on kid miss
         global _jwks_cache
         _jwks_cache = None
         key = _key_for_kid(_get_jwks(), kid)
@@ -388,13 +427,13 @@ def verify_oidc_token(token: str) -> dict[str, Any]:
     return payload
 ```
 
-- [ ] **Step 5: Run tests, expect pass**
+- [ ] **Step 6: Run tests, expect pass**
 
-Run `uv run pytest tests/core/test_oidc.py -q` from `backend/`. Expected: 4 passed.
+Run `uv run pytest tests/core/test_oidc.py -q` from `backend/`. Expected: 6 passed.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
-`git commit` message: `feat(auth): add OIDC token verifier with JWKS cache`.
+`git commit` message: `feat(auth): JWT+JWKS verifier (Cloudflare Access compatible)`.
 
 ---
 
@@ -643,14 +682,14 @@ Run `uv run pytest tests/api/test_deps_auth_mode.py -q` from `backend/`. Expecte
 
 - [ ] **Step 3: Rewrite `backend/app/api/deps.py`**
 
-Replace the whole file:
+The OIDC path reads the CF-shaped JWT from the `Cf-Access-Jwt-Assertion` header (primary) or `CF_Authorization` cookie (fallback). The local path keeps reading `Authorization: Bearer`. Replace the whole file:
 
 ```python
 from collections.abc import Generator
 from typing import Annotated
 
 import jwt
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from jwt.exceptions import InvalidTokenError
 from pydantic import ValidationError
@@ -661,6 +700,11 @@ from app.core import oidc, security
 from app.core.config import settings
 from app.core.db import engine
 from app.models import TokenPayload, User
+
+
+CF_ACCESS_HEADER = "Cf-Access-Jwt-Assertion"
+CF_ACCESS_COOKIE = "CF_Authorization"
+
 
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/access-token",
@@ -674,7 +718,18 @@ def get_db() -> Generator[Session, None, None]:
 
 
 SessionDep = Annotated[Session, Depends(get_db)]
-TokenDep = Annotated[str, Depends(reusable_oauth2)]
+LocalTokenDep = Annotated[str | None, Depends(reusable_oauth2)]
+
+
+def _extract_cf_token(request: Request) -> str | None:
+    """Read the CF Access JWT from the header (preferred) or cookie."""
+    header = request.headers.get(CF_ACCESS_HEADER)
+    if header:
+        return header
+    cookie = request.cookies.get(CF_ACCESS_COOKIE)
+    if cookie:
+        return cookie
+    return None
 
 
 def _get_current_user_local(session: Session, token: str) -> User:
@@ -710,21 +765,33 @@ def _get_current_user_oidc(session: Session, token: str) -> User:
     return user
 
 
-def get_current_user(session: SessionDep, token: TokenDep) -> User:
-    if not token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated",
-        )
+def get_current_user(
+    request: Request,
+    session: SessionDep,
+    local_token: LocalTokenDep,
+) -> User:
     mode = settings.AUTH_MODE
+    cf_token = _extract_cf_token(request)
+
     if mode == "local":
-        return _get_current_user_local(session, token)
+        if not local_token:
+            raise HTTPException(status_code=401, detail="Not authenticated")
+        return _get_current_user_local(session, local_token)
+
     if mode == "oidc":
-        return _get_current_user_oidc(session, token)
-    try:
-        return _get_current_user_oidc(session, token)
-    except HTTPException:
-        return _get_current_user_local(session, token)
+        if not cf_token:
+            raise HTTPException(status_code=401, detail="Not authenticated")
+        return _get_current_user_oidc(session, cf_token)
+
+    # both: prefer OIDC (CF), fall back to local Bearer
+    if cf_token:
+        try:
+            return _get_current_user_oidc(session, cf_token)
+        except HTTPException:
+            pass  # fall through to local
+    if local_token:
+        return _get_current_user_local(session, local_token)
+    raise HTTPException(status_code=401, detail="Not authenticated")
 
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
@@ -736,6 +803,64 @@ def get_current_active_superuser(current_user: CurrentUser) -> User:
             status_code=403, detail="The user doesn't have enough privileges"
         )
     return current_user
+```
+
+Also update the Step 1 test file — its signatures call `deps.get_current_user(session=session, token="...")`. The new signature is `(request, session, local_token)`. The tests need a fake `Request`. Use `fastapi.Request` or the helper from `starlette.testclient`. Recommended replacement for the test body:
+
+```python
+from starlette.requests import Request as StarletteRequest
+
+def _fake_request(*, header: str | None = None, cookie: str | None = None):
+    scope = {
+        "type": "http",
+        "headers": ([(b"cf-access-jwt-assertion", header.encode())] if header else []),
+        "path": "/", "method": "GET", "query_string": b"", "raw_path": b"/",
+        "client": ("test", 0),
+    }
+    req = StarletteRequest(scope)
+    if cookie:
+        req.cookies.setdefault("CF_Authorization", cookie)  # type: ignore[attr-defined]
+    return req
+
+
+def test_oidc_mode_uses_verifier(monkeypatch, session):
+    monkeypatch.setattr("app.core.config.settings.AUTH_MODE", "oidc")
+    with patch("app.core.oidc.verify_oidc_token") as v, \
+         patch("app.crud.get_or_create_user_from_claims") as p:
+        v.return_value = {"iss": "https://team.cloudflareaccess.com",
+                           "sub": "s", "email": "oidc@t.x"}
+        p.return_value = type("U", (), {"is_active": True, "id": "x"})()
+        user = deps.get_current_user(
+            request=_fake_request(header="fake.jwt.token"),
+            session=session,
+            local_token=None,
+        )
+    assert user.is_active
+
+
+def test_both_mode_uses_cf_then_falls_back_to_local(monkeypatch, session):
+    monkeypatch.setattr("app.core.config.settings.AUTH_MODE", "both")
+    def _raise(_):
+        raise oidc.OIDCError("nope")
+    with patch("app.core.oidc.verify_oidc_token", side_effect=_raise), \
+         patch("app.api.deps._get_current_user_local") as local:
+        local.return_value = "local-user"
+        user = deps.get_current_user(
+            request=_fake_request(header="bad.cf.jwt"),
+            session=session, local_token="local.bearer",
+        )
+    assert user == "local-user"
+
+
+def test_local_mode_ignores_cf_header(monkeypatch, session):
+    monkeypatch.setattr("app.core.config.settings.AUTH_MODE", "local")
+    with patch("app.api.deps._get_current_user_local") as local:
+        local.return_value = "local-user"
+        user = deps.get_current_user(
+            request=_fake_request(header="cf.jwt.should.be.ignored"),
+            session=session, local_token="local.bearer",
+        )
+    assert user == "local-user"
 ```
 
 - [ ] **Step 4: Run full test suite**
@@ -1111,8 +1236,11 @@ Append to `.env`, `.env.sops`, `.env.example`:
 ```
 # Multi-user auth (Phase 0 keeps AUTH_MODE=local)
 AUTH_MODE=local
+# Cloudflare Access values (populated in Phase 1 / Task 12):
 OIDC_ISSUER_URL=
 OIDC_AUDIENCE=
+OIDC_JWKS_URL=
+# Reserved for future non-CF providers (ignored by CF Access path):
 OIDC_CLIENT_ID_SPA=
 OIDC_JIT_ACTIVE=true
 ```
@@ -1129,19 +1257,20 @@ environment:
   AUTH_MODE: ${AUTH_MODE:-local}
   OIDC_ISSUER_URL: ${OIDC_ISSUER_URL:-}
   OIDC_AUDIENCE: ${OIDC_AUDIENCE:-}
+  OIDC_JWKS_URL: ${OIDC_JWKS_URL:-}
   OIDC_CLIENT_ID_SPA: ${OIDC_CLIENT_ID_SPA:-}
   OIDC_JIT_ACTIVE: ${OIDC_JIT_ACTIVE:-true}
 ```
 
-Frontend service (Vite picks these up as public env):
+Frontend only needs `VITE_AUTH_MODE` (so the login page knows whether to show the local form). Under the `frontend` service `environment:` block:
 
 ```yaml
 environment:
   VITE_AUTH_MODE: ${AUTH_MODE:-local}
-  VITE_OIDC_ISSUER_URL: ${OIDC_ISSUER_URL:-}
-  VITE_OIDC_CLIENT_ID_SPA: ${OIDC_CLIENT_ID_SPA:-}
-  VITE_OIDC_AUDIENCE: ${OIDC_AUDIENCE:-}
+  VITE_CF_LOGOUT_URL: ${OIDC_ISSUER_URL:+${OIDC_ISSUER_URL}/cdn-cgi/access/logout}
 ```
+
+The frontend does NOT need `VITE_OIDC_*` fields: CF Access handles login at the edge, not in the SPA.
 
 - [ ] **Step 3: Boot the stack**
 
@@ -1159,181 +1288,147 @@ Run a curl POST to `/api/v1/login/access-token` with your superuser credentials.
 
 ---
 
-## Phase 1 — IdP tenant setup + frontend OIDC
+## Phase 1 — Cloudflare Access app setup + minimal frontend
 
-### Task 12: Zitadel Cloud tenant setup (human checklist)
+### Task 12: Cloudflare Access Application setup (human checklist)
 
-No code. Record outcomes in `docs/handoff/2026-04-18-zitadel-cloud-setup.md`.
+No code. Record outcomes in `docs/handoff/2026-04-18-cf-access-setup.md`.
 
-- [ ] **Step 1:** Sign up at <https://zitadel.cloud>.
-- [ ] **Step 2:** Create an Instance; record the instance URL (e.g. `https://<slug>.zitadel.cloud`) — this is `OIDC_ISSUER_URL`.
-- [ ] **Step 3:** In the default Organization, create Project `personal-crm`.
-- [ ] **Step 4:** Create Application `crm-frontend`: type `User Agent`, authentication method `PKCE`, redirect URIs:
-  - `http://localhost:5173/auth/callback`
-  - `https://crm.${DOMAIN}/auth/callback`
-  Post-logout URIs:
-  - `http://localhost:5173/`
-  - `https://crm.${DOMAIN}/`
-  Token Settings: **JWT access tokens** (toggle from default opaque).
-  Record `Client ID` → `OIDC_CLIENT_ID_SPA`.
-- [ ] **Step 5:** Create API application `crm-api` (authentication method `JWT`). Record its audience identifier → `OIDC_AUDIENCE`.
-- [ ] **Step 6:** On `crm-frontend` → Token Settings → "Add additional audience" → add `crm-api`. Access tokens issued to the SPA now carry `aud: crm-api`.
-- [ ] **Step 7:** Create user for superuser. Email = existing `FIRST_SUPERUSER` email (exact match enables identity merge). Strong password + TOTP.
-- [ ] **Step 8:** Create user for wife. Email = her real address. Send Zitadel's password-init invite.
-- [ ] **Step 9:** Write `docs/handoff/2026-04-18-zitadel-cloud-setup.md` with: instance URL, project name, SPA client ID, API audience, both user emails, and a short "how to add a new household member" recipe.
-- [ ] **Step 10:** Commit handoff doc: `docs(auth): Zitadel Cloud tenant setup handoff`.
+Prerequisite: `crm.${DOMAIN}` already proxied through Cloudflare (your homelab already does this via tunnel, per recent commits). If not, set that up first.
+
+- [ ] **Step 1:** In Cloudflare Zero Trust dashboard (`one.dash.cloudflare.com`) → **Access → Applications → Add an application → Self-hosted**.
+- [ ] **Step 2:** Application configuration:
+  - **Name**: `personal-crm`
+  - **Session duration**: 24 hours
+  - **Application domain**: `crm.${DOMAIN}`
+  - **Identity providers**: pick whatever you already use for your homelab (Google, email OTP, GitHub, …). Multiple is fine.
+- [ ] **Step 3:** Add a **Policy** to the app:
+  - **Action**: Allow
+  - **Session duration**: inherit
+  - **Include**: `Emails` → add your email, add wife's email
+  - Leave Require/Exclude empty
+- [ ] **Step 4:** After creation, copy the **Application Audience (AUD) Tag** from the app's Overview tab → this is `OIDC_AUDIENCE` (a long hex string).
+- [ ] **Step 5:** Your team domain (visible in Zero Trust → Settings → General → Team domain) has the form `<team-name>.cloudflareaccess.com`. Record:
+  - `OIDC_ISSUER_URL = https://<team-name>.cloudflareaccess.com`
+  - `OIDC_JWKS_URL = https://<team-name>.cloudflareaccess.com/cdn-cgi/access/certs`
+- [ ] **Step 6:** Test the policy: visit `https://crm.${DOMAIN}` in an incognito browser. You should be redirected to CF's Access login, authenticate, then reach the app (still showing the existing local login since `AUTH_MODE=local` until Phase 2).
+- [ ] **Step 7:** Write `docs/handoff/2026-04-18-cf-access-setup.md` with: team domain, AUD tag, allowlisted emails, a short "how to add another household member" recipe (just edit the Access policy's Include list).
+- [ ] **Step 8:** Commit handoff doc: `docs(auth): Cloudflare Access app setup handoff`.
 
 ---
 
-### Task 13: Frontend — install `oidc-client-ts` and write auth wrapper
+### Task 13: Frontend — minimal auth module for Cloudflare Access
+
+Because CF Access handles the login flow entirely at the edge, the frontend has almost no OIDC work. We need only:
+
+1. A way to fetch the current user's identity (our `/api/v1/users/me` endpoint does this — the backend extracts it from the CF JWT on the server side).
+2. A logout affordance that redirects to CF's logout URL.
+3. Detection that we're in CF Access mode (to hide the legacy local-login form).
 
 **Files:**
-- Modify: `frontend/package.json` (via `bun add`)
-- Create: `frontend/src/auth/oidc.ts`
+- Create: `frontend/src/auth/cf.ts`
 
-- [ ] **Step 1: Install**
-
-Run `bun add oidc-client-ts` from `frontend/`.
-
-- [ ] **Step 2: Create `frontend/src/auth/oidc.ts`**
+- [ ] **Step 1: Create `frontend/src/auth/cf.ts`**
 
 ```ts
-import {
-  UserManager,
-  UserManagerSettings,
-  WebStorageStateStore,
-  InMemoryWebStorage,
-} from "oidc-client-ts";
+// Cloudflare Access auth integration.
+// No OAuth client — CF edge handles login. This module just exposes:
+//   - cfEnabled(): whether we're running behind CF Access
+//   - logout(): redirect to CF Access logout
+//
+// Identity is served by the backend's /api/v1/users/me, which derives it
+// from the Cf-Access-Jwt-Assertion header the edge injects. No frontend
+// JWT handling.
 
-const issuerUrl = import.meta.env.VITE_OIDC_ISSUER_URL as string;
-const clientId = import.meta.env.VITE_OIDC_CLIENT_ID_SPA as string;
-const audience = import.meta.env.VITE_OIDC_AUDIENCE as string;
+const authMode = import.meta.env.VITE_AUTH_MODE as string | undefined;
+const cfLogoutUrl = import.meta.env.VITE_CF_LOGOUT_URL as string | undefined;
 
-const redirectUri = `${window.location.origin}/auth/callback`;
-const postLogoutRedirectUri = `${window.location.origin}/`;
+export const cfEnabled = (): boolean =>
+  (authMode === "oidc" || authMode === "both") && !!cfLogoutUrl;
 
-const settings: UserManagerSettings = {
-  authority: issuerUrl,
-  client_id: clientId,
-  redirect_uri: redirectUri,
-  post_logout_redirect_uri: postLogoutRedirectUri,
-  response_type: "code",
-  scope: `openid profile email ${audience ? "offline_access" : ""}`.trim(),
-  automaticSilentRenew: true,
-  loadUserInfo: false,
-  userStore: new WebStorageStateStore({ store: new InMemoryWebStorage() }),
-  extraQueryParams: audience ? { audience } : {},
+export const logout = (): void => {
+  if (cfEnabled() && cfLogoutUrl) {
+    const returnTo = encodeURIComponent(window.location.origin);
+    window.location.href = `${cfLogoutUrl}?returnTo=${returnTo}`;
+    return;
+  }
+  // Local fallback: clear any stored bearer and reload
+  localStorage.removeItem("access_token");
+  window.location.href = "/";
 };
-
-export const oidcEnabled = (): boolean =>
-  (import.meta.env.VITE_AUTH_MODE as string) !== "local" && !!issuerUrl;
-
-let _mgr: UserManager | null = null;
-export const userManager = (): UserManager => {
-  if (!_mgr) _mgr = new UserManager(settings);
-  return _mgr;
-};
-
-export const getAccessToken = async (): Promise<string | null> => {
-  const user = await userManager().getUser();
-  if (!user || user.expired) return null;
-  return user.access_token;
-};
-
-export const signinRedirect = () => userManager().signinRedirect();
-export const signinRedirectCallback = () =>
-  userManager().signinRedirectCallback();
-export const signoutRedirect = () => userManager().signoutRedirect();
 ```
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 2: Commit**
 
-`git commit` message: `feat(auth): add oidc-client-ts wrapper`.
+`git commit` message: `feat(auth): minimal Cloudflare Access frontend helper`.
 
 ---
 
-### Task 14: Frontend — callback route + login conditional + axios interceptor
+### Task 14: Frontend — adapt login page, wire logout, cookies-not-bearer
+
+CF Access handles the full login flow at the edge; the SPA never renders a login UI when behind CF. What remains:
+
+1. Hide the legacy email+password form when `VITE_AUTH_MODE != local` (CF has already authenticated the user if they reached the SPA).
+2. Make sure API calls send cookies so the CF cookie reaches the backend (usually it does via browser default, but the generated client may need `credentials: "include"` set).
+3. Wire "Log out" to redirect to CF's logout URL.
 
 **Files:**
-- Create: `frontend/src/routes/auth.callback.tsx`
-- Modify: existing login page
-- Modify: axios/OpenAPI client bootstrap
+- Modify: `frontend/src/routes/login.tsx` (or equivalent login-page file)
+- Modify: the generated API client bootstrap (typically `frontend/src/client/core/OpenAPI.ts` — check for `WITH_CREDENTIALS`)
+- Modify: the user-menu / header component that owns "Log out"
 
-- [ ] **Step 1: Create the callback route**
+- [ ] **Step 1: Conditional render on login page**
 
-```tsx
-// frontend/src/routes/auth.callback.tsx
-import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { signinRedirectCallback } from "@/auth/oidc";
-
-export const Route = createFileRoute("/auth/callback")({
-  component: CallbackPage,
-});
-
-function CallbackPage() {
-  const [error, setError] = useState<string | null>(null);
-  useEffect(() => {
-    signinRedirectCallback()
-      .then(() => { window.location.replace("/"); })
-      .catch((e) => setError(String(e)));
-  }, []);
-  return error ? <div>Sign-in error: {error}</div> : <div>Signing in…</div>;
-}
-```
-
-If your router isn't TanStack Router, adapt to the actual pattern (React Router v6 `element={<CallbackPage />}`).
-
-- [ ] **Step 2: Conditional login button on the existing login page**
-
-Open `frontend/src/routes/login.tsx` (or equivalent). At the top of the component body:
+Open the existing login-page component. At the top of its body:
 
 ```tsx
-import { oidcEnabled, signinRedirect } from "@/auth/oidc";
+import { cfEnabled } from "@/auth/cf";
 
-if (oidcEnabled()) {
-  return <button onClick={() => signinRedirect()}>Sign in</button>;
+if (cfEnabled()) {
+  // Behind CF Access, the user is always authenticated to reach this code.
+  // If they somehow landed on /login, just bounce them home.
+  window.location.replace("/");
+  return null;
 }
 // fall through to the existing email+password form
 ```
 
-- [ ] **Step 3: Axios interceptor**
+- [ ] **Step 2: Ensure API requests send cookies**
 
-Find the axios instance used by the generated API client (typically `frontend/src/client/core/OpenAPI.ts`). Augment:
+Find the generated client's `OpenAPI` config (typically `frontend/src/client/core/OpenAPI.ts`). Set:
 
 ```ts
-import { getAccessToken } from "@/auth/oidc";
-
-OpenAPI.TOKEN = async () => {
-  const oidcToken = await getAccessToken();
-  if (oidcToken) return oidcToken;
-  return localStorage.getItem("access_token") ?? "";
-};
+OpenAPI.WITH_CREDENTIALS = true;
+OpenAPI.CREDENTIALS = "include";
 ```
 
-- [ ] **Step 4: Logout wiring**
+Same-origin requests to `/api/*` under `crm.${DOMAIN}` will auto-carry the `CF_Authorization` cookie. No token interceptor needed when CF is in front.
 
-In the user-menu / header component that has "Log out":
+For dev against a different origin (e.g. `localhost:5173` → `localhost:8000`) with `AUTH_MODE=local`, the existing bearer-token path continues to work; `OpenAPI.TOKEN` stays as-is.
+
+- [ ] **Step 3: Logout wiring**
+
+In the header/user-menu component that owns "Log out":
 
 ```tsx
-import { oidcEnabled, signoutRedirect } from "@/auth/oidc";
+import { cfEnabled, logout as cfLogout } from "@/auth/cf";
 
-const onLogout = async () => {
-  if (oidcEnabled()) {
-    await signoutRedirect();
+const onLogout = () => {
+  if (cfEnabled()) {
+    cfLogout();  // redirects to CF Access logout
     return;
   }
-  // existing local logout
+  // existing local logout (clear localStorage token, redirect to /login)
 };
 ```
 
-- [ ] **Step 5: Manual smoke with `AUTH_MODE=local`**
+- [ ] **Step 4: Manual smoke with `AUTH_MODE=local`**
 
-Run `bun run dev` from `frontend/`. Open `http://localhost:5173` — you should still see the normal email+password login (because `VITE_AUTH_MODE=local`). Log in successfully.
+Run `bun run dev` from `frontend/`. Open `http://localhost:5173` — you should still see the normal email+password login (because `VITE_AUTH_MODE=local`). Log in successfully. Logout still works via the local path.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 5: Commit**
 
-`git commit` message: `feat(auth): OIDC callback route, conditional login, axios interceptor`.
+`git commit` message: `feat(auth): CF-aware login page, cookie-credentialed API, CF logout`.
 
 ---
 
