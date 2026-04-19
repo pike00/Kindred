@@ -502,13 +502,6 @@ export type PetUpdate = {
     notes?: (string | null);
 };
 
-export type PrivateUserCreate = {
-    email: string;
-    password: string;
-    full_name: string;
-    is_verified?: boolean;
-};
-
 export type RelationshipCreate = {
     relationship_type: string;
     relationship_group: RelationshipGroup;
@@ -1085,12 +1078,6 @@ export type PetsDeletePetData = {
 };
 
 export type PetsDeletePetResponse = (unknown);
-
-export type PrivateCreateUserData = {
-    requestBody: PrivateUserCreate;
-};
-
-export type PrivateCreateUserResponse = (UserPublic);
 
 export type RelationshipsListRelationshipsData = {
     contactId: string;
