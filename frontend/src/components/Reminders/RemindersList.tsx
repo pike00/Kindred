@@ -14,7 +14,9 @@ export const RemindersList = () => {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Reminders</h1>
+        <h1 className="font-display text-4xl font-bold tracking-tight">
+          Reminders
+        </h1>
         <AddReminderDialog />
       </div>
       <DataTable columns={columns} data={data?.data || []} />

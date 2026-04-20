@@ -14,7 +14,9 @@ export const GroupsList = () => {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Groups</h1>
+        <h1 className="font-display text-4xl font-bold tracking-tight">
+          Groups
+        </h1>
         <AddGroupDialog />
       </div>
       <DataTable columns={columns} data={data?.data || []} />

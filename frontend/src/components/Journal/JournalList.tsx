@@ -14,7 +14,9 @@ export const JournalList = () => {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Journal</h1>
+        <h1 className="font-display text-4xl font-bold tracking-tight">
+          Journal
+        </h1>
         <AddJournalDialog />
       </div>
       <DataTable columns={columns} data={data?.data || []} />
