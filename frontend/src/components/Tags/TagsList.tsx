@@ -14,7 +14,7 @@ export const TagsList = () => {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Tags</h1>
+        <h1 className="font-display text-4xl font-bold tracking-tight">Tags</h1>
         <AddTagDialog />
       </div>
       <DataTable columns={columns} data={data?.data || []} />

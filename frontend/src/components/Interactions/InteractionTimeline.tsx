@@ -99,7 +99,9 @@ export const InteractionTimeline = () => {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-semibold tracking-tight">Interactions</h1>
+        <h1 className="font-display text-4xl font-bold tracking-tight">
+          Interactions
+        </h1>
         <AddInteractionDialog />
       </div>
 
