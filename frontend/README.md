@@ -9,7 +9,7 @@ bun install
 bun run dev
 ```
 
-Open http://localhost:5173. The dev server talks to whatever `VITE_API_URL` points at (see `.env`). For dev against the homelab, point it at `https://crm.${DOMAIN}`.
+Open http://localhost:5173. The dev server talks to whatever `VITE_API_URL` points at (see `.env`). For dev against the homelab, point it at `https://kindred.${DOMAIN}`.
 
 ## Generate the API client
 

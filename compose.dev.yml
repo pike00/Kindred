@@ -17,7 +17,7 @@ services:
     command: ["bash", "-c", "bash scripts/prestart.sh && fastapi run --reload app/main.py"]
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.crm-api.rule=Host(`crm.${DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/docs`) || PathPrefix(`/redoc`) || PathPrefix(`/openapi.json`) || PathPrefix(`/dav`) || PathPrefix(`/.well-known`))"
+      - "traefik.http.routers.crm-api.rule=Host(`kindred.${DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/docs`) || PathPrefix(`/redoc`) || PathPrefix(`/openapi.json`) || PathPrefix(`/dav`) || PathPrefix(`/.well-known`))"
       - "traefik.http.routers.crm-api.entrypoints=websecure"
       - "traefik.http.routers.crm-api.tls=true"
       - "traefik.http.services.crm-api.loadbalancer.server.port=8000"
@@ -39,8 +39,8 @@ services:
     working_dir: /app/frontend
     env_file: .env
     environment:
-      - VITE_API_URL=https://crm.${DOMAIN}
-      - VITE_PUBLIC_HOST=crm.${DOMAIN}
+      - VITE_API_URL=https://kindred.${DOMAIN}
+      - VITE_PUBLIC_HOST=kindred.${DOMAIN}
       - VITE_AUTH_MODE=${AUTH_MODE:-local}
       - VITE_CF_LOGOUT_URL=${VITE_CF_LOGOUT_URL:-}
     volumes:
@@ -60,7 +60,7 @@ services:
       - 172.20.2.253
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.crm.rule=Host(`crm.${DOMAIN}`)"
+      - "traefik.http.routers.crm.rule=Host(`kindred.${DOMAIN}`)"
       - "traefik.http.routers.crm.entrypoints=websecure"
       - "traefik.http.routers.crm.tls=true"
       - "traefik.http.services.crm.loadbalancer.server.port=5173"

@@ -2193,7 +2193,7 @@ services:
       - kindred-internal-crm
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.crm-api.rule=Host(`crm.${DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/docs`) || PathPrefix(`/dav`) || PathPrefix(`/.well-known`))"
+      - "traefik.http.routers.crm-api.rule=Host(`kindred.${DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/docs`) || PathPrefix(`/dav`) || PathPrefix(`/.well-known`))"
       - "traefik.http.routers.crm-api.entrypoints=websecure"
       - "traefik.http.services.crm-api.loadbalancer.server.port=8000"
       - "traefik.docker.network=kindred-private"
@@ -2223,7 +2223,7 @@ services:
       - kindred-private
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.crm.rule=Host(`crm.${DOMAIN}`)"
+      - "traefik.http.routers.crm.rule=Host(`kindred.${DOMAIN}`)"
       - "traefik.http.routers.crm.entrypoints=websecure"
       - "traefik.http.services.crm.loadbalancer.server.port=80"
       - "traefik.docker.network=kindred-private"
