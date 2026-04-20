@@ -33,7 +33,7 @@ Prod remains on `AUTH_MODE=local`; nothing visible to users changed. All plumbin
 
 Phase 1 (Cloudflare Access app setup + minimal frontend):
 
-1. **Task 12 (human-only checklist)** — In Cloudflare Zero Trust dashboard, create an Access Application for `crm.${DOMAIN}`:
+1. **Task 12 (human-only checklist)** — In Cloudflare Zero Trust dashboard, create an Access Application for `kindred.${DOMAIN}`:
    - Type: Self-hosted; session 24h
    - Policy: Include -> Emails -> superuser + wife
    - Record the Application AUD -> `OIDC_AUDIENCE`

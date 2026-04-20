@@ -35,7 +35,7 @@ Non-goals: multi-tenancy (households as isolated silos), in-app invitations, SCI
 ## 3. Architecture
 
 ```
-  Browser ─────────▶ Cloudflare Edge ───────▶ crm.${DOMAIN}  (Traefik → frontend)
+  Browser ─────────▶ Cloudflare Edge ───────▶ kindred.${DOMAIN}  (Traefik → frontend)
                     (Access policy:            │
                      login with Google/        │  every subsequent request carries
                      email OTP/etc.)           ▼  Cf-Access-Jwt-Assertion: <JWT>
@@ -58,7 +58,7 @@ Non-goals: multi-tenancy (households as isolated silos), in-app invitations, SCI
 
 Three pieces:
 
-1. **Cloudflare Access (edge IdP):** an Access Application scoped to `crm.${DOMAIN}` with an email-allowlist policy (you + wife). CF handles the full login dance (Google / email OTP / whatever IdP you federate) before any request reaches Traefik. Every request CF proxies onward carries `Cf-Access-Jwt-Assertion: <JWT>` and a `CF_Authorization` cookie. The JWT is signed by CF with a key fetched from `https://<team>.cloudflareaccess.com/cdn-cgi/access/certs`.
+1. **Cloudflare Access (edge IdP):** an Access Application scoped to `kindred.${DOMAIN}` with an email-allowlist policy (you + wife). CF handles the full login dance (Google / email OTP / whatever IdP you federate) before any request reaches Traefik. Every request CF proxies onward carries `Cf-Access-Jwt-Assertion: <JWT>` and a `CF_Authorization` cookie. The JWT is signed by CF with a key fetched from `https://<team>.cloudflareaccess.com/cdn-cgi/access/certs`.
 2. **Frontend (React + Vite):** does nothing OIDC-specific. No login page (CF edge handles it). No PKCE library. No access-token storage. Just makes fetch calls to `/api/*` — CF headers ride along automatically. A tiny `auth.ts` helper provides `getIdentity()` (calls `/api/v1/users/me`) and `logout()` (redirect to CF's logout URL).
 3. **Backend (FastAPI):** reads `Cf-Access-Jwt-Assertion` (header) or `CF_Authorization` (cookie fallback), verifies signature + `iss` + `aud` + `exp` against CF's cached JWKS, JIT-creates `User` rows keyed by `(iss, sub)`, and applies `visible_contact_ids(user)` to every list/detail query.
 
@@ -219,10 +219,10 @@ Controlled by `OIDC_JIT_ACTIVE=true|false` (default `true`).
 
 ### 6.1 Login (browser)
 
-1. User hits `https://crm.${DOMAIN}`.
+1. User hits `https://kindred.${DOMAIN}`.
 2. Cloudflare edge intercepts. If no valid `CF_Authorization` cookie, CF renders its own login page (per the Access policy — Google, email OTP, whatever IdP you federate).
 3. User authenticates at CF.
-4. CF sets `CF_Authorization` cookie, redirects back to `https://crm.${DOMAIN}`, and forwards the request onward to Traefik.
+4. CF sets `CF_Authorization` cookie, redirects back to `https://kindred.${DOMAIN}`, and forwards the request onward to Traefik.
 5. SPA HTML loads. No client-side login work in the app.
 
 ### 6.2 API call
@@ -308,7 +308,7 @@ Merge target: `AUTH_MODE=local` in prod. Nothing visible changes; tests prove pa
 
 ### Phase 1 — CF Access app setup + minimal frontend
 
-- In Cloudflare Zero Trust dashboard, create Access Application for `crm.${DOMAIN}`:
+- In Cloudflare Zero Trust dashboard, create Access Application for `kindred.${DOMAIN}`:
   - Type: Self-hosted
   - Session duration: 24 h (tune later)
   - Identity providers: your existing federation (Google / email OTP / ... — whatever the rest of the homelab uses)
@@ -373,7 +373,7 @@ Merge target: `AUTH_MODE=local` in prod. Nothing visible changes; tests prove pa
 
 ### 9.4 Manual smoke (release gate)
 
-1. Incognito window → `https://crm.${DOMAIN}` → redirect to Zitadel → login → redirect back → contact list loads.
+1. Incognito window → `https://kindred.${DOMAIN}` → redirect to Zitadel → login → redirect back → contact list loads.
 2. Tag a contact "joint"; share with wife; wife sees it.
 3. Wife edits; superuser sees the edit.
 4. Remove share; wife no longer sees it.

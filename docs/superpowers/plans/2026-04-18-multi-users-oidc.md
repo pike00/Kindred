@@ -1294,13 +1294,13 @@ Run a curl POST to `/api/v1/login/access-token` with your superuser credentials.
 
 No code. Record outcomes in `docs/handoff/2026-04-18-cf-access-setup.md`.
 
-Prerequisite: `crm.${DOMAIN}` already proxied through Cloudflare (your homelab already does this via tunnel, per recent commits). If not, set that up first.
+Prerequisite: `kindred.${DOMAIN}` already proxied through Cloudflare (your homelab already does this via tunnel, per recent commits). If not, set that up first.
 
 - [ ] **Step 1:** In Cloudflare Zero Trust dashboard (`one.dash.cloudflare.com`) → **Access → Applications → Add an application → Self-hosted**.
 - [ ] **Step 2:** Application configuration:
   - **Name**: `personal-crm`
   - **Session duration**: 24 hours
-  - **Application domain**: `crm.${DOMAIN}`
+  - **Application domain**: `kindred.${DOMAIN}`
   - **Identity providers**: pick whatever you already use for your homelab (Google, email OTP, GitHub, …). Multiple is fine.
 - [ ] **Step 3:** Add a **Policy** to the app:
   - **Action**: Allow
@@ -1311,7 +1311,7 @@ Prerequisite: `crm.${DOMAIN}` already proxied through Cloudflare (your homelab a
 - [ ] **Step 5:** Your team domain (visible in Zero Trust → Settings → General → Team domain) has the form `<team-name>.cloudflareaccess.com`. Record:
   - `OIDC_ISSUER_URL = https://<team-name>.cloudflareaccess.com`
   - `OIDC_JWKS_URL = https://<team-name>.cloudflareaccess.com/cdn-cgi/access/certs`
-- [ ] **Step 6:** Test the policy: visit `https://crm.${DOMAIN}` in an incognito browser. You should be redirected to CF's Access login, authenticate, then reach the app (still showing the existing local login since `AUTH_MODE=local` until Phase 2).
+- [ ] **Step 6:** Test the policy: visit `https://kindred.${DOMAIN}` in an incognito browser. You should be redirected to CF's Access login, authenticate, then reach the app (still showing the existing local login since `AUTH_MODE=local` until Phase 2).
 - [ ] **Step 7:** Write `docs/handoff/2026-04-18-cf-access-setup.md` with: team domain, AUD tag, allowlisted emails, a short "how to add another household member" recipe (just edit the Access policy's Include list).
 - [ ] **Step 8:** Commit handoff doc: `docs(auth): Cloudflare Access app setup handoff`.
 
@@ -1402,7 +1402,7 @@ OpenAPI.WITH_CREDENTIALS = true;
 OpenAPI.CREDENTIALS = "include";
 ```
 
-Same-origin requests to `/api/*` under `crm.${DOMAIN}` will auto-carry the `CF_Authorization` cookie. No token interceptor needed when CF is in front.
+Same-origin requests to `/api/*` under `kindred.${DOMAIN}` will auto-carry the `CF_Authorization` cookie. No token interceptor needed when CF is in front.
 
 For dev against a different origin (e.g. `localhost:5173` → `localhost:8000`) with `AUTH_MODE=local`, the existing bearer-token path continues to work; `OpenAPI.TOKEN` stays as-is.
 
