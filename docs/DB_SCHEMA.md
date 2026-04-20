@@ -278,7 +278,6 @@ Directed relationships between contacts (family, romantic, friend, work, other).
 | `contact_id` | UUID | NOT NULL, FK→contact.id | CASCADE DELETE | "From" contact |
 | `related_contact_id` | UUID | NOT NULL, FK→contact.id | CASCADE DELETE | "To" contact |
 | `relationship_type` | String(100) | NOT NULL | spouse, child, parent, sibling, friend, colleague, etc. |
-| `relationship_group` | Enum | NOT NULL | family, romantic, friend, work, other |
 | `notes` | String(1000) | NULLABLE | Additional context |
 
 **Indexes:** contact_id, related_contact_id
@@ -494,13 +493,6 @@ Inbound/outbound webhook configurations for triggering actions (n8n integration,
 - `social` — social media handle
 - `im` — instant messaging (Slack, Discord, etc.)
 - `custom` — user-defined
-
-### `RelationshipGroup`
-- `family`
-- `romantic`
-- `friend`
-- `work`
-- `other`
 
 ### `GiftStatus`
 - `idea` — potential gift idea

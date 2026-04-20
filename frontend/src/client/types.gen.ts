@@ -68,7 +68,6 @@ export type ContactCreate = {
     department?: (string | null);
     title?: (string | null);
     birthday?: (string | null);
-    notes?: (string | null);
     how_we_met?: (string | null);
     is_favorite?: boolean;
     is_archived?: boolean;
@@ -99,7 +98,7 @@ export type ContactFieldPublic = {
     contact_id: string;
 };
 
-export type ContactFieldType = 'email' | 'phone' | 'url' | 'social' | 'im' | 'custom';
+export type ContactFieldType = 'email' | 'phone';
 
 export type ContactFieldUpdate = {
     field_type?: (ContactFieldType | null);
@@ -120,7 +119,6 @@ export type ContactPublic = {
     department?: (string | null);
     title?: (string | null);
     birthday?: (string | null);
-    notes?: (string | null);
     how_we_met?: (string | null);
     is_favorite?: boolean;
     is_archived?: boolean;
@@ -153,7 +151,6 @@ export type ContactUpdate = {
     department?: (string | null);
     title?: (string | null);
     birthday?: (string | null);
-    notes?: (string | null);
     how_we_met?: (string | null);
     is_favorite?: (boolean | null);
     is_archived?: (boolean | null);
@@ -502,26 +499,15 @@ export type PetUpdate = {
     notes?: (string | null);
 };
 
-export type PrivateUserCreate = {
-    email: string;
-    password: string;
-    full_name: string;
-    is_verified?: boolean;
-};
-
 export type RelationshipCreate = {
     relationship_type: string;
-    relationship_group: RelationshipGroup;
     notes?: (string | null);
     contact_id: string;
     related_contact_id: string;
 };
 
-export type RelationshipGroup = 'family' | 'romantic' | 'friend' | 'work' | 'other';
-
 export type RelationshipPublic = {
     relationship_type: string;
-    relationship_group: RelationshipGroup;
     notes?: (string | null);
     id: string;
     contact_id: string;
@@ -530,7 +516,6 @@ export type RelationshipPublic = {
 
 export type RelationshipUpdate = {
     relationship_type?: (string | null);
-    relationship_group?: (RelationshipGroup | null);
     notes?: (string | null);
 };
 
@@ -1085,12 +1070,6 @@ export type PetsDeletePetData = {
 };
 
 export type PetsDeletePetResponse = (unknown);
-
-export type PrivateCreateUserData = {
-    requestBody: PrivateUserCreate;
-};
-
-export type PrivateCreateUserResponse = (UserPublic);
 
 export type RelationshipsListRelationshipsData = {
     contactId: string;

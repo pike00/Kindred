@@ -119,13 +119,6 @@ class ContactFieldType(str, enum.Enum):
     IM = "im"
     CUSTOM = "custom"
 
-class RelationshipGroup(str, enum.Enum):
-    FAMILY = "family"
-    ROMANTIC = "romantic"
-    FRIEND = "friend"
-    WORK = "work"
-    OTHER = "other"
-
 class GiftStatus(str, enum.Enum):
     IDEA = "idea"
     GIVEN = "given"
@@ -368,7 +361,6 @@ class AddressPublic(AddressBase):
 
 class RelationshipBase(SQLModel):
     relationship_type: str = Field(max_length=100)  # spouse, child, parent, friend, colleague, etc.
-    relationship_group: RelationshipGroup
     notes: str | None = Field(default=None, max_length=1000)
 
 class RelationshipCreate(RelationshipBase):
@@ -377,7 +369,6 @@ class RelationshipCreate(RelationshipBase):
 
 class RelationshipUpdate(SQLModel):
     relationship_type: str | None = None
-    relationship_group: RelationshipGroup | None = None
     notes: str | None = None
 
 class Relationship(RelationshipBase, table=True):

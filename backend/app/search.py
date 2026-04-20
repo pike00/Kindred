@@ -115,7 +115,6 @@ def setup_index() -> None:
         "nickname",
         "company",
         "title",
-        "notes",
         "how_we_met",
     ])
 

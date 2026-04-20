@@ -85,15 +85,6 @@ def contact_to_vcard(
     elif hasattr(card, "bday"):
         card.remove(card.bday)
 
-    # NOTE
-    if contact.notes:
-        if hasattr(card, "note"):
-            card.note.value = contact.notes
-        else:
-            card.add("note").value = contact.notes
-    elif hasattr(card, "note"):
-        card.remove(card.note)
-
     # UID
     uid_str = str(contact.id)
     if hasattr(card, "uid"):
@@ -108,9 +99,9 @@ def contact_to_vcard(
     else:
         card.add("rev").value = rev_str
 
-    # ─── Multi-value fields: TEL, EMAIL, URL ──────────────────────────────
-    # Remove existing TEL, EMAIL, URL entries (we regenerate from DB)
-    for prop_name in ("tel", "email", "url"):
+    # ─── Multi-value fields: TEL, EMAIL ───────────────────────────────────
+    # Remove existing TEL, EMAIL entries (we regenerate from DB)
+    for prop_name in ("tel", "email"):
         if prop_name in card.contents:
             for entry in list(card.contents[prop_name]):
                 card.remove(entry)
@@ -124,13 +115,6 @@ def contact_to_vcard(
             email = card.add("email")
             email.value = field.value
             email.params["TYPE"] = [field.label.upper()]
-        elif field.field_type == ContactFieldType.URL:
-            url = card.add("url")
-            url.value = field.value
-        elif field.field_type == ContactFieldType.SOCIAL:
-            social = card.add("x-socialprofile")
-            social.value = field.value
-            social.params["TYPE"] = [field.label]
 
     # ─── Addresses ────────────────────────────────────────────────────────
     if "adr" in card.contents:
@@ -200,10 +184,6 @@ def vcard_to_contact_data(vcard_text: str) -> dict:
         except Exception:
             pass
 
-    # NOTE
-    if hasattr(card, "note"):
-        contact["notes"] = card.note.value
-
     # NICKNAME
     if hasattr(card, "nickname"):
         contact["nickname"] = card.nickname.value
@@ -240,24 +220,6 @@ def vcard_to_contact_data(vcard_text: str) -> dict:
             "label": label,
             "value": email.value,
             "is_primary": "pref" in [t.lower() for t in types],
-        })
-
-    # URL
-    for url in getattr(card, "url_list", []):
-        fields.append({
-            "field_type": "url",
-            "label": "website",
-            "value": url.value,
-        })
-
-    # X-SOCIALPROFILE
-    for social in card.contents.get("x-socialprofile", []):
-        types = social.params.get("TYPE", ["other"])
-        label = types[0].lower() if types else "other"
-        fields.append({
-            "field_type": "social",
-            "label": label,
-            "value": social.value,
         })
 
     # ─── Addresses ────────────────────────────────────────────────────────

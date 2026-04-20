@@ -23,14 +23,12 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import useCustomToast from "@/hooks/useCustomToast"
 
 const contactCreateSchema = z.object({
   first_name: z.string().min(1, "First name is required"),
   last_name: z.string().optional(),
-  company: z.string().optional(),
-  notes: z.string().optional(),
+  birthday: z.string().optional(),
 })
 
 type ContactCreateFormData = z.infer<typeof contactCreateSchema>
@@ -45,8 +43,7 @@ export const AddContactDialog = () => {
     defaultValues: {
       first_name: "",
       last_name: "",
-      company: "",
-      notes: "",
+      birthday: "",
     },
   })
 
@@ -65,7 +62,12 @@ export const AddContactDialog = () => {
   })
 
   const onSubmit = (data: ContactCreateFormData) => {
-    addContactMutation.mutate(data as unknown as ContactCreate)
+    const payload: ContactCreate = {
+      first_name: data.first_name,
+      last_name: data.last_name || null,
+      birthday: data.birthday ? data.birthday : null,
+    }
+    addContactMutation.mutate(payload)
   }
 
   return (
@@ -110,28 +112,12 @@ export const AddContactDialog = () => {
             />
             <FormField
               control={form.control}
-              name="company"
+              name="birthday"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Company</FormLabel>
+                  <FormLabel>Birthday</FormLabel>
                   <FormControl>
-                    <Input placeholder="Acme Corp" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Notes</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Additional notes about this contact..."
-                      {...field}
-                    />
+                    <Input type="date" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

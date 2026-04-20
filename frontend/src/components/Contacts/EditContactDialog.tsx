@@ -30,10 +30,7 @@ import { Pencil } from "@/lib/icons"
 const contactUpdateSchema = z.object({
   first_name: z.string().min(1, "First name is required"),
   last_name: z.string().optional(),
-  company: z.string().optional(),
-  notes: z.string().optional(),
   nickname: z.string().optional(),
-  title: z.string().optional(),
   how_we_met: z.string().optional(),
   contact_frequency_days: z.number().optional(),
   is_favorite: z.boolean().optional(),
@@ -56,10 +53,7 @@ export const EditContactDialog = ({ contact }: EditContactDialogProps) => {
     defaultValues: {
       first_name: contact.first_name,
       last_name: contact.last_name || "",
-      company: contact.company || "",
-      notes: contact.notes || "",
       nickname: contact.nickname || "",
-      title: contact.title || "",
       how_we_met: contact.how_we_met || "",
       contact_frequency_days: contact.contact_frequency_days || 0,
       is_favorite: contact.is_favorite,
@@ -72,10 +66,7 @@ export const EditContactDialog = ({ contact }: EditContactDialogProps) => {
       form.reset({
         first_name: contact.first_name,
         last_name: contact.last_name || "",
-        company: contact.company || "",
-        notes: contact.notes || "",
         nickname: contact.nickname || "",
-        title: contact.title || "",
         how_we_met: contact.how_we_met || "",
         contact_frequency_days: contact.contact_frequency_days || 0,
         is_favorite: contact.is_favorite,
@@ -105,10 +96,7 @@ export const EditContactDialog = ({ contact }: EditContactDialogProps) => {
     const updateData: ContactUpdate = {
       first_name: data.first_name,
       last_name: data.last_name || null,
-      company: data.company || null,
-      notes: data.notes || null,
       nickname: data.nickname || null,
-      title: data.title || null,
       how_we_met: data.how_we_met || null,
       contact_frequency_days: data.contact_frequency_days || null,
       is_favorite: data.is_favorite,
@@ -173,54 +161,12 @@ export const EditContactDialog = ({ contact }: EditContactDialogProps) => {
             />
             <FormField
               control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Title</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Software Engineer" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="company"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Company</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Acme Corp" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
               name="how_we_met"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>How We Met</FormLabel>
                   <FormControl>
                     <Textarea placeholder="Tell the story..." {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Notes</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Additional notes about this contact..."
-                      {...field}
-                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
