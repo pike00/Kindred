@@ -16,6 +16,7 @@ import {
   MediaRecommendationsService,
   NotesService,
 } from "@/client"
+import { ContactAvatar } from "@/components/Common/ContactAvatar"
 import { EmptyState } from "@/components/Common/EmptyState"
 import { AddressesCard } from "@/components/Contacts/AddressesCard"
 import { ContactFieldsCard } from "@/components/Contacts/ContactFieldsCard"
@@ -157,47 +158,55 @@ function ContactDetailPage() {
   return (
     <div className="space-y-6 max-w-5xl">
       {/* Header */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-3">
-          <EditContactDialog contact={contact} />
-          <h1 className="text-3xl font-semibold tracking-tight">{fullName}</h1>
-          {contact.is_favorite && (
-            <Badge variant="secondary">
-              <Star className="size-3" /> Favorite
-            </Badge>
+      <div className="flex items-start gap-5">
+        <ContactAvatar contact={contact} size="lg" />
+        <div className="flex-1 min-w-0 space-y-2">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-3 min-w-0">
+              <h1 className="font-display text-4xl font-bold tracking-tight">
+                {fullName}
+              </h1>
+              {contact.is_favorite && (
+                <Badge variant="secondary">
+                  <Star className="size-3" /> Favorite
+                </Badge>
+              )}
+              {contact.is_archived && (
+                <Badge variant="outline">
+                  <Archive className="size-3" /> Archived
+                </Badge>
+              )}
+            </div>
+            <EditContactDialog contact={contact} />
+          </div>
+          {contact.company && (
+            <p className="text-lg text-muted-foreground">
+              {contact.title ? `${contact.title} at ` : ""}
+              {contact.company}
+            </p>
           )}
-          {contact.is_archived && (
-            <Badge variant="outline">
-              <Archive className="size-3" /> Archived
-            </Badge>
+          {!contact.company && contact.title && (
+            <p className="text-lg text-muted-foreground">{contact.title}</p>
           )}
-        </div>
-        {contact.company && (
-          <p className="text-lg text-muted-foreground">
-            {contact.title ? `${contact.title} at ` : ""}
-            {contact.company}
-          </p>
-        )}
-        {!contact.company && contact.title && (
-          <p className="text-lg text-muted-foreground">{contact.title}</p>
-        )}
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-          {contact.birthday && (
-            <span className="flex items-center gap-1">
-              <Cake className="size-3.5" /> Birthday: {contact.birthday}
-            </span>
-          )}
-          {contact.how_we_met && (
-            <span className="flex items-center gap-1">
-              <UserRoundSearch className="size-3.5" /> Met: {contact.how_we_met}
-            </span>
-          )}
-          {contact.last_contacted_at && (
-            <span className="flex items-center gap-1">
-              <Clock className="size-3.5" /> Last contacted:{" "}
-              {formatDate(contact.last_contacted_at)}
-            </span>
-          )}
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+            {contact.birthday && (
+              <span className="flex items-center gap-1">
+                <Cake className="size-3.5" /> Birthday: {contact.birthday}
+              </span>
+            )}
+            {contact.how_we_met && (
+              <span className="flex items-center gap-1">
+                <UserRoundSearch className="size-3.5" /> Met:{" "}
+                {contact.how_we_met}
+              </span>
+            )}
+            {contact.last_contacted_at && (
+              <span className="flex items-center gap-1">
+                <Clock className="size-3.5" /> Last contacted:{" "}
+                {formatDate(contact.last_contacted_at)}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
