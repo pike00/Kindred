@@ -57,6 +57,7 @@ export {
   Pencil,
   Phone,
   Plus,
+  Search,
   Send,
   Settings,
   ShieldCheck,
