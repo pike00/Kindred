@@ -33,19 +33,39 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import {
   Archive,
   Cake,
   Clock,
   Film,
+  Info,
   MessagesSquare,
   Star,
   UserRoundSearch,
 } from "@/lib/icons"
 
+function InfoHint({ children }: { children: React.ReactNode }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          aria-label="More info"
+          className="text-muted-foreground hover:text-foreground"
+        >
+          <Info className="size-3.5" />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-xs">{children}</TooltipContent>
+    </Tooltip>
+  )
+}
+
 export const Route = createFileRoute("/_layout/contacts/$contactId")({
-  loader: async ({ params }) => {
-    return ContactsService.getContact({ contactId: params.contactId })
-  },
   component: ContactDetailPage,
 })
 
@@ -194,11 +214,66 @@ function ContactDetailPage() {
 
         {/* Right column (1/3 width) */}
         <div className="space-y-6">
+          {/* Interactions log */}
+          <Card>
+            <CardHeader className="flex-row items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <MessagesSquare className="size-4" /> Interactions
+                {!interactionsLoading && ` (${interactions.length})`}
+              </CardTitle>
+              <AddInteractionDialog contactId={contactId} />
+            </CardHeader>
+            <CardContent>
+              {interactionsLoading ? (
+                <SectionSkeleton />
+              ) : interactions.length > 0 ? (
+                <div className="space-y-3">
+                  {interactions.map((ix: InteractionPublic) => (
+                    <div
+                      key={ix.id}
+                      className="flex items-start gap-2 text-sm border-b pb-2 last:border-b-0 last:pb-0"
+                    >
+                      <Badge variant="outline" className="shrink-0 mt-0.5">
+                        {channelLabels[ix.channel] ?? ix.channel}
+                      </Badge>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+                          <span>{formatDate(ix.occurred_at)}</span>
+                          {ix.duration_minutes && (
+                            <span>{ix.duration_minutes} min</span>
+                          )}
+                          {ix.mood && <span>Mood: {ix.mood}</span>}
+                        </div>
+                        {ix.notes && (
+                          <p className="text-sm mt-1 whitespace-pre-wrap">
+                            {ix.notes}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  No interactions yet. Log a call, meeting, or message to start
+                  your timeline.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Tags */}
           {contact.tags && contact.tags.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle>Tags</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  Tags
+                  <InfoHint>
+                    Small colored labels for free-form classification, like
+                    "college", "book club", or "runner". A contact can have
+                    many. Good for quick filtering.
+                  </InfoHint>
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-1.5">
@@ -216,7 +291,14 @@ function ContactDetailPage() {
           {contact.groups && contact.groups.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle>Groups</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  Groups
+                  <InfoHint>
+                    Named collections of people with a shared context, like
+                    "Family", "D&D Group", or "Work Team". Groups have a
+                    description; tags don't.
+                  </InfoHint>
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-1.5">
@@ -231,30 +313,13 @@ function ContactDetailPage() {
           )}
 
           <RelationshipsCard contactId={contactId} />
-
-          {/* Quick info from contact record */}
-          {contact.notes && (
-            <Card>
-              <CardHeader>
-                <CardTitle>About</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                  {contact.notes}
-                </p>
-              </CardContent>
-            </Card>
-          )}
         </div>
       </div>
 
-      {/* Tabbed section: Interactions & Notes */}
-      <Tabs defaultValue="interactions">
+      {/* Tabbed section: Notes, Gifts, Debts, Media */}
+      <Tabs defaultValue="notes">
         <div className="flex items-center justify-between mb-2 gap-2">
           <TabsList>
-            <TabsTrigger value="interactions">
-              Interactions {!interactionsLoading && `(${interactions.length})`}
-            </TabsTrigger>
             <TabsTrigger value="notes">
               Notes {!notesLoading && `(${notes.length})`}
             </TabsTrigger>
@@ -268,47 +333,7 @@ function ContactDetailPage() {
               Media {!mediaLoading && `(${mediaRecs.length})`}
             </TabsTrigger>
           </TabsList>
-          <AddInteractionDialog contactId={contactId} />
         </div>
-
-        <TabsContent value="interactions" className="mt-4">
-          {interactionsLoading ? (
-            <SectionSkeleton />
-          ) : interactions.length > 0 ? (
-            <div className="space-y-3">
-              {interactions.map((ix: InteractionPublic) => (
-                <Card key={ix.id} className="py-4">
-                  <CardContent className="flex items-start gap-3">
-                    <Badge variant="outline" className="shrink-0 mt-0.5">
-                      {channelLabels[ix.channel] ?? ix.channel}
-                    </Badge>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <span>{formatDate(ix.occurred_at)}</span>
-                        {ix.duration_minutes && (
-                          <span>{ix.duration_minutes} min</span>
-                        )}
-                        {ix.mood && <span>Mood: {ix.mood}</span>}
-                      </div>
-                      {ix.notes && (
-                        <p className="text-sm mt-1 whitespace-pre-wrap">
-                          {ix.notes}
-                        </p>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <EmptyState
-              icon={MessagesSquare}
-              title="No interactions yet"
-              description="Log a call, meeting, or message to start your timeline."
-              action={<AddInteractionDialog contactId={contactId} />}
-            />
-          )}
-        </TabsContent>
 
         <TabsContent value="notes" className="mt-4">
           {notesLoading ? (

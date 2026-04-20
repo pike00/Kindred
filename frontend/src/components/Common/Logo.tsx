@@ -49,10 +49,7 @@ export function Logo({
     const content = (
       <>
         <FullMark
-          className={cn(
-            "group-data-[collapsible=icon]:hidden",
-            className,
-          )}
+          className={cn("group-data-[collapsible=icon]:hidden", className)}
         />
         <KindredMark
           aria-hidden="true"
