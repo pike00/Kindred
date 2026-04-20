@@ -44,37 +44,17 @@ import {
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import useCustomToast from "@/hooks/useCustomToast"
-import {
-  AtSign,
-  Link as LinkIcon,
-  Mail,
-  MessageSquareText,
-  Pencil,
-  Phone,
-  Plus,
-  Trash2,
-} from "@/lib/icons"
+import { Mail, Pencil, Phone, Plus, Trash2 } from "@/lib/icons"
 
-const FIELD_TYPES: ContactFieldType[] = [
-  "email",
-  "phone",
-  "url",
-  "social",
-  "im",
-  "custom",
-]
+const FIELD_TYPES: ContactFieldType[] = ["email", "phone"]
 
 const fieldTypeIcon: Record<ContactFieldType, React.ReactNode> = {
   email: <Mail className="size-4" />,
   phone: <Phone className="size-4" />,
-  url: <LinkIcon className="size-4" />,
-  social: <AtSign className="size-4" />,
-  im: <MessageSquareText className="size-4" />,
-  custom: null,
 }
 
 const schema = z.object({
-  field_type: z.enum(["email", "phone", "url", "social", "im", "custom"]),
+  field_type: z.enum(["email", "phone"]),
   label: z.string().min(1, "Label is required"),
   value: z.string().min(1, "Value is required"),
   is_primary: z.boolean().optional(),
@@ -209,7 +189,7 @@ function AddContactFieldDialog({ contactId }: { contactId: string }) {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Add contact field</DialogTitle>
-          <DialogDescription>Email, phone, URL, or other.</DialogDescription>
+          <DialogDescription>Email or phone.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -349,21 +329,10 @@ function FieldRow({ field: cf }: { field: ContactFieldPublic }) {
             <a href={`mailto:${cf.value}`} className="underline">
               {cf.value}
             </a>
-          ) : cf.field_type === "phone" ? (
+          ) : (
             <a href={`tel:${cf.value}`} className="underline">
               {cf.value}
             </a>
-          ) : cf.field_type === "url" ? (
-            <a
-              href={cf.value}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline"
-            >
-              {cf.value}
-            </a>
-          ) : (
-            cf.value
           )}
         </span>
         {cf.is_primary && (
@@ -443,7 +412,7 @@ export function ContactFieldsCard({ contactId }: { contactId: string }) {
           <EmptyState
             icon={Mail}
             title="No contact info"
-            description="Add an email, phone, or social handle to reach this contact."
+            description="Add an email or phone to reach this contact."
           />
         )}
       </CardContent>

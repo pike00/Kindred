@@ -7,14 +7,12 @@ import { z } from "zod"
 import type {
   ContactPublic,
   RelationshipCreate,
-  RelationshipGroup,
   RelationshipPublic,
   RelationshipUpdate,
 } from "@/client"
 import { ContactsService, RelationshipsService } from "@/client"
 import { EmptyState } from "@/components/Common/EmptyState"
 import { RowActionsMenu } from "@/components/Common/RowActionsMenu"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -49,17 +47,8 @@ import { Textarea } from "@/components/ui/textarea"
 import useCustomToast from "@/hooks/useCustomToast"
 import { HeartHandshake, Pencil, Plus, Trash2 } from "@/lib/icons"
 
-const RELATIONSHIP_GROUPS: RelationshipGroup[] = [
-  "family",
-  "romantic",
-  "friend",
-  "work",
-  "other",
-]
-
 const createSchema = z.object({
   relationship_type: z.string().min(1, "Relationship type is required"),
-  relationship_group: z.enum(["family", "romantic", "friend", "work", "other"]),
   related_contact_id: z.string().min(1, "Related contact is required"),
   notes: z.string().optional(),
 })
@@ -93,7 +82,6 @@ function AddRelationshipDialog({ contactId }: { contactId: string }) {
     resolver: zodResolver(createSchema) as any,
     defaultValues: {
       relationship_type: "",
-      relationship_group: "friend",
       related_contact_id: "",
       notes: "",
     },
@@ -106,7 +94,6 @@ function AddRelationshipDialog({ contactId }: { contactId: string }) {
       showSuccessToast("Relationship added")
       form.reset({
         relationship_type: "",
-        relationship_group: "friend",
         related_contact_id: "",
         notes: "",
       })
@@ -124,7 +111,6 @@ function AddRelationshipDialog({ contactId }: { contactId: string }) {
       contact_id: contactId,
       related_contact_id: data.related_contact_id,
       relationship_type: data.relationship_type,
-      relationship_group: data.relationship_group,
       notes: data.notes || null,
     } as RelationshipCreate)
   }
@@ -155,20 +141,30 @@ function AddRelationshipDialog({ contactId }: { contactId: string }) {
                       Related contact{" "}
                       <span className="text-destructive">*</span>
                     </FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Choose a contact" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {pickerContacts.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>
-                            {formatContactName(c)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    {pickerContacts.length === 0 ? (
+                      <p className="text-sm text-muted-foreground border rounded-md px-3 py-2">
+                        No other contacts yet — add another contact first to
+                        create a relationship.
+                      </p>
+                    ) : (
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Choose a contact" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {pickerContacts.map((c) => (
+                            <SelectItem key={c.id} value={c.id}>
+                              {formatContactName(c)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -187,30 +183,6 @@ function AddRelationshipDialog({ contactId }: { contactId: string }) {
                         {...field}
                       />
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="relationship_group"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Group</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {RELATIONSHIP_GROUPS.map((g) => (
-                          <SelectItem key={g} value={g}>
-                            {g}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -262,7 +234,6 @@ function EditRelationshipDialog({
     resolver: zodResolver(updateSchema) as any,
     defaultValues: {
       relationship_type: rel.relationship_type,
-      relationship_group: rel.relationship_group,
       notes: rel.notes ?? "",
     },
   })
@@ -271,7 +242,6 @@ function EditRelationshipDialog({
     if (open) {
       form.reset({
         relationship_type: rel.relationship_type,
-        relationship_group: rel.relationship_group,
         notes: rel.notes ?? "",
       })
     }
@@ -299,7 +269,6 @@ function EditRelationshipDialog({
   const onSubmit = (data: UpdateFormData) => {
     mutation.mutate({
       relationship_type: data.relationship_type,
-      relationship_group: data.relationship_group,
       notes: data.notes || null,
     } as RelationshipUpdate)
   }
@@ -325,30 +294,6 @@ function EditRelationshipDialog({
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="relationship_group"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Group</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {RELATIONSHIP_GROUPS.map((g) => (
-                          <SelectItem key={g} value={g}>
-                            {g}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -431,9 +376,6 @@ function RelationshipRow({ rel }: { rel: RelationshipPublic }) {
             <span className="text-muted-foreground">
               &mdash; {rel.relationship_type}
             </span>
-            <Badge variant="secondary" className="text-[10px]">
-              {rel.relationship_group}
-            </Badge>
           </div>
           {rel.notes && (
             <p className="text-muted-foreground text-xs mt-0.5 whitespace-pre-wrap">

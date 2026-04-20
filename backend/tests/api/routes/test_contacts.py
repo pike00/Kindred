@@ -38,7 +38,6 @@ def test_create_contact_with_optional_fields(
         "company": "Acme Corp",
         "title": "Engineer",
         "nickname": "Bobby",
-        "notes": "Met at conference",
         "how_we_met": "PyCon 2025",
         "is_favorite": True,
     }

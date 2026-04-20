@@ -54,7 +54,6 @@ async def _enqueue_contact_index(contact: Contact) -> None:
             "nickname": contact.nickname or "",
             "company": contact.company or "",
             "title": contact.title or "",
-            "notes": contact.notes or "",
             "how_we_met": contact.how_we_met or "",
             "owner_id": str(contact.owner_id),
             "is_favorite": contact.is_favorite,

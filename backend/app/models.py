@@ -80,18 +80,6 @@ class UsersPublic(SQLModel):
 class ContactFieldType(str, enum.Enum):
     EMAIL = "email"
     PHONE = "phone"
-    URL = "url"
-    SOCIAL = "social"
-    IM = "im"
-    CUSTOM = "custom"
-
-
-class RelationshipGroup(str, enum.Enum):
-    FAMILY = "family"
-    ROMANTIC = "romantic"
-    FRIEND = "friend"
-    WORK = "work"
-    OTHER = "other"
 
 
 class GiftStatus(str, enum.Enum):
@@ -275,7 +263,6 @@ class ContactBase(SQLModel):
     department: str | None = Field(default=None, max_length=255)
     title: str | None = Field(default=None, max_length=255)
     birthday: date | None = None
-    notes: str | None = Field(default=None, max_length=10000)
     how_we_met: str | None = Field(default=None, max_length=2000)
     is_favorite: bool = False
     is_archived: bool = False
@@ -302,7 +289,6 @@ class ContactUpdate(SQLModel):
     department: str | None = None
     title: str | None = None
     birthday: date | None = None
-    notes: str | None = None
     how_we_met: str | None = None
     is_favorite: bool | None = None
     is_archived: bool | None = None
@@ -446,7 +432,6 @@ class RelationshipBase(SQLModel):
     relationship_type: str = Field(
         max_length=100
     )  # spouse, child, parent, friend, colleague, etc.
-    relationship_group: RelationshipGroup
     notes: str | None = Field(default=None, max_length=1000)
 
 
@@ -457,7 +442,6 @@ class RelationshipCreate(RelationshipBase):
 
 class RelationshipUpdate(SQLModel):
     relationship_type: str | None = None
-    relationship_group: RelationshipGroup | None = None
     notes: str | None = None
 
 

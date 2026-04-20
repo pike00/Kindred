@@ -523,18 +523,6 @@ export const ContactCreateSchema = {
             ],
             title: 'Birthday'
         },
-        notes: {
-            anyOf: [
-                {
-                    type: 'string',
-                    maxLength: 10000
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Notes'
-        },
         how_we_met: {
             anyOf: [
                 {
@@ -716,7 +704,7 @@ export const ContactFieldPublicSchema = {
 
 export const ContactFieldTypeSchema = {
     type: 'string',
-    enum: ['email', 'phone', 'url', 'social', 'im', 'custom'],
+    enum: ['email', 'phone'],
     title: 'ContactFieldType'
 } as const;
 
@@ -896,18 +884,6 @@ export const ContactPublicSchema = {
                 }
             ],
             title: 'Birthday'
-        },
-        notes: {
-            anyOf: [
-                {
-                    type: 'string',
-                    maxLength: 10000
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Notes'
         },
         how_we_met: {
             anyOf: [
@@ -1147,17 +1123,6 @@ export const ContactUpdateSchema = {
                 }
             ],
             title: 'Birthday'
-        },
-        notes: {
-            anyOf: [
-                {
-                    type: 'string'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Notes'
         },
         how_we_met: {
             anyOf: [
@@ -3245,40 +3210,12 @@ export const PetUpdateSchema = {
     title: 'PetUpdate'
 } as const;
 
-export const PrivateUserCreateSchema = {
-    properties: {
-        email: {
-            type: 'string',
-            title: 'Email'
-        },
-        password: {
-            type: 'string',
-            title: 'Password'
-        },
-        full_name: {
-            type: 'string',
-            title: 'Full Name'
-        },
-        is_verified: {
-            type: 'boolean',
-            title: 'Is Verified',
-            default: false
-        }
-    },
-    type: 'object',
-    required: ['email', 'password', 'full_name'],
-    title: 'PrivateUserCreate'
-} as const;
-
 export const RelationshipCreateSchema = {
     properties: {
         relationship_type: {
             type: 'string',
             maxLength: 100,
             title: 'Relationship Type'
-        },
-        relationship_group: {
-            '$ref': '#/components/schemas/RelationshipGroup'
         },
         notes: {
             anyOf: [
@@ -3304,14 +3241,8 @@ export const RelationshipCreateSchema = {
         }
     },
     type: 'object',
-    required: ['relationship_type', 'relationship_group', 'contact_id', 'related_contact_id'],
+    required: ['relationship_type', 'contact_id', 'related_contact_id'],
     title: 'RelationshipCreate'
-} as const;
-
-export const RelationshipGroupSchema = {
-    type: 'string',
-    enum: ['family', 'romantic', 'friend', 'work', 'other'],
-    title: 'RelationshipGroup'
 } as const;
 
 export const RelationshipPublicSchema = {
@@ -3320,9 +3251,6 @@ export const RelationshipPublicSchema = {
             type: 'string',
             maxLength: 100,
             title: 'Relationship Type'
-        },
-        relationship_group: {
-            '$ref': '#/components/schemas/RelationshipGroup'
         },
         notes: {
             anyOf: [
@@ -3353,7 +3281,7 @@ export const RelationshipPublicSchema = {
         }
     },
     type: 'object',
-    required: ['relationship_type', 'relationship_group', 'id', 'contact_id', 'related_contact_id'],
+    required: ['relationship_type', 'id', 'contact_id', 'related_contact_id'],
     title: 'RelationshipPublic'
 } as const;
 
@@ -3369,16 +3297,6 @@ export const RelationshipUpdateSchema = {
                 }
             ],
             title: 'Relationship Type'
-        },
-        relationship_group: {
-            anyOf: [
-                {
-                    '$ref': '#/components/schemas/RelationshipGroup'
-                },
-                {
-                    type: 'null'
-                }
-            ]
         },
         notes: {
             anyOf: [
