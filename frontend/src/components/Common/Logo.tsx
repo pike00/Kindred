@@ -1,10 +1,7 @@
 import { Link } from "@tanstack/react-router"
 
 import { KindredMark } from "@/components/Common/KindredMark"
-import { useTheme } from "@/components/theme-provider"
 import { cn } from "@/lib/utils"
-import logo from "/assets/images/kindred-logo.png"
-import logoDark from "/assets/images/kindred-logo-dark.png"
 
 interface LogoProps {
   variant?: "full" | "icon" | "responsive"
@@ -12,33 +9,48 @@ interface LogoProps {
   asLink?: boolean
 }
 
+function FullMark({ className }: { className?: string }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-2 text-lg leading-none",
+        className,
+      )}
+    >
+      <KindredMark
+        aria-hidden="true"
+        className="h-[1.5em] w-[1.5em] shrink-0 text-foreground"
+      />
+      <span className="font-extrabold tracking-tight">
+        <span className="text-primary">KIN</span>
+        <span className="text-foreground">DRED</span>
+      </span>
+      <span className="sr-only">Kindred</span>
+    </span>
+  )
+}
+
 export function Logo({
   variant = "full",
   className,
   asLink = true,
 }: LogoProps) {
-  const { resolvedTheme } = useTheme()
-  const src = resolvedTheme === "dark" ? logoDark : logo
-
-  const mark = (
-    <KindredMark
-      className={cn("h-7 w-7 text-foreground", className)}
-      aria-label="Kindred"
-    />
-  )
-
   if (variant === "icon") {
+    const mark = (
+      <KindredMark
+        className={cn("h-7 w-7 text-foreground", className)}
+        aria-label="Kindred"
+      />
+    )
     return asLink ? <Link to="/">{mark}</Link> : mark
   }
 
   if (variant === "responsive") {
     const content = (
       <>
-        <img
-          src={src}
-          alt="Kindred"
+        <FullMark
           className={cn(
-            "h-7 w-auto group-data-[collapsible=icon]:hidden",
+            "group-data-[collapsible=icon]:hidden",
             className,
           )}
         />
@@ -51,9 +63,6 @@ export function Logo({
     return asLink ? <Link to="/">{content}</Link> : content
   }
 
-  const img = (
-    <img src={src} alt="Kindred" className={cn("h-7 w-auto", className)} />
-  )
-
-  return asLink ? <Link to="/">{img}</Link> : img
+  const content = <FullMark className={className} />
+  return asLink ? <Link to="/">{content}</Link> : content
 }

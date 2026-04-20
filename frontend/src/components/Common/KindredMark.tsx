@@ -1,39 +1,29 @@
 import { cn } from "@/lib/utils"
 
-interface KindredMarkProps extends React.SVGProps<SVGSVGElement> {
+interface KindredMarkProps extends React.HTMLAttributes<HTMLSpanElement> {
   className?: string
+}
+
+const maskStyle: React.CSSProperties = {
+  WebkitMaskImage: "url(/assets/icons/kindred-mark.svg)",
+  maskImage: "url(/assets/icons/kindred-mark.svg)",
+  WebkitMaskRepeat: "no-repeat",
+  maskRepeat: "no-repeat",
+  WebkitMaskPosition: "center",
+  maskPosition: "center",
+  WebkitMaskSize: "contain",
+  maskSize: "contain",
+  backgroundColor: "currentColor",
 }
 
 export function KindredMark({ className, ...props }: KindredMarkProps) {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 512 512"
-      fill="currentColor"
+    <span
       role="img"
       aria-label="Kindred"
-      className={cn("h-full w-auto", className)}
+      className={cn("inline-block h-full w-auto aspect-square", className)}
+      style={maskStyle}
       {...props}
-    >
-      <title>Kindred</title>
-      <circle cx="120" cy="252" r="40" />
-      <path d="M 60 440 L 60 380 A 60 60 0 0 1 180 380 L 180 440 Z" />
-      <circle cx="392" cy="252" r="40" />
-      <path d="M 332 440 L 332 380 A 60 60 0 0 1 452 380 L 452 440 Z" />
-      <path d="M 166 448 L 166 360 A 90 90 0 0 1 346 360 L 346 448 Z" />
-      <circle cx="256" cy="214" r="58" />
-      <g
-        stroke="currentColor"
-        strokeWidth="16"
-        strokeLinecap="round"
-        fill="none"
-      >
-        <line x1="148" y1="154" x2="187" y2="176" />
-        <line x1="194" y1="108" x2="216" y2="147" />
-        <line x1="256" y1="91" x2="256" y2="136" />
-        <line x1="318" y1="108" x2="296" y2="147" />
-        <line x1="364" y1="154" x2="325" y2="176" />
-      </g>
-    </svg>
+    />
   )
 }
