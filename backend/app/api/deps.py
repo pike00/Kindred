@@ -58,7 +58,10 @@ def _get_current_user_local(session: Session, token: str) -> User:
         )
     user = session.get(User, token_data.sub)
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        # Token signature is valid but the user record is gone (e.g. DB reset
+        # while the browser still holds a stale JWT). Treat as auth failure so
+        # the frontend's 401/403 interceptor clears the token and redirects.
+        raise HTTPException(status_code=401, detail="User not found")
     if not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     return user
