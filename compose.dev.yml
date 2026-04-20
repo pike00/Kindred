@@ -12,6 +12,7 @@ services:
     volumes:
       - ./backend/app:/app/backend/app
       - ./backend/scripts:/app/backend/scripts
+      - ./backend/tests:/app/backend/tests
       - ./backend/alembic.ini:/app/backend/alembic.ini:ro
     working_dir: /app/backend
     command: ["bash", "-c", "bash scripts/prestart.sh && fastapi run --reload app/main.py"]
