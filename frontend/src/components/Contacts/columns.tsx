@@ -41,11 +41,6 @@ export const columns: ColumnDef<ContactPublic>[] = [
     },
   },
   {
-    accessorKey: "company",
-    header: "Company",
-    cell: ({ row }) => row.original.company || "—",
-  },
-  {
     accessorKey: "tags",
     header: "Tags",
     cell: ({ row }) => {

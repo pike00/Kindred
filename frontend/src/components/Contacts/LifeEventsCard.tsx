@@ -47,7 +47,6 @@ import useCustomToast from "@/hooks/useCustomToast"
 import { CalendarHeart, Pencil, Plus, Trash2 } from "@/lib/icons"
 
 const EVENT_TYPES = [
-  "birthday",
   "anniversary",
   "wedding",
   "graduation",
@@ -67,7 +66,7 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>
 
 const emptyDefaults: FormData = {
-  event_type: "birthday",
+  event_type: "anniversary",
   title: "",
   occurred_at: "",
   description: "",
@@ -217,7 +216,7 @@ function AddLifeEventDialog({ contactId }: { contactId: string }) {
         <DialogHeader>
           <DialogTitle>Add life event</DialogTitle>
           <DialogDescription>
-            Birthdays, anniversaries, graduations, etc.
+            Anniversaries, graduations, milestones, etc.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -426,7 +425,7 @@ export function LifeEventsCard({ contactId }: { contactId: string }) {
           <EmptyState
             icon={CalendarHeart}
             title="No life events"
-            description="Track birthdays, anniversaries, and milestones for this contact."
+            description="Track anniversaries, graduations, and milestones for this contact."
           />
         )}
       </CardContent>

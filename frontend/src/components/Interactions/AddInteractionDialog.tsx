@@ -33,6 +33,11 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import useCustomToast from "@/hooks/useCustomToast"
 
+const toLocalDateTimeInput = (d: Date) => {
+  const pad = (n: number) => String(n).padStart(2, "0")
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
 const channels = [
   { value: "call", label: "Call" },
   { value: "in_person", label: "In Person" },
@@ -70,7 +75,7 @@ export const AddInteractionDialog = ({
     defaultValues: {
       contact_id: contactId || "",
       channel: "",
-      occurred_at: new Date().toISOString().slice(0, 16),
+      occurred_at: toLocalDateTimeInput(new Date()),
       notes: "",
       mood: "",
       duration_minutes: "",
@@ -130,23 +135,21 @@ export const AddInteractionDialog = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Channel *</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="How did you interact?" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {channels.map((ch) => (
-                        <SelectItem key={ch.value} value={ch.value}>
-                          {ch.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex flex-wrap gap-1">
+                    {channels.map((ch) => (
+                      <Button
+                        key={ch.value}
+                        type="button"
+                        size="sm"
+                        variant={
+                          field.value === ch.value ? "default" : "outline"
+                        }
+                        onClick={() => field.onChange(ch.value)}
+                      >
+                        {ch.label}
+                      </Button>
+                    ))}
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}

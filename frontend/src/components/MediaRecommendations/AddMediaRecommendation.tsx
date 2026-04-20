@@ -28,13 +28,6 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import useCustomToast from "@/hooks/useCustomToast"
 import { Plus } from "@/lib/icons"
@@ -131,30 +124,40 @@ export function AddMediaRecommendation({
               <FormField
                 control={form.control}
                 name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Category</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="movie">Movie</SelectItem>
-                        <SelectItem value="tv_show">TV Show</SelectItem>
-                        <SelectItem value="podcast">Podcast</SelectItem>
-                        <SelectItem value="musician">Musician</SelectItem>
-                        <SelectItem value="book">Book</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const categories: {
+                    value: FormData["category"]
+                    label: string
+                  }[] = [
+                    { value: "movie", label: "Movie" },
+                    { value: "tv_show", label: "TV Show" },
+                    { value: "podcast", label: "Podcast" },
+                    { value: "musician", label: "Musician" },
+                    { value: "book", label: "Book" },
+                    { value: "other", label: "Other" },
+                  ]
+                  return (
+                    <FormItem>
+                      <FormLabel>Category</FormLabel>
+                      <div className="flex flex-wrap gap-1">
+                        {categories.map((cat) => (
+                          <Button
+                            key={cat.value}
+                            type="button"
+                            size="sm"
+                            variant={
+                              field.value === cat.value ? "default" : "outline"
+                            }
+                            onClick={() => field.onChange(cat.value)}
+                          >
+                            {cat.label}
+                          </Button>
+                        ))}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )
+                }}
               />
               <FormField
                 control={form.control}
