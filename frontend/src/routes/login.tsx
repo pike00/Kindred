@@ -7,6 +7,7 @@ import {
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
+import { cfEnabled } from "@/auth/cf"
 import type { Body_login_login_access_token as AccessToken } from "@/client"
 import { AuthLayout } from "@/components/Common/AuthLayout"
 import {
@@ -35,7 +36,7 @@ type FormData = z.infer<typeof formSchema>
 export const Route = createFileRoute("/login")({
   component: Login,
   beforeLoad: async () => {
-    if (isLoggedIn()) {
+    if (cfEnabled() || isLoggedIn()) {
       throw redirect({
         to: "/",
       })

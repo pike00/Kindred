@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
 
+import { cfEnabled, logout as cfLogout } from "@/auth/cf"
 import {
   type Body_login_login_access_token as AccessToken,
   LoginService,
@@ -12,6 +13,7 @@ import { handleError } from "@/utils"
 import useCustomToast from "./useCustomToast"
 
 const isLoggedIn = () => {
+  if (cfEnabled()) return true
   return localStorage.getItem("access_token") !== null
 }
 
@@ -54,6 +56,10 @@ const useAuth = () => {
   })
 
   const logout = () => {
+    if (cfEnabled()) {
+      cfLogout()
+      return
+    }
     localStorage.removeItem("access_token")
     navigate({ to: "/login", replace: true })
   }
