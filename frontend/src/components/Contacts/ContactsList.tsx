@@ -1,5 +1,5 @@
 import { useSuspenseQuery } from "@tanstack/react-query"
-import { Link } from "@tanstack/react-router"
+import { Link, useNavigate, useSearch } from "@tanstack/react-router"
 import { useMemo, useState } from "react"
 
 import { type ContactPublic, ContactsService } from "@/client"
@@ -132,7 +132,9 @@ function ContactRow({ contact }: { contact: ContactPublic }) {
 }
 
 export const ContactsList = () => {
-  const [search, setSearch] = useState("")
+  const navigate = useNavigate({ from: "/contacts" })
+  const { search: urlSearch } = useSearch({ from: "/_layout/contacts/" })
+  const [search, setSearch] = useState(urlSearch ?? "")
   const [pageIndex, setPageIndex] = useState(0)
 
   const { data } = useSuspenseQuery({
@@ -172,8 +174,13 @@ export const ContactsList = () => {
         <Input
           value={search}
           onChange={(e) => {
-            setSearch(e.target.value)
+            const next = e.target.value
+            setSearch(next)
             setPageIndex(0)
+            navigate({
+              search: next ? { search: next } : {},
+              replace: true,
+            })
           }}
           placeholder="Search by name, company, or tag..."
           className="pl-10"
