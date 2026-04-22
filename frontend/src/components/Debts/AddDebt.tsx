@@ -25,13 +25,6 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import useCustomToast from "@/hooks/useCustomToast"
 import { Plus } from "@/lib/icons"
 
@@ -110,20 +103,25 @@ export function AddDebt({ contactId }: AddDebtProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Direction</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="i_owe">I owe them</SelectItem>
-                        <SelectItem value="they_owe">They owe me</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="flex flex-wrap gap-1">
+                      {[
+                        { value: "i_owe", label: "I owe them" },
+                        { value: "they_owe", label: "They owe me" },
+                      ].map((o) => (
+                        <Button
+                          key={o.value}
+                          type="button"
+                          size="sm"
+                          variant={
+                            field.value === o.value ? "default" : "outline"
+                          }
+                          onClick={() => field.onChange(o.value)}
+                          aria-pressed={field.value === o.value}
+                        >
+                          {o.label}
+                        </Button>
+                      ))}
+                    </div>
                   </FormItem>
                 )}
               />

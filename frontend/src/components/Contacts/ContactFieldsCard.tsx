@@ -10,7 +10,6 @@ import type {
   ContactFieldUpdate,
 } from "@/client"
 import { ContactFieldsService } from "@/client"
-import { EmptyState } from "@/components/Common/EmptyState"
 import { RowActionsMenu } from "@/components/Common/RowActionsMenu"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -35,13 +34,6 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import useCustomToast from "@/hooks/useCustomToast"
 import { Mail, Pencil, Phone, Plus, Trash2 } from "@/lib/icons"
@@ -84,20 +76,21 @@ function FieldFormFields({ form }: FieldFormProps) {
             <FormLabel>
               Type <span className="text-destructive">*</span>
             </FormLabel>
-            <Select onValueChange={field.onChange} value={field.value}>
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                {FIELD_TYPES.map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {t}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex flex-wrap gap-1">
+              {FIELD_TYPES.map((t) => (
+                <Button
+                  key={t}
+                  type="button"
+                  size="sm"
+                  variant={field.value === t ? "default" : "outline"}
+                  onClick={() => field.onChange(t)}
+                  aria-pressed={field.value === t}
+                >
+                  {fieldTypeIcon[t]}
+                  <span className="ml-1 capitalize">{t}</span>
+                </Button>
+              ))}
+            </div>
             <FormMessage />
           </FormItem>
         )}
@@ -393,27 +386,24 @@ export function ContactFieldsCard({ contactId }: { contactId: string }) {
       <CardContent>
         {isLoading ? (
           <Skeleton className="h-4 w-2/3" />
-        ) : fields.length > 0 ? (
-          <div className="space-y-4">
-            {Object.entries(byType).map(([type, typeFields]) => (
+        ) : (
+          <div className="grid grid-cols-1 gap-y-4">
+            {FIELD_TYPES.map((type) => (
               <div key={type}>
                 <h4 className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">
                   {type}
                 </h4>
                 <div className="space-y-1">
-                  {typeFields.map((f) => (
+                  {(byType[type] ?? []).map((f) => (
                     <FieldRow key={f.id} field={f} />
                   ))}
+                  {!byType[type]?.length && (
+                    <p className="text-sm text-muted-foreground">—</p>
+                  )}
                 </div>
               </div>
             ))}
           </div>
-        ) : (
-          <EmptyState
-            icon={Mail}
-            title="No contact info"
-            description="Add an email or phone to reach this contact."
-          />
         )}
       </CardContent>
     </Card>

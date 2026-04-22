@@ -71,6 +71,17 @@ interface AddressFormFieldsProps {
   form: ReturnType<typeof useForm<FormData>>
 }
 
+const LABEL_PRESETS = ["Home", "Work"] as const
+
+function isPresetMatch(value: string | undefined, preset: string) {
+  return (value ?? "").trim().toLowerCase() === preset.toLowerCase()
+}
+
+function isOtherLabel(value: string | undefined) {
+  const v = (value ?? "").trim()
+  return v !== "" && !LABEL_PRESETS.some((p) => isPresetMatch(v, p))
+}
+
 function AddressFormFields({ form }: AddressFormFieldsProps) {
   return (
     <div className="grid gap-4 py-2">
@@ -80,8 +91,33 @@ function AddressFormFields({ form }: AddressFormFieldsProps) {
         render={({ field }) => (
           <FormItem>
             <FormLabel>Label</FormLabel>
+            <div className="flex flex-wrap gap-1">
+              {LABEL_PRESETS.map((p) => (
+                <Button
+                  key={p}
+                  type="button"
+                  size="sm"
+                  variant={
+                    isPresetMatch(field.value, p) ? "default" : "outline"
+                  }
+                  onClick={() => field.onChange(p)}
+                  aria-pressed={isPresetMatch(field.value, p)}
+                >
+                  {p}
+                </Button>
+              ))}
+              <Button
+                type="button"
+                size="sm"
+                variant={isOtherLabel(field.value) ? "default" : "outline"}
+                onClick={() => field.onChange("")}
+                aria-pressed={isOtherLabel(field.value)}
+              >
+                Other
+              </Button>
+            </div>
             <FormControl>
-              <Input placeholder="Home, Work, ..." {...field} />
+              <Input placeholder="Enter custom label..." {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
