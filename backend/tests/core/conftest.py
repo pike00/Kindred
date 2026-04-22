@@ -1,4 +1,5 @@
 """Override session-scoped fixtures that require a live DB for unit tests."""
+
 from collections.abc import Generator
 
 import pytest

@@ -15,7 +15,9 @@ def session():
         yield s
 
 
-def _fake_request(*, header: str | None = None, cookie: str | None = None) -> StarletteRequest:
+def _fake_request(
+    *, header: str | None = None, cookie: str | None = None
+) -> StarletteRequest:
     raw_headers: list[tuple[bytes, bytes]] = []
     if header:
         raw_headers.append((b"cf-access-jwt-assertion", header.encode()))
@@ -35,10 +37,15 @@ def _fake_request(*, header: str | None = None, cookie: str | None = None) -> St
 
 def test_oidc_mode_uses_verifier(monkeypatch, session):
     monkeypatch.setattr("app.core.config.settings.AUTH_MODE", "oidc")
-    with patch("app.core.oidc.verify_oidc_token") as v, \
-         patch("app.crud.get_or_create_user_from_claims") as p:
-        v.return_value = {"iss": "https://team.cloudflareaccess.com",
-                          "sub": "s", "email": "oidc@t.x"}
+    with (
+        patch("app.core.oidc.verify_oidc_token") as v,
+        patch("app.crud.get_or_create_user_from_claims") as p,
+    ):
+        v.return_value = {
+            "iss": "https://team.cloudflareaccess.com",
+            "sub": "s",
+            "email": "oidc@t.x",
+        }
         p.return_value = type("U", (), {"is_active": True, "id": "x"})()
         user = deps.get_current_user(
             request=_fake_request(header="fake.jwt.token"),
@@ -50,10 +57,15 @@ def test_oidc_mode_uses_verifier(monkeypatch, session):
 
 def test_oidc_mode_reads_cookie_when_header_absent(monkeypatch, session):
     monkeypatch.setattr("app.core.config.settings.AUTH_MODE", "oidc")
-    with patch("app.core.oidc.verify_oidc_token") as v, \
-         patch("app.crud.get_or_create_user_from_claims") as p:
-        v.return_value = {"iss": "https://team.cloudflareaccess.com",
-                          "sub": "s", "email": "oidc@t.x"}
+    with (
+        patch("app.core.oidc.verify_oidc_token") as v,
+        patch("app.crud.get_or_create_user_from_claims") as p,
+    ):
+        v.return_value = {
+            "iss": "https://team.cloudflareaccess.com",
+            "sub": "s",
+            "email": "oidc@t.x",
+        }
         p.return_value = type("U", (), {"is_active": True, "id": "x"})()
         user = deps.get_current_user(
             request=_fake_request(cookie="cookie.jwt.token"),
@@ -67,14 +79,19 @@ def test_oidc_mode_reads_cookie_when_header_absent(monkeypatch, session):
 
 def test_both_mode_uses_cf_then_falls_back_to_local(monkeypatch, session):
     monkeypatch.setattr("app.core.config.settings.AUTH_MODE", "both")
+
     def _raise(_):
         raise oidc.OIDCError("nope")
-    with patch("app.core.oidc.verify_oidc_token", side_effect=_raise), \
-         patch("app.api.deps._get_current_user_local") as local:
+
+    with (
+        patch("app.core.oidc.verify_oidc_token", side_effect=_raise),
+        patch("app.api.deps._get_current_user_local") as local,
+    ):
         local.return_value = "local-user"
         user = deps.get_current_user(
             request=_fake_request(header="bad.cf.jwt"),
-            session=session, local_token="local.bearer",
+            session=session,
+            local_token="local.bearer",
         )
     assert user == "local-user"
 
@@ -85,7 +102,8 @@ def test_local_mode_ignores_cf_header(monkeypatch, session):
         local.return_value = "local-user"
         user = deps.get_current_user(
             request=_fake_request(header="cf.jwt.should.be.ignored"),
-            session=session, local_token="local.bearer",
+            session=session,
+            local_token="local.bearer",
         )
     assert user == "local-user"
 
@@ -93,6 +111,7 @@ def test_local_mode_ignores_cf_header(monkeypatch, session):
 def test_no_credentials_401(monkeypatch, session):
     monkeypatch.setattr("app.core.config.settings.AUTH_MODE", "both")
     from fastapi import HTTPException
+
     with pytest.raises(HTTPException) as excinfo:
         deps.get_current_user(
             request=_fake_request(),

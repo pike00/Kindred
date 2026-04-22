@@ -5,17 +5,17 @@ from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
-from sqlmodel import col, func, select
+from sqlmodel import col, select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.models import (
-    WebhookEndpoint,
-    WebhookEndpointBase,
     Contact,
-    Interaction,
-    InteractionChannel,
     ContactField,
     ContactFieldType,
+    Interaction,
+    InteractionChannel,
+    WebhookEndpoint,
+    WebhookEndpointBase,
 )
 
 router = APIRouter(prefix="/webhooks", tags=["webhooks"])
@@ -27,7 +27,9 @@ def list_webhooks(
     current_user: CurrentUser,
 ) -> Any:
     """List all webhook endpoints for the user."""
-    statement = select(WebhookEndpoint).where(WebhookEndpoint.owner_id == current_user.id)
+    statement = select(WebhookEndpoint).where(
+        WebhookEndpoint.owner_id == current_user.id
+    )
     webhooks = session.exec(statement).all()
 
     return {

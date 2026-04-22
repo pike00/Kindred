@@ -6,7 +6,6 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session
 
 from app.core.config import settings
-from app.models import Contact, Tag, ContactTag
 
 
 def test_create_contact(
@@ -297,12 +296,8 @@ def test_contact_isolation_between_users(client: TestClient, db: Session) -> Non
 
     alice = create_random_user(db)
     bob = create_random_user(db)
-    alice_h = authentication_token_from_email(
-        client=client, email=alice.email, db=db
-    )
-    bob_h = authentication_token_from_email(
-        client=client, email=bob.email, db=db
-    )
+    alice_h = authentication_token_from_email(client=client, email=alice.email, db=db)
+    bob_h = authentication_token_from_email(client=client, email=bob.email, db=db)
 
     r = client.post(
         f"{settings.API_V1_STR}/contacts/",
@@ -317,9 +312,7 @@ def test_contact_isolation_between_users(client: TestClient, db: Session) -> Non
     ids = [c["id"] for c in r.json()["data"]]
     assert alice_cid not in ids
 
-    r = client.get(
-        f"{settings.API_V1_STR}/contacts/{alice_cid}", headers=bob_h
-    )
+    r = client.get(f"{settings.API_V1_STR}/contacts/{alice_cid}", headers=bob_h)
     assert r.status_code == 404
 
 
@@ -331,12 +324,8 @@ def test_shared_tag_exposes_contact(client: TestClient, db: Session) -> None:
 
     alice = create_random_user(db)
     bob = create_random_user(db)
-    alice_h = authentication_token_from_email(
-        client=client, email=alice.email, db=db
-    )
-    bob_h = authentication_token_from_email(
-        client=client, email=bob.email, db=db
-    )
+    alice_h = authentication_token_from_email(client=client, email=alice.email, db=db)
+    bob_h = authentication_token_from_email(client=client, email=bob.email, db=db)
 
     tag = client.post(
         f"{settings.API_V1_STR}/tags/",
@@ -360,7 +349,5 @@ def test_shared_tag_exposes_contact(client: TestClient, db: Session) -> None:
     assert r.status_code == 200
     assert contact["id"] in [c["id"] for c in r.json()["data"]]
 
-    r = client.get(
-        f"{settings.API_V1_STR}/contacts/{contact['id']}", headers=bob_h
-    )
+    r = client.get(f"{settings.API_V1_STR}/contacts/{contact['id']}", headers=bob_h)
     assert r.status_code == 200

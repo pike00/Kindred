@@ -5,26 +5,22 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from app.core.config import settings as app_settings
 from arq.connections import RedisSettings
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
 from sqlalchemy.orm import selectinload
 from sqlmodel import col, func, select
 
 from app.api.deps import CurrentUser, SessionDep
+from app.core.config import settings as app_settings
 from app.crud import visible_contact_ids
 from app.models import (
     Contact,
     ContactCreate,
     ContactGroup,
     ContactPublic,
+    ContactsPublic,
     ContactTag,
     ContactUpdate,
-    ContactsPublic,
-    Group,
-    GroupPublic,
-    Tag,
-    TagPublic,
 )
 
 logger = logging.getLogger(__name__)
@@ -40,6 +36,7 @@ async def _get_arq_pool():
     global _arq_pool
     if _arq_pool is None:
         from arq.connections import create_pool
+
         _arq_pool = await create_pool(RedisSettings.from_dsn(app_settings.REDIS_URL))
     return _arq_pool
 
@@ -48,21 +45,29 @@ async def _enqueue_contact_index(contact: Contact) -> None:
     """Enqueue contact indexing in background (non-blocking)."""
     try:
         pool = await _get_arq_pool()
-        await pool.enqueue_job("index_contact_in_search", str(contact.id), {
-            "first_name": contact.first_name,
-            "last_name": contact.last_name or "",
-            "nickname": contact.nickname or "",
-            "company": contact.company or "",
-            "title": contact.title or "",
-            "how_we_met": contact.how_we_met or "",
-            "owner_id": str(contact.owner_id),
-            "is_favorite": contact.is_favorite,
-            "is_archived": contact.is_archived,
-            "created_at": contact.created_at.isoformat(),
-            "last_contacted_at": contact.last_contacted_at.isoformat() if contact.last_contacted_at else None,
-        })
+        await pool.enqueue_job(
+            "index_contact_in_search",
+            str(contact.id),
+            {
+                "first_name": contact.first_name,
+                "last_name": contact.last_name or "",
+                "nickname": contact.nickname or "",
+                "company": contact.company or "",
+                "title": contact.title or "",
+                "how_we_met": contact.how_we_met or "",
+                "owner_id": str(contact.owner_id),
+                "is_favorite": contact.is_favorite,
+                "is_archived": contact.is_archived,
+                "created_at": contact.created_at.isoformat(),
+                "last_contacted_at": contact.last_contacted_at.isoformat()
+                if contact.last_contacted_at
+                else None,
+            },
+        )
     except Exception as e:
-        logger.warning(f"Failed to enqueue search indexing for contact {contact.id}: {e}")
+        logger.warning(
+            f"Failed to enqueue search indexing for contact {contact.id}: {e}"
+        )
 
 
 async def _enqueue_contact_removal(contact_id: str) -> None:
@@ -71,13 +76,16 @@ async def _enqueue_contact_removal(contact_id: str) -> None:
         pool = await _get_arq_pool()
         await pool.enqueue_job("remove_contact_from_search", contact_id)
     except Exception as e:
-        logger.warning(f"Failed to enqueue search removal for contact {contact_id}: {e}")
+        logger.warning(
+            f"Failed to enqueue search removal for contact {contact_id}: {e}"
+        )
 
 
 def _remove_contact_safe(contact_id: str) -> None:
     """Remove a contact from Meilisearch, failing silently if unavailable."""
     try:
         from app.search import remove_contact
+
         remove_contact(contact_id)
     except Exception as e:
         logger.warning(f"Meilisearch removal failed: {e}")
@@ -104,9 +112,7 @@ def list_contacts(
     `is_archived=false` filter is lifted so callers can resolve archived rows too.
     """
     # Build base query
-    statement = select(Contact).where(
-        Contact.id.in_(visible_contact_ids(current_user))
-    )
+    statement = select(Contact).where(Contact.id.in_(visible_contact_ids(current_user)))
 
     if ids is not None:
         if not ids:
@@ -118,7 +124,7 @@ def list_contacts(
         statement = statement.where(Contact.is_archived == is_archived)
     elif ids is None:
         # Default: exclude archived (skipped when resolving by explicit id list)
-        statement = statement.where(Contact.is_archived == False)
+        statement = statement.where(Contact.is_archived.is_(False))
 
     if is_favorite is not None:
         statement = statement.where(Contact.is_favorite == is_favorite)
@@ -139,7 +145,9 @@ def list_contacts(
         statement = statement.join(ContactTag).where(ContactTag.tag_id == tag_id)
 
     if group_id:
-        statement = statement.join(ContactGroup).where(ContactGroup.group_id == group_id)
+        statement = statement.join(ContactGroup).where(
+            ContactGroup.group_id == group_id
+        )
 
     # Count (before pagination)
     count_statement = select(func.count()).select_from(statement.subquery())
@@ -160,10 +168,7 @@ def list_contacts(
     contacts = session.exec(statement).all()
 
     # Convert to response model
-    result = [
-        ContactPublic.model_validate(contact)
-        for contact in contacts
-    ]
+    result = [ContactPublic.model_validate(contact) for contact in contacts]
 
     return ContactsPublic(data=result, count=count)
 
@@ -185,7 +190,7 @@ def list_losing_touch(
         select(Contact)
         .where(
             Contact.id.in_(visible_contact_ids(current_user)),
-            Contact.is_archived == False,
+            Contact.is_archived.is_(False),
             Contact.contact_frequency_days.is_not(None),
         )
         .options(
@@ -200,7 +205,9 @@ def list_losing_touch(
         if contact.last_contacted_at is None:
             overdue.append(contact)
         else:
-            deadline = contact.last_contacted_at + timedelta(days=contact.contact_frequency_days)
+            deadline = contact.last_contacted_at + timedelta(
+                days=contact.contact_frequency_days
+            )
             if now > deadline:
                 overdue.append(contact)
 
@@ -210,10 +217,7 @@ def list_losing_touch(
     )
 
     # Convert to response model
-    result = [
-        ContactPublic.model_validate(contact)
-        for contact in overdue[:limit]
-    ]
+    result = [ContactPublic.model_validate(contact) for contact in overdue[:limit]]
 
     return ContactsPublic(data=result, count=len(overdue))
 
@@ -269,9 +273,13 @@ def create_contact(
     session.commit()
 
     # Reload contact with eager-loaded relationships
-    statement = select(Contact).where(Contact.id == contact.id).options(
-        selectinload(Contact.tags),
-        selectinload(Contact.groups),
+    statement = (
+        select(Contact)
+        .where(Contact.id == contact.id)
+        .options(
+            selectinload(Contact.tags),
+            selectinload(Contact.groups),
+        )
     )
     contact = session.exec(statement).first()
 
@@ -290,9 +298,13 @@ def update_contact(
     background_tasks: BackgroundTasks,
 ) -> Any:
     """Update a contact."""
-    statement = select(Contact).where(Contact.id == contact_id).options(
-        selectinload(Contact.tags),
-        selectinload(Contact.groups),
+    statement = (
+        select(Contact)
+        .where(Contact.id == contact_id)
+        .options(
+            selectinload(Contact.tags),
+            selectinload(Contact.groups),
+        )
     )
     contact = session.exec(statement).first()
     if not contact:
@@ -310,7 +322,9 @@ def update_contact(
     # Update tag associations if provided
     if tag_ids is not None:
         # Remove existing
-        existing = session.exec(select(ContactTag).where(ContactTag.contact_id == contact.id)).all()
+        existing = session.exec(
+            select(ContactTag).where(ContactTag.contact_id == contact.id)
+        ).all()
         for ct in existing:
             session.delete(ct)
         # Add new
@@ -330,9 +344,13 @@ def update_contact(
     session.commit()
 
     # Reload with eager loading
-    statement = select(Contact).where(Contact.id == contact.id).options(
-        selectinload(Contact.tags),
-        selectinload(Contact.groups),
+    statement = (
+        select(Contact)
+        .where(Contact.id == contact.id)
+        .options(
+            selectinload(Contact.tags),
+            selectinload(Contact.groups),
+        )
     )
     contact = session.exec(statement).first()
 

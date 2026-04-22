@@ -9,11 +9,11 @@ from sqlmodel import func, select
 from app.api.deps import CurrentUser, SessionDep
 from app.crud import create_journal_entry
 from app.models import (
+    JournalEntriesPublic,
     JournalEntry,
     JournalEntryCreate,
     JournalEntryPublic,
     JournalEntryUpdate,
-    JournalEntriesPublic,
 )
 
 router = APIRouter(prefix="/journal", tags=["journal"])

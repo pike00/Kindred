@@ -33,6 +33,7 @@ def _require_contact_visible(session: Any, user: Any, contact_id: uuid.UUID) -> 
 
 # ─── Field Definitions ─────────────────────────────────────────────────────
 
+
 @router.get("/definitions/")
 def list_field_definitions(
     session: SessionDep,
@@ -107,6 +108,7 @@ def delete_field_definition(
 
 # ─── Field Values ──────────────────────────────────────────────────────────
 
+
 @router.get("/values/contact/{contact_id}")
 def list_field_values(
     session: SessionDep,
@@ -116,7 +118,9 @@ def list_field_values(
     """List custom field values for a contact."""
     _require_contact_visible(session, current_user, contact_id)
 
-    statement = select(CustomFieldValue).where(CustomFieldValue.contact_id == contact_id)
+    statement = select(CustomFieldValue).where(
+        CustomFieldValue.contact_id == contact_id
+    )
     values = session.exec(statement).all()
 
     return {

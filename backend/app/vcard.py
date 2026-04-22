@@ -5,16 +5,16 @@ Preserves unknown vCard properties through round-trips by storing raw vCard text
 """
 
 import uuid
-from datetime import datetime, timezone
 
 import vobject
-from vobject.vcard import Name, Address as VCardAddress
+from vobject.vcard import Address as VCardAddress
+from vobject.vcard import Name
 
 from app.models import (
+    Address,
     Contact,
     ContactField,
     ContactFieldType,
-    Address,
 )
 
 
@@ -47,7 +47,13 @@ def contact_to_vcard(
     )
 
     # FN (formatted name) — required
-    fn_parts = [contact.prefix, contact.first_name, contact.middle_name, contact.last_name, contact.suffix]
+    fn_parts = [
+        contact.prefix,
+        contact.first_name,
+        contact.middle_name,
+        contact.last_name,
+        contact.suffix,
+    ]
     fn = " ".join(p for p in fn_parts if p).strip()
     if hasattr(card, "fn"):
         card.fn.value = fn
@@ -180,6 +186,7 @@ def vcard_to_contact_data(vcard_text: str) -> dict:
     if hasattr(card, "bday"):
         try:
             from dateutil.parser import parse as dateparse
+
             contact["birthday"] = dateparse(card.bday.value).date()
         except Exception:
             pass
@@ -204,38 +211,44 @@ def vcard_to_contact_data(vcard_text: str) -> dict:
     for tel in getattr(card, "tel_list", []):
         types = tel.params.get("TYPE", ["other"])
         label = types[0].lower() if types else "other"
-        fields.append({
-            "field_type": "phone",
-            "label": label,
-            "value": tel.value,
-            "is_primary": "pref" in [t.lower() for t in types],
-        })
+        fields.append(
+            {
+                "field_type": "phone",
+                "label": label,
+                "value": tel.value,
+                "is_primary": "pref" in [t.lower() for t in types],
+            }
+        )
 
     # EMAIL
     for email in getattr(card, "email_list", []):
         types = email.params.get("TYPE", ["other"])
         label = types[0].lower() if types else "other"
-        fields.append({
-            "field_type": "email",
-            "label": label,
-            "value": email.value,
-            "is_primary": "pref" in [t.lower() for t in types],
-        })
+        fields.append(
+            {
+                "field_type": "email",
+                "label": label,
+                "value": email.value,
+                "is_primary": "pref" in [t.lower() for t in types],
+            }
+        )
 
     # ─── Addresses ────────────────────────────────────────────────────────
     addresses = []
     for adr in getattr(card, "adr_list", []):
         types = adr.params.get("TYPE", ["home"])
         label = types[0].lower() if types else "home"
-        addresses.append({
-            "label": label,
-            "street": adr.value.street or None,
-            "extended": adr.value.extended or None,
-            "city": adr.value.city or None,
-            "region": adr.value.region or None,
-            "postal_code": adr.value.code or None,
-            "country": adr.value.country or None,
-        })
+        addresses.append(
+            {
+                "label": label,
+                "street": adr.value.street or None,
+                "extended": adr.value.extended or None,
+                "city": adr.value.city or None,
+                "region": adr.value.region or None,
+                "postal_code": adr.value.code or None,
+                "country": adr.value.country or None,
+            }
+        )
 
     return {
         "contact": contact,

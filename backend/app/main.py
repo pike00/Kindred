@@ -2,13 +2,13 @@ import sentry_sdk
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from fastapi.routing import APIRoute
+from radicale import Application as RadicaleApp
+from radicale.config import Configuration as RadicaleConfig
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.wsgi import WSGIMiddleware
 
 from app.api.main import api_router
 from app.core.config import settings
-from radicale import Application as RadicaleApp
-from radicale.config import Configuration as RadicaleConfig
 
 
 def custom_generate_unique_id(route: APIRoute) -> str:
@@ -35,12 +35,16 @@ if settings.all_cors_origins:
     )
 
 # Configure Radicale CardDAV server with PostgreSQL storage backend
-from radicale.config import DEFAULT_CONFIG_SCHEMA
+from radicale.config import DEFAULT_CONFIG_SCHEMA  # noqa: E402
+
 radicale_configuration = RadicaleConfig(DEFAULT_CONFIG_SCHEMA)
-radicale_configuration.update({
-    "auth": {"type": "http_x_remote_user"},
-    "storage": {"type": "app.carddav.storage"},
-}, "app")
+radicale_configuration.update(
+    {
+        "auth": {"type": "http_x_remote_user"},
+        "storage": {"type": "app.carddav.storage"},
+    },
+    "app",
+)
 radicale_app = RadicaleApp(radicale_configuration)
 app.mount("/dav", WSGIMiddleware(radicale_app))
 

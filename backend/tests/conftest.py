@@ -8,14 +8,17 @@ os.environ["POSTGRES_DB"] = _test_db
 def _ensure_test_database() -> None:
     import psycopg
 
-    with psycopg.connect(
-        host=os.environ["POSTGRES_SERVER"],
-        port=int(os.environ.get("POSTGRES_PORT", "5432")),
-        user=os.environ["POSTGRES_USER"],
-        password=os.environ.get("POSTGRES_PASSWORD", ""),
-        dbname="postgres",
-        autocommit=True,
-    ) as conn, conn.cursor() as cur:
+    with (
+        psycopg.connect(
+            host=os.environ["POSTGRES_SERVER"],
+            port=int(os.environ.get("POSTGRES_PORT", "5432")),
+            user=os.environ["POSTGRES_USER"],
+            password=os.environ.get("POSTGRES_PASSWORD", ""),
+            dbname="postgres",
+            autocommit=True,
+        ) as conn,
+        conn.cursor() as cur,
+    ):
         cur.execute("SELECT 1 FROM pg_database WHERE datname = %s", (_test_db,))
         if cur.fetchone() is None:
             cur.execute(f'CREATE DATABASE "{_test_db}"')
@@ -24,14 +27,17 @@ def _ensure_test_database() -> None:
 def _reset_test_schema() -> None:
     import psycopg
 
-    with psycopg.connect(
-        host=os.environ["POSTGRES_SERVER"],
-        port=int(os.environ.get("POSTGRES_PORT", "5432")),
-        user=os.environ["POSTGRES_USER"],
-        password=os.environ.get("POSTGRES_PASSWORD", ""),
-        dbname=_test_db,
-        autocommit=True,
-    ) as conn, conn.cursor() as cur:
+    with (
+        psycopg.connect(
+            host=os.environ["POSTGRES_SERVER"],
+            port=int(os.environ.get("POSTGRES_PORT", "5432")),
+            user=os.environ["POSTGRES_USER"],
+            password=os.environ.get("POSTGRES_PASSWORD", ""),
+            dbname=_test_db,
+            autocommit=True,
+        ) as conn,
+        conn.cursor() as cur,
+    ):
         cur.execute("DROP SCHEMA IF EXISTS public CASCADE")
         cur.execute("CREATE SCHEMA public")
 

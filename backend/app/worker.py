@@ -12,7 +12,7 @@ from sqlmodel import Session, create_engine, select
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
-from app.models import Contact, Reminder, ReminderFrequency
+from app.models import Contact, Reminder, ReminderFrequency  # noqa: E402
 
 
 def _get_apprise() -> apprise.Apprise:
@@ -34,7 +34,7 @@ async def check_reminders(ctx: dict) -> None:
     with Session(engine) as session:
         due_reminders = session.exec(
             select(Reminder).where(
-                Reminder.is_active == True,
+                Reminder.is_active.is_(True),
                 Reminder.remind_at <= now,
                 (Reminder.snoozed_until.is_(None)) | (Reminder.snoozed_until <= now),
             )
@@ -60,7 +60,9 @@ async def check_reminders(ctx: dict) -> None:
             try:
                 apobj.notify(title=title, body=body)
             except Exception as e:
-                logger.error(f"Failed to send notification for reminder {reminder.id}: {e}")
+                logger.error(
+                    f"Failed to send notification for reminder {reminder.id}: {e}"
+                )
 
             # Always update scheduling regardless of notification success
             reminder.last_sent_at = now
@@ -92,7 +94,7 @@ async def check_cadences(ctx: dict) -> None:
     with Session(engine) as session:
         contacts = session.exec(
             select(Contact).where(
-                Contact.is_archived == False,
+                Contact.is_archived.is_(False),
                 Contact.contact_frequency_days.is_not(None),
             )
         ).all()
@@ -116,23 +118,34 @@ async def check_cadences(ctx: dict) -> None:
                         body=f"You haven't contacted {name} in over {contact.contact_frequency_days} days.",
                     )
                 except Exception as e:
-                    logger.error(f"Failed to send cadence notification for contact {contact.id}: {e}")
+                    logger.error(
+                        f"Failed to send cadence notification for contact {contact.id}: {e}"
+                    )
 
 
-async def index_contact_in_search(ctx: dict, contact_id: str, data: dict[str, Any]) -> None:
+async def index_contact_in_search(
+    ctx: dict,  # noqa: ARG001 (required by arq)
+    contact_id: str,
+    data: dict[str, Any],
+) -> None:
     """Background task to index a contact in Meilisearch (non-blocking)."""
     try:
         from app.search import index_contact
+
         index_contact(contact_id, data)
     except Exception as e:
         # Log but don't fail the API response
         logger.warning(f"Failed to index contact {contact_id}: {e}")
 
 
-async def remove_contact_from_search(ctx: dict, contact_id: str) -> None:
+async def remove_contact_from_search(
+    ctx: dict,  # noqa: ARG001 (required by arq)
+    contact_id: str,
+) -> None:
     """Background task to remove a contact from Meilisearch (non-blocking)."""
     try:
         from app.search import remove_contact
+
         remove_contact(contact_id)
     except Exception as e:
         # Log but don't fail the API response
@@ -142,10 +155,15 @@ async def remove_contact_from_search(ctx: dict, contact_id: str) -> None:
 class WorkerSettings:
     """ARQ worker settings."""
 
-    functions = [check_reminders, check_cadences, index_contact_in_search, remove_contact_from_search]
+    functions = [
+        check_reminders,
+        check_cadences,
+        index_contact_in_search,
+        remove_contact_from_search,
+    ]
     cron_jobs = [
-        cron(check_reminders, minute={0, 30}),       # Every 30 minutes
-        cron(check_cadences, hour={9}, minute={0}),   # Daily at 9 AM UTC
+        cron(check_reminders, minute={0, 30}),  # Every 30 minutes
+        cron(check_cadences, hour={9}, minute={0}),  # Daily at 9 AM UTC
     ]
     redis_settings = RedisSettings.from_dsn(settings.REDIS_URL)
 

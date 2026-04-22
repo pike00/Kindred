@@ -6,13 +6,13 @@ It reads/writes contacts from the same database as the FastAPI app.
 
 import contextlib
 import uuid as uuid_mod
+from collections.abc import Iterable, Iterator, Mapping
 from datetime import datetime, timezone
 from email.utils import formatdate
 from time import mktime
-from typing import Iterable, Iterator, Mapping, Optional, Set, Tuple
 
 from radicale import item as radicale_item
-from radicale import storage, types as radicale_types
+from radicale import types as radicale_types
 from radicale.storage import BaseCollection, BaseStorage
 from sqlmodel import Session, create_engine, select
 
@@ -43,7 +43,9 @@ class Collection(BaseCollection):
     def last_modified(self) -> str:
         return _http_datetime(datetime.now(timezone.utc))
 
-    def get_multi(self, hrefs: Iterable[str]) -> Iterable[Tuple[str, Optional[radicale_item.Item]]]:
+    def get_multi(
+        self, hrefs: Iterable[str]
+    ) -> Iterable[tuple[str, radicale_item.Item | None]]:
         with self._storage.get_session() as session:
             user = session.exec(select(User).where(User.email == self._user)).first()
             if not user:
@@ -99,7 +101,7 @@ class Collection(BaseCollection):
 
     def upload(
         self, href: str, item: radicale_item.Item
-    ) -> Tuple[radicale_item.Item, Optional[radicale_item.Item]]:
+    ) -> tuple[radicale_item.Item, radicale_item.Item | None]:
         """Store or update a vCard from an iOS/macOS client."""
         from app.vcard import vcard_to_contact_data
 
@@ -163,7 +165,7 @@ class Collection(BaseCollection):
         )
         return (new_item, old_item)
 
-    def delete(self, href: Optional[str] = None) -> None:
+    def delete(self, href: str | None = None) -> None:
         if href is None:
             return  # Don't allow deleting the entire collection
 
@@ -188,7 +190,7 @@ class Collection(BaseCollection):
                 session.delete(contact)
                 session.commit()
 
-    def get_meta(self, key: Optional[str] = None):
+    def get_meta(self, key: str | None = None):
         meta = {
             "tag": "VADDRESSBOOK",
             "D:displayname": "Contacts",
@@ -220,7 +222,7 @@ class Storage(BaseStorage):
         path: str,
         depth: str = "0",
         child_context_manager=None,
-        user_groups: Set[str] = set(),
+        user_groups: set[str] = set(),  # noqa: B006 (Radicale parent signature)
     ) -> Iterable[radicale_types.CollectionOrItem]:
         sane_path = path.strip("/")
         parts = sane_path.split("/") if sane_path else []
@@ -257,7 +259,7 @@ class Storage(BaseStorage):
             href = parts[2]
             col = Collection(self, f"{parts[0]}/{parts[1]}", user)
             results = list(col.get_multi([href]))
-            for h, item in results:
+            for _h, item in results:
                 if item:
                     yield item
 

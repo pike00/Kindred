@@ -14,7 +14,6 @@ from app.core.config import settings
 from app.core.db import engine
 from app.models import TokenPayload, User
 
-
 CF_ACCESS_HEADER = "Cf-Access-Jwt-Assertion"
 CF_ACCESS_COOKIE = "CF_Authorization"
 
