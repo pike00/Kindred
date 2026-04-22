@@ -34,13 +34,6 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import useCustomToast from "@/hooks/useCustomToast"
@@ -96,20 +89,21 @@ function LifeEventFormFields({
             <FormLabel>
               Type <span className="text-destructive">*</span>
             </FormLabel>
-            <Select onValueChange={field.onChange} value={field.value}>
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                {EVENT_TYPES.map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {t}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex flex-wrap gap-1">
+              {EVENT_TYPES.map((t) => (
+                <Button
+                  key={t}
+                  type="button"
+                  size="sm"
+                  variant={field.value === t ? "default" : "outline"}
+                  onClick={() => field.onChange(t)}
+                  aria-pressed={field.value === t}
+                  className="capitalize"
+                >
+                  {t.replace(/_/g, " ")}
+                </Button>
+              ))}
+            </div>
             <FormMessage />
           </FormItem>
         )}

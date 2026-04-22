@@ -25,13 +25,6 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import useCustomToast from "@/hooks/useCustomToast"
 import { Plus } from "@/lib/icons"
@@ -138,21 +131,26 @@ export function AddGift({ contactId }: AddGiftProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Status</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="idea">Idea</SelectItem>
-                        <SelectItem value="given">Given</SelectItem>
-                        <SelectItem value="received">Received</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="flex flex-wrap gap-1">
+                      {[
+                        { value: "idea", label: "Idea" },
+                        { value: "given", label: "Given" },
+                        { value: "received", label: "Received" },
+                      ].map((o) => (
+                        <Button
+                          key={o.value}
+                          type="button"
+                          size="sm"
+                          variant={
+                            field.value === o.value ? "default" : "outline"
+                          }
+                          onClick={() => field.onChange(o.value)}
+                          aria-pressed={field.value === o.value}
+                        >
+                          {o.label}
+                        </Button>
+                      ))}
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
