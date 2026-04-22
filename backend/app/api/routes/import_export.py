@@ -1,21 +1,19 @@
 """Import and export routes for vCard and CSV files."""
 
-import io
 from typing import Any
 
-import vobject
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi import APIRouter, File, UploadFile
 from fastapi.responses import Response
 from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.models import (
+    Address,
     Contact,
     ContactField,
     ContactFieldType,
-    Address,
 )
-from app.vcard import vcard_to_contact_data, contact_to_vcard
+from app.vcard import contact_to_vcard, vcard_to_contact_data
 
 router = APIRouter(prefix="/import-export", tags=["import-export"])
 
@@ -48,7 +46,9 @@ async def import_vcard(
                 # Check if contact with this UID already exists
                 existing = session.get(Contact, parsed["uid"])
                 if existing and existing.owner_id == current_user.id:
-                    errors.append(f"Skipped duplicate: {contact_data.get('first_name', '')} {contact_data.get('last_name', '')}")
+                    errors.append(
+                        f"Skipped duplicate: {contact_data.get('first_name', '')} {contact_data.get('last_name', '')}"
+                    )
                     continue
                 contact.id = parsed["uid"]
 

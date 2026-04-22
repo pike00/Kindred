@@ -13,8 +13,8 @@ from app.models import (
     Interaction,
     InteractionCreate,
     InteractionPublic,
-    InteractionUpdate,
     InteractionsPublic,
+    InteractionUpdate,
 )
 
 router = APIRouter(prefix="/interactions", tags=["interactions"])
@@ -60,7 +60,9 @@ def list_interactions(
     count = session.exec(count_statement).one()
 
     # Order and paginate
-    statement = statement.order_by(Interaction.occurred_at.desc()).offset(skip).limit(limit)
+    statement = (
+        statement.order_by(Interaction.occurred_at.desc()).offset(skip).limit(limit)
+    )
     interactions = session.exec(statement).all()
 
     contact_ids = {i.contact_id for i in interactions}

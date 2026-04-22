@@ -28,7 +28,7 @@ def _check_meili_sync() -> bool:
         sock = socket.create_connection((host, port), timeout=2)
         sock.close()
         return True
-    except (socket.timeout, socket.gaierror, OSError):
+    except (TimeoutError, socket.gaierror, OSError):
         return False
 
 
@@ -75,14 +75,18 @@ def index_contact(contact_id: str, data: dict[str, Any]) -> None:
 def remove_contact(contact_id: str) -> None:
     """Remove a contact from the search index."""
     if not _is_meili_available():
-        logger.info(f"Meilisearch unavailable, skipping removal for contact {contact_id}")
+        logger.info(
+            f"Meilisearch unavailable, skipping removal for contact {contact_id}"
+        )
         return
     client = get_meili_client()
     index = client.index("contacts")
     index.delete_document(contact_id)
 
 
-def search_contacts(query: str, owner_id: str, limit: int = 20) -> dict[str, Any] | None:
+def search_contacts(
+    query: str, owner_id: str, limit: int = 20
+) -> dict[str, Any] | None:
     """Search contacts using full-text search, filtered by owner.
 
     Returns None if Meilisearch is unavailable (caller should fall back to SQL).
@@ -109,24 +113,30 @@ def setup_index() -> None:
     client = get_meili_client()
     index = client.index("contacts")
 
-    index.update_searchable_attributes([
-        "first_name",
-        "last_name",
-        "nickname",
-        "company",
-        "title",
-        "how_we_met",
-    ])
+    index.update_searchable_attributes(
+        [
+            "first_name",
+            "last_name",
+            "nickname",
+            "company",
+            "title",
+            "how_we_met",
+        ]
+    )
 
-    index.update_filterable_attributes([
-        "owner_id",
-        "is_favorite",
-        "is_archived",
-    ])
+    index.update_filterable_attributes(
+        [
+            "owner_id",
+            "is_favorite",
+            "is_archived",
+        ]
+    )
 
-    index.update_sortable_attributes([
-        "first_name",
-        "last_name",
-        "created_at",
-        "last_contacted_at",
-    ])
+    index.update_sortable_attributes(
+        [
+            "first_name",
+            "last_name",
+            "created_at",
+            "last_contacted_at",
+        ]
+    )

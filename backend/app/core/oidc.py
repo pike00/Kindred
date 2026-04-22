@@ -4,6 +4,7 @@ Used here for Cloudflare Access JWT assertions but accepts any JWKS-backed
 issuer (Authelia, Auth0, Keycloak, Zitadel, ...). No OIDC discovery step;
 JWKS URL is supplied explicitly via OIDC_JWKS_URL.
 """
+
 from __future__ import annotations
 
 import time
@@ -56,8 +57,9 @@ def _key_for_kid(jwks: dict[str, Any], kid: str) -> Any:
 
 def verify_oidc_token(token: str) -> dict[str, Any]:
     """Verify token against configured issuer/audience. Returns decoded payload."""
-    if not (settings.OIDC_ISSUER_URL and settings.OIDC_AUDIENCE
-            and settings.OIDC_JWKS_URL):
+    if not (
+        settings.OIDC_ISSUER_URL and settings.OIDC_AUDIENCE and settings.OIDC_JWKS_URL
+    ):
         raise OIDCError("OIDC not configured")
     try:
         header = jwt.get_unverified_header(token)
@@ -78,7 +80,8 @@ def verify_oidc_token(token: str) -> dict[str, Any]:
 
     try:
         payload = jwt.decode(
-            token, key,
+            token,
+            key,
             algorithms=_ALLOWED_ALGS,
             audience=settings.OIDC_AUDIENCE,
             issuer=settings.OIDC_ISSUER_URL.rstrip("/"),

@@ -16,9 +16,7 @@ def _make_tag(client, headers, name="t"):
 def test_share_and_unshare(client: TestClient, db: Session):
     alice = create_random_user(db)
     bob = create_random_user(db)
-    alice_h = authentication_token_from_email(
-        client=client, email=alice.email, db=db
-    )
+    alice_h = authentication_token_from_email(client=client, email=alice.email, db=db)
     tag = _make_tag(client, alice_h, "shared-tag")
 
     r = client.post(
@@ -50,12 +48,8 @@ def test_share_and_unshare(client: TestClient, db: Session):
 def test_cannot_share_unowned_tag(client: TestClient, db: Session):
     alice = create_random_user(db)
     bob = create_random_user(db)
-    alice_h = authentication_token_from_email(
-        client=client, email=alice.email, db=db
-    )
-    bob_h = authentication_token_from_email(
-        client=client, email=bob.email, db=db
-    )
+    alice_h = authentication_token_from_email(client=client, email=alice.email, db=db)
+    bob_h = authentication_token_from_email(client=client, email=bob.email, db=db)
     tag = _make_tag(client, alice_h, "alices")
     r = client.post(
         f"{settings.API_V1_STR}/tag-shares/",

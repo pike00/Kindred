@@ -21,10 +21,14 @@ def list_groups(
     limit: int = 100,
 ) -> Any:
     """List all groups for the current user."""
-    statement = select(Group).where(Group.owner_id == current_user.id).offset(skip).limit(limit)
+    statement = (
+        select(Group).where(Group.owner_id == current_user.id).offset(skip).limit(limit)
+    )
     groups = session.exec(statement).all()
 
-    count_statement = select(func.count(Group.id)).where(Group.owner_id == current_user.id)
+    count_statement = select(func.count(Group.id)).where(
+        Group.owner_id == current_user.id
+    )
     count = session.exec(count_statement).one()
 
     return GroupsPublic(

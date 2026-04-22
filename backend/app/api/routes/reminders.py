@@ -25,9 +25,7 @@ def _reminder_accessible(user: Any, reminder: Reminder, session: Any) -> bool:
         return True
     if reminder.contact_id is None:
         return False
-    return contact_visible(
-        session=session, user=user, contact_id=reminder.contact_id
-    )
+    return contact_visible(session=session, user=user, contact_id=reminder.contact_id)
 
 
 @router.get("/", response_model=RemindersPublic)

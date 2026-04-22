@@ -8,7 +8,7 @@ from sqlmodel import func, select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.crud import create_note
-from app.models import Contact, Note, NoteCreate, NotePublic, NoteUpdate, NotesPublic
+from app.models import Contact, Note, NoteCreate, NotePublic, NotesPublic, NoteUpdate
 
 router = APIRouter(prefix="/notes", tags=["notes"])
 

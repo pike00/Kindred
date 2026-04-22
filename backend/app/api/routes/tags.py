@@ -21,7 +21,9 @@ def list_tags(
     limit: int = 100,
 ) -> Any:
     """List all tags for the current user."""
-    statement = select(Tag).where(Tag.owner_id == current_user.id).offset(skip).limit(limit)
+    statement = (
+        select(Tag).where(Tag.owner_id == current_user.id).offset(skip).limit(limit)
+    )
     tags = session.exec(statement).all()
 
     count_statement = select(func.count(Tag.id)).where(Tag.owner_id == current_user.id)
