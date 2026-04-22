@@ -206,6 +206,10 @@ export class ContactsService {
     /**
      * List Contacts
      * List contacts with filtering.
+     *
+     * Pass `ids=<uuid>&ids=<uuid>` to fetch a specific batch of contacts (useful for
+     * hydrating references from other resources). When `ids` is provided, the default
+     * `is_archived=false` filter is lifted so callers can resolve archived rows too.
      * @param data The data for the request.
      * @param data.skip
      * @param data.limit
@@ -215,6 +219,7 @@ export class ContactsService {
      * @param data.isFavorite
      * @param data.isArchived
      * @param data.stage
+     * @param data.ids
      * @returns ContactsPublic Successful Response
      * @throws ApiError
      */
@@ -230,7 +235,8 @@ export class ContactsService {
                 group_id: data.groupId,
                 is_favorite: data.isFavorite,
                 is_archived: data.isArchived,
-                stage: data.stage
+                stage: data.stage,
+                ids: data.ids
             },
             errors: {
                 422: 'Validation Error'

@@ -2291,6 +2291,39 @@ export const InteractionPublicSchema = {
             format: 'uuid',
             title: 'Contact Id'
         },
+        contact_first_name: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Contact First Name'
+        },
+        contact_last_name: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Contact Last Name'
+        },
+        contact_avatar_url: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Contact Avatar Url'
+        },
         created_at: {
             type: 'string',
             format: 'date-time',
