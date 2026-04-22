@@ -1,75 +1,66 @@
-import { useSuspenseQuery } from "@tanstack/react-query"
-import { createFileRoute, redirect } from "@tanstack/react-router"
-import { Suspense } from "react"
+import {
+  createFileRoute,
+  Link,
+  Outlet,
+  redirect,
+  useRouterState,
+} from "@tanstack/react-router"
 
-import { type UserPublic, UsersService } from "@/client"
-import AddUser from "@/components/Admin/AddUser"
-import { columns, type UserTableData } from "@/components/Admin/columns"
-import { DataTable } from "@/components/Common/DataTable"
-import PendingUsers from "@/components/Pending/PendingUsers"
-import useAuth from "@/hooks/useAuth"
-
-function getUsersQueryOptions() {
-  return {
-    queryFn: () => UsersService.readUsers({ skip: 0, limit: 100 }),
-    queryKey: ["users"],
-  }
-}
+import { UsersService } from "@/client"
+import { cn } from "@/lib/utils"
 
 export const Route = createFileRoute("/_layout/admin")({
-  component: Admin,
+  component: AdminLayout,
   beforeLoad: async () => {
     const user = await UsersService.readUserMe()
     if (!user.is_superuser) {
-      throw redirect({
-        to: "/",
-      })
+      throw redirect({ to: "/" })
     }
   },
   head: () => ({
-    meta: [
-      {
-        title: "Admin · Kindred",
-      },
-    ],
+    meta: [{ title: "Admin · Kindred" }],
   }),
 })
 
-function UsersTableContent() {
-  const { user: currentUser } = useAuth()
-  const { data: users } = useSuspenseQuery(getUsersQueryOptions())
+const tabs = [
+  { to: "/admin", label: "Users", exact: true },
+  { to: "/admin/webhooks", label: "Webhooks", exact: false },
+  { to: "/admin/import-export", label: "Import / export", exact: false },
+] as const
 
-  const tableData: UserTableData[] = users.data.map((user: UserPublic) => ({
-    ...user,
-    isCurrentUser: currentUser?.id === user.id,
-  }))
+function AdminLayout() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname })
 
-  return <DataTable columns={columns} data={tableData} />
-}
-
-function UsersTable() {
-  return (
-    <Suspense fallback={<PendingUsers />}>
-      <UsersTableContent />
-    </Suspense>
-  )
-}
-
-function Admin() {
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-3xl font-bold tracking-tight">
-            Users
-          </h1>
-          <p className="text-muted-foreground">
-            Manage user accounts and permissions
-          </p>
-        </div>
-        <AddUser />
+      <div>
+        <h1 className="font-display text-3xl font-bold tracking-tight">
+          Admin
+        </h1>
+        <p className="text-muted-foreground">
+          User management and workspace-wide settings
+        </p>
       </div>
-      <UsersTable />
+      <nav className="flex flex-wrap gap-1 border-b">
+        {tabs.map((t) => {
+          const active = t.exact ? pathname === t.to : pathname.startsWith(t.to)
+          return (
+            <Link
+              key={t.to}
+              to={t.to}
+              className={cn(
+                "-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors",
+                active
+                  ? "border-foreground text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {t.label}
+            </Link>
+          )
+        })}
+      </nav>
+      <Outlet />
     </div>
   )
 }

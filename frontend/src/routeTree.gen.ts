@@ -24,7 +24,10 @@ import { Route as LayoutGroupsRouteImport } from './routes/_layout/groups'
 import { Route as LayoutContactsRouteImport } from './routes/_layout/contacts'
 import { Route as LayoutAdminRouteImport } from './routes/_layout/admin'
 import { Route as LayoutContactsIndexRouteImport } from './routes/_layout/contacts/index'
+import { Route as LayoutAdminIndexRouteImport } from './routes/_layout/admin/index'
 import { Route as LayoutContactsContactIdRouteImport } from './routes/_layout/contacts/$contactId'
+import { Route as LayoutAdminWebhooksRouteImport } from './routes/_layout/admin/webhooks'
+import { Route as LayoutAdminImportExportRouteImport } from './routes/_layout/admin/import-export'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -100,10 +103,25 @@ const LayoutContactsIndexRoute = LayoutContactsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => LayoutContactsRoute,
 } as any)
+const LayoutAdminIndexRoute = LayoutAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => LayoutAdminRoute,
+} as any)
 const LayoutContactsContactIdRoute = LayoutContactsContactIdRouteImport.update({
   id: '/$contactId',
   path: '/$contactId',
   getParentRoute: () => LayoutContactsRoute,
+} as any)
+const LayoutAdminWebhooksRoute = LayoutAdminWebhooksRouteImport.update({
+  id: '/webhooks',
+  path: '/webhooks',
+  getParentRoute: () => LayoutAdminRoute,
+} as any)
+const LayoutAdminImportExportRoute = LayoutAdminImportExportRouteImport.update({
+  id: '/import-export',
+  path: '/import-export',
+  getParentRoute: () => LayoutAdminRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -112,7 +130,7 @@ export interface FileRoutesByFullPath {
   '/recover-password': typeof RecoverPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
-  '/admin': typeof LayoutAdminRoute
+  '/admin': typeof LayoutAdminRouteWithChildren
   '/contacts': typeof LayoutContactsRouteWithChildren
   '/groups': typeof LayoutGroupsRoute
   '/interactions': typeof LayoutInteractionsRoute
@@ -120,7 +138,10 @@ export interface FileRoutesByFullPath {
   '/reminders': typeof LayoutRemindersRoute
   '/settings': typeof LayoutSettingsRoute
   '/tags': typeof LayoutTagsRoute
+  '/admin/import-export': typeof LayoutAdminImportExportRoute
+  '/admin/webhooks': typeof LayoutAdminWebhooksRoute
   '/contacts/$contactId': typeof LayoutContactsContactIdRoute
+  '/admin/': typeof LayoutAdminIndexRoute
   '/contacts/': typeof LayoutContactsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -128,7 +149,6 @@ export interface FileRoutesByTo {
   '/recover-password': typeof RecoverPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
-  '/admin': typeof LayoutAdminRoute
   '/groups': typeof LayoutGroupsRoute
   '/interactions': typeof LayoutInteractionsRoute
   '/journal': typeof LayoutJournalRoute
@@ -136,7 +156,10 @@ export interface FileRoutesByTo {
   '/settings': typeof LayoutSettingsRoute
   '/tags': typeof LayoutTagsRoute
   '/': typeof LayoutIndexRoute
+  '/admin/import-export': typeof LayoutAdminImportExportRoute
+  '/admin/webhooks': typeof LayoutAdminWebhooksRoute
   '/contacts/$contactId': typeof LayoutContactsContactIdRoute
+  '/admin': typeof LayoutAdminIndexRoute
   '/contacts': typeof LayoutContactsIndexRoute
 }
 export interface FileRoutesById {
@@ -146,7 +169,7 @@ export interface FileRoutesById {
   '/recover-password': typeof RecoverPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
-  '/_layout/admin': typeof LayoutAdminRoute
+  '/_layout/admin': typeof LayoutAdminRouteWithChildren
   '/_layout/contacts': typeof LayoutContactsRouteWithChildren
   '/_layout/groups': typeof LayoutGroupsRoute
   '/_layout/interactions': typeof LayoutInteractionsRoute
@@ -155,7 +178,10 @@ export interface FileRoutesById {
   '/_layout/settings': typeof LayoutSettingsRoute
   '/_layout/tags': typeof LayoutTagsRoute
   '/_layout/': typeof LayoutIndexRoute
+  '/_layout/admin/import-export': typeof LayoutAdminImportExportRoute
+  '/_layout/admin/webhooks': typeof LayoutAdminWebhooksRoute
   '/_layout/contacts/$contactId': typeof LayoutContactsContactIdRoute
+  '/_layout/admin/': typeof LayoutAdminIndexRoute
   '/_layout/contacts/': typeof LayoutContactsIndexRoute
 }
 export interface FileRouteTypes {
@@ -174,7 +200,10 @@ export interface FileRouteTypes {
     | '/reminders'
     | '/settings'
     | '/tags'
+    | '/admin/import-export'
+    | '/admin/webhooks'
     | '/contacts/$contactId'
+    | '/admin/'
     | '/contacts/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -182,7 +211,6 @@ export interface FileRouteTypes {
     | '/recover-password'
     | '/reset-password'
     | '/signup'
-    | '/admin'
     | '/groups'
     | '/interactions'
     | '/journal'
@@ -190,7 +218,10 @@ export interface FileRouteTypes {
     | '/settings'
     | '/tags'
     | '/'
+    | '/admin/import-export'
+    | '/admin/webhooks'
     | '/contacts/$contactId'
+    | '/admin'
     | '/contacts'
   id:
     | '__root__'
@@ -208,7 +239,10 @@ export interface FileRouteTypes {
     | '/_layout/settings'
     | '/_layout/tags'
     | '/_layout/'
+    | '/_layout/admin/import-export'
+    | '/_layout/admin/webhooks'
     | '/_layout/contacts/$contactId'
+    | '/_layout/admin/'
     | '/_layout/contacts/'
   fileRoutesById: FileRoutesById
 }
@@ -327,6 +361,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutContactsIndexRouteImport
       parentRoute: typeof LayoutContactsRoute
     }
+    '/_layout/admin/': {
+      id: '/_layout/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof LayoutAdminIndexRouteImport
+      parentRoute: typeof LayoutAdminRoute
+    }
     '/_layout/contacts/$contactId': {
       id: '/_layout/contacts/$contactId'
       path: '/$contactId'
@@ -334,8 +375,38 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutContactsContactIdRouteImport
       parentRoute: typeof LayoutContactsRoute
     }
+    '/_layout/admin/webhooks': {
+      id: '/_layout/admin/webhooks'
+      path: '/webhooks'
+      fullPath: '/admin/webhooks'
+      preLoaderRoute: typeof LayoutAdminWebhooksRouteImport
+      parentRoute: typeof LayoutAdminRoute
+    }
+    '/_layout/admin/import-export': {
+      id: '/_layout/admin/import-export'
+      path: '/import-export'
+      fullPath: '/admin/import-export'
+      preLoaderRoute: typeof LayoutAdminImportExportRouteImport
+      parentRoute: typeof LayoutAdminRoute
+    }
   }
 }
+
+interface LayoutAdminRouteChildren {
+  LayoutAdminImportExportRoute: typeof LayoutAdminImportExportRoute
+  LayoutAdminWebhooksRoute: typeof LayoutAdminWebhooksRoute
+  LayoutAdminIndexRoute: typeof LayoutAdminIndexRoute
+}
+
+const LayoutAdminRouteChildren: LayoutAdminRouteChildren = {
+  LayoutAdminImportExportRoute: LayoutAdminImportExportRoute,
+  LayoutAdminWebhooksRoute: LayoutAdminWebhooksRoute,
+  LayoutAdminIndexRoute: LayoutAdminIndexRoute,
+}
+
+const LayoutAdminRouteWithChildren = LayoutAdminRoute._addFileChildren(
+  LayoutAdminRouteChildren,
+)
 
 interface LayoutContactsRouteChildren {
   LayoutContactsContactIdRoute: typeof LayoutContactsContactIdRoute
@@ -352,7 +423,7 @@ const LayoutContactsRouteWithChildren = LayoutContactsRoute._addFileChildren(
 )
 
 interface LayoutRouteChildren {
-  LayoutAdminRoute: typeof LayoutAdminRoute
+  LayoutAdminRoute: typeof LayoutAdminRouteWithChildren
   LayoutContactsRoute: typeof LayoutContactsRouteWithChildren
   LayoutGroupsRoute: typeof LayoutGroupsRoute
   LayoutInteractionsRoute: typeof LayoutInteractionsRoute
@@ -364,7 +435,7 @@ interface LayoutRouteChildren {
 }
 
 const LayoutRouteChildren: LayoutRouteChildren = {
-  LayoutAdminRoute: LayoutAdminRoute,
+  LayoutAdminRoute: LayoutAdminRouteWithChildren,
   LayoutContactsRoute: LayoutContactsRouteWithChildren,
   LayoutGroupsRoute: LayoutGroupsRoute,
   LayoutInteractionsRoute: LayoutInteractionsRoute,
