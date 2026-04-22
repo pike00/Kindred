@@ -16,6 +16,9 @@ openapi.json
 # TypeScript incremental build cache
 *.tsbuildinfo
 
+# TanStack Router codegen scratch dir
+.tanstack/
+
 # Generated from vite.config.ts when TS emits (do not commit)
 vite.config.js
 vite.config.d.ts
