@@ -15,3 +15,8 @@ node_modules/
 # superpowers brainstorming mockups
 .superpowers/
 
+# Generated DB docs renderings (markdown is checked in, HTML is regenerable)
+docs/db/*.html
+
+# dbml conversion stderr from `just db-docs`; regenerable
+dbml-error.log

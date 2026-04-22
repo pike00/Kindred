@@ -1,0 +1,270 @@
+# tbls — https://github.com/k1LoW/tbls
+#
+# Regenerate docs:        just db-docs
+# Check for drift:        just db-docs-check  (also runs in pre-push hook)
+#
+# DSN comes from TBLS_DSN env var set by the justfile; never checked in.
+#
+# `comments:` below mirrors the Pydantic `description=` fields in
+# backend/app/models.py. tbls merges these into the generated docs so every
+# table and column shows up with a human-readable comment even though the
+# Postgres DB has no COMMENT ON directives. If you change a description in
+# models.py, update the matching entry below and run `just db-docs`.
+
+docPath: docs/db
+
+er:
+  format: mermaid
+
+lint:
+  requireTableComment:
+    enabled: true
+  requireColumnComments:
+    enabled: true
+    exclude:
+      # alembic_version is managed by Alembic; its single column is self-explanatory.
+      - alembic_version.version_num
+
+comments:
+- table: address
+  tableComment: Physical address attached to a contact.
+  columnComments:
+    label: Label like "home", "work", "other".
+    street: Street line 1.
+    extended: Apartment, suite, floor, etc.
+    city: City.
+    region: State, province, or region.
+    postal_code: ZIP or postal code.
+    country: Country.
+    latitude: Geocoded latitude; used for map visualization.
+    longitude: Geocoded longitude; used for map visualization.
+    id: Primary key.
+    contact_id: Parent contact; cascades on delete.
+- table: contact
+  tableComment: Core contact entity — the subject of everything else in the CRM.
+  columnComments:
+    first_name: Given name; required.
+    last_name: Family name.
+    middle_name: Middle name or initial.
+    prefix: Honorific like Dr., Mr., Ms.
+    suffix: Suffix like Jr., PhD.
+    nickname: Preferred or informal name.
+    company: Organization name.
+    department: Department within the company.
+    title: Job title.
+    birthday: Date of birth; used for milestone and birthday reminders.
+    how_we_met: Short story of how the introduction happened.
+    is_favorite: Pinned to the top of contact lists.
+    is_archived: Soft-deleted; excluded from default lists.
+    is_deceased: Marks the contact as deceased.
+    deceased_at: Date the contact passed away.
+    contact_frequency_days: Target days between interactions; drives losing-touch cadence.
+    stage: Kanban stage like Active, Dormant, Lost.
+    id: Primary key.
+    owner_id: Owner user; cascades on delete.
+    vcard_raw: Raw vCard 3.0 text; preserves Apple extensions for CardDAV round-trip.
+    vcard_etag: ETag from the CardDAV server for incremental sync.
+    avatar_url: URL or on-disk path to the contact's avatar image.
+    last_contacted_at: Auto-updated by create_interaction(); powers cadence queries.
+    created_at: When the contact was created (UTC).
+    updated_at: Auto-bumped on any column change (UTC).
+- table: contact_field
+  tableComment: Flexible contact info (emails, phones) attached to a contact.
+  columnComments:
+    field_type: Kind of contact info (email or phone).
+    label: Label like "home", "work", "cell", "twitter".
+    value: The actual email address, phone number, etc.
+    is_primary: Marks the primary entry for this field_type on the contact.
+    sort_order: Display order within the same field_type.
+    id: Primary key.
+    contact_id: Parent contact; cascades on delete.
+- table: contact_group
+  tableComment: Many-to-many link between contacts and groups.
+  columnComments:
+    contact_id: Contact side of the link; cascades on delete.
+    group_id: Group side of the link; cascades on delete.
+- table: contact_tag
+  tableComment: Many-to-many link between contacts and tags.
+  columnComments:
+    contact_id: Contact side of the link; cascades on delete.
+    tag_id: Tag side of the link; cascades on delete.
+- table: custom_field_definition
+  tableComment: User-defined custom field schema, scoped to one owner.
+  columnComments:
+    name: Custom field name shown in the UI.
+    field_type: 'Field type: text, number, date, boolean, or select.'
+    description: Help text displayed alongside the field in the UI.
+    options: Comma-separated options for field_type="select".
+    icon: Icon slug for the UI (e.g. "heart", "book").
+    id: Primary key.
+    owner_id: Owner user; cascades on delete.
+    created_at: When the definition was created (UTC).
+- table: custom_field_value
+  tableComment: Value of a custom field for a specific contact (one per contact per definition).
+  columnComments:
+    value: Value as a string; coerced from the declared field_type.
+    id: Primary key.
+    contact_id: Contact this value belongs to; cascades on delete.
+    field_definition_id: Custom field definition this value instantiates; cascades on delete.
+- table: debt
+  tableComment: Money owed to or from a contact.
+  columnComments:
+    direction: 'Who owes whom: i_owe (you owe them) or they_owe (they owe you).'
+    amount: Amount owed; must be greater than zero.
+    currency: ISO 4217 currency code.
+    reason: What the debt is for.
+    is_settled: Marked paid off.
+    settled_at: Date the debt was settled.
+    id: Primary key.
+    contact_id: Contact on the other side of the debt; cascades on delete.
+    owner_id: Owner user; cascades on delete.
+    created_at: When the debt was recorded (UTC).
+- table: gift
+  tableComment: Gift idea or record for a contact.
+  columnComments:
+    name: Gift name.
+    description: Details about the gift.
+    status: 'Lifecycle: idea, given, or received.'
+    occasion: Occasion like Birthday, Christmas, Housewarming.
+    value_amount: Monetary cost or value.
+    value_currency: ISO 4217 currency code.
+    url: Link to the product page (e.g. Amazon).
+    id: Primary key.
+    contact_id: Contact the gift is for; cascades on delete.
+    owner_id: Owner user; cascades on delete.
+    date: When the gift was given or received (stored in the `date` column).
+    created_at: When the gift record was created (UTC).
+- table: group
+  tableComment: Named collection of contacts (e.g. 'Family', 'Work Team').
+  columnComments:
+    name: Group name, 1-255 chars.
+    description: Optional group description.
+    id: Primary key.
+    owner_id: Owner user; cascades on delete.
+    created_at: When the group was created (UTC).
+- table: interaction
+  tableComment: Logged touchpoint with a contact (call, meeting, text, etc.).
+  columnComments:
+    channel: How the interaction happened (call, in_person, text, etc.).
+    occurred_at: When the interaction actually took place.
+    notes: Conversation summary, action items, etc.
+    mood: Emoji or keyword capturing the tone.
+    duration_minutes: Length of the interaction in minutes.
+    id: Primary key.
+    contact_id: Contact this interaction was with; cascades on delete.
+    owner_id: Owner user; cascades on delete.
+    created_at: When the row was inserted (may be after occurred_at; UTC).
+- table: journal_entry
+  tableComment: Personal journal entry, not tied to a specific contact.
+  columnComments:
+    body: Entry body, 1-50000 chars.
+    mood: Emoji or keyword capturing the mood.
+    entry_date: Date the entry is about (may differ from created_at).
+    id: Primary key.
+    owner_id: Owner user; cascades on delete.
+    created_at: When the entry was logged (UTC).
+    updated_at: Auto-bumped on edit (UTC).
+- table: life_event
+  tableComment: Milestone on a contact's timeline (job change, wedding, move, etc.).
+  columnComments:
+    event_type: 'Kind of milestone: job_change, move, wedding, baby, graduation, birthday, anniversary, etc.'
+    title: Event title.
+    description: Extra details about the event.
+    occurred_at: Date the event happened.
+    create_annual_reminder: If true, auto-create a yearly recurring reminder on this date.
+    id: Primary key.
+    contact_id: Contact the event belongs to; cascades on delete.
+    owner_id: Owner user; cascades on delete.
+    created_at: When the event was logged (UTC).
+- table: media_recommendation
+  tableComment: Media (book, show, podcast, etc.) recommended to or by a contact.
+  columnComments:
+    category: 'Media category: movie, tv_show, podcast, musician, book, or other.'
+    title: Title of the work.
+    creator: Author, director, artist, or similar creator.
+    note: Why it was recommended or personal reaction.
+    recommended_at: Date the recommendation was made.
+    id: Primary key.
+    contact_id: Contact the recommendation is tied to; cascades on delete.
+    owner_id: Owner user; cascades on delete.
+    created_at: When the recommendation was logged (UTC).
+    updated_at: Auto-bumped on edit (UTC).
+- table: note
+  tableComment: Timestamped freeform note attached to a specific contact.
+  columnComments:
+    body: Note body, 1-50000 chars.
+    id: Primary key.
+    contact_id: Contact the note is attached to; cascades on delete.
+    owner_id: Owner user; cascades on delete.
+    created_at: When the note was created (UTC).
+    updated_at: Auto-bumped on edit (UTC).
+- table: pet
+  tableComment: Pet owned by a contact; useful for memorable conversation hooks.
+  columnComments:
+    name: Pet's name.
+    species: Species like dog, cat, bird.
+    breed: Breed, if known.
+    notes: Freeform notes (e.g. allergies, birthday).
+    id: Primary key.
+    contact_id: Owner contact; cascades on delete.
+- table: relationship
+  tableComment: Directional link between two contacts (spouse, child, friend, etc.).
+  columnComments:
+    relationship_type: 'Kind of relationship: spouse, child, parent, sibling, friend, colleague, etc.'
+    notes: Additional context about the relationship.
+    id: Primary key.
+    contact_id: '"From" contact in the directional relationship.'
+    related_contact_id: '"To" contact in the directional relationship.'
+- table: reminder
+  tableComment: Scheduled reminder; contact-specific or standalone.
+  columnComments:
+    title: Reminder title.
+    description: Extra details shown with the reminder.
+    remind_at: When to fire the reminder.
+    frequency: How often the reminder repeats.
+    is_active: Enable or disable without deleting.
+    id: Primary key.
+    contact_id: Optional contact; null for standalone reminders.
+    owner_id: Owner user; cascades on delete.
+    last_sent_at: When the ARQ worker last fired this reminder.
+    snoozed_until: If set, suppress firing until this time.
+    created_at: When the reminder was created (UTC).
+- table: tag
+  tableComment: User-defined tag for grouping contacts.
+  columnComments:
+    name: Tag name, 1-100 chars.
+    color: 'Optional hex color like #ff0000 for UI display.'
+    id: Primary key.
+    owner_id: Owner user; cascades on delete.
+    created_at: When the tag was created (UTC).
+- table: tag_share
+  tableComment: Grants another user read access to all rows bearing a given tag.
+  columnComments:
+    tag_id: Tag whose rows are being shared; cascades on delete.
+    grantee_id: User granted access; cascades on delete.
+    created_at: When the share was granted (UTC).
+- table: user
+  tableComment: Authenticated user; tenant-scope owner of every row below.
+  columnComments:
+    email: Login email; must be unique.
+    is_active: Whether the account can log in.
+    is_superuser: Grants admin-only endpoints.
+    full_name: Display name; optional.
+    id: Primary key.
+    hashed_password: Argon2id hash; null for OIDC-only users.
+    oidc_iss: OIDC issuer URL; paired with oidc_sub forms the unique external identity.
+    oidc_sub: OIDC subject; paired with oidc_iss forms the unique external identity.
+    created_at: When the account was created (UTC).
+- table: webhook_endpoint
+  tableComment: Inbound or outbound webhook configuration.
+  columnComments:
+    name: Human-readable endpoint name.
+    url: Target URL for outbound webhooks; null for inbound.
+    direction: '"inbound" or "outbound".'
+    event_types: Comma-separated event types (e.g. contact.created,interaction.logged).
+    is_active: Enable or disable without deleting.
+    secret: HMAC secret for verifying inbound payloads.
+    id: Primary key.
+    owner_id: Owner user; cascades on delete.
+    api_key: Key required to authenticate inbound webhook requests.
+    created_at: When the endpoint was created (UTC).

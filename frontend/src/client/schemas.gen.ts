@@ -6,6 +6,7 @@ export const AddressCreateSchema = {
             type: 'string',
             maxLength: 100,
             title: 'Label',
+            description: 'Label like "home", "work", "other".',
             default: 'home'
         },
         street: {
@@ -18,7 +19,8 @@ export const AddressCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Street'
+            title: 'Street',
+            description: 'Street line 1.'
         },
         extended: {
             anyOf: [
@@ -30,7 +32,8 @@ export const AddressCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Extended'
+            title: 'Extended',
+            description: 'Apartment, suite, floor, etc.'
         },
         city: {
             anyOf: [
@@ -42,7 +45,8 @@ export const AddressCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'City'
+            title: 'City',
+            description: 'City.'
         },
         region: {
             anyOf: [
@@ -54,7 +58,8 @@ export const AddressCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Region'
+            title: 'Region',
+            description: 'State, province, or region.'
         },
         postal_code: {
             anyOf: [
@@ -66,7 +71,8 @@ export const AddressCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Postal Code'
+            title: 'Postal Code',
+            description: 'ZIP or postal code.'
         },
         country: {
             anyOf: [
@@ -78,7 +84,8 @@ export const AddressCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Country'
+            title: 'Country',
+            description: 'Country.'
         },
         latitude: {
             anyOf: [
@@ -89,7 +96,8 @@ export const AddressCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Latitude'
+            title: 'Latitude',
+            description: 'Geocoded latitude; used for map visualization.'
         },
         longitude: {
             anyOf: [
@@ -100,7 +108,8 @@ export const AddressCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Longitude'
+            title: 'Longitude',
+            description: 'Geocoded longitude; used for map visualization.'
         },
         contact_id: {
             type: 'string',
@@ -119,6 +128,7 @@ export const AddressPublicSchema = {
             type: 'string',
             maxLength: 100,
             title: 'Label',
+            description: 'Label like "home", "work", "other".',
             default: 'home'
         },
         street: {
@@ -131,7 +141,8 @@ export const AddressPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Street'
+            title: 'Street',
+            description: 'Street line 1.'
         },
         extended: {
             anyOf: [
@@ -143,7 +154,8 @@ export const AddressPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Extended'
+            title: 'Extended',
+            description: 'Apartment, suite, floor, etc.'
         },
         city: {
             anyOf: [
@@ -155,7 +167,8 @@ export const AddressPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'City'
+            title: 'City',
+            description: 'City.'
         },
         region: {
             anyOf: [
@@ -167,7 +180,8 @@ export const AddressPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Region'
+            title: 'Region',
+            description: 'State, province, or region.'
         },
         postal_code: {
             anyOf: [
@@ -179,7 +193,8 @@ export const AddressPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Postal Code'
+            title: 'Postal Code',
+            description: 'ZIP or postal code.'
         },
         country: {
             anyOf: [
@@ -191,7 +206,8 @@ export const AddressPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Country'
+            title: 'Country',
+            description: 'Country.'
         },
         latitude: {
             anyOf: [
@@ -202,7 +218,8 @@ export const AddressPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Latitude'
+            title: 'Latitude',
+            description: 'Geocoded latitude; used for map visualization.'
         },
         longitude: {
             anyOf: [
@@ -213,7 +230,8 @@ export const AddressPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Longitude'
+            title: 'Longitude',
+            description: 'Geocoded longitude; used for map visualization.'
         },
         id: {
             type: 'string',
@@ -413,7 +431,8 @@ export const ContactCreateSchema = {
             type: 'string',
             maxLength: 255,
             minLength: 1,
-            title: 'First Name'
+            title: 'First Name',
+            description: 'Given name; required.'
         },
         last_name: {
             anyOf: [
@@ -425,7 +444,8 @@ export const ContactCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Last Name'
+            title: 'Last Name',
+            description: 'Family name.'
         },
         middle_name: {
             anyOf: [
@@ -437,7 +457,8 @@ export const ContactCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Middle Name'
+            title: 'Middle Name',
+            description: 'Middle name or initial.'
         },
         prefix: {
             anyOf: [
@@ -449,7 +470,8 @@ export const ContactCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Prefix'
+            title: 'Prefix',
+            description: 'Honorific like Dr., Mr., Ms.'
         },
         suffix: {
             anyOf: [
@@ -461,7 +483,8 @@ export const ContactCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Suffix'
+            title: 'Suffix',
+            description: 'Suffix like Jr., PhD.'
         },
         nickname: {
             anyOf: [
@@ -473,7 +496,8 @@ export const ContactCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Nickname'
+            title: 'Nickname',
+            description: 'Preferred or informal name.'
         },
         company: {
             anyOf: [
@@ -485,7 +509,8 @@ export const ContactCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Company'
+            title: 'Company',
+            description: 'Organization name.'
         },
         department: {
             anyOf: [
@@ -497,7 +522,8 @@ export const ContactCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Department'
+            title: 'Department',
+            description: 'Department within the company.'
         },
         title: {
             anyOf: [
@@ -509,7 +535,8 @@ export const ContactCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Title'
+            title: 'Title',
+            description: 'Job title.'
         },
         birthday: {
             anyOf: [
@@ -521,7 +548,8 @@ export const ContactCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Birthday'
+            title: 'Birthday',
+            description: 'Date of birth; used for milestone and birthday reminders.'
         },
         how_we_met: {
             anyOf: [
@@ -533,21 +561,25 @@ export const ContactCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'How We Met'
+            title: 'How We Met',
+            description: 'Short story of how the introduction happened.'
         },
         is_favorite: {
             type: 'boolean',
             title: 'Is Favorite',
+            description: 'Pinned to the top of contact lists.',
             default: false
         },
         is_archived: {
             type: 'boolean',
             title: 'Is Archived',
+            description: 'Soft-deleted; excluded from default lists.',
             default: false
         },
         is_deceased: {
             type: 'boolean',
             title: 'Is Deceased',
+            description: 'Marks the contact as deceased.',
             default: false
         },
         deceased_at: {
@@ -560,7 +592,8 @@ export const ContactCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Deceased At'
+            title: 'Deceased At',
+            description: 'Date the contact passed away.'
         },
         contact_frequency_days: {
             anyOf: [
@@ -573,7 +606,8 @@ export const ContactCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Contact Frequency Days'
+            title: 'Contact Frequency Days',
+            description: 'Target days between interactions; drives losing-touch cadence.'
         },
         stage: {
             anyOf: [
@@ -585,7 +619,8 @@ export const ContactCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Stage'
+            title: 'Stage',
+            description: 'Kanban stage like Active, Dormant, Lost.'
         },
         tag_ids: {
             anyOf: [
@@ -626,27 +661,32 @@ export const ContactCreateSchema = {
 export const ContactFieldCreateSchema = {
     properties: {
         field_type: {
-            '$ref': '#/components/schemas/ContactFieldType'
+            '$ref': '#/components/schemas/ContactFieldType',
+            description: 'Kind of contact info (email or phone).'
         },
         label: {
             type: 'string',
             maxLength: 100,
-            title: 'Label'
+            title: 'Label',
+            description: 'Label like "home", "work", "cell", "twitter".'
         },
         value: {
             type: 'string',
             maxLength: 2048,
             minLength: 1,
-            title: 'Value'
+            title: 'Value',
+            description: 'The actual email address, phone number, etc.'
         },
         is_primary: {
             type: 'boolean',
             title: 'Is Primary',
+            description: 'Marks the primary entry for this field_type on the contact.',
             default: false
         },
         sort_order: {
             type: 'integer',
             title: 'Sort Order',
+            description: 'Display order within the same field_type.',
             default: 0
         },
         contact_id: {
@@ -663,27 +703,32 @@ export const ContactFieldCreateSchema = {
 export const ContactFieldPublicSchema = {
     properties: {
         field_type: {
-            '$ref': '#/components/schemas/ContactFieldType'
+            '$ref': '#/components/schemas/ContactFieldType',
+            description: 'Kind of contact info (email or phone).'
         },
         label: {
             type: 'string',
             maxLength: 100,
-            title: 'Label'
+            title: 'Label',
+            description: 'Label like "home", "work", "cell", "twitter".'
         },
         value: {
             type: 'string',
             maxLength: 2048,
             minLength: 1,
-            title: 'Value'
+            title: 'Value',
+            description: 'The actual email address, phone number, etc.'
         },
         is_primary: {
             type: 'boolean',
             title: 'Is Primary',
+            description: 'Marks the primary entry for this field_type on the contact.',
             default: false
         },
         sort_order: {
             type: 'integer',
             title: 'Sort Order',
+            description: 'Display order within the same field_type.',
             default: 0
         },
         id: {
@@ -775,7 +820,8 @@ export const ContactPublicSchema = {
             type: 'string',
             maxLength: 255,
             minLength: 1,
-            title: 'First Name'
+            title: 'First Name',
+            description: 'Given name; required.'
         },
         last_name: {
             anyOf: [
@@ -787,7 +833,8 @@ export const ContactPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Last Name'
+            title: 'Last Name',
+            description: 'Family name.'
         },
         middle_name: {
             anyOf: [
@@ -799,7 +846,8 @@ export const ContactPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Middle Name'
+            title: 'Middle Name',
+            description: 'Middle name or initial.'
         },
         prefix: {
             anyOf: [
@@ -811,7 +859,8 @@ export const ContactPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Prefix'
+            title: 'Prefix',
+            description: 'Honorific like Dr., Mr., Ms.'
         },
         suffix: {
             anyOf: [
@@ -823,7 +872,8 @@ export const ContactPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Suffix'
+            title: 'Suffix',
+            description: 'Suffix like Jr., PhD.'
         },
         nickname: {
             anyOf: [
@@ -835,7 +885,8 @@ export const ContactPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Nickname'
+            title: 'Nickname',
+            description: 'Preferred or informal name.'
         },
         company: {
             anyOf: [
@@ -847,7 +898,8 @@ export const ContactPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Company'
+            title: 'Company',
+            description: 'Organization name.'
         },
         department: {
             anyOf: [
@@ -859,7 +911,8 @@ export const ContactPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Department'
+            title: 'Department',
+            description: 'Department within the company.'
         },
         title: {
             anyOf: [
@@ -871,7 +924,8 @@ export const ContactPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Title'
+            title: 'Title',
+            description: 'Job title.'
         },
         birthday: {
             anyOf: [
@@ -883,7 +937,8 @@ export const ContactPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Birthday'
+            title: 'Birthday',
+            description: 'Date of birth; used for milestone and birthday reminders.'
         },
         how_we_met: {
             anyOf: [
@@ -895,21 +950,25 @@ export const ContactPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'How We Met'
+            title: 'How We Met',
+            description: 'Short story of how the introduction happened.'
         },
         is_favorite: {
             type: 'boolean',
             title: 'Is Favorite',
+            description: 'Pinned to the top of contact lists.',
             default: false
         },
         is_archived: {
             type: 'boolean',
             title: 'Is Archived',
+            description: 'Soft-deleted; excluded from default lists.',
             default: false
         },
         is_deceased: {
             type: 'boolean',
             title: 'Is Deceased',
+            description: 'Marks the contact as deceased.',
             default: false
         },
         deceased_at: {
@@ -922,7 +981,8 @@ export const ContactPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Deceased At'
+            title: 'Deceased At',
+            description: 'Date the contact passed away.'
         },
         contact_frequency_days: {
             anyOf: [
@@ -935,7 +995,8 @@ export const ContactPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Contact Frequency Days'
+            title: 'Contact Frequency Days',
+            description: 'Target days between interactions; drives losing-touch cadence.'
         },
         stage: {
             anyOf: [
@@ -947,7 +1008,8 @@ export const ContactPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Stage'
+            title: 'Stage',
+            description: 'Kanban stage like Active, Dormant, Lost.'
         },
         id: {
             type: 'string',
@@ -1262,12 +1324,14 @@ export const CustomFieldDefinitionCreateSchema = {
             type: 'string',
             maxLength: 255,
             minLength: 1,
-            title: 'Name'
+            title: 'Name',
+            description: 'Custom field name shown in the UI.'
         },
         field_type: {
             type: 'string',
             maxLength: 50,
             title: 'Field Type',
+            description: 'Field type: text, number, date, boolean, or select.',
             default: 'text'
         },
         description: {
@@ -1280,7 +1344,8 @@ export const CustomFieldDefinitionCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Description'
+            title: 'Description',
+            description: 'Help text displayed alongside the field in the UI.'
         },
         options: {
             anyOf: [
@@ -1292,7 +1357,8 @@ export const CustomFieldDefinitionCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Options'
+            title: 'Options',
+            description: 'Comma-separated options for field_type="select".'
         },
         icon: {
             anyOf: [
@@ -1304,7 +1370,8 @@ export const CustomFieldDefinitionCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Icon'
+            title: 'Icon',
+            description: 'Icon slug for the UI (e.g. "heart", "book").'
         }
     },
     type: 'object',
@@ -1318,12 +1385,14 @@ export const CustomFieldDefinitionPublicSchema = {
             type: 'string',
             maxLength: 255,
             minLength: 1,
-            title: 'Name'
+            title: 'Name',
+            description: 'Custom field name shown in the UI.'
         },
         field_type: {
             type: 'string',
             maxLength: 50,
             title: 'Field Type',
+            description: 'Field type: text, number, date, boolean, or select.',
             default: 'text'
         },
         description: {
@@ -1336,7 +1405,8 @@ export const CustomFieldDefinitionPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Description'
+            title: 'Description',
+            description: 'Help text displayed alongside the field in the UI.'
         },
         options: {
             anyOf: [
@@ -1348,7 +1418,8 @@ export const CustomFieldDefinitionPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Options'
+            title: 'Options',
+            description: 'Comma-separated options for field_type="select".'
         },
         icon: {
             anyOf: [
@@ -1360,7 +1431,8 @@ export const CustomFieldDefinitionPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Icon'
+            title: 'Icon',
+            description: 'Icon slug for the UI (e.g. "heart", "book").'
         },
         id: {
             type: 'string',
@@ -1445,7 +1517,8 @@ export const CustomFieldValueCreateSchema = {
         value: {
             type: 'string',
             maxLength: 5000,
-            title: 'Value'
+            title: 'Value',
+            description: 'Value as a string; coerced from the declared field_type.'
         },
         contact_id: {
             type: 'string',
@@ -1468,7 +1541,8 @@ export const CustomFieldValuePublicSchema = {
         value: {
             type: 'string',
             maxLength: 5000,
-            title: 'Value'
+            title: 'Value',
+            description: 'Value as a string; coerced from the declared field_type.'
         },
         id: {
             type: 'string',
@@ -1523,17 +1597,20 @@ export const CustomFieldValueUpdateSchema = {
 export const DebtCreateSchema = {
     properties: {
         direction: {
-            '$ref': '#/components/schemas/DebtDirection'
+            '$ref': '#/components/schemas/DebtDirection',
+            description: 'Who owes whom: i_owe (you owe them) or they_owe (they owe you).'
         },
         amount: {
             type: 'number',
             exclusiveMinimum: 0,
-            title: 'Amount'
+            title: 'Amount',
+            description: 'Amount owed; must be greater than zero.'
         },
         currency: {
             type: 'string',
             maxLength: 3,
             title: 'Currency',
+            description: 'ISO 4217 currency code.',
             default: 'USD'
         },
         reason: {
@@ -1546,11 +1623,13 @@ export const DebtCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Reason'
+            title: 'Reason',
+            description: 'What the debt is for.'
         },
         is_settled: {
             type: 'boolean',
             title: 'Is Settled',
+            description: 'Marked paid off.',
             default: false
         },
         settled_at: {
@@ -1563,7 +1642,8 @@ export const DebtCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Settled At'
+            title: 'Settled At',
+            description: 'Date the debt was settled.'
         },
         contact_id: {
             type: 'string',
@@ -1585,17 +1665,20 @@ export const DebtDirectionSchema = {
 export const DebtPublicSchema = {
     properties: {
         direction: {
-            '$ref': '#/components/schemas/DebtDirection'
+            '$ref': '#/components/schemas/DebtDirection',
+            description: 'Who owes whom: i_owe (you owe them) or they_owe (they owe you).'
         },
         amount: {
             type: 'number',
             exclusiveMinimum: 0,
-            title: 'Amount'
+            title: 'Amount',
+            description: 'Amount owed; must be greater than zero.'
         },
         currency: {
             type: 'string',
             maxLength: 3,
             title: 'Currency',
+            description: 'ISO 4217 currency code.',
             default: 'USD'
         },
         reason: {
@@ -1608,11 +1691,13 @@ export const DebtPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Reason'
+            title: 'Reason',
+            description: 'What the debt is for.'
         },
         is_settled: {
             type: 'boolean',
             title: 'Is Settled',
+            description: 'Marked paid off.',
             default: false
         },
         settled_at: {
@@ -1625,7 +1710,8 @@ export const DebtPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Settled At'
+            title: 'Settled At',
+            description: 'Date the debt was settled.'
         },
         id: {
             type: 'string',
@@ -1746,7 +1832,8 @@ export const GiftCreateSchema = {
             type: 'string',
             maxLength: 500,
             minLength: 1,
-            title: 'Name'
+            title: 'Name',
+            description: 'Gift name.'
         },
         description: {
             anyOf: [
@@ -1758,10 +1845,12 @@ export const GiftCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Description'
+            title: 'Description',
+            description: 'Details about the gift.'
         },
         status: {
             '$ref': '#/components/schemas/GiftStatus',
+            description: 'Lifecycle: idea, given, or received.',
             default: 'idea'
         },
         occasion: {
@@ -1774,7 +1863,8 @@ export const GiftCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Occasion'
+            title: 'Occasion',
+            description: 'Occasion like Birthday, Christmas, Housewarming.'
         },
         gift_date: {
             anyOf: [
@@ -1786,7 +1876,8 @@ export const GiftCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Gift Date'
+            title: 'Gift Date',
+            description: 'When the gift was given or received.'
         },
         value_amount: {
             anyOf: [
@@ -1797,12 +1888,14 @@ export const GiftCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Value Amount'
+            title: 'Value Amount',
+            description: 'Monetary cost or value.'
         },
         value_currency: {
             type: 'string',
             maxLength: 3,
             title: 'Value Currency',
+            description: 'ISO 4217 currency code.',
             default: 'USD'
         },
         url: {
@@ -1815,7 +1908,8 @@ export const GiftCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Url'
+            title: 'Url',
+            description: 'Link to the product page (e.g. Amazon).'
         },
         contact_id: {
             type: 'string',
@@ -1834,7 +1928,8 @@ export const GiftPublicSchema = {
             type: 'string',
             maxLength: 500,
             minLength: 1,
-            title: 'Name'
+            title: 'Name',
+            description: 'Gift name.'
         },
         description: {
             anyOf: [
@@ -1846,10 +1941,12 @@ export const GiftPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Description'
+            title: 'Description',
+            description: 'Details about the gift.'
         },
         status: {
             '$ref': '#/components/schemas/GiftStatus',
+            description: 'Lifecycle: idea, given, or received.',
             default: 'idea'
         },
         occasion: {
@@ -1862,7 +1959,8 @@ export const GiftPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Occasion'
+            title: 'Occasion',
+            description: 'Occasion like Birthday, Christmas, Housewarming.'
         },
         gift_date: {
             anyOf: [
@@ -1874,7 +1972,8 @@ export const GiftPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Gift Date'
+            title: 'Gift Date',
+            description: 'When the gift was given or received.'
         },
         value_amount: {
             anyOf: [
@@ -1885,12 +1984,14 @@ export const GiftPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Value Amount'
+            title: 'Value Amount',
+            description: 'Monetary cost or value.'
         },
         value_currency: {
             type: 'string',
             maxLength: 3,
             title: 'Value Currency',
+            description: 'ISO 4217 currency code.',
             default: 'USD'
         },
         url: {
@@ -1903,7 +2004,8 @@ export const GiftPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Url'
+            title: 'Url',
+            description: 'Link to the product page (e.g. Amazon).'
         },
         id: {
             type: 'string',
@@ -2052,7 +2154,8 @@ export const GroupCreateSchema = {
             type: 'string',
             maxLength: 255,
             minLength: 1,
-            title: 'Name'
+            title: 'Name',
+            description: 'Group name, 1-255 chars.'
         },
         description: {
             anyOf: [
@@ -2064,7 +2167,8 @@ export const GroupCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Description'
+            title: 'Description',
+            description: 'Optional group description.'
         }
     },
     type: 'object',
@@ -2078,7 +2182,8 @@ export const GroupPublicSchema = {
             type: 'string',
             maxLength: 255,
             minLength: 1,
-            title: 'Name'
+            title: 'Name',
+            description: 'Group name, 1-255 chars.'
         },
         description: {
             anyOf: [
@@ -2090,7 +2195,8 @@ export const GroupPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Description'
+            title: 'Description',
+            description: 'Optional group description.'
         },
         id: {
             type: 'string',
@@ -2181,12 +2287,14 @@ export const InteractionChannelSchema = {
 export const InteractionCreateSchema = {
     properties: {
         channel: {
-            '$ref': '#/components/schemas/InteractionChannel'
+            '$ref': '#/components/schemas/InteractionChannel',
+            description: 'How the interaction happened (call, in_person, text, etc.).'
         },
         occurred_at: {
             type: 'string',
             format: 'date-time',
-            title: 'Occurred At'
+            title: 'Occurred At',
+            description: 'When the interaction actually took place.'
         },
         notes: {
             anyOf: [
@@ -2198,7 +2306,8 @@ export const InteractionCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Notes'
+            title: 'Notes',
+            description: 'Conversation summary, action items, etc.'
         },
         mood: {
             anyOf: [
@@ -2210,7 +2319,8 @@ export const InteractionCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Mood'
+            title: 'Mood',
+            description: 'Emoji or keyword capturing the tone.'
         },
         duration_minutes: {
             anyOf: [
@@ -2222,7 +2332,8 @@ export const InteractionCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Duration Minutes'
+            title: 'Duration Minutes',
+            description: 'Length of the interaction in minutes.'
         },
         contact_id: {
             type: 'string',
@@ -2238,12 +2349,14 @@ export const InteractionCreateSchema = {
 export const InteractionPublicSchema = {
     properties: {
         channel: {
-            '$ref': '#/components/schemas/InteractionChannel'
+            '$ref': '#/components/schemas/InteractionChannel',
+            description: 'How the interaction happened (call, in_person, text, etc.).'
         },
         occurred_at: {
             type: 'string',
             format: 'date-time',
-            title: 'Occurred At'
+            title: 'Occurred At',
+            description: 'When the interaction actually took place.'
         },
         notes: {
             anyOf: [
@@ -2255,7 +2368,8 @@ export const InteractionPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Notes'
+            title: 'Notes',
+            description: 'Conversation summary, action items, etc.'
         },
         mood: {
             anyOf: [
@@ -2267,7 +2381,8 @@ export const InteractionPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Mood'
+            title: 'Mood',
+            description: 'Emoji or keyword capturing the tone.'
         },
         duration_minutes: {
             anyOf: [
@@ -2279,7 +2394,8 @@ export const InteractionPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Duration Minutes'
+            title: 'Duration Minutes',
+            description: 'Length of the interaction in minutes.'
         },
         id: {
             type: 'string',
@@ -2441,7 +2557,8 @@ export const JournalEntryCreateSchema = {
             type: 'string',
             maxLength: 50000,
             minLength: 1,
-            title: 'Body'
+            title: 'Body',
+            description: 'Entry body, 1-50000 chars.'
         },
         mood: {
             anyOf: [
@@ -2453,12 +2570,14 @@ export const JournalEntryCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Mood'
+            title: 'Mood',
+            description: 'Emoji or keyword capturing the mood.'
         },
         entry_date: {
             type: 'string',
             format: 'date',
-            title: 'Entry Date'
+            title: 'Entry Date',
+            description: 'Date the entry is about (may differ from created_at).'
         }
     },
     type: 'object',
@@ -2472,7 +2591,8 @@ export const JournalEntryPublicSchema = {
             type: 'string',
             maxLength: 50000,
             minLength: 1,
-            title: 'Body'
+            title: 'Body',
+            description: 'Entry body, 1-50000 chars.'
         },
         mood: {
             anyOf: [
@@ -2484,12 +2604,14 @@ export const JournalEntryPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Mood'
+            title: 'Mood',
+            description: 'Emoji or keyword capturing the mood.'
         },
         entry_date: {
             type: 'string',
             format: 'date',
-            title: 'Entry Date'
+            title: 'Entry Date',
+            description: 'Date the entry is about (may differ from created_at).'
         },
         id: {
             type: 'string',
@@ -2558,13 +2680,15 @@ export const LifeEventCreateSchema = {
         event_type: {
             type: 'string',
             maxLength: 100,
-            title: 'Event Type'
+            title: 'Event Type',
+            description: 'Kind of milestone: job_change, move, wedding, baby, graduation, birthday, anniversary, etc.'
         },
         title: {
             type: 'string',
             maxLength: 500,
             minLength: 1,
-            title: 'Title'
+            title: 'Title',
+            description: 'Event title.'
         },
         description: {
             anyOf: [
@@ -2576,16 +2700,19 @@ export const LifeEventCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Description'
+            title: 'Description',
+            description: 'Extra details about the event.'
         },
         occurred_at: {
             type: 'string',
             format: 'date',
-            title: 'Occurred At'
+            title: 'Occurred At',
+            description: 'Date the event happened.'
         },
         create_annual_reminder: {
             type: 'boolean',
             title: 'Create Annual Reminder',
+            description: 'If true, auto-create a yearly recurring reminder on this date.',
             default: false
         },
         contact_id: {
@@ -2604,13 +2731,15 @@ export const LifeEventPublicSchema = {
         event_type: {
             type: 'string',
             maxLength: 100,
-            title: 'Event Type'
+            title: 'Event Type',
+            description: 'Kind of milestone: job_change, move, wedding, baby, graduation, birthday, anniversary, etc.'
         },
         title: {
             type: 'string',
             maxLength: 500,
             minLength: 1,
-            title: 'Title'
+            title: 'Title',
+            description: 'Event title.'
         },
         description: {
             anyOf: [
@@ -2622,16 +2751,19 @@ export const LifeEventPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Description'
+            title: 'Description',
+            description: 'Extra details about the event.'
         },
         occurred_at: {
             type: 'string',
             format: 'date',
-            title: 'Occurred At'
+            title: 'Occurred At',
+            description: 'Date the event happened.'
         },
         create_annual_reminder: {
             type: 'boolean',
             title: 'Create Annual Reminder',
+            description: 'If true, auto-create a yearly recurring reminder on this date.',
             default: false
         },
         id: {
@@ -2746,13 +2878,15 @@ export const MediaCategorySchema = {
 export const MediaRecommendationCreateSchema = {
     properties: {
         category: {
-            '$ref': '#/components/schemas/MediaCategory'
+            '$ref': '#/components/schemas/MediaCategory',
+            description: 'Media category: movie, tv_show, podcast, musician, book, or other.'
         },
         title: {
             type: 'string',
             maxLength: 500,
             minLength: 1,
-            title: 'Title'
+            title: 'Title',
+            description: 'Title of the work.'
         },
         creator: {
             anyOf: [
@@ -2764,7 +2898,8 @@ export const MediaRecommendationCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Creator'
+            title: 'Creator',
+            description: 'Author, director, artist, or similar creator.'
         },
         note: {
             anyOf: [
@@ -2776,7 +2911,8 @@ export const MediaRecommendationCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Note'
+            title: 'Note',
+            description: 'Why it was recommended or personal reaction.'
         },
         recommended_at: {
             anyOf: [
@@ -2788,7 +2924,8 @@ export const MediaRecommendationCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Recommended At'
+            title: 'Recommended At',
+            description: 'Date the recommendation was made.'
         },
         contact_id: {
             type: 'string',
@@ -2804,13 +2941,15 @@ export const MediaRecommendationCreateSchema = {
 export const MediaRecommendationPublicSchema = {
     properties: {
         category: {
-            '$ref': '#/components/schemas/MediaCategory'
+            '$ref': '#/components/schemas/MediaCategory',
+            description: 'Media category: movie, tv_show, podcast, musician, book, or other.'
         },
         title: {
             type: 'string',
             maxLength: 500,
             minLength: 1,
-            title: 'Title'
+            title: 'Title',
+            description: 'Title of the work.'
         },
         creator: {
             anyOf: [
@@ -2822,7 +2961,8 @@ export const MediaRecommendationPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Creator'
+            title: 'Creator',
+            description: 'Author, director, artist, or similar creator.'
         },
         note: {
             anyOf: [
@@ -2834,7 +2974,8 @@ export const MediaRecommendationPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Note'
+            title: 'Note',
+            description: 'Why it was recommended or personal reaction.'
         },
         recommended_at: {
             anyOf: [
@@ -2846,7 +2987,8 @@ export const MediaRecommendationPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Recommended At'
+            title: 'Recommended At',
+            description: 'Date the recommendation was made.'
         },
         id: {
             type: 'string',
@@ -2991,7 +3133,8 @@ export const NoteCreateSchema = {
             type: 'string',
             maxLength: 50000,
             minLength: 1,
-            title: 'Body'
+            title: 'Body',
+            description: 'Note body, 1-50000 chars.'
         },
         contact_id: {
             type: 'string',
@@ -3010,7 +3153,8 @@ export const NotePublicSchema = {
             type: 'string',
             maxLength: 50000,
             minLength: 1,
-            title: 'Body'
+            title: 'Body',
+            description: 'Note body, 1-50000 chars.'
         },
         id: {
             type: 'string',
@@ -3081,7 +3225,8 @@ export const PetCreateSchema = {
             type: 'string',
             maxLength: 255,
             minLength: 1,
-            title: 'Name'
+            title: 'Name',
+            description: "Pet's name."
         },
         species: {
             anyOf: [
@@ -3093,7 +3238,8 @@ export const PetCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Species'
+            title: 'Species',
+            description: 'Species like dog, cat, bird.'
         },
         breed: {
             anyOf: [
@@ -3105,7 +3251,8 @@ export const PetCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Breed'
+            title: 'Breed',
+            description: 'Breed, if known.'
         },
         notes: {
             anyOf: [
@@ -3117,7 +3264,8 @@ export const PetCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Notes'
+            title: 'Notes',
+            description: 'Freeform notes (e.g. allergies, birthday).'
         },
         contact_id: {
             type: 'string',
@@ -3136,7 +3284,8 @@ export const PetPublicSchema = {
             type: 'string',
             maxLength: 255,
             minLength: 1,
-            title: 'Name'
+            title: 'Name',
+            description: "Pet's name."
         },
         species: {
             anyOf: [
@@ -3148,7 +3297,8 @@ export const PetPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Species'
+            title: 'Species',
+            description: 'Species like dog, cat, bird.'
         },
         breed: {
             anyOf: [
@@ -3160,7 +3310,8 @@ export const PetPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Breed'
+            title: 'Breed',
+            description: 'Breed, if known.'
         },
         notes: {
             anyOf: [
@@ -3172,7 +3323,8 @@ export const PetPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Notes'
+            title: 'Notes',
+            description: 'Freeform notes (e.g. allergies, birthday).'
         },
         id: {
             type: 'string',
@@ -3248,7 +3400,8 @@ export const RelationshipCreateSchema = {
         relationship_type: {
             type: 'string',
             maxLength: 100,
-            title: 'Relationship Type'
+            title: 'Relationship Type',
+            description: 'Kind of relationship: spouse, child, parent, sibling, friend, colleague, etc.'
         },
         notes: {
             anyOf: [
@@ -3260,7 +3413,8 @@ export const RelationshipCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Notes'
+            title: 'Notes',
+            description: 'Additional context about the relationship.'
         },
         contact_id: {
             type: 'string',
@@ -3283,7 +3437,8 @@ export const RelationshipPublicSchema = {
         relationship_type: {
             type: 'string',
             maxLength: 100,
-            title: 'Relationship Type'
+            title: 'Relationship Type',
+            description: 'Kind of relationship: spouse, child, parent, sibling, friend, colleague, etc.'
         },
         notes: {
             anyOf: [
@@ -3295,7 +3450,8 @@ export const RelationshipPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Notes'
+            title: 'Notes',
+            description: 'Additional context about the relationship.'
         },
         id: {
             type: 'string',
@@ -3353,7 +3509,8 @@ export const ReminderCreateSchema = {
             type: 'string',
             maxLength: 500,
             minLength: 1,
-            title: 'Title'
+            title: 'Title',
+            description: 'Reminder title.'
         },
         description: {
             anyOf: [
@@ -3365,20 +3522,24 @@ export const ReminderCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Description'
+            title: 'Description',
+            description: 'Extra details shown with the reminder.'
         },
         remind_at: {
             type: 'string',
             format: 'date-time',
-            title: 'Remind At'
+            title: 'Remind At',
+            description: 'When to fire the reminder.'
         },
         frequency: {
             '$ref': '#/components/schemas/ReminderFrequency',
+            description: 'How often the reminder repeats.',
             default: 'once'
         },
         is_active: {
             type: 'boolean',
             title: 'Is Active',
+            description: 'Enable or disable without deleting.',
             default: true
         },
         contact_id: {
@@ -3411,7 +3572,8 @@ export const ReminderPublicSchema = {
             type: 'string',
             maxLength: 500,
             minLength: 1,
-            title: 'Title'
+            title: 'Title',
+            description: 'Reminder title.'
         },
         description: {
             anyOf: [
@@ -3423,20 +3585,24 @@ export const ReminderPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Description'
+            title: 'Description',
+            description: 'Extra details shown with the reminder.'
         },
         remind_at: {
             type: 'string',
             format: 'date-time',
-            title: 'Remind At'
+            title: 'Remind At',
+            description: 'When to fire the reminder.'
         },
         frequency: {
             '$ref': '#/components/schemas/ReminderFrequency',
+            description: 'How often the reminder repeats.',
             default: 'once'
         },
         is_active: {
             type: 'boolean',
             title: 'Is Active',
+            description: 'Enable or disable without deleting.',
             default: true
         },
         id: {
@@ -3578,7 +3744,8 @@ export const TagCreateSchema = {
             type: 'string',
             maxLength: 100,
             minLength: 1,
-            title: 'Name'
+            title: 'Name',
+            description: 'Tag name, 1-100 chars.'
         },
         color: {
             anyOf: [
@@ -3590,7 +3757,8 @@ export const TagCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Color'
+            title: 'Color',
+            description: 'Optional hex color like #ff0000 for UI display.'
         }
     },
     type: 'object',
@@ -3604,7 +3772,8 @@ export const TagPublicSchema = {
             type: 'string',
             maxLength: 100,
             minLength: 1,
-            title: 'Name'
+            title: 'Name',
+            description: 'Tag name, 1-100 chars.'
         },
         color: {
             anyOf: [
@@ -3616,7 +3785,8 @@ export const TagPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Color'
+            title: 'Color',
+            description: 'Optional hex color like #ff0000 for UI display.'
         },
         id: {
             type: 'string',
@@ -3773,16 +3943,19 @@ export const UserCreateSchema = {
             type: 'string',
             maxLength: 255,
             format: 'email',
-            title: 'Email'
+            title: 'Email',
+            description: 'Login email; must be unique.'
         },
         is_active: {
             type: 'boolean',
             title: 'Is Active',
+            description: 'Whether the account can log in.',
             default: true
         },
         is_superuser: {
             type: 'boolean',
             title: 'Is Superuser',
+            description: 'Grants admin-only endpoints.',
             default: false
         },
         full_name: {
@@ -3795,7 +3968,8 @@ export const UserCreateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Full Name'
+            title: 'Full Name',
+            description: 'Display name; optional.'
         },
         password: {
             type: 'string',
@@ -3815,16 +3989,19 @@ export const UserPublicSchema = {
             type: 'string',
             maxLength: 255,
             format: 'email',
-            title: 'Email'
+            title: 'Email',
+            description: 'Login email; must be unique.'
         },
         is_active: {
             type: 'boolean',
             title: 'Is Active',
+            description: 'Whether the account can log in.',
             default: true
         },
         is_superuser: {
             type: 'boolean',
             title: 'Is Superuser',
+            description: 'Grants admin-only endpoints.',
             default: false
         },
         full_name: {
@@ -3837,7 +4014,8 @@ export const UserPublicSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Full Name'
+            title: 'Full Name',
+            description: 'Display name; optional.'
         },
         id: {
             type: 'string',
@@ -3912,11 +4090,13 @@ export const UserUpdateSchema = {
         is_active: {
             type: 'boolean',
             title: 'Is Active',
+            description: 'Whether the account can log in.',
             default: true
         },
         is_superuser: {
             type: 'boolean',
             title: 'Is Superuser',
+            description: 'Grants admin-only endpoints.',
             default: false
         },
         full_name: {
@@ -3929,7 +4109,8 @@ export const UserUpdateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Full Name'
+            title: 'Full Name',
+            description: 'Display name; optional.'
         },
         password: {
             anyOf: [
@@ -4043,7 +4224,8 @@ export const WebhookEndpointBaseSchema = {
             type: 'string',
             maxLength: 255,
             minLength: 1,
-            title: 'Name'
+            title: 'Name',
+            description: 'Human-readable endpoint name.'
         },
         url: {
             anyOf: [
@@ -4055,12 +4237,14 @@ export const WebhookEndpointBaseSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Url'
+            title: 'Url',
+            description: 'Target URL for outbound webhooks; null for inbound.'
         },
         direction: {
             type: 'string',
             maxLength: 10,
-            title: 'Direction'
+            title: 'Direction',
+            description: '"inbound" or "outbound".'
         },
         event_types: {
             anyOf: [
@@ -4072,11 +4256,13 @@ export const WebhookEndpointBaseSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Event Types'
+            title: 'Event Types',
+            description: 'Comma-separated event types (e.g. contact.created,interaction.logged).'
         },
         is_active: {
             type: 'boolean',
             title: 'Is Active',
+            description: 'Enable or disable without deleting.',
             default: true
         },
         secret: {
@@ -4089,7 +4275,8 @@ export const WebhookEndpointBaseSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Secret'
+            title: 'Secret',
+            description: 'HMAC secret for verifying inbound payloads.'
         }
     },
     type: 'object',
