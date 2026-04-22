@@ -1,0 +1,468 @@
+Enum "contactfieldtype" {
+  "EMAIL"
+  "PHONE"
+}
+
+Enum "debtdirection" {
+  "I_OWE"
+  "THEY_OWE"
+}
+
+Enum "giftstatus" {
+  "IDEA"
+  "GIVEN"
+  "RECEIVED"
+}
+
+Enum "interactionchannel" {
+  "CALL"
+  "IN_PERSON"
+  "TEXT"
+  "EMAIL"
+  "VIDEO"
+  "SOCIAL"
+  "OTHER"
+}
+
+Enum "mediacategory" {
+  "MOVIE"
+  "TV_SHOW"
+  "PODCAST"
+  "MUSICIAN"
+  "BOOK"
+  "OTHER"
+}
+
+Enum "reminderfrequency" {
+  "ONCE"
+  "DAILY"
+  "WEEKLY"
+  "MONTHLY"
+  "YEARLY"
+}
+
+Table "alembic_version" {
+  "version_num" varchar(32) [pk, not null]
+}
+
+Table "user" {
+  "email" varchar(255) [unique, not null]
+  "is_active" bool [not null]
+  "is_superuser" bool [not null]
+  "full_name" varchar(255)
+  "hashed_password" varchar
+  "id" uuid [pk, not null]
+  "created_at" timestamptz
+  "oidc_iss" varchar(512)
+  "oidc_sub" varchar(255)
+
+  Indexes {
+    (oidc_iss, oidc_sub) [type: btree, unique, name: "uq_user_oidc_identity"]
+    oidc_iss [type: btree, name: "ix_user_oidc_iss"]
+    oidc_sub [type: btree, name: "ix_user_oidc_sub"]
+  }
+}
+
+Table "tag" {
+  "id" uuid [pk, not null]
+  "owner_id" uuid [not null]
+  "name" varchar(100) [not null]
+  "color" varchar(7)
+  "created_at" timestamptz [not null]
+
+  Indexes {
+    owner_id [type: btree, name: "ix_tag_owner_id"]
+  }
+}
+
+Table "group" {
+  "id" uuid [pk, not null]
+  "owner_id" uuid [not null]
+  "name" varchar(255) [not null]
+  "description" varchar(1000)
+  "created_at" timestamptz [not null]
+
+  Indexes {
+    owner_id [type: btree, name: "ix_group_owner_id"]
+  }
+}
+
+Table "contact" {
+  "id" uuid [pk, not null]
+  "owner_id" uuid [not null]
+  "first_name" varchar(255) [not null]
+  "last_name" varchar(255)
+  "middle_name" varchar(255)
+  "prefix" varchar(50)
+  "suffix" varchar(50)
+  "nickname" varchar(255)
+  "company" varchar(255)
+  "department" varchar(255)
+  "title" varchar(255)
+  "birthday" date
+  "how_we_met" varchar(2000)
+  "is_favorite" bool [not null]
+  "is_archived" bool [not null]
+  "is_deceased" bool [not null]
+  "deceased_at" date
+  "contact_frequency_days" int4
+  "stage" varchar(100)
+  "vcard_raw" varchar
+  "vcard_etag" varchar(255)
+  "avatar_url" varchar(2048)
+  "last_contacted_at" timestamptz
+  "created_at" timestamptz [not null]
+  "updated_at" timestamptz [not null]
+
+  Indexes {
+    contact_frequency_days [type: btree, name: "ix_contact_contact_frequency_days"]
+    is_archived [type: btree, name: "ix_contact_is_archived"]
+    is_favorite [type: btree, name: "ix_contact_is_favorite"]
+    owner_id [type: btree, name: "ix_contact_owner_id"]
+  }
+}
+
+Table "contact_tag" {
+  "contact_id" uuid [not null]
+  "tag_id" uuid [not null]
+
+  Indexes {
+    (contact_id, tag_id) [pk, type: btree, name: "contact_tag_pkey"]
+  }
+}
+
+Table "contact_group" {
+  "contact_id" uuid [not null]
+  "group_id" uuid [not null]
+
+  Indexes {
+    (contact_id, group_id) [pk, type: btree, name: "contact_group_pkey"]
+  }
+}
+
+Table "contact_field" {
+  "id" uuid [pk, not null]
+  "contact_id" uuid [not null]
+  "field_type" contactfieldtype [not null]
+  "label" varchar(100) [not null]
+  "value" varchar(2048) [not null]
+  "is_primary" bool [not null]
+  "sort_order" int4 [not null]
+
+  Indexes {
+    contact_id [type: btree, name: "ix_contact_field_contact_id"]
+    field_type [type: btree, name: "ix_contact_field_field_type"]
+  }
+}
+
+Table "address" {
+  "id" uuid [pk, not null]
+  "contact_id" uuid [not null]
+  "label" varchar(100) [not null]
+  "street" varchar(500)
+  "extended" varchar(500)
+  "city" varchar(255)
+  "region" varchar(255)
+  "postal_code" varchar(50)
+  "country" varchar(255)
+  "latitude" float8
+  "longitude" float8
+
+  Indexes {
+    contact_id [type: btree, name: "ix_address_contact_id"]
+  }
+}
+
+Table "relationship" {
+  "id" uuid [pk, not null]
+  "contact_id" uuid [not null]
+  "related_contact_id" uuid [not null]
+  "relationship_type" varchar(100) [not null]
+  "notes" varchar(1000)
+
+  Indexes {
+    contact_id [type: btree, name: "ix_relationship_contact_id"]
+    related_contact_id [type: btree, name: "ix_relationship_related_contact_id"]
+  }
+}
+
+Table "pet" {
+  "id" uuid [pk, not null]
+  "contact_id" uuid [not null]
+  "name" varchar(255) [not null]
+  "species" varchar(100)
+  "breed" varchar(100)
+  "notes" varchar(1000)
+
+  Indexes {
+    contact_id [type: btree, name: "ix_pet_contact_id"]
+  }
+}
+
+Table "custom_field_definition" {
+  "id" uuid [pk, not null]
+  "owner_id" uuid [not null]
+  "name" varchar(255) [not null]
+  "field_type" varchar(50) [not null]
+  "description" varchar(500)
+  "options" varchar(2000)
+  "icon" varchar(50)
+  "created_at" timestamptz [not null]
+
+  Indexes {
+    owner_id [type: btree, name: "ix_custom_field_definition_owner_id"]
+  }
+}
+
+Table "custom_field_value" {
+  "id" uuid [pk, not null]
+  "contact_id" uuid [not null]
+  "field_definition_id" uuid [not null]
+  "value" varchar(5000) [not null]
+
+  Indexes {
+    contact_id [type: btree, name: "ix_custom_field_value_contact_id"]
+    field_definition_id [type: btree, name: "ix_custom_field_value_field_definition_id"]
+  }
+}
+
+Table "interaction" {
+  "id" uuid [pk, not null]
+  "owner_id" uuid [not null]
+  "contact_id" uuid [not null]
+  "channel" interactionchannel [not null]
+  "occurred_at" timestamptz [not null]
+  "notes" varchar(10000)
+  "mood" varchar(50)
+  "duration_minutes" int4
+  "created_at" timestamptz [not null]
+
+  Indexes {
+    channel [type: btree, name: "ix_interaction_channel"]
+    contact_id [type: btree, name: "ix_interaction_contact_id"]
+    occurred_at [type: btree, name: "ix_interaction_occurred_at"]
+    owner_id [type: btree, name: "ix_interaction_owner_id"]
+  }
+}
+
+Table "reminder" {
+  "id" uuid [pk, not null]
+  "owner_id" uuid [not null]
+  "contact_id" uuid
+  "title" varchar(500) [not null]
+  "description" varchar(2000)
+  "remind_at" timestamptz [not null]
+  "frequency" reminderfrequency [not null]
+  "is_active" bool [not null]
+  "last_sent_at" timestamptz
+  "snoozed_until" timestamptz
+  "created_at" timestamptz [not null]
+
+  Indexes {
+    contact_id [type: btree, name: "ix_reminder_contact_id"]
+    is_active [type: btree, name: "ix_reminder_is_active"]
+    owner_id [type: btree, name: "ix_reminder_owner_id"]
+    remind_at [type: btree, name: "ix_reminder_remind_at"]
+  }
+}
+
+Table "gift" {
+  "id" uuid [pk, not null]
+  "owner_id" uuid [not null]
+  "contact_id" uuid [not null]
+  "name" varchar(500) [not null]
+  "description" varchar(2000)
+  "status" giftstatus [not null]
+  "occasion" varchar(255)
+  "date" date
+  "value_amount" float8
+  "value_currency" varchar(3) [not null]
+  "url" varchar(2048)
+  "created_at" timestamptz [not null]
+
+  Indexes {
+    contact_id [type: btree, name: "ix_gift_contact_id"]
+    owner_id [type: btree, name: "ix_gift_owner_id"]
+    status [type: btree, name: "ix_gift_status"]
+  }
+}
+
+Table "debt" {
+  "id" uuid [pk, not null]
+  "owner_id" uuid [not null]
+  "contact_id" uuid [not null]
+  "direction" debtdirection [not null]
+  "amount" float8 [not null]
+  "currency" varchar(3) [not null]
+  "reason" varchar(1000)
+  "is_settled" bool [not null]
+  "settled_at" date
+  "created_at" timestamptz [not null]
+
+  Indexes {
+    contact_id [type: btree, name: "ix_debt_contact_id"]
+    is_settled [type: btree, name: "ix_debt_is_settled"]
+    owner_id [type: btree, name: "ix_debt_owner_id"]
+  }
+}
+
+Table "life_event" {
+  "id" uuid [pk, not null]
+  "owner_id" uuid [not null]
+  "contact_id" uuid [not null]
+  "event_type" varchar(100) [not null]
+  "title" varchar(500) [not null]
+  "description" varchar(2000)
+  "occurred_at" date [not null]
+  "create_annual_reminder" bool [not null]
+  "created_at" timestamptz [not null]
+
+  Indexes {
+    contact_id [type: btree, name: "ix_life_event_contact_id"]
+    occurred_at [type: btree, name: "ix_life_event_occurred_at"]
+    owner_id [type: btree, name: "ix_life_event_owner_id"]
+  }
+}
+
+Table "note" {
+  "id" uuid [pk, not null]
+  "owner_id" uuid [not null]
+  "contact_id" uuid [not null]
+  "body" varchar(50000) [not null]
+  "created_at" timestamptz [not null]
+  "updated_at" timestamptz [not null]
+
+  Indexes {
+    contact_id [type: btree, name: "ix_note_contact_id"]
+    created_at [type: btree, name: "ix_note_created_at"]
+    owner_id [type: btree, name: "ix_note_owner_id"]
+  }
+}
+
+Table "journal_entry" {
+  "id" uuid [pk, not null]
+  "owner_id" uuid [not null]
+  "body" varchar(50000) [not null]
+  "mood" varchar(50)
+  "entry_date" date [not null]
+  "created_at" timestamptz [not null]
+  "updated_at" timestamptz [not null]
+
+  Indexes {
+    entry_date [type: btree, name: "ix_journal_entry_entry_date"]
+    owner_id [type: btree, name: "ix_journal_entry_owner_id"]
+  }
+}
+
+Table "webhook_endpoint" {
+  "id" uuid [pk, not null]
+  "owner_id" uuid [not null]
+  "name" varchar(255) [not null]
+  "url" varchar(2048)
+  "direction" varchar(10) [not null]
+  "event_types" varchar(1000)
+  "is_active" bool [not null]
+  "secret" varchar(255)
+  "api_key" varchar(255) [not null]
+  "created_at" timestamptz [not null]
+
+  Indexes {
+    direction [type: btree, name: "ix_webhook_endpoint_direction"]
+    owner_id [type: btree, name: "ix_webhook_endpoint_owner_id"]
+  }
+}
+
+Table "tag_share" {
+  "tag_id" uuid [not null]
+  "grantee_id" uuid [not null]
+  "created_at" timestamptz [not null, default: `now()`]
+
+  Indexes {
+    (tag_id, grantee_id) [pk, type: btree, name: "tag_share_pkey"]
+  }
+}
+
+Table "media_recommendation" {
+  "id" uuid [pk, not null]
+  "owner_id" uuid [not null]
+  "contact_id" uuid [not null]
+  "category" mediacategory [not null]
+  "title" varchar(500) [not null]
+  "creator" varchar(500)
+  "note" varchar(5000)
+  "recommended_at" date
+  "created_at" timestamptz [not null]
+  "updated_at" timestamptz [not null]
+
+  Indexes {
+    category [type: btree, name: "ix_media_recommendation_category"]
+    contact_id [type: btree, name: "ix_media_recommendation_contact_id"]
+    owner_id [type: btree, name: "ix_media_recommendation_owner_id"]
+  }
+}
+
+Ref "address_contact_id_fkey":"contact"."id" < "address"."contact_id" [delete: cascade]
+
+Ref "contact_owner_id_fkey":"user"."id" < "contact"."owner_id" [delete: cascade]
+
+Ref "contact_field_contact_id_fkey":"contact"."id" < "contact_field"."contact_id" [delete: cascade]
+
+Ref "contact_group_contact_id_fkey":"contact"."id" < "contact_group"."contact_id" [delete: cascade]
+
+Ref "contact_group_group_id_fkey":"group"."id" < "contact_group"."group_id" [delete: cascade]
+
+Ref "contact_tag_contact_id_fkey":"contact"."id" < "contact_tag"."contact_id" [delete: cascade]
+
+Ref "contact_tag_tag_id_fkey":"tag"."id" < "contact_tag"."tag_id" [delete: cascade]
+
+Ref "custom_field_definition_owner_id_fkey":"user"."id" < "custom_field_definition"."owner_id" [delete: cascade]
+
+Ref "custom_field_value_contact_id_fkey":"contact"."id" < "custom_field_value"."contact_id" [delete: cascade]
+
+Ref "custom_field_value_field_definition_id_fkey":"custom_field_definition"."id" < "custom_field_value"."field_definition_id" [delete: cascade]
+
+Ref "debt_contact_id_fkey":"contact"."id" < "debt"."contact_id" [delete: cascade]
+
+Ref "debt_owner_id_fkey":"user"."id" < "debt"."owner_id" [delete: cascade]
+
+Ref "gift_contact_id_fkey":"contact"."id" < "gift"."contact_id" [delete: cascade]
+
+Ref "gift_owner_id_fkey":"user"."id" < "gift"."owner_id" [delete: cascade]
+
+Ref "group_owner_id_fkey":"user"."id" < "group"."owner_id" [delete: cascade]
+
+Ref "interaction_contact_id_fkey":"contact"."id" < "interaction"."contact_id" [delete: cascade]
+
+Ref "interaction_owner_id_fkey":"user"."id" < "interaction"."owner_id" [delete: cascade]
+
+Ref "journal_entry_owner_id_fkey":"user"."id" < "journal_entry"."owner_id" [delete: cascade]
+
+Ref "life_event_contact_id_fkey":"contact"."id" < "life_event"."contact_id" [delete: cascade]
+
+Ref "life_event_owner_id_fkey":"user"."id" < "life_event"."owner_id" [delete: cascade]
+
+Ref "media_recommendation_contact_id_fkey":"contact"."id" < "media_recommendation"."contact_id" [delete: cascade]
+
+Ref "media_recommendation_owner_id_fkey":"user"."id" < "media_recommendation"."owner_id" [delete: cascade]
+
+Ref "note_contact_id_fkey":"contact"."id" < "note"."contact_id" [delete: cascade]
+
+Ref "note_owner_id_fkey":"user"."id" < "note"."owner_id" [delete: cascade]
+
+Ref "pet_contact_id_fkey":"contact"."id" < "pet"."contact_id" [delete: cascade]
+
+Ref "relationship_contact_id_fkey":"contact"."id" < "relationship"."contact_id" [delete: cascade]
+
+Ref "relationship_related_contact_id_fkey":"contact"."id" < "relationship"."related_contact_id" [delete: cascade]
+
+Ref "reminder_contact_id_fkey":"contact"."id" < "reminder"."contact_id" [delete: cascade]
+
+Ref "reminder_owner_id_fkey":"user"."id" < "reminder"."owner_id" [delete: cascade]
+
+Ref "tag_owner_id_fkey":"user"."id" < "tag"."owner_id" [delete: cascade]
+
+Ref "tag_share_grantee_id_fkey":"user"."id" < "tag_share"."grantee_id" [delete: cascade]
+
+Ref "tag_share_tag_id_fkey":"tag"."id" < "tag_share"."tag_id" [delete: cascade]
+
+Ref "webhook_endpoint_owner_id_fkey":"user"."id" < "webhook_endpoint"."owner_id" [delete: cascade]

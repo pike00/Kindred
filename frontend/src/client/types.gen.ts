@@ -6,27 +6,81 @@ export type _ShareIn = {
 };
 
 export type AddressCreate = {
+    /**
+     * Label like "home", "work", "other".
+     */
     label?: string;
+    /**
+     * Street line 1.
+     */
     street?: (string | null);
+    /**
+     * Apartment, suite, floor, etc.
+     */
     extended?: (string | null);
+    /**
+     * City.
+     */
     city?: (string | null);
+    /**
+     * State, province, or region.
+     */
     region?: (string | null);
+    /**
+     * ZIP or postal code.
+     */
     postal_code?: (string | null);
+    /**
+     * Country.
+     */
     country?: (string | null);
+    /**
+     * Geocoded latitude; used for map visualization.
+     */
     latitude?: (number | null);
+    /**
+     * Geocoded longitude; used for map visualization.
+     */
     longitude?: (number | null);
     contact_id: string;
 };
 
 export type AddressPublic = {
+    /**
+     * Label like "home", "work", "other".
+     */
     label?: string;
+    /**
+     * Street line 1.
+     */
     street?: (string | null);
+    /**
+     * Apartment, suite, floor, etc.
+     */
     extended?: (string | null);
+    /**
+     * City.
+     */
     city?: (string | null);
+    /**
+     * State, province, or region.
+     */
     region?: (string | null);
+    /**
+     * ZIP or postal code.
+     */
     postal_code?: (string | null);
+    /**
+     * Country.
+     */
     country?: (string | null);
+    /**
+     * Geocoded latitude; used for map visualization.
+     */
     latitude?: (number | null);
+    /**
+     * Geocoded longitude; used for map visualization.
+     */
     longitude?: (number | null);
     id: string;
     contact_id: string;
@@ -58,41 +112,122 @@ export type Body_login_login_access_token = {
 };
 
 export type ContactCreate = {
+    /**
+     * Given name; required.
+     */
     first_name: string;
+    /**
+     * Family name.
+     */
     last_name?: (string | null);
+    /**
+     * Middle name or initial.
+     */
     middle_name?: (string | null);
+    /**
+     * Honorific like Dr., Mr., Ms.
+     */
     prefix?: (string | null);
+    /**
+     * Suffix like Jr., PhD.
+     */
     suffix?: (string | null);
+    /**
+     * Preferred or informal name.
+     */
     nickname?: (string | null);
+    /**
+     * Organization name.
+     */
     company?: (string | null);
+    /**
+     * Department within the company.
+     */
     department?: (string | null);
+    /**
+     * Job title.
+     */
     title?: (string | null);
+    /**
+     * Date of birth; used for milestone and birthday reminders.
+     */
     birthday?: (string | null);
+    /**
+     * Short story of how the introduction happened.
+     */
     how_we_met?: (string | null);
+    /**
+     * Pinned to the top of contact lists.
+     */
     is_favorite?: boolean;
+    /**
+     * Soft-deleted; excluded from default lists.
+     */
     is_archived?: boolean;
+    /**
+     * Marks the contact as deceased.
+     */
     is_deceased?: boolean;
+    /**
+     * Date the contact passed away.
+     */
     deceased_at?: (string | null);
+    /**
+     * Target days between interactions; drives losing-touch cadence.
+     */
     contact_frequency_days?: (number | null);
+    /**
+     * Kanban stage like Active, Dormant, Lost.
+     */
     stage?: (string | null);
     tag_ids?: (Array<(string)> | null);
     group_ids?: (Array<(string)> | null);
 };
 
 export type ContactFieldCreate = {
+    /**
+     * Kind of contact info (email or phone).
+     */
     field_type: ContactFieldType;
+    /**
+     * Label like "home", "work", "cell", "twitter".
+     */
     label: string;
+    /**
+     * The actual email address, phone number, etc.
+     */
     value: string;
+    /**
+     * Marks the primary entry for this field_type on the contact.
+     */
     is_primary?: boolean;
+    /**
+     * Display order within the same field_type.
+     */
     sort_order?: number;
     contact_id: string;
 };
 
 export type ContactFieldPublic = {
+    /**
+     * Kind of contact info (email or phone).
+     */
     field_type: ContactFieldType;
+    /**
+     * Label like "home", "work", "cell", "twitter".
+     */
     label: string;
+    /**
+     * The actual email address, phone number, etc.
+     */
     value: string;
+    /**
+     * Marks the primary entry for this field_type on the contact.
+     */
     is_primary?: boolean;
+    /**
+     * Display order within the same field_type.
+     */
     sort_order?: number;
     id: string;
     contact_id: string;
@@ -109,22 +244,73 @@ export type ContactFieldUpdate = {
 };
 
 export type ContactPublic = {
+    /**
+     * Given name; required.
+     */
     first_name: string;
+    /**
+     * Family name.
+     */
     last_name?: (string | null);
+    /**
+     * Middle name or initial.
+     */
     middle_name?: (string | null);
+    /**
+     * Honorific like Dr., Mr., Ms.
+     */
     prefix?: (string | null);
+    /**
+     * Suffix like Jr., PhD.
+     */
     suffix?: (string | null);
+    /**
+     * Preferred or informal name.
+     */
     nickname?: (string | null);
+    /**
+     * Organization name.
+     */
     company?: (string | null);
+    /**
+     * Department within the company.
+     */
     department?: (string | null);
+    /**
+     * Job title.
+     */
     title?: (string | null);
+    /**
+     * Date of birth; used for milestone and birthday reminders.
+     */
     birthday?: (string | null);
+    /**
+     * Short story of how the introduction happened.
+     */
     how_we_met?: (string | null);
+    /**
+     * Pinned to the top of contact lists.
+     */
     is_favorite?: boolean;
+    /**
+     * Soft-deleted; excluded from default lists.
+     */
     is_archived?: boolean;
+    /**
+     * Marks the contact as deceased.
+     */
     is_deceased?: boolean;
+    /**
+     * Date the contact passed away.
+     */
     deceased_at?: (string | null);
+    /**
+     * Target days between interactions; drives losing-touch cadence.
+     */
     contact_frequency_days?: (number | null);
+    /**
+     * Kanban stage like Active, Dormant, Lost.
+     */
     stage?: (string | null);
     id: string;
     avatar_url: (string | null);
@@ -163,18 +349,48 @@ export type ContactUpdate = {
 };
 
 export type CustomFieldDefinitionCreate = {
+    /**
+     * Custom field name shown in the UI.
+     */
     name: string;
+    /**
+     * Field type: text, number, date, boolean, or select.
+     */
     field_type?: string;
+    /**
+     * Help text displayed alongside the field in the UI.
+     */
     description?: (string | null);
+    /**
+     * Comma-separated options for field_type="select".
+     */
     options?: (string | null);
+    /**
+     * Icon slug for the UI (e.g. "heart", "book").
+     */
     icon?: (string | null);
 };
 
 export type CustomFieldDefinitionPublic = {
+    /**
+     * Custom field name shown in the UI.
+     */
     name: string;
+    /**
+     * Field type: text, number, date, boolean, or select.
+     */
     field_type?: string;
+    /**
+     * Help text displayed alongside the field in the UI.
+     */
     description?: (string | null);
+    /**
+     * Comma-separated options for field_type="select".
+     */
     options?: (string | null);
+    /**
+     * Icon slug for the UI (e.g. "heart", "book").
+     */
     icon?: (string | null);
     id: string;
     created_at: string;
@@ -189,12 +405,18 @@ export type CustomFieldDefinitionUpdate = {
 };
 
 export type CustomFieldValueCreate = {
+    /**
+     * Value as a string; coerced from the declared field_type.
+     */
     value: string;
     contact_id: string;
     field_definition_id: string;
 };
 
 export type CustomFieldValuePublic = {
+    /**
+     * Value as a string; coerced from the declared field_type.
+     */
     value: string;
     id: string;
     contact_id: string;
@@ -207,11 +429,29 @@ export type CustomFieldValueUpdate = {
 };
 
 export type DebtCreate = {
+    /**
+     * Who owes whom: i_owe (you owe them) or they_owe (they owe you).
+     */
     direction: DebtDirection;
+    /**
+     * Amount owed; must be greater than zero.
+     */
     amount: number;
+    /**
+     * ISO 4217 currency code.
+     */
     currency?: string;
+    /**
+     * What the debt is for.
+     */
     reason?: (string | null);
+    /**
+     * Marked paid off.
+     */
     is_settled?: boolean;
+    /**
+     * Date the debt was settled.
+     */
     settled_at?: (string | null);
     contact_id: string;
 };
@@ -219,11 +459,29 @@ export type DebtCreate = {
 export type DebtDirection = 'i_owe' | 'they_owe';
 
 export type DebtPublic = {
+    /**
+     * Who owes whom: i_owe (you owe them) or they_owe (they owe you).
+     */
     direction: DebtDirection;
+    /**
+     * Amount owed; must be greater than zero.
+     */
     amount: number;
+    /**
+     * ISO 4217 currency code.
+     */
     currency?: string;
+    /**
+     * What the debt is for.
+     */
     reason?: (string | null);
+    /**
+     * Marked paid off.
+     */
     is_settled?: boolean;
+    /**
+     * Date the debt was settled.
+     */
     settled_at?: (string | null);
     id: string;
     contact_id: string;
@@ -245,25 +503,73 @@ export type DebtUpdate = {
 };
 
 export type GiftCreate = {
+    /**
+     * Gift name.
+     */
     name: string;
+    /**
+     * Details about the gift.
+     */
     description?: (string | null);
+    /**
+     * Lifecycle: idea, given, or received.
+     */
     status?: GiftStatus;
+    /**
+     * Occasion like Birthday, Christmas, Housewarming.
+     */
     occasion?: (string | null);
+    /**
+     * When the gift was given or received.
+     */
     gift_date?: (string | null);
+    /**
+     * Monetary cost or value.
+     */
     value_amount?: (number | null);
+    /**
+     * ISO 4217 currency code.
+     */
     value_currency?: string;
+    /**
+     * Link to the product page (e.g. Amazon).
+     */
     url?: (string | null);
     contact_id: string;
 };
 
 export type GiftPublic = {
+    /**
+     * Gift name.
+     */
     name: string;
+    /**
+     * Details about the gift.
+     */
     description?: (string | null);
+    /**
+     * Lifecycle: idea, given, or received.
+     */
     status?: GiftStatus;
+    /**
+     * Occasion like Birthday, Christmas, Housewarming.
+     */
     occasion?: (string | null);
+    /**
+     * When the gift was given or received.
+     */
     gift_date?: (string | null);
+    /**
+     * Monetary cost or value.
+     */
     value_amount?: (number | null);
+    /**
+     * ISO 4217 currency code.
+     */
     value_currency?: string;
+    /**
+     * Link to the product page (e.g. Amazon).
+     */
     url?: (string | null);
     id: string;
     contact_id: string;
@@ -289,12 +595,24 @@ export type GiftUpdate = {
 };
 
 export type GroupCreate = {
+    /**
+     * Group name, 1-255 chars.
+     */
     name: string;
+    /**
+     * Optional group description.
+     */
     description?: (string | null);
 };
 
 export type GroupPublic = {
+    /**
+     * Group name, 1-255 chars.
+     */
     name: string;
+    /**
+     * Optional group description.
+     */
     description?: (string | null);
     id: string;
     created_at: string;
@@ -317,19 +635,49 @@ export type HTTPValidationError = {
 export type InteractionChannel = 'call' | 'in_person' | 'text' | 'email' | 'video' | 'social' | 'other';
 
 export type InteractionCreate = {
+    /**
+     * How the interaction happened (call, in_person, text, etc.).
+     */
     channel: InteractionChannel;
+    /**
+     * When the interaction actually took place.
+     */
     occurred_at: string;
+    /**
+     * Conversation summary, action items, etc.
+     */
     notes?: (string | null);
+    /**
+     * Emoji or keyword capturing the tone.
+     */
     mood?: (string | null);
+    /**
+     * Length of the interaction in minutes.
+     */
     duration_minutes?: (number | null);
     contact_id: string;
 };
 
 export type InteractionPublic = {
+    /**
+     * How the interaction happened (call, in_person, text, etc.).
+     */
     channel: InteractionChannel;
+    /**
+     * When the interaction actually took place.
+     */
     occurred_at: string;
+    /**
+     * Conversation summary, action items, etc.
+     */
     notes?: (string | null);
+    /**
+     * Emoji or keyword capturing the tone.
+     */
     mood?: (string | null);
+    /**
+     * Length of the interaction in minutes.
+     */
     duration_minutes?: (number | null);
     id: string;
     contact_id: string;
@@ -358,14 +706,32 @@ export type JournalEntriesPublic = {
 };
 
 export type JournalEntryCreate = {
+    /**
+     * Entry body, 1-50000 chars.
+     */
     body: string;
+    /**
+     * Emoji or keyword capturing the mood.
+     */
     mood?: (string | null);
+    /**
+     * Date the entry is about (may differ from created_at).
+     */
     entry_date: string;
 };
 
 export type JournalEntryPublic = {
+    /**
+     * Entry body, 1-50000 chars.
+     */
     body: string;
+    /**
+     * Emoji or keyword capturing the mood.
+     */
     mood?: (string | null);
+    /**
+     * Date the entry is about (may differ from created_at).
+     */
     entry_date: string;
     id: string;
     created_at: string;
@@ -379,19 +745,49 @@ export type JournalEntryUpdate = {
 };
 
 export type LifeEventCreate = {
+    /**
+     * Kind of milestone: job_change, move, wedding, baby, graduation, birthday, anniversary, etc.
+     */
     event_type: string;
+    /**
+     * Event title.
+     */
     title: string;
+    /**
+     * Extra details about the event.
+     */
     description?: (string | null);
+    /**
+     * Date the event happened.
+     */
     occurred_at: string;
+    /**
+     * If true, auto-create a yearly recurring reminder on this date.
+     */
     create_annual_reminder?: boolean;
     contact_id: string;
 };
 
 export type LifeEventPublic = {
+    /**
+     * Kind of milestone: job_change, move, wedding, baby, graduation, birthday, anniversary, etc.
+     */
     event_type: string;
+    /**
+     * Event title.
+     */
     title: string;
+    /**
+     * Extra details about the event.
+     */
     description?: (string | null);
+    /**
+     * Date the event happened.
+     */
     occurred_at: string;
+    /**
+     * If true, auto-create a yearly recurring reminder on this date.
+     */
     create_annual_reminder?: boolean;
     id: string;
     contact_id: string;
@@ -414,19 +810,49 @@ export type LifeEventUpdate = {
 export type MediaCategory = 'movie' | 'tv_show' | 'podcast' | 'musician' | 'book' | 'other';
 
 export type MediaRecommendationCreate = {
+    /**
+     * Media category: movie, tv_show, podcast, musician, book, or other.
+     */
     category: MediaCategory;
+    /**
+     * Title of the work.
+     */
     title: string;
+    /**
+     * Author, director, artist, or similar creator.
+     */
     creator?: (string | null);
+    /**
+     * Why it was recommended or personal reaction.
+     */
     note?: (string | null);
+    /**
+     * Date the recommendation was made.
+     */
     recommended_at?: (string | null);
     contact_id: string;
 };
 
 export type MediaRecommendationPublic = {
+    /**
+     * Media category: movie, tv_show, podcast, musician, book, or other.
+     */
     category: MediaCategory;
+    /**
+     * Title of the work.
+     */
     title: string;
+    /**
+     * Author, director, artist, or similar creator.
+     */
     creator?: (string | null);
+    /**
+     * Why it was recommended or personal reaction.
+     */
     note?: (string | null);
+    /**
+     * Date the recommendation was made.
+     */
     recommended_at?: (string | null);
     id: string;
     contact_id: string;
@@ -457,11 +883,17 @@ export type NewPassword = {
 };
 
 export type NoteCreate = {
+    /**
+     * Note body, 1-50000 chars.
+     */
     body: string;
     contact_id: string;
 };
 
 export type NotePublic = {
+    /**
+     * Note body, 1-50000 chars.
+     */
     body: string;
     id: string;
     contact_id: string;
@@ -479,17 +911,41 @@ export type NoteUpdate = {
 };
 
 export type PetCreate = {
+    /**
+     * Pet's name.
+     */
     name: string;
+    /**
+     * Species like dog, cat, bird.
+     */
     species?: (string | null);
+    /**
+     * Breed, if known.
+     */
     breed?: (string | null);
+    /**
+     * Freeform notes (e.g. allergies, birthday).
+     */
     notes?: (string | null);
     contact_id: string;
 };
 
 export type PetPublic = {
+    /**
+     * Pet's name.
+     */
     name: string;
+    /**
+     * Species like dog, cat, bird.
+     */
     species?: (string | null);
+    /**
+     * Breed, if known.
+     */
     breed?: (string | null);
+    /**
+     * Freeform notes (e.g. allergies, birthday).
+     */
     notes?: (string | null);
     id: string;
     contact_id: string;
@@ -503,14 +959,26 @@ export type PetUpdate = {
 };
 
 export type RelationshipCreate = {
+    /**
+     * Kind of relationship: spouse, child, parent, sibling, friend, colleague, etc.
+     */
     relationship_type: string;
+    /**
+     * Additional context about the relationship.
+     */
     notes?: (string | null);
     contact_id: string;
     related_contact_id: string;
 };
 
 export type RelationshipPublic = {
+    /**
+     * Kind of relationship: spouse, child, parent, sibling, friend, colleague, etc.
+     */
     relationship_type: string;
+    /**
+     * Additional context about the relationship.
+     */
     notes?: (string | null);
     id: string;
     contact_id: string;
@@ -523,10 +991,25 @@ export type RelationshipUpdate = {
 };
 
 export type ReminderCreate = {
+    /**
+     * Reminder title.
+     */
     title: string;
+    /**
+     * Extra details shown with the reminder.
+     */
     description?: (string | null);
+    /**
+     * When to fire the reminder.
+     */
     remind_at: string;
+    /**
+     * How often the reminder repeats.
+     */
     frequency?: ReminderFrequency;
+    /**
+     * Enable or disable without deleting.
+     */
     is_active?: boolean;
     contact_id?: (string | null);
 };
@@ -534,10 +1017,25 @@ export type ReminderCreate = {
 export type ReminderFrequency = 'once' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 
 export type ReminderPublic = {
+    /**
+     * Reminder title.
+     */
     title: string;
+    /**
+     * Extra details shown with the reminder.
+     */
     description?: (string | null);
+    /**
+     * When to fire the reminder.
+     */
     remind_at: string;
+    /**
+     * How often the reminder repeats.
+     */
     frequency?: ReminderFrequency;
+    /**
+     * Enable or disable without deleting.
+     */
     is_active?: boolean;
     id: string;
     contact_id: (string | null);
@@ -560,12 +1058,24 @@ export type ReminderUpdate = {
 };
 
 export type TagCreate = {
+    /**
+     * Tag name, 1-100 chars.
+     */
     name: string;
+    /**
+     * Optional hex color like #ff0000 for UI display.
+     */
     color?: (string | null);
 };
 
 export type TagPublic = {
+    /**
+     * Tag name, 1-100 chars.
+     */
     name: string;
+    /**
+     * Optional hex color like #ff0000 for UI display.
+     */
     color?: (string | null);
     id: string;
     created_at: string;
@@ -604,17 +1114,41 @@ export type UpdatePassword = {
 };
 
 export type UserCreate = {
+    /**
+     * Login email; must be unique.
+     */
     email: string;
+    /**
+     * Whether the account can log in.
+     */
     is_active?: boolean;
+    /**
+     * Grants admin-only endpoints.
+     */
     is_superuser?: boolean;
+    /**
+     * Display name; optional.
+     */
     full_name?: (string | null);
     password: string;
 };
 
 export type UserPublic = {
+    /**
+     * Login email; must be unique.
+     */
     email: string;
+    /**
+     * Whether the account can log in.
+     */
     is_active?: boolean;
+    /**
+     * Grants admin-only endpoints.
+     */
     is_superuser?: boolean;
+    /**
+     * Display name; optional.
+     */
     full_name?: (string | null);
     id: string;
     created_at?: (string | null);
@@ -633,8 +1167,17 @@ export type UsersPublic = {
 
 export type UserUpdate = {
     email?: (string | null);
+    /**
+     * Whether the account can log in.
+     */
     is_active?: boolean;
+    /**
+     * Grants admin-only endpoints.
+     */
     is_superuser?: boolean;
+    /**
+     * Display name; optional.
+     */
     full_name?: (string | null);
     password?: (string | null);
 };
@@ -655,11 +1198,29 @@ export type ValidationError = {
 };
 
 export type WebhookEndpointBase = {
+    /**
+     * Human-readable endpoint name.
+     */
     name: string;
+    /**
+     * Target URL for outbound webhooks; null for inbound.
+     */
     url?: (string | null);
+    /**
+     * "inbound" or "outbound".
+     */
     direction: string;
+    /**
+     * Comma-separated event types (e.g. contact.created,interaction.logged).
+     */
     event_types?: (string | null);
+    /**
+     * Enable or disable without deleting.
+     */
     is_active?: boolean;
+    /**
+     * HMAC secret for verifying inbound payloads.
+     */
     secret?: (string | null);
 };
 

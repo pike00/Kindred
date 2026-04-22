@@ -14,10 +14,25 @@ def get_datetime_utc() -> datetime:
 
 # Shared properties
 class UserBase(SQLModel):
-    email: EmailStr = Field(unique=True, index=True, max_length=255)
-    is_active: bool = True
-    is_superuser: bool = False
-    full_name: str | None = Field(default=None, max_length=255)
+    email: EmailStr = Field(
+        unique=True,
+        index=True,
+        max_length=255,
+        description="Login email; must be unique.",
+    )
+    is_active: bool = Field(
+        default=True,
+        description="Whether the account can log in.",
+    )
+    is_superuser: bool = Field(
+        default=False,
+        description="Grants admin-only endpoints.",
+    )
+    full_name: str | None = Field(
+        default=None,
+        max_length=255,
+        description="Display name; optional.",
+    )
 
 
 # Properties to receive via API on creation
@@ -49,13 +64,33 @@ class UpdatePassword(SQLModel):
 
 # Database model, database table inferred from class name
 class User(UserBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    hashed_password: str | None = None  # nullable: OIDC users have no password
-    oidc_iss: str | None = Field(default=None, max_length=512, index=True)
-    oidc_sub: str | None = Field(default=None, max_length=255, index=True)
+    """Authenticated user; tenant-scope owner of every row below."""
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
+    hashed_password: str | None = Field(
+        default=None,
+        description="Argon2id hash; null for OIDC-only users.",
+    )
+    oidc_iss: str | None = Field(
+        default=None,
+        max_length=512,
+        index=True,
+        description="OIDC issuer URL; paired with oidc_sub forms the unique external identity.",
+    )
+    oidc_sub: str | None = Field(
+        default=None,
+        max_length=255,
+        index=True,
+        description="OIDC subject; paired with oidc_iss forms the unique external identity.",
+    )
     created_at: datetime | None = Field(
         default_factory=get_datetime_utc,
         sa_type=DateTime(timezone=True),  # type: ignore
+        description="When the account was created (UTC).",
     )
 
     __table_args__ = (
@@ -124,8 +159,16 @@ class MediaCategory(str, enum.Enum):
 
 
 class TagBase(SQLModel):
-    name: str = Field(min_length=1, max_length=100)
-    color: str | None = Field(default=None, max_length=7)  # hex color e.g. #ff0000
+    name: str = Field(
+        min_length=1,
+        max_length=100,
+        description="Tag name, 1-100 chars.",
+    )
+    color: str | None = Field(
+        default=None,
+        max_length=7,
+        description="Optional hex color like #ff0000 for UI display.",
+    )
 
 
 class TagCreate(TagBase):
@@ -138,12 +181,23 @@ class TagUpdate(SQLModel):
 
 
 class Tag(TagBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    """User-defined tag for grouping contacts."""
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
     owner_id: uuid.UUID = Field(
-        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+        foreign_key="user.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description="Owner user; cascades on delete.",
     )
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc), nullable=False
+        default_factory=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        description="When the tag was created (UTC).",
     )
 
 
@@ -161,12 +215,20 @@ class TagsPublic(SQLModel):
 
 
 class ContactTag(SQLModel, table=True):
+    """Many-to-many link between contacts and tags."""
+
     __tablename__ = "contact_tag"
     contact_id: uuid.UUID = Field(
-        foreign_key="contact.id", primary_key=True, ondelete="CASCADE"
+        foreign_key="contact.id",
+        primary_key=True,
+        ondelete="CASCADE",
+        description="Contact side of the link; cascades on delete.",
     )
     tag_id: uuid.UUID = Field(
-        foreign_key="tag.id", primary_key=True, ondelete="CASCADE"
+        foreign_key="tag.id",
+        primary_key=True,
+        ondelete="CASCADE",
+        description="Tag side of the link; cascades on delete.",
     )
 
 
@@ -174,16 +236,25 @@ class ContactTag(SQLModel, table=True):
 
 
 class TagShare(SQLModel, table=True):
+    """Grants another user read access to all rows bearing a given tag."""
+
     __tablename__ = "tag_share"
     tag_id: uuid.UUID = Field(
-        foreign_key="tag.id", primary_key=True, ondelete="CASCADE"
+        foreign_key="tag.id",
+        primary_key=True,
+        ondelete="CASCADE",
+        description="Tag whose rows are being shared; cascades on delete.",
     )
     grantee_id: uuid.UUID = Field(
-        foreign_key="user.id", primary_key=True, ondelete="CASCADE"
+        foreign_key="user.id",
+        primary_key=True,
+        ondelete="CASCADE",
+        description="User granted access; cascades on delete.",
     )
     created_at: datetime = Field(
         default_factory=get_datetime_utc,
         sa_type=DateTime(timezone=True),  # type: ignore
+        description="When the share was granted (UTC).",
     )
 
 
@@ -203,8 +274,16 @@ class TagSharesPublic(SQLModel):
 
 
 class GroupBase(SQLModel):
-    name: str = Field(min_length=1, max_length=255)
-    description: str | None = Field(default=None, max_length=1000)
+    name: str = Field(
+        min_length=1,
+        max_length=255,
+        description="Group name, 1-255 chars.",
+    )
+    description: str | None = Field(
+        default=None,
+        max_length=1000,
+        description="Optional group description.",
+    )
 
 
 class GroupCreate(GroupBase):
@@ -217,12 +296,23 @@ class GroupUpdate(SQLModel):
 
 
 class Group(GroupBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    """Named collection of contacts (e.g. 'Family', 'Work Team')."""
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
     owner_id: uuid.UUID = Field(
-        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+        foreign_key="user.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description="Owner user; cascades on delete.",
     )
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc), nullable=False
+        default_factory=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        description="When the group was created (UTC).",
     )
 
 
@@ -240,12 +330,20 @@ class GroupsPublic(SQLModel):
 
 
 class ContactGroup(SQLModel, table=True):
+    """Many-to-many link between contacts and groups."""
+
     __tablename__ = "contact_group"
     contact_id: uuid.UUID = Field(
-        foreign_key="contact.id", primary_key=True, ondelete="CASCADE"
+        foreign_key="contact.id",
+        primary_key=True,
+        ondelete="CASCADE",
+        description="Contact side of the link; cascades on delete.",
     )
     group_id: uuid.UUID = Field(
-        foreign_key="group.id", primary_key=True, ondelete="CASCADE"
+        foreign_key="group.id",
+        primary_key=True,
+        ondelete="CASCADE",
+        description="Group side of the link; cascades on delete.",
     )
 
 
@@ -253,24 +351,88 @@ class ContactGroup(SQLModel, table=True):
 
 
 class ContactBase(SQLModel):
-    first_name: str = Field(min_length=1, max_length=255)
-    last_name: str | None = Field(default=None, max_length=255)
-    middle_name: str | None = Field(default=None, max_length=255)
-    prefix: str | None = Field(default=None, max_length=50)
-    suffix: str | None = Field(default=None, max_length=50)
-    nickname: str | None = Field(default=None, max_length=255)
-    company: str | None = Field(default=None, max_length=255)
-    department: str | None = Field(default=None, max_length=255)
-    title: str | None = Field(default=None, max_length=255)
-    birthday: date | None = None
-    how_we_met: str | None = Field(default=None, max_length=2000)
-    is_favorite: bool = False
-    is_archived: bool = False
-    is_deceased: bool = False
-    deceased_at: date | None = None
-    contact_frequency_days: int | None = Field(default=None, ge=1, le=3650)
+    first_name: str = Field(
+        min_length=1,
+        max_length=255,
+        description="Given name; required.",
+    )
+    last_name: str | None = Field(
+        default=None,
+        max_length=255,
+        description="Family name.",
+    )
+    middle_name: str | None = Field(
+        default=None,
+        max_length=255,
+        description="Middle name or initial.",
+    )
+    prefix: str | None = Field(
+        default=None,
+        max_length=50,
+        description="Honorific like Dr., Mr., Ms.",
+    )
+    suffix: str | None = Field(
+        default=None,
+        max_length=50,
+        description="Suffix like Jr., PhD.",
+    )
+    nickname: str | None = Field(
+        default=None,
+        max_length=255,
+        description="Preferred or informal name.",
+    )
+    company: str | None = Field(
+        default=None,
+        max_length=255,
+        description="Organization name.",
+    )
+    department: str | None = Field(
+        default=None,
+        max_length=255,
+        description="Department within the company.",
+    )
+    title: str | None = Field(
+        default=None,
+        max_length=255,
+        description="Job title.",
+    )
+    birthday: date | None = Field(
+        default=None,
+        description="Date of birth; used for milestone and birthday reminders.",
+    )
+    how_we_met: str | None = Field(
+        default=None,
+        max_length=2000,
+        description="Short story of how the introduction happened.",
+    )
+    is_favorite: bool = Field(
+        default=False,
+        description="Pinned to the top of contact lists.",
+    )
+    is_archived: bool = Field(
+        default=False,
+        description="Soft-deleted; excluded from default lists.",
+    )
+    is_deceased: bool = Field(
+        default=False,
+        description="Marks the contact as deceased.",
+    )
+    deceased_at: date | None = Field(
+        default=None,
+        description="Date the contact passed away.",
+    )
+    contact_frequency_days: int | None = Field(
+        default=None,
+        ge=1,
+        le=3650,
+        description="Target days between interactions; drives losing-touch cadence.",
+    )
     # Kanban stage for relationship tracking
-    stage: str | None = Field(default=None, max_length=100)
+    stage: str | None = Field(
+        default=None,
+        max_length=100,
+        description="Kanban stage like Active, Dormant, Lost.",
+    )
 
 
 class ContactCreate(ContactBase):
@@ -301,24 +463,50 @@ class ContactUpdate(SQLModel):
 
 
 class Contact(ContactBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    """Core contact entity — the subject of everything else in the CRM."""
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
     owner_id: uuid.UUID = Field(
-        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+        foreign_key="user.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description="Owner user; cascades on delete.",
     )
     # Raw vCard text for CardDAV round-trip fidelity
-    vcard_raw: str | None = Field(default=None)
-    vcard_etag: str | None = Field(default=None, max_length=255)
+    vcard_raw: str | None = Field(
+        default=None,
+        description="Raw vCard 3.0 text; preserves Apple extensions for CardDAV round-trip.",
+    )
+    vcard_etag: str | None = Field(
+        default=None,
+        max_length=255,
+        description="ETag from the CardDAV server for incremental sync.",
+    )
     # Avatar stored as file path or URL
-    avatar_url: str | None = Field(default=None, max_length=2048)
+    avatar_url: str | None = Field(
+        default=None,
+        max_length=2048,
+        description="URL or on-disk path to the contact's avatar image.",
+    )
     # Computed: last time any interaction was logged with this contact
-    last_contacted_at: datetime | None = None
+    last_contacted_at: datetime | None = Field(
+        default=None,
+        description="Auto-updated by create_interaction(); powers cadence queries.",
+    )
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc), nullable=False
+        default_factory=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        description="When the contact was created (UTC).",
     )
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
         sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
         nullable=False,
+        description="Auto-bumped on any column change (UTC).",
     )
     # Relationships
     tags: list["Tag"] = Relationship(
@@ -350,11 +538,26 @@ class ContactsPublic(SQLModel):
 
 
 class ContactFieldBase(SQLModel):
-    field_type: ContactFieldType
-    label: str = Field(max_length=100)  # e.g. "home", "work", "cell", "twitter"
-    value: str = Field(min_length=1, max_length=2048)
-    is_primary: bool = False
-    sort_order: int = 0
+    field_type: ContactFieldType = Field(
+        description="Kind of contact info (email or phone).",
+    )
+    label: str = Field(
+        max_length=100,
+        description='Label like "home", "work", "cell", "twitter".',
+    )
+    value: str = Field(
+        min_length=1,
+        max_length=2048,
+        description="The actual email address, phone number, etc.",
+    )
+    is_primary: bool = Field(
+        default=False,
+        description="Marks the primary entry for this field_type on the contact.",
+    )
+    sort_order: int = Field(
+        default=0,
+        description="Display order within the same field_type.",
+    )
 
 
 class ContactFieldCreate(ContactFieldBase):
@@ -370,10 +573,19 @@ class ContactFieldUpdate(SQLModel):
 
 
 class ContactField(ContactFieldBase, table=True):
+    """Flexible contact info (emails, phones) attached to a contact."""
+
     __tablename__ = "contact_field"
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
     contact_id: uuid.UUID = Field(
-        foreign_key="contact.id", nullable=False, ondelete="CASCADE"
+        foreign_key="contact.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description="Parent contact; cascades on delete.",
     )
 
 
@@ -386,15 +598,49 @@ class ContactFieldPublic(ContactFieldBase):
 
 
 class AddressBase(SQLModel):
-    label: str = Field(max_length=100, default="home")  # home, work, other
-    street: str | None = Field(default=None, max_length=500)
-    extended: str | None = Field(default=None, max_length=500)  # apt, suite
-    city: str | None = Field(default=None, max_length=255)
-    region: str | None = Field(default=None, max_length=255)  # state/province
-    postal_code: str | None = Field(default=None, max_length=50)
-    country: str | None = Field(default=None, max_length=255)
-    latitude: float | None = None
-    longitude: float | None = None
+    label: str = Field(
+        max_length=100,
+        default="home",
+        description='Label like "home", "work", "other".',
+    )
+    street: str | None = Field(
+        default=None,
+        max_length=500,
+        description="Street line 1.",
+    )
+    extended: str | None = Field(
+        default=None,
+        max_length=500,
+        description="Apartment, suite, floor, etc.",
+    )
+    city: str | None = Field(
+        default=None,
+        max_length=255,
+        description="City.",
+    )
+    region: str | None = Field(
+        default=None,
+        max_length=255,
+        description="State, province, or region.",
+    )
+    postal_code: str | None = Field(
+        default=None,
+        max_length=50,
+        description="ZIP or postal code.",
+    )
+    country: str | None = Field(
+        default=None,
+        max_length=255,
+        description="Country.",
+    )
+    latitude: float | None = Field(
+        default=None,
+        description="Geocoded latitude; used for map visualization.",
+    )
+    longitude: float | None = Field(
+        default=None,
+        description="Geocoded longitude; used for map visualization.",
+    )
 
 
 class AddressCreate(AddressBase):
@@ -414,9 +660,18 @@ class AddressUpdate(SQLModel):
 
 
 class Address(AddressBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    """Physical address attached to a contact."""
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
     contact_id: uuid.UUID = Field(
-        foreign_key="contact.id", nullable=False, ondelete="CASCADE"
+        foreign_key="contact.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description="Parent contact; cascades on delete.",
     )
 
 
@@ -430,9 +685,14 @@ class AddressPublic(AddressBase):
 
 class RelationshipBase(SQLModel):
     relationship_type: str = Field(
-        max_length=100
-    )  # spouse, child, parent, friend, colleague, etc.
-    notes: str | None = Field(default=None, max_length=1000)
+        max_length=100,
+        description="Kind of relationship: spouse, child, parent, sibling, friend, colleague, etc.",
+    )
+    notes: str | None = Field(
+        default=None,
+        max_length=1000,
+        description="Additional context about the relationship.",
+    )
 
 
 class RelationshipCreate(RelationshipBase):
@@ -446,12 +706,27 @@ class RelationshipUpdate(SQLModel):
 
 
 class Relationship(RelationshipBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    """Directional link between two contacts (spouse, child, friend, etc.).
+
+    To model a symmetric relationship, create two rows (one per direction).
+    """
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
     contact_id: uuid.UUID = Field(
-        foreign_key="contact.id", nullable=False, ondelete="CASCADE"
+        foreign_key="contact.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description='"From" contact in the directional relationship.',
     )
     related_contact_id: uuid.UUID = Field(
-        foreign_key="contact.id", nullable=False, ondelete="CASCADE"
+        foreign_key="contact.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description='"To" contact in the directional relationship.',
     )
 
 
@@ -465,10 +740,26 @@ class RelationshipPublic(RelationshipBase):
 
 
 class PetBase(SQLModel):
-    name: str = Field(min_length=1, max_length=255)
-    species: str | None = Field(default=None, max_length=100)  # dog, cat, etc.
-    breed: str | None = Field(default=None, max_length=100)
-    notes: str | None = Field(default=None, max_length=1000)
+    name: str = Field(
+        min_length=1,
+        max_length=255,
+        description="Pet's name.",
+    )
+    species: str | None = Field(
+        default=None,
+        max_length=100,
+        description="Species like dog, cat, bird.",
+    )
+    breed: str | None = Field(
+        default=None,
+        max_length=100,
+        description="Breed, if known.",
+    )
+    notes: str | None = Field(
+        default=None,
+        max_length=1000,
+        description="Freeform notes (e.g. allergies, birthday).",
+    )
 
 
 class PetCreate(PetBase):
@@ -483,9 +774,18 @@ class PetUpdate(SQLModel):
 
 
 class Pet(PetBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    """Pet owned by a contact; useful for memorable conversation hooks."""
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
     contact_id: uuid.UUID = Field(
-        foreign_key="contact.id", nullable=False, ondelete="CASCADE"
+        foreign_key="contact.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description="Owner contact; cascades on delete.",
     )
 
 
@@ -503,14 +803,32 @@ class CustomFieldDefinitionBase(SQLModel):
     Example: name="Preferred Filament", field_type="text"
     """
 
-    name: str = Field(min_length=1, max_length=255)
+    name: str = Field(
+        min_length=1,
+        max_length=255,
+        description="Custom field name shown in the UI.",
+    )
     field_type: str = Field(
-        max_length=50, default="text"
-    )  # text, number, date, boolean, select
-    description: str | None = Field(default=None, max_length=500)
+        max_length=50,
+        default="text",
+        description="Field type: text, number, date, boolean, or select.",
+    )
+    description: str | None = Field(
+        default=None,
+        max_length=500,
+        description="Help text displayed alongside the field in the UI.",
+    )
     # For "select" type: comma-separated options
-    options: str | None = Field(default=None, max_length=2000)
-    icon: str | None = Field(default=None, max_length=50)
+    options: str | None = Field(
+        default=None,
+        max_length=2000,
+        description='Comma-separated options for field_type="select".',
+    )
+    icon: str | None = Field(
+        default=None,
+        max_length=50,
+        description='Icon slug for the UI (e.g. "heart", "book").',
+    )
 
 
 class CustomFieldDefinitionCreate(CustomFieldDefinitionBase):
@@ -526,13 +844,24 @@ class CustomFieldDefinitionUpdate(SQLModel):
 
 
 class CustomFieldDefinition(CustomFieldDefinitionBase, table=True):
+    """User-defined custom field schema, scoped to one owner."""
+
     __tablename__ = "custom_field_definition"
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
     owner_id: uuid.UUID = Field(
-        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+        foreign_key="user.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description="Owner user; cascades on delete.",
     )
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc), nullable=False
+        default_factory=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        description="When the definition was created (UTC).",
     )
 
 
@@ -545,7 +874,10 @@ class CustomFieldDefinitionPublic(CustomFieldDefinitionBase):
 
 
 class CustomFieldValueBase(SQLModel):
-    value: str = Field(max_length=5000)
+    value: str = Field(
+        max_length=5000,
+        description="Value as a string; coerced from the declared field_type.",
+    )
 
 
 class CustomFieldValueCreate(CustomFieldValueBase):
@@ -558,13 +890,25 @@ class CustomFieldValueUpdate(SQLModel):
 
 
 class CustomFieldValue(CustomFieldValueBase, table=True):
+    """Value of a custom field for a specific contact (one per contact per definition)."""
+
     __tablename__ = "custom_field_value"
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
     contact_id: uuid.UUID = Field(
-        foreign_key="contact.id", nullable=False, ondelete="CASCADE"
+        foreign_key="contact.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description="Contact this value belongs to; cascades on delete.",
     )
     field_definition_id: uuid.UUID = Field(
-        foreign_key="custom_field_definition.id", nullable=False, ondelete="CASCADE"
+        foreign_key="custom_field_definition.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description="Custom field definition this value instantiates; cascades on delete.",
     )
 
 
@@ -579,11 +923,27 @@ class CustomFieldValuePublic(CustomFieldValueBase):
 
 
 class InteractionBase(SQLModel):
-    channel: InteractionChannel
-    occurred_at: datetime
-    notes: str | None = Field(default=None, max_length=10000)
-    mood: str | None = Field(default=None, max_length=50)  # emoji or keyword
-    duration_minutes: int | None = Field(default=None, ge=0)
+    channel: InteractionChannel = Field(
+        description="How the interaction happened (call, in_person, text, etc.).",
+    )
+    occurred_at: datetime = Field(
+        description="When the interaction actually took place.",
+    )
+    notes: str | None = Field(
+        default=None,
+        max_length=10000,
+        description="Conversation summary, action items, etc.",
+    )
+    mood: str | None = Field(
+        default=None,
+        max_length=50,
+        description="Emoji or keyword capturing the tone.",
+    )
+    duration_minutes: int | None = Field(
+        default=None,
+        ge=0,
+        description="Length of the interaction in minutes.",
+    )
 
 
 class InteractionCreate(InteractionBase):
@@ -599,15 +959,32 @@ class InteractionUpdate(SQLModel):
 
 
 class Interaction(InteractionBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    """Logged touchpoint with a contact (call, meeting, text, etc.).
+
+    Inserting a row bumps the parent contact's ``last_contacted_at``.
+    """
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
     contact_id: uuid.UUID = Field(
-        foreign_key="contact.id", nullable=False, ondelete="CASCADE"
+        foreign_key="contact.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description="Contact this interaction was with; cascades on delete.",
     )
     owner_id: uuid.UUID = Field(
-        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+        foreign_key="user.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description="Owner user; cascades on delete.",
     )
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc), nullable=False
+        default_factory=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        description="When the row was inserted (may be after occurred_at; UTC).",
     )
 
 
@@ -629,11 +1006,27 @@ class InteractionsPublic(SQLModel):
 
 
 class ReminderBase(SQLModel):
-    title: str = Field(min_length=1, max_length=500)
-    description: str | None = Field(default=None, max_length=2000)
-    remind_at: datetime
-    frequency: ReminderFrequency = ReminderFrequency.ONCE
-    is_active: bool = True
+    title: str = Field(
+        min_length=1,
+        max_length=500,
+        description="Reminder title.",
+    )
+    description: str | None = Field(
+        default=None,
+        max_length=2000,
+        description="Extra details shown with the reminder.",
+    )
+    remind_at: datetime = Field(
+        description="When to fire the reminder.",
+    )
+    frequency: ReminderFrequency = Field(
+        default=ReminderFrequency.ONCE,
+        description="How often the reminder repeats.",
+    )
+    is_active: bool = Field(
+        default=True,
+        description="Enable or disable without deleting.",
+    )
 
 
 class ReminderCreate(ReminderBase):
@@ -649,17 +1042,37 @@ class ReminderUpdate(SQLModel):
 
 
 class Reminder(ReminderBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    """Scheduled reminder; contact-specific or standalone."""
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
     contact_id: uuid.UUID | None = Field(
-        default=None, foreign_key="contact.id", ondelete="CASCADE"
+        default=None,
+        foreign_key="contact.id",
+        ondelete="CASCADE",
+        description="Optional contact; null for standalone reminders.",
     )
     owner_id: uuid.UUID = Field(
-        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+        foreign_key="user.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description="Owner user; cascades on delete.",
     )
-    last_sent_at: datetime | None = None
-    snoozed_until: datetime | None = None
+    last_sent_at: datetime | None = Field(
+        default=None,
+        description="When the ARQ worker last fired this reminder.",
+    )
+    snoozed_until: datetime | None = Field(
+        default=None,
+        description="If set, suppress firing until this time.",
+    )
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc), nullable=False
+        default_factory=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        description="When the reminder was created (UTC).",
     )
 
 
@@ -680,14 +1093,43 @@ class RemindersPublic(SQLModel):
 
 
 class GiftBase(SQLModel):
-    name: str = Field(min_length=1, max_length=500)
-    description: str | None = Field(default=None, max_length=2000)
-    status: GiftStatus = GiftStatus.IDEA
-    occasion: str | None = Field(default=None, max_length=255)
-    gift_date: date | None = Field(default=None)
-    value_amount: float | None = Field(default=None)
-    value_currency: str = Field(default="USD", max_length=3)
-    url: str | None = Field(default=None, max_length=2048)
+    name: str = Field(
+        min_length=1,
+        max_length=500,
+        description="Gift name.",
+    )
+    description: str | None = Field(
+        default=None,
+        max_length=2000,
+        description="Details about the gift.",
+    )
+    status: GiftStatus = Field(
+        default=GiftStatus.IDEA,
+        description="Lifecycle: idea, given, or received.",
+    )
+    occasion: str | None = Field(
+        default=None,
+        max_length=255,
+        description="Occasion like Birthday, Christmas, Housewarming.",
+    )
+    gift_date: date | None = Field(
+        default=None,
+        description="When the gift was given or received.",
+    )
+    value_amount: float | None = Field(
+        default=None,
+        description="Monetary cost or value.",
+    )
+    value_currency: str = Field(
+        default="USD",
+        max_length=3,
+        description="ISO 4217 currency code.",
+    )
+    url: str | None = Field(
+        default=None,
+        max_length=2048,
+        description="Link to the product page (e.g. Amazon).",
+    )
 
 
 class GiftCreate(GiftBase):
@@ -706,18 +1148,34 @@ class GiftUpdate(SQLModel):
 
 
 class Gift(GiftBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    """Gift idea or record for a contact."""
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
     contact_id: uuid.UUID = Field(
-        foreign_key="contact.id", nullable=False, ondelete="CASCADE"
+        foreign_key="contact.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description="Contact the gift is for; cascades on delete.",
     )
     owner_id: uuid.UUID = Field(
-        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+        foreign_key="user.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description="Owner user; cascades on delete.",
     )
     gift_date: date | None = Field(
-        default=None, sa_column=sa.Column("date", sa.Date, nullable=True)
+        default=None,
+        sa_column=sa.Column("date", sa.Date, nullable=True),
+        description="When the gift was given or received (stored in the `date` column).",
     )
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc), nullable=False
+        default_factory=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        description="When the gift record was created (UTC).",
     )
 
 
@@ -736,12 +1194,31 @@ class GiftsPublic(SQLModel):
 
 
 class DebtBase(SQLModel):
-    direction: DebtDirection
-    amount: float = Field(gt=0)
-    currency: str = Field(default="USD", max_length=3)
-    reason: str | None = Field(default=None, max_length=1000)
-    is_settled: bool = False
-    settled_at: date | None = None
+    direction: DebtDirection = Field(
+        description="Who owes whom: i_owe (you owe them) or they_owe (they owe you).",
+    )
+    amount: float = Field(
+        gt=0,
+        description="Amount owed; must be greater than zero.",
+    )
+    currency: str = Field(
+        default="USD",
+        max_length=3,
+        description="ISO 4217 currency code.",
+    )
+    reason: str | None = Field(
+        default=None,
+        max_length=1000,
+        description="What the debt is for.",
+    )
+    is_settled: bool = Field(
+        default=False,
+        description="Marked paid off.",
+    )
+    settled_at: date | None = Field(
+        default=None,
+        description="Date the debt was settled.",
+    )
 
 
 class DebtCreate(DebtBase):
@@ -758,15 +1235,29 @@ class DebtUpdate(SQLModel):
 
 
 class Debt(DebtBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    """Money owed to or from a contact."""
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
     contact_id: uuid.UUID = Field(
-        foreign_key="contact.id", nullable=False, ondelete="CASCADE"
+        foreign_key="contact.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description="Contact on the other side of the debt; cascades on delete.",
     )
     owner_id: uuid.UUID = Field(
-        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+        foreign_key="user.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description="Owner user; cascades on delete.",
     )
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc), nullable=False
+        default_factory=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        description="When the debt was recorded (UTC).",
     )
 
 
@@ -786,12 +1277,26 @@ class DebtsPublic(SQLModel):
 
 class LifeEventBase(SQLModel):
     event_type: str = Field(
-        max_length=100
-    )  # job_change, move, wedding, baby, graduation, etc.
-    title: str = Field(min_length=1, max_length=500)
-    description: str | None = Field(default=None, max_length=2000)
-    occurred_at: date
-    create_annual_reminder: bool = False
+        max_length=100,
+        description="Kind of milestone: job_change, move, wedding, baby, graduation, birthday, anniversary, etc.",
+    )
+    title: str = Field(
+        min_length=1,
+        max_length=500,
+        description="Event title.",
+    )
+    description: str | None = Field(
+        default=None,
+        max_length=2000,
+        description="Extra details about the event.",
+    )
+    occurred_at: date = Field(
+        description="Date the event happened.",
+    )
+    create_annual_reminder: bool = Field(
+        default=False,
+        description="If true, auto-create a yearly recurring reminder on this date.",
+    )
 
 
 class LifeEventCreate(LifeEventBase):
@@ -807,16 +1312,30 @@ class LifeEventUpdate(SQLModel):
 
 
 class LifeEvent(LifeEventBase, table=True):
+    """Milestone on a contact's timeline (job change, wedding, move, etc.)."""
+
     __tablename__ = "life_event"
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
     contact_id: uuid.UUID = Field(
-        foreign_key="contact.id", nullable=False, ondelete="CASCADE"
+        foreign_key="contact.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description="Contact the event belongs to; cascades on delete.",
     )
     owner_id: uuid.UUID = Field(
-        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+        foreign_key="user.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description="Owner user; cascades on delete.",
     )
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc), nullable=False
+        default_factory=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        description="When the event was logged (UTC).",
     )
 
 
@@ -835,7 +1354,11 @@ class LifeEventsPublic(SQLModel):
 
 
 class NoteBase(SQLModel):
-    body: str = Field(min_length=1, max_length=50000)
+    body: str = Field(
+        min_length=1,
+        max_length=50000,
+        description="Note body, 1-50000 chars.",
+    )
 
 
 class NoteCreate(NoteBase):
@@ -847,20 +1370,35 @@ class NoteUpdate(SQLModel):
 
 
 class Note(NoteBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    """Timestamped freeform note attached to a specific contact."""
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
     contact_id: uuid.UUID = Field(
-        foreign_key="contact.id", nullable=False, ondelete="CASCADE"
+        foreign_key="contact.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description="Contact the note is attached to; cascades on delete.",
     )
     owner_id: uuid.UUID = Field(
-        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+        foreign_key="user.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description="Owner user; cascades on delete.",
     )
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc), nullable=False
+        default_factory=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        description="When the note was created (UTC).",
     )
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
         sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
         nullable=False,
+        description="Auto-bumped on edit (UTC).",
     )
 
 
@@ -880,11 +1418,28 @@ class NotesPublic(SQLModel):
 
 
 class MediaRecommendationBase(SQLModel):
-    category: MediaCategory
-    title: str = Field(min_length=1, max_length=500)
-    creator: str | None = Field(default=None, max_length=500)
-    note: str | None = Field(default=None, max_length=5000)
-    recommended_at: date | None = Field(default=None)
+    category: MediaCategory = Field(
+        description="Media category: movie, tv_show, podcast, musician, book, or other.",
+    )
+    title: str = Field(
+        min_length=1,
+        max_length=500,
+        description="Title of the work.",
+    )
+    creator: str | None = Field(
+        default=None,
+        max_length=500,
+        description="Author, director, artist, or similar creator.",
+    )
+    note: str | None = Field(
+        default=None,
+        max_length=5000,
+        description="Why it was recommended or personal reaction.",
+    )
+    recommended_at: date | None = Field(
+        default=None,
+        description="Date the recommendation was made.",
+    )
 
 
 class MediaRecommendationCreate(MediaRecommendationBase):
@@ -900,21 +1455,36 @@ class MediaRecommendationUpdate(SQLModel):
 
 
 class MediaRecommendation(MediaRecommendationBase, table=True):
+    """Media (book, show, podcast, etc.) recommended to or by a contact."""
+
     __tablename__ = "media_recommendation"
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
     contact_id: uuid.UUID = Field(
-        foreign_key="contact.id", nullable=False, ondelete="CASCADE"
+        foreign_key="contact.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description="Contact the recommendation is tied to; cascades on delete.",
     )
     owner_id: uuid.UUID = Field(
-        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+        foreign_key="user.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description="Owner user; cascades on delete.",
     )
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc), nullable=False
+        default_factory=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        description="When the recommendation was logged (UTC).",
     )
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
         sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
         nullable=False,
+        description="Auto-bumped on edit (UTC).",
     )
 
 
@@ -934,9 +1504,19 @@ class MediaRecommendationsPublic(SQLModel):
 
 
 class JournalEntryBase(SQLModel):
-    body: str = Field(min_length=1, max_length=50000)
-    mood: str | None = Field(default=None, max_length=50)
-    entry_date: date
+    body: str = Field(
+        min_length=1,
+        max_length=50000,
+        description="Entry body, 1-50000 chars.",
+    )
+    mood: str | None = Field(
+        default=None,
+        max_length=50,
+        description="Emoji or keyword capturing the mood.",
+    )
+    entry_date: date = Field(
+        description="Date the entry is about (may differ from created_at).",
+    )
 
 
 class JournalEntryCreate(JournalEntryBase):
@@ -950,18 +1530,30 @@ class JournalEntryUpdate(SQLModel):
 
 
 class JournalEntry(JournalEntryBase, table=True):
+    """Personal journal entry, not tied to a specific contact."""
+
     __tablename__ = "journal_entry"
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
     owner_id: uuid.UUID = Field(
-        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+        foreign_key="user.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description="Owner user; cascades on delete.",
     )
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc), nullable=False
+        default_factory=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        description="When the entry was logged (UTC).",
     )
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
         sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
         nullable=False,
+        description="Auto-bumped on edit (UTC).",
     )
 
 
@@ -980,23 +1572,59 @@ class JournalEntriesPublic(SQLModel):
 
 
 class WebhookEndpointBase(SQLModel):
-    name: str = Field(min_length=1, max_length=255)
-    url: str | None = Field(default=None, max_length=2048)  # outbound target URL
-    direction: str = Field(max_length=10)  # "inbound" or "outbound"
-    event_types: str | None = Field(default=None, max_length=1000)  # comma-separated
-    is_active: bool = True
-    secret: str | None = Field(default=None, max_length=255)  # for verifying inbound
+    name: str = Field(
+        min_length=1,
+        max_length=255,
+        description="Human-readable endpoint name.",
+    )
+    url: str | None = Field(
+        default=None,
+        max_length=2048,
+        description="Target URL for outbound webhooks; null for inbound.",
+    )
+    direction: str = Field(
+        max_length=10,
+        description='"inbound" or "outbound".',
+    )
+    event_types: str | None = Field(
+        default=None,
+        max_length=1000,
+        description="Comma-separated event types (e.g. contact.created,interaction.logged).",
+    )
+    is_active: bool = Field(
+        default=True,
+        description="Enable or disable without deleting.",
+    )
+    secret: str | None = Field(
+        default=None,
+        max_length=255,
+        description="HMAC secret for verifying inbound payloads.",
+    )
 
 
 class WebhookEndpoint(WebhookEndpointBase, table=True):
+    """Inbound or outbound webhook configuration."""
+
     __tablename__ = "webhook_endpoint"
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    owner_id: uuid.UUID = Field(
-        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
     )
-    api_key: str = Field(max_length=255)  # for authenticating inbound webhooks
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description="Owner user; cascades on delete.",
+    )
+    api_key: str = Field(
+        max_length=255,
+        description="Key required to authenticate inbound webhook requests.",
+    )
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc), nullable=False
+        default_factory=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        description="When the endpoint was created (UTC).",
     )
 
 
