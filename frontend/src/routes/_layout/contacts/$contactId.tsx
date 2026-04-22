@@ -1,12 +1,11 @@
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query"
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, Link } from "@tanstack/react-router"
 
 import type {
   DebtPublic,
   GiftPublic,
   InteractionPublic,
   MediaRecommendationPublic,
-  NotePublic,
 } from "@/client"
 import {
   ContactsService,
@@ -14,7 +13,6 @@ import {
   GiftsService,
   InteractionsService,
   MediaRecommendationsService,
-  NotesService,
 } from "@/client"
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
 import { EmptyState } from "@/components/Common/EmptyState"
@@ -29,6 +27,7 @@ import { AddDebt } from "@/components/Debts/AddDebt"
 import { AddGift } from "@/components/Gifts/AddGift"
 import { AddInteractionDialog } from "@/components/Interactions/AddInteractionDialog"
 import { AddMediaRecommendation } from "@/components/MediaRecommendations/AddMediaRecommendation"
+import { NotesCard } from "@/components/Notes/NotesCard"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -118,11 +117,6 @@ function ContactDetailPage() {
     queryFn: () => InteractionsService.listInteractions({ contactId }),
   })
 
-  const { data: notesData, isLoading: notesLoading } = useQuery({
-    queryKey: ["notes", contactId],
-    queryFn: () => NotesService.listNotes({ contactId }),
-  })
-
   const { data: giftsData, isLoading: giftsLoading } = useQuery({
     queryKey: ["gifts", contactId],
     queryFn: () => GiftsService.listGifts({ contactId }),
@@ -150,7 +144,6 @@ function ContactDetailPage() {
     .join(" ")
 
   const interactions = interactionsData?.data ?? []
-  const notes = notesData?.data ?? []
   const gifts = giftsData?.data ?? []
   const debts = debtsData?.data ?? []
   const mediaRecs = mediaData?.data ?? []
@@ -214,8 +207,11 @@ function ContactDetailPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Left column (2/3 width) */}
         <div className="md:col-span-2 space-y-6">
-          <ContactFieldsCard contactId={contactId} />
-          <AddressesCard contactId={contactId} />
+          <NotesCard contactId={contactId} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <ContactFieldsCard contactId={contactId} />
+            <AddressesCard contactId={contactId} />
+          </div>
           <PetsCard contactId={contactId} />
           <LifeEventsCard contactId={contactId} />
           <CustomFieldsCard contactId={contactId} />
@@ -287,9 +283,19 @@ function ContactDetailPage() {
               <CardContent>
                 <div className="flex flex-wrap gap-1.5">
                   {contact.tags.map((tag) => (
-                    <Badge key={tag.id} variant="secondary">
-                      {tag.name}
-                    </Badge>
+                    <Link
+                      key={tag.id}
+                      to="/contacts"
+                      search={{ search: tag.name }}
+                      className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-full"
+                    >
+                      <Badge
+                        variant="secondary"
+                        className="cursor-pointer transition-colors hover:bg-secondary/80"
+                      >
+                        {tag.name}
+                      </Badge>
+                    </Link>
                   ))}
                 </div>
               </CardContent>
@@ -325,13 +331,10 @@ function ContactDetailPage() {
         </div>
       </div>
 
-      {/* Tabbed section: Notes, Gifts, Debts, Media */}
-      <Tabs defaultValue="notes">
+      {/* Tabbed section: Gifts, Debts, Media */}
+      <Tabs defaultValue="gifts">
         <div className="flex items-center justify-between mb-2 gap-2">
           <TabsList>
-            <TabsTrigger value="notes">
-              Notes {!notesLoading && `(${notes.length})`}
-            </TabsTrigger>
             <TabsTrigger value="gifts">
               Gifts {!giftsLoading && `(${gifts.length})`}
             </TabsTrigger>
@@ -343,33 +346,6 @@ function ContactDetailPage() {
             </TabsTrigger>
           </TabsList>
         </div>
-
-        <TabsContent value="notes" className="mt-4">
-          {notesLoading ? (
-            <SectionSkeleton />
-          ) : notes.length > 0 ? (
-            <div className="space-y-3">
-              {notes.map((note: NotePublic) => (
-                <Card key={note.id} className="py-4">
-                  <CardContent>
-                    <p className="text-sm whitespace-pre-wrap">{note.body}</p>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      {formatDate(note.created_at)}
-                      {note.updated_at !== note.created_at &&
-                        ` (edited ${formatDate(note.updated_at)})`}
-                    </p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <EmptyState
-              icon={MessagesSquare}
-              title="No notes yet"
-              description="Capture quick observations or context about this contact."
-            />
-          )}
-        </TabsContent>
 
         <TabsContent value="gifts" className="mt-4">
           {giftsLoading ? (
