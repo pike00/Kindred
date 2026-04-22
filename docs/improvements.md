@@ -55,8 +55,6 @@ Grounded in the current schema ([backend/app/models.py](backend/app/models.py)) 
 
 13. **Audit log for shared data** `[schema][api]` — `activity_log (owner_id, actor_id, entity_type, entity_id, action, changes_json, occurred_at)` scoped to shared rows via `TagShare`. Anyone sharing a tag can see who edited what and when.
 
-14. **Gift reciprocity** `[api][ui]` — Computed, per-contact: count/value of `Gift(given)` vs `Gift(received)`. Surface on contact header as a tactful `+$180 over 3 years` summary. No new table — pure query.
-
 15. **Debt partial payments** `[schema][api][ui]` — `debt_payment (debt_id, amount, paid_at, note)`. Current `is_settled` bool becomes a derived check (sum of payments ≥ debt amount). Enables IOU tracking that matches real life.
 
 16. **Interaction drafts** `[schema][api][ui]` — Add `is_draft` and `draft_source` (`"voice_memo"`, `"email_suggestion"`, etc.) to `Interaction`. Drafts don't affect `last_contacted_at` until confirmed. Pairs well with voice-to-text capture (item 47).
@@ -79,9 +77,6 @@ Grounded in the current schema ([backend/app/models.py](backend/app/models.py)) 
 
 24. **CSV import/export** `[api][ui]` — Import: column-mapping UI (first_name → First Name, etc.), dedupe-by-email check. Export: one-click, includes related tag/group names.
 
-25. **Email log ingestion** `[api][infra]` — OAuth into Gmail / IMAP, poll headers, auto-create `Interaction(channel=EMAIL)` for messages to/from known contacts. Gate behind a per-contact `auto_log_email` flag to avoid overwhelming the timeline.
-
-26. **Twilio SMS/call webhook** `[api][infra]` — Inbound webhook endpoint (already scaffolded via `WebhookEndpoint`) to auto-log `Interaction(channel=TEXT|CALL)` when SMS/calls hit a provider number. Needs contact matching by phone number.
 
 27. **iCal importer (backfill)** `[api][ui]` — One-shot: upload an `.ics`, heuristically extract past events with people's names, propose as `LifeEvent` or historical `Interaction` rows. Manual confirmation before insert.
 
@@ -131,12 +126,4 @@ Grounded in the current schema ([backend/app/models.py](backend/app/models.py)) 
 
 49. **PWA installability + offline note drafting** `[infra][ui]` — Service worker, manifest, cache-first for the app shell. Notes composed offline are queued and synced on reconnect. iOS A2HS + Android install banner.
 
-50. **Keyboard shortcut help overlay** `[ui]` — `Cmd+/` or `?` opens a grouped cheat sheet modal. Covers navigation (`g c` → contacts, `g i` → interactions), actions (`n n` → new note, `n i` → new interaction), and search (`Cmd+K`). Self-documenting as you add shortcuts.
-
 ---
-
-## Notes for editing
-
-- Drop items you disagree with — the point of the list is to prune.
-- If an item becomes a TODO, cut the tag line short (`[ui]` is enough), add acceptance criteria, move it up.
-- If a tag like `[schema]` shows up on an item that also needs a migration, that's your cue to write an Alembic migration before touching the model.
