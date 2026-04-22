@@ -13,6 +13,13 @@ dist-ssr
 *.local
 openapi.json
 
+# TypeScript incremental build cache
+*.tsbuildinfo
+
+# Generated from vite.config.ts when TS emits (do not commit)
+vite.config.js
+vite.config.d.ts
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
