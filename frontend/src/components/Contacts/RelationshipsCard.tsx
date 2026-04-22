@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import type {
@@ -13,8 +13,17 @@ import type {
 import { ContactsService, RelationshipsService } from "@/client"
 import { EmptyState } from "@/components/Common/EmptyState"
 import { RowActionsMenu } from "@/components/Common/RowActionsMenu"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command"
 import {
   Dialog,
   DialogClose,
@@ -23,7 +32,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import {
   Form,
@@ -36,41 +44,44 @@ import {
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import useCustomToast from "@/hooks/useCustomToast"
-import { HeartHandshake, Pencil, Plus, Trash2 } from "@/lib/icons"
+import {
+  ChevronsUpDown,
+  HeartHandshake,
+  Pencil,
+  Plus,
+  Trash2,
+  X,
+} from "@/lib/icons"
 
-const createSchema = z.object({
+const updateSchema = z.object({
   relationship_type: z.string().min(1, "Relationship type is required"),
-  related_contact_id: z.string().min(1, "Related contact is required"),
   notes: z.string().optional(),
 })
-
-type CreateFormData = z.infer<typeof createSchema>
-
-const updateSchema = createSchema.omit({ related_contact_id: true })
 type UpdateFormData = z.infer<typeof updateSchema>
 
 function formatContactName(c: ContactPublic) {
   return [c.first_name, c.last_name].filter(Boolean).join(" ") || "(unnamed)"
 }
 
-function AddRelationshipDialog({ contactId }: { contactId: string }) {
-  const [open, setOpen] = useState(false)
+function AddRelationshipInline({ contactId }: { contactId: string }) {
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [selected, setSelected] = useState<ContactPublic | null>(null)
+  const [relationshipType, setRelationshipType] = useState("")
+  const typeInputRef = useRef<HTMLInputElement>(null)
+
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
 
   const { data: contactsResp } = useQuery({
     queryKey: ["contacts", "picker"],
     queryFn: () => ContactsService.listContacts({ limit: 500 }),
-    enabled: open,
   })
 
   const pickerContacts = useMemo(
@@ -78,26 +89,13 @@ function AddRelationshipDialog({ contactId }: { contactId: string }) {
     [contactsResp, contactId],
   )
 
-  const form = useForm<CreateFormData>({
-    resolver: zodResolver(createSchema) as any,
-    defaultValues: {
-      relationship_type: "",
-      related_contact_id: "",
-      notes: "",
-    },
-  })
-
   const mutation = useMutation({
     mutationFn: (data: RelationshipCreate) =>
       RelationshipsService.createRelationshipRoute({ requestBody: data }),
     onSuccess: () => {
       showSuccessToast("Relationship added")
-      form.reset({
-        relationship_type: "",
-        related_contact_id: "",
-        notes: "",
-      })
-      setOpen(false)
+      setSelected(null)
+      setRelationshipType("")
       queryClient.invalidateQueries({ queryKey: ["relationships", contactId] })
     },
     onError: (err) =>
@@ -106,115 +104,119 @@ function AddRelationshipDialog({ contactId }: { contactId: string }) {
       ),
   })
 
-  const onSubmit = (data: CreateFormData) => {
+  useEffect(() => {
+    if (selected) typeInputRef.current?.focus()
+  }, [selected])
+
+  const reset = () => {
+    setSelected(null)
+    setRelationshipType("")
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const trimmed = relationshipType.trim()
+    if (!selected || !trimmed) return
     mutation.mutate({
       contact_id: contactId,
-      related_contact_id: data.related_contact_id,
-      relationship_type: data.relationship_type,
-      notes: data.notes || null,
+      related_contact_id: selected.id,
+      relationship_type: trimmed,
+      notes: null,
     } as RelationshipCreate)
   }
 
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Plus className="mr-1 size-3.5" /> Add
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Add relationship</DialogTitle>
-          <DialogDescription>
-            Link this contact to another contact.
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <div className="grid gap-4 py-2">
-              <FormField
-                control={form.control}
-                name="related_contact_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Related contact{" "}
-                      <span className="text-destructive">*</span>
-                    </FormLabel>
-                    {pickerContacts.length === 0 ? (
-                      <p className="text-sm text-muted-foreground border rounded-md px-3 py-2">
-                        No other contacts yet — add another contact first to
-                        create a relationship.
-                      </p>
-                    ) : (
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
+  if (!selected) {
+    return (
+      <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            role="combobox"
+            aria-expanded={pickerOpen}
+            className="w-full justify-between text-muted-foreground font-normal"
+          >
+            <span className="flex items-center">
+              <Plus className="mr-1 size-3.5" /> Add relationship
+            </span>
+            <ChevronsUpDown className="size-3.5 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent
+          className="w-[var(--radix-popover-trigger-width)] p-0"
+          align="start"
+        >
+          <Command>
+            <CommandInput placeholder="Search contacts..." />
+            <CommandList>
+              {pickerContacts.length === 0 ? (
+                <CommandEmpty>No other contacts yet.</CommandEmpty>
+              ) : (
+                <>
+                  <CommandEmpty>No contacts found.</CommandEmpty>
+                  <CommandGroup>
+                    {pickerContacts.map((c) => (
+                      <CommandItem
+                        key={c.id}
+                        value={formatContactName(c)}
+                        onSelect={() => {
+                          setSelected(c)
+                          setPickerOpen(false)
+                        }}
                       >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Choose a contact" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {pickerContacts.map((c) => (
-                            <SelectItem key={c.id} value={c.id}>
-                              {formatContactName(c)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="relationship_type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Type <span className="text-destructive">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="spouse, brother, colleague, ..."
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="notes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Notes</FormLabel>
-                    <FormControl>
-                      <Textarea rows={2} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <DialogFooter className="mt-4">
-              <DialogClose asChild>
-                <Button variant="outline" disabled={mutation.isPending}>
-                  Cancel
-                </Button>
-              </DialogClose>
-              <LoadingButton type="submit" loading={mutation.isPending}>
-                Save
-              </LoadingButton>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+                        {formatContactName(c)}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </>
+              )}
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    )
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-2">
+      <div className="flex items-center gap-1">
+        <Badge variant="secondary" className="shrink-0">
+          {formatContactName(selected)}
+        </Badge>
+        <span className="text-muted-foreground text-sm">is my</span>
+        <button
+          type="button"
+          onClick={reset}
+          className="ml-auto text-muted-foreground hover:text-foreground"
+          aria-label="Cancel"
+        >
+          <X className="size-3.5" />
+        </button>
+      </div>
+      <div className="flex gap-2">
+        <Input
+          ref={typeInputRef}
+          placeholder="spouse, brother, colleague..."
+          value={relationshipType}
+          onChange={(e) => setRelationshipType(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") {
+              e.preventDefault()
+              reset()
+            }
+          }}
+          className="h-8"
+        />
+        <LoadingButton
+          type="submit"
+          size="sm"
+          loading={mutation.isPending}
+          disabled={!relationshipType.trim()}
+        >
+          Save
+        </LoadingButton>
+      </div>
+    </form>
   )
 }
 
@@ -421,13 +423,13 @@ export function RelationshipsCard({ contactId }: { contactId: string }) {
 
   return (
     <Card>
-      <CardHeader className="flex-row items-center justify-between">
+      <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <HeartHandshake className="size-4" /> Relationships
         </CardTitle>
-        <AddRelationshipDialog contactId={contactId} />
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-3">
+        <AddRelationshipInline contactId={contactId} />
         {isLoading ? (
           <Skeleton className="h-4 w-2/3" />
         ) : relationships.length > 0 ? (
