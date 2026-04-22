@@ -333,6 +333,9 @@ export type InteractionPublic = {
     duration_minutes?: (number | null);
     id: string;
     contact_id: string;
+    contact_first_name?: (string | null);
+    contact_last_name?: (string | null);
+    contact_avatar_url?: (string | null);
     created_at: string;
 };
 
@@ -716,6 +719,7 @@ export type ContactFieldsDeleteContactFieldResponse = (unknown);
 
 export type ContactsListContactsData = {
     groupId?: (string | null);
+    ids?: (Array<(string)> | null);
     isArchived?: (boolean | null);
     isFavorite?: (boolean | null);
     limit?: number;

@@ -614,6 +614,9 @@ class Interaction(InteractionBase, table=True):
 class InteractionPublic(InteractionBase):
     id: uuid.UUID
     contact_id: uuid.UUID
+    contact_first_name: str | None = None
+    contact_last_name: str | None = None
+    contact_avatar_url: str | None = None
     created_at: datetime
 
 

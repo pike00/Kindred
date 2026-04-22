@@ -7,7 +7,7 @@ from typing import Any
 
 from app.core.config import settings as app_settings
 from arq.connections import RedisSettings
-from fastapi import APIRouter, BackgroundTasks, HTTPException
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
 from sqlalchemy.orm import selectinload
 from sqlmodel import col, func, select
 
@@ -95,18 +95,29 @@ def list_contacts(
     is_favorite: bool | None = None,
     is_archived: bool | None = None,
     stage: str | None = None,
+    ids: list[uuid.UUID] | None = Query(default=None),
 ) -> Any:
-    """List contacts with filtering."""
+    """List contacts with filtering.
+
+    Pass `ids=<uuid>&ids=<uuid>` to fetch a specific batch of contacts (useful for
+    hydrating references from other resources). When `ids` is provided, the default
+    `is_archived=false` filter is lifted so callers can resolve archived rows too.
+    """
     # Build base query
     statement = select(Contact).where(
         Contact.id.in_(visible_contact_ids(current_user))
     )
 
+    if ids is not None:
+        if not ids:
+            return ContactsPublic(data=[], count=0)
+        statement = statement.where(Contact.id.in_(ids))
+
     # Apply filters
     if is_archived is not None:
         statement = statement.where(Contact.is_archived == is_archived)
-    else:
-        # Default: exclude archived
+    elif ids is None:
+        # Default: exclude archived (skipped when resolving by explicit id list)
         statement = statement.where(Contact.is_archived == False)
 
     if is_favorite is not None:

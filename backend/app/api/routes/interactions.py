@@ -20,6 +20,20 @@ from app.models import (
 router = APIRouter(prefix="/interactions", tags=["interactions"])
 
 
+def _interaction_to_public(
+    interaction: Interaction, contact: Contact | None
+) -> InteractionPublic:
+    """Build an InteractionPublic with denormalized contact fields."""
+    return InteractionPublic(
+        **InteractionPublic.model_validate(interaction).model_dump(
+            exclude={"contact_first_name", "contact_last_name", "contact_avatar_url"}
+        ),
+        contact_first_name=contact.first_name if contact else None,
+        contact_last_name=contact.last_name if contact else None,
+        contact_avatar_url=contact.avatar_url if contact else None,
+    )
+
+
 @router.get("/", response_model=InteractionsPublic)
 def list_interactions(
     session: SessionDep,
@@ -49,8 +63,19 @@ def list_interactions(
     statement = statement.order_by(Interaction.occurred_at.desc()).offset(skip).limit(limit)
     interactions = session.exec(statement).all()
 
+    contact_ids = {i.contact_id for i in interactions}
+    contact_map: dict[uuid.UUID, Contact] = {}
+    if contact_ids:
+        contacts = session.exec(
+            select(Contact).where(Contact.id.in_(contact_ids))
+        ).all()
+        contact_map = {c.id: c for c in contacts}
+
     return InteractionsPublic(
-        data=[InteractionPublic.model_validate(i) for i in interactions],
+        data=[
+            _interaction_to_public(i, contact_map.get(i.contact_id))
+            for i in interactions
+        ],
         count=count,
     )
 
@@ -73,7 +98,8 @@ def create_interaction_route(
     interaction = create_interaction(
         session=session, interaction_in=interaction_in, owner_id=current_user.id
     )
-    return InteractionPublic.model_validate(interaction)
+    contact = session.get(Contact, interaction.contact_id)
+    return _interaction_to_public(interaction, contact)
 
 
 @router.patch("/{interaction_id}", response_model=InteractionPublic)
@@ -100,7 +126,8 @@ def update_interaction(
     session.add(interaction)
     session.commit()
     session.refresh(interaction)
-    return InteractionPublic.model_validate(interaction)
+    contact = session.get(Contact, interaction.contact_id)
+    return _interaction_to_public(interaction, contact)
 
 
 @router.delete("/{interaction_id}")
