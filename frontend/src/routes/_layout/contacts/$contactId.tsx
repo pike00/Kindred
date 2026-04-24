@@ -4,14 +4,12 @@ import { createFileRoute, Link } from "@tanstack/react-router"
 import type {
   DebtPublic,
   GiftPublic,
-  InteractionPublic,
   MediaRecommendationPublic,
 } from "@/client"
 import {
   ContactsService,
   DebtsService,
   GiftsService,
-  InteractionsService,
   MediaRecommendationsService,
 } from "@/client"
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
@@ -28,6 +26,7 @@ import { AddGift } from "@/components/Gifts/AddGift"
 import { AddInteractionDialog } from "@/components/Interactions/AddInteractionDialog"
 import { AddMediaRecommendation } from "@/components/MediaRecommendations/AddMediaRecommendation"
 import { NotesCard } from "@/components/Notes/NotesCard"
+import { UnifiedTimeline } from "@/components/Timeline/UnifiedTimeline"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -69,16 +68,6 @@ export const Route = createFileRoute("/_layout/contacts/$contactId")({
   component: ContactDetailPage,
 })
 
-const channelLabels: Record<string, string> = {
-  call: "Call",
-  in_person: "In person",
-  text: "Text",
-  email: "Email",
-  video: "Video",
-  social: "Social",
-  other: "Other",
-}
-
 const mediaCategoryLabels: Record<string, string> = {
   movie: "Movie",
   tv_show: "TV Show",
@@ -112,11 +101,6 @@ function ContactDetailPage() {
     queryFn: () => ContactsService.getContact({ contactId }),
   })
 
-  const { data: interactionsData, isLoading: interactionsLoading } = useQuery({
-    queryKey: ["interactions", contactId],
-    queryFn: () => InteractionsService.listInteractions({ contactId }),
-  })
-
   const { data: giftsData, isLoading: giftsLoading } = useQuery({
     queryKey: ["gifts", contactId],
     queryFn: () => GiftsService.listGifts({ contactId }),
@@ -143,7 +127,6 @@ function ContactDetailPage() {
     .filter(Boolean)
     .join(" ")
 
-  const interactions = interactionsData?.data ?? []
   const gifts = giftsData?.data ?? []
   const debts = debtsData?.data ?? []
   const mediaRecs = mediaData?.data ?? []
@@ -207,6 +190,7 @@ function ContactDetailPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Left column (2/3 width) */}
         <div className="md:col-span-2 space-y-6">
+          <UnifiedTimeline contactId={contactId} />
           <NotesCard contactId={contactId} />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <ContactFieldsCard contactId={contactId} />
@@ -219,53 +203,9 @@ function ContactDetailPage() {
 
         {/* Right column (1/3 width) */}
         <div className="space-y-6">
-          {/* Interactions log */}
-          <Card>
-            <CardHeader className="flex-row items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <MessagesSquare className="size-4" /> Interactions
-                {!interactionsLoading && ` (${interactions.length})`}
-              </CardTitle>
-              <AddInteractionDialog contactId={contactId} />
-            </CardHeader>
-            <CardContent>
-              {interactionsLoading ? (
-                <SectionSkeleton />
-              ) : interactions.length > 0 ? (
-                <div className="space-y-3">
-                  {interactions.map((ix: InteractionPublic) => (
-                    <div
-                      key={ix.id}
-                      className="flex items-start gap-2 text-sm border-b pb-2 last:border-b-0 last:pb-0"
-                    >
-                      <Badge variant="outline" className="shrink-0 mt-0.5">
-                        {channelLabels[ix.channel] ?? ix.channel}
-                      </Badge>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
-                          <span>{formatDate(ix.occurred_at)}</span>
-                          {ix.duration_minutes && (
-                            <span>{ix.duration_minutes} min</span>
-                          )}
-                          {ix.mood && <span>Mood: {ix.mood}</span>}
-                        </div>
-                        {ix.notes && (
-                          <p className="text-sm mt-1 whitespace-pre-wrap">
-                            {ix.notes}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  No interactions yet. Log a call, meeting, or message to start
-                  your timeline.
-                </p>
-              )}
-            </CardContent>
-          </Card>
+          <div className="flex justify-end">
+            <AddInteractionDialog contactId={contactId} />
+          </div>
 
           {/* Tags */}
           {contact.tags && contact.tags.length > 0 && (
