@@ -124,7 +124,6 @@ erDiagram
 "public.interaction" {
   uuid id
   uuid owner_id FK
-  uuid contact_id FK
   interactionchannel channel
   timestamp_with_time_zone occurred_at
   varchar_10000_ notes

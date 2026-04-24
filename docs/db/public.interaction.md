@@ -2,15 +2,14 @@
 
 ## Description
 
-Logged touchpoint with a contact (call, meeting, text, etc.).
+Logged touchpoint with one or more contacts (call, meeting, text, etc.). Attendees are attached via interaction_attendee.
 
 ## Columns
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | uuid |  | false |  |  | Primary key. |
+| id | uuid |  | false | [public.interaction_attendee](public.interaction_attendee.md) |  | Primary key. |
 | owner_id | uuid |  | false |  | [public.user](public.user.md) | Owner user; cascades on delete. |
-| contact_id | uuid |  | false |  | [public.contact](public.contact.md) | Contact this interaction was with; cascades on delete. |
 | channel | interactionchannel |  | false |  |  | How the interaction happened (call, in_person, text, etc.). |
 | occurred_at | timestamp with time zone |  | false |  |  | When the interaction actually took place. |
 | notes | varchar(10000) |  | true |  |  | Conversation summary, action items, etc. |
@@ -23,13 +22,11 @@ Logged touchpoint with a contact (call, meeting, text, etc.).
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
 | interaction_channel_not_null | n | NOT NULL channel |
-| interaction_contact_id_not_null | n | NOT NULL contact_id |
 | interaction_created_at_not_null | n | NOT NULL created_at |
 | interaction_id_not_null | n | NOT NULL id |
 | interaction_occurred_at_not_null | n | NOT NULL occurred_at |
 | interaction_owner_id_not_null | n | NOT NULL owner_id |
 | interaction_owner_id_fkey | FOREIGN KEY | FOREIGN KEY (owner_id) REFERENCES "user"(id) ON DELETE CASCADE |
-| interaction_contact_id_fkey | FOREIGN KEY | FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE |
 | interaction_pkey | PRIMARY KEY | PRIMARY KEY (id) |
 
 ## Indexes
@@ -37,7 +34,6 @@ Logged touchpoint with a contact (call, meeting, text, etc.).
 | Name | Definition |
 | ---- | ---------- |
 | interaction_pkey | CREATE UNIQUE INDEX interaction_pkey ON public.interaction USING btree (id) |
-| ix_interaction_contact_id | CREATE INDEX ix_interaction_contact_id ON public.interaction USING btree (contact_id) |
 | ix_interaction_owner_id | CREATE INDEX ix_interaction_owner_id ON public.interaction USING btree (owner_id) |
 | ix_interaction_occurred_at | CREATE INDEX ix_interaction_occurred_at ON public.interaction USING btree (occurred_at) |
 | ix_interaction_channel | CREATE INDEX ix_interaction_channel ON public.interaction USING btree (channel) |
@@ -47,19 +43,22 @@ Logged touchpoint with a contact (call, meeting, text, etc.).
 ```mermaid
 erDiagram
 
+"public.interaction_attendee" }o--|| "public.interaction" : "FOREIGN KEY (interaction_id) REFERENCES interaction(id) ON DELETE CASCADE"
 "public.interaction" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
-"public.interaction" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 
 "public.interaction" {
   uuid id
   uuid owner_id FK
-  uuid contact_id FK
   interactionchannel channel
   timestamp_with_time_zone occurred_at
   varchar_10000_ notes
   varchar_50_ mood
   integer duration_minutes
   timestamp_with_time_zone created_at
+}
+"public.interaction_attendee" {
+  uuid interaction_id FK
+  uuid contact_id FK
 }
 "public.user" {
   varchar_255_ email
@@ -71,33 +70,6 @@ erDiagram
   timestamp_with_time_zone created_at
   varchar_512_ oidc_iss
   varchar_255_ oidc_sub
-}
-"public.contact" {
-  uuid id
-  uuid owner_id FK
-  varchar_255_ first_name
-  varchar_255_ last_name
-  varchar_255_ middle_name
-  varchar_50_ prefix
-  varchar_50_ suffix
-  varchar_255_ nickname
-  varchar_255_ company
-  varchar_255_ department
-  varchar_255_ title
-  date birthday
-  varchar_2000_ how_we_met
-  boolean is_favorite
-  boolean is_archived
-  boolean is_deceased
-  date deceased_at
-  integer contact_frequency_days
-  varchar_100_ stage
-  varchar vcard_raw
-  varchar_255_ vcard_etag
-  varchar_2048_ avatar_url
-  timestamp_with_time_zone last_contacted_at
-  timestamp_with_time_zone created_at
-  timestamp_with_time_zone updated_at
 }
 ```
 

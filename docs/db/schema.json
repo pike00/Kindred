@@ -1792,7 +1792,7 @@
     {
       "name": "public.interaction",
       "type": "BASE TABLE",
-      "comment": "Logged touchpoint with a contact (call, meeting, text, etc.).",
+      "comment": "Logged touchpoint with one or more contacts (call, meeting, text, etc.). Attendees are attached via interaction_attendee.",
       "columns": [
         {
           "name": "id",
@@ -1805,12 +1805,6 @@
           "type": "uuid",
           "nullable": false,
           "comment": "Owner user; cascades on delete."
-        },
-        {
-          "name": "contact_id",
-          "type": "uuid",
-          "nullable": false,
-          "comment": "Contact this interaction was with; cascades on delete."
         },
         {
           "name": "channel",
@@ -1859,14 +1853,6 @@
           ]
         },
         {
-          "name": "ix_interaction_contact_id",
-          "def": "CREATE INDEX ix_interaction_contact_id ON public.interaction USING btree (contact_id)",
-          "table": "public.interaction",
-          "columns": [
-            "contact_id"
-          ]
-        },
-        {
           "name": "ix_interaction_owner_id",
           "def": "CREATE INDEX ix_interaction_owner_id ON public.interaction USING btree (owner_id)",
           "table": "public.interaction",
@@ -1900,16 +1886,6 @@
           "referenced_table": "",
           "columns": [
             "channel"
-          ]
-        },
-        {
-          "name": "interaction_contact_id_not_null",
-          "type": "n",
-          "def": "NOT NULL contact_id",
-          "table": "public.interaction",
-          "referenced_table": "",
-          "columns": [
-            "contact_id"
           ]
         },
         {
@@ -1960,19 +1936,6 @@
           "referenced_table": "public.user",
           "columns": [
             "owner_id"
-          ],
-          "referenced_columns": [
-            "id"
-          ]
-        },
-        {
-          "name": "interaction_contact_id_fkey",
-          "type": "FOREIGN KEY",
-          "def": "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE",
-          "table": "public.interaction",
-          "referenced_table": "public.contact",
-          "columns": [
-            "contact_id"
           ],
           "referenced_columns": [
             "id"
@@ -3703,6 +3666,103 @@
           ]
         }
       ]
+    },
+    {
+      "name": "public.interaction_attendee",
+      "type": "BASE TABLE",
+      "comment": "Many-to-many link between interactions and contacts (attendees).",
+      "columns": [
+        {
+          "name": "interaction_id",
+          "type": "uuid",
+          "nullable": false,
+          "comment": "Interaction side of the link; cascades on delete."
+        },
+        {
+          "name": "contact_id",
+          "type": "uuid",
+          "nullable": false,
+          "comment": "Contact side of the link; cascades on delete."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "interaction_attendee_pkey",
+          "def": "CREATE UNIQUE INDEX interaction_attendee_pkey ON public.interaction_attendee USING btree (interaction_id, contact_id)",
+          "table": "public.interaction_attendee",
+          "columns": [
+            "interaction_id",
+            "contact_id"
+          ]
+        },
+        {
+          "name": "ix_interaction_attendee_contact_id",
+          "def": "CREATE INDEX ix_interaction_attendee_contact_id ON public.interaction_attendee USING btree (contact_id)",
+          "table": "public.interaction_attendee",
+          "columns": [
+            "contact_id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "interaction_attendee_contact_id_not_null",
+          "type": "n",
+          "def": "NOT NULL contact_id",
+          "table": "public.interaction_attendee",
+          "referenced_table": "",
+          "columns": [
+            "contact_id"
+          ]
+        },
+        {
+          "name": "interaction_attendee_interaction_id_not_null",
+          "type": "n",
+          "def": "NOT NULL interaction_id",
+          "table": "public.interaction_attendee",
+          "referenced_table": "",
+          "columns": [
+            "interaction_id"
+          ]
+        },
+        {
+          "name": "interaction_attendee_contact_id_fkey",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE",
+          "table": "public.interaction_attendee",
+          "referenced_table": "public.contact",
+          "columns": [
+            "contact_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "interaction_attendee_interaction_id_fkey",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (interaction_id) REFERENCES interaction(id) ON DELETE CASCADE",
+          "table": "public.interaction_attendee",
+          "referenced_table": "public.interaction",
+          "columns": [
+            "interaction_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "interaction_attendee_pkey",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (interaction_id, contact_id)",
+          "table": "public.interaction_attendee",
+          "referenced_table": "",
+          "columns": [
+            "interaction_id",
+            "contact_id"
+          ]
+        }
+      ]
     }
   ],
   "relations": [
@@ -3915,19 +3975,6 @@
       "def": "FOREIGN KEY (owner_id) REFERENCES \"user\"(id) ON DELETE CASCADE"
     },
     {
-      "table": "public.interaction",
-      "columns": [
-        "contact_id"
-      ],
-      "cardinality": "zero_or_more",
-      "parent_table": "public.contact",
-      "parent_columns": [
-        "id"
-      ],
-      "parent_cardinality": "exactly_one",
-      "def": "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
-    },
-    {
       "table": "public.reminder",
       "columns": [
         "owner_id"
@@ -4134,6 +4181,32 @@
       ],
       "parent_cardinality": "exactly_one",
       "def": "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
+    },
+    {
+      "table": "public.interaction_attendee",
+      "columns": [
+        "contact_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.contact",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
+    },
+    {
+      "table": "public.interaction_attendee",
+      "columns": [
+        "interaction_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.interaction",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (interaction_id) REFERENCES interaction(id) ON DELETE CASCADE"
     }
   ],
   "functions": [
