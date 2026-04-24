@@ -66,11 +66,11 @@ export function QuickLog({ contactId }: QuickLogProps) {
 
   const onSubmit = (data: FormData) => {
     mutation.mutate({
-      contact_id: contactId,
-      channel: data.channel,
+      attendee_ids: [contactId],
+      channel: data.channel as InteractionCreate["channel"],
       notes: data.notes || undefined,
       occurred_at: new Date().toISOString(),
-    } as InteractionCreate)
+    })
   }
 
   return (

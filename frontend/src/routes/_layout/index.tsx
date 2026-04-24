@@ -237,28 +237,37 @@ function Dashboard() {
           {recentInteractions?.data && recentInteractions.data.length > 0 ? (
             <div className="space-y-2">
               {recentInteractions.data.map((ix) => {
-                const fullName = [ix.contact_first_name, ix.contact_last_name]
-                  .filter(Boolean)
-                  .join(" ")
+                const primary = (ix.attendees ?? [])[0]
+                const others = (ix.attendees ?? []).slice(1)
+                const fullName = primary
+                  ? [primary.first_name, primary.last_name]
+                      .filter(Boolean)
+                      .join(" ")
+                  : ""
+                const extra =
+                  others.length > 0
+                    ? ` +${others.length} other${others.length === 1 ? "" : "s"}`
+                    : ""
+                if (!primary) return null
                 return (
                   <Link
                     key={ix.id}
                     to="/contacts/$contactId"
-                    params={{ contactId: ix.contact_id }}
+                    params={{ contactId: primary.id }}
                     className="flex items-center gap-3 rounded-2xl border bg-card p-3 shadow-xs transition-colors hover:bg-accent/50"
                   >
                     <ContactAvatar
                       contact={{
-                        id: ix.contact_id,
-                        first_name: ix.contact_first_name,
-                        last_name: ix.contact_last_name,
+                        id: primary.id,
+                        first_name: primary.first_name,
+                        last_name: primary.last_name,
                       }}
                       size="sm"
                     />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <p className="font-medium text-sm truncate">
-                          {fullName || "Unknown contact"}
+                          {(fullName || "Unknown contact") + extra}
                         </p>
                         <Badge variant="outline" className="text-xs shrink-0">
                           {ix.channel}

@@ -34,6 +34,7 @@ from app.models import (
     GiftStatus,
     Group,
     Interaction,
+    InteractionAttendee,
     InteractionChannel,
     LifeEvent,
     MediaCategory,
@@ -740,17 +741,17 @@ def seed_contact_children(
     latest_interaction: datetime | None = None
     for _ in range(random.randint(0, 6)):
         occurred = _rand_datetime(2, 0)
-        session.add(
-            Interaction(
-                contact_id=contact.id,
-                owner_id=owner_id,
-                channel=random.choice(list(InteractionChannel)),
-                occurred_at=occurred,
-                notes=random.choice(INTERACTION_NOTES) or None,
-                mood=random.choice([None, None, "😊", "😐", "🙂", "🤔", "😂"]),
-                duration_minutes=random.choice([None, 5, 15, 30, 45, 60, 90]),
-            )
+        ix = Interaction(
+            owner_id=owner_id,
+            channel=random.choice(list(InteractionChannel)),
+            occurred_at=occurred,
+            notes=random.choice(INTERACTION_NOTES) or None,
+            mood=random.choice([None, None, "😊", "😐", "🙂", "🤔", "😂"]),
+            duration_minutes=random.choice([None, 5, 15, 30, 45, 60, 90]),
         )
+        session.add(ix)
+        session.flush()
+        session.add(InteractionAttendee(interaction_id=ix.id, contact_id=contact.id))
         if latest_interaction is None or occurred > latest_interaction:
             latest_interaction = occurred
     contact.last_contacted_at = latest_interaction

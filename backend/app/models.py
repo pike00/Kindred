@@ -947,7 +947,10 @@ class InteractionBase(SQLModel):
 
 
 class InteractionCreate(InteractionBase):
-    contact_id: uuid.UUID
+    attendee_ids: list[uuid.UUID] = Field(
+        min_length=1,
+        description="Contacts that attended; must have at least one.",
+    )
 
 
 class InteractionUpdate(SQLModel):
@@ -956,24 +959,42 @@ class InteractionUpdate(SQLModel):
     notes: str | None = None
     mood: str | None = None
     duration_minutes: int | None = None
+    attendee_ids: list[uuid.UUID] | None = Field(
+        default=None,
+        min_length=1,
+        description="Replace the attendee set; must have at least one if provided.",
+    )
+
+
+class InteractionAttendee(SQLModel, table=True):
+    """Many-to-many link between interactions and contacts (attendees)."""
+
+    __tablename__ = "interaction_attendee"
+    interaction_id: uuid.UUID = Field(
+        foreign_key="interaction.id",
+        primary_key=True,
+        ondelete="CASCADE",
+        description="Interaction side of the link; cascades on delete.",
+    )
+    contact_id: uuid.UUID = Field(
+        foreign_key="contact.id",
+        primary_key=True,
+        ondelete="CASCADE",
+        description="Contact side of the link; cascades on delete.",
+    )
 
 
 class Interaction(InteractionBase, table=True):
-    """Logged touchpoint with a contact (call, meeting, text, etc.).
+    """Logged touchpoint with one or more contacts (call, meeting, text, etc.).
 
-    Inserting a row bumps the parent contact's ``last_contacted_at``.
+    A single interaction can have multiple attendees via ``interaction_attendee``.
+    Creating or modifying rows recomputes each attendee's ``last_contacted_at``.
     """
 
     id: uuid.UUID = Field(
         default_factory=uuid.uuid4,
         primary_key=True,
         description="Primary key.",
-    )
-    contact_id: uuid.UUID = Field(
-        foreign_key="contact.id",
-        nullable=False,
-        ondelete="CASCADE",
-        description="Contact this interaction was with; cascades on delete.",
     )
     owner_id: uuid.UUID = Field(
         foreign_key="user.id",
@@ -988,12 +1009,16 @@ class Interaction(InteractionBase, table=True):
     )
 
 
+class InteractionAttendeeSummary(SQLModel):
+    id: uuid.UUID
+    first_name: str
+    last_name: str | None = None
+    avatar_url: str | None = None
+
+
 class InteractionPublic(InteractionBase):
     id: uuid.UUID
-    contact_id: uuid.UUID
-    contact_first_name: str | None = None
-    contact_last_name: str | None = None
-    contact_avatar_url: str | None = None
+    attendees: list[InteractionAttendeeSummary] = []
     created_at: datetime
 
 
