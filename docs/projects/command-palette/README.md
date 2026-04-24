@@ -1,9 +1,9 @@
 ---
 title: Global Command Palette (Cmd+K)
-status: active
+status: archived
 repos: [personal-crm]
 started: 2026-04-23
-last_updated: 2026-04-23
+last_updated: 2026-04-24
 next_step: Set up keyboard listener and command registry pattern (hook + context)
 ---
 
@@ -22,6 +22,9 @@ Implement a global keyboard-invoked command palette (Cmd+K on Mac, Ctrl+K on Win
 - [ ] Add command keyboard shortcuts in UI (e.g., "Cmd+Shift+N for new note") and help panel
 
 ## Session Log
+
+### 2026-04-24
+- Project archived. Palette shipped in commit 7237b8e: Cmd+K/Ctrl+K opens a dialog with Contacts / Quick actions / Navigate groups, wired via CommandPaletteProvider in _layout.
 
 ### 2026-04-23
 - Project created. command.tsx and popover.tsx primitives exist in frontend/src/components/ui/.

@@ -1,9 +1,9 @@
 ---
 title: Unified Contact Timeline
-status: active
+status: archived
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-04-21
+last_updated: 2026-04-24
 next_step: Implement /contacts/{id}/timeline backend endpoint (SQL UNION ALL of Interactions, Notes, Gifts, LifeEvents, Debts, and stage changes)
 ---
 
@@ -21,6 +21,9 @@ Display all contact-related events in a single reverse-chronological feed on the
 - [ ] Frontend: Filter bar (checkboxes by event type) + visual type colors
 
 ## Session Log
+
+### 2026-04-24
+- Project archived. UnifiedTimeline shipped in commit 1978daa: single client-side aggregation of Interactions / Notes / Gifts / LifeEvents / Debts on the contact detail page, with per-type filter chips. No dedicated backend endpoint — reuses existing per-type list endpoints. Stage changes deferred (no audit table yet).
 
 ### 2026-04-21
 - Project created.
