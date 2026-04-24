@@ -8,7 +8,7 @@ Core contact entity — the subject of everything else in the CRM.
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | uuid |  | false | [public.contact_tag](public.contact_tag.md) [public.contact_group](public.contact_group.md) [public.contact_field](public.contact_field.md) [public.address](public.address.md) [public.relationship](public.relationship.md) [public.pet](public.pet.md) [public.custom_field_value](public.custom_field_value.md) [public.interaction](public.interaction.md) [public.reminder](public.reminder.md) [public.gift](public.gift.md) [public.debt](public.debt.md) [public.life_event](public.life_event.md) [public.note](public.note.md) [public.media_recommendation](public.media_recommendation.md) |  | Primary key. |
+| id | uuid |  | false | [public.contact_tag](public.contact_tag.md) [public.contact_group](public.contact_group.md) [public.contact_field](public.contact_field.md) [public.address](public.address.md) [public.relationship](public.relationship.md) [public.pet](public.pet.md) [public.custom_field_value](public.custom_field_value.md) [public.reminder](public.reminder.md) [public.gift](public.gift.md) [public.debt](public.debt.md) [public.life_event](public.life_event.md) [public.note](public.note.md) [public.media_recommendation](public.media_recommendation.md) [public.interaction_attendee](public.interaction_attendee.md) |  | Primary key. |
 | owner_id | uuid |  | false |  | [public.user](public.user.md) | Owner user; cascades on delete. |
 | first_name | varchar(255) |  | false |  |  | Given name; required. |
 | last_name | varchar(255) |  | true |  |  | Family name. |
@@ -72,13 +72,13 @@ erDiagram
 "public.relationship" }o--|| "public.contact" : "FOREIGN KEY (related_contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.pet" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.custom_field_value" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
-"public.interaction" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.reminder" }o--o| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.gift" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.debt" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.life_event" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.note" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.media_recommendation" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
+"public.interaction_attendee" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.contact" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 
 "public.contact" {
@@ -159,17 +159,6 @@ erDiagram
   uuid field_definition_id FK
   varchar_5000_ value
 }
-"public.interaction" {
-  uuid id
-  uuid owner_id FK
-  uuid contact_id FK
-  interactionchannel channel
-  timestamp_with_time_zone occurred_at
-  varchar_10000_ notes
-  varchar_50_ mood
-  integer duration_minutes
-  timestamp_with_time_zone created_at
-}
 "public.reminder" {
   uuid id
   uuid owner_id FK
@@ -239,6 +228,10 @@ erDiagram
   date recommended_at
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
+}
+"public.interaction_attendee" {
+  uuid interaction_id FK
+  uuid contact_id FK
 }
 "public.user" {
   varchar_255_ email

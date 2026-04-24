@@ -143,7 +143,7 @@ comments:
     owner_id: Owner user; cascades on delete.
     created_at: When the group was created (UTC).
 - table: interaction
-  tableComment: Logged touchpoint with a contact (call, meeting, text, etc.).
+  tableComment: Logged touchpoint with one or more contacts (call, meeting, text, etc.). Attendees are attached via interaction_attendee.
   columnComments:
     channel: How the interaction happened (call, in_person, text, etc.).
     occurred_at: When the interaction actually took place.
@@ -151,9 +151,13 @@ comments:
     mood: Emoji or keyword capturing the tone.
     duration_minutes: Length of the interaction in minutes.
     id: Primary key.
-    contact_id: Contact this interaction was with; cascades on delete.
     owner_id: Owner user; cascades on delete.
     created_at: When the row was inserted (may be after occurred_at; UTC).
+- table: interaction_attendee
+  tableComment: Many-to-many link between interactions and contacts (attendees).
+  columnComments:
+    interaction_id: Interaction side of the link; cascades on delete.
+    contact_id: Contact side of the link; cascades on delete.
 - table: journal_entry
   tableComment: Personal journal entry, not tied to a specific contact.
   columnComments:

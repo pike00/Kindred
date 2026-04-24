@@ -17,7 +17,7 @@
 | [public.pet](public.pet.md) | 6 | Pet owned by a contact; useful for memorable conversation hooks. | BASE TABLE |
 | [public.custom_field_definition](public.custom_field_definition.md) | 8 | User-defined custom field schema, scoped to one owner. | BASE TABLE |
 | [public.custom_field_value](public.custom_field_value.md) | 4 | Value of a custom field for a specific contact (one per contact per definition). | BASE TABLE |
-| [public.interaction](public.interaction.md) | 9 | Logged touchpoint with a contact (call, meeting, text, etc.). | BASE TABLE |
+| [public.interaction](public.interaction.md) | 8 | Logged touchpoint with one or more contacts (call, meeting, text, etc.). Attendees are attached via interaction_attendee. | BASE TABLE |
 | [public.reminder](public.reminder.md) | 11 | Scheduled reminder; contact-specific or standalone. | BASE TABLE |
 | [public.gift](public.gift.md) | 12 | Gift idea or record for a contact. | BASE TABLE |
 | [public.debt](public.debt.md) | 10 | Money owed to or from a contact. | BASE TABLE |
@@ -27,6 +27,7 @@
 | [public.webhook_endpoint](public.webhook_endpoint.md) | 10 | Inbound or outbound webhook configuration. | BASE TABLE |
 | [public.tag_share](public.tag_share.md) | 3 | Grants another user read access to all rows bearing a given tag. | BASE TABLE |
 | [public.media_recommendation](public.media_recommendation.md) | 10 | Media (book, show, podcast, etc.) recommended to or by a contact. | BASE TABLE |
+| [public.interaction_attendee](public.interaction_attendee.md) | 2 | Many-to-many link between interactions and contacts (attendees). | BASE TABLE |
 
 ## Stored procedures and functions
 
@@ -75,7 +76,6 @@ erDiagram
 "public.custom_field_value" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.custom_field_value" }o--|| "public.custom_field_definition" : "FOREIGN KEY (field_definition_id) REFERENCES custom_field_definition(id) ON DELETE CASCADE"
 "public.interaction" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
-"public.interaction" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.reminder" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.reminder" }o--o| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.gift" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
@@ -92,6 +92,8 @@ erDiagram
 "public.tag_share" }o--|| "public.tag" : "FOREIGN KEY (tag_id) REFERENCES tag(id) ON DELETE CASCADE"
 "public.media_recommendation" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.media_recommendation" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
+"public.interaction_attendee" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
+"public.interaction_attendee" }o--|| "public.interaction" : "FOREIGN KEY (interaction_id) REFERENCES interaction(id) ON DELETE CASCADE"
 
 "public.alembic_version" {
   varchar_32_ version_num
@@ -212,7 +214,6 @@ erDiagram
 "public.interaction" {
   uuid id
   uuid owner_id FK
-  uuid contact_id FK
   interactionchannel channel
   timestamp_with_time_zone occurred_at
   varchar_10000_ notes
@@ -315,6 +316,10 @@ erDiagram
   date recommended_at
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
+}
+"public.interaction_attendee" {
+  uuid interaction_id FK
+  uuid contact_id FK
 }
 ```
 

@@ -229,7 +229,6 @@ Table "custom_field_value" {
 Table "interaction" {
   "id" uuid [pk, not null]
   "owner_id" uuid [not null]
-  "contact_id" uuid [not null]
   "channel" interactionchannel [not null]
   "occurred_at" timestamptz [not null]
   "notes" varchar(10000)
@@ -239,7 +238,6 @@ Table "interaction" {
 
   Indexes {
     channel [type: btree, name: "ix_interaction_channel"]
-    contact_id [type: btree, name: "ix_interaction_contact_id"]
     occurred_at [type: btree, name: "ix_interaction_occurred_at"]
     owner_id [type: btree, name: "ix_interaction_owner_id"]
   }
@@ -401,6 +399,16 @@ Table "media_recommendation" {
   }
 }
 
+Table "interaction_attendee" {
+  "interaction_id" uuid [not null]
+  "contact_id" uuid [not null]
+
+  Indexes {
+    (interaction_id, contact_id) [pk, type: btree, name: "interaction_attendee_pkey"]
+    contact_id [type: btree, name: "ix_interaction_attendee_contact_id"]
+  }
+}
+
 Ref "address_contact_id_fkey":"contact"."id" < "address"."contact_id" [delete: cascade]
 
 Ref "contact_owner_id_fkey":"user"."id" < "contact"."owner_id" [delete: cascade]
@@ -431,9 +439,11 @@ Ref "gift_owner_id_fkey":"user"."id" < "gift"."owner_id" [delete: cascade]
 
 Ref "group_owner_id_fkey":"user"."id" < "group"."owner_id" [delete: cascade]
 
-Ref "interaction_contact_id_fkey":"contact"."id" < "interaction"."contact_id" [delete: cascade]
-
 Ref "interaction_owner_id_fkey":"user"."id" < "interaction"."owner_id" [delete: cascade]
+
+Ref "interaction_attendee_contact_id_fkey":"contact"."id" < "interaction_attendee"."contact_id" [delete: cascade]
+
+Ref "interaction_attendee_interaction_id_fkey":"interaction"."id" < "interaction_attendee"."interaction_id" [delete: cascade]
 
 Ref "journal_entry_owner_id_fkey":"user"."id" < "journal_entry"."owner_id" [delete: cascade]
 
