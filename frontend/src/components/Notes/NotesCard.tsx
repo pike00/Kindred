@@ -4,6 +4,8 @@ import type { NotePublic } from "@/client"
 import { NotesService } from "@/client"
 import { EmptyState } from "@/components/Common/EmptyState"
 import { RowActionsMenu } from "@/components/Common/RowActionsMenu"
+import { MentionText } from "@/components/Mentions/MentionText"
+import { MentionTextarea } from "@/components/Mentions/MentionTextarea"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -16,7 +18,6 @@ import {
 } from "@/components/ui/dialog"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Textarea } from "@/components/ui/textarea"
 import useCustomToast from "@/hooks/useCustomToast"
 import { NotebookPen, Pencil, Trash2 } from "@/lib/icons"
 
@@ -59,10 +60,10 @@ function QuickCapture({ contactId }: { contactId: string }) {
       }}
       className="space-y-2"
     >
-      <Textarea
+      <MentionTextarea
         value={body}
-        onChange={(e) => setBody(e.target.value)}
-        placeholder="Jot a quick note about this person…"
+        onChange={setBody}
+        placeholder="Jot a quick note about this person… (type @ to mention)"
         rows={3}
         onKeyDown={(e) => {
           if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && canSave) {
@@ -128,12 +129,7 @@ function EditNoteDialog({
         <DialogHeader>
           <DialogTitle>Edit note</DialogTitle>
         </DialogHeader>
-        <Textarea
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          rows={6}
-          autoFocus
-        />
+        <MentionTextarea value={body} onChange={setBody} rows={6} autoFocus />
         <DialogFooter className="mt-4">
           <DialogClose asChild>
             <Button variant="outline" disabled={mutation.isPending}>
@@ -176,7 +172,10 @@ function NoteItem({ note }: { note: NotePublic }) {
     <>
       <div className="group flex items-start justify-between gap-2 border-t pt-3 first:border-t-0 first:pt-0">
         <div className="min-w-0 flex-1">
-          <p className="text-sm whitespace-pre-wrap">{note.body}</p>
+          <MentionText
+            text={note.body}
+            className="text-sm whitespace-pre-wrap"
+          />
           <p className="text-xs text-muted-foreground mt-1">
             {formatDate(note.created_at)}
             {edited && ` · edited ${formatDate(note.updated_at)}`}

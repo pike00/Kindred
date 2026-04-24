@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 import type { JournalEntryCreate } from "@/client"
 import { JournalService } from "@/client"
+import { MentionTextarea } from "@/components/Mentions/MentionTextarea"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -23,7 +24,6 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import useCustomToast from "@/hooks/useCustomToast"
 
 const journalCreateSchema = z.object({
@@ -100,10 +100,14 @@ export const AddJournalDialog = () => {
                 <FormItem>
                   <FormLabel>Entry *</FormLabel>
                   <FormControl>
-                    <Textarea
-                      placeholder="What's on your mind? Write freely..."
+                    <MentionTextarea
+                      placeholder="What's on your mind? Write freely... (type @ to mention)"
                       className="min-h-48"
-                      {...field}
+                      name={field.name}
+                      onBlur={field.onBlur}
+                      ref={field.ref}
+                      value={field.value ?? ""}
+                      onChange={field.onChange}
                     />
                   </FormControl>
                   <FormMessage />
