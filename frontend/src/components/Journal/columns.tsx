@@ -1,6 +1,7 @@
 import type { ColumnDef } from "@tanstack/react-table"
 
 import type { JournalEntryPublic } from "@/client"
+import { MentionText } from "@/components/Mentions/MentionText"
 import { NotebookPen } from "@/lib/icons"
 import { JournalActionsMenu } from "./JournalActionsMenu"
 
@@ -14,9 +15,10 @@ export const columns: ColumnDef<JournalEntryPublic>[] = [
         <div className="flex items-start gap-3">
           <NotebookPen className="h-4 w-4 text-muted-foreground mt-1 flex-shrink-0" />
           <div>
-            <div className="text-sm text-muted-foreground line-clamp-2">
-              {entry.body}
-            </div>
+            <MentionText
+              text={entry.body}
+              className="text-sm text-muted-foreground line-clamp-2"
+            />
             {entry.mood && (
               <div className="text-xs text-muted-foreground mt-1">
                 Mood: {entry.mood}
