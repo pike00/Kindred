@@ -4,7 +4,7 @@ status: completed
 repos: [personal-crm]
 started: 2026-04-21
 last_updated: 2026-04-24
-next_step: Exercise in day-to-day use; archive once satisfied.
+next_step: Investigate @-mention timeline follow-ups below before archiving.
 ---
 
 # Multi-Party Interactions
@@ -60,3 +60,8 @@ Replace the current one-to-one `Interaction.contact_id` design with a many-to-ma
 - **last_contacted_at computation**: Currently bumped by INSERT trigger on Interaction. Post-migration, also trigger on DELETE from interaction_attendee (to recompute if attendee is removed). Query logic: `SELECT MAX(occurred_at) FROM interaction i JOIN interaction_attendee ia ON i.id = ia.interaction_id WHERE ia.contact_id = ?`
 
 - **API breaking changes**: POST /interactions will accept `attendee_ids: [uuid, ...]` instead of `contact_id: uuid`. Backward-compat endpoint or deprecation warning needed. GET /interactions/{id} returns new InteractionPublic with `attendees: [{id, first_name, last_name, avatar_url}, ...]`. Tests must cover both single and multi-contact scenarios.
+
+## Look into later
+
+- **Notes with @-mentions not appearing in the other person's @ timeline.** When a note is written on contact A and @-mentions contact B, it does not show up on contact B's mentions/@-timeline view. Need to trace whether the mention extraction runs on notes (vs only on interactions/journal entries), whether the backfill covers existing notes, and whether the timeline query filters it out. Repro: create a note on one contact that @-references another, then check the referenced contact's timeline.
+- **Do you need to @-reference the current contact in their own note?** Unclear whether a note authored on contact A's page is implicitly associated with A, or whether you must also `@A` inside the note body for it to surface in A's @ timeline / mention views. If implicit, the UI should make that obvious; if explicit, self-reference feels redundant. Decide the intended behavior and make it consistent with how interactions handle attendee vs. body mentions.
