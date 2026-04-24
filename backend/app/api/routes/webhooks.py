@@ -13,6 +13,7 @@ from app.models import (
     ContactField,
     ContactFieldType,
     Interaction,
+    InteractionAttendee,
     InteractionChannel,
     WebhookEndpoint,
     WebhookEndpointBase,
@@ -208,13 +209,16 @@ async def inbound_webhook(
         occurred_at = datetime.now(timezone.utc)
 
     interaction = Interaction(
-        contact_id=contact.id,
         owner_id=owner_id,
         channel=channel_enum,
         occurred_at=occurred_at,
         notes=payload.get("notes"),
     )
     session.add(interaction)
+    session.flush()
+    session.add(
+        InteractionAttendee(interaction_id=interaction.id, contact_id=contact.id)
+    )
 
     # Update last_contacted_at
     if contact.last_contacted_at is None or occurred_at > contact.last_contacted_at:

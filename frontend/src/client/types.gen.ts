@@ -632,6 +632,13 @@ export type HTTPValidationError = {
     detail?: Array<ValidationError>;
 };
 
+export type InteractionAttendeeSummary = {
+    id: string;
+    first_name: string;
+    last_name?: (string | null);
+    avatar_url?: (string | null);
+};
+
 export type InteractionChannel = 'call' | 'in_person' | 'text' | 'email' | 'video' | 'social' | 'other';
 
 export type InteractionCreate = {
@@ -655,7 +662,10 @@ export type InteractionCreate = {
      * Length of the interaction in minutes.
      */
     duration_minutes?: (number | null);
-    contact_id: string;
+    /**
+     * Contacts that attended; must have at least one.
+     */
+    attendee_ids: Array<(string)>;
 };
 
 export type InteractionPublic = {
@@ -680,10 +690,7 @@ export type InteractionPublic = {
      */
     duration_minutes?: (number | null);
     id: string;
-    contact_id: string;
-    contact_first_name?: (string | null);
-    contact_last_name?: (string | null);
-    contact_avatar_url?: (string | null);
+    attendees?: Array<InteractionAttendeeSummary>;
     created_at: string;
 };
 
@@ -698,6 +705,10 @@ export type InteractionUpdate = {
     notes?: (string | null);
     mood?: (string | null);
     duration_minutes?: (number | null);
+    /**
+     * Replace the attendee set; must have at least one if provided.
+     */
+    attendee_ids?: (Array<(string)> | null);
 };
 
 export type JournalEntriesPublic = {

@@ -839,7 +839,7 @@ export class ImportExportService {
 export class InteractionsService {
     /**
      * List Interactions
-     * List interactions (global or per-contact).
+     * List interactions. Pass ``contact_id`` to filter by attendee.
      * @param data The data for the request.
      * @param data.contactId
      * @param data.skip
@@ -864,7 +864,7 @@ export class InteractionsService {
     
     /**
      * Create Interaction Route
-     * Create a new interaction.
+     * Create a new interaction with one or more attendees.
      * @param data The data for the request.
      * @param data.requestBody
      * @returns InteractionPublic Successful Response
@@ -884,7 +884,7 @@ export class InteractionsService {
     
     /**
      * Update Interaction
-     * Update an interaction.
+     * Update an interaction; ``attendee_ids`` replaces the attendee set.
      * @param data The data for the request.
      * @param data.interactionId
      * @param data.requestBody
@@ -908,7 +908,7 @@ export class InteractionsService {
     
     /**
      * Delete Interaction
-     * Delete an interaction.
+     * Delete an interaction and recompute each attendee's last_contacted_at.
      * @param data The data for the request.
      * @param data.interactionId
      * @returns unknown Successful Response

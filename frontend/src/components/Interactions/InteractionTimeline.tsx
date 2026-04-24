@@ -8,6 +8,7 @@ import type { InteractionPublic } from "@/client"
 import { InteractionsService } from "@/client"
 import { EmptyState } from "@/components/Common/EmptyState"
 import { RowActionsMenu } from "@/components/Common/RowActionsMenu"
+import { MentionText } from "@/components/Mentions/MentionText"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import useCustomToast from "@/hooks/useCustomToast"
@@ -152,6 +153,7 @@ function InteractionCard({
     onError: () => showErrorToast("Failed to delete"),
   })
 
+  const attendees = ix.attendees ?? []
   return (
     <Card className="relative py-3">
       <div className="absolute -left-[1.65rem] top-4 size-3 rounded-full bg-primary border-2 border-background" />
@@ -166,8 +168,20 @@ function InteractionCard({
           <ChannelIcon className="size-4" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <span className="font-medium text-foreground">{channel.label}</span>
+            {attendees.length > 0 && (
+              <>
+                <span>·</span>
+                <span className="text-foreground">
+                  {attendees
+                    .map((a) =>
+                      [a.first_name, a.last_name].filter(Boolean).join(" "),
+                    )
+                    .join(", ")}
+                </span>
+              </>
+            )}
             <span>·</span>
             <span>{formatTime(ix.occurred_at)}</span>
             {ix.duration_minutes != null && (
@@ -183,7 +197,10 @@ function InteractionCard({
             )}
           </div>
           {ix.notes && (
-            <p className="text-sm mt-1 whitespace-pre-wrap">{ix.notes}</p>
+            <MentionText
+              text={ix.notes}
+              className="text-sm mt-1 block whitespace-pre-wrap"
+            />
           )}
         </div>
         <RowActionsMenu

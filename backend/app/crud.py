@@ -25,6 +25,7 @@ from app.models import (
     Group,
     GroupCreate,
     Interaction,
+    InteractionAttendee,
     InteractionCreate,
     JournalEntry,
     JournalEntryCreate,
@@ -229,19 +230,51 @@ def create_custom_field_value(
 # ─── Interaction CRUD ────────────────────────────────────────────────────────
 
 
+def recompute_last_contacted_at(*, session: Session, contact_id: uuid.UUID) -> None:
+    """Reset contact.last_contacted_at to the most recent attended interaction."""
+    contact = session.get(Contact, contact_id)
+    if contact is None:
+        return
+    stmt = (
+        select(Interaction.occurred_at)
+        .join(
+            InteractionAttendee,
+            InteractionAttendee.interaction_id == Interaction.id,  # type: ignore[arg-type]
+        )
+        .where(InteractionAttendee.contact_id == contact_id)
+        .order_by(Interaction.occurred_at.desc())
+        .limit(1)
+    )
+    latest = session.exec(stmt).first()
+    contact.last_contacted_at = latest
+    session.add(contact)
+
+
 def create_interaction(
-    *, session: Session, interaction_in: InteractionCreate, owner_id: uuid.UUID
+    *,
+    session: Session,
+    interaction_in: InteractionCreate,
+    owner_id: uuid.UUID,
 ) -> Interaction:
-    db_obj = Interaction.model_validate(interaction_in, update={"owner_id": owner_id})
+    db_obj = Interaction.model_validate(
+        interaction_in,
+        update={"owner_id": owner_id},
+    )
     session.add(db_obj)
+    session.flush()
+    for attendee_id in set(interaction_in.attendee_ids):
+        session.add(
+            InteractionAttendee(interaction_id=db_obj.id, contact_id=attendee_id)
+        )
+        contact = session.get(Contact, attendee_id)
+        if contact and (
+            contact.last_contacted_at is None
+            or db_obj.occurred_at > contact.last_contacted_at
+        ):
+            contact.last_contacted_at = db_obj.occurred_at
+            session.add(contact)
     session.commit()
     session.refresh(db_obj)
-    # Update contact's last_contacted_at
-    contact = session.get(Contact, interaction_in.contact_id)
-    if contact:
-        contact.last_contacted_at = db_obj.occurred_at
-        session.add(contact)
-        session.commit()
     return db_obj
 
 

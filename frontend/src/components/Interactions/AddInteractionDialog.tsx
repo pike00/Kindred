@@ -1,11 +1,21 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import type { InteractionCreate } from "@/client"
+import type { ContactPublic, InteractionCreate } from "@/client"
 import { ContactsService, InteractionsService } from "@/client"
+import { MentionTextarea } from "@/components/Mentions/MentionTextarea"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command"
 import {
   Dialog,
   DialogContent,
@@ -24,14 +34,12 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import useCustomToast from "@/hooks/useCustomToast"
+import { Plus, X } from "@/lib/icons"
 
 const toLocalDateTimeInput = (d: Date) => {
   const pad = (n: number) => String(n).padStart(2, "0")
@@ -49,7 +57,7 @@ const channels = [
 ]
 
 const interactionCreateSchema = z.object({
-  contact_id: z.string().uuid("Select a contact"),
+  attendee_ids: z.array(z.string().uuid()).min(1, "Pick at least one attendee"),
   channel: z.string().min(1, "Select a channel"),
   occurred_at: z.string().min(1, "Date is required"),
   notes: z.string().optional(),
@@ -63,6 +71,13 @@ interface AddInteractionDialogProps {
   contactId?: string
 }
 
+function contactLabel(contact: ContactPublic): string {
+  return (
+    [contact.first_name, contact.last_name].filter(Boolean).join(" ") ||
+    "Unnamed contact"
+  )
+}
+
 export const AddInteractionDialog = ({
   contactId,
 }: AddInteractionDialogProps) => {
@@ -73,7 +88,7 @@ export const AddInteractionDialog = ({
   const form = useForm<InteractionCreateFormData>({
     resolver: zodResolver(interactionCreateSchema),
     defaultValues: {
-      contact_id: contactId || "",
+      attendee_ids: contactId ? [contactId] : [],
       channel: "",
       occurred_at: toLocalDateTimeInput(new Date()),
       notes: "",
@@ -85,16 +100,18 @@ export const AddInteractionDialog = ({
   const addMutation = useMutation({
     mutationFn: (data: InteractionCreate) =>
       InteractionsService.createInteractionRoute({ requestBody: data }),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       showSuccessToast("Interaction logged")
       form.reset()
       setOpen(false)
       queryClient.invalidateQueries({ queryKey: ["interactions"] })
-      if (contactId) {
+      for (const attendeeId of variables.attendee_ids) {
         queryClient.invalidateQueries({
-          queryKey: ["contact-interactions", contactId],
+          queryKey: ["interactions", attendeeId],
         })
+        queryClient.invalidateQueries({ queryKey: ["contacts", attendeeId] })
       }
+      queryClient.invalidateQueries({ queryKey: ["contacts"] })
     },
     onError: (error: Error) => {
       showErrorToast(error.message || "Failed to log interaction")
@@ -103,15 +120,15 @@ export const AddInteractionDialog = ({
 
   const onSubmit = (data: InteractionCreateFormData) => {
     addMutation.mutate({
-      contact_id: data.contact_id,
-      channel: data.channel as any,
+      attendee_ids: data.attendee_ids,
+      channel: data.channel as InteractionCreate["channel"],
       occurred_at: new Date(data.occurred_at).toISOString(),
       notes: data.notes || null,
       mood: data.mood || null,
       duration_minutes: data.duration_minutes
         ? parseInt(data.duration_minutes, 10)
         : null,
-    } as unknown as InteractionCreate)
+    })
   }
 
   return (
@@ -123,12 +140,12 @@ export const AddInteractionDialog = ({
         <DialogHeader>
           <DialogTitle>Log Interaction</DialogTitle>
           <DialogDescription>
-            Record a conversation or meeting with a contact.
+            Record a conversation or meeting with one or more contacts.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {!contactId && <ContactSelector control={form.control} />}
+            <AttendeePicker control={form.control} />
             <FormField
               control={form.control}
               name="channel"
@@ -200,9 +217,13 @@ export const AddInteractionDialog = ({
                 <FormItem>
                   <FormLabel>Notes</FormLabel>
                   <FormControl>
-                    <Textarea
-                      placeholder="What did you talk about?"
-                      {...field}
+                    <MentionTextarea
+                      placeholder="What did you talk about? (type @ to mention)"
+                      name={field.name}
+                      onBlur={field.onBlur}
+                      ref={field.ref}
+                      value={field.value ?? ""}
+                      onChange={field.onChange}
                     />
                   </FormControl>
                   <FormMessage />
@@ -223,40 +244,103 @@ export const AddInteractionDialog = ({
   )
 }
 
-function ContactSelector({
+function AttendeePicker({
   control,
 }: {
   control: ReturnType<typeof useForm<InteractionCreateFormData>>["control"]
 }) {
+  const [pickerOpen, setPickerOpen] = useState(false)
   const { data } = useQuery({
     queryKey: ["contacts"],
     queryFn: () => ContactsService.listContacts(),
   })
+  const contacts = useMemo(() => data?.data ?? [], [data])
+  const contactById = useMemo(() => {
+    const m = new Map<string, ContactPublic>()
+    for (const c of contacts) m.set(c.id, c)
+    return m
+  }, [contacts])
 
   return (
     <FormField
       control={control}
-      name="contact_id"
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>Contact *</FormLabel>
-          <Select onValueChange={field.onChange} defaultValue={field.value}>
-            <FormControl>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a contact" />
-              </SelectTrigger>
-            </FormControl>
-            <SelectContent>
-              {(data?.data || []).map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  {c.first_name} {c.last_name || ""}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <FormMessage />
-        </FormItem>
-      )}
+      name="attendee_ids"
+      render={({ field }) => {
+        const selected = field.value ?? []
+        const available = contacts.filter((c) => !selected.includes(c.id))
+        const toggle = (contact: ContactPublic) => {
+          if (selected.includes(contact.id)) {
+            field.onChange(selected.filter((id) => id !== contact.id))
+          } else {
+            field.onChange([...selected, contact.id])
+          }
+        }
+        return (
+          <FormItem>
+            <FormLabel>Attendees *</FormLabel>
+            <div className="flex flex-wrap items-center gap-1.5 rounded-md border bg-background p-2 min-h-[42px]">
+              {selected.map((id) => {
+                const c = contactById.get(id)
+                return (
+                  <Badge key={id} variant="secondary" className="gap-1 pr-1">
+                    {c ? contactLabel(c) : "Unknown"}
+                    <button
+                      type="button"
+                      className="ml-1 rounded hover:bg-background/60"
+                      onClick={() =>
+                        field.onChange(selected.filter((i) => i !== id))
+                      }
+                      aria-label="Remove attendee"
+                    >
+                      <X className="size-3" />
+                    </button>
+                  </Badge>
+                )
+              })}
+              <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 gap-1 text-xs text-muted-foreground"
+                  >
+                    <Plus className="size-3.5" />
+                    Add attendee
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-72 p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Search contacts..." />
+                    <CommandList>
+                      <CommandEmpty>No matches.</CommandEmpty>
+                      <CommandGroup>
+                        {available.map((c) => (
+                          <CommandItem
+                            key={c.id}
+                            value={`${contactLabel(c)} ${c.company ?? ""}`}
+                            onSelect={() => {
+                              toggle(c)
+                            }}
+                          >
+                            <span className="truncate">{contactLabel(c)}</span>
+                            {c.company && (
+                              <span className="ml-auto truncate text-xs text-muted-foreground">
+                                {c.company}
+                              </span>
+                            )}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
+            <FormMessage />
+          </FormItem>
+        )
+      }}
     />
   )
 }

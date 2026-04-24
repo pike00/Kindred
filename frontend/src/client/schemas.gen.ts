@@ -2278,6 +2278,45 @@ export const HTTPValidationErrorSchema = {
     title: 'HTTPValidationError'
 } as const;
 
+export const InteractionAttendeeSummarySchema = {
+    properties: {
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        first_name: {
+            type: 'string',
+            title: 'First Name'
+        },
+        last_name: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Last Name'
+        },
+        avatar_url: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Avatar Url'
+        }
+    },
+    type: 'object',
+    required: ['id', 'first_name'],
+    title: 'InteractionAttendeeSummary'
+} as const;
+
 export const InteractionChannelSchema = {
     type: 'string',
     enum: ['call', 'in_person', 'text', 'email', 'video', 'social', 'other'],
@@ -2335,14 +2374,19 @@ export const InteractionCreateSchema = {
             title: 'Duration Minutes',
             description: 'Length of the interaction in minutes.'
         },
-        contact_id: {
-            type: 'string',
-            format: 'uuid',
-            title: 'Contact Id'
+        attendee_ids: {
+            items: {
+                type: 'string',
+                format: 'uuid'
+            },
+            type: 'array',
+            minItems: 1,
+            title: 'Attendee Ids',
+            description: 'Contacts that attended; must have at least one.'
         }
     },
     type: 'object',
-    required: ['channel', 'occurred_at', 'contact_id'],
+    required: ['channel', 'occurred_at', 'attendee_ids'],
     title: 'InteractionCreate'
 } as const;
 
@@ -2402,43 +2446,13 @@ export const InteractionPublicSchema = {
             format: 'uuid',
             title: 'Id'
         },
-        contact_id: {
-            type: 'string',
-            format: 'uuid',
-            title: 'Contact Id'
-        },
-        contact_first_name: {
-            anyOf: [
-                {
-                    type: 'string'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Contact First Name'
-        },
-        contact_last_name: {
-            anyOf: [
-                {
-                    type: 'string'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Contact Last Name'
-        },
-        contact_avatar_url: {
-            anyOf: [
-                {
-                    type: 'string'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Contact Avatar Url'
+        attendees: {
+            items: {
+                '$ref': '#/components/schemas/InteractionAttendeeSummary'
+            },
+            type: 'array',
+            title: 'Attendees',
+            default: []
         },
         created_at: {
             type: 'string',
@@ -2447,7 +2461,7 @@ export const InteractionPublicSchema = {
         }
     },
     type: 'object',
-    required: ['channel', 'occurred_at', 'id', 'contact_id', 'created_at'],
+    required: ['channel', 'occurred_at', 'id', 'created_at'],
     title: 'InteractionPublic'
 } as const;
 
@@ -2507,6 +2521,23 @@ export const InteractionUpdateSchema = {
                 }
             ],
             title: 'Duration Minutes'
+        },
+        attendee_ids: {
+            anyOf: [
+                {
+                    items: {
+                        type: 'string',
+                        format: 'uuid'
+                    },
+                    type: 'array',
+                    minItems: 1
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Attendee Ids',
+            description: 'Replace the attendee set; must have at least one if provided.'
         }
     },
     type: 'object',
