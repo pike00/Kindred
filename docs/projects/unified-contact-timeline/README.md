@@ -1,0 +1,49 @@
+---
+title: Unified Contact Timeline
+status: active
+repos: [personal-crm]
+started: 2026-04-21
+last_updated: 2026-04-21
+next_step: Implement /contacts/{id}/timeline backend endpoint (SQL UNION ALL of Interactions, Notes, Gifts, LifeEvents, Debts, and stage changes)
+---
+
+# Unified Contact Timeline
+
+## Goal
+Display all contact-related events in a single reverse-chronological feed on the contact detail page. Each event type (Interaction, Note, Gift, LifeEvent, Debt, stage change) appears as a colored card, with filters along the top to show/hide event types, enabling users to see the complete history of a relationship at a glance.
+
+## Tasks
+- [ ] Backend: `/contacts/{id}/timeline` endpoint with SQL UNION ALL, cursor-based pagination by `occurred_at`, owner_id filter
+- [ ] Backend: Timestamp normalization helper (map each entity type to its timestamp column)
+- [ ] Backend: Response schema unifying timeline events (type, timestamp, payload)
+- [ ] Frontend: Timeline card renderers for each event type (Interaction, Note, Gift, LifeEvent, Debt, StageChange)
+- [ ] Frontend: Infinite scroll + cursor pagination on contact detail page
+- [ ] Frontend: Filter bar (checkboxes by event type) + visual type colors
+
+## Session Log
+
+### 2026-04-21
+- Project created.
+- Analyzed models.py to identify timeline entities and timestamp fields.
+
+## Notes
+
+- **SQL UNION ALL strategy**: Normalize timestamp across entity types and stack via UNION ALL. Each SELECT projects the same columns: `type` (literal), `id`, `contact_id`, `occurred_at`, `payload` (JSON-serialized relevant fields). This is cleaner than N separate queries and easier to paginate than client-side merging.
+
+- **Timestamp field mapping** (see [models.py](../../../backend/app/models.py)):
+  - `Interaction`: `occurred_at` (datetime, when the interaction happened)
+  - `Note`: `created_at` (datetime, when the note was added)
+  - `Gift`: `gift_date` (date; convert to datetime at midnight for sorting) or `created_at` if not set
+  - `LifeEvent`: `occurred_at` (date; convert to datetime at midnight for sorting)
+  - `Debt`: `created_at` (datetime) — consider adding an optional `incurred_at` field for when the debt arose
+  - `StageChange`: Synthesized from `Contact.stage` column; track changes via audit table or manually log (out of scope for MVP)
+
+- **Include contact stage events**: Stage transitions (Active → Dormant, etc.) are meaningful timeline events. If no stage audit table exists, consider deferring stage change visibility to a second iteration.
+
+- **Exclude drafts**: Assume all entities in the models are "published" by default (no `is_draft` column). If draft logic is added later, filter by `is_draft = false` in the UNION query.
+
+- **Pairing with interaction heatmap**: The timeline complements the interaction heatmap (frequency over time). The heatmap shows cadence; the timeline shows *what* happened and *notes*.
+
+- **Pagination**: Use `cursor` (serialized `occurred_at` + `id` for tiebreaking) to handle large timelines. Fetch cursor + limit from frontend, decode on backend, `WHERE (occurred_at, id) < cursor ORDER BY occurred_at DESC, id DESC`.
+
+- **Color scheme**: Define a type-to-color map in the frontend (e.g., Interaction=blue, Note=green, Gift=yellow, LifeEvent=purple, Debt=red, StageChange=gray). Use as background or left border on each card.
