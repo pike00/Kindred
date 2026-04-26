@@ -4,7 +4,7 @@ status: active
 repos: [personal-crm]
 started: 2026-04-21
 last_updated: 2026-04-26
-next_step: Confirm all 9 tests green, then scope GET /activity-logs via TagShare (task 5)
+next_step: Run `docker compose exec backend pytest tests/api/routes/test_activity_logs.py -v`, confirm 9 green, commit implementation, then scope GET /activity-logs via TagShare (task 5)
 progress: 3/7 tasks
 ---
 
@@ -24,6 +24,10 @@ Track edits to shared rows in personal-crm with owner and actor identity. Any us
 
 ## Session Log
 
+### 2026-04-26 (session 3)
+- Test run attempted outside Docker — hit `POSTGRES_SERVER` env issue; tests must run via `docker compose exec backend pytest`
+- All 9 implementation files confirmed present on disk; code unchanged from session 2, still uncommitted
+
 ### 2026-04-26
 - work-in-progress — no commits yet
 - Expanded scope from interaction-only to all entities; recommendation changed from explicit calls to SQLAlchemy `before_flush` session event
@@ -40,6 +44,10 @@ Track edits to shared rows in personal-crm with owner and actor identity. Any us
 - README drafted with accurate schema references and design notes.
 
 ## Notes
+
+### 2026-04-26 (session 3)
+- **Gotchas:** Tests require `POSTGRES_SERVER` env var — must run via `docker compose exec backend pytest tests/api/routes/test_activity_logs.py`, not directly via `.venv/bin/python -m pytest`
+- **Issues:** All implementation files uncommitted; 9 tests written but green status unconfirmed
 
 ### 2026-04-26 (session 2)
 - **Decisions:** `before_flush` over explicit calls — scope is ~50 mutation points across 18 route files, not 3; `session.info["actor_id"]` stamped in `get_current_user`; single `activity_log` table confirmed; `create_interaction` explicit flush removed so Interaction + attendees go through one before_flush call
