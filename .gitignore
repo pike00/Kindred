@@ -15,6 +15,9 @@ node_modules/
 # superpowers brainstorming mockups
 .superpowers/
 
+# git worktrees
+.worktrees/
+
 # Generated DB docs renderings (markdown is checked in, HTML is regenerable)
 docs/db/*.html
 
