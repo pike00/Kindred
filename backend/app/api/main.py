@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.routes import (
+    activity_logs,
     addresses,
     contact_fields,
     contacts,
@@ -52,6 +53,7 @@ api_router.include_router(media_recommendations.router)
 api_router.include_router(journal.router)
 api_router.include_router(import_export.router)
 api_router.include_router(webhooks.router)
+api_router.include_router(activity_logs.router)
 
 
 if settings.ENVIRONMENT == "local":

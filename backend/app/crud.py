@@ -261,7 +261,6 @@ def create_interaction(
         update={"owner_id": owner_id},
     )
     session.add(db_obj)
-    session.flush()
     for attendee_id in set(interaction_in.attendee_ids):
         session.add(
             InteractionAttendee(interaction_id=db_obj.id, contact_id=attendee_id)
