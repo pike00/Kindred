@@ -508,6 +508,14 @@ class Contact(ContactBase, table=True):
         nullable=False,
         description="Auto-bumped on any column change (UTC).",
     )
+    deleted_at: datetime | None = Field(
+        default=None,
+        index=True,
+        description=(
+            "Soft-delete marker. When non-null, the row is hidden from the "
+            "default visibility helpers; restore by clearing this column."
+        ),
+    )
     # Relationships
     tags: list["Tag"] = Relationship(
         back_populates=None,
@@ -525,6 +533,7 @@ class ContactPublic(ContactBase):
     last_contacted_at: datetime | None
     created_at: datetime
     updated_at: datetime
+    deleted_at: datetime | None = None
     tags: list[TagPublic] = []
     groups: list[GroupPublic] = []
 
