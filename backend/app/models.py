@@ -1653,6 +1653,54 @@ class WebhookEndpoint(WebhookEndpointBase, table=True):
     )
 
 
+class ActivityLog(SQLModel, table=True):
+    """Immutable record of a create/update/delete on any audited entity."""
+
+    __tablename__ = "activity_log"
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id",
+        nullable=False,
+        ondelete="CASCADE",
+        index=True,
+    )
+    actor_id: uuid.UUID | None = Field(
+        default=None,
+        foreign_key="user.id",
+        nullable=True,
+        index=True,
+    )
+    entity_type: str = Field(max_length=64)
+    entity_id: uuid.UUID = Field(index=True)
+    action: str = Field(max_length=32)
+    changes_json: dict | None = Field(
+        default=None,
+        sa_column=sa.Column("changes_json", sa.JSON, nullable=True),
+    )
+    occurred_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),
+        nullable=False,
+    )
+
+
+class ActivityLogPublic(SQLModel):
+    id: uuid.UUID
+    owner_id: uuid.UUID
+    actor_id: uuid.UUID | None
+    entity_type: str
+    entity_id: uuid.UUID
+    action: str
+    changes_json: dict | None
+    occurred_at: datetime
+
+
+class ActivityLogsPublic(SQLModel):
+    data: list[ActivityLogPublic]
+    count: int
+
+
 # Generic message
 class Message(SQLModel):
     message: str

@@ -5,6 +5,24 @@ export type _ShareIn = {
     grantee_id: string;
 };
 
+export type ActivityLogPublic = {
+    id: string;
+    owner_id: string;
+    actor_id: (string | null);
+    entity_type: string;
+    entity_id: string;
+    action: string;
+    changes_json: ({
+    [key: string]: unknown;
+} | null);
+    occurred_at: string;
+};
+
+export type ActivityLogsPublic = {
+    data: Array<ActivityLogPublic>;
+    count: number;
+};
+
 export type AddressCreate = {
     /**
      * Label like "home", "work", "other".
@@ -1234,6 +1252,15 @@ export type WebhookEndpointBase = {
      */
     secret?: (string | null);
 };
+
+export type ActivityLogsListActivityLogsData = {
+    entityId?: (string | null);
+    entityType?: (string | null);
+    limit?: number;
+    offset?: number;
+};
+
+export type ActivityLogsListActivityLogsResponse = (ActivityLogsPublic);
 
 export type AddressesListAddressesData = {
     contactId: string;
