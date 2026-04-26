@@ -9,6 +9,7 @@ import {
 import useAuth from "@/hooks/useAuth"
 import {
   Bell,
+  CalendarHeart,
   Home,
   MessagesSquare,
   NotebookPen,
@@ -28,6 +29,7 @@ const baseItems: Item[] = [
   { icon: UsersRound, title: "Groups", path: "/groups" },
   { icon: Bell, title: "Reminders", path: "/reminders" },
   { icon: NotebookPen, title: "Journal", path: "/journal" },
+  { icon: CalendarHeart, title: "Calendar", path: "/calendar" },
 ]
 
 export function AppSidebar() {

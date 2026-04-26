@@ -19,6 +19,7 @@ import { Route as LayoutTagsRouteImport } from './routes/_layout/tags'
 import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
 import { Route as LayoutRemindersRouteImport } from './routes/_layout/reminders'
 import { Route as LayoutJournalRouteImport } from './routes/_layout/journal'
+import { Route as LayoutCalendarRouteImport } from './routes/_layout/calendar'
 import { Route as LayoutInteractionsRouteImport } from './routes/_layout/interactions'
 import { Route as LayoutGroupsRouteImport } from './routes/_layout/groups'
 import { Route as LayoutContactsRouteImport } from './routes/_layout/contacts'
@@ -78,6 +79,11 @@ const LayoutJournalRoute = LayoutJournalRouteImport.update({
   path: '/journal',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutCalendarRoute = LayoutCalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
+  getParentRoute: () => LayoutRoute,
+} as any)
 const LayoutInteractionsRoute = LayoutInteractionsRouteImport.update({
   id: '/interactions',
   path: '/interactions',
@@ -131,6 +137,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/admin': typeof LayoutAdminRouteWithChildren
+  '/calendar': typeof LayoutCalendarRoute
   '/contacts': typeof LayoutContactsRouteWithChildren
   '/groups': typeof LayoutGroupsRoute
   '/interactions': typeof LayoutInteractionsRoute
@@ -149,6 +156,7 @@ export interface FileRoutesByTo {
   '/recover-password': typeof RecoverPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/calendar': typeof LayoutCalendarRoute
   '/groups': typeof LayoutGroupsRoute
   '/interactions': typeof LayoutInteractionsRoute
   '/journal': typeof LayoutJournalRoute
@@ -170,6 +178,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/_layout/admin': typeof LayoutAdminRouteWithChildren
+  '/_layout/calendar': typeof LayoutCalendarRoute
   '/_layout/contacts': typeof LayoutContactsRouteWithChildren
   '/_layout/groups': typeof LayoutGroupsRoute
   '/_layout/interactions': typeof LayoutInteractionsRoute
@@ -193,6 +202,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/admin'
+    | '/calendar'
     | '/contacts'
     | '/groups'
     | '/interactions'
@@ -211,6 +221,7 @@ export interface FileRouteTypes {
     | '/recover-password'
     | '/reset-password'
     | '/signup'
+    | '/calendar'
     | '/groups'
     | '/interactions'
     | '/journal'
@@ -231,6 +242,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/_layout/admin'
+    | '/_layout/calendar'
     | '/_layout/contacts'
     | '/_layout/groups'
     | '/_layout/interactions'
@@ -340,6 +352,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutGroupsRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/calendar': {
+      id: '/_layout/calendar'
+      path: '/calendar'
+      fullPath: '/calendar'
+      preLoaderRoute: typeof LayoutCalendarRouteImport
+      parentRoute: typeof LayoutRoute
+    }
     '/_layout/contacts': {
       id: '/_layout/contacts'
       path: '/contacts'
@@ -424,6 +443,7 @@ const LayoutContactsRouteWithChildren = LayoutContactsRoute._addFileChildren(
 
 interface LayoutRouteChildren {
   LayoutAdminRoute: typeof LayoutAdminRouteWithChildren
+  LayoutCalendarRoute: typeof LayoutCalendarRoute
   LayoutContactsRoute: typeof LayoutContactsRouteWithChildren
   LayoutGroupsRoute: typeof LayoutGroupsRoute
   LayoutInteractionsRoute: typeof LayoutInteractionsRoute
@@ -436,6 +456,7 @@ interface LayoutRouteChildren {
 
 const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutAdminRoute: LayoutAdminRouteWithChildren,
+  LayoutCalendarRoute: LayoutCalendarRoute,
   LayoutContactsRoute: LayoutContactsRouteWithChildren,
   LayoutGroupsRoute: LayoutGroupsRoute,
   LayoutInteractionsRoute: LayoutInteractionsRoute,
