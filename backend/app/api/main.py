@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from app.api.routes import (
     activity_logs,
     addresses,
+    calendar,
     contact_fields,
     contacts,
     custom_fields,
@@ -54,6 +55,7 @@ api_router.include_router(journal.router)
 api_router.include_router(import_export.router)
 api_router.include_router(webhooks.router)
 api_router.include_router(activity_logs.router)
+api_router.include_router(calendar.router)
 
 
 if settings.ENVIRONMENT == "local":
