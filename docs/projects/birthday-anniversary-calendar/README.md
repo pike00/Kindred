@@ -3,8 +3,8 @@ title: Birthday and Anniversary Calendar
 status: active
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-04-23
-next_step: Design /calendar/month/{yyyy-mm} endpoint schema and pagination for multiple events per day
+last_updated: 2026-04-26
+next_step: Regenerate frontend OpenAPI client (cd frontend && bun run generate-client), then build MonthCalendar React component
 ---
 
 # Birthday and Anniversary Calendar
@@ -15,18 +15,25 @@ Month-view calendar UI displaying birthdays (from Contact.birthday) and annual l
 
 ## Tasks
 
-- [ ] Design GET /calendar/month/{yyyy-mm} endpoint: returns day -> list of (name, type, age|event_type, contact_id)
+- [x] Design GET /calendar/month/{yyyy-mm} endpoint: returns day -> list of (name, type, age|event_type, contact_id)
 - [ ] Build month-view React component: grid layout, highlight today, dot stacking for multi-event days
 - [ ] Implement day drill-down panel: click day to expand and see all people/events
 - [ ] Add click-through to contact detail page from drill-down
-- [ ] Compute age on birthday endpoint (birth_year derived from contact.birthday)
+- [x] Compute age on birthday endpoint (birth_year derived from contact.birthday)
 - [ ] Month/year navigation: prev/next buttons, jump to date picker
 - [ ] Integrate with ICS export: link calendar to feed subscription
-- [ ] Handle partial birthdays (year unknown): display as "--" age, still appears on month view
-- [ ] Write integration tests: fixture contacts with various birthdays, events, edge cases
+- [x] Handle partial birthdays (year unknown): display as "--" age, still appears on month view
+- [x] Write integration tests: fixture contacts with various birthdays, events, edge cases
 - [ ] Update API docs with /calendar/month/{yyyy-mm} schema
 
 ## Session Log
+
+### 2026-04-26
+- Implemented `GET /api/v1/calendar/month/{yyyy_mm}` endpoint: aggregates birthdays and annual life events, computes age, returns grouped by day (work-in-progress, not yet committed).
+- Added `CalendarEntry` and `CalendarMonthResponse` models to `models.py`.
+- Registered calendar router in `api/main.py`.
+- Wrote 6 integration tests (all passing): auth, birthday, life event, partial birthday null age, empty month, invalid format.
+- Debugged stale alembic revision in crm_test DB (b2c3d4e5f6a7 orphan from prior branch work); fixed by manual schema reset.
 
 ### 2026-04-21
 - Project created.
@@ -36,6 +43,11 @@ Month-view calendar UI displaying birthdays (from Contact.birthday) and annual l
 - Reviewed models: Contact.birthday (date or null), LifeEvent.create_annual_reminder (bool).
 
 ## Notes
+
+### 2026-04-26
+- **Decisions:** Partial birthday sentinel = `birthday.year <= 1` (Python date min); no DB migration needed (existing `date` column holds it). `CalendarEntry`/`CalendarMonthResponse` are pure Pydantic models, no new DB table.
+- **Gotchas:** The `crm_test` DB can accumulate orphaned alembic revisions from prior branches — the conftest DROP SCHEMA only helps if the test DB isn't externally modified between runs. Fix: `docker exec crm-db psql -U postgres -d crm_test -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"`.
+- **Accomplished:** `backend/app/api/routes/calendar.py`, `backend/tests/api/routes/test_calendar.py` (6/6 tests passing), models and router wired up.
 
 - **Partial birthdays (year unknown):** Contact.birthday can be stored as YYYY-MM-DD with year=0000 or similar sentinel, or as month+day only (out of scope for now). Store as-is; endpoint detects year and returns null age. UI displays "--" or "age TBD".
 
