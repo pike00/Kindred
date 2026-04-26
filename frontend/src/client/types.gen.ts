@@ -1258,6 +1258,7 @@ export type ActivityLogsListActivityLogsData = {
     entityType?: (string | null);
     limit?: number;
     offset?: number;
+    tagId?: (string | null);
 };
 
 export type ActivityLogsListActivityLogsResponse = (ActivityLogsPublic);

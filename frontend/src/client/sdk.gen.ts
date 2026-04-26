@@ -8,10 +8,14 @@ import type { ActivityLogsListActivityLogsData, ActivityLogsListActivityLogsResp
 export class ActivityLogsService {
     /**
      * List Activity Logs
-     * Return activity log entries owned by the current user.
+     * Return activity log entries for entities visible to the current user.
+     *
+     * Owned logs (any entity type) are always included.  Contact-entity logs are
+     * also included when the contact is visible via a TagShare grant.
      * @param data The data for the request.
      * @param data.entityType
      * @param data.entityId
+     * @param data.tagId
      * @param data.limit
      * @param data.offset
      * @returns ActivityLogsPublic Successful Response
@@ -24,6 +28,7 @@ export class ActivityLogsService {
             query: {
                 entity_type: data.entityType,
                 entity_id: data.entityId,
+                tag_id: data.tagId,
                 limit: data.limit,
                 offset: data.offset
             },
