@@ -4,8 +4,8 @@ status: active
 repos: [personal-crm]
 started: 2026-04-21
 last_updated: 2026-04-26
-next_step: Run `docker compose exec backend pytest tests/api/routes/test_activity_logs.py -v`, confirm 9 green, commit implementation, then scope GET /activity-logs via TagShare (task 5)
-progress: 3/7 tasks
+next_step: Add PII redaction for sensitive fields in changes_json before returning to grantees (task 6)
+progress: 4/7 tasks
 ---
 
 # Audit Log for Shared Data
@@ -18,11 +18,16 @@ Track edits to shared rows in personal-crm with owner and actor identity. Any us
 - [x] Create Alembic migration for activity_log table
 - [ ] Implement activity log service layer (insert, query by tag scope)
 - [x] Wire SQLAlchemy event listeners or explicit service calls to log mutations
-- [ ] Build read API endpoint scoped via TagShare (GET /activity-logs?tag_id=...)
+- [x] Build read API endpoint scoped via TagShare (GET /activity-logs?tag_id=...)
 - [ ] Add PII redaction for sensitive fields in changes_json
 - [ ] Document retention policy and archival strategy
 
 ## Session Log
+
+### 2026-04-26 (session 4)
+- Extended GET /activity-logs with TagShare scoping: grantees can now query contact-entity logs for contacts shared via a tag; `tag_id` filter narrows to contacts bearing that tag with 403 for unauthorized callers
+- 4 new integration tests added (13 total, all green); frontend SDK regenerated with `tagId` param
+- Commits: `49edc2d` (TagShare scoping + tests), prior session: `35decba` (listener + initial endpoint), `c15af97` (settings)
 
 ### 2026-04-26 (session 3)
 - Test run attempted outside Docker — hit `POSTGRES_SERVER` env issue; tests must run via `docker compose exec backend pytest`
@@ -44,6 +49,12 @@ Track edits to shared rows in personal-crm with owner and actor identity. Any us
 - README drafted with accurate schema references and design notes.
 
 ## Notes
+
+### 2026-04-26 (session 4)
+- **Decisions:** TagShare scoping covers contact-entity logs only for MVP; non-contact entities (notes, interactions) only visible to owner — extend when needed
+- **Gotchas:** `visible_contact_ids()` union subquery works in `.in_()` as expected; ruff auto-merged `and_, func, or_` into one import line on pre-commit
+- **Accomplished:** Task 5 complete; 13/13 tests green; `tag_id` param added to frontend SDK; tree clean and pushed
+- **Issues:** Task 3 (service layer) has no dedicated module — functionality covered by before_flush + route but task text implies a separate layer; tasks 6 (PII redaction) and 7 (retention) still open
 
 ### 2026-04-26 (session 3)
 - **Gotchas:** Tests require `POSTGRES_SERVER` env var — must run via `docker compose exec backend pytest tests/api/routes/test_activity_logs.py`, not directly via `.venv/bin/python -m pytest`
