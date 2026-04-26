@@ -3,7 +3,7 @@ title: Multi-Party Interactions
 status: completed
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-04-24
+last_updated: 2026-04-26
 next_step: Investigate @-mention timeline follow-ups below before archiving.
 ---
 
@@ -35,6 +35,10 @@ Replace the current one-to-one `Interaction.contact_id` design with a many-to-ma
 - Project created.
 
 ## Notes
+
+### 2026-04-26
+- **State sync:** all claims verified clean; bumped last_updated to today
+- **Verified clean:** 5 claims matched reality (PLAN.md, commit ecc2b5f, migration a7b8c9d0e1f2, InteractionAttendee model, 8 commits since last save)
 
 ### 2026-04-24
 - **Decisions:**
