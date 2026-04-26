@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(docker image *)"
+      "Bash(docker image *)",
+      "Bash(docker compose config *)",
+      "Bash(docker network inspect *)"
     ]
   }
 }
