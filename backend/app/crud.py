@@ -365,22 +365,36 @@ def create_journal_entry(
 # ─── Visibility helpers ───────────────────────────────────────────────────────
 
 
-def visible_contact_ids(user: User) -> Any:
-    """Subquery: contact IDs visible to user (owned OR tag-shared)."""
+def visible_contact_ids(user: User, *, include_deleted: bool = False) -> Any:
+    """Subquery: contact IDs visible to user (owned OR tag-shared).
+
+    Soft-deleted contacts (`deleted_at` set) are hidden by default. Pass
+    ``include_deleted=True`` to surface them — used by the trash/restore flow.
+    """
     owned = select(Contact.id).where(Contact.owner_id == user.id)
     shared = (
         select(ContactTag.contact_id)
         .join(TagShare, TagShare.tag_id == ContactTag.tag_id)  # type: ignore[arg-type]
+        .join(Contact, Contact.id == ContactTag.contact_id)  # type: ignore[arg-type]
         .where(TagShare.grantee_id == user.id)
     )
+    if not include_deleted:
+        owned = owned.where(Contact.deleted_at.is_(None))
+        shared = shared.where(Contact.deleted_at.is_(None))
     return union(owned, shared)
 
 
-def contact_visible(*, session: Session, user: User, contact_id: uuid.UUID) -> bool:
+def contact_visible(
+    *,
+    session: Session,
+    user: User,
+    contact_id: uuid.UUID,
+    include_deleted: bool = False,
+) -> bool:
     """True if `user` may read/write the given contact via ownership or tag share."""
     stmt = select(Contact.id).where(
         Contact.id == contact_id,
-        Contact.id.in_(visible_contact_ids(user)),
+        Contact.id.in_(visible_contact_ids(user, include_deleted=include_deleted)),
     )
     return session.exec(stmt).first() is not None
 

@@ -172,13 +172,24 @@ def _audit_before_flush(
         owner_id = _owner_for(instance, session)
         if owner_id is None:
             continue
+        # Soft-delete on Contact: an UPDATE that flips `deleted_at` is logged
+        # as a "delete" or "restore" action so audit consumers see the same
+        # semantics as a hard delete.
+        action = "update"
+        if isinstance(instance, Contact) and "deleted_at" in diff:
+            entry = diff["deleted_at"]
+            if entry["old"] is None and entry["new"] is not None:
+                action = "delete"
+                diff = None  # mirror hard-delete payload shape
+            elif entry["old"] is not None and entry["new"] is None:
+                action = "restore"
         logs.append(
             ActivityLog(
                 owner_id=owner_id,
                 actor_id=actor_id,
                 entity_type=_AUDITABLE[type(instance)],
                 entity_id=instance.id,
-                action="update",
+                action=action,
                 changes_json=diff,
             )
         )
