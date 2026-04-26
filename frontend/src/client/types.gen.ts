@@ -111,6 +111,20 @@ export type Body_login_login_access_token = {
     client_secret?: (string | null);
 };
 
+export type CalendarEntry = {
+    contact_id: string;
+    name: string;
+    type: string;
+    age: (number | null);
+};
+
+export type CalendarMonthResponse = {
+    month: string;
+    days: {
+        [key: string]: Array<CalendarEntry>;
+    };
+};
+
 export type ContactCreate = {
     /**
      * Given name; required.
@@ -1259,6 +1273,12 @@ export type AddressesDeleteAddressData = {
 };
 
 export type AddressesDeleteAddressResponse = (unknown);
+
+export type CalendarGetCalendarMonthData = {
+    yyyyMm: string;
+};
+
+export type CalendarGetCalendarMonthResponse = (CalendarMonthResponse);
 
 export type CarddavWellKnownCarddavResponse = (unknown);
 

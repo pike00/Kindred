@@ -425,6 +425,60 @@ export const Body_login_login_access_tokenSchema = {
     title: 'Body_login-login_access_token'
 } as const;
 
+export const CalendarEntrySchema = {
+    properties: {
+        contact_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Contact Id'
+        },
+        name: {
+            type: 'string',
+            title: 'Name'
+        },
+        type: {
+            type: 'string',
+            title: 'Type'
+        },
+        age: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Age'
+        }
+    },
+    type: 'object',
+    required: ['contact_id', 'name', 'type', 'age'],
+    title: 'CalendarEntry'
+} as const;
+
+export const CalendarMonthResponseSchema = {
+    properties: {
+        month: {
+            type: 'string',
+            title: 'Month'
+        },
+        days: {
+            additionalProperties: {
+                items: {
+                    '$ref': '#/components/schemas/CalendarEntry'
+                },
+                type: 'array'
+            },
+            type: 'object',
+            title: 'Days'
+        }
+    },
+    type: 'object',
+    required: ['month', 'days'],
+    title: 'CalendarMonthResponse'
+} as const;
+
 export const ContactCreateSchema = {
     properties: {
         first_name: {
