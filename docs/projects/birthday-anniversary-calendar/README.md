@@ -51,6 +51,11 @@ Month-view calendar UI displaying birthdays (from Contact.birthday) and annual l
 
 ## Notes
 
+### 2026-04-26 (session 2)
+- **Decisions:** CSS Grid custom month view (not react-big-calendar); TanStack `<Link search={{ month }}>` for URL-based month navigation; `routeTree.gen.ts` updated manually since vite plugin only regenerates on dev/build startup.
+- **Gotchas:** Biome `useButtonType` rule requires `type="button"` on `<button>` elements or commit is blocked. `new Date("YYYY-MM-DD")` parses as UTC — append `T00:00:00` to get local-timezone date in drill-down header. Biome v2.3.14 schema vs v2.4.9 CLI emits a warning but doesn't block.
+- **Accomplished:** `frontend/src/components/Calendar/MonthCalendar.tsx` (7-col CSS Grid, dot stacking, drill-down, nav), `frontend/src/routes/_layout/calendar.tsx` (`?month=YYYY-MM`), sidebar `CalendarHeart` nav item, `routeTree.gen.ts` updated. TypeScript clean, biome clean, pushed to feature branch.
+
 ### 2026-04-26
 - **Decisions:** Partial birthday sentinel = `birthday.year <= 1` (Python date min); no DB migration needed (existing `date` column holds it). `CalendarEntry`/`CalendarMonthResponse` are pure Pydantic models, no new DB table.
 - **Gotchas:** The `crm_test` DB can accumulate orphaned alembic revisions from prior branches — the conftest DROP SCHEMA only helps if the test DB isn't externally modified between runs. Fix: `docker exec crm-db psql -U postgres -d crm_test -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"`.
