@@ -4,7 +4,7 @@ status: active
 repos: [personal-crm]
 started: 2026-04-21
 last_updated: 2026-04-26
-next_step: Regenerate frontend OpenAPI client (cd frontend && bun run generate-client), then build MonthCalendar React component
+next_step: Manual test in browser; then wire up ICS export link and update API docs
 ---
 
 # Birthday and Anniversary Calendar
@@ -16,17 +16,24 @@ Month-view calendar UI displaying birthdays (from Contact.birthday) and annual l
 ## Tasks
 
 - [x] Design GET /calendar/month/{yyyy-mm} endpoint: returns day -> list of (name, type, age|event_type, contact_id)
-- [ ] Build month-view React component: grid layout, highlight today, dot stacking for multi-event days
-- [ ] Implement day drill-down panel: click day to expand and see all people/events
-- [ ] Add click-through to contact detail page from drill-down
+- [x] Build month-view React component: grid layout, highlight today, dot stacking for multi-event days
+- [x] Implement day drill-down panel: click day to expand and see all people/events
+- [x] Add click-through to contact detail page from drill-down
 - [x] Compute age on birthday endpoint (birth_year derived from contact.birthday)
-- [ ] Month/year navigation: prev/next buttons, jump to date picker
+- [x] Month/year navigation: prev/next buttons, jump to date picker
 - [ ] Integrate with ICS export: link calendar to feed subscription
 - [x] Handle partial birthdays (year unknown): display as "--" age, still appears on month view
 - [x] Write integration tests: fixture contacts with various birthdays, events, edge cases
 - [ ] Update API docs with /calendar/month/{yyyy-mm} schema
 
 ## Session Log
+
+### 2026-04-26 (session 2)
+- Built `MonthCalendar` React component (`frontend/src/components/Calendar/MonthCalendar.tsx`): CSS Grid 7-column month view, today highlight with primary ring, dot stacking (up to 3 colored dots + "+N more"), day drill-down panel with contact links.
+- Added `/_layout/calendar` route (`frontend/src/routes/_layout/calendar.tsx`) with `?month=YYYY-MM` search param; defaults to current month.
+- Added Calendar sidebar nav item (`CalendarHeart` icon) to `AppSidebar.tsx`.
+- Updated `routeTree.gen.ts` to register new route (vite plugin will overwrite on next dev/build run).
+- Committed and pushed to `feature/birthday-anniversary-calendar`.
 
 ### 2026-04-26
 - Implemented `GET /api/v1/calendar/month/{yyyy_mm}` endpoint: aggregates birthdays and annual life events, computes age, returns grouped by day (work-in-progress, not yet committed).
