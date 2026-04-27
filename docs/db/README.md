@@ -8,7 +8,7 @@
 | [public.user](public.user.md) | 9 | Authenticated user; tenant-scope owner of every row below. | BASE TABLE |
 | [public.tag](public.tag.md) | 5 | User-defined tag for grouping contacts. | BASE TABLE |
 | [public.group](public.group.md) | 5 | Named collection of contacts (e.g. 'Family', 'Work Team'). | BASE TABLE |
-| [public.contact](public.contact.md) | 25 | Core contact entity — the subject of everything else in the CRM. | BASE TABLE |
+| [public.contact](public.contact.md) | 26 | Core contact entity — the subject of everything else in the CRM. | BASE TABLE |
 | [public.contact_tag](public.contact_tag.md) | 2 | Many-to-many link between contacts and tags. | BASE TABLE |
 | [public.contact_group](public.contact_group.md) | 2 | Many-to-many link between contacts and groups. | BASE TABLE |
 | [public.contact_field](public.contact_field.md) | 7 | Flexible contact info (emails, phones) attached to a contact. | BASE TABLE |
@@ -28,6 +28,7 @@
 | [public.tag_share](public.tag_share.md) | 3 | Grants another user read access to all rows bearing a given tag. | BASE TABLE |
 | [public.media_recommendation](public.media_recommendation.md) | 10 | Media (book, show, podcast, etc.) recommended to or by a contact. | BASE TABLE |
 | [public.interaction_attendee](public.interaction_attendee.md) | 2 | Many-to-many link between interactions and contacts (attendees). | BASE TABLE |
+| [public.activity_log](public.activity_log.md) | 8 |  | BASE TABLE |
 
 ## Stored procedures and functions
 
@@ -94,6 +95,8 @@ erDiagram
 "public.media_recommendation" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.interaction_attendee" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.interaction_attendee" }o--|| "public.interaction" : "FOREIGN KEY (interaction_id) REFERENCES interaction(id) ON DELETE CASCADE"
+"public.activity_log" }o--o| "public.user" : "FOREIGN KEY (actor_id) REFERENCES #quot;user#quot;(id) ON DELETE SET NULL"
+"public.activity_log" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 
 "public.alembic_version" {
   varchar_32_ version_num
@@ -149,6 +152,7 @@ erDiagram
   timestamp_with_time_zone last_contacted_at
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
+  timestamp_with_time_zone deleted_at
 }
 "public.contact_tag" {
   uuid contact_id FK
@@ -320,6 +324,16 @@ erDiagram
 "public.interaction_attendee" {
   uuid interaction_id FK
   uuid contact_id FK
+}
+"public.activity_log" {
+  uuid id
+  uuid owner_id FK
+  uuid actor_id FK
+  varchar_64_ entity_type
+  uuid entity_id
+  varchar_32_ action
+  json changes_json
+  timestamp_with_time_zone occurred_at
 }
 ```
 
