@@ -33,6 +33,7 @@ Core contact entity — the subject of everything else in the CRM.
 | last_contacted_at | timestamp with time zone |  | true |  |  | Auto-updated by create_interaction(); powers cadence queries. |
 | created_at | timestamp with time zone |  | false |  |  | When the contact was created (UTC). |
 | updated_at | timestamp with time zone |  | false |  |  | Auto-bumped on any column change (UTC). |
+| deleted_at | timestamp with time zone |  | true |  |  |  |
 
 ## Constraints
 
@@ -58,6 +59,7 @@ Core contact entity — the subject of everything else in the CRM.
 | ix_contact_is_favorite | CREATE INDEX ix_contact_is_favorite ON public.contact USING btree (is_favorite) |
 | ix_contact_owner_id | CREATE INDEX ix_contact_owner_id ON public.contact USING btree (owner_id) |
 | ix_contact_contact_frequency_days | CREATE INDEX ix_contact_contact_frequency_days ON public.contact USING btree (contact_frequency_days) |
+| ix_contact_deleted_at | CREATE INDEX ix_contact_deleted_at ON public.contact USING btree (deleted_at) |
 
 ## Relations
 
@@ -107,6 +109,7 @@ erDiagram
   timestamp_with_time_zone last_contacted_at
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
+  timestamp_with_time_zone deleted_at
 }
 "public.contact_tag" {
   uuid contact_id FK

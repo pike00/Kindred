@@ -605,6 +605,11 @@
           "type": "timestamp with time zone",
           "nullable": false,
           "comment": "Auto-bumped on any column change (UTC)."
+        },
+        {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "nullable": true
         }
       ],
       "indexes": [
@@ -646,6 +651,14 @@
           "table": "public.contact",
           "columns": [
             "contact_frequency_days"
+          ]
+        },
+        {
+          "name": "ix_contact_deleted_at",
+          "def": "CREATE INDEX ix_contact_deleted_at ON public.contact USING btree (deleted_at)",
+          "table": "public.contact",
+          "columns": [
+            "deleted_at"
           ]
         }
       ],
@@ -3763,6 +3776,184 @@
           ]
         }
       ]
+    },
+    {
+      "name": "public.activity_log",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "owner_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "actor_id",
+          "type": "uuid",
+          "nullable": true
+        },
+        {
+          "name": "entity_type",
+          "type": "varchar(64)",
+          "nullable": false
+        },
+        {
+          "name": "entity_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "action",
+          "type": "varchar(32)",
+          "nullable": false
+        },
+        {
+          "name": "changes_json",
+          "type": "json",
+          "nullable": true
+        },
+        {
+          "name": "occurred_at",
+          "type": "timestamp with time zone",
+          "nullable": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "activity_log_pkey",
+          "def": "CREATE UNIQUE INDEX activity_log_pkey ON public.activity_log USING btree (id)",
+          "table": "public.activity_log",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "ix_activity_log_owner_id",
+          "def": "CREATE INDEX ix_activity_log_owner_id ON public.activity_log USING btree (owner_id)",
+          "table": "public.activity_log",
+          "columns": [
+            "owner_id"
+          ]
+        },
+        {
+          "name": "ix_activity_log_actor_id",
+          "def": "CREATE INDEX ix_activity_log_actor_id ON public.activity_log USING btree (actor_id)",
+          "table": "public.activity_log",
+          "columns": [
+            "actor_id"
+          ]
+        },
+        {
+          "name": "ix_activity_log_entity_id",
+          "def": "CREATE INDEX ix_activity_log_entity_id ON public.activity_log USING btree (entity_id)",
+          "table": "public.activity_log",
+          "columns": [
+            "entity_id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "activity_log_action_not_null",
+          "type": "n",
+          "def": "NOT NULL action",
+          "table": "public.activity_log",
+          "referenced_table": "",
+          "columns": [
+            "action"
+          ]
+        },
+        {
+          "name": "activity_log_entity_id_not_null",
+          "type": "n",
+          "def": "NOT NULL entity_id",
+          "table": "public.activity_log",
+          "referenced_table": "",
+          "columns": [
+            "entity_id"
+          ]
+        },
+        {
+          "name": "activity_log_entity_type_not_null",
+          "type": "n",
+          "def": "NOT NULL entity_type",
+          "table": "public.activity_log",
+          "referenced_table": "",
+          "columns": [
+            "entity_type"
+          ]
+        },
+        {
+          "name": "activity_log_id_not_null",
+          "type": "n",
+          "def": "NOT NULL id",
+          "table": "public.activity_log",
+          "referenced_table": "",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "activity_log_occurred_at_not_null",
+          "type": "n",
+          "def": "NOT NULL occurred_at",
+          "table": "public.activity_log",
+          "referenced_table": "",
+          "columns": [
+            "occurred_at"
+          ]
+        },
+        {
+          "name": "activity_log_owner_id_not_null",
+          "type": "n",
+          "def": "NOT NULL owner_id",
+          "table": "public.activity_log",
+          "referenced_table": "",
+          "columns": [
+            "owner_id"
+          ]
+        },
+        {
+          "name": "activity_log_actor_id_fkey",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (actor_id) REFERENCES \"user\"(id) ON DELETE SET NULL",
+          "table": "public.activity_log",
+          "referenced_table": "public.user",
+          "columns": [
+            "actor_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "activity_log_owner_id_fkey",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (owner_id) REFERENCES \"user\"(id) ON DELETE CASCADE",
+          "table": "public.activity_log",
+          "referenced_table": "public.user",
+          "columns": [
+            "owner_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "activity_log_pkey",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "public.activity_log",
+          "referenced_table": "",
+          "columns": [
+            "id"
+          ]
+        }
+      ]
     }
   ],
   "relations": [
@@ -4207,6 +4398,32 @@
       ],
       "parent_cardinality": "exactly_one",
       "def": "FOREIGN KEY (interaction_id) REFERENCES interaction(id) ON DELETE CASCADE"
+    },
+    {
+      "table": "public.activity_log",
+      "columns": [
+        "actor_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.user",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "zero_or_one",
+      "def": "FOREIGN KEY (actor_id) REFERENCES \"user\"(id) ON DELETE SET NULL"
+    },
+    {
+      "table": "public.activity_log",
+      "columns": [
+        "owner_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.user",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (owner_id) REFERENCES \"user\"(id) ON DELETE CASCADE"
     }
   ],
   "functions": [
