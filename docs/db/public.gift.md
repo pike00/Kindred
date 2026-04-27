@@ -104,6 +104,7 @@ erDiagram
   timestamp_with_time_zone last_contacted_at
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
+  timestamp_with_time_zone deleted_at
 }
 ```
 

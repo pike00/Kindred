@@ -113,9 +113,11 @@ Table "contact" {
   "last_contacted_at" timestamptz
   "created_at" timestamptz [not null]
   "updated_at" timestamptz [not null]
+  "deleted_at" timestamptz
 
   Indexes {
     contact_frequency_days [type: btree, name: "ix_contact_contact_frequency_days"]
+    deleted_at [type: btree, name: "ix_contact_deleted_at"]
     is_archived [type: btree, name: "ix_contact_is_archived"]
     is_favorite [type: btree, name: "ix_contact_is_favorite"]
     owner_id [type: btree, name: "ix_contact_owner_id"]
@@ -408,6 +410,27 @@ Table "interaction_attendee" {
     contact_id [type: btree, name: "ix_interaction_attendee_contact_id"]
   }
 }
+
+Table "activity_log" {
+  "id" uuid [pk, not null]
+  "owner_id" uuid [not null]
+  "actor_id" uuid
+  "entity_type" varchar(64) [not null]
+  "entity_id" uuid [not null]
+  "action" varchar(32) [not null]
+  "changes_json" json
+  "occurred_at" timestamptz [not null]
+
+  Indexes {
+    actor_id [type: btree, name: "ix_activity_log_actor_id"]
+    entity_id [type: btree, name: "ix_activity_log_entity_id"]
+    owner_id [type: btree, name: "ix_activity_log_owner_id"]
+  }
+}
+
+Ref "activity_log_actor_id_fkey":"user"."id" < "activity_log"."actor_id" [delete: set null]
+
+Ref "activity_log_owner_id_fkey":"user"."id" < "activity_log"."owner_id" [delete: cascade]
 
 Ref "address_contact_id_fkey":"contact"."id" < "address"."contact_id" [delete: cascade]
 
