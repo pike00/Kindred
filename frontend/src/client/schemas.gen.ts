@@ -1128,6 +1128,33 @@ export const ContactPublicSchema = {
             format: 'date-time',
             title: 'Updated At'
         },
+        deleted_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Deleted At'
+        },
+        source_provider: {
+            '$ref': '#/components/schemas/ContactSource',
+            default: 'manual'
+        },
+        source_external_id: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Source External Id'
+        },
         tags: {
             items: {
                 '$ref': '#/components/schemas/TagPublic'
@@ -1148,6 +1175,12 @@ export const ContactPublicSchema = {
     type: 'object',
     required: ['first_name', 'id', 'avatar_url', 'last_contacted_at', 'created_at', 'updated_at'],
     title: 'ContactPublic'
+} as const;
+
+export const ContactSourceSchema = {
+    type: 'string',
+    enum: ['manual', 'google', 'icloud'],
+    title: 'ContactSource'
 } as const;
 
 export const ContactUpdateSchema = {

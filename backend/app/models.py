@@ -155,6 +155,12 @@ class MediaCategory(str, enum.Enum):
     OTHER = "other"
 
 
+class ContactSource(str, enum.Enum):
+    MANUAL = "manual"
+    GOOGLE = "google"
+    ICLOUD = "icloud"
+
+
 # ─── Tag ──────────────────────────────────────────────────────────────────────
 
 
@@ -486,6 +492,22 @@ class Contact(ContactBase, table=True):
         max_length=255,
         description="ETag from the CardDAV server for incremental sync.",
     )
+    # Provenance for re-import dedup (Google People API, iCloud CardDAV, manual entry)
+    source_provider: ContactSource = Field(
+        default=ContactSource.MANUAL,
+        nullable=False,
+        index=True,
+        description="Origin of this contact; used to dedup on re-import.",
+    )
+    source_external_id: str | None = Field(
+        default=None,
+        max_length=255,
+        index=True,
+        description=(
+            "Provider-issued stable ID (Google resourceName, iCloud UID). "
+            "Unique per (owner_id, source_provider) when set."
+        ),
+    )
     # Avatar stored as file path or URL
     avatar_url: str | None = Field(
         default=None,
@@ -534,6 +556,8 @@ class ContactPublic(ContactBase):
     created_at: datetime
     updated_at: datetime
     deleted_at: datetime | None = None
+    source_provider: ContactSource = ContactSource.MANUAL
+    source_external_id: str | None = None
     tags: list[TagPublic] = []
     groups: list[GroupPublic] = []
 
