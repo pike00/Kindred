@@ -1,12 +1,11 @@
 ---
 title: Google / iCloud OAuth Contact Import
 status: in-progress
-progress: 1/10
+progress: 2/10
 repos: [personal-crm]
 started: 2026-04-21
 last_updated: 2026-04-28
-next_step: Patch e5f6a7b8c9d0 downgrade() (drop explicit enum .drop()), then run pytest tests/api/routes/test_contact_imports.py to confirm the OAuth slice
-blocker: Task-2 OAuth code is scaffolded but unverified — last test run failed in alembic upgrade (DuplicateObject on `oauthprovider`); upgrade() patched, downgrade() patch was rejected mid-edit; tests have not been re-run end-to-end
+next_step: Implement task 3 — Google People API delta sync (use stored credential + syncToken to fetch contacts, map People API names/emails/phones into Contact + ContactField rows)
 ---
 
 # Google / iCloud OAuth Contact Import
@@ -16,7 +15,7 @@ Enable one-click seeding of contacts from Google Contacts and iCloud. Implement 
 
 ## Tasks
 - [x] Design contact provenance tracking: add source_provider (enum: google, icloud, manual) and source_external_id (string, indexed) to Contact model; migration + schema updates
-- [ ] Implement Google People API OAuth flow: authorize, exchange code for token, store refresh token in user secrets
+- [x] Implement Google People API OAuth flow: authorize, exchange code for token, store refresh token in user secrets
 - [ ] Implement Google incremental sync: use syncToken from previous run to fetch deltas; map People API names/emails/phones to Contact fields
 - [ ] Add iCloud CardDAV login (email + app-specific password, no OAuth): enumerate addressbooks, fetch vCard collection, parse into Contact fields
 - [ ] Build import preview UI: show incoming contacts side-by-side with existing matches (via name/email dedup heuristic), allow user to select merge or create behavior
@@ -34,8 +33,8 @@ Enable one-click seeding of contacts from Google Contacts and iCloud. Implement 
 - Wrote and verified Alembic migration `d4e5f6a7b8c9` (full chain + downgrade roundtrip green on ephemeral postgres).
 - Updated `ContactPublic` to surface the new fields with safe defaults.
 - Started task 2/10: scaffolded the Google OAuth slice end-to-end — `GOOGLE_OAUTH_*` settings + `google_import_enabled` computed field, `core/crypto.py` (Fernet derived from SECRET_KEY via HKDF-SHA256), `OAuthCredential` model + `OAuthProvider` enum, migration `e5f6a7b8c9d0_add_oauth_credential.py`, route `backend/app/api/routes/contact_imports.py` with POST `/google/authorize` (returns Google consent URL + JWT state) and POST `/google/exchange` (exchanges code via httpx, stores encrypted refresh + access tokens), router mounted in `api/main.py`, 10 pytest cases covering 503-when-unconfigured / state binding / state rejection / token persistence / overwrite-on-reconnect / Google failure paths.
-- WIP gotcha: alembic upgrade failed with `psycopg.errors.DuplicateObject: type "oauthprovider" already exists` because the migration both called `OAUTH_PROVIDER.create()` AND let SQLAlchemy auto-create the type during `op.create_table()`. Patched `upgrade()` to match the project pattern (inline `sa.Enum(...)` in the column, no explicit `.create()`); `downgrade()` patch was rejected mid-edit and still has `OAUTH_PROVIDER.drop` call referencing a now-undefined name — must be replaced with `sa.Enum(name="oauthprovider").drop(op.get_bind(), checkfirst=False)` before the migration roundtrips clean.
-- Tests NOT verified to pass — re-run after the downgrade patch lands. Architectural choices for the OAuth surface (frontend-callback + backend exchange POST; full slice in this task) were confirmed with the user via question prompts before implementation.
+- Migration enum-double-create gotcha: alembic upgrade initially failed with `psycopg.errors.DuplicateObject: type "oauthprovider" already exists` because the first draft both called `OAUTH_PROVIDER.create()` AND let SQLAlchemy auto-create the type during `op.create_table()`. Fix: declare the enum inline in the column (`sa.Enum("GOOGLE", name="oauthprovider")`), drop the standalone create/drop calls, mirror the `media_recommendation` pattern. Final downgrade uses `sa.Enum(name="oauthprovider").drop(op.get_bind(), checkfirst=False)`.
+- Verified end-to-end: alembic chain `e2412...` → `e5f6a7b8c9d0` upgrades clean, all 10 OAuth pytest cases pass (503-when-unconfigured, authorize URL contents, state JWT binds user+provider, 3 state-rejection paths, exchange persists with encrypted tokens, exchange overwrites in place, 2 Google-failure paths). Architectural choices for the OAuth surface (frontend-callback + backend exchange POST; full slice in this task) were confirmed with the user via question prompts before implementation.
 
 ### 2026-04-23
 - Project created. README written.
@@ -44,6 +43,17 @@ Enable one-click seeding of contacts from Google Contacts and iCloud. Implement 
 - Project created.
 
 ## Notes
+
+### 2026-04-28 (task 2 verified)
+- **Decisions:** none new — confirmed prior architectural choices held up under test.
+- **Gotchas:**
+  - The `cd` in a Bash compound command does not persist across separate Bash tool calls — each invocation starts in the original cwd. After the worktree session ended (between `/project-save` and resume), cwd reverted to the main repo and the test command initially failed with `file or directory not found` because `tests/api/routes/test_contact_imports.py` only exists in the worktree. Fix: prepend `cd <worktree>` to the same command line.
+- **Issues (open):** none for the OAuth slice itself. Implementation files (model + migration + crypto + route + tests) are still uncommitted on `worktree-google-icloud-oauth-import` — the README commits don't carry the code.
+- **Accomplished this turn:**
+  - Pushed `worktree-google-icloud-oauth-import` to origin.
+  - Verified migration enum-double-create fix end-to-end on ephemeral postgres: full alembic chain `e2412...` → `e5f6a7b8c9d0` runs clean.
+  - Ran `pytest tests/api/routes/test_contact_imports.py -v` against the ephemeral DB: **10 passed in 0.35s** (503-when-unconfigured, authorize URL params, state binds user+provider, 4 state-rejection paths, exchange persists with encrypted tokens, exchange overwrites in place, two Google-failure paths).
+  - Ephemeral DB / network / image torn down after verification.
 
 ### 2026-04-28 (task 2 WIP)
 - **Decisions:**
