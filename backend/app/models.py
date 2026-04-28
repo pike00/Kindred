@@ -161,6 +161,15 @@ class ContactSource(str, enum.Enum):
     ICLOUD = "icloud"
 
 
+class OAuthProvider(str, enum.Enum):
+    """External OAuth providers from which contacts can be imported.
+
+    iCloud uses an app-specific password (no OAuth) and is intentionally absent.
+    """
+
+    GOOGLE = "google"
+
+
 # ─── Tag ──────────────────────────────────────────────────────────────────────
 
 
@@ -1732,6 +1741,90 @@ class ActivityLogPublic(SQLModel):
 class ActivityLogsPublic(SQLModel):
     data: list[ActivityLogPublic]
     count: int
+
+
+# ─── OAuthCredential (per-user, per-provider import tokens) ──────────────────
+
+
+class OAuthCredential(SQLModel, table=True):
+    """Encrypted OAuth refresh/access tokens for an import provider."""
+
+    __tablename__ = "oauth_credential"
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
+    user_id: uuid.UUID = Field(
+        foreign_key="user.id",
+        nullable=False,
+        ondelete="CASCADE",
+        index=True,
+        description="Owner user; cascades on delete.",
+    )
+    provider: OAuthProvider = Field(
+        nullable=False,
+        index=True,
+        description="External provider this credential belongs to.",
+    )
+    encrypted_refresh_token: str = Field(
+        nullable=False,
+        description="Fernet-encrypted refresh token (base64 ascii).",
+    )
+    encrypted_access_token: str | None = Field(
+        default=None,
+        description="Fernet-encrypted access token; refreshed before expiry.",
+    )
+    access_token_expires_at: datetime | None = Field(
+        default=None,
+        sa_type=DateTime(timezone=True),  # type: ignore
+        description="When the cached access token expires (UTC).",
+    )
+    scopes: str = Field(
+        default="",
+        max_length=2000,
+        description="Space-separated OAuth scopes granted at consent time.",
+    )
+    sync_token: str | None = Field(
+        default=None,
+        max_length=4000,
+        description="Provider sync cursor (Google People API syncToken).",
+    )
+    last_synced_at: datetime | None = Field(
+        default=None,
+        sa_type=DateTime(timezone=True),  # type: ignore
+        description="When the last successful sync completed (UTC).",
+    )
+    created_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+        nullable=False,
+        description="When the credential was first stored (UTC).",
+    )
+    updated_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+        sa_column_kwargs={"onupdate": get_datetime_utc},
+        nullable=False,
+        description="Auto-bumped on any column change (UTC).",
+    )
+
+    __table_args__ = (
+        sa.UniqueConstraint(
+            "user_id", "provider", name="uq_oauth_credential_user_provider"
+        ),
+    )
+
+
+class OAuthCredentialPublic(SQLModel):
+    """Connection status surfaced to the frontend (never includes tokens)."""
+
+    provider: OAuthProvider
+    scopes: list[str]
+    last_synced_at: datetime | None
+    created_at: datetime
+    updated_at: datetime
 
 
 # Generic message

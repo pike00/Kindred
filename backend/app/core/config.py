@@ -139,5 +139,20 @@ class Settings(BaseSettings):
             )
         return self
 
+    # Google People API import (separate from OIDC login). All three must be
+    # set to enable the import endpoints; otherwise /authorize 503s.
+    GOOGLE_OAUTH_CLIENT_ID: str = ""
+    GOOGLE_OAUTH_CLIENT_SECRET: str = ""
+    GOOGLE_OAUTH_REDIRECT_URI: str = ""
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def google_import_enabled(self) -> bool:
+        return bool(
+            self.GOOGLE_OAUTH_CLIENT_ID
+            and self.GOOGLE_OAUTH_CLIENT_SECRET
+            and self.GOOGLE_OAUTH_REDIRECT_URI
+        )
+
 
 settings = Settings()  # type: ignore

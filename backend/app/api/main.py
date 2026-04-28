@@ -4,6 +4,7 @@ from app.api.routes import (
     activity_logs,
     addresses,
     contact_fields,
+    contact_imports,
     contacts,
     custom_fields,
     debts,
@@ -52,6 +53,7 @@ api_router.include_router(notes.router)
 api_router.include_router(media_recommendations.router)
 api_router.include_router(journal.router)
 api_router.include_router(import_export.router)
+api_router.include_router(contact_imports.router)
 api_router.include_router(webhooks.router)
 api_router.include_router(activity_logs.router)
 

@@ -116,6 +116,11 @@ export type AddressUpdate = {
     longitude?: (number | null);
 };
 
+export type AuthorizeResponse = {
+    authorize_url: string;
+    state: string;
+};
+
 export type Body_import_export_import_vcard = {
     file: (Blob | File);
 };
@@ -523,6 +528,11 @@ export type DebtUpdate = {
     reason?: (string | null);
     is_settled?: (boolean | null);
     settled_at?: (string | null);
+};
+
+export type ExchangeRequest = {
+    code: string;
+    state: string;
 };
 
 export type GiftCreate = {
@@ -944,6 +954,24 @@ export type NoteUpdate = {
     body?: (string | null);
 };
 
+/**
+ * Connection status surfaced to the frontend (never includes tokens).
+ */
+export type OAuthCredentialPublic = {
+    provider: OAuthProvider;
+    scopes: Array<(string)>;
+    last_synced_at: (string | null);
+    created_at: string;
+    updated_at: string;
+};
+
+/**
+ * External OAuth providers from which contacts can be imported.
+ *
+ * iCloud uses an app-specific password (no OAuth) and is intentionally absent.
+ */
+export type OAuthProvider = 'google';
+
 export type PetCreate = {
     /**
      * Pet's name.
@@ -1321,6 +1349,14 @@ export type ContactFieldsDeleteContactFieldData = {
 };
 
 export type ContactFieldsDeleteContactFieldResponse = (unknown);
+
+export type ContactImportsGoogleAuthorizeResponse = (AuthorizeResponse);
+
+export type ContactImportsGoogleExchangeData = {
+    requestBody: ExchangeRequest;
+};
+
+export type ContactImportsGoogleExchangeResponse = (OAuthCredentialPublic);
 
 export type ContactsListContactsData = {
     groupId?: (string | null);

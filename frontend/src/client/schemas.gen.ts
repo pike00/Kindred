@@ -434,6 +434,22 @@ export const AddressUpdateSchema = {
     title: 'AddressUpdate'
 } as const;
 
+export const AuthorizeResponseSchema = {
+    properties: {
+        authorize_url: {
+            type: 'string',
+            title: 'Authorize Url'
+        },
+        state: {
+            type: 'string',
+            title: 'State'
+        }
+    },
+    type: 'object',
+    required: ['authorize_url', 'state'],
+    title: 'AuthorizeResponse'
+} as const;
+
 export const Body_import_export_import_vcardSchema = {
     properties: {
         file: {
@@ -1938,6 +1954,22 @@ export const DebtsPublicSchema = {
     title: 'DebtsPublic'
 } as const;
 
+export const ExchangeRequestSchema = {
+    properties: {
+        code: {
+            type: 'string',
+            title: 'Code'
+        },
+        state: {
+            type: 'string',
+            title: 'State'
+        }
+    },
+    type: 'object',
+    required: ['code', 'state'],
+    title: 'ExchangeRequest'
+} as const;
+
 export const GiftCreateSchema = {
     properties: {
         name: {
@@ -3360,6 +3392,56 @@ export const NotesPublicSchema = {
     type: 'object',
     required: ['data', 'count'],
     title: 'NotesPublic'
+} as const;
+
+export const OAuthCredentialPublicSchema = {
+    properties: {
+        provider: {
+            '$ref': '#/components/schemas/OAuthProvider'
+        },
+        scopes: {
+            items: {
+                type: 'string'
+            },
+            type: 'array',
+            title: 'Scopes'
+        },
+        last_synced_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Last Synced At'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        },
+        updated_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Updated At'
+        }
+    },
+    type: 'object',
+    required: ['provider', 'scopes', 'last_synced_at', 'created_at', 'updated_at'],
+    title: 'OAuthCredentialPublic',
+    description: 'Connection status surfaced to the frontend (never includes tokens).'
+} as const;
+
+export const OAuthProviderSchema = {
+    type: 'string',
+    enum: ['google'],
+    title: 'OAuthProvider',
+    description: `External OAuth providers from which contacts can be imported.
+
+iCloud uses an app-specific password (no OAuth) and is intentionally absent.`
 } as const;
 
 export const PetCreateSchema = {
