@@ -27,6 +27,10 @@ Enable one-click seeding of contacts from Google Contacts and iCloud. Implement 
 
 ## Session Log
 
+### 2026-04-28 (pushed)
+- Committed and pushed all task 1 and task 2 code post-verification: provenance schema migration + model fields (`4e52505`), Google OAuth routes + crypto helpers + 10 tests (`18dd683`), db-docs regeneration (`fc56c06`).
+- Branch `worktree-google-icloud-oauth-import` clean and fully pushed to origin.
+
 ### 2026-04-28
 - Loaded project state, verified live codebase had no provenance work yet.
 - Implemented task 1/10: `ContactSource` enum + `source_provider` / `source_external_id` columns on Contact, with composite partial-unique index for cross-provider re-import dedup.
@@ -43,6 +47,9 @@ Enable one-click seeding of contacts from Google Contacts and iCloud. Implement 
 - Project created.
 
 ## Notes
+
+### 2026-04-28 (pushed)
+- **Accomplished:** 3 commits pushed post-verification — provenance schema (`4e52505`), OAuth endpoints + tests (`18dd683`), db-docs (`fc56c06`). Worktree clean. No new issues or decisions.
 
 ### 2026-04-28 (task 2 verified)
 - **Decisions:** none new — confirmed prior architectural choices held up under test.
