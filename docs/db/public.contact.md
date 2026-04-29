@@ -34,6 +34,8 @@ Core contact entity — the subject of everything else in the CRM.
 | created_at | timestamp with time zone |  | false |  |  | When the contact was created (UTC). |
 | updated_at | timestamp with time zone |  | false |  |  | Auto-bumped on any column change (UTC). |
 | deleted_at | timestamp with time zone |  | true |  |  |  |
+| source_provider | contactsource | 'MANUAL'::contactsource | false |  |  |  |
+| source_external_id | varchar(255) |  | true |  |  |  |
 
 ## Constraints
 
@@ -46,6 +48,7 @@ Core contact entity — the subject of everything else in the CRM.
 | contact_is_deceased_not_null | n | NOT NULL is_deceased |
 | contact_is_favorite_not_null | n | NOT NULL is_favorite |
 | contact_owner_id_not_null | n | NOT NULL owner_id |
+| contact_source_provider_not_null | n | NOT NULL source_provider |
 | contact_updated_at_not_null | n | NOT NULL updated_at |
 | contact_owner_id_fkey | FOREIGN KEY | FOREIGN KEY (owner_id) REFERENCES "user"(id) ON DELETE CASCADE |
 | contact_pkey | PRIMARY KEY | PRIMARY KEY (id) |
@@ -60,6 +63,9 @@ Core contact entity — the subject of everything else in the CRM.
 | ix_contact_owner_id | CREATE INDEX ix_contact_owner_id ON public.contact USING btree (owner_id) |
 | ix_contact_contact_frequency_days | CREATE INDEX ix_contact_contact_frequency_days ON public.contact USING btree (contact_frequency_days) |
 | ix_contact_deleted_at | CREATE INDEX ix_contact_deleted_at ON public.contact USING btree (deleted_at) |
+| ix_contact_source_provider | CREATE INDEX ix_contact_source_provider ON public.contact USING btree (source_provider) |
+| ix_contact_source_external_id | CREATE INDEX ix_contact_source_external_id ON public.contact USING btree (source_external_id) |
+| ux_contact_owner_provider_external | CREATE UNIQUE INDEX ux_contact_owner_provider_external ON public.contact USING btree (owner_id, source_provider, source_external_id) WHERE (source_external_id IS NOT NULL) |
 
 ## Relations
 
@@ -110,6 +116,8 @@ erDiagram
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
   timestamp_with_time_zone deleted_at
+  contactsource source_provider
+  varchar_255_ source_external_id
 }
 "public.contact_tag" {
   uuid contact_id FK

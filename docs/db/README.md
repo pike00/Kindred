@@ -8,7 +8,7 @@
 | [public.user](public.user.md) | 9 | Authenticated user; tenant-scope owner of every row below. | BASE TABLE |
 | [public.tag](public.tag.md) | 5 | User-defined tag for grouping contacts. | BASE TABLE |
 | [public.group](public.group.md) | 5 | Named collection of contacts (e.g. 'Family', 'Work Team'). | BASE TABLE |
-| [public.contact](public.contact.md) | 26 | Core contact entity — the subject of everything else in the CRM. | BASE TABLE |
+| [public.contact](public.contact.md) | 28 | Core contact entity — the subject of everything else in the CRM. | BASE TABLE |
 | [public.contact_tag](public.contact_tag.md) | 2 | Many-to-many link between contacts and tags. | BASE TABLE |
 | [public.contact_group](public.contact_group.md) | 2 | Many-to-many link between contacts and groups. | BASE TABLE |
 | [public.contact_field](public.contact_field.md) | 7 | Flexible contact info (emails, phones) attached to a contact. | BASE TABLE |
@@ -29,6 +29,7 @@
 | [public.media_recommendation](public.media_recommendation.md) | 10 | Media (book, show, podcast, etc.) recommended to or by a contact. | BASE TABLE |
 | [public.interaction_attendee](public.interaction_attendee.md) | 2 | Many-to-many link between interactions and contacts (attendees). | BASE TABLE |
 | [public.activity_log](public.activity_log.md) | 8 |  | BASE TABLE |
+| [public.oauth_credential](public.oauth_credential.md) | 11 |  | BASE TABLE |
 
 ## Stored procedures and functions
 
@@ -50,10 +51,12 @@
 | Name | Values |
 | ---- | ------- |
 | public.contactfieldtype | EMAIL, PHONE |
+| public.contactsource | GOOGLE, ICLOUD, MANUAL |
 | public.debtdirection | I_OWE, THEY_OWE |
 | public.giftstatus | GIVEN, IDEA, RECEIVED |
 | public.interactionchannel | CALL, EMAIL, IN_PERSON, OTHER, SOCIAL, TEXT, VIDEO |
 | public.mediacategory | BOOK, MOVIE, MUSICIAN, OTHER, PODCAST, TV_SHOW |
+| public.oauthprovider | GOOGLE |
 | public.reminderfrequency | DAILY, MONTHLY, ONCE, WEEKLY, YEARLY |
 
 ## Relations
@@ -97,6 +100,7 @@ erDiagram
 "public.interaction_attendee" }o--|| "public.interaction" : "FOREIGN KEY (interaction_id) REFERENCES interaction(id) ON DELETE CASCADE"
 "public.activity_log" }o--o| "public.user" : "FOREIGN KEY (actor_id) REFERENCES #quot;user#quot;(id) ON DELETE SET NULL"
 "public.activity_log" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
+"public.oauth_credential" }o--|| "public.user" : "FOREIGN KEY (user_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 
 "public.alembic_version" {
   varchar_32_ version_num
@@ -153,6 +157,8 @@ erDiagram
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
   timestamp_with_time_zone deleted_at
+  contactsource source_provider
+  varchar_255_ source_external_id
 }
 "public.contact_tag" {
   uuid contact_id FK
@@ -334,6 +340,19 @@ erDiagram
   varchar_32_ action
   json changes_json
   timestamp_with_time_zone occurred_at
+}
+"public.oauth_credential" {
+  uuid id
+  uuid user_id FK
+  oauthprovider provider
+  varchar encrypted_refresh_token
+  varchar encrypted_access_token
+  timestamp_with_time_zone access_token_expires_at
+  varchar_2000_ scopes
+  varchar_4000_ sync_token
+  timestamp_with_time_zone last_synced_at
+  timestamp_with_time_zone created_at
+  timestamp_with_time_zone updated_at
 }
 ```
 

@@ -3,6 +3,12 @@ Enum "contactfieldtype" {
   "PHONE"
 }
 
+Enum "contactsource" {
+  "MANUAL"
+  "GOOGLE"
+  "ICLOUD"
+}
+
 Enum "debtdirection" {
   "I_OWE"
   "THEY_OWE"
@@ -31,6 +37,10 @@ Enum "mediacategory" {
   "MUSICIAN"
   "BOOK"
   "OTHER"
+}
+
+Enum "oauthprovider" {
+  "GOOGLE"
 }
 
 Enum "reminderfrequency" {
@@ -114,13 +124,18 @@ Table "contact" {
   "created_at" timestamptz [not null]
   "updated_at" timestamptz [not null]
   "deleted_at" timestamptz
+  "source_provider" contactsource [not null, default: 'MANUAL']
+  "source_external_id" varchar(255)
 
   Indexes {
+    (owner_id, source_provider, source_external_id) [type: btree, unique, name: "ux_contact_owner_provider_external"]
     contact_frequency_days [type: btree, name: "ix_contact_contact_frequency_days"]
     deleted_at [type: btree, name: "ix_contact_deleted_at"]
     is_archived [type: btree, name: "ix_contact_is_archived"]
     is_favorite [type: btree, name: "ix_contact_is_favorite"]
     owner_id [type: btree, name: "ix_contact_owner_id"]
+    source_external_id [type: btree, name: "ix_contact_source_external_id"]
+    source_provider [type: btree, name: "ix_contact_source_provider"]
   }
 }
 
@@ -428,6 +443,26 @@ Table "activity_log" {
   }
 }
 
+Table "oauth_credential" {
+  "id" uuid [pk, not null]
+  "user_id" uuid [not null]
+  "provider" oauthprovider [not null]
+  "encrypted_refresh_token" varchar [not null]
+  "encrypted_access_token" varchar
+  "access_token_expires_at" timestamptz
+  "scopes" varchar(2000) [not null, default: '']
+  "sync_token" varchar(4000)
+  "last_synced_at" timestamptz
+  "created_at" timestamptz [not null]
+  "updated_at" timestamptz [not null]
+
+  Indexes {
+    (user_id, provider) [type: btree, unique, name: "uq_oauth_credential_user_provider"]
+    provider [type: btree, name: "ix_oauth_credential_provider"]
+    user_id [type: btree, name: "ix_oauth_credential_user_id"]
+  }
+}
+
 Ref "activity_log_actor_id_fkey":"user"."id" < "activity_log"."actor_id" [delete: set null]
 
 Ref "activity_log_owner_id_fkey":"user"."id" < "activity_log"."owner_id" [delete: cascade]
@@ -481,6 +516,8 @@ Ref "media_recommendation_owner_id_fkey":"user"."id" < "media_recommendation"."o
 Ref "note_contact_id_fkey":"contact"."id" < "note"."contact_id" [delete: cascade]
 
 Ref "note_owner_id_fkey":"user"."id" < "note"."owner_id" [delete: cascade]
+
+Ref "oauth_credential_user_id_fkey":"user"."id" < "oauth_credential"."user_id" [delete: cascade]
 
 Ref "pet_contact_id_fkey":"contact"."id" < "pet"."contact_id" [delete: cascade]
 
