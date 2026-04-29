@@ -204,7 +204,7 @@ function ContactDetailPage() {
         {/* Right column (1/3 width) */}
         <div className="space-y-6">
           <div className="flex justify-end">
-            <AddInteractionDialog contactId={contactId} />
+            <AddInteractionDialog seedContact={contact} />
           </div>
 
           {/* Tags */}
