@@ -1,10 +1,11 @@
 ---
 title: Google / iCloud OAuth Contact Import
-status: active
+status: in-progress
+progress: 2/10
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-04-23
-next_step: Design contact provenance tracking schema (source provider + external ID columns)
+last_updated: 2026-04-28
+next_step: Implement task 3 — Google People API delta sync (use stored credential + syncToken to fetch contacts, map People API names/emails/phones into Contact + ContactField rows)
 ---
 
 # Google / iCloud OAuth Contact Import
@@ -13,8 +14,8 @@ next_step: Design contact provenance tracking schema (source provider + external
 Enable one-click seeding of contacts from Google Contacts and iCloud. Implement provenance tracking so re-running the import doesn't create duplicates. Support incremental syncing for Google (via syncToken) and iCloud (via app-specific passwords and CardDAV).
 
 ## Tasks
-- [ ] Design contact provenance tracking: add source_provider (enum: google, icloud, manual) and source_external_id (string, indexed) to Contact model; migration + schema updates
-- [ ] Implement Google People API OAuth flow: authorize, exchange code for token, store refresh token in user secrets
+- [x] Design contact provenance tracking: add source_provider (enum: google, icloud, manual) and source_external_id (string, indexed) to Contact model; migration + schema updates
+- [x] Implement Google People API OAuth flow: authorize, exchange code for token, store refresh token in user secrets
 - [ ] Implement Google incremental sync: use syncToken from previous run to fetch deltas; map People API names/emails/phones to Contact fields
 - [ ] Add iCloud CardDAV login (email + app-specific password, no OAuth): enumerate addressbooks, fetch vCard collection, parse into Contact fields
 - [ ] Build import preview UI: show incoming contacts side-by-side with existing matches (via name/email dedup heuristic), allow user to select merge or create behavior
@@ -26,6 +27,12 @@ Enable one-click seeding of contacts from Google Contacts and iCloud. Implement 
 
 ## Session Log
 
+### 2026-04-28
+- Implemented tasks 1 and 2 on worktree branch `worktree-google-icloud-oauth-import` (not yet merged to main).
+- Task 1 (`4e52505`): `ContactSource` enum, `source_provider`/`source_external_id` columns, partial unique index `ux_contact_owner_provider_external`, migration `d4e5f6a7b8c9`.
+- Task 2 (`18dd683`): Google OAuth authorize/exchange routes, `core/crypto.py` (Fernet+HKDF-SHA256), `OAuthCredential` model, migration `e5f6a7b8c9d0`, 10 passing tests.
+- db-docs regenerated (`fc56c06`). All pushed to origin.
+
 ### 2026-04-23
 - Project created. README written.
 
@@ -33,6 +40,12 @@ Enable one-click seeding of contacts from Google Contacts and iCloud. Implement 
 - Project created.
 
 ## Notes
+
+### 2026-04-28
+- **Accomplished:** Tasks 1 and 2 shipped on `worktree-google-icloud-oauth-import` branch (not yet merged to main). Provenance schema + Fernet crypto helpers + OAuth credential model + Google authorize/exchange routes + 10 tests, all committed and pushed.
+- **Decisions:** Work lives in a git worktree; merge to main after task 3+ complete. Code is accessible via `git show worktree-google-icloud-oauth-import:<path>`.
+- **Gotchas:** `sa.Enum(...).create()` + `op.create_table()` both emit `CREATE TYPE` — DuplicateObject. Fix: declare enum inline in column, no standalone create. Pattern from `media_recommendation` migration.
+
 - **Contact provenance hard dependency:** Requires Contact.source_provider (enum) and Contact.source_external_id (string, unique per provider per user) columns. See [models.py Contact definition](../../../backend/app/models.py) lines 465-520. Without this, re-run deduping is manual and error-prone.
 - **iCloud requires app-specific password:** iCloud.com does not support standard OAuth for CardDAV. User must generate an app-specific password in iCloud account settings. Store securely; rotate periodically. No long-lived refresh token like Google.
 - **Google People API syncToken:** Each sync response includes a syncToken. Store it per user (e.g., in a sync_metadata table or encrypted in User). Next sync request passes syncToken to get only deltas since last run. Full sync (no token) on first import takes longer but ensures completeness.
