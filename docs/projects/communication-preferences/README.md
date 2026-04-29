@@ -26,7 +26,9 @@ Replace free-text `how_we_met` narrative with structured communication metadata:
 ### 2026-04-28
 - Loaded as prerequisite for stay-in-touch-dashboard, which is now blocked on shipping this. Status flipped active → paused; verified pristine starting state — no `CommunicationPreference` model, table, migration, or related fields exist anywhere in `backend/`.
 - Brainstorm initiated but paused before clarifying questions; design decisions not yet locked.
-- **Next:** Resume brainstorm to lock design (separate table vs columns on Contact, replace-vs-coexist with `how_we_met`, dashboard widget scope, reminder-suppression interaction with `is_deceased`); then write spec + plan; ship before unblocking stay-in-touch-dashboard.
+- Resumed context exploration: Alembic head confirmed as `f5a6b7c8d9e0`; `check_cadences` (worker.py:89) is the cadence overdue function (distinct from `check_reminders`) — both need `do_not_contact` filtering.
+- Asked Q1 (separate `communication_preference` table vs. columns on Contact); user saved before answering.
+- **Next:** Resume brainstorm — answer Q1, then how_we_met treatment, dashboard widget scope, timezone placement; write spec + plan.
 
 ### 2026-04-21
 - Project created.
@@ -38,7 +40,8 @@ Replace free-text `how_we_met` narrative with structured communication metadata:
 - **Discrepancies:** None (no false claims in the README).
 - **Verified clean:** `backend/app/models.py` and `worker.py` exist; `frontend/src/components/Contacts/EditContactDialog.tsx` exists (correct attach point for the new form section); `InteractionChannel` enum at `models.py:126-133` confirmed; `how_we_met` field present on Contact model (lines 403, 454); ARQ worker `check_reminders` exists with no `do_not_contact` filter yet (correct starting state for task 6); no `CommunicationPreference` model/table or related migrations exist anywhere in `backend/` (correct starting state for tasks 1-3).
 - **Decisions:** Promoted to prerequisite-of-record for stay-in-touch-dashboard; that project is now formally `blocked` on shipping the full scope here (preferred_channel + best_time_local + do_not_contact + reason + reminder suppression). User explicitly rejected the do_not_contact-only thin slice in favor of full scope.
-- **Issues:** Brainstorm interrupted before any clarifying question was answered. Open design questions: (a) separate `communication_preference` table vs. columns on `contact`, (b) does `how_we_met` get removed/migrated/coexist, (c) does the dashboard widget belong in this spec or split into a follow-up, (d) reminder-suppression composition with the existing `is_deceased` check, (e) does this also add `timezone` to Contact (Notes flag this as ambiguous).
+- **Issues:** Q1 (schema: separate table vs columns) not yet answered — brainstorm resumes here. Remaining open: (b) how_we_met treatment, (c) dashboard widget scope, (d) reminder-suppression composition with `is_deceased`, (e) timezone field placement.
+- **Gotchas:** `check_cadences` (worker.py:89) is the cadence overdue notification function — distinct from `check_reminders` (Reminder record handler). Both need `do_not_contact` filtering once comm-prefs ships. Neither currently checks `is_deceased` either.
 - **Accomplished:** Worktree created at `.claude/worktrees/communication-preferences`; README state-synced; pristine starting state confirmed across backend models, migrations, ARQ worker, and frontend dialog; relevant code locations cataloged in Notes.
 
 - **InteractionChannel enum:** [Defined in models.py](../../../backend/app/models.py) lines 126-133; values are CALL, IN_PERSON, TEXT, EMAIL, VIDEO, SOCIAL, OTHER. Communication preferences will reuse this to keep sync between interaction tracking and preferred contact method.
