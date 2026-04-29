@@ -1,0 +1,187 @@
+# Per-worktree dev stack — Traefik-routed by default, fresh DB per worktree.
+#
+# Each worktree gets its own URL: https://${SLUG}.kindred.${DOMAIN}, where
+# ${SLUG} is the worktree directory name (e.g. audit-log-shared-data).
+# Routing happens via the homelab Traefik on pikenet-private, exactly like
+# the prod stack at kindred.${DOMAIN}.
+#
+# Host ports are ALSO published (offset-based) for direct CLI access:
+#   psql -h localhost -p ${DB_PORT}   redis-cli -p ${REDIS_PORT}
+#   curl http://localhost:${BACKEND_PORT}/api/v1/utils/health-check/
+#
+# Driven by the just recipes (`just up` / `just down` / etc), which compute
+# SLUG, WORKTREE_HOST, COMPOSE_PROJECT_NAME, and the *_PORT env vars from the
+# current worktree's directory name. Volumes are project-namespaced (not
+# external) so each worktree gets a fresh Postgres / Redis / Meili dataset.
+# Run `just down-clean` to delete those volumes.
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file: .env
+    environment:
+      # Override prod values from .env: ENVIRONMENT=local relaxes the
+      # default-secret check; FRONTEND_HOST drives `all_cors_origins` in
+      # config.py so the worktree URL is auto-allowed for CORS.
+      - ENVIRONMENT=local
+      - FRONTEND_HOST=https://${WORKTREE_HOST:?run via 'just up' so WORKTREE_HOST is set}
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    volumes:
+      - ./backend/app:/app/backend/app
+      - ./backend/scripts:/app/backend/scripts
+      - ./backend/tests:/app/backend/tests
+      - ./backend/alembic.ini:/app/backend/alembic.ini:ro
+    working_dir: /app/backend
+    command: ["bash", "-c", "bash scripts/prestart.sh && fastapi run --reload app/main.py"]
+    networks:
+      - default
+      - pikenet-private
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=pikenet-private"
+      - "traefik.http.routers.${SLUG:?}-api.rule=Host(`${WORKTREE_HOST}`) && (PathPrefix(`/api`) || PathPrefix(`/docs`) || PathPrefix(`/redoc`) || PathPrefix(`/openapi.json`) || PathPrefix(`/dav`) || PathPrefix(`/.well-known`))"
+      - "traefik.http.routers.${SLUG}-api.entrypoints=websecure"
+      - "traefik.http.routers.${SLUG}-api.tls=true"
+      # Force Traefik to obtain *.kindred.${DOMAIN} via DNS-01 the first time
+      # any worktree starts. Once minted, all worktree subdomains share the
+      # same wildcard cert.
+      - "traefik.http.routers.${SLUG}-api.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.${SLUG}-api.tls.domains[0].main=*.kindred.${DOMAIN}"
+      - "traefik.http.services.${SLUG}-api.loadbalancer.server.port=8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/utils/health-check/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    image: oven/bun:1
+    working_dir: /app/frontend
+    env_file: .env
+    environment:
+      # Browser hits https://${WORKTREE_HOST} → Traefik → frontend container,
+      # then the Vite app calls the same host for /api/* which Traefik routes
+      # to the backend. VITE_PUBLIC_HOST tells Vite the public hostname so
+      # HMR over wss connects back through Traefik instead of localhost.
+      - VITE_API_URL=https://${WORKTREE_HOST}
+      - VITE_PUBLIC_HOST=${WORKTREE_HOST}
+      - VITE_AUTH_MODE=${AUTH_MODE:-local}
+      - VITE_CF_LOGOUT_URL=${VITE_CF_LOGOUT_URL:-}
+    ports:
+      - "${FRONTEND_PORT:-5173}:5173"
+    volumes:
+      - ./package.json:/app/package.json:ro
+      - ./bun.lock:/app/bun.lock:ro
+      - ./frontend:/app/frontend
+      - frontend-node-modules:/app/frontend/node_modules
+    command:
+      - sh
+      - -c
+      - |
+        bun install --frozen-lockfile &&
+        bun run dev --host 0.0.0.0 --port 5173
+    networks:
+      - default
+      - pikenet-private
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=pikenet-private"
+      - "traefik.http.routers.${SLUG}.rule=Host(`${WORKTREE_HOST}`)"
+      - "traefik.http.routers.${SLUG}.entrypoints=websecure"
+      - "traefik.http.routers.${SLUG}.tls=true"
+      - "traefik.http.routers.${SLUG}.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.${SLUG}.tls.domains[0].main=*.kindred.${DOMAIN}"
+      - "traefik.http.services.${SLUG}.loadbalancer.server.port=5173"
+
+  db:
+    image: postgres:18-alpine
+    env_file: .env
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - "${DB_PORT:-15432}:5432"
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  worker:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: ["arq", "app.worker.WorkerSettings"]
+    env_file: .env
+    environment:
+      # Match backend overrides so emails / scheduled jobs reference the
+      # worktree's URL rather than the prod kindred.* hostname.
+      - ENVIRONMENT=local
+      - FRONTEND_HOST=https://${WORKTREE_HOST}
+    volumes:
+      - ./backend/app:/app/backend/app
+    working_dir: /app/backend
+    networks:
+      - default
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis-data:/data
+    ports:
+      - "${REDIS_PORT:-16379}:6379"
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.12
+    env_file: .env
+    environment:
+      - MEILI_ENV=development
+      - MEILI_NO_ANALYTICS=true
+      - MEILI_MASTER_KEY=${MEILI_MASTER_KEY}
+    volumes:
+      - meili-data:/meili_data
+    ports:
+      - "${MEILI_PORT:-17700}:7700"
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7700/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  db-data:
+  redis-data:
+  meili-data:
+  frontend-node-modules:
+
+networks:
+  default:
+  pikenet-private:
+    name: pikenet-private
+    external: true
