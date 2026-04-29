@@ -610,6 +610,17 @@
           "name": "deleted_at",
           "type": "timestamp with time zone",
           "nullable": true
+        },
+        {
+          "name": "source_provider",
+          "type": "contactsource",
+          "nullable": false,
+          "default": "'MANUAL'::contactsource"
+        },
+        {
+          "name": "source_external_id",
+          "type": "varchar(255)",
+          "nullable": true
         }
       ],
       "indexes": [
@@ -659,6 +670,32 @@
           "table": "public.contact",
           "columns": [
             "deleted_at"
+          ]
+        },
+        {
+          "name": "ix_contact_source_provider",
+          "def": "CREATE INDEX ix_contact_source_provider ON public.contact USING btree (source_provider)",
+          "table": "public.contact",
+          "columns": [
+            "source_provider"
+          ]
+        },
+        {
+          "name": "ix_contact_source_external_id",
+          "def": "CREATE INDEX ix_contact_source_external_id ON public.contact USING btree (source_external_id)",
+          "table": "public.contact",
+          "columns": [
+            "source_external_id"
+          ]
+        },
+        {
+          "name": "ux_contact_owner_provider_external",
+          "def": "CREATE UNIQUE INDEX ux_contact_owner_provider_external ON public.contact USING btree (owner_id, source_provider, source_external_id) WHERE (source_external_id IS NOT NULL)",
+          "table": "public.contact",
+          "columns": [
+            "owner_id",
+            "source_provider",
+            "source_external_id"
           ]
         }
       ],
@@ -731,6 +768,16 @@
           "referenced_table": "",
           "columns": [
             "owner_id"
+          ]
+        },
+        {
+          "name": "contact_source_provider_not_null",
+          "type": "n",
+          "def": "NOT NULL source_provider",
+          "table": "public.contact",
+          "referenced_table": "",
+          "columns": [
+            "source_provider"
           ]
         },
         {
@@ -3954,6 +4001,209 @@
           ]
         }
       ]
+    },
+    {
+      "name": "public.oauth_credential",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "user_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "provider",
+          "type": "oauthprovider",
+          "nullable": false
+        },
+        {
+          "name": "encrypted_refresh_token",
+          "type": "varchar",
+          "nullable": false
+        },
+        {
+          "name": "encrypted_access_token",
+          "type": "varchar",
+          "nullable": true
+        },
+        {
+          "name": "access_token_expires_at",
+          "type": "timestamp with time zone",
+          "nullable": true
+        },
+        {
+          "name": "scopes",
+          "type": "varchar(2000)",
+          "nullable": false,
+          "default": "''::character varying"
+        },
+        {
+          "name": "sync_token",
+          "type": "varchar(4000)",
+          "nullable": true
+        },
+        {
+          "name": "last_synced_at",
+          "type": "timestamp with time zone",
+          "nullable": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": false
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "nullable": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "oauth_credential_pkey",
+          "def": "CREATE UNIQUE INDEX oauth_credential_pkey ON public.oauth_credential USING btree (id)",
+          "table": "public.oauth_credential",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "uq_oauth_credential_user_provider",
+          "def": "CREATE UNIQUE INDEX uq_oauth_credential_user_provider ON public.oauth_credential USING btree (user_id, provider)",
+          "table": "public.oauth_credential",
+          "columns": [
+            "user_id",
+            "provider"
+          ]
+        },
+        {
+          "name": "ix_oauth_credential_user_id",
+          "def": "CREATE INDEX ix_oauth_credential_user_id ON public.oauth_credential USING btree (user_id)",
+          "table": "public.oauth_credential",
+          "columns": [
+            "user_id"
+          ]
+        },
+        {
+          "name": "ix_oauth_credential_provider",
+          "def": "CREATE INDEX ix_oauth_credential_provider ON public.oauth_credential USING btree (provider)",
+          "table": "public.oauth_credential",
+          "columns": [
+            "provider"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "oauth_credential_created_at_not_null",
+          "type": "n",
+          "def": "NOT NULL created_at",
+          "table": "public.oauth_credential",
+          "referenced_table": "",
+          "columns": [
+            "created_at"
+          ]
+        },
+        {
+          "name": "oauth_credential_encrypted_refresh_token_not_null",
+          "type": "n",
+          "def": "NOT NULL encrypted_refresh_token",
+          "table": "public.oauth_credential",
+          "referenced_table": "",
+          "columns": [
+            "encrypted_refresh_token"
+          ]
+        },
+        {
+          "name": "oauth_credential_id_not_null",
+          "type": "n",
+          "def": "NOT NULL id",
+          "table": "public.oauth_credential",
+          "referenced_table": "",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "oauth_credential_provider_not_null",
+          "type": "n",
+          "def": "NOT NULL provider",
+          "table": "public.oauth_credential",
+          "referenced_table": "",
+          "columns": [
+            "provider"
+          ]
+        },
+        {
+          "name": "oauth_credential_scopes_not_null",
+          "type": "n",
+          "def": "NOT NULL scopes",
+          "table": "public.oauth_credential",
+          "referenced_table": "",
+          "columns": [
+            "scopes"
+          ]
+        },
+        {
+          "name": "oauth_credential_updated_at_not_null",
+          "type": "n",
+          "def": "NOT NULL updated_at",
+          "table": "public.oauth_credential",
+          "referenced_table": "",
+          "columns": [
+            "updated_at"
+          ]
+        },
+        {
+          "name": "oauth_credential_user_id_not_null",
+          "type": "n",
+          "def": "NOT NULL user_id",
+          "table": "public.oauth_credential",
+          "referenced_table": "",
+          "columns": [
+            "user_id"
+          ]
+        },
+        {
+          "name": "oauth_credential_user_id_fkey",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (user_id) REFERENCES \"user\"(id) ON DELETE CASCADE",
+          "table": "public.oauth_credential",
+          "referenced_table": "public.user",
+          "columns": [
+            "user_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "oauth_credential_pkey",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "public.oauth_credential",
+          "referenced_table": "",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "uq_oauth_credential_user_provider",
+          "type": "UNIQUE",
+          "def": "UNIQUE (user_id, provider)",
+          "table": "public.oauth_credential",
+          "referenced_table": "",
+          "columns": [
+            "user_id",
+            "provider"
+          ]
+        }
+      ]
     }
   ],
   "relations": [
@@ -4424,6 +4674,19 @@
       ],
       "parent_cardinality": "exactly_one",
       "def": "FOREIGN KEY (owner_id) REFERENCES \"user\"(id) ON DELETE CASCADE"
+    },
+    {
+      "table": "public.oauth_credential",
+      "columns": [
+        "user_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.user",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (user_id) REFERENCES \"user\"(id) ON DELETE CASCADE"
     }
   ],
   "functions": [
@@ -4497,6 +4760,14 @@
       ]
     },
     {
+      "name": "public.contactsource",
+      "values": [
+        "GOOGLE",
+        "ICLOUD",
+        "MANUAL"
+      ]
+    },
+    {
       "name": "public.debtdirection",
       "values": [
         "I_OWE",
@@ -4532,6 +4803,12 @@
         "OTHER",
         "PODCAST",
         "TV_SHOW"
+      ]
+    },
+    {
+      "name": "public.oauthprovider",
+      "values": [
+        "GOOGLE"
       ]
     },
     {

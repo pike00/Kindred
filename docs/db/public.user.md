@@ -13,7 +13,7 @@ Authenticated user; tenant-scope owner of every row below.
 | is_superuser | boolean |  | false |  |  | Grants admin-only endpoints. |
 | full_name | varchar(255) |  | true |  |  | Display name; optional. |
 | hashed_password | varchar |  | true |  |  | Argon2id hash; null for OIDC-only users. |
-| id | uuid |  | false | [public.tag](public.tag.md) [public.group](public.group.md) [public.contact](public.contact.md) [public.custom_field_definition](public.custom_field_definition.md) [public.interaction](public.interaction.md) [public.reminder](public.reminder.md) [public.gift](public.gift.md) [public.debt](public.debt.md) [public.life_event](public.life_event.md) [public.note](public.note.md) [public.journal_entry](public.journal_entry.md) [public.webhook_endpoint](public.webhook_endpoint.md) [public.tag_share](public.tag_share.md) [public.media_recommendation](public.media_recommendation.md) [public.activity_log](public.activity_log.md) |  | Primary key. |
+| id | uuid |  | false | [public.tag](public.tag.md) [public.group](public.group.md) [public.contact](public.contact.md) [public.custom_field_definition](public.custom_field_definition.md) [public.interaction](public.interaction.md) [public.reminder](public.reminder.md) [public.gift](public.gift.md) [public.debt](public.debt.md) [public.life_event](public.life_event.md) [public.note](public.note.md) [public.journal_entry](public.journal_entry.md) [public.webhook_endpoint](public.webhook_endpoint.md) [public.tag_share](public.tag_share.md) [public.media_recommendation](public.media_recommendation.md) [public.activity_log](public.activity_log.md) [public.oauth_credential](public.oauth_credential.md) |  | Primary key. |
 | created_at | timestamp with time zone |  | true |  |  | When the account was created (UTC). |
 | oidc_iss | varchar(512) |  | true |  |  | OIDC issuer URL; paired with oidc_sub forms the unique external identity. |
 | oidc_sub | varchar(255) |  | true |  |  | OIDC subject; paired with oidc_iss forms the unique external identity. |
@@ -60,6 +60,7 @@ erDiagram
 "public.media_recommendation" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.activity_log" }o--o| "public.user" : "FOREIGN KEY (actor_id) REFERENCES #quot;user#quot;(id) ON DELETE SET NULL"
 "public.activity_log" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
+"public.oauth_credential" }o--|| "public.user" : "FOREIGN KEY (user_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 
 "public.user" {
   varchar_255_ email
@@ -113,6 +114,8 @@ erDiagram
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
   timestamp_with_time_zone deleted_at
+  contactsource source_provider
+  varchar_255_ source_external_id
 }
 "public.custom_field_definition" {
   uuid id
@@ -239,6 +242,19 @@ erDiagram
   varchar_32_ action
   json changes_json
   timestamp_with_time_zone occurred_at
+}
+"public.oauth_credential" {
+  uuid id
+  uuid user_id FK
+  oauthprovider provider
+  varchar encrypted_refresh_token
+  varchar encrypted_access_token
+  timestamp_with_time_zone access_token_expires_at
+  varchar_2000_ scopes
+  varchar_4000_ sync_token
+  timestamp_with_time_zone last_synced_at
+  timestamp_with_time_zone created_at
+  timestamp_with_time_zone updated_at
 }
 ```
 
