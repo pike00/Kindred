@@ -1128,6 +1128,18 @@ export const ContactPublicSchema = {
             format: 'date-time',
             title: 'Updated At'
         },
+        deleted_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Deleted At'
+        },
         tags: {
             items: {
                 '$ref': '#/components/schemas/TagPublic'

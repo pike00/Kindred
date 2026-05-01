@@ -335,6 +335,7 @@ export type ContactPublic = {
     last_contacted_at: (string | null);
     created_at: string;
     updated_at: string;
+    deleted_at?: (string | null);
     tags?: Array<TagPublic>;
     groups?: Array<GroupPublic>;
 };
@@ -1320,9 +1321,11 @@ export type ContactFieldsDeleteContactFieldResponse = (unknown);
 export type ContactsListContactsData = {
     groupId?: (string | null);
     ids?: (Array<(string)> | null);
+    includeDeleted?: boolean;
     isArchived?: (boolean | null);
     isFavorite?: (boolean | null);
     limit?: number;
+    onlyDeleted?: boolean;
     search?: (string | null);
     skip?: number;
     stage?: (string | null);
@@ -1361,6 +1364,12 @@ export type ContactsDeleteContactData = {
 };
 
 export type ContactsDeleteContactResponse = (unknown);
+
+export type ContactsRestoreContactData = {
+    contactId: string;
+};
+
+export type ContactsRestoreContactResponse = (ContactPublic);
 
 export type CustomFieldsListFieldDefinitionsResponse = (unknown);
 
