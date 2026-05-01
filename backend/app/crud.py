@@ -1,8 +1,10 @@
+import re
 import uuid
 from typing import Any
 
 from sqlalchemy import union
 from sqlmodel import Session, select
+from sqlmodel import delete as sql_delete
 
 from app.core.security import get_password_hash, verify_password
 from app.models import (
@@ -35,6 +37,8 @@ from app.models import (
     MediaRecommendationCreate,
     Note,
     NoteCreate,
+    NoteMention,
+    NoteUpdate,
     Pet,
     PetCreate,
     Relationship,
@@ -341,12 +345,49 @@ def create_media_recommendation(
 # ─── Note CRUD ─────────────────────────────────────────────────────────────────
 
 
+_MENTION_RE = re.compile(r"@\[[^\]]+\]\(([a-f0-9-]{36})\)")
+
+
+def _extract_mention_ids(body: str | None) -> set[uuid.UUID]:
+    """Pull every contact UUID out of @[Name](uuid) tokens in a note body."""
+    if not body:
+        return set()
+    ids: set[uuid.UUID] = set()
+    for raw in _MENTION_RE.findall(body):
+        try:
+            ids.add(uuid.UUID(raw))
+        except ValueError:
+            continue
+    return ids
+
+
+def _sync_note_mentions(*, session: Session, note: Note) -> None:
+    """Replace note_mention rows for ``note`` with the IDs currently in its body."""
+    session.exec(sql_delete(NoteMention).where(NoteMention.note_id == note.id))
+    for cid in _extract_mention_ids(note.body):
+        session.add(NoteMention(note_id=note.id, contact_id=cid))
+
+
 def create_note(*, session: Session, note_in: NoteCreate, owner_id: uuid.UUID) -> Note:
     db_obj = Note.model_validate(note_in, update={"owner_id": owner_id})
     session.add(db_obj)
+    session.flush()
+    _sync_note_mentions(session=session, note=db_obj)
     session.commit()
     session.refresh(db_obj)
     return db_obj
+
+
+def update_note(*, session: Session, note: Note, note_in: NoteUpdate) -> Note:
+    update_data = note_in.model_dump(exclude_unset=True)
+    note.sqlmodel_update(update_data)
+    session.add(note)
+    session.flush()
+    if "body" in update_data:
+        _sync_note_mentions(session=session, note=note)
+    session.commit()
+    session.refresh(note)
+    return note
 
 
 # ─── JournalEntry CRUD ────────────────────────────────────────────────────────

@@ -1403,6 +1403,24 @@ class NoteUpdate(SQLModel):
     body: str | None = None
 
 
+class NoteMention(SQLModel, table=True):
+    """Many-to-many link between notes and contacts referenced via @[Name](uuid) tokens."""
+
+    __tablename__ = "note_mention"
+    note_id: uuid.UUID = Field(
+        foreign_key="note.id",
+        primary_key=True,
+        ondelete="CASCADE",
+        description="Note side of the link; cascades on delete.",
+    )
+    contact_id: uuid.UUID = Field(
+        foreign_key="contact.id",
+        primary_key=True,
+        ondelete="CASCADE",
+        description="Mentioned contact; cascades on delete.",
+    )
+
+
 class Note(NoteBase, table=True):
     """Timestamped freeform note attached to a specific contact."""
 
