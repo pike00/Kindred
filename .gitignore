@@ -18,6 +18,9 @@ node_modules/
 # git worktrees
 .worktrees/
 
+# Claude Code internal state (worktrees, sessions, etc.)
+.claude/
+
 # Generated DB docs renderings (markdown is checked in, HTML is regenerable)
 docs/db/*.html
 
