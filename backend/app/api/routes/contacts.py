@@ -9,7 +9,7 @@ from arq.connections import RedisSettings
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import selectinload
-from sqlmodel import col, func, select
+from sqlmodel import SQLModel, col, func, select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.core.config import settings as app_settings
@@ -97,7 +97,7 @@ def _remove_contact_safe(contact_id: str) -> None:
 @router.get("/", response_model=ContactsPublic)
 def list_contacts(
     session: SessionDep,
-    current_user: CurrentUser,
+    current_user: CurrentUser,  # noqa: ARG001
     skip: int = 0,
     limit: int = 100,
     search: str | None = None,
@@ -196,7 +196,7 @@ def list_contacts(
 @router.get("/losing-touch", response_model=ContactsPublic)
 def list_losing_touch(
     session: SessionDep,
-    current_user: CurrentUser,
+    current_user: CurrentUser,  # noqa: ARG001
     limit: int = 20,
 ) -> Any:
     """Return contacts whose cadence has been exceeded.
@@ -245,7 +245,7 @@ def list_losing_touch(
 @router.get("/{contact_id}", response_model=ContactPublic)
 def get_contact(
     session: SessionDep,
-    current_user: CurrentUser,
+    current_user: CurrentUser,  # noqa: ARG001
     contact_id: uuid.UUID,
 ) -> Any:
     """Get a single contact by ID."""
@@ -271,7 +271,7 @@ def get_contact(
 def create_contact(
     *,
     session: SessionDep,
-    current_user: CurrentUser,
+    current_user: CurrentUser,  # noqa: ARG001
     contact_in: ContactCreate,
     background_tasks: BackgroundTasks,
 ) -> Any:
@@ -312,7 +312,7 @@ def create_contact(
 def update_contact(
     *,
     session: SessionDep,
-    current_user: CurrentUser,
+    current_user: CurrentUser,  # noqa: ARG001
     contact_id: uuid.UUID,
     contact_in: ContactUpdate,
     background_tasks: BackgroundTasks,
@@ -382,7 +382,7 @@ def update_contact(
 @router.delete("/{contact_id}")
 def delete_contact(
     session: SessionDep,
-    current_user: CurrentUser,
+    current_user: CurrentUser,  # noqa: ARG001
     contact_id: uuid.UUID,
     background_tasks: BackgroundTasks,
 ) -> Any:
@@ -425,7 +425,7 @@ class NoteMentionPublic(BaseModel):
 @router.get("/{contact_id}/mentions", response_model=list[NoteMentionPublic])
 def list_contact_mentions(
     session: SessionDep,
-    current_user: CurrentUser,
+    current_user: CurrentUser,  # noqa: ARG001
     contact_id: uuid.UUID,
 ) -> Any:
     """List notes that @-mention this contact, with the source (authoring) contact."""
@@ -470,7 +470,7 @@ def list_contact_mentions(
 @router.post("/{contact_id}/restore", response_model=ContactPublic)
 def restore_contact(
     session: SessionDep,
-    current_user: CurrentUser,
+    current_user: CurrentUser,  # noqa: ARG001
     contact_id: uuid.UUID,
     background_tasks: BackgroundTasks,
 ) -> Any:
@@ -499,3 +499,168 @@ def restore_contact(
     contact = session.exec(statement).first()
     background_tasks.add_task(_enqueue_contact_index, contact)
     return ContactPublic.model_validate(contact)
+
+
+# ─── Merge / Unmerge ──────────────────────────────────────────────────
+
+
+class MergeContactsRequest(BaseModel):
+    """Request body for merging two contacts."""
+
+    surviving_id: uuid.UUID
+    absorbed_id: uuid.UUID
+    notes: str | None = None
+
+
+class MergeResponse(SQLModel):
+    """Response after a merge operation."""
+
+    merge_log_id: uuid.UUID
+    surviving_id: uuid.UUID
+    absorbed_id: uuid.UUID
+    merged_at: datetime
+
+
+@router.post("/merge", response_model=MergeResponse, status_code=201)
+def merge_contacts_endpoint(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,  # noqa: ARG001
+    background_tasks: BackgroundTasks,
+    data: MergeContactsRequest,
+) -> Any:
+    """Merge one contact into another.
+
+    The absorbed contact is soft-deleted (is_merged=True) and all its
+    child rows (interactions, notes, relationships, etc.) are reassigned
+    to the surviving contact. The operation is logged in contact_merge.
+    """
+    from app.merge_service import merge_contacts as do_merge
+
+    # Verify user has access to both contacts
+    surviving = session.get(Contact, data.surviving_id)
+    absorbed = session.get(Contact, data.absorbed_id)
+
+    if not surviving or not absorbed:
+        raise HTTPException(status_code=404, detail="One or both contacts not found")
+
+    if surviving.owner_id != current_user.id or absorbed.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
+    try:
+        merge_log = do_merge(
+            session=session,
+            surviving_id=str(data.surviving_id),
+            absorbed_id=str(data.absorbed_id),
+            merged_by=str(current_user.id),
+            notes=data.notes,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    # Re-index surviving contact (with updated data)
+    updated = session.get(Contact, data.surviving_id)
+    if updated:
+        background_tasks.add_task(_enqueue_contact_index, updated)
+
+    return MergeResponse(
+        merge_log_id=merge_log.id,
+        surviving_id=merge_log.surviving_id,
+        absorbed_id=merge_log.absorbed_id,
+        merged_at=merge_log.merged_at,
+    )
+
+
+@router.post("/{contact_id}/unmerge", response_model=ContactPublic)
+def unmerge_contact_endpoint(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,  # noqa: ARG001
+    background_tasks: BackgroundTasks,
+    contact_id: uuid.UUID,
+) -> Any:
+    """Reverse a previously merged contact.
+
+    Looks up the contact_merge log entry, restores the absorbed contact
+    by moving child rows back, and deletes the merge log entry.
+    """
+    from app.merge_service import unmerge_contact as do_unmerge
+
+    # Verify user has access to the absorbed contact
+    absorbed = session.get(Contact, contact_id)
+    if not absorbed:
+        raise HTTPException(status_code=404, detail="Contact not found")
+
+    if absorbed.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
+    try:
+        do_unmerge(
+            session=session,
+            absorbed_id=str(contact_id),
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    # Reload with eager loading
+    statement = (
+        select(Contact)
+        .where(Contact.id == contact_id)
+        .options(
+            selectinload(Contact.tags),
+            selectinload(Contact.groups),
+        )
+    )
+    absorbed = session.exec(statement).first()
+
+    # Re-index the restored contact
+    if absorbed:
+        background_tasks.add_task(_enqueue_contact_index, absorbed)
+
+    return ContactPublic.model_validate(absorbed)
+
+
+@router.get("/merge-logs", response_model=dict)
+def list_merge_logs(
+    session: SessionDep,
+    current_user: CurrentUser,  # noqa: ARG001
+    skip: int = 0,
+    limit: int = 100,
+    contact_id: uuid.UUID | None = None,
+) -> Any:
+    """List contact merge log entries.
+
+    Optionally filter by a specific contact (as either survivor or absorbed).
+    """
+    from app.merge_service import get_merge_logs
+
+    results, count = get_merge_logs(
+        session=session,
+        skip=skip,
+        limit=limit,
+        contact_id=str(contact_id) if contact_id else None,
+    )
+
+    # Enrich with contact names
+    logs = []
+    for log in results:
+        surviving = session.get(Contact, log.surviving_id)
+        absorbed = session.get(Contact, log.absorbed_id)
+        logs.append(
+            {
+                "id": str(log.id),
+                "surviving_id": str(log.surviving_id),
+                "absorbed_id": str(log.absorbed_id),
+                "surviving_name": f"{surviving.first_name} {surviving.last_name or ''}".strip()
+                if surviving
+                else None,
+                "absorbed_name": f"{absorbed.first_name} {absorbed.last_name or ''}".strip()
+                if absorbed
+                else None,
+                "merged_by": str(log.merged_by) if log.merged_by else None,
+                "merged_at": log.merged_at,
+                "notes": log.notes,
+            }
+        )
+
+    return {"data": logs, "count": count}
