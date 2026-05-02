@@ -275,8 +275,17 @@ def create_contact(
     contact_in: ContactCreate,
     background_tasks: BackgroundTasks,
 ) -> Any:
-    """Create a new contact."""
-    contact = Contact.model_validate(contact_in, update={"owner_id": current_user.id})
+    """Create a new contact.
+    
+    If source_external_id is provided, uses upsert logic to update existing
+    contact with same (owner_id, source, source_external_id) or create new.
+    """
+    from app.crud import upsert_contact
+    
+    contact = upsert_contact(
+        session=session, contact_in=contact_in, owner_id=current_user.id
+    )
+    session.flush()  # Ensure contact.id is available
     session.add(contact)
     session.flush()  # Flush to get contact.id without committing
 

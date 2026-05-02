@@ -510,3 +510,62 @@ def get_or_create_user_from_claims(
     session.commit()
     session.refresh(new_user)
     return new_user
+
+def upsert_contact(
+    *, session: Session, contact_in: ContactCreate, owner_id: uuid.UUID
+) -> Contact:
+    """Create or update a contact based on (owner_id, source, source_external_id) match.
+    
+    If a contact with the same (owner_id, source, source_external_id) exists,
+    update it with the new data. Otherwise, create a new contact.
+    Only applies when source_external_id is not None.
+    """
+    # Only attempt upsert if source_external_id is provided
+    if contact_in.source_external_id is not None:
+        existing = session.exec(
+            select(Contact).where(
+                Contact.owner_id == owner_id,
+                Contact.source == contact_in.source,
+                Contact.source_external_id == contact_in.source_external_id,
+            )
+        ).first()
+        
+        if existing:
+            # Update existing contact with new data
+            update_data = contact_in.model_dump(exclude_unset=True, exclude={"tag_ids", "group_ids"})
+            existing.sqlmodel_update(update_data)
+            session.add(existing)
+            session.commit()
+            session.refresh(existing)
+            
+            # Handle tag associations if provided
+            if contact_in.tag_ids is not None:
+                # Remove existing tags
+                existing_tags = session.exec(
+                    select(ContactTag).where(ContactTag.contact_id == existing.id)
+                ).all()
+                for ct in existing_tags:
+                    session.delete(ct)
+                # Add new tags
+                for tag_id in contact_in.tag_ids:
+                    session.add(ContactTag(contact_id=existing.id, tag_id=tag_id))
+                session.commit()
+            
+            # Handle group associations if provided
+            if contact_in.group_ids is not None:
+                # Remove existing groups
+                existing_groups = session.exec(
+                    select(ContactGroup).where(ContactGroup.contact_id == existing.id)
+                ).all()
+                for cg in existing_groups:
+                    session.delete(cg)
+                # Add new groups
+                for group_id in contact_in.group_ids:
+                    session.add(ContactGroup(contact_id=existing.id, group_id=group_id))
+                session.commit()
+            
+            session.refresh(existing)
+            return existing
+    
+    # Fall through to normal create
+    return create_contact(session=session, contact_in=contact_in, owner_id=owner_id)
