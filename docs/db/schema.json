@@ -1343,6 +1343,11 @@
           "type": "varchar(1000)",
           "nullable": true,
           "comment": "Additional context about the relationship."
+        },
+        {
+          "name": "inverse_id",
+          "type": "uuid",
+          "nullable": true
         }
       ],
       "indexes": [
@@ -1368,6 +1373,14 @@
           "table": "public.relationship",
           "columns": [
             "related_contact_id"
+          ]
+        },
+        {
+          "name": "ix_relationship_inverse_id",
+          "def": "CREATE INDEX ix_relationship_inverse_id ON public.relationship USING btree (inverse_id)",
+          "table": "public.relationship",
+          "columns": [
+            "inverse_id"
           ]
         }
       ],
@@ -1433,6 +1446,19 @@
           "referenced_table": "public.contact",
           "columns": [
             "related_contact_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "fk_relationship_inverse_id",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (inverse_id) REFERENCES relationship(id) ON DELETE SET NULL",
+          "table": "public.relationship",
+          "referenced_table": "public.relationship",
+          "columns": [
+            "inverse_id"
           ],
           "referenced_columns": [
             "id"
@@ -4443,6 +4469,19 @@
       ],
       "parent_cardinality": "exactly_one",
       "def": "FOREIGN KEY (related_contact_id) REFERENCES contact(id) ON DELETE CASCADE"
+    },
+    {
+      "table": "public.relationship",
+      "columns": [
+        "inverse_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.relationship",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "zero_or_one",
+      "def": "FOREIGN KEY (inverse_id) REFERENCES relationship(id) ON DELETE SET NULL"
     },
     {
       "table": "public.pet",

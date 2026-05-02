@@ -196,9 +196,11 @@ Table "relationship" {
   "related_contact_id" uuid [not null]
   "relationship_type" varchar(100) [not null]
   "notes" varchar(1000)
+  "inverse_id" uuid
 
   Indexes {
     contact_id [type: btree, name: "ix_relationship_contact_id"]
+    inverse_id [type: btree, name: "ix_relationship_inverse_id"]
     related_contact_id [type: btree, name: "ix_relationship_related_contact_id"]
   }
 }
@@ -534,6 +536,8 @@ Ref "note_mention_note_id_fkey":"note"."id" < "note_mention"."note_id" [delete: 
 Ref "oauth_credential_user_id_fkey":"user"."id" < "oauth_credential"."user_id" [delete: cascade]
 
 Ref "pet_contact_id_fkey":"contact"."id" < "pet"."contact_id" [delete: cascade]
+
+Ref "fk_relationship_inverse_id":"relationship"."id" < "relationship"."inverse_id" [delete: set null]
 
 Ref "relationship_contact_id_fkey":"contact"."id" < "relationship"."contact_id" [delete: cascade]
 

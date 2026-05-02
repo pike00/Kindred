@@ -13,7 +13,7 @@
 | [public.contact_group](public.contact_group.md) | 2 | Many-to-many link between contacts and groups. | BASE TABLE |
 | [public.contact_field](public.contact_field.md) | 7 | Flexible contact info (emails, phones) attached to a contact. | BASE TABLE |
 | [public.address](public.address.md) | 11 | Physical address attached to a contact. | BASE TABLE |
-| [public.relationship](public.relationship.md) | 5 | Directional link between two contacts (spouse, child, friend, etc.). | BASE TABLE |
+| [public.relationship](public.relationship.md) | 6 | Directional link between two contacts (spouse, child, friend, etc.). | BASE TABLE |
 | [public.pet](public.pet.md) | 6 | Pet owned by a contact; useful for memorable conversation hooks. | BASE TABLE |
 | [public.custom_field_definition](public.custom_field_definition.md) | 8 | User-defined custom field schema, scoped to one owner. | BASE TABLE |
 | [public.custom_field_value](public.custom_field_value.md) | 4 | Value of a custom field for a specific contact (one per contact per definition). | BASE TABLE |
@@ -76,6 +76,7 @@ erDiagram
 "public.address" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.relationship" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.relationship" }o--|| "public.contact" : "FOREIGN KEY (related_contact_id) REFERENCES contact(id) ON DELETE CASCADE"
+"public.relationship" }o--o| "public.relationship" : "FOREIGN KEY (inverse_id) REFERENCES relationship(id) ON DELETE SET NULL"
 "public.pet" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.custom_field_definition" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.custom_field_value" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
@@ -199,6 +200,7 @@ erDiagram
   uuid related_contact_id FK
   varchar_100_ relationship_type
   varchar_1000_ notes
+  uuid inverse_id FK
 }
 "public.pet" {
   uuid id
