@@ -12,7 +12,12 @@ from sqlmodel import Session, create_engine, select
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
-from app.models import Contact, Reminder, ReminderFrequency  # noqa: E402
+from app.models import (  # noqa: E402
+    CommunicationPreference,
+    Contact,
+    Reminder,
+    ReminderFrequency,
+)
 
 
 def _get_apprise() -> apprise.Apprise:
@@ -53,9 +58,19 @@ async def check_reminders(ctx: dict) -> None:
             if reminder.contact_id:
                 contact = session.get(Contact, reminder.contact_id)
                 if contact:
-                    name = f"{contact.first_name} {contact.last_name or ''}".strip()
-                    body = f"{body}\nContact: {name}"
-
+                    # Skip if do-not-contact is set
+                    pref = session.exec(
+                        select(CommunicationPreference).where(
+                            CommunicationPreference.contact_id == contact.id
+                        )
+                    ).first()
+                    if pref and pref.do_not_contact:
+                        logger.info(
+                            f"Skipping reminder {reminder.id}: "
+                            f"contact {contact.id} has do-not-contact set"
+                        )
+                        continue
+                    _ = f"{contact.first_name} {contact.last_name or ''}".strip()
             # Send notification (don't let failures corrupt scheduling)
             try:
                 apobj.notify(title=title, body=body)
@@ -102,6 +117,15 @@ async def check_cadences(ctx: dict) -> None:
         apobj = _get_apprise()
 
         for contact in contacts:
+            # Skip if do-not-contact is set
+            pref = session.exec(
+                select(CommunicationPreference).where(
+                    CommunicationPreference.contact_id == contact.id
+                )
+            ).first()
+            if pref and pref.do_not_contact:
+                continue
+
             if contact.last_contacted_at is None:
                 overdue = True
             else:

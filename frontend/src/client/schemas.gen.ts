@@ -504,6 +504,130 @@ export const Body_login_login_access_tokenSchema = {
     title: 'Body_login-login_access_token'
 } as const;
 
+export const CommunicationPreferencePublicSchema = {
+    properties: {
+        preferred_channel: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 20
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Preferred Channel',
+            description: 'Preferred contact channel (call, in_person, text, email, video, social, other).'
+        },
+        best_time_local: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 11
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Best Time Local',
+            description: 'Preferred contact time window in HH:MM-HH:MM format, local to the contact.'
+        },
+        do_not_contact: {
+            type: 'boolean',
+            title: 'Do Not Contact',
+            description: 'When True, suppress all outbound contact reminders.',
+            default: false
+        },
+        do_not_contact_reason: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 500
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Do Not Contact Reason',
+            description: 'Reason for do-not-contact status (e.g. deceased, requested removal).'
+        },
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        contact_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Contact Id'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        },
+        updated_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Updated At'
+        }
+    },
+    type: 'object',
+    required: ['id', 'contact_id', 'created_at', 'updated_at'],
+    title: 'CommunicationPreferencePublic'
+} as const;
+
+export const CommunicationPreferenceUpdateSchema = {
+    properties: {
+        preferred_channel: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Preferred Channel'
+        },
+        best_time_local: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Best Time Local'
+        },
+        do_not_contact: {
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Do Not Contact'
+        },
+        do_not_contact_reason: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Do Not Contact Reason'
+        }
+    },
+    type: 'object',
+    title: 'CommunicationPreferenceUpdate'
+} as const;
+
 export const ContactCreateSchema = {
     properties: {
         first_name: {
@@ -1128,6 +1252,18 @@ export const ContactPublicSchema = {
             format: 'date-time',
             title: 'Updated At'
         },
+        deleted_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Deleted At'
+        },
         tags: {
             items: {
                 '$ref': '#/components/schemas/TagPublic'
@@ -1143,6 +1279,16 @@ export const ContactPublicSchema = {
             type: 'array',
             title: 'Groups',
             default: []
+        },
+        communication_preference: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/CommunicationPreferencePublic'
+                },
+                {
+                    type: 'null'
+                }
+            ]
         }
     },
     type: 'object',

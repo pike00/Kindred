@@ -129,6 +129,36 @@ export type Body_login_login_access_token = {
     client_secret?: (string | null);
 };
 
+export type CommunicationPreferencePublic = {
+    /**
+     * Preferred contact channel (call, in_person, text, email, video, social, other).
+     */
+    preferred_channel?: (string | null);
+    /**
+     * Preferred contact time window in HH:MM-HH:MM format, local to the contact.
+     */
+    best_time_local?: (string | null);
+    /**
+     * When True, suppress all outbound contact reminders.
+     */
+    do_not_contact?: boolean;
+    /**
+     * Reason for do-not-contact status (e.g. deceased, requested removal).
+     */
+    do_not_contact_reason?: (string | null);
+    id: string;
+    contact_id: string;
+    created_at: string;
+    updated_at: string;
+};
+
+export type CommunicationPreferenceUpdate = {
+    preferred_channel?: (string | null);
+    best_time_local?: (string | null);
+    do_not_contact?: (boolean | null);
+    do_not_contact_reason?: (string | null);
+};
+
 export type ContactCreate = {
     /**
      * Given name; required.
@@ -335,8 +365,10 @@ export type ContactPublic = {
     last_contacted_at: (string | null);
     created_at: string;
     updated_at: string;
+    deleted_at?: (string | null);
     tags?: Array<TagPublic>;
     groups?: Array<GroupPublic>;
+    communication_preference?: (CommunicationPreferencePublic | null);
 };
 
 export type ContactsPublic = {
@@ -1290,6 +1322,25 @@ export type AddressesDeleteAddressResponse = (unknown);
 
 export type CarddavWellKnownCarddavResponse = (unknown);
 
+export type CommunicationPreferencesGetCommunicationPreferenceData = {
+    contactId: string;
+};
+
+export type CommunicationPreferencesGetCommunicationPreferenceResponse = ((CommunicationPreferencePublic | null));
+
+export type CommunicationPreferencesUpsertCommunicationPreferenceData = {
+    contactId: string;
+    requestBody: CommunicationPreferenceUpdate;
+};
+
+export type CommunicationPreferencesUpsertCommunicationPreferenceResponse = (CommunicationPreferencePublic);
+
+export type CommunicationPreferencesDeleteCommunicationPreferenceData = {
+    contactId: string;
+};
+
+export type CommunicationPreferencesDeleteCommunicationPreferenceResponse = (unknown);
+
 export type ContactFieldsListContactFieldsData = {
     contactId: string;
     limit?: number;
@@ -1320,9 +1371,11 @@ export type ContactFieldsDeleteContactFieldResponse = (unknown);
 export type ContactsListContactsData = {
     groupId?: (string | null);
     ids?: (Array<(string)> | null);
+    includeDeleted?: boolean;
     isArchived?: (boolean | null);
     isFavorite?: (boolean | null);
     limit?: number;
+    onlyDeleted?: boolean;
     search?: (string | null);
     skip?: number;
     stage?: (string | null);
@@ -1361,6 +1414,12 @@ export type ContactsDeleteContactData = {
 };
 
 export type ContactsDeleteContactResponse = (unknown);
+
+export type ContactsRestoreContactData = {
+    contactId: string;
+};
+
+export type ContactsRestoreContactResponse = (ContactPublic);
 
 export type CustomFieldsListFieldDefinitionsResponse = (unknown);
 

@@ -1,9 +1,12 @@
+from __future__ import annotations
+
 import enum
+import re
 import uuid
 from datetime import date, datetime, timezone
 
 import sqlalchemy as sa
-from pydantic import EmailStr
+from pydantic import EmailStr, field_validator
 from sqlalchemy import DateTime
 from sqlmodel import Field, Relationship, SQLModel
 
@@ -517,13 +520,16 @@ class Contact(ContactBase, table=True):
         ),
     )
     # Relationships
-    tags: list["Tag"] = Relationship(
+    tags: list[Tag] = Relationship(
         back_populates=None,
         link_model=ContactTag,
     )
-    groups: list["Group"] = Relationship(
+    groups: list[Group] = Relationship(
         back_populates=None,
         link_model=ContactGroup,
+    )
+    communication_preference: CommunicationPreference | None = Relationship(
+        sa_relationship_kwargs={"uselist": False, "cascade": "all, delete-orphan"},
     )
 
 
@@ -536,11 +542,98 @@ class ContactPublic(ContactBase):
     deleted_at: datetime | None = None
     tags: list[TagPublic] = []
     groups: list[GroupPublic] = []
+    communication_preference: CommunicationPreferencePublic | None = None
 
 
 class ContactsPublic(SQLModel):
     data: list[ContactPublic]
     count: int
+
+
+# ─── CommunicationPreference ───────────────────────────────────────────────
+
+
+class CommunicationPreferenceBase(SQLModel):
+    preferred_channel: str | None = Field(
+        default=None,
+        max_length=20,
+        description="Preferred contact channel (call, in_person, text, email, video, social, other).",
+    )
+    best_time_local: str | None = Field(
+        default=None,
+        max_length=11,
+        description="Preferred contact time window in HH:MM-HH:MM format, local to the contact.",
+    )
+    do_not_contact: bool = Field(
+        default=False,
+        description="When True, suppress all outbound contact reminders.",
+    )
+    do_not_contact_reason: str | None = Field(
+        default=None,
+        max_length=500,
+        description="Reason for do-not-contact status (e.g. deceased, requested removal).",
+    )
+
+    @field_validator("best_time_local")
+    @classmethod
+    def validate_best_time_local(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        # Validate HH:MM-HH:MM format
+        pattern = r"^([01]\d|2[0-3]):([0-5]\d)-([01]\d|2[0-3]):([0-5]\d)$"
+        if not re.match(pattern, v):
+            raise ValueError(
+                "best_time_local must be in HH:MM-HH:MM format (e.g. 09:00-17:00)"
+            )
+        return v
+
+
+class CommunicationPreferenceCreate(CommunicationPreferenceBase):
+    pass
+
+
+class CommunicationPreferenceUpdate(SQLModel):
+    preferred_channel: str | None = None
+    best_time_local: str | None = None
+    do_not_contact: bool | None = None
+    do_not_contact_reason: str | None = None
+
+
+class CommunicationPreference(CommunicationPreferenceBase, table=True):
+    """Per-contact communication preferences (channel, time window, DNC flag)."""
+
+    __tablename__ = "communication_preference"
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
+    contact_id: uuid.UUID = Field(
+        foreign_key="contact.id",
+        nullable=False,
+        ondelete="CASCADE",
+        unique=True,
+        description="Contact these preferences belong to; cascades on delete.",
+    )
+    created_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        nullable=False,
+        description="When the preferences were created (UTC).",
+    )
+    updated_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
+        nullable=False,
+        description="Auto-bumped on edit (UTC).",
+    )
+
+
+class CommunicationPreferencePublic(CommunicationPreferenceBase):
+    id: uuid.UUID
+    contact_id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
 
 
 # ─── ContactField ────────────────────────────────────────────────────────────

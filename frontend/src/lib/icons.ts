@@ -29,6 +29,7 @@ export {
   Eye,
   EyeOff,
   Film,
+  Globe,
   HeartHandshake,
   // Sidebar nav
   Home,
