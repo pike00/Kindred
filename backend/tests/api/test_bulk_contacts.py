@@ -11,7 +11,19 @@ from sqlmodel import Session, select
 from app.models import Contact, ContactTag, ContactGroup, Tag, Group
 
 
-def create_test_contact(session: Session, owner_id: uuid.UUID, **kwargs: Any) -> Contact:
+def get_superuser_id(db: Session) -> uuid.UUID:
+    """Get the first user ID from the database."""
+    from app.models import User
+
+    user = db.exec(select(User).limit(1)).first()
+    if user:
+        return user.id
+    raise ValueError("No user found in database")
+
+
+def create_test_contact(
+    db: Session, owner_id: uuid.UUID, **kwargs: Any
+) -> Contact:
     """Helper to create a test contact."""
     data = {
         "first_name": "Test",
@@ -22,18 +34,20 @@ def create_test_contact(session: Session, owner_id: uuid.UUID, **kwargs: Any) ->
     }
     data.update(kwargs)
     contact = Contact(**data)
-    session.add(contact)
-    session.commit()
-    session.refresh(contact)
+    db.add(contact)
+    db.commit()
+    db.refresh(contact)
     return contact
 
 
-def test_bulk_update_by_ids(client: TestClient, superuser_token_headers: dict[str, str], superuser: dict[str, Any], session: Session) -> None:
+def test_bulk_update_by_ids(
+    client: TestClient, superuser_token_headers: dict[str, str], db: Session
+) -> None:
     """Test bulk update with explicit contact_ids."""
-    # Create test contacts
-    contact1 = create_test_contact(session, superuser["id"], first_name="Alice")
-    contact2 = create_test_contact(session, superuser["id"], first_name="Bob")
-    contact3 = create_test_contact(session, superuser["id"], first_name="Charlie")
+    user_id = get_superuser_id(db)
+    contact1 = create_test_contact(db, user_id, first_name="Alice")
+    contact2 = create_test_contact(db, user_id, first_name="Bob")
+    contact3 = create_test_contact(db, user_id, first_name="Charlie")
 
     response = client.patch(
         "/api/v1/contacts/bulk",
@@ -49,18 +63,21 @@ def test_bulk_update_by_ids(client: TestClient, superuser_token_headers: dict[st
     assert result["skipped_count"] == 0
 
     # Verify contacts were updated
-    session.refresh(contact1)
-    session.refresh(contact2)
-    session.refresh(contact3)
+    db.refresh(contact1)
+    db.refresh(contact2)
+    db.refresh(contact3)
     assert contact1.is_favorite is True
     assert contact2.is_favorite is True
     assert contact3.is_favorite is False  # Not in the list
 
 
-def test_bulk_archive(client: TestClient, superuser_token_headers: dict[str, str], superuser: dict[str, Any], session: Session) -> None:
+def test_bulk_archive(
+    client: TestClient, superuser_token_headers: dict[str, str], db: Session
+) -> None:
     """Test bulk archive operation."""
-    contact1 = create_test_contact(session, superuser["id"], first_name="Alice")
-    contact2 = create_test_contact(session, superuser["id"], first_name="Bob")
+    user_id = get_superuser_id(db)
+    contact1 = create_test_contact(db, user_id, first_name="Alice")
+    contact2 = create_test_contact(db, user_id, first_name="Bob")
 
     response = client.patch(
         "/api/v1/contacts/bulk",
@@ -74,16 +91,19 @@ def test_bulk_archive(client: TestClient, superuser_token_headers: dict[str, str
     result = response.json()
     assert result["updated_count"] == 2
 
-    session.refresh(contact1)
-    session.refresh(contact2)
+    db.refresh(contact1)
+    db.refresh(contact2)
     assert contact1.is_archived is True
     assert contact2.is_archived is True
 
 
-def test_bulk_unarchive(client: TestClient, superuser_token_headers: dict[str, str], superuser: dict[str, Any], session: Session) -> None:
+def test_bulk_unarchive(
+    client: TestClient, superuser_token_headers: dict[str, str], db: Session
+) -> None:
     """Test bulk unarchive operation."""
-    contact1 = create_test_contact(session, superuser["id"], first_name="Alice", is_archived=True)
-    contact2 = create_test_contact(session, superuser["id"], first_name="Bob", is_archived=True)
+    user_id = get_superuser_id(db)
+    contact1 = create_test_contact(db, user_id, first_name="Alice", is_archived=True)
+    contact2 = create_test_contact(db, user_id, first_name="Bob", is_archived=True)
 
     response = client.patch(
         "/api/v1/contacts/bulk",
@@ -97,28 +117,32 @@ def test_bulk_unarchive(client: TestClient, superuser_token_headers: dict[str, s
     result = response.json()
     assert result["updated_count"] == 2
 
-    session.refresh(contact1)
-    session.refresh(contact2)
+    db.refresh(contact1)
+    db.refresh(contact2)
     assert contact1.is_archived is False
     assert contact2.is_archived is False
 
 
-def test_bulk_add_tags(client: TestClient, superuser_token_headers: dict[str, str], superuser: dict[str, Any], session: Session) -> None:
+def test_bulk_add_tags(
+    client: TestClient, superuser_token_headers: dict[str, str], db: Session
+) -> None:
     """Test bulk add tags operation."""
     from app.models import Tag
 
-    # Create tags
-    tag1 = Tag(name="VIP", color="#ff0000")
-    tag2 = Tag(name="Work", color="#00ff00")
-    session.add(tag1)
-    session.add(tag2)
-    session.commit()
-    session.refresh(tag1)
-    session.refresh(tag2)
+    user_id = get_superuser_id(db)
+
+    # Create tags with required owner_id
+    tag1 = Tag(name="VIP", color="#ff0000", owner_id=user_id)
+    tag2 = Tag(name="Work", color="#00ff00", owner_id=user_id)
+    db.add(tag1)
+    db.add(tag2)
+    db.commit()
+    db.refresh(tag1)
+    db.refresh(tag2)
 
     # Create contacts
-    contact1 = create_test_contact(session, superuser["id"], first_name="Alice")
-    contact2 = create_test_contact(session, superuser["id"], first_name="Bob")
+    contact1 = create_test_contact(db, user_id, first_name="Alice")
+    contact2 = create_test_contact(db, user_id, first_name="Bob")
 
     response = client.patch(
         "/api/v1/contacts/bulk",
@@ -134,29 +158,33 @@ def test_bulk_add_tags(client: TestClient, superuser_token_headers: dict[str, st
 
     # Verify tags were added
     stmt = select(ContactTag).where(ContactTag.contact_id == contact1.id)
-    tags = session.exec(stmt).all()
+    tags = db.exec(stmt).all()
     assert len(tags) == 2
 
 
-def test_bulk_remove_tags(client: TestClient, superuser_token_headers: dict[str, str], superuser: dict[str, Any], session: Session) -> None:
+def test_bulk_remove_tags(
+    client: TestClient, superuser_token_headers: dict[str, str], db: Session
+) -> None:
     """Test bulk remove tags operation."""
     from app.models import Tag, ContactTag
 
-    # Create tag
-    tag1 = Tag(name="VIP", color="#ff0000")
-    session.add(tag1)
-    session.commit()
-    session.refresh(tag1)
+    user_id = get_superuser_id(db)
+
+    # Create tag with required owner_id
+    tag1 = Tag(name="VIP", color="#ff0000", owner_id=user_id)
+    db.add(tag1)
+    db.commit()
+    db.refresh(tag1)
 
     # Create contact with tag
-    contact1 = create_test_contact(session, superuser["id"], first_name="Alice")
+    contact1 = create_test_contact(db, user_id, first_name="Alice")
     contact_tag = ContactTag(contact_id=contact1.id, tag_id=tag1.id)
-    session.add(contact_tag)
-    session.commit()
+    db.add(contact_tag)
+    db.commit()
 
     # Verify tag exists
     stmt = select(ContactTag).where(ContactTag.contact_id == contact1.id)
-    tags = session.exec(stmt).all()
+    tags = db.exec(stmt).all()
     assert len(tags) == 1
 
     # Remove tag via bulk operation
@@ -174,25 +202,29 @@ def test_bulk_remove_tags(client: TestClient, superuser_token_headers: dict[str,
 
     # Verify tag was removed
     stmt = select(ContactTag).where(ContactTag.contact_id == contact1.id)
-    tags = session.exec(stmt).all()
+    tags = db.exec(stmt).all()
     assert len(tags) == 0
 
 
-def test_bulk_add_groups(client: TestClient, superuser_token_headers: dict[str, str], superuser: dict[str, Any], session: Session) -> None:
+def test_bulk_add_groups(
+    client: TestClient, superuser_token_headers: dict[str, str], db: Session
+) -> None:
     """Test bulk add groups operation."""
     from app.models import Group
 
-    # Create groups
-    group1 = Group(name="Family", description="Family members")
-    group2 = Group(name="Work", description="Work colleagues")
-    session.add(group1)
-    session.add(group2)
-    session.commit()
-    session.refresh(group1)
-    session.refresh(group2)
+    user_id = get_superuser_id(db)
+
+    # Create groups with required owner_id
+    group1 = Group(name="Family", description="Family members", owner_id=user_id)
+    group2 = Group(name="Work", description="Work colleagues", owner_id=user_id)
+    db.add(group1)
+    db.add(group2)
+    db.commit()
+    db.refresh(group1)
+    db.refresh(group2)
 
     # Create contact
-    contact1 = create_test_contact(session, superuser["id"], first_name="Alice")
+    contact1 = create_test_contact(db, user_id, first_name="Alice")
 
     response = client.patch(
         "/api/v1/contacts/bulk",
@@ -208,25 +240,29 @@ def test_bulk_add_groups(client: TestClient, superuser_token_headers: dict[str, 
 
     # Verify groups were added
     stmt = select(ContactGroup).where(ContactGroup.contact_id == contact1.id)
-    groups = session.exec(stmt).all()
+    groups = db.exec(stmt).all()
     assert len(groups) == 2
 
 
-def test_bulk_remove_groups(client: TestClient, superuser_token_headers: dict[str, str], superuser: dict[str, Any], session: Session) -> None:
+def test_bulk_remove_groups(
+    client: TestClient, superuser_token_headers: dict[str, str], db: Session
+) -> None:
     """Test bulk remove groups operation."""
     from app.models import Group, ContactGroup
 
-    # Create group
-    group1 = Group(name="Family", description="Family members")
-    session.add(group1)
-    session.commit()
-    session.refresh(group1)
+    user_id = get_superuser_id(db)
+
+    # Create group with required owner_id
+    group1 = Group(name="Family", description="Family members", owner_id=user_id)
+    db.add(group1)
+    db.commit()
+    db.refresh(group1)
 
     # Create contact with group
-    contact1 = create_test_contact(session, superuser["id"], first_name="Alice")
+    contact1 = create_test_contact(db, user_id, first_name="Alice")
     contact_group = ContactGroup(contact_id=contact1.id, group_id=group1.id)
-    session.add(contact_group)
-    session.commit()
+    db.add(contact_group)
+    db.commit()
 
     # Remove group via bulk operation
     response = client.patch(
@@ -243,16 +279,18 @@ def test_bulk_remove_groups(client: TestClient, superuser_token_headers: dict[st
 
     # Verify group was removed
     stmt = select(ContactGroup).where(ContactGroup.contact_id == contact1.id)
-    groups = session.exec(stmt).all()
+    groups = db.exec(stmt).all()
     assert len(groups) == 0
 
 
-def test_bulk_select_all_filtered(client: TestClient, superuser_token_headers: dict[str, str], superuser: dict[str, Any], session: Session) -> None:
+def test_bulk_select_all_filtered(
+    client: TestClient, superuser_token_headers: dict[str, str], db: Session
+) -> None:
     """Test bulk update with select_all_filtered."""
-    # Create test contacts
-    create_test_contact(session, superuser["id"], first_name="Alice")
-    create_test_contact(session, superuser["id"], first_name="Bob")
-    create_test_contact(session, superuser["id"], first_name="Charlie")
+    user_id = get_superuser_id(db)
+    create_test_contact(db, user_id, first_name="Alice")
+    create_test_contact(db, user_id, first_name="Bob")
+    create_test_contact(db, user_id, first_name="Charlie")
 
     # Bulk update all contacts (no filter)
     response = client.patch(
@@ -268,12 +306,14 @@ def test_bulk_select_all_filtered(client: TestClient, superuser_token_headers: d
     assert result["updated_count"] == 3
 
 
-def test_bulk_select_all_filtered_with_search(client: TestClient, superuser_token_headers: dict[str, str], superuser: dict[str, Any], session: Session) -> None:
+def test_bulk_select_all_filtered_with_search(
+    client: TestClient, superuser_token_headers: dict[str, str], db: Session
+) -> None:
     """Test bulk update with select_all_filtered and search filter."""
-    # Create test contacts
-    create_test_contact(session, superuser["id"], first_name="Alice")
-    create_test_contact(session, superuser["id"], first_name="Bob")
-    create_test_contact(session, superuser["id"], first_name="Charlie")
+    user_id = get_superuser_id(db)
+    create_test_contact(db, user_id, first_name="Alice")
+    create_test_contact(db, user_id, first_name="Bob")
+    create_test_contact(db, user_id, first_name="Charlie")
 
     # Bulk update only contacts matching "Ali" (should only match Alice)
     response = client.patch(
@@ -290,11 +330,13 @@ def test_bulk_select_all_filtered_with_search(client: TestClient, superuser_toke
     assert result["updated_count"] == 1  # Only Alice
 
 
-def test_bulk_preview(client: TestClient, superuser_token_headers: dict[str, str], superuser: dict[str, Any], session: Session) -> None:
+def test_bulk_preview(
+    client: TestClient, superuser_token_headers: dict[str, str], db: Session
+) -> None:
     """Test bulk preview endpoint."""
-    # Create test contacts
-    create_test_contact(session, superuser["id"], first_name="Alice")
-    create_test_contact(session, superuser["id"], first_name="Bob")
+    user_id = get_superuser_id(db)
+    create_test_contact(db, user_id, first_name="Alice")
+    create_test_contact(db, user_id, first_name="Bob")
 
     response = client.get(
         "/api/v1/contacts/bulk/preview",
@@ -307,11 +349,13 @@ def test_bulk_preview(client: TestClient, superuser_token_headers: dict[str, str
     assert len(result["data"]) == 2
 
 
-def test_bulk_preview_with_search(client: TestClient, superuser_token_headers: dict[str, str], superuser: dict[str, Any], session: Session) -> None:
+def test_bulk_preview_with_search(
+    client: TestClient, superuser_token_headers: dict[str, str], db: Session
+) -> None:
     """Test bulk preview with search filter."""
-    # Create test contacts
-    create_test_contact(session, superuser["id"], first_name="Alice")
-    create_test_contact(session, superuser["id"], first_name="Bob")
+    user_id = get_superuser_id(db)
+    create_test_contact(db, user_id, first_name="Alice")
+    create_test_contact(db, user_id, first_name="Bob")
 
     response = client.get(
         "/api/v1/contacts/bulk/preview",
@@ -325,7 +369,9 @@ def test_bulk_preview_with_search(client: TestClient, superuser_token_headers: d
     assert result["data"][0]["first_name"] == "Alice"
 
 
-def test_bulk_no_ids_or_filter(client: TestClient, superuser_token_headers: dict[str, str], superuser: dict[str, Any]) -> None:
+def test_bulk_no_ids_or_filter(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
     """Test bulk update with neither contact_ids nor select_all_filtered."""
     response = client.patch(
         "/api/v1/contacts/bulk",
@@ -338,7 +384,9 @@ def test_bulk_no_ids_or_filter(client: TestClient, superuser_token_headers: dict
     assert "contact_ids or set select_all_filtered" in response.json()["detail"]
 
 
-def test_bulk_empty_result(client: TestClient, superuser_token_headers: dict[str, str], superuser: dict[str, Any]) -> None:
+def test_bulk_empty_result(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
     """Test bulk update with no matching contacts."""
     response = client.patch(
         "/api/v1/contacts/bulk",
@@ -354,11 +402,14 @@ def test_bulk_empty_result(client: TestClient, superuser_token_headers: dict[str
     assert result["skipped_count"] == 0
 
 
-def test_bulk_limit_enforced(client: TestClient, superuser_token_headers: dict[str, str], superuser: dict[str, Any], session: Session) -> None:
+def test_bulk_limit_enforced(
+    client: TestClient, superuser_token_headers: dict[str, str], db: Session
+) -> None:
     """Test that bulk operations respect the limit."""
+    user_id = get_superuser_id(db)
     # Create 10 contacts
     for i in range(10):
-        create_test_contact(session, superuser["id"], first_name=f"Contact{i}")
+        create_test_contact(db, user_id, first_name=f"Contact{i}")
 
     # Set limit to 5
     response = client.patch(
@@ -375,21 +426,25 @@ def test_bulk_limit_enforced(client: TestClient, superuser_token_headers: dict[s
     assert result["updated_count"] == 5
 
 
-def test_bulk_other_user_contacts_not_affected(client: TestClient, superuser_token_headers: dict[str, str], superuser: dict[str, Any], session: Session) -> None:
+def test_bulk_other_user_contacts_not_affected(
+    client: TestClient, superuser_token_headers: dict[str, str], db: Session
+) -> None:
     """Test that bulk operations only affect contacts owned by the current user."""
     from app.models import User
 
+    user_id = get_superuser_id(db)
+
     # Create another user
     other_user = User(email="other@example.com", hashed_password="fakehash", is_active=True)
-    session.add(other_user)
-    session.commit()
-    session.refresh(other_user)
+    db.add(other_user)
+    db.commit()
+    db.refresh(other_user)
 
     # Create contact for other user
-    other_contact = create_test_contact(session, other_user.id, first_name="Other")
+    other_contact = create_test_contact(db, other_user.id, first_name="Other")
 
     # Create contact for superuser
-    my_contact = create_test_contact(session, superuser["id"], first_name="Mine")
+    my_contact = create_test_contact(db, user_id, first_name="Mine")
 
     # Bulk update all - should only affect my contact
     response = client.patch(
@@ -405,5 +460,5 @@ def test_bulk_other_user_contacts_not_affected(client: TestClient, superuser_tok
     assert result["updated_count"] == 1
 
     # Verify other user's contact was not affected
-    session.refresh(other_contact)
+    db.refresh(other_contact)
     assert other_contact.is_favorite is False

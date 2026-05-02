@@ -73,3 +73,6 @@ export {
   Video,
   X,
 } from "lucide-react"
+
+// Additional icons for bulk operations
+export { CheckSquare, Square, Download } from "lucide-react"

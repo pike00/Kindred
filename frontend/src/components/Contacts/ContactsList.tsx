@@ -16,11 +16,9 @@ import {
   Search,
   Star,
   Users,
-  CheckSquare,
-  Square,
   Archive,
-  Tag,
   Trash2,
+  Download,
 } from "@/lib/icons"
 import { cn } from "@/lib/utils"
 import { AddContactDialog } from "./AddContactDialog"
@@ -43,9 +41,10 @@ const BULK_ACTIONS = [
   { id: "favorite", label: "Add to Favorites", icon: Star, color: "text-yellow-600" },
   { id: "unfavorite", label: "Remove from Favorites", icon: Star, color: "text-gray-600" },
   { id: "delete", label: "Delete", icon: Trash2, color: "text-red-600" },
+  { id: "export", label: "Export CSV", icon: Download, color: "text-blue-600" },
 ]
 
-type BulkActionId = "archive" | "unarchive" | "favorite" | "unfavorite" | "delete"
+type BulkActionId = "archive" | "unarchive" | "favorite" | "unfavorite" | "delete" | "export"
 
 // Preview modal state
 interface PreviewModalState {
@@ -54,6 +53,7 @@ interface PreviewModalState {
   count: number
   contacts: ContactPublic[]
 }
+
 
 function fullName(contact: ContactPublic): string {
   return (
@@ -202,6 +202,7 @@ export const ContactsList = () => {
   const { data } = useSuspenseQuery({
     queryKey: ["contacts"],
     queryFn: () => ContactsService.listContactsContacts(),
+  })
 
   const allContacts = useMemo(() => data?.data ?? [], [data?.data])
   const filtered = useMemo(
@@ -266,7 +267,78 @@ export const ContactsList = () => {
     }
   }, [search, selectAllFiltered])
 
+  const handleExportCsv = useCallback(async () => {
+    try {
+      // Build query string
+      const params = new URLSearchParams()
+      if (selectAllFiltered) params.append('select_all_filtered', 'true')
+      if (search) params.append('search', search)
+      
+      // Get token from localStorage
+      const token = localStorage.getItem('token') || ''
+      
+      const response = await fetch(`/api/v1/import-export/export/csv?${params.toString()}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      })
+      
+      if (!response.ok) throw new Error('Failed to export CSV')
+      
+      const blob = await response.blob()
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = url
+      link.setAttribute("download", "contacts.csv")
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+      
+      toast.success("CSV exported successfully")
+    } catch (error) {
+      toast.error("Failed to export CSV")
+    }
+  }, [selectAllFiltered, search])
+
+  const handleUndo = useCallback(async (undoData: { ids: string[], action: BulkActionId }) => {
+    // Reverse the action
+    const operations: BulkContactRequest["operations"] = {}
+    switch (undoData.action) {
+      case "archive":
+        operations.set_is_archived = false
+        break
+      case "unarchive":
+        operations.set_is_archived = true
+        break
+      case "favorite":
+        operations.set_is_favorite = false
+        break
+      case "unfavorite":
+        operations.set_is_favorite = true
+        break
+    }
+    try {
+      await ContactsService.bulkUpdateContactsContactsBulk({
+        requestBody: {
+          contact_ids: undoData.ids,
+          operations,
+        },
+      })
+      toast.success("Undo successful")
+    } catch (error) {
+      toast.error("Undo failed")
+    }
+  }, [])
+
   const handleBulkAction = useCallback(async (actionId: BulkActionId) => {
+    if (actionId === "export") {
+      handleExportCsv()
+      return
+    }
+
     if (selectedCount === 0 && !selectAllFiltered) {
       toast.error("No contacts selected")
       return
@@ -304,7 +376,17 @@ export const ContactsList = () => {
       }
 
       const result = await ContactsService.bulkUpdateContactsContactsBulk({ requestBody: body })
-      toast.success(`Updated ${result.updated_count} contacts`)
+      toast.success(`Updated ${result.updated_count} contacts`, {
+        action: {
+          label: "Undo",
+          onClick: () => {
+            const ids = selectAllFiltered
+              ? filtered.map((c: ContactPublic) => c.id)
+              : Array.from(selectedIds)
+            handleUndo({ ids, action: actionId })
+          },
+        },
+      })
       if (result.failed_ids && result.failed_ids.length > 0) {
         toast.error(`Failed to update ${result.failed_ids.length} contacts`)
       }
@@ -312,19 +394,21 @@ export const ContactsList = () => {
       // Clear selection and refresh
       setSelectedIds(new Set())
       setSelectAllFiltered(false)
-      // Refetch contacts
-      // Note: In production, you'd invalidate the query
     } catch (error) {
       toast.error("Bulk operation failed")
     } finally {
       setIsLoading(false)
       setPreviewModal({ open: false, action: null, count: 0, contacts: [] })
     }
-  }, [selectedCount, selectAllFiltered, selectedIds, search])
+  }, [selectedCount, selectAllFiltered, selectedIds, search, handleExportCsv, handleUndo])
 
   const handlePreviewAction = useCallback((actionId: BulkActionId) => {
+    if (actionId === "export") {
+      handleExportCsv()
+      return
+    }
     setPreviewModal((prev) => ({ ...prev, open: true, action: actionId }))
-  }, [])
+  }, [handleExportCsv])
 
   const handleConfirmAction = useCallback(() => {
     if (previewModal.action) {
@@ -414,9 +498,9 @@ export const ContactsList = () => {
         <div className="flex items-center gap-2 px-4">
           <Checkbox
             checked={isAllSelected}
-            indeterminate={isSomeSelected && !isAllSelected}
             onCheckedChange={handleToggleAll}
             aria-label="Select all on this page"
+            {...(isSomeSelected && !isAllSelected ? { indeterminate: true } : {})}
           />
           <span className="text-sm text-muted-foreground">
             {isAllSelected ? "All on page selected" : "Select all on this page"}
