@@ -707,6 +707,15 @@ class RelationshipBase(SQLModel):
 class RelationshipCreate(RelationshipBase):
     contact_id: uuid.UUID  # "from" contact
     related_contact_id: uuid.UUID  # "to" contact
+    inverse_relationship_type: str | None = Field(
+        default=None,
+        max_length=100,
+        description=(
+            "Type for the auto-generated inverse row. If omitted, the "
+            "server infers it from a known map of symmetric/asymmetric "
+            "types and returns 422 when it cannot."
+        ),
+    )
 
 
 class RelationshipUpdate(SQLModel):
@@ -717,7 +726,9 @@ class RelationshipUpdate(SQLModel):
 class Relationship(RelationshipBase, table=True):
     """Directional link between two contacts (spouse, child, friend, etc.).
 
-    To model a symmetric relationship, create two rows (one per direction).
+    Every row is paired with an inverse row pointing the opposite
+    direction; ``inverse_id`` cross-links them. Deleting one side
+    cascades to the other so both contacts stay in sync.
     """
 
     id: uuid.UUID = Field(
@@ -737,12 +748,20 @@ class Relationship(RelationshipBase, table=True):
         ondelete="CASCADE",
         description='"To" contact in the directional relationship.',
     )
+    inverse_id: uuid.UUID | None = Field(
+        default=None,
+        foreign_key="relationship.id",
+        nullable=True,
+        ondelete="SET NULL",
+        description="The paired row pointing the opposite direction.",
+    )
 
 
 class RelationshipPublic(RelationshipBase):
     id: uuid.UUID
     contact_id: uuid.UUID
     related_contact_id: uuid.UUID
+    inverse_id: uuid.UUID | None = None
 
 
 # ─── Pet ──────────────────────────────────────────────────────────────────────

@@ -183,13 +183,39 @@ def create_address(*, session: Session, address_in: AddressCreate) -> Address:
 
 
 def create_relationship(
-    *, session: Session, relationship_in: RelationshipCreate
+    *,
+    session: Session,
+    relationship_in: RelationshipCreate,
+    inverse_type: str,
 ) -> Relationship:
-    db_obj = Relationship.model_validate(relationship_in)
-    session.add(db_obj)
+    """Create a directional relationship plus its inverse, cross-linked.
+
+    The caller resolves ``inverse_type`` (either explicitly from the
+    user or via ``infer_inverse``) so this function stays purely
+    persistence — it never falls back silently to a wrong inverse.
+    """
+    forward = Relationship(
+        contact_id=relationship_in.contact_id,
+        related_contact_id=relationship_in.related_contact_id,
+        relationship_type=relationship_in.relationship_type,
+        notes=relationship_in.notes,
+    )
+    inverse = Relationship(
+        contact_id=relationship_in.related_contact_id,
+        related_contact_id=relationship_in.contact_id,
+        relationship_type=inverse_type,
+        notes=relationship_in.notes,
+    )
+    session.add(forward)
+    session.add(inverse)
+    session.flush()
+    forward.inverse_id = inverse.id
+    inverse.inverse_id = forward.id
+    session.add(forward)
+    session.add(inverse)
     session.commit()
-    session.refresh(db_obj)
-    return db_obj
+    session.refresh(forward)
+    return forward
 
 
 # ─── Pet CRUD ──────────────────────────────────────────────────────────────────

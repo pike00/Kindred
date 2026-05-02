@@ -3626,6 +3626,19 @@ export const RelationshipCreateSchema = {
             type: 'string',
             format: 'uuid',
             title: 'Related Contact Id'
+        },
+        inverse_relationship_type: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 100
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Inverse Relationship Type',
+            description: 'Type for the auto-generated inverse row. If omitted, the server infers it from a known map of symmetric/asymmetric types and returns 422 when it cannot.'
         }
     },
     type: 'object',
@@ -3668,6 +3681,18 @@ export const RelationshipPublicSchema = {
             type: 'string',
             format: 'uuid',
             title: 'Related Contact Id'
+        },
+        inverse_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'uuid'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Inverse Id'
         }
     },
     type: 'object',

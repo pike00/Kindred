@@ -1027,6 +1027,10 @@ export type RelationshipCreate = {
     notes?: (string | null);
     contact_id: string;
     related_contact_id: string;
+    /**
+     * Type for the auto-generated inverse row. If omitted, the server infers it from a known map of symmetric/asymmetric types and returns 422 when it cannot.
+     */
+    inverse_relationship_type?: (string | null);
 };
 
 export type RelationshipPublic = {
@@ -1041,6 +1045,7 @@ export type RelationshipPublic = {
     id: string;
     contact_id: string;
     related_contact_id: string;
+    inverse_id?: (string | null);
 };
 
 export type RelationshipUpdate = {
@@ -1723,6 +1728,14 @@ export type PetsDeletePetData = {
 };
 
 export type PetsDeletePetResponse = (unknown);
+
+export type RelationshipsLookupInverseData = {
+    type: string;
+};
+
+export type RelationshipsLookupInverseResponse = ({
+    [key: string]: (string | null);
+});
 
 export type RelationshipsListRelationshipsData = {
     contactId: string;
