@@ -26,3 +26,6 @@ docs/db/*.html
 
 # dbml conversion stderr from `just db-docs`; regenerable
 dbml-error.log
+
+# scripts/run-dirac-projects.sh state, logs, and prompts
+.dirac-runner/
