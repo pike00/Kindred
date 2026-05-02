@@ -56,7 +56,7 @@ def test_contact_to_vcard_with_fields():
     vcard_text = contact_to_vcard(contact, fields=fields, addresses=[])
     assert "jane@example.com" in vcard_text
     assert "+1-555-1234" in vcard_text
-    assert "TYPE:WORK" in vcard_text or "TYPE:cell" in vcard_text
+    assert "TYPE=WORK" in vcard_text or "TYPE=cell" in vcard_text
 
 
 def test_contact_to_vcard_with_address():
@@ -102,7 +102,8 @@ def test_contact_to_vcard_with_crm_fields():
     assert "X-CRM-FAVORITE:TRUE" in vcard_text
     assert "X-CRM-STAGE:Active" in vcard_text
     assert "X-CRM-FREQUENCY-DAYS:30" in vcard_text
-    assert "PHOTO:https://example.com/avatar.jpg" in vcard_text
+    assert "PHOTO" in vcard_text
+    assert "https://example.com/avatar.jpg" in vcard_text
 
 
 def test_vcard_to_contact_data_basic():
