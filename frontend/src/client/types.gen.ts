@@ -627,6 +627,62 @@ export type GiftUpdate = {
     url?: (string | null);
 };
 
+/**
+ * A single contact from Google, mapped to our schema for preview.
+ */
+export type GoogleContactPreview = {
+    /**
+     * Google resourceName (source_external_id).
+     */
+    resource_name: string;
+    first_name?: (string | null);
+    last_name?: (string | null);
+    middle_name?: (string | null);
+    /**
+     * List of {label, value} dicts.
+     */
+    emails?: Array<{
+        [key: string]: (string);
+    }>;
+    /**
+     * List of {label, value} dicts.
+     */
+    phones?: Array<{
+        [key: string]: (string);
+    }>;
+};
+
+/**
+ * Preview of Google contacts before import.
+ */
+export type GoogleSyncPreviewResponse = {
+    contacts: Array<GoogleContactPreview>;
+    next_sync_token?: (string | null);
+    total_count: number;
+};
+
+/**
+ * Summary of what the sync operation did.
+ */
+export type GoogleSyncResult = {
+    /**
+     * New contacts created during this sync.
+     */
+    created: number;
+    /**
+     * Existing contacts updated during this sync.
+     */
+    updated: number;
+    /**
+     * Contacts that were skipped (duplicates, errors).
+     */
+    skipped: number;
+    /**
+     * syncToken to use for the next incremental sync.
+     */
+    next_sync_token?: (string | null);
+};
+
 export type GroupCreate = {
     /**
      * Group name, 1-255 chars.
@@ -1357,6 +1413,10 @@ export type ContactImportsGoogleExchangeData = {
 };
 
 export type ContactImportsGoogleExchangeResponse = (OAuthCredentialPublic);
+
+export type ContactImportsGoogleSyncResponse = (GoogleSyncResult);
+
+export type ContactImportsGoogleSyncPreviewResponse = (GoogleSyncPreviewResponse);
 
 export type ContactsListContactsData = {
     groupId?: (string | null);

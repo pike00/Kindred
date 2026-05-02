@@ -13,7 +13,14 @@ from sqlmodel import Session, select
 from app.api.routes import contact_imports
 from app.core import crypto, security
 from app.core.config import settings
-from app.models import OAuthCredential, OAuthProvider, User
+from app.models import (
+    Contact,
+    ContactField,
+    ContactSource,
+    OAuthCredential,
+    OAuthProvider,
+    User,
+)
 
 GOOGLE_CLIENT_ID = "test-client-id.apps.googleusercontent.com"
 GOOGLE_CLIENT_SECRET = "test-client-secret"
@@ -356,3 +363,273 @@ def test_exchange_400_when_google_token_call_fails(
     )
     assert r.status_code == 400
     assert "Google token exchange failed" in r.json()["detail"]
+
+
+# --- /sync/preview ---------------------------------------------------------
+
+
+def _fake_google_contacts(*, sync_token=None):
+    """Return a fake Google People API connections response."""
+    contacts = [
+        {
+            "resourceName": "people/c1",
+            "names": [{"givenName": "Alice", "familyName": "Smith"}],
+            "emailAddresses": [{"value": "alice@example.com", "type": "home"}],
+            "phoneNumbers": [{"value": "+1-555-0100", "type": "mobile"}],
+        },
+        {
+            "resourceName": "people/c2",
+            "names": [{"givenName": "Bob", "familyName": "Jones", "middleName": "T"}],
+            "emailAddresses": [{"value": "bob@example.com", "type": "work"}],
+        },
+    ]
+    resp = {"connections": contacts}
+    if sync_token:
+        resp["nextSyncToken"] = "sync-token-123"
+    return resp
+
+
+def _stub_google_api(monkeypatch, contacts_fn=None):
+    """Stub out httpx.get for Google People API."""
+    captured = {}
+    if contacts_fn is None:
+        contacts_fn = _fake_google_contacts
+
+    class _Resp:
+        def __init__(self, data, status_code=200):
+            self.status_code = status_code
+            self._data = data
+            self.text = "stub"
+
+        def json(self):
+            return self._data
+
+    def _fake_get(url, **kwargs):
+        captured["url"] = url
+        captured["params"] = kwargs.get("params", {})
+        return _Resp(contacts_fn())
+
+    monkeypatch.setattr(contact_imports.httpx, "get", _fake_get)
+    return captured
+
+
+def _create_google_credential(db, user_id):
+    """Create a test OAuthCredential for Google."""
+    cred = OAuthCredential(
+        user_id=user_id,
+        provider=OAuthProvider.GOOGLE,
+        encrypted_refresh_token=crypto.encrypt("fake-refresh-token"),
+        encrypted_access_token=crypto.encrypt("fake-access-token"),
+        access_token_expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+    )
+    db.add(cred)
+    db.commit()
+    return cred
+
+
+@pytest.mark.usefixtures("google_configured")
+def test_sync_preview_requires_credential(
+    client,
+    superuser_token_headers,
+):
+    """GET /sync/preview should 404 if no credential exists."""
+    r = client.get(
+        f"{settings.API_V1_STR}/contacts/import/google/sync/preview",
+        headers=superuser_token_headers,
+    )
+    assert r.status_code == 404
+    assert "No Google credential" in r.json()["detail"]
+
+
+@pytest.mark.usefixtures("google_configured")
+def test_sync_preview_returns_contacts(
+    client,
+    superuser_token_headers,
+    db,
+    monkeypatch,
+):
+    """GET /sync/preview should return mapped contacts."""
+    user = _current_user(client, superuser_token_headers, db)
+    _create_google_credential(db, user.id)
+    _stub_google_api(monkeypatch)
+
+    r = client.get(
+        f"{settings.API_V1_STR}/contacts/import/google/sync/preview",
+        headers=superuser_token_headers,
+    )
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["total_count"] == 2
+    assert len(body["contacts"]) == 2
+    # Check first contact mapping
+    alice = body["contacts"][0]
+    assert alice["resource_name"] == "people/c1"
+    assert alice["first_name"] == "Alice"
+    assert alice["last_name"] == "Smith"
+    assert len(alice["emails"]) == 1
+    assert alice["emails"][0]["value"] == "alice@example.com"
+    assert len(alice["phones"]) == 1
+    assert alice["phones"][0]["value"] == "+1-555-0100"
+
+    # Check second contact (Bob with middle name)
+    bob = body["contacts"][1]
+    assert bob["first_name"] == "Bob"
+    assert bob["last_name"] == "Jones"
+    assert bob["middle_name"] == "T"
+
+
+@pytest.mark.usefixtures("google_configured")
+def test_sync_preview_includes_sync_token(
+    client,
+    superuser_token_headers,
+    db,
+    monkeypatch,
+):
+    """GET /sync/preview should return next_sync_token when provided."""
+    user = _current_user(client, superuser_token_headers, db)
+    cred = _create_google_credential(db, user.id)
+    cred.sync_token = "existing-sync-token"
+    db.add(cred)
+    db.commit()
+
+    captured = _stub_google_api(monkeypatch)
+
+    r = client.get(
+        f"{settings.API_V1_STR}/contacts/import/google/sync/preview",
+        headers=superuser_token_headers,
+    )
+    assert r.status_code == 200, r.text
+    body = r.json()
+    # Should pass sync_token in request
+    assert captured["params"].get("syncToken") == "existing-sync-token"
+    # Should return next_sync_token from response
+    assert body["next_sync_token"] == "sync-token-123"
+
+
+# --- /sync (POST) -----------------------------------------------------------
+
+
+@pytest.mark.usefixtures("google_configured")
+def test_sync_requires_credential(
+    client,
+    superuser_token_headers,
+):
+    """POST /sync should 404 if no credential exists."""
+    r = client.post(
+        f"{settings.API_V1_STR}/contacts/import/google/sync",
+        headers=superuser_token_headers,
+    )
+    assert r.status_code == 404
+    assert "No Google credential" in r.json()["detail"]
+
+
+@pytest.mark.usefixtures("google_configured")
+def test_sync_creates_new_contacts(
+    client,
+    superuser_token_headers,
+    db,
+    monkeypatch,
+):
+    """POST /sync should create new contacts from Google data."""
+    user = _current_user(client, superuser_token_headers, db)
+    _create_google_credential(db, user.id)
+    _stub_google_api(monkeypatch)
+
+    r = client.post(
+        f"{settings.API_V1_STR}/contacts/import/google/sync",
+        headers=superuser_token_headers,
+    )
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["created"] == 2
+    assert body["updated"] == 0
+    assert body["skipped"] == 0
+
+    # Verify contacts were created in DB
+    contacts = db.exec(
+        select(Contact).where(
+            Contact.owner_id == user.id,
+            Contact.source_provider == ContactSource.GOOGLE,
+        )
+    ).all()
+    assert len(contacts) == 2
+
+    # Verify contact fields (emails, phones)
+    alice = db.exec(
+        select(Contact).where(Contact.source_external_id == "people/c1")
+    ).first()
+    assert alice is not None
+    assert alice.first_name == "Alice"
+    fields = db.exec(
+        select(ContactField).where(ContactField.contact_id == alice.id)
+    ).all()
+    assert len(fields) == 2  # 1 email + 1 phone
+
+
+@pytest.mark.usefixtures("google_configured")
+def test_sync_updates_existing_contacts(
+    client,
+    superuser_token_headers,
+    db,
+    monkeypatch,
+):
+    """POST /sync should update existing contacts on re-import."""
+    user = _current_user(client, superuser_token_headers, db)
+    _create_google_credential(db, user.id)
+
+    # Pre-create a contact that matches one from Google
+    existing = Contact(
+        owner_id=user.id,
+        first_name="OldName",
+        last_name="OldLastName",
+        source_provider=ContactSource.GOOGLE,
+        source_external_id="people/c1",
+    )
+    db.add(existing)
+    db.commit()
+
+    _stub_google_api(monkeypatch)
+
+    r = client.post(
+        f"{settings.API_V1_STR}/contacts/import/google/sync",
+        headers=superuser_token_headers,
+    )
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["created"] == 1  # people/c2 is new
+    assert body["updated"] == 1  # people/c1 is updated
+
+    # Verify the existing contact was updated
+    db.refresh(existing)
+    assert existing.first_name == "Alice"
+    assert existing.last_name == "Smith"
+
+
+@pytest.mark.usefixtures("google_configured")
+def test_sync_updates_sync_token(
+    client,
+    superuser_token_headers,
+    db,
+    monkeypatch,
+):
+    """POST /sync should update the stored sync_token."""
+    user = _current_user(client, superuser_token_headers, db)
+    _create_google_credential(db, user.id)
+    _stub_google_api(monkeypatch)
+
+    r = client.post(
+        f"{settings.API_V1_STR}/contacts/import/google/sync",
+        headers=superuser_token_headers,
+    )
+    assert r.status_code == 200, r.text
+
+    # Verify sync_token was updated
+    cred = db.exec(
+        select(OAuthCredential).where(
+            OAuthCredential.user_id == user.id,
+            OAuthCredential.provider == OAuthProvider.GOOGLE,
+        )
+    ).first()
+    assert cred is not None
+    assert cred.sync_token == "sync-token-123"
+    assert cred.last_synced_at is not None

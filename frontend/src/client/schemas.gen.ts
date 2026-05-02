@@ -2292,6 +2292,142 @@ export const GiftsPublicSchema = {
     title: 'GiftsPublic'
 } as const;
 
+export const GoogleContactPreviewSchema = {
+    properties: {
+        resource_name: {
+            type: 'string',
+            title: 'Resource Name',
+            description: 'Google resourceName (source_external_id).'
+        },
+        first_name: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'First Name'
+        },
+        last_name: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Last Name'
+        },
+        middle_name: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Middle Name'
+        },
+        emails: {
+            items: {
+                additionalProperties: {
+                    type: 'string'
+                },
+                type: 'object'
+            },
+            type: 'array',
+            title: 'Emails',
+            description: 'List of {label, value} dicts.'
+        },
+        phones: {
+            items: {
+                additionalProperties: {
+                    type: 'string'
+                },
+                type: 'object'
+            },
+            type: 'array',
+            title: 'Phones',
+            description: 'List of {label, value} dicts.'
+        }
+    },
+    type: 'object',
+    required: ['resource_name'],
+    title: 'GoogleContactPreview',
+    description: 'A single contact from Google, mapped to our schema for preview.'
+} as const;
+
+export const GoogleSyncPreviewResponseSchema = {
+    properties: {
+        contacts: {
+            items: {
+                '$ref': '#/components/schemas/GoogleContactPreview'
+            },
+            type: 'array',
+            title: 'Contacts'
+        },
+        next_sync_token: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Next Sync Token'
+        },
+        total_count: {
+            type: 'integer',
+            title: 'Total Count'
+        }
+    },
+    type: 'object',
+    required: ['contacts', 'total_count'],
+    title: 'GoogleSyncPreviewResponse',
+    description: 'Preview of Google contacts before import.'
+} as const;
+
+export const GoogleSyncResultSchema = {
+    properties: {
+        created: {
+            type: 'integer',
+            title: 'Created',
+            description: 'New contacts created during this sync.'
+        },
+        updated: {
+            type: 'integer',
+            title: 'Updated',
+            description: 'Existing contacts updated during this sync.'
+        },
+        skipped: {
+            type: 'integer',
+            title: 'Skipped',
+            description: 'Contacts that were skipped (duplicates, errors).'
+        },
+        next_sync_token: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Next Sync Token',
+            description: 'syncToken to use for the next incremental sync.'
+        }
+    },
+    type: 'object',
+    required: ['created', 'updated', 'skipped'],
+    title: 'GoogleSyncResult',
+    description: 'Summary of what the sync operation did.'
+} as const;
+
 export const GroupCreateSchema = {
     properties: {
         name: {
