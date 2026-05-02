@@ -19,22 +19,9 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 
-import {
-  ContactsKanbanService,
-  ContactsService,
-  type ContactPublic,
-  type ContactsPublic,
-} from "@/client/kanban-service";
-import { ContactAvatar } from "@/components/Common/ContactAvatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Search, GripVertical } from "@/lib/icons";
-import { cn } from "@/lib/utils";
-import { EmptyState } from "@/components/Common/EmptyState";
-import { AddContactDialog } from "./AddContactDialog";
 import {
   ContactsKanbanService,
   ContactsService,
@@ -45,19 +32,13 @@ import { ContactAvatar } from "@/components/Common/ContactAvatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Search,
-  Users,
-  GripVertical,
-} from "@/lib/icons";
+import { Search, GripVertical, Users } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/Common/EmptyState";
 import { AddContactDialog } from "./AddContactDialog";
+import { toast } from "sonner";
 
 const DEFAULT_STAGES = ["Active", "Dormant", "Lost", "Archived"];
-const PAGE_SIZE = 25;
 
 function fullName(contact: ContactPublic): string {
   return (
@@ -66,24 +47,47 @@ function fullName(contact: ContactPublic): string {
   );
 }
 
-function ContactCard({
+function SortableContactCard({
   contact,
   isDragging,
 }: {
   contact: ContactPublic;
   isDragging?: boolean;
 }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging: isSortableDragging,
+  } = useSortable({
+    id: contact.id,
+    data: {
+      type: "contact",
+      contact,
+    },
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
   return (
     <div
+      ref={setNodeRef}
+      style={style}
       className={cn(
-        "group flex items-center gap-3 rounded-xl border bg-card p-3 shadow-xs transition-all",
-        isDragging && "opacity-50 shadow-lg",
-        !isDragging && "hover:-translate-y-px hover:border-primary/30 hover:shadow-sm",
+        "group flex items-center gap-3 rounded-xl border bg-card p-3 shadow-xs transition-all cursor-grab",
+        isDragging || isSortableDragging
+          ? "opacity-50 shadow-lg"
+          : "hover:-translate-y-px hover:border-primary/30 hover:shadow-sm",
       )}
+      {...attributes}
+      {...listeners}
     >
-      <div className="cursor-grab opacity-40 group-hover:opacity-100 transition-opacity">
-        <GripVertical className="size-4" />
-      </div>
+      <GripVertical className="size-4 opacity-40 group-hover:opacity-100 transition-opacity shrink-0" />
       <ContactAvatar contact={contact} size="sm" />
       <div className="min-w-0 flex-1">
         <div className="font-medium text-sm truncate">{fullName(contact)}</div>
@@ -110,10 +114,19 @@ function KanbanColumn({
   isOver?: boolean;
   onAddContact?: () => void;
 }) {
+  const { setNodeRef } = useDroppable({
+    id: stage,
+    data: {
+      type: "column",
+      stage,
+    },
+  });
+
   return (
     <div
+      ref={setNodeRef}
       className={cn(
-        "flex w-80 flex-col rounded-2xl border bg-muted/30 transition-colors",
+        "flex w-80 flex-col rounded-2xl border bg-muted/30 transition-colors shrink-0",
         isOver && "bg-primary/5 border-primary/30",
       )}
     >
@@ -139,15 +152,23 @@ function KanbanColumn({
 
       {/* Column Body - scrollable */}
       <div className="flex-1 overflow-y-auto p-2 space-y-2 min-h-[200px] max-h-[calc(100vh-300px)]">
-        {contacts.length === 0 ? (
-          <div className="flex items-center justify-center h-20 text-xs text-muted-foreground">
-            No contacts
-          </div>
-        ) : (
-          contacts.map((contact) => (
-            <ContactCard key={contact.id} contact={contact} />
-          ))
-        )}
+        <SortableContext
+          items={contacts.map((c) => c.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          {contacts.length === 0 ? (
+            <div className="flex items-center justify-center h-20 text-xs text-muted-foreground">
+              No contacts
+            </div>
+          ) : (
+            contacts.map((contact) => (
+              <SortableContactCard
+                key={contact.id}
+                contact={contact}
+              />
+            ))
+          )}
+        </SortableContext>
       </div>
     </div>
   );
@@ -157,6 +178,7 @@ export const KanbanBoard = () => {
   const navigate = useNavigate({ from: "/contacts" });
   const [search, setSearch] = useState("");
   const [activeContact, setActiveContact] = useState<ContactPublic | null>(null);
+  const queryClient = useQueryClient();
 
   // Fetch stages
   const { data: stagesData } = useSuspenseQuery({
@@ -178,6 +200,24 @@ export const KanbanBoard = () => {
       ContactsKanbanService.getKanbanBoard({
         search: search || null,
       }),
+  });
+
+  // Mutation for updating contact stage
+  const updateStageMutation = useMutation({
+    mutationFn: ({ contactId, newStage }: { contactId: string; newStage: string }) =>
+      ContactsService.updateContact({
+        contactId,
+        requestBody: { stage: newStage },
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["kanban-board"] });
+    },
+    onError: (error) => {
+      console.error("Failed to update contact stage:", error);
+      toast.error("Failed to update contact stage. Please try again.");
+      // Refetch to get correct state
+      refetch();
+    },
   });
 
   // Sensors for dnd-kit
@@ -209,7 +249,7 @@ export const KanbanBoard = () => {
   }, [boardData]);
 
   const handleDragOver = useCallback((event: DragOverEvent) => {
-    // We handle the visual feedback in the columns
+    // Visual feedback is handled by the droppable columns
   }, []);
 
   const handleDragEnd = useCallback(
@@ -236,19 +276,9 @@ export const KanbanBoard = () => {
 
       // Optimistic update: move contact in local state
       // We'll refetch after the mutation
-      try {
-        await ContactsService.updateContact({
-          contactId,
-          requestBody: { stage: newStage },
-        });
-        refetch();
-      } catch (error) {
-        console.error("Failed to update contact stage:", error);
-        // Revert - refetch to get correct state
-        refetch();
-      }
+      updateStageMutation.mutate({ contactId, newStage });
     },
-    [boardData, refetch],
+    [boardData, updateStageMutation],
   );
 
   return (
@@ -299,7 +329,9 @@ export const KanbanBoard = () => {
 
         <DragOverlay>
           {activeContact ? (
-            <ContactCard contact={activeContact} isDragging />
+            <div className="w-72">
+              <SortableContactCard contact={activeContact} isDragging />
+            </div>
           ) : null}
         </DragOverlay>
       </DndContext>

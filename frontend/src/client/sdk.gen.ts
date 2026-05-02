@@ -2245,3 +2245,67 @@ export class WebhooksService {
 
     }
 }
+
+export class ContactsKanbanService {
+    /**
+     * Get Distinct Stages
+     * Return distinct stage values used by the current user's contacts.
+     * @returns list[str] Successful Response
+     * @throws ApiError
+     */
+    public static getDistinctStages(): CancelablePromise<GetDistinctStagesResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/contacts/stages/distinct',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+
+    /**
+     * Get Kanban Board
+     * Return contacts grouped by stage for kanban board.
+     * @param data The data for the request.
+     * @param data.search
+     * @param data.tagId
+     * @param data.groupId
+     * @returns dict[str, ContactsPublic] Successful Response
+     * @throws ApiError
+     */
+    public static getKanbanBoard(data: GetKanbanBoardData = {}): CancelablePromise<KanbanBoardResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/contacts/kanban',
+            query: {
+                search: data.search,
+                tag_id: data.tagId,
+                group_id: data.groupId,
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+
+    /**
+     * Get Contact Stage Events
+     * Get stage change history for a contact.
+     * @param data The data for the request.
+     * @param data.contactId
+     * @returns ContactStageEventsPublic Successful Response
+     * @throws ApiError
+     */
+    public static getContactStageEvents(data: GetContactStageEventsData): CancelablePromise<ContactStageEventsPublic> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/contacts/{contact_id}/stage-events',
+            path: {
+                contact_id: data.contactId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+}
