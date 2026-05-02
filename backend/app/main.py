@@ -11,6 +11,8 @@ import app.audit  # noqa: F401 — registers before_flush listener
 from app.api.main import api_router
 from app.core.config import settings
 
+from radicale.config import DEFAULT_CONFIG_SCHEMA  # noqa: E402
+
 
 def custom_generate_unique_id(route: APIRoute) -> str:
     return f"{route.tags[0]}-{route.name}"
@@ -35,16 +37,14 @@ if settings.all_cors_origins:
         allow_headers=["*"],
     )
 
-# Configure Radicale CardDAV server with PostgreSQL storage backend
-from radicale.config import DEFAULT_CONFIG_SCHEMA  # noqa: E402
-
+# Configure Radicale with custom auth and storage backends
 radicale_configuration = RadicaleConfig(DEFAULT_CONFIG_SCHEMA)
 radicale_configuration.update(
     {
-        "auth": {"type": "http_x_remote_user"},
+        "auth": {"type": "app.carddav.auth"},
         "storage": {"type": "app.carddav.storage"},
-    },
-    "app",
+        "rights": {"type": "app.carddav.rights"},
+    }
 )
 radicale_app = RadicaleApp(radicale_configuration)
 app.mount("/dav", WSGIMiddleware(radicale_app))

@@ -4,6 +4,8 @@ Converts between Contact/ContactField/Address database models and vCard format.
 Preserves unknown vCard properties through round-trips by storing raw vCard text.
 """
 
+import hashlib
+
 import uuid
 
 import vobject
@@ -16,6 +18,23 @@ from app.models import (
     ContactField,
     ContactFieldType,
 )
+
+
+def compute_etag(vcard_raw: str) -> str:
+    """Compute an ETag value from vCard content.
+
+    Uses SHA-256 hash of the vCard text to generate a strong ETag.
+
+    Args:
+        vcard_raw: The raw vCard text
+
+    Returns:
+        A string suitable for use as an ETag (hex digest of SHA-256)
+    """
+    if not vcard_raw:
+        return ""
+    sha = hashlib.sha256(vcard_raw.encode("utf-8")).hexdigest()
+    return f'"{sha}"'
 
 
 def contact_to_vcard(
@@ -140,7 +159,14 @@ def contact_to_vcard(
         )
         adr.params["TYPE"] = [addr.label.upper()]
 
-    return card.serialize()
+    vcard_text = card.serialize()
+
+    # Update vcard_raw and vcard_etag on the contact object
+    if contact.id:
+        contact.vcard_raw = vcard_text
+        contact.vcard_etag = compute_etag(vcard_text)
+
+    return vcard_text
 
 
 def vcard_to_contact_data(vcard_text: str) -> dict:

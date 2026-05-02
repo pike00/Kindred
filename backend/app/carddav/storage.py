@@ -1,5 +1,8 @@
 """Radicale storage plugin backed by the CRM's PostgreSQL database.
 
+from app.vcard import compute_etag
+
+
 This module exposes a `Storage` class that Radicale loads via config.
 It reads/writes contacts from the same database as the FastAPI app.
 """
@@ -141,7 +144,7 @@ class Collection(BaseCollection):
                     if hasattr(existing, key):
                         setattr(existing, key, value)
                 existing.vcard_raw = vcard_text
-                existing.vcard_etag = item.etag
+                existing.vcard_etag = compute_etag(vcard_text)
                 session.add(existing)
             else:
                 # Create new contact
@@ -149,7 +152,7 @@ class Collection(BaseCollection):
                 new_contact = Contact(
                     owner_id=user.id,
                     vcard_raw=vcard_text,
-                    vcard_etag=item.etag,
+                    vcard_etag=compute_etag(vcard_text),
                     **contact_data,
                 )
                 if parsed.get("uid"):
