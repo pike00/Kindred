@@ -172,7 +172,7 @@ function ContactDetailPage() {
             )}
             {contact.how_we_met && (
               <span className="flex items-center gap-1">
-                <UserRoundSearch className="size-3.5" /> Met:{" "}
+                <UserRoundSearch className="size-3.5" /> How we met:{" "}
                 {contact.how_we_met}
               </span>
             )}
@@ -267,7 +267,10 @@ function ContactDetailPage() {
             </Card>
           )}
 
-          <RelationshipsCard contactId={contactId} />
+          <RelationshipsCard
+            contactId={contactId}
+            contactName={contact.first_name ?? ""}
+          />
         </div>
       </div>
 
