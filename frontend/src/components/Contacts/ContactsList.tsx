@@ -1,21 +1,52 @@
 import { useSuspenseQuery } from "@tanstack/react-query"
 import { Link, useNavigate, useSearch } from "@tanstack/react-router"
+import { Users } from "lucide-react"
 import { useMemo, useState } from "react"
-
 import { type ContactPublic, ContactsService } from "@/client"
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
 import { EmptyState } from "@/components/Common/EmptyState"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
   ChevronLeft,
   ChevronRight,
   Clock,
+  Mail,
+  MessageSquare,
+  Pencil,
+  Phone,
   Search,
   Star,
-  Users,
+  Video,
 } from "@/lib/icons"
+
+const CHANNELS = [
+  { value: "call", label: "Call", icon: Phone },
+  { value: "in_person", label: "In Person", icon: Users },
+  { value: "text", label: "Text", icon: MessageSquare },
+  { value: "email", label: "Email", icon: Mail },
+  { value: "video", label: "Video", icon: Video },
+  { value: "social", label: "Social", icon: Users },
+  { value: "other", label: "Other", icon: Pencil },
+] as const
+
+const CHANNEL_OPTIONS = [
+  { value: "", label: "All Channels" },
+  ...CHANNELS.map((c) => ({ value: c.value, label: c.label })),
+]
+
+const CHANNEL_ICON_MAP: Record<string, React.ReactNode> = Object.fromEntries(
+  CHANNELS.map((c) => [c.value, <c.icon key={c.value} className="size-3" />]),
+)
+
+import { Badge } from "@/components/ui/badge"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { AddContactDialog } from "./AddContactDialog"
 
@@ -100,6 +131,12 @@ function ContactRow({ contact }: { contact: ContactPublic }) {
           {contact.is_favorite && (
             <Star className="size-3.5 shrink-0 fill-amber-400 text-amber-400" />
           )}
+
+          {contact.communication_preference?.do_not_contact && (
+            <Badge variant="destructive" className="text-xs">
+              DNC
+            </Badge>
+          )}
         </div>
         <div className="mt-1 flex items-center gap-2 text-xs">
           <span
@@ -127,6 +164,17 @@ function ContactRow({ contact }: { contact: ContactPublic }) {
           </Badge>
         )}
       </div>
+      {contact.communication_preference?.preferred_channel && (
+        <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+          {CHANNEL_ICON_MAP[contact.communication_preference.preferred_channel]}
+          <span>
+            {CHANNELS.find(
+              (c) =>
+                c.value === contact.communication_preference?.preferred_channel,
+            )?.label ?? contact.communication_preference.preferred_channel}
+          </span>
+        </div>
+      )}
     </Link>
   )
 }
@@ -137,6 +185,9 @@ export const ContactsList = () => {
   const [search, setSearch] = useState(urlSearch ?? "")
   const [pageIndex, setPageIndex] = useState(0)
 
+  const [channelFilter, setChannelFilter] = useState<string>("")
+  const [showDncOnly, setShowDncOnly] = useState(false)
+
   const { data } = useSuspenseQuery({
     queryKey: ["contacts"],
     queryFn: () => ContactsService.listContacts(),
@@ -144,8 +195,22 @@ export const ContactsList = () => {
 
   const allContacts = useMemo(() => data?.data ?? [], [data?.data])
   const filtered = useMemo(
-    () => allContacts.filter((c) => matchesSearch(c, search)),
-    [allContacts, search],
+    () =>
+      allContacts
+        .filter((c) => matchesSearch(c, search))
+        .filter((c) => {
+          if (
+            channelFilter &&
+            c.communication_preference?.preferred_channel !== channelFilter
+          ) {
+            return false
+          }
+          if (showDncOnly && !c.communication_preference?.do_not_contact) {
+            return false
+          }
+          return true
+        }),
+    [allContacts, search, channelFilter, showDncOnly],
   )
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const safePageIndex = Math.min(pageIndex, pageCount - 1)
@@ -167,6 +232,29 @@ export const ContactsList = () => {
           </p>
         </div>
         <AddContactDialog />
+      </div>
+
+      {/* Filter controls */}
+      <div className="flex flex-wrap items-center gap-2">
+        <Select value={channelFilter} onValueChange={setChannelFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter by channel" />
+          </SelectTrigger>
+          <SelectContent>
+            {CHANNEL_OPTIONS.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button
+          variant={showDncOnly ? "default" : "outline"}
+          size="sm"
+          onClick={() => setShowDncOnly(!showDncOnly)}
+        >
+          DNC Only
+        </Button>
       </div>
 
       <div className="relative">
