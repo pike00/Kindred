@@ -59,95 +59,27 @@ jobs:
       - name: Generate release notes
         id: notes
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION_TAG: ${{ steps.version.outputs.tag }}
         run: |
-          # Get the previous tag
+          # Get the previous tag for the --since-tag argument
           PREV_TAG=$(git tag --sort=-v:refname | head -1)
           if [ -z "$PREV_TAG" ]; then
             echo "No previous tag found, using all commits"
-            COMMITS=$(git log --no-merges --pretty=format:"%h %s" --reverse)
+            python3 scripts/generate-release-notes.py \
+              --version "$VERSION_TAG" \
+              --since-tag "" \
+              > /tmp/release_notes.md
           else
             echo "Previous tag: $PREV_TAG"
-            COMMITS=$(git log --no-merges --pretty=format:"%h %s" --reverse "${PREV_TAG}..HEAD")
+            python3 scripts/generate-release-notes.py \
+              --version "$VERSION_TAG" \
+              --since-tag "$PREV_TAG" \
+              > /tmp/release_notes.md
           fi
-
-          if [ -z "$COMMITS" ]; then
-            echo "No commits found since $PREV_TAG"
-            NOTES="## No changes\n\nNo new commits since the last release."
-          else
-            # Generate categorized release notes
-            NOTES="## What's Changed\n\n"
-
-            # Features
-            FEATURES=$(echo "$COMMITS" | grep -E "^\w+ feat" || true)
-            if [ -n "$FEATURES" ]; then
-              NOTES="${NOTES}### 🚀 Features\n"
-              echo "$FEATURES" | while IFS= read -r line; do
-                HASH=$(echo "$line" | awk '{print $1}')
-                SUBJECT=$(echo "$line" | cut -d' ' -f2-)
-                # Clean up conventional commit format
-                CLEAN=$(echo "$SUBJECT" | sed -E 's/^(feat)(\([^)]+\))?:\s*//')
-                NOTES="${NOTES}- ${CLEAN} (${HASH})\n"
-              done
-            fi
-
-            # Fixes
-            FIXES=$(echo "$COMMITS" | grep -E "^\w+ fix" || true)
-            if [ -n "$FIXES" ]; then
-              NOTES="${NOTES}### 🐛 Fixes\n"
-              echo "$FIXES" | while IFS= read -r line; do
-                HASH=$(echo "$line" | awk '{print $1}')
-                SUBJECT=$(echo "$line" | cut -d' ' -f2-)
-                CLEAN=$(echo "$SUBJECT" | sed -E 's/^(fix)(\([^)]+\))?:\s*//')
-                NOTES="${NOTES}- ${CLEAN} (${HASH})\n"
-              done
-            fi
-
-            # Docs
-            DOCS=$(echo "$COMMITS" | grep -E "^\w+ docs" || true)
-            if [ -n "$DOCS" ]; then
-              NOTES="${NOTES}### 📚 Documentation\n"
-              echo "$DOCS" | while IFS= read -r line; do
-                HASH=$(echo "$line" | awk '{print $1}')
-                SUBJECT=$(echo "$line" | cut -d' ' -f2-)
-                CLEAN=$(echo "$SUBJECT" | sed -E 's/^(docs)(\([^)]+\))?:\s*//')
-                NOTES="${NOTES}- ${CLEAN} (${HASH})\n"
-              done
-            fi
-
-            # Chores (refactor, chore, style, perf, test)
-            CHORES=$(echo "$COMMITS" | grep -E "^\w+ (chore|refactor|style|perf|test)" || true)
-            if [ -n "$CHORES" ]; then
-              NOTES="${NOTES}### 🔧 Maintenance\n"
-              echo "$CHORES" | while IFS= read -r line; do
-                HASH=$(echo "$line" | awk '{print $1}')
-                SUBJECT=$(echo "$line" | cut -d' ' -f2-)
-                CLEAN=$(echo "$SUBJECT" | sed -E 's/^(chore|refactor|style|perf|test)(\([^)]+\))?:\s*//')
-                NOTES="${NOTES}- ${CLEAN} (${HASH})\n"
-              done
-            fi
-
-            # Everything else
-            OTHER=$(echo "$COMMITS" | grep -vE "^\w+ (feat|fix|docs|chore|refactor|style|perf|test)" || true)
-            if [ -n "$OTHER" ]; then
-              NOTES="${NOTES}### 📦 Other Changes\n"
-              echo "$OTHER" | while IFS= read -r line; do
-                HASH=$(echo "$line" | awk '{print $1}')
-                SUBJECT=$(echo "$line" | cut -d' ' -f2-)
-                NOTES="${NOTES}- ${SUBJECT} (${HASH})\n"
-              done
-            fi
-          fi
-
-          # Write to file for multi-line handling
-          echo "$NOTES" > /tmp/release_notes.md
-          echo "notes_file=/tmp/release_notes.md" >> "$GITHUB_OUTPUT"
-
-          # Also set for display
+          # Set multi-line output for GitHub Actions
           {
             echo 'notes<<EOF'
-            echo "$NOTES"
+            cat /tmp/release_notes.md
             echo 'EOF'
           } >> "$GITHUB_OUTPUT"
 
@@ -156,7 +88,7 @@ jobs:
           echo "=== Release Notes for ${{ steps.version.outputs.tag }} ==="
           cat /tmp/release_notes.md
 
-      - name: Create tag (dry run check)
+      - name: Create tag
         if: inputs.dry_run != true
         env:
           VERSION_TAG: ${{ steps.version.outputs.tag }}
@@ -164,7 +96,7 @@ jobs:
           git tag "$VERSION_TAG"
           git push origin "$VERSION_TAG"
 
-      - name: Publish release (dry run check)
+      - name: Publish release
         if: inputs.dry_run != true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
