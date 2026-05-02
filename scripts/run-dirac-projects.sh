@@ -38,6 +38,20 @@ mkdir -p "$LOG_DIR" "$PROMPT_DIR"
 now() { date -u +%Y-%m-%dT%H:%M:%SZ; }
 log() { printf '[runner %s] %s\n' "$(now)" "$*" | tee -a "$RUNNER_LOG"; }
 
+MM_WEBHOOK_FILE="$STATE_DIR/mm-webhook"
+
+# mm_post <markdown-text> — non-blocking, errors swallowed.
+# Reads URL from $MM_WEBHOOK_FILE; no-op if missing. 5s timeout so the runner
+# never stalls on Mattermost being unreachable.
+mm_post() {
+  [ -s "$MM_WEBHOOK_FILE" ] || return 0
+  local url; url=$(head -1 "$MM_WEBHOOK_FILE")
+  [ -n "$url" ] || return 0
+  local payload; payload=$(jq -n --arg t "$1" '{text: $t}')
+  curl -fsS --max-time 5 -X POST -H "Content-Type: application/json" \
+    -d "$payload" "$url" >/dev/null 2>&1 || true
+}
+
 state_set() {
   # state_set <slug> key=val [key=val ...]
   local slug="$1"; shift
@@ -256,6 +270,22 @@ run_one() {
     finished_at="$(now)"
 
   log "DONE $slug — outcome=$outcome commits=$commits_ahead pr=${pr_url:-none}"
+
+  # Mattermost notification (best-effort; choose icon by outcome)
+  local icon
+  case "$outcome" in
+    ok)      icon="✅" ;;
+    timeout) icon="⏱️" ;;
+    killed)  icon="🛑" ;;
+    *)       icon="⚠️"  ;;
+  esac
+  if [ -n "${pr_url:-}" ]; then
+    mm_post "$icon \`$slug\` — $outcome ($commits_ahead commits) → [PR]($pr_url)"
+  elif [ "$commits_ahead" -gt 0 ]; then
+    mm_post "$icon \`$slug\` — $outcome ($commits_ahead commits, push failed)"
+  else
+    mm_post "$icon \`$slug\` — $outcome (no commits)"
+  fi
 }
 
 main() {
@@ -282,6 +312,12 @@ main() {
     exit 0
   fi
 
+  # Pre-run snapshot for the kickoff post
+  local already_ok already_err
+  already_ok=$(jq -r '[.[] | select(.outcome == "ok")] | length' "$STATE_FILE")
+  already_err=$(jq -r '[.[] | select(.outcome != "ok" and .outcome != null)] | length' "$STATE_FILE")
+  mm_post "🚀 **Dirac runner started** — $total projects queued (already ok: $already_ok, retrying: $already_err, untouched: $((total - already_ok - already_err)))  · model: \`tencent/hy3-preview:free\`"
+
   local i=0
   while IFS=$'\t' read -r status slug; do
     [ -z "$slug" ] && continue
@@ -295,6 +331,15 @@ main() {
   log "ALL DONE"
   log "Summary:"
   jq -r 'to_entries | map([.key, .value.outcome // "?", (.value.commits_ahead // 0|tostring), .value.pr_url // ""] | join("  ")) | .[]' "$STATE_FILE" | tee -a "$RUNNER_LOG"
+
+  # Final summary post
+  local s_ok s_err s_to s_total
+  s_ok=$(jq -r '[.[] | select(.outcome == "ok")] | length' "$STATE_FILE")
+  s_err=$(jq -r '[.[] | select(.outcome == "error")] | length' "$STATE_FILE")
+  s_to=$(jq -r '[.[] | select(.outcome == "timeout" or .outcome == "killed")] | length' "$STATE_FILE")
+  s_total=$(jq -r '. | length' "$STATE_FILE")
+  local prs; prs=$(jq -r '[.[] | select(.pr_url != null and .pr_url != "")] | length' "$STATE_FILE")
+  mm_post "🏁 **Dirac runner finished** — $s_total touched · ok: $s_ok · error: $s_err · timeout/killed: $s_to · PRs opened: $prs"
 }
 
 main "$@"
