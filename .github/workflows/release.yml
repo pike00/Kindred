@@ -1,0 +1,183 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version tag (e.g., v1.2.3). Leave empty to auto-increment from latest tag."
+        required: false
+        type: string
+      dry_run:
+        description: "Dry run - generate notes without publishing"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Generate version tag
+        id: version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          if [ -n "$INPUT_VERSION" ]; then
+            VERSION="$INPUT_VERSION"
+          else
+            LATEST=$(git tag --sort=-v:refname | head -1)
+            if [ -z "$LATEST" ]; then
+              VERSION="v0.1.0"
+            else
+              # Auto-increment patch version
+              BASE="${LATEST#v}"
+              MAJOR=$(echo "$BASE" | cut -d. -f1)
+              MINOR=$(echo "$BASE" | cut -d. -f2)
+              PATCH=$(echo "$BASE" | cut -d. -f3)
+              PATCH=$((PATCH + 1))
+              VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+            fi
+          fi
+          # Ensure version starts with 'v'
+          if [[ "$VERSION" != v* ]]; then
+            VERSION="v$VERSION"
+          fi
+          echo "tag=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Generated version: $VERSION"
+
+      - name: Generate release notes
+        id: notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          # Get the previous tag
+          PREV_TAG=$(git tag --sort=-v:refname | head -1)
+          if [ -z "$PREV_TAG" ]; then
+            echo "No previous tag found, using all commits"
+            COMMITS=$(git log --no-merges --pretty=format:"%h %s" --reverse)
+          else
+            echo "Previous tag: $PREV_TAG"
+            COMMITS=$(git log --no-merges --pretty=format:"%h %s" --reverse "${PREV_TAG}..HEAD")
+          fi
+
+          if [ -z "$COMMITS" ]; then
+            echo "No commits found since $PREV_TAG"
+            NOTES="## No changes\n\nNo new commits since the last release."
+          else
+            # Generate categorized release notes
+            NOTES="## What's Changed\n\n"
+
+            # Features
+            FEATURES=$(echo "$COMMITS" | grep -E "^\w+ feat" || true)
+            if [ -n "$FEATURES" ]; then
+              NOTES="${NOTES}### 🚀 Features\n"
+              echo "$FEATURES" | while IFS= read -r line; do
+                HASH=$(echo "$line" | awk '{print $1}')
+                SUBJECT=$(echo "$line" | cut -d' ' -f2-)
+                # Clean up conventional commit format
+                CLEAN=$(echo "$SUBJECT" | sed -E 's/^(feat)(\([^)]+\))?:\s*//')
+                NOTES="${NOTES}- ${CLEAN} (${HASH})\n"
+              done
+            fi
+
+            # Fixes
+            FIXES=$(echo "$COMMITS" | grep -E "^\w+ fix" || true)
+            if [ -n "$FIXES" ]; then
+              NOTES="${NOTES}### 🐛 Fixes\n"
+              echo "$FIXES" | while IFS= read -r line; do
+                HASH=$(echo "$line" | awk '{print $1}')
+                SUBJECT=$(echo "$line" | cut -d' ' -f2-)
+                CLEAN=$(echo "$SUBJECT" | sed -E 's/^(fix)(\([^)]+\))?:\s*//')
+                NOTES="${NOTES}- ${CLEAN} (${HASH})\n"
+              done
+            fi
+
+            # Docs
+            DOCS=$(echo "$COMMITS" | grep -E "^\w+ docs" || true)
+            if [ -n "$DOCS" ]; then
+              NOTES="${NOTES}### 📚 Documentation\n"
+              echo "$DOCS" | while IFS= read -r line; do
+                HASH=$(echo "$line" | awk '{print $1}')
+                SUBJECT=$(echo "$line" | cut -d' ' -f2-)
+                CLEAN=$(echo "$SUBJECT" | sed -E 's/^(docs)(\([^)]+\))?:\s*//')
+                NOTES="${NOTES}- ${CLEAN} (${HASH})\n"
+              done
+            fi
+
+            # Chores (refactor, chore, style, perf, test)
+            CHORES=$(echo "$COMMITS" | grep -E "^\w+ (chore|refactor|style|perf|test)" || true)
+            if [ -n "$CHORES" ]; then
+              NOTES="${NOTES}### 🔧 Maintenance\n"
+              echo "$CHORES" | while IFS= read -r line; do
+                HASH=$(echo "$line" | awk '{print $1}')
+                SUBJECT=$(echo "$line" | cut -d' ' -f2-)
+                CLEAN=$(echo "$SUBJECT" | sed -E 's/^(chore|refactor|style|perf|test)(\([^)]+\))?:\s*//')
+                NOTES="${NOTES}- ${CLEAN} (${HASH})\n"
+              done
+            fi
+
+            # Everything else
+            OTHER=$(echo "$COMMITS" | grep -vE "^\w+ (feat|fix|docs|chore|refactor|style|perf|test)" || true)
+            if [ -n "$OTHER" ]; then
+              NOTES="${NOTES}### 📦 Other Changes\n"
+              echo "$OTHER" | while IFS= read -r line; do
+                HASH=$(echo "$line" | awk '{print $1}')
+                SUBJECT=$(echo "$line" | cut -d' ' -f2-)
+                NOTES="${NOTES}- ${SUBJECT} (${HASH})\n"
+              done
+            fi
+          fi
+
+          # Write to file for multi-line handling
+          echo "$NOTES" > /tmp/release_notes.md
+          echo "notes_file=/tmp/release_notes.md" >> "$GITHUB_OUTPUT"
+
+          # Also set for display
+          {
+            echo 'notes<<EOF'
+            echo "$NOTES"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Display release notes
+        run: |
+          echo "=== Release Notes for ${{ steps.version.outputs.tag }} ==="
+          cat /tmp/release_notes.md
+
+      - name: Create tag (dry run check)
+        if: inputs.dry_run != true
+        env:
+          VERSION_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          git tag "$VERSION_TAG"
+          git push origin "$VERSION_TAG"
+
+      - name: Publish release (dry run check)
+        if: inputs.dry_run != true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          gh release create "$VERSION_TAG" \
+            --title "$VERSION_TAG" \
+            --notes-file /tmp/release_notes.md
+
+      - name: Dry run summary
+        if: inputs.dry_run == true
+        run: |
+          echo "::notice::DRY RUN - No release published"
+          echo "Would have created tag: ${{ steps.version.outputs.tag }}"
+          echo "With notes:"
+          cat /tmp/release_notes.md
