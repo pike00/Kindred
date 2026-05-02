@@ -122,9 +122,22 @@ GUARDRAILS — NON-NEGOTIABLE:
 - Default to editing existing files; only create new files when the spec demands it
 - If you hit a hard blocker (missing schema, ambiguous spec, external dep unavailable), append a note to NOTES.md in this worktree describing what you tried and why you stopped, then end the task
 
+DOCKER / INFRASTRUCTURE — DO NOT TOUCH:
+- The dev stack (db, backend, worker, redis, meilisearch, frontend) is ALREADY running. Do not start, stop, restart, recreate, or rebuild it.
+- FORBIDDEN commands (any of these will break the shared dev environment for other parallel runs):
+  - \`docker compose up\`, \`docker compose down\`, \`docker compose restart\`, \`docker compose pull\`, \`docker compose build\`
+  - \`docker rm\`, \`docker stop\`, \`docker kill\` against the project's containers (crm-db, personal-crm-backend-1, personal-crm-frontend-1, personal-crm-worker-1, personal-crm-redis-1, personal-crm-meilisearch-1)
+  - \`docker volume rm\`, \`docker volume prune\`, \`docker system prune\`, \`docker network rm\`
+  - \`just up\`, \`just down\`, \`just down-clean\`, \`just rebuild\`
+- ALLOWED for testing/inspection:
+  - \`docker compose exec backend …\` (run inside the running backend), \`docker compose exec db psql …\`
+  - \`docker compose ps\`, \`docker compose logs\`, \`docker exec\`, \`docker logs\`, \`docker ps\`
+  - Alembic migrations applied via \`docker compose exec backend uv run alembic upgrade head\` are fine — they go into the live shared DB
+- If a service appears unhealthy, write to NOTES.md and stop. Do NOT try to recover it.
+
 VERIFICATION (best-effort, run before declaring done):
-- \`cd backend && uv run pytest -x -q\` if you touched backend/
-- \`cd frontend && bun run typecheck\` if you touched frontend/
+- \`docker compose exec -T backend uv run pytest -x -q\` if you touched backend/ (use exec, do NOT cd into backend/)
+- \`docker compose exec -T frontend bun run typecheck\` if you touched frontend/
 - If verification fails, fix what you can; if you cannot fix in 2 attempts, note it in NOTES.md and stop
 
 COMMITS:
