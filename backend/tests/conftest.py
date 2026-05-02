@@ -78,6 +78,42 @@ def db() -> Generator[Session, None, None]:
         yield session
 
 
+
+@pytest.fixture
+def user_factory(db: Session):
+    """Factory fixture to create users."""
+    from tests.utils.utils import random_email, random_lower_string
+    from app.models import UserCreate
+    from app.crud import create_user
+    from app.core.security import get_password_hash
+
+    def _user_factory(email=None, password=None):
+        if email is None:
+            email = random_email()
+        if password is None:
+            password = random_lower_string()
+        user_in = UserCreate(email=email, password=password)
+        return create_user(session=db, user_create=user_in)
+
+    return _user_factory
+
+
+@pytest.fixture
+def tag_factory(db: Session):
+    """Factory fixture to create tags."""
+    from app.models import TagCreate
+    from app.crud import create_tag
+
+    def _tag_factory(user, name=None):
+        if name is None:
+            import uuid
+            name = f"tag-{uuid.uuid4().hex[:8]}"
+        tag_in = TagCreate(name=name, color="#ff0000")
+        return create_tag(session=db, tag_in=tag_in, owner_id=user.id)
+
+    return _tag_factory
+
+
 @pytest.fixture(scope="module")
 def client() -> Generator[TestClient, None, None]:
     with TestClient(app) as c:
