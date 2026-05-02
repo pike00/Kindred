@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+from app.api.routes import search
 
 from app.api.routes import (
     activity_logs,
@@ -56,6 +57,7 @@ api_router.include_router(import_export.router)
 api_router.include_router(webhooks.router)
 api_router.include_router(activity_logs.router)
 api_router.include_router(calendar.router)
+api_router.include_router(search.router)
 
 
 if settings.ENVIRONMENT == "local":

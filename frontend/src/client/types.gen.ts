@@ -1016,6 +1016,13 @@ export type PetUpdate = {
     notes?: (string | null);
 };
 
+export type PrivateUserCreate = {
+    email: string;
+    password: string;
+    full_name: string;
+    is_verified?: boolean;
+};
+
 export type RelationshipCreate = {
     /**
      * Kind of relationship: spouse, child, parent, sibling, friend, colleague, etc.
@@ -1118,6 +1125,28 @@ export type ReminderUpdate = {
     remind_at?: (string | null);
     frequency?: (ReminderFrequency | null);
     is_active?: (boolean | null);
+};
+
+/**
+ * Search results grouped by type with total counts.
+ */
+export type SearchResponse = {
+    results: Array<SearchResultItem>;
+    total: number;
+    query: string;
+};
+
+/**
+ * A single search result with type discriminator and ranking info.
+ */
+export type SearchResultItem = {
+    id: string;
+    type: string;
+    title: string;
+    snippet?: (string | null);
+    rank?: (number | null);
+    created_at?: (string | null);
+    updated_at?: (string | null);
 };
 
 export type TagCreate = {
@@ -1729,6 +1758,12 @@ export type PetsDeletePetData = {
 
 export type PetsDeletePetResponse = (unknown);
 
+export type PrivateCreateUserData = {
+    requestBody: PrivateUserCreate;
+};
+
+export type PrivateCreateUserResponse = (UserPublic);
+
 export type RelationshipsLookupInverseData = {
     type: string;
 };
@@ -1795,6 +1830,19 @@ export type RemindersSnoozeReminderData = {
 };
 
 export type RemindersSnoozeReminderResponse = (unknown);
+
+export type SearchSearchData = {
+    /**
+     * Max results per type
+     */
+    limit?: number;
+    /**
+     * Search query
+     */
+    q: string;
+};
+
+export type SearchSearchResponse = (SearchResponse);
 
 export type TagsListTagsData = {
     limit?: number;

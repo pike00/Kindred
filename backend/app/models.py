@@ -463,6 +463,10 @@ class ContactUpdate(SQLModel):
 
 
 class Contact(ContactBase, table=True):
+    search_vector: str | None = Field(
+        default=None,
+        sa_column=sa.Column("search_vector", sa.Computed(None), nullable=True),
+    )
     """Core contact entity — the subject of everything else in the CRM."""
 
     id: uuid.UUID = Field(
@@ -1013,6 +1017,10 @@ class InteractionAttendee(SQLModel, table=True):
 
 
 class Interaction(InteractionBase, table=True):
+    search_vector: str | None = Field(
+        default=None,
+        sa_column=sa.Column("search_vector", sa.Computed(None), nullable=True),
+    )
     """Logged touchpoint with one or more contacts (call, meeting, text, etc.).
 
     A single interaction can have multiple attendees via ``interaction_attendee``.
@@ -1441,6 +1449,10 @@ class NoteMention(SQLModel, table=True):
 
 
 class Note(NoteBase, table=True):
+    search_vector: str | None = Field(
+        default=None,
+        sa_column=sa.Column("search_vector", sa.Computed(None), nullable=True),
+    )
     """Timestamped freeform note attached to a specific contact."""
 
     id: uuid.UUID = Field(
@@ -1601,6 +1613,10 @@ class JournalEntryUpdate(SQLModel):
 
 
 class JournalEntry(JournalEntryBase, table=True):
+    search_vector: str | None = Field(
+        default=None,
+        sa_column=sa.Column("search_vector", sa.Computed(None), nullable=True),
+    )
     """Personal journal entry, not tied to a specific contact."""
 
     __tablename__ = "journal_entry"

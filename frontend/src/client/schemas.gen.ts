@@ -3596,6 +3596,31 @@ export const PetUpdateSchema = {
     title: 'PetUpdate'
 } as const;
 
+export const PrivateUserCreateSchema = {
+    properties: {
+        email: {
+            type: 'string',
+            title: 'Email'
+        },
+        password: {
+            type: 'string',
+            title: 'Password'
+        },
+        full_name: {
+            type: 'string',
+            title: 'Full Name'
+        },
+        is_verified: {
+            type: 'boolean',
+            title: 'Is Verified',
+            default: false
+        }
+    },
+    type: 'object',
+    required: ['email', 'password', 'full_name'],
+    title: 'PrivateUserCreate'
+} as const;
+
 export const RelationshipCreateSchema = {
     properties: {
         relationship_type: {
@@ -3962,6 +3987,95 @@ export const RemindersPublicSchema = {
     type: 'object',
     required: ['data', 'count'],
     title: 'RemindersPublic'
+} as const;
+
+export const SearchResponseSchema = {
+    properties: {
+        results: {
+            items: {
+                '$ref': '#/components/schemas/SearchResultItem'
+            },
+            type: 'array',
+            title: 'Results'
+        },
+        total: {
+            type: 'integer',
+            title: 'Total'
+        },
+        query: {
+            type: 'string',
+            title: 'Query'
+        }
+    },
+    type: 'object',
+    required: ['results', 'total', 'query'],
+    title: 'SearchResponse',
+    description: 'Search results grouped by type with total counts.'
+} as const;
+
+export const SearchResultItemSchema = {
+    properties: {
+        id: {
+            type: 'string',
+            title: 'Id'
+        },
+        type: {
+            type: 'string',
+            title: 'Type'
+        },
+        title: {
+            type: 'string',
+            title: 'Title'
+        },
+        snippet: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Snippet'
+        },
+        rank: {
+            anyOf: [
+                {
+                    type: 'number'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Rank'
+        },
+        created_at: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Created At'
+        },
+        updated_at: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Updated At'
+        }
+    },
+    type: 'object',
+    required: ['id', 'type', 'title'],
+    title: 'SearchResultItem',
+    description: 'A single search result with type discriminator and ranking info.'
 } as const;
 
 export const TagCreateSchema = {
