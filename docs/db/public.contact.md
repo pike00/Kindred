@@ -156,6 +156,7 @@ erDiagram
   uuid related_contact_id FK
   varchar_100_ relationship_type
   varchar_1000_ notes
+  uuid inverse_id FK
 }
 "public.pet" {
   uuid id
