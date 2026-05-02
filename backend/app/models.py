@@ -1847,16 +1847,6 @@ class ContactMerge(SQLModel, table=True):
         description="Optional notes about why the merge was performed.",
     )
 
-    # Relationships
-    surviving_contact: "Contact" = Relationship(
-        back_populates="merge_logs_survivor",
-        sa_relationship_kwargs={"foreign_keys": "ContactMerge.surviving_id"},
-    )
-    absorbed_contact: "Contact" = Relationship(
-        back_populates="merge_logs_absorbed",
-        sa_relationship_kwargs={"foreign_keys": "ContactMerge.absorbed_id"},
-    )
-
 
 class ContactMergePublic(SQLModel):
     """Public schema for contact merge log entries."""

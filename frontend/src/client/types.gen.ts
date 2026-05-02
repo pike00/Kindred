@@ -924,6 +924,25 @@ export type MediaRecommendationUpdate = {
     recommended_at?: (string | null);
 };
 
+/**
+ * Request body for merging two contacts.
+ */
+export type MergeContactsRequest = {
+    surviving_id: string;
+    absorbed_id: string;
+    notes?: (string | null);
+};
+
+/**
+ * Response after a merge operation.
+ */
+export type MergeResponse = {
+    merge_log_id: string;
+    surviving_id: string;
+    absorbed_id: string;
+    merged_at: string;
+};
+
 export type Message = {
     message: string;
 };
@@ -1415,6 +1434,28 @@ export type ContactsRestoreContactData = {
 };
 
 export type ContactsRestoreContactResponse = (ContactPublic);
+
+export type ContactsMergeContactsEndpointData = {
+    requestBody: MergeContactsRequest;
+};
+
+export type ContactsMergeContactsEndpointResponse = (MergeResponse);
+
+export type ContactsUnmergeContactEndpointData = {
+    contactId: string;
+};
+
+export type ContactsUnmergeContactEndpointResponse = (ContactPublic);
+
+export type ContactsListMergeLogsData = {
+    contactId?: (string | null);
+    limit?: number;
+    skip?: number;
+};
+
+export type ContactsListMergeLogsResponse = ({
+    [key: string]: unknown;
+});
 
 export type CustomFieldsListFieldDefinitionsResponse = (unknown);
 

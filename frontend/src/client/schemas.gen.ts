@@ -3273,6 +3273,65 @@ export const MediaRecommendationsPublicSchema = {
     title: 'MediaRecommendationsPublic'
 } as const;
 
+export const MergeContactsRequestSchema = {
+    properties: {
+        surviving_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Surviving Id'
+        },
+        absorbed_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Absorbed Id'
+        },
+        notes: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Notes'
+        }
+    },
+    type: 'object',
+    required: ['surviving_id', 'absorbed_id'],
+    title: 'MergeContactsRequest',
+    description: 'Request body for merging two contacts.'
+} as const;
+
+export const MergeResponseSchema = {
+    properties: {
+        merge_log_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Merge Log Id'
+        },
+        surviving_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Surviving Id'
+        },
+        absorbed_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Absorbed Id'
+        },
+        merged_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Merged At'
+        }
+    },
+    type: 'object',
+    required: ['merge_log_id', 'surviving_id', 'absorbed_id', 'merged_at'],
+    title: 'MergeResponse',
+    description: 'Response after a merge operation.'
+} as const;
+
 export const MessageSchema = {
     properties: {
         message: {
