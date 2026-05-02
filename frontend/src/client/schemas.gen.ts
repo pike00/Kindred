@@ -434,7 +434,7 @@ export const AddressUpdateSchema = {
     title: 'AddressUpdate'
 } as const;
 
-export const Body_import_vcard_import_export_import_vcard_postSchema = {
+export const Body_import_export_import_vcardSchema = {
     properties: {
         file: {
             type: 'string',
@@ -444,10 +444,10 @@ export const Body_import_vcard_import_export_import_vcard_postSchema = {
     },
     type: 'object',
     required: ['file'],
-    title: 'Body_import_vcard_import_export_import_vcard_post'
+    title: 'Body_import-export-import_vcard'
 } as const;
 
-export const Body_login_access_token_login_access_token_postSchema = {
+export const Body_login_login_access_tokenSchema = {
     properties: {
         grant_type: {
             anyOf: [
@@ -501,7 +501,7 @@ export const Body_login_access_token_login_access_token_postSchema = {
     },
     type: 'object',
     required: ['username', 'password'],
-    title: 'Body_login_access_token_login_access_token_post'
+    title: 'Body_login-login_access_token'
 } as const;
 
 export const BulkContactFilterSchema = {
@@ -3833,31 +3833,6 @@ export const PetUpdateSchema = {
     },
     type: 'object',
     title: 'PetUpdate'
-} as const;
-
-export const PrivateUserCreateSchema = {
-    properties: {
-        email: {
-            type: 'string',
-            title: 'Email'
-        },
-        password: {
-            type: 'string',
-            title: 'Password'
-        },
-        full_name: {
-            type: 'string',
-            title: 'Full Name'
-        },
-        is_verified: {
-            type: 'boolean',
-            title: 'Is Verified',
-            default: false
-        }
-    },
-    type: 'object',
-    required: ['email', 'password', 'full_name'],
-    title: 'PrivateUserCreate'
 } as const;
 
 export const RelationshipCreateSchema = {

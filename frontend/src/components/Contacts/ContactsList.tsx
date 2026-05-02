@@ -1,27 +1,17 @@
 import { useSuspenseQuery } from "@tanstack/react-query"
 import { Link, useNavigate, useSearch } from "@tanstack/react-router"
-import { useMemo, useState, useCallback } from "react"
-
-import { type ContactPublic, ContactsService, type BulkContactRequest } from "@/client"
+import { useCallback, useMemo, useState } from "react"
+import { toast } from "sonner"
+import {
+  type BulkContactRequest,
+  type ContactPublic,
+  ContactsService,
+} from "@/client"
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
 import { EmptyState } from "@/components/Common/EmptyState"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
-import {
-  ChevronLeft,
-  ChevronRight,
-  Clock,
-  Search,
-  Star,
-  Users,
-  Archive,
-  Trash2,
-  Download,
-} from "@/lib/icons"
-import { cn } from "@/lib/utils"
-import { AddContactDialog } from "./AddContactDialog"
 import {
   Dialog,
   DialogContent,
@@ -30,21 +20,55 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { toast } from "sonner"
+import { Input } from "@/components/ui/input"
+import {
+  Archive,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Download,
+  Search,
+  Star,
+  Trash2,
+  Users,
+} from "@/lib/icons"
+import { cn } from "@/lib/utils"
+import { AddContactDialog } from "./AddContactDialog"
 
 const PAGE_SIZE = 25
 
 // Bulk action types
 const BULK_ACTIONS = [
   { id: "archive", label: "Archive", icon: Archive, color: "text-orange-600" },
-  { id: "unarchive", label: "Unarchive", icon: Archive, color: "text-green-600" },
-  { id: "favorite", label: "Add to Favorites", icon: Star, color: "text-yellow-600" },
-  { id: "unfavorite", label: "Remove from Favorites", icon: Star, color: "text-gray-600" },
+  {
+    id: "unarchive",
+    label: "Unarchive",
+    icon: Archive,
+    color: "text-green-600",
+  },
+  {
+    id: "favorite",
+    label: "Add to Favorites",
+    icon: Star,
+    color: "text-yellow-600",
+  },
+  {
+    id: "unfavorite",
+    label: "Remove from Favorites",
+    icon: Star,
+    color: "text-gray-600",
+  },
   { id: "delete", label: "Delete", icon: Trash2, color: "text-red-600" },
   { id: "export", label: "Export CSV", icon: Download, color: "text-blue-600" },
 ]
 
-type BulkActionId = "archive" | "unarchive" | "favorite" | "unfavorite" | "delete" | "export"
+type BulkActionId =
+  | "archive"
+  | "unarchive"
+  | "favorite"
+  | "unfavorite"
+  | "delete"
+  | "export"
 
 // Preview modal state
 interface PreviewModalState {
@@ -53,7 +77,6 @@ interface PreviewModalState {
   count: number
   contacts: ContactPublic[]
 }
-
 
 function fullName(contact: ContactPublic): string {
   return (
@@ -123,9 +146,7 @@ function ContactRow({
   const extraTags = tags.length - visibleTags.length
 
   return (
-    <div
-      className="group flex items-center gap-4 rounded-2xl border bg-card p-4 shadow-xs transition-all hover:-translate-y-px hover:border-primary/30 hover:shadow-sm"
-    >
+    <div className="group flex items-center gap-4 rounded-2xl border bg-card p-4 shadow-xs transition-all hover:-translate-y-px hover:border-primary/30 hover:shadow-sm">
       <Checkbox
         checked={selected}
         onCheckedChange={() => onToggle(contact.id)}
@@ -217,32 +238,40 @@ export const ContactsList = () => {
   )
 
   const selectedCount = selectedIds.size
-  const isAllSelected = paged.length > 0 && paged.every((c: ContactPublic) => selectedIds.has(c.id))
+  const isAllSelected =
+    paged.length > 0 && paged.every((c: ContactPublic) => selectedIds.has(c.id))
   const isSomeSelected = paged.some((c: ContactPublic) => selectedIds.has(c.id))
 
   const handleToggleAll = useCallback(() => {
     if (isAllSelected) {
       // Deselect all on current page
       const newSelected = new Set(selectedIds)
-      paged.forEach((c: ContactPublic) => newSelected.delete(c.id))
+      paged.forEach((c: ContactPublic) => {
+        newSelected.delete(c.id)
+      })
       setSelectedIds(newSelected)
     } else {
       // Select all on current page
       const newSelected = new Set(selectedIds)
-      paged.forEach((c: ContactPublic) => newSelected.add(c.id))
+      paged.forEach((c: ContactPublic) => {
+        newSelected.add(c.id)
+      })
       setSelectedIds(newSelected)
     }
   }, [paged, selectedIds, isAllSelected])
 
-  const handleToggle = useCallback((id: string) => {
-    const newSelected = new Set(selectedIds)
-    if (newSelected.has(id)) {
-      newSelected.delete(id)
-    } else {
-      newSelected.add(id)
-    }
-    setSelectedIds(newSelected)
-  }, [selectedIds])
+  const handleToggle = useCallback(
+    (id: string) => {
+      const newSelected = new Set(selectedIds)
+      if (newSelected.has(id)) {
+        newSelected.delete(id)
+      } else {
+        newSelected.add(id)
+      }
+      setSelectedIds(newSelected)
+    },
+    [selectedIds],
+  )
 
   const handleSelectAllFiltered = useCallback(async () => {
     if (selectAllFiltered) {
@@ -251,9 +280,10 @@ export const ContactsList = () => {
     } else {
       // Preview how many contacts would be selected
       try {
-        const result = await ContactsService.previewBulkContactsContactsBulkPreview({
-          search: search || undefined,
-        })
+        const result =
+          await ContactsService.previewBulkContactsContactsBulkPreview({
+            search: search || undefined,
+          })
         setPreviewModal({
           open: true,
           action: null,
@@ -261,7 +291,7 @@ export const ContactsList = () => {
           contacts: result.data ?? [],
         })
         setSelectAllFiltered(true)
-      } catch (error) {
+      } catch (_error) {
         toast.error("Failed to preview contacts")
       }
     }
@@ -271,22 +301,25 @@ export const ContactsList = () => {
     try {
       // Build query string
       const params = new URLSearchParams()
-      if (selectAllFiltered) params.append('select_all_filtered', 'true')
-      if (search) params.append('search', search)
-      
+      if (selectAllFiltered) params.append("select_all_filtered", "true")
+      if (search) params.append("search", search)
+
       // Get token from localStorage
-      const token = localStorage.getItem('token') || ''
-      
-      const response = await fetch(`/api/v1/import-export/export/csv?${params.toString()}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
+      const token = localStorage.getItem("token") || ""
+
+      const response = await fetch(
+        `/api/v1/import-export/export/csv?${params.toString()}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-      })
-      
-      if (!response.ok) throw new Error('Failed to export CSV')
-      
+      )
+
+      if (!response.ok) throw new Error("Failed to export CSV")
+
       const blob = await response.blob()
-      
+
       // Create download link
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement("a")
@@ -296,119 +329,140 @@ export const ContactsList = () => {
       link.click()
       link.remove()
       window.URL.revokeObjectURL(url)
-      
+
       toast.success("CSV exported successfully")
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to export CSV")
     }
   }, [selectAllFiltered, search])
 
-  const handleUndo = useCallback(async (undoData: { ids: string[], action: BulkActionId }) => {
-    // Reverse the action
-    const operations: BulkContactRequest["operations"] = {}
-    switch (undoData.action) {
-      case "archive":
-        operations.set_is_archived = false
-        break
-      case "unarchive":
-        operations.set_is_archived = true
-        break
-      case "favorite":
-        operations.set_is_favorite = false
-        break
-      case "unfavorite":
-        operations.set_is_favorite = true
-        break
-    }
-    try {
-      await ContactsService.bulkUpdateContactsContactsBulk({
-        requestBody: {
-          contact_ids: undoData.ids,
-          operations,
-        },
-      })
-      toast.success("Undo successful")
-    } catch (error) {
-      toast.error("Undo failed")
-    }
-  }, [])
-
-  const handleBulkAction = useCallback(async (actionId: BulkActionId) => {
-    if (actionId === "export") {
-      handleExportCsv()
-      return
-    }
-
-    if (selectedCount === 0 && !selectAllFiltered) {
-      toast.error("No contacts selected")
-      return
-    }
-
-    setIsLoading(true)
-    try {
+  const handleUndo = useCallback(
+    async (undoData: { ids: string[]; action: BulkActionId }) => {
+      // Reverse the action
       const operations: BulkContactRequest["operations"] = {}
-
-      switch (actionId) {
+      switch (undoData.action) {
         case "archive":
-          operations.set_is_archived = true
-          break
-        case "unarchive":
           operations.set_is_archived = false
           break
-        case "favorite":
-          operations.set_is_favorite = true
-          break
-        case "unfavorite":
-          operations.set_is_favorite = false
-          break
-        case "delete":
+        case "unarchive":
           operations.set_is_archived = true
           break
+        case "favorite":
+          operations.set_is_favorite = false
+          break
+        case "unfavorite":
+          operations.set_is_favorite = true
+          break
       }
-
-      const body: BulkContactRequest = {
-        operations,
-        select_all_filtered: selectAllFiltered || undefined,
-        contact_ids: selectAllFiltered ? undefined : Array.from(selectedIds),
-        filters: selectAllFiltered ? {
-          search: search || undefined,
-        } : undefined,
-      }
-
-      const result = await ContactsService.bulkUpdateContactsContactsBulk({ requestBody: body })
-      toast.success(`Updated ${result.updated_count} contacts`, {
-        action: {
-          label: "Undo",
-          onClick: () => {
-            const ids = selectAllFiltered
-              ? filtered.map((c: ContactPublic) => c.id)
-              : Array.from(selectedIds)
-            handleUndo({ ids, action: actionId })
+      try {
+        await ContactsService.bulkUpdateContactsContactsBulk({
+          requestBody: {
+            contact_ids: undoData.ids,
+            operations,
           },
-        },
-      })
-      if (result.failed_ids && result.failed_ids.length > 0) {
-        toast.error(`Failed to update ${result.failed_ids.length} contacts`)
+        })
+        toast.success("Undo successful")
+      } catch (_error) {
+        toast.error("Undo failed")
+      }
+    },
+    [],
+  )
+
+  const handleBulkAction = useCallback(
+    async (actionId: BulkActionId) => {
+      if (actionId === "export") {
+        handleExportCsv()
+        return
       }
 
-      // Clear selection and refresh
-      setSelectedIds(new Set())
-      setSelectAllFiltered(false)
-    } catch (error) {
-      toast.error("Bulk operation failed")
-    } finally {
-      setIsLoading(false)
-      setPreviewModal({ open: false, action: null, count: 0, contacts: [] })
-    }
-  }, [selectedCount, selectAllFiltered, selectedIds, search, handleExportCsv, handleUndo])
+      if (selectedCount === 0 && !selectAllFiltered) {
+        toast.error("No contacts selected")
+        return
+      }
 
-  const handlePreviewAction = useCallback((actionId: BulkActionId) => {
-    if (actionId === "export") {
-      handleExportCsv()
-      return
-    }
-    setPreviewModal((prev) => ({ ...prev, open: true, action: actionId }))
-  }, [handleExportCsv])
+      setIsLoading(true)
+      try {
+        const operations: BulkContactRequest["operations"] = {}
+
+        switch (actionId) {
+          case "archive":
+            operations.set_is_archived = true
+            break
+          case "unarchive":
+            operations.set_is_archived = false
+            break
+          case "favorite":
+            operations.set_is_favorite = true
+            break
+          case "unfavorite":
+            operations.set_is_favorite = false
+            break
+          case "delete":
+            operations.set_is_archived = true
+            break
+        }
+
+        const body: BulkContactRequest = {
+          operations,
+          select_all_filtered: selectAllFiltered || undefined,
+          contact_ids: selectAllFiltered ? undefined : Array.from(selectedIds),
+          filters: selectAllFiltered
+            ? {
+                search: search || undefined,
+              }
+            : undefined,
+        }
+
+        const result = await ContactsService.bulkUpdateContactsContactsBulk({
+          requestBody: body,
+        })
+        toast.success(`Updated ${result.updated_count} contacts`, {
+          action: {
+            label: "Undo",
+            onClick: () => {
+              const ids = selectAllFiltered
+                ? filtered.map((c: ContactPublic) => c.id)
+                : Array.from(selectedIds)
+              handleUndo({ ids, action: actionId })
+            },
+          },
+        })
+        if (result.failed_ids && result.failed_ids.length > 0) {
+          toast.error(`Failed to update ${result.failed_ids.length} contacts`)
+        }
+
+        // Clear selection and refresh
+        setSelectedIds(new Set())
+        setSelectAllFiltered(false)
+      } catch (_error) {
+        toast.error("Bulk operation failed")
+      } finally {
+        setIsLoading(false)
+        setPreviewModal({ open: false, action: null, count: 0, contacts: [] })
+      }
+    },
+    [
+      selectedCount,
+      selectAllFiltered,
+      selectedIds,
+      search,
+      handleExportCsv,
+      handleUndo,
+      filtered.map,
+    ],
+  )
+
+  const handlePreviewAction = useCallback(
+    (actionId: BulkActionId) => {
+      if (actionId === "export") {
+        handleExportCsv()
+        return
+      }
+      setPreviewModal((prev) => ({ ...prev, open: true, action: actionId }))
+    },
+    [handleExportCsv],
+  )
 
   const handleConfirmAction = useCallback(() => {
     if (previewModal.action) {
@@ -426,9 +480,7 @@ export const ContactsList = () => {
           <p className="text-muted-foreground mt-1">
             {allContacts.length}{" "}
             {allContacts.length === 1 ? "person" : "people"}
-            {selectedCount > 0 && (
-              <> · {selectedCount} selected</>
-            )}
+            {selectedCount > 0 && <> · {selectedCount} selected</>}
           </p>
         </div>
         <AddContactDialog />
@@ -437,11 +489,7 @@ export const ContactsList = () => {
       {/* Bulk Action Bar */}
       {selectedCount > 0 || selectAllFiltered ? (
         <div className="flex items-center gap-2 p-4 bg-muted/50 rounded-2xl border">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleSelectAllFiltered}
-          >
+          <Button variant="outline" size="sm" onClick={handleSelectAllFiltered}>
             {selectAllFiltered ? (
               <>Deselect All ({previewModal.count})</>
             ) : (
@@ -500,7 +548,9 @@ export const ContactsList = () => {
             checked={isAllSelected}
             onCheckedChange={handleToggleAll}
             aria-label="Select all on this page"
-            {...(isSomeSelected && !isAllSelected ? { indeterminate: true } : {})}
+            {...(isSomeSelected && !isAllSelected
+              ? { indeterminate: true }
+              : {})}
           />
           <span className="text-sm text-muted-foreground">
             {isAllSelected ? "All on page selected" : "Select all on this page"}
@@ -568,26 +618,30 @@ export const ContactsList = () => {
       {/* Preview/Confirm Modal */}
       <Dialog
         open={previewModal.open}
-        onOpenChange={(open) =>
-          setPreviewModal((prev) => ({ ...prev, open }))
-        }
+        onOpenChange={(open) => setPreviewModal((prev) => ({ ...prev, open }))}
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              Confirm Bulk Action
-            </DialogTitle>
+            <DialogTitle>Confirm Bulk Action</DialogTitle>
             <DialogDescription>
               {previewModal.action === "delete" ? (
                 <>
-                  This will archive <strong>{previewModal.count || selectedCount}</strong> contacts.
-                  This action cannot be undone.
+                  This will archive{" "}
+                  <strong>{previewModal.count || selectedCount}</strong>{" "}
+                  contacts. This action cannot be undone.
                 </>
               ) : (
                 <>
-                  This will apply the "<strong>
-                  {BULK_ACTIONS.find((a) => a.id === previewModal.action)?.label}
-                  </strong>" action to <strong>{previewModal.count || selectedCount}</strong> contacts.
+                  This will apply the "
+                  <strong>
+                    {
+                      BULK_ACTIONS.find((a) => a.id === previewModal.action)
+                        ?.label
+                    }
+                  </strong>
+                  " action to{" "}
+                  <strong>{previewModal.count || selectedCount}</strong>{" "}
+                  contacts.
                 </>
               )}
             </DialogDescription>
@@ -596,7 +650,12 @@ export const ContactsList = () => {
             <Button
               variant="outline"
               onClick={() =>
-                setPreviewModal({ open: false, action: null, count: 0, contacts: [] })
+                setPreviewModal({
+                  open: false,
+                  action: null,
+                  count: 0,
+                  contacts: [],
+                })
               }
             >
               Cancel

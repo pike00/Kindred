@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { ListActivityLogsActivityLogsGetData, ListActivityLogsActivityLogsGetResponse, ListAddressesAddressesContactContactIdGetData, ListAddressesAddressesContactContactIdGetResponse, CreateAddressRouteAddressesPostData, CreateAddressRouteAddressesPostResponse, UpdateAddressAddressesAddressIdPatchData, UpdateAddressAddressesAddressIdPatchResponse, DeleteAddressAddressesAddressIdDeleteData, DeleteAddressAddressesAddressIdDeleteResponse, GetCalendarMonthCalendarMonthYyyyMmGetData, GetCalendarMonthCalendarMonthYyyyMmGetResponse, ListContactFieldsContactFieldsContactContactIdGetData, ListContactFieldsContactFieldsContactContactIdGetResponse, CreateContactFieldRouteContactFieldsPostData, CreateContactFieldRouteContactFieldsPostResponse, UpdateContactFieldContactFieldsFieldIdPatchData, UpdateContactFieldContactFieldsFieldIdPatchResponse, DeleteContactFieldContactFieldsFieldIdDeleteData, DeleteContactFieldContactFieldsFieldIdDeleteResponse, BulkUpdateContactsContactsBulkPatchData, BulkUpdateContactsContactsBulkPatchResponse, PreviewBulkContactsContactsBulkPreviewGetData, PreviewBulkContactsContactsBulkPreviewGetResponse, ListContactsContactsGetData, ListContactsContactsGetResponse, CreateContactContactsPostData, CreateContactContactsPostResponse, ListLosingTouchContactsLosingTouchGetData, ListLosingTouchContactsLosingTouchGetResponse, GetContactContactsContactIdGetData, GetContactContactsContactIdGetResponse, UpdateContactContactsContactIdPatchData, UpdateContactContactsContactIdPatchResponse, DeleteContactContactsContactIdDeleteData, DeleteContactContactsContactIdDeleteResponse, ListContactMentionsContactsContactIdMentionsGetData, ListContactMentionsContactsContactIdMentionsGetResponse, RestoreContactContactsContactIdRestorePostData, RestoreContactContactsContactIdRestorePostResponse, ListFieldDefinitionsCustomFieldsDefinitionsGetResponse, CreateFieldDefinitionCustomFieldsDefinitionsPostData, CreateFieldDefinitionCustomFieldsDefinitionsPostResponse, UpdateFieldDefinitionCustomFieldsDefinitionsDefIdPatchData, UpdateFieldDefinitionCustomFieldsDefinitionsDefIdPatchResponse, DeleteFieldDefinitionCustomFieldsDefinitionsDefIdDeleteData, DeleteFieldDefinitionCustomFieldsDefinitionsDefIdDeleteResponse, ListFieldValuesCustomFieldsValuesContactContactIdGetData, ListFieldValuesCustomFieldsValuesContactContactIdGetResponse, CreateFieldValueCustomFieldsValuesPostData, CreateFieldValueCustomFieldsValuesPostResponse, UpdateFieldValueCustomFieldsValuesValueIdPatchData, UpdateFieldValueCustomFieldsValuesValueIdPatchResponse, DeleteFieldValueCustomFieldsValuesValueIdDeleteData, DeleteFieldValueCustomFieldsValuesValueIdDeleteResponse, ListDebtsDebtsContactContactIdGetData, ListDebtsDebtsContactContactIdGetResponse, CreateDebtRouteDebtsPostData, CreateDebtRouteDebtsPostResponse, UpdateDebtDebtsDebtIdPatchData, UpdateDebtDebtsDebtIdPatchResponse, DeleteDebtDebtsDebtIdDeleteData, DeleteDebtDebtsDebtIdDeleteResponse, ListGiftsGiftsContactContactIdGetData, ListGiftsGiftsContactContactIdGetResponse, CreateGiftRouteGiftsPostData, CreateGiftRouteGiftsPostResponse, UpdateGiftGiftsGiftIdPatchData, UpdateGiftGiftsGiftIdPatchResponse, DeleteGiftGiftsGiftIdDeleteData, DeleteGiftGiftsGiftIdDeleteResponse, ListGroupsGroupsGetData, ListGroupsGroupsGetResponse, CreateGroupRouteGroupsPostData, CreateGroupRouteGroupsPostResponse, UpdateGroupGroupsGroupIdPatchData, UpdateGroupGroupsGroupIdPatchResponse, DeleteGroupGroupsGroupIdDeleteData, DeleteGroupGroupsGroupIdDeleteResponse, ImportVcardImportExportImportVcardPostData, ImportVcardImportExportImportVcardPostResponse, ExportVcardImportExportExportVcardGetResponse, ExportJsonImportExportExportJsonGetResponse, ListInteractionsInteractionsGetData, ListInteractionsInteractionsGetResponse, CreateInteractionRouteInteractionsPostData, CreateInteractionRouteInteractionsPostResponse, UpdateInteractionInteractionsInteractionIdPatchData, UpdateInteractionInteractionsInteractionIdPatchResponse, DeleteInteractionInteractionsInteractionIdDeleteData, DeleteInteractionInteractionsInteractionIdDeleteResponse, ListJournalEntriesJournalGetData, ListJournalEntriesJournalGetResponse, CreateJournalEntryRouteJournalPostData, CreateJournalEntryRouteJournalPostResponse, UpdateJournalEntryJournalEntryIdPatchData, UpdateJournalEntryJournalEntryIdPatchResponse, DeleteJournalEntryJournalEntryIdDeleteData, DeleteJournalEntryJournalEntryIdDeleteResponse, ListLifeEventsLifeEventsContactContactIdGetData, ListLifeEventsLifeEventsContactContactIdGetResponse, CreateLifeEventRouteLifeEventsPostData, CreateLifeEventRouteLifeEventsPostResponse, UpdateLifeEventLifeEventsEventIdPatchData, UpdateLifeEventLifeEventsEventIdPatchResponse, DeleteLifeEventLifeEventsEventIdDeleteData, DeleteLifeEventLifeEventsEventIdDeleteResponse, LoginAccessTokenLoginAccessTokenPostData, LoginAccessTokenLoginAccessTokenPostResponse, TestTokenLoginTestTokenPostResponse, RecoverPasswordPasswordRecoveryEmailPostData, RecoverPasswordPasswordRecoveryEmailPostResponse, ResetPasswordResetPasswordPostData, ResetPasswordResetPasswordPostResponse, RecoverPasswordHtmlContentPasswordRecoveryHtmlContentEmailPostData, RecoverPasswordHtmlContentPasswordRecoveryHtmlContentEmailPostResponse, ListMediaRecommendationsMediaRecommendationsContactContactIdGetData, ListMediaRecommendationsMediaRecommendationsContactContactIdGetResponse, CreateMediaRecommendationRouteMediaRecommendationsPostData, CreateMediaRecommendationRouteMediaRecommendationsPostResponse, UpdateMediaRecommendationMediaRecommendationsRecIdPatchData, UpdateMediaRecommendationMediaRecommendationsRecIdPatchResponse, DeleteMediaRecommendationMediaRecommendationsRecIdDeleteData, DeleteMediaRecommendationMediaRecommendationsRecIdDeleteResponse, ListNotesNotesContactContactIdGetData, ListNotesNotesContactContactIdGetResponse, CreateNoteRouteNotesPostData, CreateNoteRouteNotesPostResponse, UpdateNoteRouteNotesNoteIdPatchData, UpdateNoteRouteNotesNoteIdPatchResponse, DeleteNoteNotesNoteIdDeleteData, DeleteNoteNotesNoteIdDeleteResponse, ListPetsPetsContactContactIdGetData, ListPetsPetsContactContactIdGetResponse, CreatePetRoutePetsPostData, CreatePetRoutePetsPostResponse, UpdatePetPetsPetIdPatchData, UpdatePetPetsPetIdPatchResponse, DeletePetPetsPetIdDeleteData, DeletePetPetsPetIdDeleteResponse, CreateUserPrivateUsersPostData, CreateUserPrivateUsersPostResponse, LookupInverseRelationshipsInverseGetData, LookupInverseRelationshipsInverseGetResponse, ListRelationshipsRelationshipsContactContactIdGetData, ListRelationshipsRelationshipsContactContactIdGetResponse, CreateRelationshipRouteRelationshipsPostData, CreateRelationshipRouteRelationshipsPostResponse, UpdateRelationshipRelationshipsRelIdPatchData, UpdateRelationshipRelationshipsRelIdPatchResponse, DeleteRelationshipRelationshipsRelIdDeleteData, DeleteRelationshipRelationshipsRelIdDeleteResponse, ListRemindersRemindersGetData, ListRemindersRemindersGetResponse, CreateReminderRouteRemindersPostData, CreateReminderRouteRemindersPostResponse, UpdateReminderRemindersReminderIdPatchData, UpdateReminderRemindersReminderIdPatchResponse, DeleteReminderRemindersReminderIdDeleteData, DeleteReminderRemindersReminderIdDeleteResponse, SnoozeReminderRemindersReminderIdSnoozePostData, SnoozeReminderRemindersReminderIdSnoozePostResponse, ListTagsTagsGetData, ListTagsTagsGetResponse, CreateTagRouteTagsPostData, CreateTagRouteTagsPostResponse, UpdateTagTagsTagIdPatchData, UpdateTagTagsTagIdPatchResponse, DeleteTagTagsTagIdDeleteData, DeleteTagTagsTagIdDeleteResponse, CreateTagShareTagSharesPostData, CreateTagShareTagSharesPostResponse, ListTagSharesTagSharesGetData, ListTagSharesTagSharesGetResponse, DeleteTagShareTagSharesTagIdGranteeIdDeleteData, DeleteTagShareTagSharesTagIdGranteeIdDeleteResponse, ReadUsersUsersGetData, ReadUsersUsersGetResponse, CreateUserUsersPostData, CreateUserUsersPostResponse, ReadUserMeUsersMeGetResponse, DeleteUserMeUsersMeDeleteResponse, UpdateUserMeUsersMePatchData, UpdateUserMeUsersMePatchResponse, UpdatePasswordMeUsersMePasswordPatchData, UpdatePasswordMeUsersMePasswordPatchResponse, RegisterUserUsersSignupPostData, RegisterUserUsersSignupPostResponse, ReadUserByIdUsersUserIdGetData, ReadUserByIdUsersUserIdGetResponse, UpdateUserUsersUserIdPatchData, UpdateUserUsersUserIdPatchResponse, DeleteUserUsersUserIdDeleteData, DeleteUserUsersUserIdDeleteResponse, TestEmailUtilsTestEmailPostData, TestEmailUtilsTestEmailPostResponse, HealthCheckUtilsHealthCheckGetResponse, ListWebhooksWebhooksGetResponse, CreateWebhookWebhooksPostData, CreateWebhookWebhooksPostResponse, UpdateWebhookWebhooksWebhookIdPatchData, UpdateWebhookWebhooksWebhookIdPatchResponse, DeleteWebhookWebhooksWebhookIdDeleteData, DeleteWebhookWebhooksWebhookIdDeleteResponse, InboundWebhookWebhooksInboundApiKeyPostData, InboundWebhookWebhooksInboundApiKeyPostResponse } from './types.gen';
+import type { ActivityLogsListActivityLogsData, ActivityLogsListActivityLogsResponse, AddressesListAddressesData, AddressesListAddressesResponse, AddressesCreateAddressRouteData, AddressesCreateAddressRouteResponse, AddressesUpdateAddressData, AddressesUpdateAddressResponse, AddressesDeleteAddressData, AddressesDeleteAddressResponse, CalendarGetCalendarMonthData, CalendarGetCalendarMonthResponse, CarddavWellKnownCarddavResponse, ContactFieldsListContactFieldsData, ContactFieldsListContactFieldsResponse, ContactFieldsCreateContactFieldRouteData, ContactFieldsCreateContactFieldRouteResponse, ContactFieldsUpdateContactFieldData, ContactFieldsUpdateContactFieldResponse, ContactFieldsDeleteContactFieldData, ContactFieldsDeleteContactFieldResponse, ContactsBulkUpdateContactsData, ContactsBulkUpdateContactsResponse, ContactsPreviewBulkContactsData, ContactsPreviewBulkContactsResponse, ContactsListContactsData, ContactsListContactsResponse, ContactsCreateContactData, ContactsCreateContactResponse, ContactsListLosingTouchData, ContactsListLosingTouchResponse, ContactsGetContactData, ContactsGetContactResponse, ContactsUpdateContactData, ContactsUpdateContactResponse, ContactsDeleteContactData, ContactsDeleteContactResponse, ContactsListContactMentionsData, ContactsListContactMentionsResponse, ContactsRestoreContactData, ContactsRestoreContactResponse, CustomFieldsListFieldDefinitionsResponse, CustomFieldsCreateFieldDefinitionData, CustomFieldsCreateFieldDefinitionResponse, CustomFieldsUpdateFieldDefinitionData, CustomFieldsUpdateFieldDefinitionResponse, CustomFieldsDeleteFieldDefinitionData, CustomFieldsDeleteFieldDefinitionResponse, CustomFieldsListFieldValuesData, CustomFieldsListFieldValuesResponse, CustomFieldsCreateFieldValueData, CustomFieldsCreateFieldValueResponse, CustomFieldsUpdateFieldValueData, CustomFieldsUpdateFieldValueResponse, CustomFieldsDeleteFieldValueData, CustomFieldsDeleteFieldValueResponse, DebtsListDebtsData, DebtsListDebtsResponse, DebtsCreateDebtRouteData, DebtsCreateDebtRouteResponse, DebtsUpdateDebtData, DebtsUpdateDebtResponse, DebtsDeleteDebtData, DebtsDeleteDebtResponse, GiftsListGiftsData, GiftsListGiftsResponse, GiftsCreateGiftRouteData, GiftsCreateGiftRouteResponse, GiftsUpdateGiftData, GiftsUpdateGiftResponse, GiftsDeleteGiftData, GiftsDeleteGiftResponse, GroupsListGroupsData, GroupsListGroupsResponse, GroupsCreateGroupRouteData, GroupsCreateGroupRouteResponse, GroupsUpdateGroupData, GroupsUpdateGroupResponse, GroupsDeleteGroupData, GroupsDeleteGroupResponse, ImportExportImportVcardData, ImportExportImportVcardResponse, ImportExportExportVcardResponse, ImportExportExportJsonResponse, ImportExportExportCsvData, ImportExportExportCsvResponse, InteractionsListInteractionsData, InteractionsListInteractionsResponse, InteractionsCreateInteractionRouteData, InteractionsCreateInteractionRouteResponse, InteractionsUpdateInteractionData, InteractionsUpdateInteractionResponse, InteractionsDeleteInteractionData, InteractionsDeleteInteractionResponse, JournalListJournalEntriesData, JournalListJournalEntriesResponse, JournalCreateJournalEntryRouteData, JournalCreateJournalEntryRouteResponse, JournalUpdateJournalEntryData, JournalUpdateJournalEntryResponse, JournalDeleteJournalEntryData, JournalDeleteJournalEntryResponse, LifeEventsListLifeEventsData, LifeEventsListLifeEventsResponse, LifeEventsCreateLifeEventRouteData, LifeEventsCreateLifeEventRouteResponse, LifeEventsUpdateLifeEventData, LifeEventsUpdateLifeEventResponse, LifeEventsDeleteLifeEventData, LifeEventsDeleteLifeEventResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, MediaRecommendationsListMediaRecommendationsData, MediaRecommendationsListMediaRecommendationsResponse, MediaRecommendationsCreateMediaRecommendationRouteData, MediaRecommendationsCreateMediaRecommendationRouteResponse, MediaRecommendationsUpdateMediaRecommendationData, MediaRecommendationsUpdateMediaRecommendationResponse, MediaRecommendationsDeleteMediaRecommendationData, MediaRecommendationsDeleteMediaRecommendationResponse, NotesListNotesData, NotesListNotesResponse, NotesCreateNoteRouteData, NotesCreateNoteRouteResponse, NotesUpdateNoteRouteData, NotesUpdateNoteRouteResponse, NotesDeleteNoteData, NotesDeleteNoteResponse, PetsListPetsData, PetsListPetsResponse, PetsCreatePetRouteData, PetsCreatePetRouteResponse, PetsUpdatePetData, PetsUpdatePetResponse, PetsDeletePetData, PetsDeletePetResponse, RelationshipsLookupInverseData, RelationshipsLookupInverseResponse, RelationshipsListRelationshipsData, RelationshipsListRelationshipsResponse, RelationshipsCreateRelationshipRouteData, RelationshipsCreateRelationshipRouteResponse, RelationshipsUpdateRelationshipData, RelationshipsUpdateRelationshipResponse, RelationshipsDeleteRelationshipData, RelationshipsDeleteRelationshipResponse, RemindersListRemindersData, RemindersListRemindersResponse, RemindersCreateReminderRouteData, RemindersCreateReminderRouteResponse, RemindersUpdateReminderData, RemindersUpdateReminderResponse, RemindersDeleteReminderData, RemindersDeleteReminderResponse, RemindersSnoozeReminderData, RemindersSnoozeReminderResponse, TagsListTagsData, TagsListTagsResponse, TagsCreateTagRouteData, TagsCreateTagRouteResponse, TagsUpdateTagData, TagsUpdateTagResponse, TagsDeleteTagData, TagsDeleteTagResponse, TagSharesCreateTagShareData, TagSharesCreateTagShareResponse, TagSharesListTagSharesData, TagSharesListTagSharesResponse, TagSharesDeleteTagShareData, TagSharesDeleteTagShareResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse, WebhooksListWebhooksResponse, WebhooksCreateWebhookData, WebhooksCreateWebhookResponse, WebhooksUpdateWebhookData, WebhooksUpdateWebhookResponse, WebhooksDeleteWebhookData, WebhooksDeleteWebhookResponse, WebhooksInboundWebhookData, WebhooksInboundWebhookResponse } from './types.gen';
 
 export class ActivityLogsService {
     /**
@@ -21,10 +21,10 @@ export class ActivityLogsService {
      * @returns ActivityLogsPublic Successful Response
      * @throws ApiError
      */
-    public static listActivityLogsActivityLogs(data: ListActivityLogsActivityLogsGetData = {}): CancelablePromise<ListActivityLogsActivityLogsGetResponse> {
+    public static listActivityLogs(data: ActivityLogsListActivityLogsData = {}): CancelablePromise<ActivityLogsListActivityLogsResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/activity-logs/',
+            url: '/api/v1/activity-logs/',
             query: {
                 entity_type: data.entityType,
                 entity_id: data.entityId,
@@ -48,10 +48,10 @@ export class AddressesService {
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static listAddressesAddressesContactContactId(data: ListAddressesAddressesContactContactIdGetData): CancelablePromise<ListAddressesAddressesContactContactIdGetResponse> {
+    public static listAddresses(data: AddressesListAddressesData): CancelablePromise<AddressesListAddressesResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/addresses/contact/{contact_id}',
+            url: '/api/v1/addresses/contact/{contact_id}',
             path: {
                 contact_id: data.contactId
             },
@@ -69,10 +69,10 @@ export class AddressesService {
      * @returns AddressPublic Successful Response
      * @throws ApiError
      */
-    public static createAddressRouteAddresses(data: CreateAddressRouteAddressesPostData): CancelablePromise<CreateAddressRouteAddressesPostResponse> {
+    public static createAddressRoute(data: AddressesCreateAddressRouteData): CancelablePromise<AddressesCreateAddressRouteResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/addresses/',
+            url: '/api/v1/addresses/',
             body: data.requestBody,
             mediaType: 'application/json',
             errors: {
@@ -90,10 +90,10 @@ export class AddressesService {
      * @returns AddressPublic Successful Response
      * @throws ApiError
      */
-    public static updateAddressAddressesAddressId(data: UpdateAddressAddressesAddressIdPatchData): CancelablePromise<UpdateAddressAddressesAddressIdPatchResponse> {
+    public static updateAddress(data: AddressesUpdateAddressData): CancelablePromise<AddressesUpdateAddressResponse> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/addresses/{address_id}',
+            url: '/api/v1/addresses/{address_id}',
             path: {
                 address_id: data.addressId
             },
@@ -113,10 +113,10 @@ export class AddressesService {
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static deleteAddressAddressesAddressId(data: DeleteAddressAddressesAddressIdDeleteData): CancelablePromise<DeleteAddressAddressesAddressIdDeleteResponse> {
+    public static deleteAddress(data: AddressesDeleteAddressData): CancelablePromise<AddressesDeleteAddressResponse> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/addresses/{address_id}',
+            url: '/api/v1/addresses/{address_id}',
             path: {
                 address_id: data.addressId
             },
@@ -135,16 +135,31 @@ export class CalendarService {
      * @returns CalendarMonthResponse Successful Response
      * @throws ApiError
      */
-    public static getCalendarMonthCalendarMonthYyyyMm(data: GetCalendarMonthCalendarMonthYyyyMmGetData): CancelablePromise<GetCalendarMonthCalendarMonthYyyyMmGetResponse> {
+    public static getCalendarMonth(data: CalendarGetCalendarMonthData): CancelablePromise<CalendarGetCalendarMonthResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/calendar/month/{yyyy_mm}',
+            url: '/api/v1/calendar/month/{yyyy_mm}',
             path: {
                 yyyy_mm: data.yyyyMm
             },
             errors: {
                 422: 'Validation Error'
             }
+        });
+    }
+}
+
+export class CarddavService {
+    /**
+     * Well Known Carddav
+     * Redirect to CardDAV server for iOS/macOS client discovery.
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static wellKnownCarddav(): CancelablePromise<CarddavWellKnownCarddavResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/.well-known/carddav'
         });
     }
 }
@@ -160,10 +175,10 @@ export class ContactFieldsService {
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static listContactFieldsContactFieldsContactContactId(data: ListContactFieldsContactFieldsContactContactIdGetData): CancelablePromise<ListContactFieldsContactFieldsContactContactIdGetResponse> {
+    public static listContactFields(data: ContactFieldsListContactFieldsData): CancelablePromise<ContactFieldsListContactFieldsResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/contact-fields/contact/{contact_id}',
+            url: '/api/v1/contact-fields/contact/{contact_id}',
             path: {
                 contact_id: data.contactId
             },
@@ -185,10 +200,10 @@ export class ContactFieldsService {
      * @returns ContactFieldPublic Successful Response
      * @throws ApiError
      */
-    public static createContactFieldRouteContactFields(data: CreateContactFieldRouteContactFieldsPostData): CancelablePromise<CreateContactFieldRouteContactFieldsPostResponse> {
+    public static createContactFieldRoute(data: ContactFieldsCreateContactFieldRouteData): CancelablePromise<ContactFieldsCreateContactFieldRouteResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/contact-fields/',
+            url: '/api/v1/contact-fields/',
             body: data.requestBody,
             mediaType: 'application/json',
             errors: {
@@ -206,10 +221,10 @@ export class ContactFieldsService {
      * @returns ContactFieldPublic Successful Response
      * @throws ApiError
      */
-    public static updateContactFieldContactFieldsFieldId(data: UpdateContactFieldContactFieldsFieldIdPatchData): CancelablePromise<UpdateContactFieldContactFieldsFieldIdPatchResponse> {
+    public static updateContactField(data: ContactFieldsUpdateContactFieldData): CancelablePromise<ContactFieldsUpdateContactFieldResponse> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/contact-fields/{field_id}',
+            url: '/api/v1/contact-fields/{field_id}',
             path: {
                 field_id: data.fieldId
             },
@@ -229,10 +244,10 @@ export class ContactFieldsService {
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static deleteContactFieldContactFieldsFieldId(data: DeleteContactFieldContactFieldsFieldIdDeleteData): CancelablePromise<DeleteContactFieldContactFieldsFieldIdDeleteResponse> {
+    public static deleteContactField(data: ContactFieldsDeleteContactFieldData): CancelablePromise<ContactFieldsDeleteContactFieldResponse> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/contact-fields/{field_id}',
+            url: '/api/v1/contact-fields/{field_id}',
             path: {
                 field_id: data.fieldId
             },
@@ -259,10 +274,10 @@ export class ContactsService {
      * @returns BulkContactResult Successful Response
      * @throws ApiError
      */
-    public static bulkUpdateContactsContactsBulk(data: BulkUpdateContactsContactsBulkPatchData): CancelablePromise<BulkUpdateContactsContactsBulkPatchResponse> {
+    public static bulkUpdateContacts(data: ContactsBulkUpdateContactsData): CancelablePromise<ContactsBulkUpdateContactsResponse> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/contacts/bulk',
+            url: '/api/v1/contacts/bulk',
             body: data.requestBody,
             mediaType: 'application/json',
             errors: {
@@ -286,10 +301,10 @@ export class ContactsService {
      * @returns ContactsPublic Successful Response
      * @throws ApiError
      */
-    public static previewBulkContactsContactsBulkPreview(data: PreviewBulkContactsContactsBulkPreviewGetData = {}): CancelablePromise<PreviewBulkContactsContactsBulkPreviewGetResponse> {
+    public static previewBulkContacts(data: ContactsPreviewBulkContactsData = {}): CancelablePromise<ContactsPreviewBulkContactsResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/contacts/bulk/preview',
+            url: '/api/v1/contacts/bulk/preview',
             query: {
                 select_all_filtered: data.selectAllFiltered,
                 search: data.search,
@@ -324,10 +339,10 @@ export class ContactsService {
      * @returns ContactsPublic Successful Response
      * @throws ApiError
      */
-    public static listContactsContacts(data: ListContactsContactsGetData = {}): CancelablePromise<ListContactsContactsGetResponse> {
+    public static listContacts(data: ContactsListContactsData = {}): CancelablePromise<ContactsListContactsResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/contacts/',
+            url: '/api/v1/contacts/',
             query: {
                 skip: data.skip,
                 limit: data.limit,
@@ -355,10 +370,10 @@ export class ContactsService {
      * @returns ContactPublic Successful Response
      * @throws ApiError
      */
-    public static createContactContacts(data: CreateContactContactsPostData): CancelablePromise<CreateContactContactsPostResponse> {
+    public static createContact(data: ContactsCreateContactData): CancelablePromise<ContactsCreateContactResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/contacts/',
+            url: '/api/v1/contacts/',
             body: data.requestBody,
             mediaType: 'application/json',
             errors: {
@@ -375,10 +390,10 @@ export class ContactsService {
      * @returns ContactsPublic Successful Response
      * @throws ApiError
      */
-    public static listLosingTouchContactsLosingTouch(data: ListLosingTouchContactsLosingTouchGetData = {}): CancelablePromise<ListLosingTouchContactsLosingTouchGetResponse> {
+    public static listLosingTouch(data: ContactsListLosingTouchData = {}): CancelablePromise<ContactsListLosingTouchResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/contacts/losing-touch',
+            url: '/api/v1/contacts/losing-touch',
             query: {
                 limit: data.limit
             },
@@ -396,10 +411,10 @@ export class ContactsService {
      * @returns ContactPublic Successful Response
      * @throws ApiError
      */
-    public static getContactContactsContactId(data: GetContactContactsContactIdGetData): CancelablePromise<GetContactContactsContactIdGetResponse> {
+    public static getContact(data: ContactsGetContactData): CancelablePromise<ContactsGetContactResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/contacts/{contact_id}',
+            url: '/api/v1/contacts/{contact_id}',
             path: {
                 contact_id: data.contactId
             },
@@ -418,10 +433,10 @@ export class ContactsService {
      * @returns ContactPublic Successful Response
      * @throws ApiError
      */
-    public static updateContactContactsContactId(data: UpdateContactContactsContactIdPatchData): CancelablePromise<UpdateContactContactsContactIdPatchResponse> {
+    public static updateContact(data: ContactsUpdateContactData): CancelablePromise<ContactsUpdateContactResponse> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/contacts/{contact_id}',
+            url: '/api/v1/contacts/{contact_id}',
             path: {
                 contact_id: data.contactId
             },
@@ -441,10 +456,10 @@ export class ContactsService {
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static deleteContactContactsContactId(data: DeleteContactContactsContactIdDeleteData): CancelablePromise<DeleteContactContactsContactIdDeleteResponse> {
+    public static deleteContact(data: ContactsDeleteContactData): CancelablePromise<ContactsDeleteContactResponse> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/contacts/{contact_id}',
+            url: '/api/v1/contacts/{contact_id}',
             path: {
                 contact_id: data.contactId
             },
@@ -462,10 +477,10 @@ export class ContactsService {
      * @returns NoteMentionPublic Successful Response
      * @throws ApiError
      */
-    public static listContactMentionsContactsContactIdMentions(data: ListContactMentionsContactsContactIdMentionsGetData): CancelablePromise<ListContactMentionsContactsContactIdMentionsGetResponse> {
+    public static listContactMentions(data: ContactsListContactMentionsData): CancelablePromise<ContactsListContactMentionsResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/contacts/{contact_id}/mentions',
+            url: '/api/v1/contacts/{contact_id}/mentions',
             path: {
                 contact_id: data.contactId
             },
@@ -483,10 +498,10 @@ export class ContactsService {
      * @returns ContactPublic Successful Response
      * @throws ApiError
      */
-    public static restoreContactContactsContactIdRestore(data: RestoreContactContactsContactIdRestorePostData): CancelablePromise<RestoreContactContactsContactIdRestorePostResponse> {
+    public static restoreContact(data: ContactsRestoreContactData): CancelablePromise<ContactsRestoreContactResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/contacts/{contact_id}/restore',
+            url: '/api/v1/contacts/{contact_id}/restore',
             path: {
                 contact_id: data.contactId
             },
@@ -504,10 +519,10 @@ export class CustomFieldsService {
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static listFieldDefinitionsCustomFieldsDefinitions(): CancelablePromise<ListFieldDefinitionsCustomFieldsDefinitionsGetResponse> {
+    public static listFieldDefinitions(): CancelablePromise<CustomFieldsListFieldDefinitionsResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/custom-fields/definitions/'
+            url: '/api/v1/custom-fields/definitions/'
         });
     }
     
@@ -519,10 +534,10 @@ export class CustomFieldsService {
      * @returns CustomFieldDefinitionPublic Successful Response
      * @throws ApiError
      */
-    public static createFieldDefinitionCustomFieldsDefinitions(data: CreateFieldDefinitionCustomFieldsDefinitionsPostData): CancelablePromise<CreateFieldDefinitionCustomFieldsDefinitionsPostResponse> {
+    public static createFieldDefinition(data: CustomFieldsCreateFieldDefinitionData): CancelablePromise<CustomFieldsCreateFieldDefinitionResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/custom-fields/definitions/',
+            url: '/api/v1/custom-fields/definitions/',
             body: data.requestBody,
             mediaType: 'application/json',
             errors: {
@@ -540,10 +555,10 @@ export class CustomFieldsService {
      * @returns CustomFieldDefinitionPublic Successful Response
      * @throws ApiError
      */
-    public static updateFieldDefinitionCustomFieldsDefinitionsDefId(data: UpdateFieldDefinitionCustomFieldsDefinitionsDefIdPatchData): CancelablePromise<UpdateFieldDefinitionCustomFieldsDefinitionsDefIdPatchResponse> {
+    public static updateFieldDefinition(data: CustomFieldsUpdateFieldDefinitionData): CancelablePromise<CustomFieldsUpdateFieldDefinitionResponse> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/custom-fields/definitions/{def_id}',
+            url: '/api/v1/custom-fields/definitions/{def_id}',
             path: {
                 def_id: data.defId
             },
@@ -563,10 +578,10 @@ export class CustomFieldsService {
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static deleteFieldDefinitionCustomFieldsDefinitionsDefId(data: DeleteFieldDefinitionCustomFieldsDefinitionsDefIdDeleteData): CancelablePromise<DeleteFieldDefinitionCustomFieldsDefinitionsDefIdDeleteResponse> {
+    public static deleteFieldDefinition(data: CustomFieldsDeleteFieldDefinitionData): CancelablePromise<CustomFieldsDeleteFieldDefinitionResponse> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/custom-fields/definitions/{def_id}',
+            url: '/api/v1/custom-fields/definitions/{def_id}',
             path: {
                 def_id: data.defId
             },
@@ -584,10 +599,10 @@ export class CustomFieldsService {
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static listFieldValuesCustomFieldsValuesContactContactId(data: ListFieldValuesCustomFieldsValuesContactContactIdGetData): CancelablePromise<ListFieldValuesCustomFieldsValuesContactContactIdGetResponse> {
+    public static listFieldValues(data: CustomFieldsListFieldValuesData): CancelablePromise<CustomFieldsListFieldValuesResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/custom-fields/values/contact/{contact_id}',
+            url: '/api/v1/custom-fields/values/contact/{contact_id}',
             path: {
                 contact_id: data.contactId
             },
@@ -605,10 +620,10 @@ export class CustomFieldsService {
      * @returns CustomFieldValuePublic Successful Response
      * @throws ApiError
      */
-    public static createFieldValueCustomFieldsValues(data: CreateFieldValueCustomFieldsValuesPostData): CancelablePromise<CreateFieldValueCustomFieldsValuesPostResponse> {
+    public static createFieldValue(data: CustomFieldsCreateFieldValueData): CancelablePromise<CustomFieldsCreateFieldValueResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/custom-fields/values/',
+            url: '/api/v1/custom-fields/values/',
             body: data.requestBody,
             mediaType: 'application/json',
             errors: {
@@ -626,10 +641,10 @@ export class CustomFieldsService {
      * @returns CustomFieldValuePublic Successful Response
      * @throws ApiError
      */
-    public static updateFieldValueCustomFieldsValuesValueId(data: UpdateFieldValueCustomFieldsValuesValueIdPatchData): CancelablePromise<UpdateFieldValueCustomFieldsValuesValueIdPatchResponse> {
+    public static updateFieldValue(data: CustomFieldsUpdateFieldValueData): CancelablePromise<CustomFieldsUpdateFieldValueResponse> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/custom-fields/values/{value_id}',
+            url: '/api/v1/custom-fields/values/{value_id}',
             path: {
                 value_id: data.valueId
             },
@@ -649,10 +664,10 @@ export class CustomFieldsService {
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static deleteFieldValueCustomFieldsValuesValueId(data: DeleteFieldValueCustomFieldsValuesValueIdDeleteData): CancelablePromise<DeleteFieldValueCustomFieldsValuesValueIdDeleteResponse> {
+    public static deleteFieldValue(data: CustomFieldsDeleteFieldValueData): CancelablePromise<CustomFieldsDeleteFieldValueResponse> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/custom-fields/values/{value_id}',
+            url: '/api/v1/custom-fields/values/{value_id}',
             path: {
                 value_id: data.valueId
             },
@@ -672,10 +687,10 @@ export class DebtsService {
      * @returns DebtsPublic Successful Response
      * @throws ApiError
      */
-    public static listDebtsDebtsContactContactId(data: ListDebtsDebtsContactContactIdGetData): CancelablePromise<ListDebtsDebtsContactContactIdGetResponse> {
+    public static listDebts(data: DebtsListDebtsData): CancelablePromise<DebtsListDebtsResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/debts/contact/{contact_id}',
+            url: '/api/v1/debts/contact/{contact_id}',
             path: {
                 contact_id: data.contactId
             },
@@ -693,10 +708,10 @@ export class DebtsService {
      * @returns DebtPublic Successful Response
      * @throws ApiError
      */
-    public static createDebtRouteDebts(data: CreateDebtRouteDebtsPostData): CancelablePromise<CreateDebtRouteDebtsPostResponse> {
+    public static createDebtRoute(data: DebtsCreateDebtRouteData): CancelablePromise<DebtsCreateDebtRouteResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/debts/',
+            url: '/api/v1/debts/',
             body: data.requestBody,
             mediaType: 'application/json',
             errors: {
@@ -714,10 +729,10 @@ export class DebtsService {
      * @returns DebtPublic Successful Response
      * @throws ApiError
      */
-    public static updateDebtDebtsDebtId(data: UpdateDebtDebtsDebtIdPatchData): CancelablePromise<UpdateDebtDebtsDebtIdPatchResponse> {
+    public static updateDebt(data: DebtsUpdateDebtData): CancelablePromise<DebtsUpdateDebtResponse> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/debts/{debt_id}',
+            url: '/api/v1/debts/{debt_id}',
             path: {
                 debt_id: data.debtId
             },
@@ -737,10 +752,10 @@ export class DebtsService {
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static deleteDebtDebtsDebtId(data: DeleteDebtDebtsDebtIdDeleteData): CancelablePromise<DeleteDebtDebtsDebtIdDeleteResponse> {
+    public static deleteDebt(data: DebtsDeleteDebtData): CancelablePromise<DebtsDeleteDebtResponse> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/debts/{debt_id}',
+            url: '/api/v1/debts/{debt_id}',
             path: {
                 debt_id: data.debtId
             },
@@ -760,10 +775,10 @@ export class GiftsService {
      * @returns GiftsPublic Successful Response
      * @throws ApiError
      */
-    public static listGiftsGiftsContactContactId(data: ListGiftsGiftsContactContactIdGetData): CancelablePromise<ListGiftsGiftsContactContactIdGetResponse> {
+    public static listGifts(data: GiftsListGiftsData): CancelablePromise<GiftsListGiftsResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/gifts/contact/{contact_id}',
+            url: '/api/v1/gifts/contact/{contact_id}',
             path: {
                 contact_id: data.contactId
             },
@@ -781,10 +796,10 @@ export class GiftsService {
      * @returns GiftPublic Successful Response
      * @throws ApiError
      */
-    public static createGiftRouteGifts(data: CreateGiftRouteGiftsPostData): CancelablePromise<CreateGiftRouteGiftsPostResponse> {
+    public static createGiftRoute(data: GiftsCreateGiftRouteData): CancelablePromise<GiftsCreateGiftRouteResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/gifts/',
+            url: '/api/v1/gifts/',
             body: data.requestBody,
             mediaType: 'application/json',
             errors: {
@@ -802,10 +817,10 @@ export class GiftsService {
      * @returns GiftPublic Successful Response
      * @throws ApiError
      */
-    public static updateGiftGiftsGiftId(data: UpdateGiftGiftsGiftIdPatchData): CancelablePromise<UpdateGiftGiftsGiftIdPatchResponse> {
+    public static updateGift(data: GiftsUpdateGiftData): CancelablePromise<GiftsUpdateGiftResponse> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/gifts/{gift_id}',
+            url: '/api/v1/gifts/{gift_id}',
             path: {
                 gift_id: data.giftId
             },
@@ -825,10 +840,10 @@ export class GiftsService {
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static deleteGiftGiftsGiftId(data: DeleteGiftGiftsGiftIdDeleteData): CancelablePromise<DeleteGiftGiftsGiftIdDeleteResponse> {
+    public static deleteGift(data: GiftsDeleteGiftData): CancelablePromise<GiftsDeleteGiftResponse> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/gifts/{gift_id}',
+            url: '/api/v1/gifts/{gift_id}',
             path: {
                 gift_id: data.giftId
             },
@@ -849,10 +864,10 @@ export class GroupsService {
      * @returns GroupsPublic Successful Response
      * @throws ApiError
      */
-    public static listGroupsGroups(data: ListGroupsGroupsGetData = {}): CancelablePromise<ListGroupsGroupsGetResponse> {
+    public static listGroups(data: GroupsListGroupsData = {}): CancelablePromise<GroupsListGroupsResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/groups/',
+            url: '/api/v1/groups/',
             query: {
                 skip: data.skip,
                 limit: data.limit
@@ -871,10 +886,10 @@ export class GroupsService {
      * @returns GroupPublic Successful Response
      * @throws ApiError
      */
-    public static createGroupRouteGroups(data: CreateGroupRouteGroupsPostData): CancelablePromise<CreateGroupRouteGroupsPostResponse> {
+    public static createGroupRoute(data: GroupsCreateGroupRouteData): CancelablePromise<GroupsCreateGroupRouteResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/groups/',
+            url: '/api/v1/groups/',
             body: data.requestBody,
             mediaType: 'application/json',
             errors: {
@@ -892,10 +907,10 @@ export class GroupsService {
      * @returns GroupPublic Successful Response
      * @throws ApiError
      */
-    public static updateGroupGroupsGroupId(data: UpdateGroupGroupsGroupIdPatchData): CancelablePromise<UpdateGroupGroupsGroupIdPatchResponse> {
+    public static updateGroup(data: GroupsUpdateGroupData): CancelablePromise<GroupsUpdateGroupResponse> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/groups/{group_id}',
+            url: '/api/v1/groups/{group_id}',
             path: {
                 group_id: data.groupId
             },
@@ -915,10 +930,10 @@ export class GroupsService {
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static deleteGroupGroupsGroupId(data: DeleteGroupGroupsGroupIdDeleteData): CancelablePromise<DeleteGroupGroupsGroupIdDeleteResponse> {
+    public static deleteGroup(data: GroupsDeleteGroupData): CancelablePromise<GroupsDeleteGroupResponse> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/groups/{group_id}',
+            url: '/api/v1/groups/{group_id}',
             path: {
                 group_id: data.groupId
             },
@@ -938,10 +953,10 @@ export class ImportExportService {
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static importVcardImportExportImportVcard(data: ImportVcardImportExportImportVcardPostData): CancelablePromise<ImportVcardImportExportImportVcardPostResponse> {
+    public static importVcard(data: ImportExportImportVcardData): CancelablePromise<ImportExportImportVcardResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/import-export/import/vcard',
+            url: '/api/v1/import-export/import/vcard',
             formData: data.formData,
             mediaType: 'multipart/form-data',
             errors: {
@@ -956,10 +971,10 @@ export class ImportExportService {
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static exportVcardImportExportExportVcard(): CancelablePromise<ExportVcardImportExportExportVcardGetResponse> {
+    public static exportVcard(): CancelablePromise<ImportExportExportVcardResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/import-export/export/vcard'
+            url: '/api/v1/import-export/export/vcard'
         });
     }
     
@@ -969,10 +984,45 @@ export class ImportExportService {
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static exportJsonImportExportExportJson(): CancelablePromise<ExportJsonImportExportExportJsonGetResponse> {
+    public static exportJson(): CancelablePromise<ImportExportExportJsonResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/import-export/export/json'
+            url: '/api/v1/import-export/export/json'
+        });
+    }
+    
+    /**
+     * Export Csv
+     * Export contacts as CSV file.
+     * @param data The data for the request.
+     * @param data.selectAllFiltered
+     * @param data.search
+     * @param data.tagId
+     * @param data.groupId
+     * @param data.isFavorite
+     * @param data.isArchived
+     * @param data.stage
+     * @param data.limit
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static exportCsv(data: ImportExportExportCsvData = {}): CancelablePromise<ImportExportExportCsvResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/import-export/export/csv',
+            query: {
+                select_all_filtered: data.selectAllFiltered,
+                search: data.search,
+                tag_id: data.tagId,
+                group_id: data.groupId,
+                is_favorite: data.isFavorite,
+                is_archived: data.isArchived,
+                stage: data.stage,
+                limit: data.limit
+            },
+            errors: {
+                422: 'Validation Error'
+            }
         });
     }
 }
@@ -988,10 +1038,10 @@ export class InteractionsService {
      * @returns InteractionsPublic Successful Response
      * @throws ApiError
      */
-    public static listInteractionsInteractions(data: ListInteractionsInteractionsGetData = {}): CancelablePromise<ListInteractionsInteractionsGetResponse> {
+    public static listInteractions(data: InteractionsListInteractionsData = {}): CancelablePromise<InteractionsListInteractionsResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/interactions/',
+            url: '/api/v1/interactions/',
             query: {
                 contact_id: data.contactId,
                 skip: data.skip,
@@ -1011,10 +1061,10 @@ export class InteractionsService {
      * @returns InteractionPublic Successful Response
      * @throws ApiError
      */
-    public static createInteractionRouteInteractions(data: CreateInteractionRouteInteractionsPostData): CancelablePromise<CreateInteractionRouteInteractionsPostResponse> {
+    public static createInteractionRoute(data: InteractionsCreateInteractionRouteData): CancelablePromise<InteractionsCreateInteractionRouteResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/interactions/',
+            url: '/api/v1/interactions/',
             body: data.requestBody,
             mediaType: 'application/json',
             errors: {
@@ -1032,10 +1082,10 @@ export class InteractionsService {
      * @returns InteractionPublic Successful Response
      * @throws ApiError
      */
-    public static updateInteractionInteractionsInteractionId(data: UpdateInteractionInteractionsInteractionIdPatchData): CancelablePromise<UpdateInteractionInteractionsInteractionIdPatchResponse> {
+    public static updateInteraction(data: InteractionsUpdateInteractionData): CancelablePromise<InteractionsUpdateInteractionResponse> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/interactions/{interaction_id}',
+            url: '/api/v1/interactions/{interaction_id}',
             path: {
                 interaction_id: data.interactionId
             },
@@ -1055,10 +1105,10 @@ export class InteractionsService {
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static deleteInteractionInteractionsInteractionId(data: DeleteInteractionInteractionsInteractionIdDeleteData): CancelablePromise<DeleteInteractionInteractionsInteractionIdDeleteResponse> {
+    public static deleteInteraction(data: InteractionsDeleteInteractionData): CancelablePromise<InteractionsDeleteInteractionResponse> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/interactions/{interaction_id}',
+            url: '/api/v1/interactions/{interaction_id}',
             path: {
                 interaction_id: data.interactionId
             },
@@ -1079,10 +1129,10 @@ export class JournalService {
      * @returns JournalEntriesPublic Successful Response
      * @throws ApiError
      */
-    public static listJournalEntriesJournal(data: ListJournalEntriesJournalGetData = {}): CancelablePromise<ListJournalEntriesJournalGetResponse> {
+    public static listJournalEntries(data: JournalListJournalEntriesData = {}): CancelablePromise<JournalListJournalEntriesResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/journal/',
+            url: '/api/v1/journal/',
             query: {
                 skip: data.skip,
                 limit: data.limit
@@ -1101,10 +1151,10 @@ export class JournalService {
      * @returns JournalEntryPublic Successful Response
      * @throws ApiError
      */
-    public static createJournalEntryRouteJournal(data: CreateJournalEntryRouteJournalPostData): CancelablePromise<CreateJournalEntryRouteJournalPostResponse> {
+    public static createJournalEntryRoute(data: JournalCreateJournalEntryRouteData): CancelablePromise<JournalCreateJournalEntryRouteResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/journal/',
+            url: '/api/v1/journal/',
             body: data.requestBody,
             mediaType: 'application/json',
             errors: {
@@ -1122,10 +1172,10 @@ export class JournalService {
      * @returns JournalEntryPublic Successful Response
      * @throws ApiError
      */
-    public static updateJournalEntryJournalEntryId(data: UpdateJournalEntryJournalEntryIdPatchData): CancelablePromise<UpdateJournalEntryJournalEntryIdPatchResponse> {
+    public static updateJournalEntry(data: JournalUpdateJournalEntryData): CancelablePromise<JournalUpdateJournalEntryResponse> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/journal/{entry_id}',
+            url: '/api/v1/journal/{entry_id}',
             path: {
                 entry_id: data.entryId
             },
@@ -1145,10 +1195,10 @@ export class JournalService {
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static deleteJournalEntryJournalEntryId(data: DeleteJournalEntryJournalEntryIdDeleteData): CancelablePromise<DeleteJournalEntryJournalEntryIdDeleteResponse> {
+    public static deleteJournalEntry(data: JournalDeleteJournalEntryData): CancelablePromise<JournalDeleteJournalEntryResponse> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/journal/{entry_id}',
+            url: '/api/v1/journal/{entry_id}',
             path: {
                 entry_id: data.entryId
             },
@@ -1168,10 +1218,10 @@ export class LifeEventsService {
      * @returns LifeEventsPublic Successful Response
      * @throws ApiError
      */
-    public static listLifeEventsLifeEventsContactContactId(data: ListLifeEventsLifeEventsContactContactIdGetData): CancelablePromise<ListLifeEventsLifeEventsContactContactIdGetResponse> {
+    public static listLifeEvents(data: LifeEventsListLifeEventsData): CancelablePromise<LifeEventsListLifeEventsResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/life-events/contact/{contact_id}',
+            url: '/api/v1/life-events/contact/{contact_id}',
             path: {
                 contact_id: data.contactId
             },
@@ -1189,10 +1239,10 @@ export class LifeEventsService {
      * @returns LifeEventPublic Successful Response
      * @throws ApiError
      */
-    public static createLifeEventRouteLifeEvents(data: CreateLifeEventRouteLifeEventsPostData): CancelablePromise<CreateLifeEventRouteLifeEventsPostResponse> {
+    public static createLifeEventRoute(data: LifeEventsCreateLifeEventRouteData): CancelablePromise<LifeEventsCreateLifeEventRouteResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/life-events/',
+            url: '/api/v1/life-events/',
             body: data.requestBody,
             mediaType: 'application/json',
             errors: {
@@ -1210,10 +1260,10 @@ export class LifeEventsService {
      * @returns LifeEventPublic Successful Response
      * @throws ApiError
      */
-    public static updateLifeEventLifeEventsEventId(data: UpdateLifeEventLifeEventsEventIdPatchData): CancelablePromise<UpdateLifeEventLifeEventsEventIdPatchResponse> {
+    public static updateLifeEvent(data: LifeEventsUpdateLifeEventData): CancelablePromise<LifeEventsUpdateLifeEventResponse> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/life-events/{event_id}',
+            url: '/api/v1/life-events/{event_id}',
             path: {
                 event_id: data.eventId
             },
@@ -1233,10 +1283,10 @@ export class LifeEventsService {
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static deleteLifeEventLifeEventsEventId(data: DeleteLifeEventLifeEventsEventIdDeleteData): CancelablePromise<DeleteLifeEventLifeEventsEventIdDeleteResponse> {
+    public static deleteLifeEvent(data: LifeEventsDeleteLifeEventData): CancelablePromise<LifeEventsDeleteLifeEventResponse> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/life-events/{event_id}',
+            url: '/api/v1/life-events/{event_id}',
             path: {
                 event_id: data.eventId
             },
@@ -1256,10 +1306,10 @@ export class LoginService {
      * @returns Token Successful Response
      * @throws ApiError
      */
-    public static accessTokenLoginAccessToken(data: LoginAccessTokenLoginAccessTokenPostData): CancelablePromise<LoginAccessTokenLoginAccessTokenPostResponse> {
+    public static loginAccessToken(data: LoginLoginAccessTokenData): CancelablePromise<LoginLoginAccessTokenResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/login/access-token',
+            url: '/api/v1/login/access-token',
             formData: data.formData,
             mediaType: 'application/x-www-form-urlencoded',
             errors: {
@@ -1274,10 +1324,10 @@ export class LoginService {
      * @returns UserPublic Successful Response
      * @throws ApiError
      */
-    public static testTokenLoginTestToken(): CancelablePromise<TestTokenLoginTestTokenPostResponse> {
+    public static testToken(): CancelablePromise<LoginTestTokenResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/login/test-token'
+            url: '/api/v1/login/test-token'
         });
     }
     
@@ -1289,10 +1339,10 @@ export class LoginService {
      * @returns Message Successful Response
      * @throws ApiError
      */
-    public static recoverPasswordPasswordRecoveryEmail(data: RecoverPasswordPasswordRecoveryEmailPostData): CancelablePromise<RecoverPasswordPasswordRecoveryEmailPostResponse> {
+    public static recoverPassword(data: LoginRecoverPasswordData): CancelablePromise<LoginRecoverPasswordResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/password-recovery/{email}',
+            url: '/api/v1/password-recovery/{email}',
             path: {
                 email: data.email
             },
@@ -1310,10 +1360,10 @@ export class LoginService {
      * @returns Message Successful Response
      * @throws ApiError
      */
-    public static resetPasswordResetPassword(data: ResetPasswordResetPasswordPostData): CancelablePromise<ResetPasswordResetPasswordPostResponse> {
+    public static resetPassword(data: LoginResetPasswordData): CancelablePromise<LoginResetPasswordResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/reset-password/',
+            url: '/api/v1/reset-password/',
             body: data.requestBody,
             mediaType: 'application/json',
             errors: {
@@ -1330,10 +1380,10 @@ export class LoginService {
      * @returns string Successful Response
      * @throws ApiError
      */
-    public static recoverPasswordHtmlContentPasswordRecoveryHtmlContentEmail(data: RecoverPasswordHtmlContentPasswordRecoveryHtmlContentEmailPostData): CancelablePromise<RecoverPasswordHtmlContentPasswordRecoveryHtmlContentEmailPostResponse> {
+    public static recoverPasswordHtmlContent(data: LoginRecoverPasswordHtmlContentData): CancelablePromise<LoginRecoverPasswordHtmlContentResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/password-recovery-html-content/{email}',
+            url: '/api/v1/password-recovery-html-content/{email}',
             path: {
                 email: data.email
             },
@@ -1353,10 +1403,10 @@ export class MediaRecommendationsService {
      * @returns MediaRecommendationsPublic Successful Response
      * @throws ApiError
      */
-    public static listMediaRecommendationsMediaRecommendationsContactContactId(data: ListMediaRecommendationsMediaRecommendationsContactContactIdGetData): CancelablePromise<ListMediaRecommendationsMediaRecommendationsContactContactIdGetResponse> {
+    public static listMediaRecommendations(data: MediaRecommendationsListMediaRecommendationsData): CancelablePromise<MediaRecommendationsListMediaRecommendationsResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/media-recommendations/contact/{contact_id}',
+            url: '/api/v1/media-recommendations/contact/{contact_id}',
             path: {
                 contact_id: data.contactId
             },
@@ -1374,10 +1424,10 @@ export class MediaRecommendationsService {
      * @returns MediaRecommendationPublic Successful Response
      * @throws ApiError
      */
-    public static createMediaRecommendationRouteMediaRecommendations(data: CreateMediaRecommendationRouteMediaRecommendationsPostData): CancelablePromise<CreateMediaRecommendationRouteMediaRecommendationsPostResponse> {
+    public static createMediaRecommendationRoute(data: MediaRecommendationsCreateMediaRecommendationRouteData): CancelablePromise<MediaRecommendationsCreateMediaRecommendationRouteResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/media-recommendations/',
+            url: '/api/v1/media-recommendations/',
             body: data.requestBody,
             mediaType: 'application/json',
             errors: {
@@ -1395,10 +1445,10 @@ export class MediaRecommendationsService {
      * @returns MediaRecommendationPublic Successful Response
      * @throws ApiError
      */
-    public static updateMediaRecommendationMediaRecommendationsRecId(data: UpdateMediaRecommendationMediaRecommendationsRecIdPatchData): CancelablePromise<UpdateMediaRecommendationMediaRecommendationsRecIdPatchResponse> {
+    public static updateMediaRecommendation(data: MediaRecommendationsUpdateMediaRecommendationData): CancelablePromise<MediaRecommendationsUpdateMediaRecommendationResponse> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/media-recommendations/{rec_id}',
+            url: '/api/v1/media-recommendations/{rec_id}',
             path: {
                 rec_id: data.recId
             },
@@ -1418,10 +1468,10 @@ export class MediaRecommendationsService {
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static deleteMediaRecommendationMediaRecommendationsRecId(data: DeleteMediaRecommendationMediaRecommendationsRecIdDeleteData): CancelablePromise<DeleteMediaRecommendationMediaRecommendationsRecIdDeleteResponse> {
+    public static deleteMediaRecommendation(data: MediaRecommendationsDeleteMediaRecommendationData): CancelablePromise<MediaRecommendationsDeleteMediaRecommendationResponse> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/media-recommendations/{rec_id}',
+            url: '/api/v1/media-recommendations/{rec_id}',
             path: {
                 rec_id: data.recId
             },
@@ -1443,10 +1493,10 @@ export class NotesService {
      * @returns NotesPublic Successful Response
      * @throws ApiError
      */
-    public static listNotesNotesContactContactId(data: ListNotesNotesContactContactIdGetData): CancelablePromise<ListNotesNotesContactContactIdGetResponse> {
+    public static listNotes(data: NotesListNotesData): CancelablePromise<NotesListNotesResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/notes/contact/{contact_id}',
+            url: '/api/v1/notes/contact/{contact_id}',
             path: {
                 contact_id: data.contactId
             },
@@ -1468,10 +1518,10 @@ export class NotesService {
      * @returns NotePublic Successful Response
      * @throws ApiError
      */
-    public static createNoteRouteNotes(data: CreateNoteRouteNotesPostData): CancelablePromise<CreateNoteRouteNotesPostResponse> {
+    public static createNoteRoute(data: NotesCreateNoteRouteData): CancelablePromise<NotesCreateNoteRouteResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/notes/',
+            url: '/api/v1/notes/',
             body: data.requestBody,
             mediaType: 'application/json',
             errors: {
@@ -1489,10 +1539,10 @@ export class NotesService {
      * @returns NotePublic Successful Response
      * @throws ApiError
      */
-    public static updateNoteRouteNotesNoteId(data: UpdateNoteRouteNotesNoteIdPatchData): CancelablePromise<UpdateNoteRouteNotesNoteIdPatchResponse> {
+    public static updateNoteRoute(data: NotesUpdateNoteRouteData): CancelablePromise<NotesUpdateNoteRouteResponse> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/notes/{note_id}',
+            url: '/api/v1/notes/{note_id}',
             path: {
                 note_id: data.noteId
             },
@@ -1512,10 +1562,10 @@ export class NotesService {
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static deleteNoteNotesNoteId(data: DeleteNoteNotesNoteIdDeleteData): CancelablePromise<DeleteNoteNotesNoteIdDeleteResponse> {
+    public static deleteNote(data: NotesDeleteNoteData): CancelablePromise<NotesDeleteNoteResponse> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/notes/{note_id}',
+            url: '/api/v1/notes/{note_id}',
             path: {
                 note_id: data.noteId
             },
@@ -1535,10 +1585,10 @@ export class PetsService {
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static listPetsPetsContactContactId(data: ListPetsPetsContactContactIdGetData): CancelablePromise<ListPetsPetsContactContactIdGetResponse> {
+    public static listPets(data: PetsListPetsData): CancelablePromise<PetsListPetsResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/pets/contact/{contact_id}',
+            url: '/api/v1/pets/contact/{contact_id}',
             path: {
                 contact_id: data.contactId
             },
@@ -1556,10 +1606,10 @@ export class PetsService {
      * @returns PetPublic Successful Response
      * @throws ApiError
      */
-    public static createPetRoutePets(data: CreatePetRoutePetsPostData): CancelablePromise<CreatePetRoutePetsPostResponse> {
+    public static createPetRoute(data: PetsCreatePetRouteData): CancelablePromise<PetsCreatePetRouteResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/pets/',
+            url: '/api/v1/pets/',
             body: data.requestBody,
             mediaType: 'application/json',
             errors: {
@@ -1577,10 +1627,10 @@ export class PetsService {
      * @returns PetPublic Successful Response
      * @throws ApiError
      */
-    public static updatePetPetsPetId(data: UpdatePetPetsPetIdPatchData): CancelablePromise<UpdatePetPetsPetIdPatchResponse> {
+    public static updatePet(data: PetsUpdatePetData): CancelablePromise<PetsUpdatePetResponse> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/pets/{pet_id}',
+            url: '/api/v1/pets/{pet_id}',
             path: {
                 pet_id: data.petId
             },
@@ -1600,35 +1650,13 @@ export class PetsService {
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static deletePetPetsPetId(data: DeletePetPetsPetIdDeleteData): CancelablePromise<DeletePetPetsPetIdDeleteResponse> {
+    public static deletePet(data: PetsDeletePetData): CancelablePromise<PetsDeletePetResponse> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/pets/{pet_id}',
+            url: '/api/v1/pets/{pet_id}',
             path: {
                 pet_id: data.petId
             },
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-}
-
-export class PrivateService {
-    /**
-     * Create User
-     * Create a new user.
-     * @param data The data for the request.
-     * @param data.requestBody
-     * @returns UserPublic Successful Response
-     * @throws ApiError
-     */
-    public static createUserPrivateUsers(data: CreateUserPrivateUsersPostData): CancelablePromise<CreateUserPrivateUsersPostResponse> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/private/users/',
-            body: data.requestBody,
-            mediaType: 'application/json',
             errors: {
                 422: 'Validation Error'
             }
@@ -1650,10 +1678,10 @@ export class RelationshipsService {
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static lookupInverseRelationshipsInverse(data: LookupInverseRelationshipsInverseGetData): CancelablePromise<LookupInverseRelationshipsInverseGetResponse> {
+    public static lookupInverse(data: RelationshipsLookupInverseData): CancelablePromise<RelationshipsLookupInverseResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/relationships/inverse',
+            url: '/api/v1/relationships/inverse',
             query: {
                 type: data.type
             },
@@ -1671,10 +1699,10 @@ export class RelationshipsService {
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static listRelationshipsRelationshipsContactContactId(data: ListRelationshipsRelationshipsContactContactIdGetData): CancelablePromise<ListRelationshipsRelationshipsContactContactIdGetResponse> {
+    public static listRelationships(data: RelationshipsListRelationshipsData): CancelablePromise<RelationshipsListRelationshipsResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/relationships/contact/{contact_id}',
+            url: '/api/v1/relationships/contact/{contact_id}',
             path: {
                 contact_id: data.contactId
             },
@@ -1692,10 +1720,10 @@ export class RelationshipsService {
      * @returns RelationshipPublic Successful Response
      * @throws ApiError
      */
-    public static createRelationshipRouteRelationships(data: CreateRelationshipRouteRelationshipsPostData): CancelablePromise<CreateRelationshipRouteRelationshipsPostResponse> {
+    public static createRelationshipRoute(data: RelationshipsCreateRelationshipRouteData): CancelablePromise<RelationshipsCreateRelationshipRouteResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/relationships/',
+            url: '/api/v1/relationships/',
             body: data.requestBody,
             mediaType: 'application/json',
             errors: {
@@ -1718,10 +1746,10 @@ export class RelationshipsService {
      * @returns RelationshipPublic Successful Response
      * @throws ApiError
      */
-    public static updateRelationshipRelationshipsRelId(data: UpdateRelationshipRelationshipsRelIdPatchData): CancelablePromise<UpdateRelationshipRelationshipsRelIdPatchResponse> {
+    public static updateRelationship(data: RelationshipsUpdateRelationshipData): CancelablePromise<RelationshipsUpdateRelationshipResponse> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/relationships/{rel_id}',
+            url: '/api/v1/relationships/{rel_id}',
             path: {
                 rel_id: data.relId
             },
@@ -1741,10 +1769,10 @@ export class RelationshipsService {
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static deleteRelationshipRelationshipsRelId(data: DeleteRelationshipRelationshipsRelIdDeleteData): CancelablePromise<DeleteRelationshipRelationshipsRelIdDeleteResponse> {
+    public static deleteRelationship(data: RelationshipsDeleteRelationshipData): CancelablePromise<RelationshipsDeleteRelationshipResponse> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/relationships/{rel_id}',
+            url: '/api/v1/relationships/{rel_id}',
             path: {
                 rel_id: data.relId
             },
@@ -1766,10 +1794,10 @@ export class RemindersService {
      * @returns RemindersPublic Successful Response
      * @throws ApiError
      */
-    public static listRemindersReminders(data: ListRemindersRemindersGetData = {}): CancelablePromise<ListRemindersRemindersGetResponse> {
+    public static listReminders(data: RemindersListRemindersData = {}): CancelablePromise<RemindersListRemindersResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/reminders/',
+            url: '/api/v1/reminders/',
             query: {
                 skip: data.skip,
                 limit: data.limit,
@@ -1789,10 +1817,10 @@ export class RemindersService {
      * @returns ReminderPublic Successful Response
      * @throws ApiError
      */
-    public static createReminderRouteReminders(data: CreateReminderRouteRemindersPostData): CancelablePromise<CreateReminderRouteRemindersPostResponse> {
+    public static createReminderRoute(data: RemindersCreateReminderRouteData): CancelablePromise<RemindersCreateReminderRouteResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/reminders/',
+            url: '/api/v1/reminders/',
             body: data.requestBody,
             mediaType: 'application/json',
             errors: {
@@ -1810,10 +1838,10 @@ export class RemindersService {
      * @returns ReminderPublic Successful Response
      * @throws ApiError
      */
-    public static updateReminderRemindersReminderId(data: UpdateReminderRemindersReminderIdPatchData): CancelablePromise<UpdateReminderRemindersReminderIdPatchResponse> {
+    public static updateReminder(data: RemindersUpdateReminderData): CancelablePromise<RemindersUpdateReminderResponse> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/reminders/{reminder_id}',
+            url: '/api/v1/reminders/{reminder_id}',
             path: {
                 reminder_id: data.reminderId
             },
@@ -1833,10 +1861,10 @@ export class RemindersService {
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static deleteReminderRemindersReminderId(data: DeleteReminderRemindersReminderIdDeleteData): CancelablePromise<DeleteReminderRemindersReminderIdDeleteResponse> {
+    public static deleteReminder(data: RemindersDeleteReminderData): CancelablePromise<RemindersDeleteReminderResponse> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/reminders/{reminder_id}',
+            url: '/api/v1/reminders/{reminder_id}',
             path: {
                 reminder_id: data.reminderId
             },
@@ -1855,10 +1883,10 @@ export class RemindersService {
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static snoozeReminderRemindersReminderIdSnooze(data: SnoozeReminderRemindersReminderIdSnoozePostData): CancelablePromise<SnoozeReminderRemindersReminderIdSnoozePostResponse> {
+    public static snoozeReminder(data: RemindersSnoozeReminderData): CancelablePromise<RemindersSnoozeReminderResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/reminders/{reminder_id}/snooze',
+            url: '/api/v1/reminders/{reminder_id}/snooze',
             path: {
                 reminder_id: data.reminderId
             },
@@ -1882,10 +1910,10 @@ export class TagsService {
      * @returns TagsPublic Successful Response
      * @throws ApiError
      */
-    public static listTagsTags(data: ListTagsTagsGetData = {}): CancelablePromise<ListTagsTagsGetResponse> {
+    public static listTags(data: TagsListTagsData = {}): CancelablePromise<TagsListTagsResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/tags/',
+            url: '/api/v1/tags/',
             query: {
                 skip: data.skip,
                 limit: data.limit
@@ -1904,10 +1932,10 @@ export class TagsService {
      * @returns TagPublic Successful Response
      * @throws ApiError
      */
-    public static createTagRouteTags(data: CreateTagRouteTagsPostData): CancelablePromise<CreateTagRouteTagsPostResponse> {
+    public static createTagRoute(data: TagsCreateTagRouteData): CancelablePromise<TagsCreateTagRouteResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/tags/',
+            url: '/api/v1/tags/',
             body: data.requestBody,
             mediaType: 'application/json',
             errors: {
@@ -1925,10 +1953,10 @@ export class TagsService {
      * @returns TagPublic Successful Response
      * @throws ApiError
      */
-    public static updateTagTagsTagId(data: UpdateTagTagsTagIdPatchData): CancelablePromise<UpdateTagTagsTagIdPatchResponse> {
+    public static updateTag(data: TagsUpdateTagData): CancelablePromise<TagsUpdateTagResponse> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/tags/{tag_id}',
+            url: '/api/v1/tags/{tag_id}',
             path: {
                 tag_id: data.tagId
             },
@@ -1948,10 +1976,10 @@ export class TagsService {
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static deleteTagTagsTagId(data: DeleteTagTagsTagIdDeleteData): CancelablePromise<DeleteTagTagsTagIdDeleteResponse> {
+    public static deleteTag(data: TagsDeleteTagData): CancelablePromise<TagsDeleteTagResponse> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/tags/{tag_id}',
+            url: '/api/v1/tags/{tag_id}',
             path: {
                 tag_id: data.tagId
             },
@@ -1970,10 +1998,10 @@ export class TagSharesService {
      * @returns TagSharePublic Successful Response
      * @throws ApiError
      */
-    public static createTagShareTagShares(data: CreateTagShareTagSharesPostData): CancelablePromise<CreateTagShareTagSharesPostResponse> {
+    public static createTagShare(data: TagSharesCreateTagShareData): CancelablePromise<TagSharesCreateTagShareResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/tag-shares/',
+            url: '/api/v1/tag-shares/',
             body: data.requestBody,
             mediaType: 'application/json',
             errors: {
@@ -1989,10 +2017,10 @@ export class TagSharesService {
      * @returns TagSharesPublic Successful Response
      * @throws ApiError
      */
-    public static listTagSharesTagShares(data: ListTagSharesTagSharesGetData): CancelablePromise<ListTagSharesTagSharesGetResponse> {
+    public static listTagShares(data: TagSharesListTagSharesData): CancelablePromise<TagSharesListTagSharesResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/tag-shares/',
+            url: '/api/v1/tag-shares/',
             query: {
                 tag_id: data.tagId
             },
@@ -2010,10 +2038,10 @@ export class TagSharesService {
      * @returns string Successful Response
      * @throws ApiError
      */
-    public static deleteTagShareTagSharesTagIdGranteeId(data: DeleteTagShareTagSharesTagIdGranteeIdDeleteData): CancelablePromise<DeleteTagShareTagSharesTagIdGranteeIdDeleteResponse> {
+    public static deleteTagShare(data: TagSharesDeleteTagShareData): CancelablePromise<TagSharesDeleteTagShareResponse> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/tag-shares/{tag_id}/{grantee_id}',
+            url: '/api/v1/tag-shares/{tag_id}/{grantee_id}',
             path: {
                 tag_id: data.tagId,
                 grantee_id: data.granteeId
@@ -2035,10 +2063,10 @@ export class UsersService {
      * @returns UsersPublic Successful Response
      * @throws ApiError
      */
-    public static readUsersUsers(data: ReadUsersUsersGetData = {}): CancelablePromise<ReadUsersUsersGetResponse> {
+    public static readUsers(data: UsersReadUsersData = {}): CancelablePromise<UsersReadUsersResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/users/',
+            url: '/api/v1/users/',
             query: {
                 skip: data.skip,
                 limit: data.limit
@@ -2057,10 +2085,10 @@ export class UsersService {
      * @returns UserPublic Successful Response
      * @throws ApiError
      */
-    public static createUserUsers(data: CreateUserUsersPostData): CancelablePromise<CreateUserUsersPostResponse> {
+    public static createUser(data: UsersCreateUserData): CancelablePromise<UsersCreateUserResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/users/',
+            url: '/api/v1/users/',
             body: data.requestBody,
             mediaType: 'application/json',
             errors: {
@@ -2075,10 +2103,10 @@ export class UsersService {
      * @returns UserPublic Successful Response
      * @throws ApiError
      */
-    public static readUserMeUsersMe(): CancelablePromise<ReadUserMeUsersMeGetResponse> {
+    public static readUserMe(): CancelablePromise<UsersReadUserMeResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/users/me'
+            url: '/api/v1/users/me'
         });
     }
     
@@ -2088,10 +2116,10 @@ export class UsersService {
      * @returns Message Successful Response
      * @throws ApiError
      */
-    public static deleteUserMeUsersMe(): CancelablePromise<DeleteUserMeUsersMeDeleteResponse> {
+    public static deleteUserMe(): CancelablePromise<UsersDeleteUserMeResponse> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/users/me'
+            url: '/api/v1/users/me'
         });
     }
     
@@ -2103,10 +2131,10 @@ export class UsersService {
      * @returns UserPublic Successful Response
      * @throws ApiError
      */
-    public static updateUserMeUsersMe(data: UpdateUserMeUsersMePatchData): CancelablePromise<UpdateUserMeUsersMePatchResponse> {
+    public static updateUserMe(data: UsersUpdateUserMeData): CancelablePromise<UsersUpdateUserMeResponse> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/users/me',
+            url: '/api/v1/users/me',
             body: data.requestBody,
             mediaType: 'application/json',
             errors: {
@@ -2123,10 +2151,10 @@ export class UsersService {
      * @returns Message Successful Response
      * @throws ApiError
      */
-    public static updatePasswordMeUsersMePassword(data: UpdatePasswordMeUsersMePasswordPatchData): CancelablePromise<UpdatePasswordMeUsersMePasswordPatchResponse> {
+    public static updatePasswordMe(data: UsersUpdatePasswordMeData): CancelablePromise<UsersUpdatePasswordMeResponse> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/users/me/password',
+            url: '/api/v1/users/me/password',
             body: data.requestBody,
             mediaType: 'application/json',
             errors: {
@@ -2143,10 +2171,10 @@ export class UsersService {
      * @returns UserPublic Successful Response
      * @throws ApiError
      */
-    public static registerUserUsersSignup(data: RegisterUserUsersSignupPostData): CancelablePromise<RegisterUserUsersSignupPostResponse> {
+    public static registerUser(data: UsersRegisterUserData): CancelablePromise<UsersRegisterUserResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/users/signup',
+            url: '/api/v1/users/signup',
             body: data.requestBody,
             mediaType: 'application/json',
             errors: {
@@ -2163,10 +2191,10 @@ export class UsersService {
      * @returns UserPublic Successful Response
      * @throws ApiError
      */
-    public static readUserByIdUsersUserId(data: ReadUserByIdUsersUserIdGetData): CancelablePromise<ReadUserByIdUsersUserIdGetResponse> {
+    public static readUserById(data: UsersReadUserByIdData): CancelablePromise<UsersReadUserByIdResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/users/{user_id}',
+            url: '/api/v1/users/{user_id}',
             path: {
                 user_id: data.userId
             },
@@ -2185,10 +2213,10 @@ export class UsersService {
      * @returns UserPublic Successful Response
      * @throws ApiError
      */
-    public static updateUserUsersUserId(data: UpdateUserUsersUserIdPatchData): CancelablePromise<UpdateUserUsersUserIdPatchResponse> {
+    public static updateUser(data: UsersUpdateUserData): CancelablePromise<UsersUpdateUserResponse> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/users/{user_id}',
+            url: '/api/v1/users/{user_id}',
             path: {
                 user_id: data.userId
             },
@@ -2208,10 +2236,10 @@ export class UsersService {
      * @returns Message Successful Response
      * @throws ApiError
      */
-    public static deleteUserUsersUserId(data: DeleteUserUsersUserIdDeleteData): CancelablePromise<DeleteUserUsersUserIdDeleteResponse> {
+    public static deleteUser(data: UsersDeleteUserData): CancelablePromise<UsersDeleteUserResponse> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/users/{user_id}',
+            url: '/api/v1/users/{user_id}',
             path: {
                 user_id: data.userId
             },
@@ -2231,10 +2259,10 @@ export class UtilsService {
      * @returns Message Successful Response
      * @throws ApiError
      */
-    public static testEmailUtilsTestEmail(data: TestEmailUtilsTestEmailPostData): CancelablePromise<TestEmailUtilsTestEmailPostResponse> {
+    public static testEmail(data: UtilsTestEmailData): CancelablePromise<UtilsTestEmailResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/utils/test-email/',
+            url: '/api/v1/utils/test-email/',
             query: {
                 email_to: data.emailTo
             },
@@ -2249,10 +2277,10 @@ export class UtilsService {
      * @returns boolean Successful Response
      * @throws ApiError
      */
-    public static healthCheckUtilsHealthCheck(): CancelablePromise<HealthCheckUtilsHealthCheckGetResponse> {
+    public static healthCheck(): CancelablePromise<UtilsHealthCheckResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/utils/health-check/'
+            url: '/api/v1/utils/health-check/'
         });
     }
 }
@@ -2264,10 +2292,10 @@ export class WebhooksService {
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static listWebhooksWebhooks(): CancelablePromise<ListWebhooksWebhooksGetResponse> {
+    public static listWebhooks(): CancelablePromise<WebhooksListWebhooksResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/webhooks/'
+            url: '/api/v1/webhooks/'
         });
     }
     
@@ -2279,10 +2307,10 @@ export class WebhooksService {
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static createWebhookWebhooks(data: CreateWebhookWebhooksPostData): CancelablePromise<CreateWebhookWebhooksPostResponse> {
+    public static createWebhook(data: WebhooksCreateWebhookData): CancelablePromise<WebhooksCreateWebhookResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/webhooks/',
+            url: '/api/v1/webhooks/',
             body: data.requestBody,
             mediaType: 'application/json',
             errors: {
@@ -2300,10 +2328,10 @@ export class WebhooksService {
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static updateWebhookWebhooksWebhookId(data: UpdateWebhookWebhooksWebhookIdPatchData): CancelablePromise<UpdateWebhookWebhooksWebhookIdPatchResponse> {
+    public static updateWebhook(data: WebhooksUpdateWebhookData): CancelablePromise<WebhooksUpdateWebhookResponse> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/webhooks/{webhook_id}',
+            url: '/api/v1/webhooks/{webhook_id}',
             path: {
                 webhook_id: data.webhookId
             },
@@ -2323,10 +2351,10 @@ export class WebhooksService {
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static deleteWebhookWebhooksWebhookId(data: DeleteWebhookWebhooksWebhookIdDeleteData): CancelablePromise<DeleteWebhookWebhooksWebhookIdDeleteResponse> {
+    public static deleteWebhook(data: WebhooksDeleteWebhookData): CancelablePromise<WebhooksDeleteWebhookResponse> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/webhooks/{webhook_id}',
+            url: '/api/v1/webhooks/{webhook_id}',
             path: {
                 webhook_id: data.webhookId
             },
@@ -2354,10 +2382,10 @@ export class WebhooksService {
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static inboundWebhookWebhooksInboundApiKey(data: InboundWebhookWebhooksInboundApiKeyPostData): CancelablePromise<InboundWebhookWebhooksInboundApiKeyPostResponse> {
+    public static inboundWebhook(data: WebhooksInboundWebhookData): CancelablePromise<WebhooksInboundWebhookResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/webhooks/inbound/{api_key}',
+            url: '/api/v1/webhooks/inbound/{api_key}',
             path: {
                 api_key: data.apiKey
             },

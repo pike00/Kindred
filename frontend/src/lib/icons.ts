@@ -5,6 +5,7 @@
  */
 
 export type { LucideIcon } from "lucide-react"
+// Additional icons for bulk operations
 export {
   Archive,
   AtSign,
@@ -13,6 +14,7 @@ export {
   Cake,
   CalendarHeart,
   Check,
+  CheckSquare,
   ChevronDown,
   // Pagination
   ChevronLeft,
@@ -25,6 +27,7 @@ export {
   CircleCheck,
   Clock,
   Coffee,
+  Download,
   // Forms / inputs
   Eye,
   EyeOff,
@@ -61,6 +64,7 @@ export {
   Send,
   Settings,
   ShieldCheck,
+  Square,
   Star,
   // Theme
   Sun,
@@ -73,6 +77,3 @@ export {
   Video,
   X,
 } from "lucide-react"
-
-// Additional icons for bulk operations
-export { CheckSquare, Square, Download } from "lucide-react"

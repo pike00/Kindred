@@ -123,11 +123,11 @@ export type AddressUpdate = {
     longitude?: (number | null);
 };
 
-export type Body_import_vcard_import_export_import_vcard_post = {
+export type Body_import_export_import_vcard = {
     file: (Blob | File);
 };
 
-export type Body_login_access_token_login_access_token_post = {
+export type Body_login_login_access_token = {
     grant_type?: (string | null);
     username: string;
     password: string;
@@ -1060,13 +1060,6 @@ export type PetUpdate = {
     notes?: (string | null);
 };
 
-export type PrivateUserCreate = {
-    email: string;
-    password: string;
-    full_name: string;
-    is_verified?: boolean;
-};
-
 export type RelationshipCreate = {
     /**
      * Kind of relationship: spouse, child, parent, sibling, friend, colleague, etc.
@@ -1338,7 +1331,7 @@ export type WebhookEndpointBase = {
     secret?: (string | null);
 };
 
-export type ListActivityLogsActivityLogsGetData = {
+export type ActivityLogsListActivityLogsData = {
     entityId?: (string | null);
     entityType?: (string | null);
     limit?: number;
@@ -1346,73 +1339,75 @@ export type ListActivityLogsActivityLogsGetData = {
     tagId?: (string | null);
 };
 
-export type ListActivityLogsActivityLogsGetResponse = (ActivityLogsPublic);
+export type ActivityLogsListActivityLogsResponse = (ActivityLogsPublic);
 
-export type ListAddressesAddressesContactContactIdGetData = {
+export type AddressesListAddressesData = {
     contactId: string;
 };
 
-export type ListAddressesAddressesContactContactIdGetResponse = (unknown);
+export type AddressesListAddressesResponse = (unknown);
 
-export type CreateAddressRouteAddressesPostData = {
+export type AddressesCreateAddressRouteData = {
     requestBody: AddressCreate;
 };
 
-export type CreateAddressRouteAddressesPostResponse = (AddressPublic);
+export type AddressesCreateAddressRouteResponse = (AddressPublic);
 
-export type UpdateAddressAddressesAddressIdPatchData = {
+export type AddressesUpdateAddressData = {
     addressId: string;
     requestBody: AddressUpdate;
 };
 
-export type UpdateAddressAddressesAddressIdPatchResponse = (AddressPublic);
+export type AddressesUpdateAddressResponse = (AddressPublic);
 
-export type DeleteAddressAddressesAddressIdDeleteData = {
+export type AddressesDeleteAddressData = {
     addressId: string;
 };
 
-export type DeleteAddressAddressesAddressIdDeleteResponse = (unknown);
+export type AddressesDeleteAddressResponse = (unknown);
 
-export type GetCalendarMonthCalendarMonthYyyyMmGetData = {
+export type CalendarGetCalendarMonthData = {
     yyyyMm: string;
 };
 
-export type GetCalendarMonthCalendarMonthYyyyMmGetResponse = (CalendarMonthResponse);
+export type CalendarGetCalendarMonthResponse = (CalendarMonthResponse);
 
-export type ListContactFieldsContactFieldsContactContactIdGetData = {
+export type CarddavWellKnownCarddavResponse = (unknown);
+
+export type ContactFieldsListContactFieldsData = {
     contactId: string;
     limit?: number;
     skip?: number;
 };
 
-export type ListContactFieldsContactFieldsContactContactIdGetResponse = (unknown);
+export type ContactFieldsListContactFieldsResponse = (unknown);
 
-export type CreateContactFieldRouteContactFieldsPostData = {
+export type ContactFieldsCreateContactFieldRouteData = {
     requestBody: ContactFieldCreate;
 };
 
-export type CreateContactFieldRouteContactFieldsPostResponse = (ContactFieldPublic);
+export type ContactFieldsCreateContactFieldRouteResponse = (ContactFieldPublic);
 
-export type UpdateContactFieldContactFieldsFieldIdPatchData = {
+export type ContactFieldsUpdateContactFieldData = {
     fieldId: string;
     requestBody: ContactFieldUpdate;
 };
 
-export type UpdateContactFieldContactFieldsFieldIdPatchResponse = (ContactFieldPublic);
+export type ContactFieldsUpdateContactFieldResponse = (ContactFieldPublic);
 
-export type DeleteContactFieldContactFieldsFieldIdDeleteData = {
+export type ContactFieldsDeleteContactFieldData = {
     fieldId: string;
 };
 
-export type DeleteContactFieldContactFieldsFieldIdDeleteResponse = (unknown);
+export type ContactFieldsDeleteContactFieldResponse = (unknown);
 
-export type BulkUpdateContactsContactsBulkPatchData = {
+export type ContactsBulkUpdateContactsData = {
     requestBody: BulkContactRequest;
 };
 
-export type BulkUpdateContactsContactsBulkPatchResponse = (BulkContactResult);
+export type ContactsBulkUpdateContactsResponse = (BulkContactResult);
 
-export type PreviewBulkContactsContactsBulkPreviewGetData = {
+export type ContactsPreviewBulkContactsData = {
     groupId?: (string | null);
     isArchived?: (boolean | null);
     isFavorite?: (boolean | null);
@@ -1423,9 +1418,9 @@ export type PreviewBulkContactsContactsBulkPreviewGetData = {
     tagId?: (string | null);
 };
 
-export type PreviewBulkContactsContactsBulkPreviewGetResponse = (ContactsPublic);
+export type ContactsPreviewBulkContactsResponse = (ContactsPublic);
 
-export type ListContactsContactsGetData = {
+export type ContactsListContactsData = {
     groupId?: (string | null);
     ids?: (Array<(string)> | null);
     includeDeleted?: boolean;
@@ -1439,572 +1434,579 @@ export type ListContactsContactsGetData = {
     tagId?: (string | null);
 };
 
-export type ListContactsContactsGetResponse = (ContactsPublic);
+export type ContactsListContactsResponse = (ContactsPublic);
 
-export type CreateContactContactsPostData = {
+export type ContactsCreateContactData = {
     requestBody: ContactCreate;
 };
 
-export type CreateContactContactsPostResponse = (ContactPublic);
+export type ContactsCreateContactResponse = (ContactPublic);
 
-export type ListLosingTouchContactsLosingTouchGetData = {
+export type ContactsListLosingTouchData = {
     limit?: number;
 };
 
-export type ListLosingTouchContactsLosingTouchGetResponse = (ContactsPublic);
+export type ContactsListLosingTouchResponse = (ContactsPublic);
 
-export type GetContactContactsContactIdGetData = {
+export type ContactsGetContactData = {
     contactId: string;
 };
 
-export type GetContactContactsContactIdGetResponse = (ContactPublic);
+export type ContactsGetContactResponse = (ContactPublic);
 
-export type UpdateContactContactsContactIdPatchData = {
+export type ContactsUpdateContactData = {
     contactId: string;
     requestBody: ContactUpdate;
 };
 
-export type UpdateContactContactsContactIdPatchResponse = (ContactPublic);
+export type ContactsUpdateContactResponse = (ContactPublic);
 
-export type DeleteContactContactsContactIdDeleteData = {
+export type ContactsDeleteContactData = {
     contactId: string;
 };
 
-export type DeleteContactContactsContactIdDeleteResponse = (unknown);
+export type ContactsDeleteContactResponse = (unknown);
 
-export type ListContactMentionsContactsContactIdMentionsGetData = {
+export type ContactsListContactMentionsData = {
     contactId: string;
 };
 
-export type ListContactMentionsContactsContactIdMentionsGetResponse = (Array<NoteMentionPublic>);
+export type ContactsListContactMentionsResponse = (Array<NoteMentionPublic>);
 
-export type RestoreContactContactsContactIdRestorePostData = {
+export type ContactsRestoreContactData = {
     contactId: string;
 };
 
-export type RestoreContactContactsContactIdRestorePostResponse = (ContactPublic);
+export type ContactsRestoreContactResponse = (ContactPublic);
 
-export type ListFieldDefinitionsCustomFieldsDefinitionsGetResponse = (unknown);
+export type CustomFieldsListFieldDefinitionsResponse = (unknown);
 
-export type CreateFieldDefinitionCustomFieldsDefinitionsPostData = {
+export type CustomFieldsCreateFieldDefinitionData = {
     requestBody: CustomFieldDefinitionCreate;
 };
 
-export type CreateFieldDefinitionCustomFieldsDefinitionsPostResponse = (CustomFieldDefinitionPublic);
+export type CustomFieldsCreateFieldDefinitionResponse = (CustomFieldDefinitionPublic);
 
-export type UpdateFieldDefinitionCustomFieldsDefinitionsDefIdPatchData = {
+export type CustomFieldsUpdateFieldDefinitionData = {
     defId: string;
     requestBody: CustomFieldDefinitionUpdate;
 };
 
-export type UpdateFieldDefinitionCustomFieldsDefinitionsDefIdPatchResponse = (CustomFieldDefinitionPublic);
+export type CustomFieldsUpdateFieldDefinitionResponse = (CustomFieldDefinitionPublic);
 
-export type DeleteFieldDefinitionCustomFieldsDefinitionsDefIdDeleteData = {
+export type CustomFieldsDeleteFieldDefinitionData = {
     defId: string;
 };
 
-export type DeleteFieldDefinitionCustomFieldsDefinitionsDefIdDeleteResponse = (unknown);
+export type CustomFieldsDeleteFieldDefinitionResponse = (unknown);
 
-export type ListFieldValuesCustomFieldsValuesContactContactIdGetData = {
+export type CustomFieldsListFieldValuesData = {
     contactId: string;
 };
 
-export type ListFieldValuesCustomFieldsValuesContactContactIdGetResponse = (unknown);
+export type CustomFieldsListFieldValuesResponse = (unknown);
 
-export type CreateFieldValueCustomFieldsValuesPostData = {
+export type CustomFieldsCreateFieldValueData = {
     requestBody: CustomFieldValueCreate;
 };
 
-export type CreateFieldValueCustomFieldsValuesPostResponse = (CustomFieldValuePublic);
+export type CustomFieldsCreateFieldValueResponse = (CustomFieldValuePublic);
 
-export type UpdateFieldValueCustomFieldsValuesValueIdPatchData = {
+export type CustomFieldsUpdateFieldValueData = {
     requestBody: CustomFieldValueUpdate;
     valueId: string;
 };
 
-export type UpdateFieldValueCustomFieldsValuesValueIdPatchResponse = (CustomFieldValuePublic);
+export type CustomFieldsUpdateFieldValueResponse = (CustomFieldValuePublic);
 
-export type DeleteFieldValueCustomFieldsValuesValueIdDeleteData = {
+export type CustomFieldsDeleteFieldValueData = {
     valueId: string;
 };
 
-export type DeleteFieldValueCustomFieldsValuesValueIdDeleteResponse = (unknown);
+export type CustomFieldsDeleteFieldValueResponse = (unknown);
 
-export type ListDebtsDebtsContactContactIdGetData = {
+export type DebtsListDebtsData = {
     contactId: string;
 };
 
-export type ListDebtsDebtsContactContactIdGetResponse = (DebtsPublic);
+export type DebtsListDebtsResponse = (DebtsPublic);
 
-export type CreateDebtRouteDebtsPostData = {
+export type DebtsCreateDebtRouteData = {
     requestBody: DebtCreate;
 };
 
-export type CreateDebtRouteDebtsPostResponse = (DebtPublic);
+export type DebtsCreateDebtRouteResponse = (DebtPublic);
 
-export type UpdateDebtDebtsDebtIdPatchData = {
+export type DebtsUpdateDebtData = {
     debtId: string;
     requestBody: DebtUpdate;
 };
 
-export type UpdateDebtDebtsDebtIdPatchResponse = (DebtPublic);
+export type DebtsUpdateDebtResponse = (DebtPublic);
 
-export type DeleteDebtDebtsDebtIdDeleteData = {
+export type DebtsDeleteDebtData = {
     debtId: string;
 };
 
-export type DeleteDebtDebtsDebtIdDeleteResponse = (unknown);
+export type DebtsDeleteDebtResponse = (unknown);
 
-export type ListGiftsGiftsContactContactIdGetData = {
+export type GiftsListGiftsData = {
     contactId: string;
 };
 
-export type ListGiftsGiftsContactContactIdGetResponse = (GiftsPublic);
+export type GiftsListGiftsResponse = (GiftsPublic);
 
-export type CreateGiftRouteGiftsPostData = {
+export type GiftsCreateGiftRouteData = {
     requestBody: GiftCreate;
 };
 
-export type CreateGiftRouteGiftsPostResponse = (GiftPublic);
+export type GiftsCreateGiftRouteResponse = (GiftPublic);
 
-export type UpdateGiftGiftsGiftIdPatchData = {
+export type GiftsUpdateGiftData = {
     giftId: string;
     requestBody: GiftUpdate;
 };
 
-export type UpdateGiftGiftsGiftIdPatchResponse = (GiftPublic);
+export type GiftsUpdateGiftResponse = (GiftPublic);
 
-export type DeleteGiftGiftsGiftIdDeleteData = {
+export type GiftsDeleteGiftData = {
     giftId: string;
 };
 
-export type DeleteGiftGiftsGiftIdDeleteResponse = (unknown);
+export type GiftsDeleteGiftResponse = (unknown);
 
-export type ListGroupsGroupsGetData = {
+export type GroupsListGroupsData = {
     limit?: number;
     skip?: number;
 };
 
-export type ListGroupsGroupsGetResponse = (GroupsPublic);
+export type GroupsListGroupsResponse = (GroupsPublic);
 
-export type CreateGroupRouteGroupsPostData = {
+export type GroupsCreateGroupRouteData = {
     requestBody: GroupCreate;
 };
 
-export type CreateGroupRouteGroupsPostResponse = (GroupPublic);
+export type GroupsCreateGroupRouteResponse = (GroupPublic);
 
-export type UpdateGroupGroupsGroupIdPatchData = {
+export type GroupsUpdateGroupData = {
     groupId: string;
     requestBody: GroupUpdate;
 };
 
-export type UpdateGroupGroupsGroupIdPatchResponse = (GroupPublic);
+export type GroupsUpdateGroupResponse = (GroupPublic);
 
-export type DeleteGroupGroupsGroupIdDeleteData = {
+export type GroupsDeleteGroupData = {
     groupId: string;
 };
 
-export type DeleteGroupGroupsGroupIdDeleteResponse = (unknown);
+export type GroupsDeleteGroupResponse = (unknown);
 
-export type ImportVcardImportExportImportVcardPostData = {
-    formData: Body_import_vcard_import_export_import_vcard_post;
+export type ImportExportImportVcardData = {
+    formData: Body_import_export_import_vcard;
 };
 
-export type ImportVcardImportExportImportVcardPostResponse = (unknown);
+export type ImportExportImportVcardResponse = (unknown);
 
-export type ExportVcardImportExportExportVcardGetResponse = (unknown);
+export type ImportExportExportVcardResponse = (unknown);
 
-export type ExportJsonImportExportExportJsonGetResponse = (unknown);
+export type ImportExportExportJsonResponse = (unknown);
 
-export type ListInteractionsInteractionsGetData = {
+export type ImportExportExportCsvData = {
+    groupId?: (string | null);
+    isArchived?: (boolean | null);
+    isFavorite?: (boolean | null);
+    limit?: number;
+    search?: (string | null);
+    selectAllFiltered?: boolean;
+    stage?: (string | null);
+    tagId?: (string | null);
+};
+
+export type ImportExportExportCsvResponse = (unknown);
+
+export type InteractionsListInteractionsData = {
     contactId?: (string | null);
     limit?: number;
     skip?: number;
 };
 
-export type ListInteractionsInteractionsGetResponse = (InteractionsPublic);
+export type InteractionsListInteractionsResponse = (InteractionsPublic);
 
-export type CreateInteractionRouteInteractionsPostData = {
+export type InteractionsCreateInteractionRouteData = {
     requestBody: InteractionCreate;
 };
 
-export type CreateInteractionRouteInteractionsPostResponse = (InteractionPublic);
+export type InteractionsCreateInteractionRouteResponse = (InteractionPublic);
 
-export type UpdateInteractionInteractionsInteractionIdPatchData = {
+export type InteractionsUpdateInteractionData = {
     interactionId: string;
     requestBody: InteractionUpdate;
 };
 
-export type UpdateInteractionInteractionsInteractionIdPatchResponse = (InteractionPublic);
+export type InteractionsUpdateInteractionResponse = (InteractionPublic);
 
-export type DeleteInteractionInteractionsInteractionIdDeleteData = {
+export type InteractionsDeleteInteractionData = {
     interactionId: string;
 };
 
-export type DeleteInteractionInteractionsInteractionIdDeleteResponse = (unknown);
+export type InteractionsDeleteInteractionResponse = (unknown);
 
-export type ListJournalEntriesJournalGetData = {
+export type JournalListJournalEntriesData = {
     limit?: number;
     skip?: number;
 };
 
-export type ListJournalEntriesJournalGetResponse = (JournalEntriesPublic);
+export type JournalListJournalEntriesResponse = (JournalEntriesPublic);
 
-export type CreateJournalEntryRouteJournalPostData = {
+export type JournalCreateJournalEntryRouteData = {
     requestBody: JournalEntryCreate;
 };
 
-export type CreateJournalEntryRouteJournalPostResponse = (JournalEntryPublic);
+export type JournalCreateJournalEntryRouteResponse = (JournalEntryPublic);
 
-export type UpdateJournalEntryJournalEntryIdPatchData = {
+export type JournalUpdateJournalEntryData = {
     entryId: string;
     requestBody: JournalEntryUpdate;
 };
 
-export type UpdateJournalEntryJournalEntryIdPatchResponse = (JournalEntryPublic);
+export type JournalUpdateJournalEntryResponse = (JournalEntryPublic);
 
-export type DeleteJournalEntryJournalEntryIdDeleteData = {
+export type JournalDeleteJournalEntryData = {
     entryId: string;
 };
 
-export type DeleteJournalEntryJournalEntryIdDeleteResponse = (unknown);
+export type JournalDeleteJournalEntryResponse = (unknown);
 
-export type ListLifeEventsLifeEventsContactContactIdGetData = {
+export type LifeEventsListLifeEventsData = {
     contactId: string;
 };
 
-export type ListLifeEventsLifeEventsContactContactIdGetResponse = (LifeEventsPublic);
+export type LifeEventsListLifeEventsResponse = (LifeEventsPublic);
 
-export type CreateLifeEventRouteLifeEventsPostData = {
+export type LifeEventsCreateLifeEventRouteData = {
     requestBody: LifeEventCreate;
 };
 
-export type CreateLifeEventRouteLifeEventsPostResponse = (LifeEventPublic);
+export type LifeEventsCreateLifeEventRouteResponse = (LifeEventPublic);
 
-export type UpdateLifeEventLifeEventsEventIdPatchData = {
+export type LifeEventsUpdateLifeEventData = {
     eventId: string;
     requestBody: LifeEventUpdate;
 };
 
-export type UpdateLifeEventLifeEventsEventIdPatchResponse = (LifeEventPublic);
+export type LifeEventsUpdateLifeEventResponse = (LifeEventPublic);
 
-export type DeleteLifeEventLifeEventsEventIdDeleteData = {
+export type LifeEventsDeleteLifeEventData = {
     eventId: string;
 };
 
-export type DeleteLifeEventLifeEventsEventIdDeleteResponse = (unknown);
+export type LifeEventsDeleteLifeEventResponse = (unknown);
 
-export type LoginAccessTokenLoginAccessTokenPostData = {
-    formData: Body_login_access_token_login_access_token_post;
+export type LoginLoginAccessTokenData = {
+    formData: Body_login_login_access_token;
 };
 
-export type LoginAccessTokenLoginAccessTokenPostResponse = (Token);
+export type LoginLoginAccessTokenResponse = (Token);
 
-export type TestTokenLoginTestTokenPostResponse = (UserPublic);
+export type LoginTestTokenResponse = (UserPublic);
 
-export type RecoverPasswordPasswordRecoveryEmailPostData = {
+export type LoginRecoverPasswordData = {
     email: string;
 };
 
-export type RecoverPasswordPasswordRecoveryEmailPostResponse = (Message);
+export type LoginRecoverPasswordResponse = (Message);
 
-export type ResetPasswordResetPasswordPostData = {
+export type LoginResetPasswordData = {
     requestBody: NewPassword;
 };
 
-export type ResetPasswordResetPasswordPostResponse = (Message);
+export type LoginResetPasswordResponse = (Message);
 
-export type RecoverPasswordHtmlContentPasswordRecoveryHtmlContentEmailPostData = {
+export type LoginRecoverPasswordHtmlContentData = {
     email: string;
 };
 
-export type RecoverPasswordHtmlContentPasswordRecoveryHtmlContentEmailPostResponse = (string);
+export type LoginRecoverPasswordHtmlContentResponse = (string);
 
-export type ListMediaRecommendationsMediaRecommendationsContactContactIdGetData = {
+export type MediaRecommendationsListMediaRecommendationsData = {
     contactId: string;
 };
 
-export type ListMediaRecommendationsMediaRecommendationsContactContactIdGetResponse = (MediaRecommendationsPublic);
+export type MediaRecommendationsListMediaRecommendationsResponse = (MediaRecommendationsPublic);
 
-export type CreateMediaRecommendationRouteMediaRecommendationsPostData = {
+export type MediaRecommendationsCreateMediaRecommendationRouteData = {
     requestBody: MediaRecommendationCreate;
 };
 
-export type CreateMediaRecommendationRouteMediaRecommendationsPostResponse = (MediaRecommendationPublic);
+export type MediaRecommendationsCreateMediaRecommendationRouteResponse = (MediaRecommendationPublic);
 
-export type UpdateMediaRecommendationMediaRecommendationsRecIdPatchData = {
+export type MediaRecommendationsUpdateMediaRecommendationData = {
     recId: string;
     requestBody: MediaRecommendationUpdate;
 };
 
-export type UpdateMediaRecommendationMediaRecommendationsRecIdPatchResponse = (MediaRecommendationPublic);
+export type MediaRecommendationsUpdateMediaRecommendationResponse = (MediaRecommendationPublic);
 
-export type DeleteMediaRecommendationMediaRecommendationsRecIdDeleteData = {
+export type MediaRecommendationsDeleteMediaRecommendationData = {
     recId: string;
 };
 
-export type DeleteMediaRecommendationMediaRecommendationsRecIdDeleteResponse = (unknown);
+export type MediaRecommendationsDeleteMediaRecommendationResponse = (unknown);
 
-export type ListNotesNotesContactContactIdGetData = {
+export type NotesListNotesData = {
     contactId: string;
     limit?: number;
     skip?: number;
 };
 
-export type ListNotesNotesContactContactIdGetResponse = (NotesPublic);
+export type NotesListNotesResponse = (NotesPublic);
 
-export type CreateNoteRouteNotesPostData = {
+export type NotesCreateNoteRouteData = {
     requestBody: NoteCreate;
 };
 
-export type CreateNoteRouteNotesPostResponse = (NotePublic);
+export type NotesCreateNoteRouteResponse = (NotePublic);
 
-export type UpdateNoteRouteNotesNoteIdPatchData = {
+export type NotesUpdateNoteRouteData = {
     noteId: string;
     requestBody: NoteUpdate;
 };
 
-export type UpdateNoteRouteNotesNoteIdPatchResponse = (NotePublic);
+export type NotesUpdateNoteRouteResponse = (NotePublic);
 
-export type DeleteNoteNotesNoteIdDeleteData = {
+export type NotesDeleteNoteData = {
     noteId: string;
 };
 
-export type DeleteNoteNotesNoteIdDeleteResponse = (unknown);
+export type NotesDeleteNoteResponse = (unknown);
 
-export type ListPetsPetsContactContactIdGetData = {
+export type PetsListPetsData = {
     contactId: string;
 };
 
-export type ListPetsPetsContactContactIdGetResponse = (unknown);
+export type PetsListPetsResponse = (unknown);
 
-export type CreatePetRoutePetsPostData = {
+export type PetsCreatePetRouteData = {
     requestBody: PetCreate;
 };
 
-export type CreatePetRoutePetsPostResponse = (PetPublic);
+export type PetsCreatePetRouteResponse = (PetPublic);
 
-export type UpdatePetPetsPetIdPatchData = {
+export type PetsUpdatePetData = {
     petId: string;
     requestBody: PetUpdate;
 };
 
-export type UpdatePetPetsPetIdPatchResponse = (PetPublic);
+export type PetsUpdatePetResponse = (PetPublic);
 
-export type DeletePetPetsPetIdDeleteData = {
+export type PetsDeletePetData = {
     petId: string;
 };
 
-export type DeletePetPetsPetIdDeleteResponse = (unknown);
+export type PetsDeletePetResponse = (unknown);
 
-export type CreateUserPrivateUsersPostData = {
-    requestBody: PrivateUserCreate;
-};
-
-export type CreateUserPrivateUsersPostResponse = (UserPublic);
-
-export type LookupInverseRelationshipsInverseGetData = {
+export type RelationshipsLookupInverseData = {
     type: string;
 };
 
-export type LookupInverseRelationshipsInverseGetResponse = ({
+export type RelationshipsLookupInverseResponse = ({
     [key: string]: (string | null);
 });
 
-export type ListRelationshipsRelationshipsContactContactIdGetData = {
+export type RelationshipsListRelationshipsData = {
     contactId: string;
 };
 
-export type ListRelationshipsRelationshipsContactContactIdGetResponse = (unknown);
+export type RelationshipsListRelationshipsResponse = (unknown);
 
-export type CreateRelationshipRouteRelationshipsPostData = {
+export type RelationshipsCreateRelationshipRouteData = {
     requestBody: RelationshipCreate;
 };
 
-export type CreateRelationshipRouteRelationshipsPostResponse = (RelationshipPublic);
+export type RelationshipsCreateRelationshipRouteResponse = (RelationshipPublic);
 
-export type UpdateRelationshipRelationshipsRelIdPatchData = {
+export type RelationshipsUpdateRelationshipData = {
     relId: string;
     requestBody: RelationshipUpdate;
 };
 
-export type UpdateRelationshipRelationshipsRelIdPatchResponse = (RelationshipPublic);
+export type RelationshipsUpdateRelationshipResponse = (RelationshipPublic);
 
-export type DeleteRelationshipRelationshipsRelIdDeleteData = {
+export type RelationshipsDeleteRelationshipData = {
     relId: string;
 };
 
-export type DeleteRelationshipRelationshipsRelIdDeleteResponse = (unknown);
+export type RelationshipsDeleteRelationshipResponse = (unknown);
 
-export type ListRemindersRemindersGetData = {
+export type RemindersListRemindersData = {
     isActive?: (boolean | null);
     limit?: number;
     skip?: number;
 };
 
-export type ListRemindersRemindersGetResponse = (RemindersPublic);
+export type RemindersListRemindersResponse = (RemindersPublic);
 
-export type CreateReminderRouteRemindersPostData = {
+export type RemindersCreateReminderRouteData = {
     requestBody: ReminderCreate;
 };
 
-export type CreateReminderRouteRemindersPostResponse = (ReminderPublic);
+export type RemindersCreateReminderRouteResponse = (ReminderPublic);
 
-export type UpdateReminderRemindersReminderIdPatchData = {
+export type RemindersUpdateReminderData = {
     reminderId: string;
     requestBody: ReminderUpdate;
 };
 
-export type UpdateReminderRemindersReminderIdPatchResponse = (ReminderPublic);
+export type RemindersUpdateReminderResponse = (ReminderPublic);
 
-export type DeleteReminderRemindersReminderIdDeleteData = {
+export type RemindersDeleteReminderData = {
     reminderId: string;
 };
 
-export type DeleteReminderRemindersReminderIdDeleteResponse = (unknown);
+export type RemindersDeleteReminderResponse = (unknown);
 
-export type SnoozeReminderRemindersReminderIdSnoozePostData = {
+export type RemindersSnoozeReminderData = {
     minutes?: number;
     reminderId: string;
 };
 
-export type SnoozeReminderRemindersReminderIdSnoozePostResponse = (unknown);
+export type RemindersSnoozeReminderResponse = (unknown);
 
-export type ListTagsTagsGetData = {
+export type TagsListTagsData = {
     limit?: number;
     skip?: number;
 };
 
-export type ListTagsTagsGetResponse = (TagsPublic);
+export type TagsListTagsResponse = (TagsPublic);
 
-export type CreateTagRouteTagsPostData = {
+export type TagsCreateTagRouteData = {
     requestBody: TagCreate;
 };
 
-export type CreateTagRouteTagsPostResponse = (TagPublic);
+export type TagsCreateTagRouteResponse = (TagPublic);
 
-export type UpdateTagTagsTagIdPatchData = {
+export type TagsUpdateTagData = {
     requestBody: TagUpdate;
     tagId: string;
 };
 
-export type UpdateTagTagsTagIdPatchResponse = (TagPublic);
+export type TagsUpdateTagResponse = (TagPublic);
 
-export type DeleteTagTagsTagIdDeleteData = {
+export type TagsDeleteTagData = {
     tagId: string;
 };
 
-export type DeleteTagTagsTagIdDeleteResponse = (unknown);
+export type TagsDeleteTagResponse = (unknown);
 
-export type CreateTagShareTagSharesPostData = {
+export type TagSharesCreateTagShareData = {
     requestBody: _ShareIn;
 };
 
-export type CreateTagShareTagSharesPostResponse = (TagSharePublic);
+export type TagSharesCreateTagShareResponse = (TagSharePublic);
 
-export type ListTagSharesTagSharesGetData = {
+export type TagSharesListTagSharesData = {
     tagId: string;
 };
 
-export type ListTagSharesTagSharesGetResponse = (TagSharesPublic);
+export type TagSharesListTagSharesResponse = (TagSharesPublic);
 
-export type DeleteTagShareTagSharesTagIdGranteeIdDeleteData = {
+export type TagSharesDeleteTagShareData = {
     granteeId: string;
     tagId: string;
 };
 
-export type DeleteTagShareTagSharesTagIdGranteeIdDeleteResponse = ({
+export type TagSharesDeleteTagShareResponse = ({
     [key: string]: (string);
 });
 
-export type ReadUsersUsersGetData = {
+export type UsersReadUsersData = {
     limit?: number;
     skip?: number;
 };
 
-export type ReadUsersUsersGetResponse = (UsersPublic);
+export type UsersReadUsersResponse = (UsersPublic);
 
-export type CreateUserUsersPostData = {
+export type UsersCreateUserData = {
     requestBody: UserCreate;
 };
 
-export type CreateUserUsersPostResponse = (UserPublic);
+export type UsersCreateUserResponse = (UserPublic);
 
-export type ReadUserMeUsersMeGetResponse = (UserPublic);
+export type UsersReadUserMeResponse = (UserPublic);
 
-export type DeleteUserMeUsersMeDeleteResponse = (Message);
+export type UsersDeleteUserMeResponse = (Message);
 
-export type UpdateUserMeUsersMePatchData = {
+export type UsersUpdateUserMeData = {
     requestBody: UserUpdateMe;
 };
 
-export type UpdateUserMeUsersMePatchResponse = (UserPublic);
+export type UsersUpdateUserMeResponse = (UserPublic);
 
-export type UpdatePasswordMeUsersMePasswordPatchData = {
+export type UsersUpdatePasswordMeData = {
     requestBody: UpdatePassword;
 };
 
-export type UpdatePasswordMeUsersMePasswordPatchResponse = (Message);
+export type UsersUpdatePasswordMeResponse = (Message);
 
-export type RegisterUserUsersSignupPostData = {
+export type UsersRegisterUserData = {
     requestBody: UserRegister;
 };
 
-export type RegisterUserUsersSignupPostResponse = (UserPublic);
+export type UsersRegisterUserResponse = (UserPublic);
 
-export type ReadUserByIdUsersUserIdGetData = {
+export type UsersReadUserByIdData = {
     userId: string;
 };
 
-export type ReadUserByIdUsersUserIdGetResponse = (UserPublic);
+export type UsersReadUserByIdResponse = (UserPublic);
 
-export type UpdateUserUsersUserIdPatchData = {
+export type UsersUpdateUserData = {
     requestBody: UserUpdate;
     userId: string;
 };
 
-export type UpdateUserUsersUserIdPatchResponse = (UserPublic);
+export type UsersUpdateUserResponse = (UserPublic);
 
-export type DeleteUserUsersUserIdDeleteData = {
+export type UsersDeleteUserData = {
     userId: string;
 };
 
-export type DeleteUserUsersUserIdDeleteResponse = (Message);
+export type UsersDeleteUserResponse = (Message);
 
-export type TestEmailUtilsTestEmailPostData = {
+export type UtilsTestEmailData = {
     emailTo: string;
 };
 
-export type TestEmailUtilsTestEmailPostResponse = (Message);
+export type UtilsTestEmailResponse = (Message);
 
-export type HealthCheckUtilsHealthCheckGetResponse = (boolean);
+export type UtilsHealthCheckResponse = (boolean);
 
-export type ListWebhooksWebhooksGetResponse = (unknown);
+export type WebhooksListWebhooksResponse = (unknown);
 
-export type CreateWebhookWebhooksPostData = {
+export type WebhooksCreateWebhookData = {
     requestBody: WebhookEndpointBase;
 };
 
-export type CreateWebhookWebhooksPostResponse = (unknown);
+export type WebhooksCreateWebhookResponse = (unknown);
 
-export type UpdateWebhookWebhooksWebhookIdPatchData = {
+export type WebhooksUpdateWebhookData = {
     requestBody: WebhookEndpointBase;
     webhookId: string;
 };
 
-export type UpdateWebhookWebhooksWebhookIdPatchResponse = (unknown);
+export type WebhooksUpdateWebhookResponse = (unknown);
 
-export type DeleteWebhookWebhooksWebhookIdDeleteData = {
+export type WebhooksDeleteWebhookData = {
     webhookId: string;
 };
 
-export type DeleteWebhookWebhooksWebhookIdDeleteResponse = (unknown);
+export type WebhooksDeleteWebhookResponse = (unknown);
 
-export type InboundWebhookWebhooksInboundApiKeyPostData = {
+export type WebhooksInboundWebhookData = {
     apiKey: string;
     requestBody: {
         [key: string]: unknown;
     };
 };
 
-export type InboundWebhookWebhooksInboundApiKeyPostResponse = (unknown);
+export type WebhooksInboundWebhookResponse = (unknown);

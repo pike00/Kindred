@@ -2,6 +2,11 @@
 
 import json
 import os
+import sys
+import warnings
+
+# Suppress warnings to avoid corrupting JSON output
+warnings.filterwarnings("ignore")
 
 # Mock environment variables before importing the app
 os.environ.setdefault("PROJECT_NAME", "Personal CRM")
@@ -17,10 +22,12 @@ os.environ.setdefault("MEILI_URL", "http://localhost:7700")
 os.environ.setdefault("MEILI_MASTER_KEY", "test")
 
 # Now import and generate
-# Create a minimal FastAPI app to get the OpenAPI spec
 from fastapi import FastAPI
 
+# noqa: E402
 from app.api.main import api_router
+
+# noqa: E402
 
 app = FastAPI()
 app.include_router(api_router)
@@ -29,4 +36,5 @@ app.include_router(api_router)
 spec = app.openapi()
 
 # Output to stdout
-print(json.dumps(spec, indent=2))
+sys.stdout.write(json.dumps(spec, indent=2))
+sys.stdout.write("\n")
