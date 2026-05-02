@@ -4204,6 +4204,100 @@
           ]
         }
       ]
+    },
+    {
+      "name": "public.note_mention",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "note_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "contact_id",
+          "type": "uuid",
+          "nullable": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "note_mention_pkey",
+          "def": "CREATE UNIQUE INDEX note_mention_pkey ON public.note_mention USING btree (note_id, contact_id)",
+          "table": "public.note_mention",
+          "columns": [
+            "note_id",
+            "contact_id"
+          ]
+        },
+        {
+          "name": "ix_note_mention_contact_id",
+          "def": "CREATE INDEX ix_note_mention_contact_id ON public.note_mention USING btree (contact_id)",
+          "table": "public.note_mention",
+          "columns": [
+            "contact_id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "note_mention_contact_id_not_null",
+          "type": "n",
+          "def": "NOT NULL contact_id",
+          "table": "public.note_mention",
+          "referenced_table": "",
+          "columns": [
+            "contact_id"
+          ]
+        },
+        {
+          "name": "note_mention_note_id_not_null",
+          "type": "n",
+          "def": "NOT NULL note_id",
+          "table": "public.note_mention",
+          "referenced_table": "",
+          "columns": [
+            "note_id"
+          ]
+        },
+        {
+          "name": "note_mention_contact_id_fkey",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE",
+          "table": "public.note_mention",
+          "referenced_table": "public.contact",
+          "columns": [
+            "contact_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "note_mention_note_id_fkey",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (note_id) REFERENCES note(id) ON DELETE CASCADE",
+          "table": "public.note_mention",
+          "referenced_table": "public.note",
+          "columns": [
+            "note_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "note_mention_pkey",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (note_id, contact_id)",
+          "table": "public.note_mention",
+          "referenced_table": "",
+          "columns": [
+            "note_id",
+            "contact_id"
+          ]
+        }
+      ]
     }
   ],
   "relations": [
@@ -4687,6 +4781,32 @@
       ],
       "parent_cardinality": "exactly_one",
       "def": "FOREIGN KEY (user_id) REFERENCES \"user\"(id) ON DELETE CASCADE"
+    },
+    {
+      "table": "public.note_mention",
+      "columns": [
+        "contact_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.contact",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
+    },
+    {
+      "table": "public.note_mention",
+      "columns": [
+        "note_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.note",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (note_id) REFERENCES note(id) ON DELETE CASCADE"
     }
   ],
   "functions": [

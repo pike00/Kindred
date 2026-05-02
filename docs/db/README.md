@@ -30,6 +30,7 @@
 | [public.interaction_attendee](public.interaction_attendee.md) | 2 | Many-to-many link between interactions and contacts (attendees). | BASE TABLE |
 | [public.activity_log](public.activity_log.md) | 8 |  | BASE TABLE |
 | [public.oauth_credential](public.oauth_credential.md) | 11 |  | BASE TABLE |
+| [public.note_mention](public.note_mention.md) | 2 |  | BASE TABLE |
 
 ## Stored procedures and functions
 
@@ -101,6 +102,8 @@ erDiagram
 "public.activity_log" }o--o| "public.user" : "FOREIGN KEY (actor_id) REFERENCES #quot;user#quot;(id) ON DELETE SET NULL"
 "public.activity_log" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.oauth_credential" }o--|| "public.user" : "FOREIGN KEY (user_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
+"public.note_mention" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
+"public.note_mention" }o--|| "public.note" : "FOREIGN KEY (note_id) REFERENCES note(id) ON DELETE CASCADE"
 
 "public.alembic_version" {
   varchar_32_ version_num
@@ -353,6 +356,10 @@ erDiagram
   timestamp_with_time_zone last_synced_at
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
+}
+"public.note_mention" {
+  uuid note_id FK
+  uuid contact_id FK
 }
 ```
 

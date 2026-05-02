@@ -463,6 +463,16 @@ Table "oauth_credential" {
   }
 }
 
+Table "note_mention" {
+  "note_id" uuid [not null]
+  "contact_id" uuid [not null]
+
+  Indexes {
+    (note_id, contact_id) [pk, type: btree, name: "note_mention_pkey"]
+    contact_id [type: btree, name: "ix_note_mention_contact_id"]
+  }
+}
+
 Ref "activity_log_actor_id_fkey":"user"."id" < "activity_log"."actor_id" [delete: set null]
 
 Ref "activity_log_owner_id_fkey":"user"."id" < "activity_log"."owner_id" [delete: cascade]
@@ -516,6 +526,10 @@ Ref "media_recommendation_owner_id_fkey":"user"."id" < "media_recommendation"."o
 Ref "note_contact_id_fkey":"contact"."id" < "note"."contact_id" [delete: cascade]
 
 Ref "note_owner_id_fkey":"user"."id" < "note"."owner_id" [delete: cascade]
+
+Ref "note_mention_contact_id_fkey":"contact"."id" < "note_mention"."contact_id" [delete: cascade]
+
+Ref "note_mention_note_id_fkey":"note"."id" < "note_mention"."note_id" [delete: cascade]
 
 Ref "oauth_credential_user_id_fkey":"user"."id" < "oauth_credential"."user_id" [delete: cascade]
 
