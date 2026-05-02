@@ -70,6 +70,7 @@ export {
   UserRoundSearch,
   Users,
   UsersRound,
+  GripVertical,
   Video,
   X,
 } from "lucide-react"

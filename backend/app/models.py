@@ -527,6 +527,78 @@ class Contact(ContactBase, table=True):
     )
 
 
+# ─── ContactStageEvent ───────────────────────────────────────────
+
+
+class ContactStageEventBase(SQLModel):
+    """Stage change audit entry."""
+
+    old_stage: str | None = Field(
+        default=None,
+        max_length=100,
+        description="Previous stage value; null when the contact is first assigned a stage.",
+    )
+    new_stage: str | None = Field(
+        default=None,
+        max_length=100,
+        description="New stage value; null when the contact is cleared.",
+    )
+    changed_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),
+        nullable=False,
+        description="When the stage change occurred (UTC).",
+    )
+
+
+class ContactStageEvent(ContactStageEventBase, table=True):
+    """Audit trail for Contact.stage changes.
+
+    Rows are written atomically with the stage PATCH in the service layer
+    so that every transition is recorded without relying on the frontend.
+    """
+
+    __tablename__ = "contact_stage_event"
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
+    contact_id: uuid.UUID = Field(
+        foreign_key="contact.id",
+        nullable=False,
+        ondelete="CASCADE",
+        index=True,
+        description="Contact whose stage changed.",
+    )
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id",
+        nullable=False,
+        ondelete="CASCADE",
+        index=True,
+        description="Owner user; cascades on delete.",
+    )
+    changed_by_id: uuid.UUID | None = Field(
+        foreign_key="user.id",
+        nullable=True,
+        ondelete="SET NULL",
+        description="User who performed the change; null for system-initiated changes.",
+    )
+
+
+class ContactStageEventPublic(ContactStageEventBase):
+    id: uuid.UUID
+    contact_id: uuid.UUID
+    owner_id: uuid.UUID
+    changed_by_id: uuid.UUID | None
+
+
+class ContactStageEventsPublic(SQLModel):
+    data: list[ContactStageEventPublic]
+    count: int
+
+
 class ContactPublic(ContactBase):
     id: uuid.UUID
     avatar_url: str | None
@@ -536,6 +608,7 @@ class ContactPublic(ContactBase):
     deleted_at: datetime | None = None
     tags: list[TagPublic] = []
     groups: list[GroupPublic] = []
+    stage_events: list[ContactStageEventPublic] = []
 
 
 class ContactsPublic(SQLModel):
