@@ -2,7 +2,7 @@ import { useSuspenseQuery } from "@tanstack/react-query"
 import { Link, useNavigate, useSearch } from "@tanstack/react-router"
 import { useMemo, useState, useCallback } from "react"
 
-import { type ContactPublic, ContactsService, type BulkContactRequest } from "@/client"
+import { type ContactPublic, ContactsService, type BulkContactRequest, type BulkContactResult } from "@/client"
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
 import { EmptyState } from "@/components/Common/EmptyState"
 import { Badge } from "@/components/ui/badge"
@@ -25,15 +25,16 @@ import {
 import { cn } from "@/lib/utils"
 import { AddContactDialog } from "./AddContactDialog"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
-
 const PAGE_SIZE = 25
 
 // Bulk action types
@@ -201,11 +202,12 @@ export const ContactsList = () => {
 
   const { data } = useSuspenseQuery({
     queryKey: ["contacts"],
-    queryFn: () => ContactsService.listContactsContacts(),
+    queryFn: () => ContactsService.listContacts(),
+  })
 
   const allContacts = useMemo(() => data?.data ?? [], [data?.data])
   const filtered = useMemo(
-    () => allContacts.filter((c: ContactPublic) => matchesSearch(c, search)),
+    () => allContacts.filter((c) => matchesSearch(c, search)),
     [allContacts, search],
   )
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
@@ -216,19 +218,19 @@ export const ContactsList = () => {
   )
 
   const selectedCount = selectedIds.size
-  const isAllSelected = paged.length > 0 && paged.every((c: ContactPublic) => selectedIds.has(c.id))
-  const isSomeSelected = paged.some((c: ContactPublic) => selectedIds.has(c.id))
+  const isAllSelected = paged.length > 0 && paged.every((c) => selectedIds.has(c.id))
+  const isSomeSelected = paged.some((c) => selectedIds.has(c.id))
 
   const handleToggleAll = useCallback(() => {
     if (isAllSelected) {
       // Deselect all on current page
       const newSelected = new Set(selectedIds)
-      paged.forEach((c: ContactPublic) => newSelected.delete(c.id))
+      paged.forEach((c) => newSelected.delete(c.id))
       setSelectedIds(newSelected)
     } else {
       // Select all on current page
       const newSelected = new Set(selectedIds)
-      paged.forEach((c: ContactPublic) => newSelected.add(c.id))
+      paged.forEach((c) => newSelected.add(c.id))
       setSelectedIds(newSelected)
     }
   }, [paged, selectedIds, isAllSelected])
@@ -250,7 +252,8 @@ export const ContactsList = () => {
     } else {
       // Preview how many contacts would be selected
       try {
-        const result = await ContactsService.previewBulkContactsContactsBulkPreview({
+        const result = await ContactsService.previewBulkContacts({
+          selectAllFiltered: true,
           search: search || undefined,
         })
         setPreviewModal({
@@ -278,35 +281,36 @@ export const ContactsList = () => {
 
       switch (actionId) {
         case "archive":
-          operations.set_is_archived = true
+          operations.setIsArchived = true
           break
         case "unarchive":
-          operations.set_is_archived = false
+          operations.setIsArchived = false
           break
         case "favorite":
-          operations.set_is_favorite = true
+          operations.setIsFavorite = true
           break
         case "unfavorite":
-          operations.set_is_favorite = false
+          operations.setIsFavorite = false
           break
         case "delete":
-          operations.set_is_archived = true
+          operations.setIsArchived = true
           break
       }
 
       const body: BulkContactRequest = {
         operations,
-        select_all_filtered: selectAllFiltered || undefined,
-        contact_ids: selectAllFiltered ? undefined : Array.from(selectedIds),
+        selectAllFiltered: selectAllFiltered || undefined,
+        contactIds: selectAllFiltered ? undefined : Array.from(selectedIds),
         filters: selectAllFiltered ? {
           search: search || undefined,
         } : undefined,
       }
 
-      const result = await ContactsService.bulkUpdateContactsContactsBulk({ requestBody: body })
-      toast.success(`Updated ${result.updated_count} contacts`)
-      if (result.failed_ids && result.failed_ids.length > 0) {
-        toast.error(`Failed to update ${result.failed_ids.length} contacts`)
+      const result = await ContactsService.bulkUpdateContacts({ requestBody: body })
+
+      toast.success(`Updated ${result.updatedCount} contacts`)
+      if (result.failedIds && result.failedIds.length > 0) {
+        toast.error(`Failed to update ${result.failedIds.length} contacts`)
       }
 
       // Clear selection and refresh
@@ -426,7 +430,7 @@ export const ContactsList = () => {
 
       {paged.length > 0 ? (
         <div className="space-y-2">
-          {paged.map((contact: ContactPublic) => (
+          {paged.map((contact) => (
             <ContactRow
               key={contact.id}
               contact={contact}
@@ -482,18 +486,18 @@ export const ContactsList = () => {
       )}
 
       {/* Preview/Confirm Modal */}
-      <Dialog
+      <AlertDialog
         open={previewModal.open}
         onOpenChange={(open) =>
           setPreviewModal((prev) => ({ ...prev, open }))
         }
       >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
               Confirm Bulk Action
-            </DialogTitle>
-            <DialogDescription>
+            </AlertDialogTitle>
+            <AlertDialogDescription>
               {previewModal.action === "delete" ? (
                 <>
                   This will archive <strong>{previewModal.count || selectedCount}</strong> contacts.
@@ -506,18 +510,17 @@ export const ContactsList = () => {
                   </strong>" action to <strong>{previewModal.count || selectedCount}</strong> contacts.
                 </>
               )}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
               onClick={() =>
                 setPreviewModal({ open: false, action: null, count: 0, contacts: [] })
               }
             >
               Cancel
-            </Button>
-            <Button
+            </AlertDialogCancel>
+            <AlertDialogAction
               onClick={handleConfirmAction}
               disabled={isLoading}
               className={
@@ -527,10 +530,11 @@ export const ContactsList = () => {
               }
             >
               {isLoading ? "Processing..." : "Confirm"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
+  )
   )
 }

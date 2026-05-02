@@ -1,8 +1,13 @@
 import { useSuspenseQuery } from "@tanstack/react-query"
 import { Link, useNavigate, useSearch } from "@tanstack/react-router"
 import { useMemo, useState, useCallback } from "react"
+import React from "react"
 
-import { type ContactPublic, ContactsService, type BulkContactRequest } from "@/client"
+import {
+  type ContactPublic,
+  ContactsService,
+  type BulkContactRequest,
+} from "@/client"
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
 import { EmptyState } from "@/components/Common/EmptyState"
 import { Badge } from "@/components/ui/badge"
@@ -16,16 +21,14 @@ import {
   Search,
   Star,
   Users,
-  CheckSquare,
-  Square,
   Archive,
-  Tag,
   Trash2,
 } from "@/lib/icons"
 import { cn } from "@/lib/utils"
 import { AddContactDialog } from "./AddContactDialog"
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -57,21 +60,14 @@ interface PreviewModalState {
 
 function fullName(contact: ContactPublic): string {
   return (
-    [
-      contact.prefix,
-      contact.first_name,
-      contact.middle_name,
-      contact.last_name,
-      contact.suffix,
-    ]
+    [contact.prefix, contact.first_name, contact.middle_name, contact.last_name, contact.suffix]
       .filter(Boolean)
       .join(" ") || "Unnamed contact"
   )
 }
 
 function titleLine(contact: ContactPublic): string {
-  if (contact.title && contact.company)
-    return `${contact.title} at ${contact.company}`
+  if (contact.title && contact.company) return `${contact.title} at ${contact.company}`
   if (contact.title) return contact.title
   if (contact.company) return contact.company
   return ""
@@ -155,15 +151,10 @@ function ContactRow({
           </div>
           <div className="mt-1 flex items-center gap-2 text-xs">
             <span
-              className={cn(
-                "inline-flex items-center gap-1",
-                lastContactTone(days),
-              )}
+              className={cn("inline-flex items-center gap-1", lastContactTone(days))}
             >
               <Clock className="size-3" />
-              {days == null
-                ? "No interactions yet"
-                : `${days}d since last contact`}
+              {days == null ? "No interactions yet" : `${days}d since last contact`}
             </span>
           </div>
         </div>
@@ -201,7 +192,8 @@ export const ContactsList = () => {
 
   const { data } = useSuspenseQuery({
     queryKey: ["contacts"],
-    queryFn: () => ContactsService.listContactsContacts(),
+    queryFn: () => ContactsService.listContacts(),
+  })
 
   const allContacts = useMemo(() => data?.data ?? [], [data?.data])
   const filtered = useMemo(
@@ -216,17 +208,15 @@ export const ContactsList = () => {
   )
 
   const selectedCount = selectedIds.size
-  const isAllSelected = paged.length > 0 && paged.every((c: ContactPublic) => selectedIds.has(c.id))
-  const isSomeSelected = paged.some((c: ContactPublic) => selectedIds.has(c.id))
+  const isAllSelected = paged.length > 0 && paged.every((c) => selectedIds.has(c.id))
+  const isSomeSelected = paged.some((c) => selectedIds.has(c.id))
 
   const handleToggleAll = useCallback(() => {
     if (isAllSelected) {
-      // Deselect all on current page
       const newSelected = new Set(selectedIds)
       paged.forEach((c: ContactPublic) => newSelected.delete(c.id))
       setSelectedIds(newSelected)
     } else {
-      // Select all on current page
       const newSelected = new Set(selectedIds)
       paged.forEach((c: ContactPublic) => newSelected.add(c.id))
       setSelectedIds(newSelected)
@@ -248,9 +238,9 @@ export const ContactsList = () => {
       setSelectedIds(new Set())
       setSelectAllFiltered(false)
     } else {
-      // Preview how many contacts would be selected
       try {
-        const result = await ContactsService.previewBulkContactsContactsBulkPreview({
+        const result = await ContactsService.bulkUpdateContactsBulkPreview({
+          select_all_filtered: true,
           search: search || undefined,
         })
         setPreviewModal({
@@ -298,22 +288,18 @@ export const ContactsList = () => {
         operations,
         select_all_filtered: selectAllFiltered || undefined,
         contact_ids: selectAllFiltered ? undefined : Array.from(selectedIds),
-        filters: selectAllFiltered ? {
-          search: search || undefined,
-        } : undefined,
+        filters: selectAllFiltered ? { search: search || undefined } : undefined,
       }
 
-      const result = await ContactsService.bulkUpdateContactsContactsBulk({ requestBody: body })
-      toast.success(`Updated ${result.updated_count} contacts`)
-      if (result.failed_ids && result.failed_ids.length > 0) {
-        toast.error(`Failed to update ${result.failed_ids.length} contacts`)
+      const result = await ContactsService.bulkUpdateContactsContactsBulkPatch({ requestBody: body })
+
+      toast.success(`Updated ${result.updatedCount} contacts`)
+      if (result.failedIds && result.failedIds.length > 0) {
+        toast.error(`Failed to update ${result.failedIds.length} contacts`)
       }
 
-      // Clear selection and refresh
       setSelectedIds(new Set())
       setSelectAllFiltered(false)
-      // Refetch contacts
-      // Note: In production, you'd invalidate the query
     } catch (error) {
       toast.error("Bulk operation failed")
     } finally {
@@ -343,7 +329,7 @@ export const ContactsList = () => {
             {allContacts.length}{" "}
             {allContacts.length === 1 ? "person" : "people"}
             {selectedCount > 0 && (
-              <> · {selectedCount} selected</>
+              <React.Fragment> · {selectedCount} selected</React.Fragment>
             )}
           </p>
         </div>
@@ -359,9 +345,9 @@ export const ContactsList = () => {
             onClick={handleSelectAllFiltered}
           >
             {selectAllFiltered ? (
-              <>Deselect All ({previewModal.count})</>
+              <React.Fragment>Deselect All ({previewModal.count})</React.Fragment>
             ) : (
-              <>Select All Filtered</>
+              <React.Fragment>Select All Filtered</React.Fragment>
             )}
           </Button>
           <div className="h-6 w-px bg-border" />
@@ -426,7 +412,7 @@ export const ContactsList = () => {
 
       {paged.length > 0 ? (
         <div className="space-y-2">
-          {paged.map((contact: ContactPublic) => (
+          {paged.map((contact) => (
             <ContactRow
               key={contact.id}
               contact={contact}
@@ -495,29 +481,28 @@ export const ContactsList = () => {
             </DialogTitle>
             <DialogDescription>
               {previewModal.action === "delete" ? (
-                <>
+                <React.Fragment>
                   This will archive <strong>{previewModal.count || selectedCount}</strong> contacts.
                   This action cannot be undone.
-                </>
+                </React.Fragment>
               ) : (
-                <>
+                <React.Fragment>
                   This will apply the "<strong>
                   {BULK_ACTIONS.find((a) => a.id === previewModal.action)?.label}
                   </strong>" action to <strong>{previewModal.count || selectedCount}</strong> contacts.
-                </>
+                </React.Fragment>
               )}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              variant="outline"
+            <DialogClose
               onClick={() =>
                 setPreviewModal({ open: false, action: null, count: 0, contacts: [] })
               }
             >
               Cancel
-            </Button>
-            <Button
+            </DialogClose>
+            <DialogAction
               onClick={handleConfirmAction}
               disabled={isLoading}
               className={
@@ -527,7 +512,7 @@ export const ContactsList = () => {
               }
             >
               {isLoading ? "Processing..." : "Confirm"}
-            </Button>
+            </DialogAction>
           </DialogFooter>
         </DialogContent>
       </Dialog>

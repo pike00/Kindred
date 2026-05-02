@@ -434,7 +434,7 @@ export const AddressUpdateSchema = {
     title: 'AddressUpdate'
 } as const;
 
-export const Body_import_export_import_vcardSchema = {
+export const Body_import_vcard_import_export_import_vcard_postSchema = {
     properties: {
         file: {
             type: 'string',
@@ -444,10 +444,10 @@ export const Body_import_export_import_vcardSchema = {
     },
     type: 'object',
     required: ['file'],
-    title: 'Body_import-export-import_vcard'
+    title: 'Body_import_vcard_import_export_import_vcard_post'
 } as const;
 
-export const Body_login_login_access_tokenSchema = {
+export const Body_login_access_token_login_access_token_postSchema = {
     properties: {
         grant_type: {
             anyOf: [
@@ -501,7 +501,246 @@ export const Body_login_login_access_tokenSchema = {
     },
     type: 'object',
     required: ['username', 'password'],
-    title: 'Body_login-login_access_token'
+    title: 'Body_login_access_token_login_access_token_post'
+} as const;
+
+export const BulkContactFilterSchema = {
+    properties: {
+        search: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Search'
+        },
+        tag_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'uuid'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Tag Id'
+        },
+        group_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'uuid'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Group Id'
+        },
+        is_favorite: {
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Is Favorite'
+        },
+        is_archived: {
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Is Archived'
+        },
+        stage: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Stage'
+        }
+    },
+    type: 'object',
+    title: 'BulkContactFilter',
+    description: 'Filter criteria matching list_contacts parameters.'
+} as const;
+
+export const BulkContactOperationSchema = {
+    properties: {
+        add_tag_ids: {
+            anyOf: [
+                {
+                    items: {
+                        type: 'string',
+                        format: 'uuid'
+                    },
+                    type: 'array'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Add Tag Ids'
+        },
+        remove_tag_ids: {
+            anyOf: [
+                {
+                    items: {
+                        type: 'string',
+                        format: 'uuid'
+                    },
+                    type: 'array'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Remove Tag Ids'
+        },
+        add_group_ids: {
+            anyOf: [
+                {
+                    items: {
+                        type: 'string',
+                        format: 'uuid'
+                    },
+                    type: 'array'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Add Group Ids'
+        },
+        remove_group_ids: {
+            anyOf: [
+                {
+                    items: {
+                        type: 'string',
+                        format: 'uuid'
+                    },
+                    type: 'array'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Remove Group Ids'
+        },
+        set_is_archived: {
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Set Is Archived'
+        },
+        set_is_favorite: {
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Set Is Favorite'
+        }
+    },
+    type: 'object',
+    title: 'BulkContactOperation',
+    description: 'A single operation to apply to matching contacts.'
+} as const;
+
+export const BulkContactRequestSchema = {
+    properties: {
+        contact_ids: {
+            anyOf: [
+                {
+                    items: {
+                        type: 'string',
+                        format: 'uuid'
+                    },
+                    type: 'array'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Contact Ids'
+        },
+        select_all_filtered: {
+            type: 'boolean',
+            title: 'Select All Filtered',
+            default: false
+        },
+        filters: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/BulkContactFilter'
+                },
+                {
+                    type: 'null'
+                }
+            ]
+        },
+        limit: {
+            type: 'integer',
+            title: 'Limit',
+            default: 500
+        },
+        operations: {
+            '$ref': '#/components/schemas/BulkContactOperation'
+        }
+    },
+    type: 'object',
+    required: ['operations'],
+    title: 'BulkContactRequest',
+    description: 'Bulk operation request body.'
+} as const;
+
+export const BulkContactResultSchema = {
+    properties: {
+        updated_count: {
+            type: 'integer',
+            title: 'Updated Count'
+        },
+        skipped_count: {
+            type: 'integer',
+            title: 'Skipped Count'
+        },
+        failed_ids: {
+            items: {
+                type: 'string',
+                format: 'uuid'
+            },
+            type: 'array',
+            title: 'Failed Ids',
+            default: []
+        }
+    },
+    type: 'object',
+    required: ['updated_count', 'skipped_count'],
+    title: 'BulkContactResult',
+    description: 'Bulk operation result.'
 } as const;
 
 export const CalendarEntrySchema = {
@@ -3594,6 +3833,31 @@ export const PetUpdateSchema = {
     },
     type: 'object',
     title: 'PetUpdate'
+} as const;
+
+export const PrivateUserCreateSchema = {
+    properties: {
+        email: {
+            type: 'string',
+            title: 'Email'
+        },
+        password: {
+            type: 'string',
+            title: 'Password'
+        },
+        full_name: {
+            type: 'string',
+            title: 'Full Name'
+        },
+        is_verified: {
+            type: 'boolean',
+            title: 'Is Verified',
+            default: false
+        }
+    },
+    type: 'object',
+    required: ['email', 'password', 'full_name'],
+    title: 'PrivateUserCreate'
 } as const;
 
 export const RelationshipCreateSchema = {
