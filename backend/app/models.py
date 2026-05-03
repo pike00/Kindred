@@ -133,7 +133,6 @@ class InteractionChannel(str, enum.Enum):
     OTHER = "other"
 
 
-
 class InteractionDraftSource(str, enum.Enum):
     """Origin of a draft interaction."""
 
@@ -1069,7 +1068,6 @@ class InteractionPublic(InteractionBase):
     created_at: datetime
     is_draft: bool = False
     draft_source: InteractionDraftSource | None = None
-
 
 
 # ─── Draft Interaction helpers ──────────────────────────────────────────────

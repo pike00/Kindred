@@ -2603,6 +2603,18 @@ export const InteractionPublicSchema = {
             type: 'string',
             format: 'date-time',
             title: 'Created At'
+    },
+        is_draft: {
+            type: 'boolean',
+            title: 'Is Draft',
+            default: false
+        },
+        draft_source: {
+            anyOf: [
+                { type: 'string' },
+                { type: 'null' }
+            ],
+            title: 'Draft Source'
         }
     },
     type: 'object',

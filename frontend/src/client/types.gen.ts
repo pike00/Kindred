@@ -1552,6 +1552,7 @@ export type InteractionsListInteractionsData = {
     contactId?: (string | null);
     limit?: number;
     skip?: number;
+    is_draft?: boolean;
 };
 
 export type InteractionsListInteractionsResponse = (InteractionsPublic);
@@ -1574,6 +1575,13 @@ export type InteractionsDeleteInteractionData = {
 };
 
 export type InteractionsDeleteInteractionResponse = (unknown);
+
+export type InteractionsConfirmDraftData = {
+    interactionId: string;
+};
+
+export type InteractionsConfirmDraftResponse = (InteractionPublic);
+
 
 export type JournalListJournalEntriesData = {
     limit?: number;
