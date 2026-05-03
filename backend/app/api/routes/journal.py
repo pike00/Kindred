@@ -4,6 +4,7 @@ import uuid
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
+from sqlmodel import delete as sql_delete
 from sqlmodel import func, select
 
 from app.api.deps import CurrentUser, SessionDep
@@ -11,6 +12,7 @@ from app.crud import create_journal_entry
 from app.models import (
     JournalEntriesPublic,
     JournalEntry,
+    JournalEntryContact,
     JournalEntryCreate,
     JournalEntryPublic,
     JournalEntryUpdate,
@@ -35,6 +37,12 @@ def list_journal_entries(
         .limit(limit)
     )
     entries = session.exec(statement).all()
+    # Load contact IDs for each entry
+    for entry in entries:
+        contact_ids_stmt = select(JournalEntryContact.contact_id).where(
+            JournalEntryContact.journal_entry_id == entry.id
+        )
+        entry.contact_ids = list(session.exec(contact_ids_stmt).all())
 
     count_statement = select(func.count(JournalEntry.id)).where(
         JournalEntry.owner_id == current_user.id
@@ -58,6 +66,11 @@ def create_journal_entry_route(
     entry = create_journal_entry(
         session=session, journal_in=entry_in, owner_id=current_user.id
     )
+    # Load contact IDs for response
+    contact_ids_stmt = select(JournalEntryContact.contact_id).where(
+        JournalEntryContact.journal_entry_id == entry.id
+    )
+    entry.contact_ids = list(session.exec(contact_ids_stmt).all())
     return JournalEntryPublic.model_validate(entry)
 
 
@@ -81,6 +94,27 @@ def update_journal_entry(
     session.add(entry)
     session.commit()
     session.refresh(entry)
+    # Sync contact associations if provided
+    if "contact_ids" in update_data:
+        # Remove existing associations
+        session.exec(
+            sql_delete(JournalEntryContact).where(
+                JournalEntryContact.journal_entry_id == entry.id
+            )
+        )
+        # Add new associations
+        if update_data.get("contact_ids"):
+            for cid in set(update_data["contact_ids"]):
+                session.add(
+                    JournalEntryContact(journal_entry_id=entry.id, contact_id=cid)
+                )
+        session.flush()
+        session.refresh(entry)
+    # Load contact IDs for response
+    contact_ids_stmt = select(JournalEntryContact.contact_id).where(
+        JournalEntryContact.journal_entry_id == entry.id
+    )
+    entry.contact_ids = list(session.exec(contact_ids_stmt).all())
     return JournalEntryPublic.model_validate(entry)
 
 
