@@ -626,6 +626,17 @@
           "name": "organization_id",
           "type": "uuid",
           "nullable": true
+        },
+        {
+          "name": "do_not_contact",
+          "type": "boolean",
+          "nullable": false,
+          "default": "false"
+        },
+        {
+          "name": "do_not_contact_reason",
+          "type": "varchar(500)",
+          "nullable": true
         }
       ],
       "indexes": [
@@ -697,6 +708,16 @@
           "referenced_table": "",
           "columns": [
             "created_at"
+          ]
+        },
+        {
+          "name": "contact_do_not_contact_not_null",
+          "type": "n",
+          "def": "NOT NULL do_not_contact",
+          "table": "public.contact",
+          "referenced_table": "",
+          "columns": [
+            "do_not_contact"
           ]
         },
         {

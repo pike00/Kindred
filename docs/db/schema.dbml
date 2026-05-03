@@ -131,6 +131,8 @@ Table "contact" {
   "source" contactsource [not null, default: 'MANUAL']
   "source_external_id" varchar(500)
   "organization_id" uuid
+  "do_not_contact" bool [not null, default: false]
+  "do_not_contact_reason" varchar(500)
 
   Indexes {
     (owner_id, source, source_external_id) [type: btree, unique, name: "uq_contact_owner_source_external_id"]
