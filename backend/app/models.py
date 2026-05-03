@@ -601,6 +601,29 @@ class Contact(ContactBase, table=True):
         max_length=2048,
         description="URL or on-disk path to the contact's avatar image.",
     )
+
+    # iMessage integration fields
+    imessage_id: str | None = Field(
+        default=None,
+        max_length=500,
+        index=True,
+        description="E.164 phone or email for stable iMessage identity.",
+    )
+    imessage_synced_at: datetime | None = Field(
+        default=None,
+        description="When the contact was last synced from iMessage (UTC).",
+    )
+    imessage_profile_hash: str | None = Field(
+        default=None,
+        max_length=64,
+        description="Hash of the iMessage profile data for idempotent updates.",
+    )
+    imessage_profile: dict | None = Field(
+        default=None,
+        sa_column=sa.Column("imessage_profile", sa.JSON, nullable=True),
+        description="Raw iMessage profile data (JSON).",
+    )
+
     # Computed: last time any interaction was logged with this contact
     last_contacted_at: datetime | None = Field(
         default=None,
@@ -648,6 +671,10 @@ class ContactPublic(ContactBase):
     do_not_contact_reason: str | None = None
     tags: list[TagPublic] = []
     groups: list[GroupPublic] = []
+
+    imessage_id: str | None = None
+    imessage_synced_at: datetime | None = None
+    imessage_profile: dict | None = None
 
 
 class ContactsPublic(SQLModel):
