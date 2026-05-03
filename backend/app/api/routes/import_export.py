@@ -3,9 +3,9 @@
 import logging
 from typing import Any
 
-from fastapi import APIRouter, File, Query, UploadFile
+from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 from fastapi.responses import Response
-from sqlmodel import select
+from sqlmodel import SQLModel, select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.csv_utils import (
@@ -161,8 +161,10 @@ logger = logging.getLogger(__name__)
 
 # ─── CSV Import Preview ───────────────────────────────────────────────────────
 
+
 class CSVPreviewResponse(SQLModel):
     """Preview of CSV import: column mapping and sample rows."""
+
     headers: list[str]
     detected_mapping: dict[str, str | None]
     sample_rows: list[dict[str, str]]
@@ -199,8 +201,10 @@ async def preview_csv_import(
 
 # ─── CSV Import ─────────────────────────────────────────────────────────────
 
+
 class CSVImportRequest(SQLModel):
     """Request body for CSV import with column mapping override."""
+
     column_mapping: dict[str, str | None] | None = None
     skip_duplicates: bool = True
     merge_duplicates: bool = False
@@ -210,6 +214,7 @@ class CSVImportRequest(SQLModel):
 
 class CSVImportResponse(SQLModel):
     """Response for CSV import."""
+
     imported: int
     skipped: int
     updated: int
@@ -245,13 +250,33 @@ async def import_csv(
     if column_mapping:
         # Validate: ensure all values are valid field names
         valid_fields = [
-            "first_name", "last_name", "middle_name", "prefix", "suffix",
-            "nickname", "company", "department", "title", "birthday",
-            "how_we_met", "is_favorite", "is_archived", "contact_frequency_days",
-            "stage", "email", "phone", "address", "city", "region",
-            "postal_code", "country", "tag_names", "group_names", "notes",
+            "first_name",
+            "last_name",
+            "middle_name",
+            "prefix",
+            "suffix",
+            "nickname",
+            "company",
+            "department",
+            "title",
+            "birthday",
+            "how_we_met",
+            "is_favorite",
+            "is_archived",
+            "contact_frequency_days",
+            "stage",
+            "email",
+            "phone",
+            "address",
+            "city",
+            "region",
+            "postal_code",
+            "country",
+            "tag_names",
+            "group_names",
+            "notes",
         ]
-        for h, field in column_mapping.items():
+        for _h, field in column_mapping.items():
             if field and field not in valid_fields:
                 raise HTTPException(
                     status_code=422,
@@ -284,7 +309,9 @@ async def import_csv(
 
             # Check for duplicates by email
             existing_contact = None
-            row_emails = [f["value"] for f in fields if f["field_type"] == ContactFieldType.EMAIL]
+            row_emails = [
+                f["value"] for f in fields if f["field_type"] == ContactFieldType.EMAIL
+            ]
             for email in row_emails:
                 normalized = normalize_email(email)
                 if normalized in existing_contacts:
@@ -420,6 +447,7 @@ async def import_csv(
 
 
 # ─── CSV Export ─────────────────────────────────────────────────────────────
+
 
 @router.get("/export/csv")
 def export_csv(

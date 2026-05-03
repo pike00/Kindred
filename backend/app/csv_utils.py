@@ -3,100 +3,180 @@
 import csv
 import io
 import re
-from collections.abc import Generator
 from datetime import date
 from typing import Any
 
 from sqlalchemy.orm import Session
+from sqlmodel import select
 
 from app.models import (
     Contact,
-    ContactCreate,
     ContactField,
     ContactFieldType,
-    Tag,
     Group,
-    ContactTag,
-    ContactGroup,
+    Tag,
 )
 
 # Common header aliases for auto-detection
 HEADER_ALIASES: dict[str, list[str]] = {
     "first_name": [
-        "first_name", "firstname", "first", "given_name", "given", "fname",
+        "first_name",
+        "firstname",
+        "first",
+        "given_name",
+        "given",
+        "fname",
     ],
     "last_name": [
-        "last_name", "lastname", "last", "family_name", "family", "surname", "lname",
+        "last_name",
+        "lastname",
+        "last",
+        "family_name",
+        "family",
+        "surname",
+        "lname",
     ],
     "middle_name": [
-        "middle_name", "middlename", "middle", "middle_initial", "mi",
+        "middle_name",
+        "middlename",
+        "middle",
+        "middle_initial",
+        "mi",
     ],
     "prefix": [
-        "prefix", "title", "honorific", "salutation",
+        "prefix",
+        "title",
+        "honorific",
+        "salutation",
     ],
     "suffix": [
-        "suffix", "designation",
+        "suffix",
+        "designation",
     ],
     "nickname": [
-        "nickname", "nick", "preferred_name", "display_name",
+        "nickname",
+        "nick",
+        "preferred_name",
+        "display_name",
     ],
     "company": [
-        "company", "organization", "org", "employer", "workplace",
+        "company",
+        "organization",
+        "org",
+        "employer",
+        "workplace",
     ],
     "department": [
-        "department", "dept", "division",
+        "department",
+        "dept",
+        "division",
     ],
     "title": [
-        "title", "job_title", "position", "role",
+        "title",
+        "job_title",
+        "position",
+        "role",
     ],
     "birthday": [
-        "birthday", "birth_date", "date_of_birth", "dob", "birth",
+        "birthday",
+        "birth_date",
+        "date_of_birth",
+        "dob",
+        "birth",
     ],
     "how_we_met": [
-        "how_we_met", "met", "introduction", "source",
+        "how_we_met",
+        "met",
+        "introduction",
+        "source",
     ],
     "is_favorite": [
-        "is_favorite", "favorite", "fav", "starred",
+        "is_favorite",
+        "favorite",
+        "fav",
+        "starred",
     ],
     "is_archived": [
-        "is_archived", "archived", "deleted",
+        "is_archived",
+        "archived",
+        "deleted",
     ],
     "contact_frequency_days": [
-        "contact_frequency_days", "frequency", "cadence", "touch_frequency",
+        "contact_frequency_days",
+        "frequency",
+        "cadence",
+        "touch_frequency",
     ],
     "stage": [
-        "stage", "kanban_stage", "status", "pipeline_stage",
+        "stage",
+        "kanban_stage",
+        "status",
+        "pipeline_stage",
     ],
     "email": [
-        "email", "email_address", "email1", "primary_email", "e_mail",
+        "email",
+        "email_address",
+        "email1",
+        "primary_email",
+        "e_mail",
     ],
     "phone": [
-        "phone", "phone_number", "telephone", "mobile", "cell", "home_phone",
-        "work_phone", "tel", "phone1",
+        "phone",
+        "phone_number",
+        "telephone",
+        "mobile",
+        "cell",
+        "home_phone",
+        "work_phone",
+        "tel",
+        "phone1",
     ],
     "address": [
-        "address", "street_address", "full_address", "location",
+        "address",
+        "street_address",
+        "full_address",
+        "location",
     ],
     "city": [
-        "city", "town", "locality",
+        "city",
+        "town",
+        "locality",
     ],
     "region": [
-        "region", "state", "province", "county", "st",
+        "region",
+        "state",
+        "province",
+        "county",
+        "st",
     ],
     "postal_code": [
-        "postal_code", "zip", "zip_code", "postcode", "postal",
+        "postal_code",
+        "zip",
+        "zip_code",
+        "postcode",
+        "postal",
     ],
     "country": [
-        "country", "nation",
+        "country",
+        "nation",
     ],
     "tag_names": [
-        "tags", "tag_names", "tag_list", "labels",
+        "tags",
+        "tag_names",
+        "tag_list",
+        "labels",
     ],
     "group_names": [
-        "groups", "group_names", "group_list",
+        "groups",
+        "group_names",
+        "group_list",
     ],
     "notes": [
-        "notes", "note", "comments", "description", "remarks",
+        "notes",
+        "note",
+        "comments",
+        "description",
+        "remarks",
     ],
 }
 
@@ -239,29 +319,21 @@ def parse_csv_content(
     # Parse CSV
     reader = csv.DictReader(io.StringIO(text))
     headers = list(reader.fieldnames) if reader.fieldnames else []
-    rows = [row for row in reader]
+    rows = list(reader)
 
     return headers, rows, encoding
 
 
 def get_existing_tags(session: Session, owner_id: str) -> dict[str, Tag]:
     """Get existing tags for a user, keyed by lowercase name."""
-    tags = session.exec(
-        select(Tag).where(Tag.owner_id == owner_id)
-    ).all()
+    tags = session.exec(select(Tag).where(Tag.owner_id == owner_id)).all()
     return {tag.name.lower(): tag for tag in tags}
-
-
 
 
 def get_existing_groups(session: Session, owner_id: str) -> dict[str, Group]:
     """Get existing groups for a user, keyed by lowercase name."""
-    groups = session.exec(
-        select(Group).where(Group.owner_id == owner_id)
-    ).all()
+    groups = session.exec(select(Group).where(Group.owner_id == owner_id)).all()
     return {group.name.lower(): group for group in groups}
-
-
 
 
 def get_existing_contacts_by_email(
@@ -271,14 +343,11 @@ def get_existing_contacts_by_email(
 
     Only includes contacts that have at least one email field.
     """
-    contacts = session.exec(
-        select(Contact).where(Contact.owner_id == owner_id)
-    ).all()
+    contacts = session.exec(select(Contact).where(Contact.owner_id == owner_id)).all()
     result: dict[str, Contact] = {}
     for contact in contacts:
         fields = session.exec(
-            select(ContactField)
-            .where(
+            select(ContactField).where(
                 (ContactField.contact_id == contact.id)
                 & (ContactField.field_type == ContactFieldType.EMAIL)
             )
@@ -290,13 +359,10 @@ def get_existing_contacts_by_email(
     return result
 
 
-
-
-
 def build_contact_from_row(
     row: dict[str, str],
     column_mapping: dict[str, str | None],
-    owner_id: str,
+    _owner_id: str,
 ) -> dict[str, Any]:
     """Build contact data from a CSV row using the column mapping.
 
@@ -308,9 +374,6 @@ def build_contact_from_row(
     group_names: list[str] = []
     addresses: list[dict[str, Any]] = []
 
-    # Reverse mapping: canonical field -> CSV header
-    header_to_canonical = {h: c for h, c in column_mapping.items() if c}
-
     for csv_header, canonical in column_mapping.items():
         if not canonical:
             continue
@@ -321,8 +384,16 @@ def build_contact_from_row(
 
         # Handle contact base fields
         if canonical in [
-            "first_name", "last_name", "middle_name", "prefix", "suffix",
-            "nickname", "company", "department", "title", "how_we_met",
+            "first_name",
+            "last_name",
+            "middle_name",
+            "prefix",
+            "suffix",
+            "nickname",
+            "company",
+            "department",
+            "title",
+            "how_we_met",
             "stage",
         ]:
             contact_data[canonical] = value
@@ -337,10 +408,22 @@ def build_contact_from_row(
                 pass
 
         elif canonical == "is_favorite":
-            contact_data["is_favorite"] = value.lower() in ("true", "1", "yes", "y", "t")
+            contact_data["is_favorite"] = value.lower() in (
+                "true",
+                "1",
+                "yes",
+                "y",
+                "t",
+            )
 
         elif canonical == "is_archived":
-            contact_data["is_archived"] = value.lower() in ("true", "1", "yes", "y", "t")
+            contact_data["is_archived"] = value.lower() in (
+                "true",
+                "1",
+                "yes",
+                "y",
+                "t",
+            )
 
         elif canonical == "contact_frequency_days":
             try:
@@ -353,22 +436,26 @@ def build_contact_from_row(
         elif canonical == "email":
             normalized = normalize_email(value)
             if normalized:
-                fields.append({
-                    "field_type": ContactFieldType.EMAIL,
-                    "label": "other",
-                    "value": normalized,
-                    "is_primary": True,
-                })
+                fields.append(
+                    {
+                        "field_type": ContactFieldType.EMAIL,
+                        "label": "other",
+                        "value": normalized,
+                        "is_primary": True,
+                    }
+                )
 
         elif canonical == "phone":
             normalized = normalize_phone_to_e164(value)
             if normalized:
-                fields.append({
-                    "field_type": ContactFieldType.PHONE,
-                    "label": "other",
-                    "value": normalized,
-                    "is_primary": True,
-                })
+                fields.append(
+                    {
+                        "field_type": ContactFieldType.PHONE,
+                        "label": "other",
+                        "value": normalized,
+                        "is_primary": True,
+                    }
+                )
 
         elif canonical == "tag_names":
             # Split by common separators: semicolon, comma
@@ -460,16 +547,25 @@ def export_contacts_to_csv(
     Returns:
         Tuple of (filename, csv_bytes_with_bom)
     """
-    contacts = session.exec(
-        select(Contact).where(Contact.owner_id == owner_id)
-    ).all()
+    contacts = session.exec(select(Contact).where(Contact.owner_id == owner_id)).all()
 
     # Build CSV rows
     output = io.StringIO()
     fieldnames = [
-        "first_name", "last_name", "middle_name", "prefix", "suffix",
-        "nickname", "company", "department", "title", "birthday",
-        "how_we_met", "is_favorite", "is_archived", "contact_frequency_days",
+        "first_name",
+        "last_name",
+        "middle_name",
+        "prefix",
+        "suffix",
+        "nickname",
+        "company",
+        "department",
+        "title",
+        "birthday",
+        "how_we_met",
+        "is_favorite",
+        "is_archived",
+        "contact_frequency_days",
         "stage",
     ]
 
@@ -505,16 +601,11 @@ def export_contacts_to_csv(
         if include_fields:
             # Get contact fields
             fields = session.exec(
-                select(ContactField)
-                .where(ContactField.contact_id == contact.id)
+                select(ContactField).where(ContactField.contact_id == contact.id)
             ).all()
 
-            emails = [
-                f.value for f in fields if f.field_type == ContactFieldType.EMAIL
-            ]
-            phones = [
-                f.value for f in fields if f.field_type == ContactFieldType.PHONE
-            ]
+            emails = [f.value for f in fields if f.field_type == ContactFieldType.EMAIL]
+            phones = [f.value for f in fields if f.field_type == ContactFieldType.PHONE]
 
             row["emails"] = "; ".join(emails)
             row["phones"] = "; ".join(phones)
@@ -534,4 +625,3 @@ def export_contacts_to_csv(
     csv_bytes = b"\xef\xbb\xbf" + csv_str.encode("utf-8")
 
     return "contacts.csv", csv_bytes
-
