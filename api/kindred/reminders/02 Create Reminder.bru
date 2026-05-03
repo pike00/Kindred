@@ -1,0 +1,36 @@
+meta {
+  name: Create Reminder
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/api/v1/reminders/
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt_token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "title": "Check in with Alice",
+    "description": "She was looking for new roles — follow up",
+    "remind_at": "2026-05-17T09:00:00Z",
+    "frequency": "once",
+    "is_active": true,
+    "contact_id": "{{contact_id}}"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    bru.setEnvVar("reminder_id", res.body.id);
+  }
+}
