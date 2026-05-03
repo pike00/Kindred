@@ -1,0 +1,120 @@
+# Kindred SDK
+
+A typed Python client for [Personal CRM](https://github.com/willff/personal-crm) (Kindred), generated from its OpenAPI schema.
+
+## Installation
+
+```bash
+pip install kindred-sdk
+```
+
+Or with Poetry:
+
+```bash
+poetry add kindred-sdk
+```
+
+## Quick Start
+
+```python
+from kindred_sdk import KindredClient
+
+# Create a client (unauthenticated)
+client = KindredClient(base_url="https://kindred.example.com")
+
+# Or with authentication
+client = KindredClient(
+    base_url="https://kindred.example.com",
+    token="your-api-token"
+)
+
+# List contacts
+contacts = client.contacts.list()
+for contact in contacts.data:
+    print(contact.name)
+
+# Get a specific contact
+contact = client.contacts.get(contact_id="uuid-here")
+
+# Create a contact
+from personal_crm_client.models import ContactCreate
+new_contact = client.contacts.create(
+    ContactCreate(name="John Doe", email="john@example.com")
+)
+
+# Async support
+import asyncio
+
+async def main():
+    contacts = await client.contacts.list_async()
+    print(contacts)
+
+asyncio.run(main())
+```
+
+## Available Resources
+
+The SDK provides a thin facade over the generated OpenAPI client with these resources:
+
+| Resource | Methods |
+|----------|---------|
+| `client.contacts` | `list()`, `get()`, `create()`, `update()`, `delete()`, `restore()`, `list_mentions()`, `get_household()` |
+| `client.groups` | `list()`, `get()`, `create()`, `update()`, `delete()` |
+| `client.interactions` | `list()`, `get()`, `create()`, `update()`, `delete()` |
+| `client.tags` | `list()`, `get()`, `create()`, `update()`, `delete()` |
+| `client.notes` | `list()`, `get()`, `create()`, `update()`, `delete()` |
+| `client.gifts` | `list()`, `get()`, `create()`, `update()`, `delete()` |
+| `client.debts` | `list()`, `get()`, `create()`, `update()`, `delete()` |
+| `client.pets` | `list()`, `get()`, `create()`, `update()`, `delete()` |
+| `client.addresses` | `list()`, `get()`, `create()`, `update()`, `delete()` |
+| `client.relationships` | `list()`, `get()`, `create()`, `update()`, `delete()` |
+| `client.reminders` | `list()`, `get()`, `create()`, `update()`, `delete()` |
+| `client.life_events` | `list()`, `get()`, `create()`, `update()`, `delete()` |
+| `client.journal` | `list()`, `get()`, `create()`, `update()`, `delete()` |
+| `client.custom_fields` | `list_definitions()`, `create_definition()`, `update_definition()`, `delete_definition()`, `list_values()`, `create_value()`, `update_value()`, `delete_value()` |
+| `client.activity_logs` | `list()` |
+| `client.calendar` | `get_month()` |
+
+## Regenerating the SDK
+
+The SDK is generated from the backend's OpenAPI schema using [`openapi-python-client`](https://github.com/openapi-generators/openapi-python-client):
+
+```bash
+# Fetch the OpenAPI schema
+curl http://localhost:8000/api/v1/openapi.json > openapi.json
+
+# Generate the client
+openapi-python-client generate --path openapi.json --output-path kindred-sdk --overwrite
+
+# The kindred_sdk/ package wraps the generated personal_crm_client/
+```
+
+## Schema Drift Detection
+
+The CI workflow (`.github/workflows/sdk-drift.yml`) automatically:
+1. Fetches the OpenAPI schema from the running backend
+2. Regenerates the SDK
+3. Fails if there are changes (indicating the SDK is out of date)
+
+To manually check for drift:
+
+```bash
+just sdk-check  # If added to justfile
+```
+
+## Development
+
+```bash
+# Install dependencies
+pip install -e kindred-sdk/
+
+# Run type checks
+cd kindred-sdk && pyright
+
+# Build the package
+cd kindred-sdk && pip build
+```
+
+## License
+
+MIT (same as Personal CRM)

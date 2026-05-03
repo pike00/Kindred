@@ -1,0 +1,23 @@
+"""Calendar resource for Kindred SDK."""
+
+from personal_crm_client import AuthenticatedClient, Client
+from personal_crm_client.models import CalendarMonthResponse
+from personal_crm_client.models import HTTPValidationError
+from uuid import UUID
+
+
+class CalendarResource:
+    """Resource for calendar operations."""
+
+    def __init__(self, client: AuthenticatedClient | Client):
+        self._client = client
+
+    def get_month(self, *, year: int, month: int) -> CalendarMonthResponse | HTTPValidationError | None:
+        """Get calendar data for a specific month."""
+        from personal_crm_client.api.calendar import calendar_get_calendar_month
+        return calendar_get_calendar_month.sync(client=self._client, year=year, month=month)
+
+    async def get_month_async(self, *, year: int, month: int) -> CalendarMonthResponse | HTTPValidationError | None:
+        """Async version of get_month()."""
+        from personal_crm_client.api.calendar import calendar_get_calendar_month
+        return await calendar_get_calendar_month.asyncio(client=self._client, year=year, month=month)
