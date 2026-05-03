@@ -15,6 +15,9 @@ node_modules/
 # superpowers brainstorming mockups
 .superpowers/
 
+# playwright MCP tool artifacts
+.playwright-mcp/
+
 # git worktrees
 .worktrees/
 
