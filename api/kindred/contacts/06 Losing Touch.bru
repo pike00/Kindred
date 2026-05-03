@@ -1,0 +1,20 @@
+meta {
+  name: Losing Touch
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{base_url}}/api/v1/contacts/losing-touch
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt_token}}
+}
+
+params:query {
+  skip: 0
+  limit: 20
+}

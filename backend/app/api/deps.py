@@ -1,4 +1,5 @@
 from collections.abc import Generator
+from datetime import datetime, timezone
 from typing import Annotated
 
 import jwt
@@ -10,6 +11,7 @@ from sqlmodel import Session
 
 from app import crud
 from app.core import oidc, security
+from app.core.api_keys import hash_key, looks_like_api_key
 from app.core.config import settings
 from app.core.db import SessionLocal, configure_session
 from app.models import TokenPayload, User
@@ -81,11 +83,68 @@ def _get_current_user_oidc(session: Session, token: str) -> User:
     return user
 
 
+def _get_current_user_api_key(request: Request, session: Session, token: str) -> User:
+    key_hash = hash_key(token)
+    api_key = crud.get_api_key_by_hash(session=session, key_hash=key_hash)
+    if api_key is None:
+        raise HTTPException(status_code=401, detail="Invalid API key")
+    if api_key.revoked_at is not None:
+        raise HTTPException(status_code=401, detail="API key has been revoked")
+    if api_key.expires_at is not None and api_key.expires_at < datetime.now(
+        timezone.utc
+    ):
+        raise HTTPException(status_code=401, detail="API key has expired")
+
+    api_key.last_used_at = datetime.now(timezone.utc)
+    session.add(api_key)
+    session.flush()
+
+    on_behalf_of = request.headers.get("X-On-Behalf-Of")
+    if on_behalf_of:
+        import uuid as _uuid
+
+        try:
+            target_id = _uuid.UUID(on_behalf_of)
+        except ValueError:
+            raise HTTPException(
+                status_code=400, detail="X-On-Behalf-Of must be a valid UUID"
+            )
+        allowed = crud.get_api_key_impersonate_targets(
+            session=session, api_key_id=api_key.id
+        )
+        if target_id not in allowed:
+            raise HTTPException(
+                status_code=403,
+                detail="API key not authorized to impersonate this user",
+            )
+        user = session.get(User, target_id)
+        if user is None:
+            raise HTTPException(
+                status_code=404, detail="Impersonation target user not found"
+            )
+    else:
+        user = session.get(User, api_key.owned_by_user_id)
+        if user is None:
+            raise HTTPException(status_code=404, detail="API key owner not found")
+
+    if not user.is_active:
+        raise HTTPException(status_code=400, detail="Inactive user")
+
+    session.info["acting_api_key_id"] = api_key.id
+    return user
+
+
 def get_current_user(
     request: Request,
     session: SessionDep,
     local_token: LocalTokenDep,
 ) -> User:
+    # API key path — short-circuit before normal auth modes
+    if local_token and looks_like_api_key(local_token):
+        user = _get_current_user_api_key(request, session, local_token)
+        session.info["actor_id"] = user.id
+        return user
+
     mode = settings.AUTH_MODE
     cf_token = _extract_cf_token(request)
 

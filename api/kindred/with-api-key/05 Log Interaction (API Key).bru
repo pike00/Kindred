@@ -1,0 +1,33 @@
+meta {
+  name: Log Interaction (API Key)
+  type: http
+  seq: 5
+}
+
+// Janet / external service writing an interaction on behalf of a user.
+
+post {
+  url: {{base_url}}/api/v1/interactions/
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{api_key}}
+}
+
+headers {
+  Content-Type: application/json
+  X-On-Behalf-Of: {{impersonate_user_id}}
+}
+
+body:json {
+  {
+    "channel": "text",
+    "occurred_at": "2026-05-03T15:00:00Z",
+    "notes": "Texted to wish happy birthday. They replied with a photo.",
+    "mood": "warm",
+    "duration_minutes": 5,
+    "attendee_ids": ["{{contact_id}}"]
+  }
+}
