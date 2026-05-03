@@ -1,0 +1,101 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { TagSharesService } from "@/client";
+import type { TagSharePublic, TagPublic } from "@/client";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Trash2 } from "@/lib/icons";
+import useCustomToast from "@/hooks/useCustomToast";
+import { Loader2 } from "@/lib/icons";
+
+interface TagSharesListProps {
+  tag: TagPublic;
+}
+
+export const TagSharesList = ({ tag }: TagSharesListProps) => {
+  const { showSuccessToast, showErrorToast } = useCustomToast();
+  const queryClient = useQueryClient();
+
+  const { data: shares, isLoading } = useQuery({
+    queryKey: ["tag-shares", tag.id],
+    queryFn: () => TagSharesService.listTagShares({ tagId: tag.id }),
+  });
+
+  const revokeMutation = useMutation({
+    mutationFn: (granteeId: string) =>
+      TagSharesService.deleteTagShare({
+        tagId: tag.id,
+        granteeId,
+      }),
+    onSuccess: () => {
+      showSuccessToast("Share revoked successfully");
+      queryClient.invalidateQueries({ queryKey: ["tag-shares", tag.id] });
+    },
+    onError: () => {
+      showErrorToast("Failed to revoke share");
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center p-4">
+        <Loader2 className="h-6 w-6 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!shares?.data || shares.data.length === 0) {
+    return (
+      <div className="text-center p-4 text-muted-foreground">
+        No shares yet. Share this tag with another user to grant them access.
+      </div>
+    );
+  }
+
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Grantee Email</TableHead>
+          <TableHead>Shared On</TableHead>
+          <TableHead className="text-right">Actions</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {shares.data.map((share: TagSharePublic) => (
+          <TableRow key={share.grantee_id}>
+            <TableCell>{share.grantee_email}</TableCell>
+            <TableCell>
+              {new Date(share.created_at).toLocaleDateString()}
+            </TableCell>
+            <TableCell className="text-right">
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() =>
+                  revokeMutation.mutate(share.grantee_id as string)
+                }
+                disabled={revokeMutation.isPending}
+              >
+                {revokeMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Revoke
+                  </>
+                )}
+              </Button>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+};

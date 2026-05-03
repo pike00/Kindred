@@ -5,6 +5,27 @@ export type _ShareIn = {
     grantee_id: string;
 };
 
+/**
+ * Preview counts for a single entity type.
+ */
+export type SharePreviewEntity = {
+    entity_type: string;
+    count: number;
+};
+
+/**
+ * Preview of what will be shared when granting access to a tag.
+ */
+export type TagSharePreview = {
+    tag_id: string;
+    tag_name: string;
+    contact_count: number;
+    sample_contacts: Array<string>;
+    entities: Array<SharePreviewEntity>;
+    total_related_rows: number;
+};
+
+
 export type ActivityLogPublic = {
     id: string;
     owner_id: string;

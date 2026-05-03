@@ -2114,6 +2114,50 @@ export class TagSharesService {
             }
         });
     }
+    /**
+     * Preview Tag Share Scope
+     * Preview the scope of sharing a tag - counts of all related entities.
+     * @param data The data for the request.
+     * @param data.tagId
+     * @returns TagSharePreview Successful Response
+     * @throws ApiError
+     */
+    public static previewTagShare(data: { tagId: string }): CancelablePromise<TagSharePreview> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/tag-shares/preview/{tag_id}',
+            path: {
+                tag_id: data.tagId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+
+    /**
+     * Log Tag Share Audit
+     * Log an audit entry for tag share creation.
+     * @param data The data for the request.
+     * @param data.tagId
+     * @param data.granteeId
+     * @returns string Successful Response
+     * @throws ApiError
+     */
+    public static logTagShareAudit(data: { tagId: string; granteeId: string }): CancelablePromise<string> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/tag-shares/{tag_id}/{grantee_id}/audit',
+            path: {
+                tag_id: data.tagId,
+                grantee_id: data.granteeId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+
 }
 
 export class UsersService {
