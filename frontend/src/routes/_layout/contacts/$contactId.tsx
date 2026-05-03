@@ -176,6 +176,17 @@ function ContactDetailPage() {
                 {contact.how_we_met}
               </span>
             )}
+            {contact.pronouns && (
+              <span className="flex items-center gap-1">
+                <UserRoundSearch className="size-3.5" /> Pronouns: {contact.pronouns}
+              </span>
+            )}
+
+            {contact.timezone && (
+              <span className="flex items-center gap-1">
+                <Clock className="size-3.5" /> Timezone: {contact.timezone}
+              </span>
+            )}
             {contact.last_contacted_at && (
               <span className="flex items-center gap-1">
                 <Clock className="size-3.5" /> Last contacted:{" "}
@@ -250,7 +261,7 @@ function ContactDetailPage() {
                   Groups
                   <InfoHint>
                     Named collections of people with a shared context, like
-                    "Family", "D&D Group", or "Work Team". Groups have a
+                    "Family", "D and D Group", or "Work Team". Groups have a
                     description; tags don't.
                   </InfoHint>
                 </CardTitle>

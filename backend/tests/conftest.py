@@ -48,7 +48,8 @@ def _migrate_test_database() -> None:
 
     from app.core.config import settings
 
-    cfg = Config("alembic.ini")
+    cfg = Config("/app/backend/alembic.ini")
+    cfg.set_main_option("script_location", "/app/backend/app/alembic")
     cfg.set_main_option("sqlalchemy.url", str(settings.SQLALCHEMY_DATABASE_URI))
     command.upgrade(cfg, "head")
 

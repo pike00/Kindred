@@ -433,6 +433,16 @@ class ContactBase(SQLModel):
         max_length=100,
         description="Kanban stage like Active, Dormant, Lost.",
     )
+    timezone: str | None = Field(
+        default=None,
+        max_length=255,
+        description="IANA timezone string (e.g., America/New_York); nullable.",
+    )
+    pronouns: str | None = Field(
+        default=None,
+        max_length=100,
+        description="Contact's pronouns (free text, max 100 chars); nullable.",
+    )
 
 
 class ContactCreate(ContactBase):
@@ -458,6 +468,8 @@ class ContactUpdate(SQLModel):
     deceased_at: date | None = None
     contact_frequency_days: int | None = None
     stage: str | None = None
+    timezone: str | None = None
+    pronouns: str | None = None
     tag_ids: list[uuid.UUID] | None = None
     group_ids: list[uuid.UUID] | None = None
 

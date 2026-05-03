@@ -51,6 +51,7 @@ function matchesSearch(contact: ContactPublic, q: string): boolean {
     contact.last_name,
     contact.middle_name,
     contact.nickname,
+    contact.pronouns,
     contact.company,
     contact.title,
     ...(contact.tags?.map((t) => t.name) ?? []),
@@ -92,6 +93,11 @@ function ContactRow({ contact }: { contact: ContactPublic }) {
           <span className="font-display text-base font-semibold tracking-tight truncate">
             {fullName(contact)}
           </span>
+          {contact.pronouns && (
+            <span className="text-xs text-muted-foreground">
+              ({contact.pronouns})
+            </span>
+          )}
           {titleLine(contact) && (
             <span className="text-xs text-muted-foreground truncate hidden sm:inline">
               · {titleLine(contact)}

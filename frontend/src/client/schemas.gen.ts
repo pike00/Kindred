@@ -755,6 +755,32 @@ export const ContactCreateSchema = {
             title: 'Stage',
             description: 'Kanban stage like Active, Dormant, Lost.'
         },
+        timezone: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Timezone',
+            description: 'IANA timezone string (e.g., America/New_York); nullable.'
+        },
+        pronouns: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 100
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Pronouns',
+            description: "Contact's pronouns (free text, max 100 chars); nullable."
+        },
         tag_ids: {
             anyOf: [
                 {
@@ -1144,6 +1170,32 @@ export const ContactPublicSchema = {
             title: 'Stage',
             description: 'Kanban stage like Active, Dormant, Lost.'
         },
+        timezone: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Timezone',
+            description: 'IANA timezone string (e.g., America/New_York); nullable.'
+        },
+        pronouns: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 100
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Pronouns',
+            description: "Contact's pronouns (free text, max 100 chars); nullable."
+        },
         id: {
             type: 'string',
             format: 'uuid',
@@ -1408,6 +1460,28 @@ export const ContactUpdateSchema = {
                 }
             ],
             title: 'Stage'
+        },
+        timezone: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Timezone'
+        },
+        pronouns: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Pronouns'
         },
         tag_ids: {
             anyOf: [
@@ -3594,6 +3668,31 @@ export const PetUpdateSchema = {
     },
     type: 'object',
     title: 'PetUpdate'
+} as const;
+
+export const PrivateUserCreateSchema = {
+    properties: {
+        email: {
+            type: 'string',
+            title: 'Email'
+        },
+        password: {
+            type: 'string',
+            title: 'Password'
+        },
+        full_name: {
+            type: 'string',
+            title: 'Full Name'
+        },
+        is_verified: {
+            type: 'boolean',
+            title: 'Is Verified',
+            default: false
+        }
+    },
+    type: 'object',
+    required: ['email', 'password', 'full_name'],
+    title: 'PrivateUserCreate'
 } as const;
 
 export const RelationshipCreateSchema = {

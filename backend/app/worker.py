@@ -90,6 +90,16 @@ async def check_cadences(ctx: dict) -> None:
     """Check for contacts whose cadence has been exceeded and notify."""
     engine = ctx["engine"]
     now = datetime.now(timezone.utc)
+    from zoneinfo import ZoneInfo
+
+    def _contact_now(contact_tz: str | None) -> datetime:
+        """Return current time in the contact's timezone, or UTC."""
+        if contact_tz:
+            try:
+                return datetime.now(ZoneInfo(contact_tz))
+            except Exception:
+                pass
+        return datetime.now(timezone.utc)
 
     with Session(engine) as session:
         contacts = session.exec(
@@ -105,12 +115,23 @@ async def check_cadences(ctx: dict) -> None:
             if contact.last_contacted_at is None:
                 overdue = True
             else:
+                # Compute deadline in UTC
                 deadline = contact.last_contacted_at + timedelta(
                     days=contact.contact_frequency_days
                 )
-                overdue = now > deadline
-
-            if overdue:
+                # Get current time in contact's timezone
+                contact_now = _contact_now(contact.timezone)
+                # 9am in contact's local time, converted to UTC
+                try:
+                    local_tz = ZoneInfo(contact.timezone) if contact.timezone else timezone.utc
+                except Exception:
+                    local_tz = timezone.utc
+                nine_am_local = contact_now.astimezone(local_tz).replace(
+                    hour=9, minute=0, second=0, microsecond=0
+                )
+                nine_am_utc = nine_am_local.astimezone(timezone.utc)
+                overdue = (now > deadline) and (now > nine_am_utc)
+        if overdue:
                 name = f"{contact.first_name} {contact.last_name or ''}".strip()
                 try:
                     apobj.notify(

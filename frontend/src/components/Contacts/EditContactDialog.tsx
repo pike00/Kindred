@@ -35,6 +35,8 @@ const contactUpdateSchema = z.object({
   contact_frequency_days: z.number().optional(),
   is_favorite: z.boolean().optional(),
   is_archived: z.boolean().optional(),
+  timezone: z.string().max(255).optional(),
+  pronouns: z.string().max(100).optional(),
 })
 
 type ContactUpdateFormData = z.infer<typeof contactUpdateSchema>
@@ -57,7 +59,9 @@ export const EditContactDialog = ({ contact }: EditContactDialogProps) => {
       how_we_met: contact.how_we_met || "",
       contact_frequency_days: contact.contact_frequency_days || 0,
       is_favorite: contact.is_favorite,
-      is_archived: contact.is_archived,
+        is_archived: contact.is_archived,
+        timezone: contact.timezone || "",
+        pronouns: contact.pronouns || "",
     },
   })
 
@@ -71,6 +75,8 @@ export const EditContactDialog = ({ contact }: EditContactDialogProps) => {
         contact_frequency_days: contact.contact_frequency_days || 0,
         is_favorite: contact.is_favorite,
         is_archived: contact.is_archived,
+        timezone: contact.timezone || "",
+        pronouns: contact.pronouns || "",
       })
     }
   }, [open, contact, form])
@@ -101,6 +107,8 @@ export const EditContactDialog = ({ contact }: EditContactDialogProps) => {
       contact_frequency_days: data.contact_frequency_days || null,
       is_favorite: data.is_favorite,
       is_archived: data.is_archived,
+      timezone: data.timezone || null,
+      pronouns: data.pronouns || null,
     }
     updateContactMutation.mutate(updateData)
   }
@@ -167,6 +175,32 @@ export const EditContactDialog = ({ contact }: EditContactDialogProps) => {
                   <FormLabel>How We Met</FormLabel>
                   <FormControl>
                     <Textarea placeholder="Tell the story..." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="timezone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Timezone</FormLabel>
+                  <FormControl>
+                    <Input placeholder="America/New_York" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="pronouns"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Pronouns</FormLabel>
+                  <FormControl>
+                    <Input placeholder="they/them" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
