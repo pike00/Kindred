@@ -10,8 +10,8 @@ from alembic import op
 import sqlalchemy as sa
 
 
-revision = "d4e5f6a7b8c9"
-down_revision = "c3d4e5f6a7b8"
+revision = "add_oauth_contact_provenance"
+down_revision = "add_do_not_contact_fields"
 branch_labels = None
 depends_on = None
 

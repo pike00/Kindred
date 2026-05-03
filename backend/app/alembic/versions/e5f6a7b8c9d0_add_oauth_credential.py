@@ -11,8 +11,8 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 
-revision = "e5f6a7b8c9d0"
-down_revision = "d4e5f6a7b8c9"
+revision = "add_oauth_credential_table"
+down_revision = "add_oauth_contact_provenance"
 branch_labels = None
 depends_on = None
 
