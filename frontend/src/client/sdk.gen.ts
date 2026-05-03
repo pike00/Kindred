@@ -1817,7 +1817,79 @@ export class RemindersService {
                 422: 'Validation Error'
             }
         });
+    },
+
+    /**
+     * List Due Reminders
+     * List reminders due now or overdue for the current user.
+     * @param data The data for the request.
+     * @param data.skip
+     * @param data.limit
+     * @returns RemindersPublic Successful Response
+     * @throws ApiError
+     */
+    public static listDueReminders(data: RemindersListDueRemindersData = {}): CancelablePromise<RemindersListDueRemindersResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/reminders/due',
+            query: {
+                skip: data.skip,
+                limit: data.limit,
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
     }
+
+    /**
+     * Dismiss Reminder
+     * Dismiss a reminder by setting snoozed_until to now (soft-clear from badge).
+     * @param data The data for the request.
+     * @param data.reminderId
+     * @returns ReminderPublic Successful Response
+     * @throws ApiError
+     */
+    public static dismissReminder(data: RemindersDismissReminderData): CancelablePromise<RemindersDismissReminderResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/reminders/{reminder_id}/dismiss',
+            path: {
+                reminder_id: data.reminderId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+
+    /**
+     * Snooze Reminder
+     * Snooze a reminder.
+     * @param data The data for the request.
+     * @param data.reminderId
+     * @param data.minutes
+     * @param data.snoozeUntil
+     * @returns ReminderPublic Successful Response
+     * @throws ApiError
+     */
+    public static snoozeReminder(data: RemindersSnoozeReminderData): CancelablePromise<RemindersSnoozeReminderResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/reminders/{reminder_id}/snooze',
+            path: {
+                reminder_id: data.reminderId
+            },
+            query: {
+                minutes: data.minutes,
+                snooze_until: data.snoozeUntil,
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+}
 }
 
 export class TagsService {

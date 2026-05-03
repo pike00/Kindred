@@ -1,7 +1,6 @@
 """Reminder management routes."""
-
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
@@ -59,6 +58,66 @@ def list_reminders(
     )
 
 
+@router.get("/due", response_model=RemindersPublic)
+def list_due_reminders(
+    session: SessionDep,
+    current_user: CurrentUser,
+    skip: int = 0,
+    limit: int = 100,
+) -> Any:
+    """List reminders due now or overdue for the current user.
+
+    Filters for reminders where:
+    - remind_at <= now (due or overdue)
+    - snoozed_until is NULL or snoozed_until <= now (not snoozed)
+    - is_active is True
+    - owned by current user or tied to visible contacts
+    """
+    now = datetime.now(timezone.utc)
+
+    statement = select(Reminder).where(
+        Reminder.remind_at <= now,
+        or_(
+            Reminder.snoozed_until.is_(None),
+            Reminder.snoozed_until <= now,
+        ),
+        Reminder.is_active == True,
+        or_(
+            Reminder.owner_id == current_user.id,
+            Reminder.contact_id.in_(visible_contact_ids(current_user)),
+        ),
+    )
+
+    count_statement = select(func.count()).select_from(statement.subquery())
+    count = session.exec(count_statement).one()
+
+    statement = statement.order_by(Reminder.remind_at.asc()).offset(skip).limit(limit)
+    reminders = session.exec(statement).all()
+
+    return RemindersPublic(
+        data=[ReminderPublic.model_validate(r) for r in reminders],
+        count=count,
+    )
+
+
+@router.post("/{reminder_id}/dismiss")
+def dismiss_reminder(
+    session: SessionDep,
+    current_user: CurrentUser,
+    reminder_id: uuid.UUID,
+) -> Any:
+    """Dismiss a reminder by setting snoozed_until to now (soft-clear from badge)."""
+    reminder = session.get(Reminder, reminder_id)
+    if reminder is None or not _reminder_accessible(current_user, reminder, session):
+        raise HTTPException(status_code=404, detail="Reminder not found")
+
+    reminder.snoozed_until = datetime.now(timezone.utc)
+    session.add(reminder)
+    session.commit()
+    session.refresh(reminder)
+    return ReminderPublic.model_validate(reminder)
+
+
 @router.post("/", response_model=ReminderPublic)
 def create_reminder_route(
     *,
@@ -104,16 +163,29 @@ def snooze_reminder(
     session: SessionDep,
     current_user: CurrentUser,
     reminder_id: uuid.UUID,
-    minutes: int = 30,
+    minutes: int | None = None,
+    snooze_until: datetime | None = None,
 ) -> Any:
-    """Snooze a reminder."""
+    """Snooze a reminder.
+
+    Provide either:
+    - minutes: snooze for this many minutes from now
+    - snooze_until: snooze until this specific datetime
+    - neither: defaults to 1 hour
+    """
     reminder = session.get(Reminder, reminder_id)
     if reminder is None or not _reminder_accessible(current_user, reminder, session):
         raise HTTPException(status_code=404, detail="Reminder not found")
 
-    from datetime import timedelta
+    now = datetime.now(timezone.utc)
+    if snooze_until is not None:
+        reminder.snoozed_until = snooze_until
+    elif minutes is not None:
+        reminder.snoozed_until = now + timedelta(minutes=minutes)
+    else:
+        # Default: snooze for 1 hour
+        reminder.snoozed_until = now + timedelta(hours=1)
 
-    reminder.snoozed_until = datetime.now(timezone.utc) + timedelta(minutes=minutes)
     session.add(reminder)
     session.commit()
     session.refresh(reminder)
