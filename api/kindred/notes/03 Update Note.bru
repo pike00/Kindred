@@ -1,0 +1,25 @@
+meta {
+  name: Update Note
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{base_url}}/api/v1/notes/{{note_id}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt_token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "body": "Caught up over coffee. Mentioned looking for a new role in ML. Follow up in two weeks."
+  }
+}
