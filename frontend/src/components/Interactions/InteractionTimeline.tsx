@@ -18,6 +18,7 @@ import {
   Coffee,
   type LucideIcon,
   Mail,
+  MapPin,
   MessageSquare,
   MessagesSquare,
   MoreHorizontal,
@@ -194,6 +195,17 @@ function InteractionCard({
               <Badge variant="secondary" className="text-xs">
                 {ix.mood}
               </Badge>
+            )}
+            {ix.location_label && (
+              <div className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                <MapPin className="size-3" />
+                {ix.location_label}
+              </div>
+            )}
+            {ix.latitude != null && ix.longitude != null && (
+              <div className="text-xs text-muted-foreground mt-1">
+                📍 {ix.latitude.toFixed(4)}, {ix.longitude.toFixed(4)}
+              </div>
             )}
           </div>
           {ix.notes && (

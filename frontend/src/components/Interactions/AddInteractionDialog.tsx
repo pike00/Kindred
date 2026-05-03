@@ -63,8 +63,10 @@ const interactionCreateSchema = z.object({
   notes: z.string().optional(),
   mood: z.string().optional(),
   duration_minutes: z.string().optional(),
+  location_label: z.string().max(500).optional(),
+  latitude: z.string().optional(),
+  longitude: z.string().optional(),
 })
-
 type InteractionCreateFormData = z.infer<typeof interactionCreateSchema>
 
 interface AddInteractionDialogProps {
@@ -128,6 +130,9 @@ export const AddInteractionDialog = ({
       duration_minutes: data.duration_minutes
         ? parseInt(data.duration_minutes, 10)
         : null,
+      location_label: data.location_label || null,
+      latitude: data.latitude ? parseFloat(data.latitude) : null,
+      longitude: data.longitude ? parseFloat(data.longitude) : null,
     })
   }
 
@@ -230,6 +235,50 @@ export const AddInteractionDialog = ({
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="location_label"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Location</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Starbucks on 5th, their home, the park..."
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="grid grid-cols-2 gap-2">
+              <FormField
+                control={form.control}
+                name="latitude"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Latitude</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Optional" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="longitude"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Longitude</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Optional" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             <Button
               type="submit"
               disabled={addMutation.isPending}

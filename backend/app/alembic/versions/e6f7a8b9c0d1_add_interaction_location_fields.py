@@ -1,7 +1,7 @@
 """Add location fields to Interaction table.
 
 Revision ID: e6f7a8b9c0d1
-Revises: e2412789c190
+Revises: add_setup_state
 Create Date: 2026-04-21 12:00:00.000000
 
 Adds location_label, latitude, and longitude columns to the Interaction table
