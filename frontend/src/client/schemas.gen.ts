@@ -4344,6 +4344,19 @@ export const RelationshipCreateSchema = {
             type: 'string',
             format: 'uuid',
             title: 'Related Contact Id'
+        },
+        inverse_relationship_type: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 100
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Inverse Relationship Type',
+            description: "Type for the auto-created inverse row (e.g. 'parent' for 'child'). Inferred when omitted."
         }
     },
     type: 'object',
