@@ -1236,6 +1236,10 @@ export type RelationshipCreate = {
     notes?: (string | null);
     contact_id: string;
     related_contact_id: string;
+    /**
+     * Type for the auto-created inverse row (e.g. 'parent' for 'child'). Inferred when omitted.
+     */
+    inverse_relationship_type?: (string | null);
 };
 
 export type RelationshipPublic = {

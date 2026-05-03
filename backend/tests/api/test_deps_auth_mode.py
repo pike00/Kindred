@@ -83,29 +83,31 @@ def test_both_mode_uses_cf_then_falls_back_to_local(monkeypatch, session):
     def _raise(_):
         raise oidc.OIDCError("nope")
 
+    _local_user = type("U", (), {"is_active": True, "id": "local-id"})()
     with (
         patch("app.core.oidc.verify_oidc_token", side_effect=_raise),
         patch("app.api.deps._get_current_user_local") as local,
     ):
-        local.return_value = "local-user"
+        local.return_value = _local_user
         user = deps.get_current_user(
             request=_fake_request(header="bad.cf.jwt"),
             session=session,
             local_token="local.bearer",
         )
-    assert user == "local-user"
+    assert user is _local_user
 
 
 def test_local_mode_ignores_cf_header(monkeypatch, session):
     monkeypatch.setattr("app.core.config.settings.AUTH_MODE", "local")
+    _local_user = type("U", (), {"is_active": True, "id": "local-id"})()
     with patch("app.api.deps._get_current_user_local") as local:
-        local.return_value = "local-user"
+        local.return_value = _local_user
         user = deps.get_current_user(
             request=_fake_request(header="cf.jwt.should.be.ignored"),
             session=session,
             local_token="local.bearer",
         )
-    assert user == "local-user"
+    assert user is _local_user
 
 
 def test_no_credentials_401(monkeypatch, session):
