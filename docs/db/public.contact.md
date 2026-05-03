@@ -37,12 +37,15 @@ Core contact entity — the subject of everything else in the CRM.
 | source | contactsource | 'MANUAL'::contactsource | false |  |  |  |
 | source_external_id | varchar(500) |  | true |  |  |  |
 | organization_id | uuid |  | true |  | [public.organization](public.organization.md) |  |
+| do_not_contact | boolean | false | false |  |  |  |
+| do_not_contact_reason | varchar(500) |  | true |  |  |  |
 
 ## Constraints
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
 | contact_created_at_not_null | n | NOT NULL created_at |
+| contact_do_not_contact_not_null | n | NOT NULL do_not_contact |
 | contact_first_name_not_null | n | NOT NULL first_name |
 | contact_id_not_null | n | NOT NULL id |
 | contact_is_archived_not_null | n | NOT NULL is_archived |
@@ -123,6 +126,8 @@ erDiagram
   contactsource source
   varchar_500_ source_external_id
   uuid organization_id FK
+  boolean do_not_contact
+  varchar_500_ do_not_contact_reason
 }
 "public.contact_tag" {
   uuid contact_id FK

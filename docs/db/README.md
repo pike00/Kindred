@@ -8,7 +8,7 @@
 | [public.user](public.user.md) | 9 | Authenticated user; tenant-scope owner of every row below. | BASE TABLE |
 | [public.tag](public.tag.md) | 5 | User-defined tag for grouping contacts. | BASE TABLE |
 | [public.group](public.group.md) | 5 | Named collection of contacts (e.g. 'Family', 'Work Team'). | BASE TABLE |
-| [public.contact](public.contact.md) | 29 | Core contact entity — the subject of everything else in the CRM. | BASE TABLE |
+| [public.contact](public.contact.md) | 31 | Core contact entity — the subject of everything else in the CRM. | BASE TABLE |
 | [public.contact_tag](public.contact_tag.md) | 2 | Many-to-many link between contacts and tags. | BASE TABLE |
 | [public.contact_group](public.contact_group.md) | 2 | Many-to-many link between contacts and groups. | BASE TABLE |
 | [public.contact_field](public.contact_field.md) | 7 | Flexible contact info (emails, phones) attached to a contact. | BASE TABLE |
@@ -177,6 +177,8 @@ erDiagram
   contactsource source
   varchar_500_ source_external_id
   uuid organization_id FK
+  boolean do_not_contact
+  varchar_500_ do_not_contact_reason
 }
 "public.contact_tag" {
   uuid contact_id FK
