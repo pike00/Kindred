@@ -1,10 +1,10 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import type { OrganizationPublic, OrganizationUpdate } from "@/client"
+import type { OrganizationCreate } from "@/client"
 import { OrganizationsService } from "@/client"
 import { Button } from "@/components/ui/button"
 import {
@@ -23,89 +23,67 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import useCustomToast from "@/hooks/useCustomToast"
 
-const organizationUpdateSchema = z.object({
+const organizationCreateSchema = z.object({
   name: z.string().min(1, "Organization name is required"),
   domain: z.string().optional(),
   industry: z.string().optional(),
-  notes: z.string().optional(),
 })
 
-type OrganizationUpdateFormData = z.infer<typeof organizationUpdateSchema>
+type OrganizationCreateFormData = z.infer<typeof organizationCreateSchema>
 
-interface EditOrganizationDialogProps {
+interface AddOrganizationDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  organization: OrganizationPublic
 }
 
-export function EditOrganizationDialog({
+export function AddOrganizationDialog({
   open,
   onOpenChange,
-  organization,
-}: EditOrganizationDialogProps) {
+}: AddOrganizationDialogProps) {
   const { showSuccessToast, showErrorToast } = useCustomToast()
   const queryClient = useQueryClient()
 
-  const form = useForm<OrganizationUpdateFormData>({
-    resolver: zodResolver(organizationUpdateSchema),
+  const form = useForm<OrganizationCreateFormData>({
+    resolver: zodResolver(organizationCreateSchema),
     defaultValues: {
-      name: organization.name || "",
-      domain: (organization as any).domain || "",
-      industry: (organization as any).industry || "",
-      notes: (organization as any).notes || "",
+      name: "",
+      domain: "",
+      industry: "",
     },
   })
 
-  useEffect(() => {
-    if (open) {
-      form.reset({
-        name: organization.name || "",
-        domain: (organization as any).domain || "",
-        industry: (organization as any).industry || "",
-        notes: (organization as any).notes || "",
-      })
-    }
-  }, [open, organization, form])
-
-  const updateOrgMutation = useMutation({
-    mutationFn: (data: OrganizationUpdate) =>
-      OrganizationsService.updateOrganization({
-        organizationId: organization.id,
-        requestBody: data,
-      }),
+  const createOrgMutation = useMutation({
+    mutationFn: (data: OrganizationCreate) =>
+      OrganizationsService.createOrganization({ requestBody: data }),
     onSuccess: () => {
-      showSuccessToast("Organization updated successfully")
+      showSuccessToast("Organization created successfully")
+      form.reset()
       onOpenChange(false)
       queryClient.invalidateQueries({ queryKey: ["organizations"] })
-      queryClient.invalidateQueries({
-        queryKey: ["organizations", organization.id],
-      })
     },
     onError: () => {
-      showErrorToast("Failed to update organization")
+      showErrorToast("Failed to create organization")
     },
   })
 
-  const onSubmit = (data: OrganizationUpdateFormData) => {
-    const payload: OrganizationUpdate = {
+  const onSubmit = (data: OrganizationCreateFormData) => {
+    const payload: OrganizationCreate = {
       name: data.name,
       domain: data.domain || null,
       industry: data.industry || null,
-      notes: data.notes || null,
     }
-    updateOrgMutation.mutate(payload)
+    createOrgMutation.mutate(payload)
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit Organization</DialogTitle>
+          <DialogTitle>Add New Organization</DialogTitle>
           <DialogDescription>
-            Update the organization information.
+            Create a new organization to link with your contacts.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -149,30 +127,14 @@ export function EditOrganizationDialog({
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Notes</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Notes about the organization..."
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             <Button
               type="submit"
-              disabled={updateOrgMutation.isPending}
+              disabled={createOrgMutation.isPending}
               className="w-full"
             >
-              {updateOrgMutation.isPending
-                ? "Updating..."
-                : "Update Organization"}
+              {createOrgMutation.isPending
+                ? "Creating..."
+                : "Create Organization"}
             </Button>
           </form>
         </Form>

@@ -7,13 +7,14 @@ from sqlmodel import func, select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.models import (
+    Contact,
+    ContactPublic,
     Organization,
     OrganizationCreate,
     OrganizationPublic,
     OrganizationUpdate,
     OrganizationsPublic,
 )
-
 router = APIRouter(prefix="/organizations", tags=["organizations"])
 
 
@@ -145,3 +146,40 @@ def delete_organization(
     session.delete(organization)
     session.commit()
     return {"ok": True}
+
+
+from app.models import Contact, Organization, OrganizationPublic, OrganizationsPublic, OrganizationUpdate, OrganizationCreate
+from sqlmodel import select, func, Relationship
+
+
+@router.get("/{organization_id}/contacts", response_model=dict)
+def get_organization_with_contacts(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    organization_id: uuid.UUID,
+) -> Any:
+    """Get an organization and its linked contacts."""
+    organization = session.get(Organization, organization_id)
+    if not organization:
+        raise HTTPException(status_code=404, detail="Organization not found")
+    if organization.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    
+    # Get linked contacts
+    contacts_stmt = select(Contact).where(
+        Contact.organization_id == organization_id,
+        Contact.owner_id == current_user.id,
+    )
+    contacts = session.exec(contacts_stmt).all()
+    
+    # Build response with contact_count
+    org_public = OrganizationPublic.model_validate(organization)
+    # Override contact_count with actual count
+    org_dict = org_public.model_dump()
+    org_dict["contact_count"] = len(contacts)
+    
+    return {
+        "organization": org_dict,
+        "contacts": [ContactPublic.model_validate(c) for c in contacts],
+    }
