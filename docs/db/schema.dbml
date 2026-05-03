@@ -5,8 +5,10 @@ Enum "contactfieldtype" {
 
 Enum "contactsource" {
   "MANUAL"
+  "VCARD_IMPORT"
+  "CARDDAV"
   "GOOGLE"
-  "ICLOUD"
+  "WEBHOOK"
 }
 
 Enum "debtdirection" {
@@ -124,18 +126,16 @@ Table "contact" {
   "created_at" timestamptz [not null]
   "updated_at" timestamptz [not null]
   "deleted_at" timestamptz
-  "source_provider" contactsource [not null, default: 'MANUAL']
-  "source_external_id" varchar(255)
+  "source" contactsource [not null, default: 'MANUAL']
+  "source_external_id" varchar(500)
 
   Indexes {
-    (owner_id, source_provider, source_external_id) [type: btree, unique, name: "ux_contact_owner_provider_external"]
+    (owner_id, source, source_external_id) [type: btree, unique, name: "uq_contact_owner_source_external_id"]
     contact_frequency_days [type: btree, name: "ix_contact_contact_frequency_days"]
     deleted_at [type: btree, name: "ix_contact_deleted_at"]
     is_archived [type: btree, name: "ix_contact_is_archived"]
     is_favorite [type: btree, name: "ix_contact_is_favorite"]
     owner_id [type: btree, name: "ix_contact_owner_id"]
-    source_external_id [type: btree, name: "ix_contact_source_external_id"]
-    source_provider [type: btree, name: "ix_contact_source_provider"]
   }
 }
 
@@ -475,11 +475,24 @@ Table "note_mention" {
   }
 }
 
+Table "communication_preference" {
+  "id" uuid [pk, not null, default: `gen_random_uuid()`]
+  "contact_id" uuid [unique, not null]
+  "preferred_channel" varchar(20)
+  "best_time_local" varchar(11)
+  "do_not_contact" bool [not null, default: false]
+  "do_not_contact_reason" varchar(500)
+  "created_at" timestamptz [not null, default: `now()`]
+  "updated_at" timestamptz [not null, default: `now()`]
+}
+
 Ref "activity_log_actor_id_fkey":"user"."id" < "activity_log"."actor_id" [delete: set null]
 
 Ref "activity_log_owner_id_fkey":"user"."id" < "activity_log"."owner_id" [delete: cascade]
 
 Ref "address_contact_id_fkey":"contact"."id" < "address"."contact_id" [delete: cascade]
+
+Ref "communication_preference_contact_id_fkey":"contact"."id" < "communication_preference"."contact_id" [delete: cascade]
 
 Ref "contact_owner_id_fkey":"user"."id" < "contact"."owner_id" [delete: cascade]
 

@@ -8,7 +8,7 @@ Core contact entity — the subject of everything else in the CRM.
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | uuid |  | false | [public.contact_tag](public.contact_tag.md) [public.contact_group](public.contact_group.md) [public.contact_field](public.contact_field.md) [public.address](public.address.md) [public.relationship](public.relationship.md) [public.pet](public.pet.md) [public.custom_field_value](public.custom_field_value.md) [public.reminder](public.reminder.md) [public.gift](public.gift.md) [public.debt](public.debt.md) [public.life_event](public.life_event.md) [public.note](public.note.md) [public.media_recommendation](public.media_recommendation.md) [public.interaction_attendee](public.interaction_attendee.md) [public.note_mention](public.note_mention.md) |  | Primary key. |
+| id | uuid |  | false | [public.contact_tag](public.contact_tag.md) [public.contact_group](public.contact_group.md) [public.contact_field](public.contact_field.md) [public.address](public.address.md) [public.relationship](public.relationship.md) [public.pet](public.pet.md) [public.custom_field_value](public.custom_field_value.md) [public.reminder](public.reminder.md) [public.gift](public.gift.md) [public.debt](public.debt.md) [public.life_event](public.life_event.md) [public.note](public.note.md) [public.media_recommendation](public.media_recommendation.md) [public.interaction_attendee](public.interaction_attendee.md) [public.note_mention](public.note_mention.md) [public.communication_preference](public.communication_preference.md) |  | Primary key. |
 | owner_id | uuid |  | false |  | [public.user](public.user.md) | Owner user; cascades on delete. |
 | first_name | varchar(255) |  | false |  |  | Given name; required. |
 | last_name | varchar(255) |  | true |  |  | Family name. |
@@ -34,8 +34,8 @@ Core contact entity — the subject of everything else in the CRM.
 | created_at | timestamp with time zone |  | false |  |  | When the contact was created (UTC). |
 | updated_at | timestamp with time zone |  | false |  |  | Auto-bumped on any column change (UTC). |
 | deleted_at | timestamp with time zone |  | true |  |  |  |
-| source_provider | contactsource | 'MANUAL'::contactsource | false |  |  |  |
-| source_external_id | varchar(255) |  | true |  |  |  |
+| source | contactsource | 'MANUAL'::contactsource | false |  |  |  |
+| source_external_id | varchar(500) |  | true |  |  |  |
 
 ## Constraints
 
@@ -48,10 +48,11 @@ Core contact entity — the subject of everything else in the CRM.
 | contact_is_deceased_not_null | n | NOT NULL is_deceased |
 | contact_is_favorite_not_null | n | NOT NULL is_favorite |
 | contact_owner_id_not_null | n | NOT NULL owner_id |
-| contact_source_provider_not_null | n | NOT NULL source_provider |
+| contact_source_not_null | n | NOT NULL source |
 | contact_updated_at_not_null | n | NOT NULL updated_at |
 | contact_owner_id_fkey | FOREIGN KEY | FOREIGN KEY (owner_id) REFERENCES "user"(id) ON DELETE CASCADE |
 | contact_pkey | PRIMARY KEY | PRIMARY KEY (id) |
+| uq_contact_owner_source_external_id | UNIQUE | UNIQUE (owner_id, source, source_external_id) |
 
 ## Indexes
 
@@ -63,9 +64,7 @@ Core contact entity — the subject of everything else in the CRM.
 | ix_contact_owner_id | CREATE INDEX ix_contact_owner_id ON public.contact USING btree (owner_id) |
 | ix_contact_contact_frequency_days | CREATE INDEX ix_contact_contact_frequency_days ON public.contact USING btree (contact_frequency_days) |
 | ix_contact_deleted_at | CREATE INDEX ix_contact_deleted_at ON public.contact USING btree (deleted_at) |
-| ix_contact_source_provider | CREATE INDEX ix_contact_source_provider ON public.contact USING btree (source_provider) |
-| ix_contact_source_external_id | CREATE INDEX ix_contact_source_external_id ON public.contact USING btree (source_external_id) |
-| ux_contact_owner_provider_external | CREATE UNIQUE INDEX ux_contact_owner_provider_external ON public.contact USING btree (owner_id, source_provider, source_external_id) WHERE (source_external_id IS NOT NULL) |
+| uq_contact_owner_source_external_id | CREATE UNIQUE INDEX uq_contact_owner_source_external_id ON public.contact USING btree (owner_id, source, source_external_id) |
 
 ## Relations
 
@@ -88,6 +87,7 @@ erDiagram
 "public.media_recommendation" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.interaction_attendee" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.note_mention" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
+"public.communication_preference" |o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.contact" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 
 "public.contact" {
@@ -117,8 +117,8 @@ erDiagram
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
   timestamp_with_time_zone deleted_at
-  contactsource source_provider
-  varchar_255_ source_external_id
+  contactsource source
+  varchar_500_ source_external_id
 }
 "public.contact_tag" {
   uuid contact_id FK
@@ -249,6 +249,16 @@ erDiagram
 "public.note_mention" {
   uuid note_id FK
   uuid contact_id FK
+}
+"public.communication_preference" {
+  uuid id
+  uuid contact_id FK
+  varchar_20_ preferred_channel
+  varchar_11_ best_time_local
+  boolean do_not_contact
+  varchar_500_ do_not_contact_reason
+  timestamp_with_time_zone created_at
+  timestamp_with_time_zone updated_at
 }
 "public.user" {
   varchar_255_ email

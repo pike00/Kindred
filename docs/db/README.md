@@ -31,6 +31,7 @@
 | [public.activity_log](public.activity_log.md) | 8 |  | BASE TABLE |
 | [public.oauth_credential](public.oauth_credential.md) | 11 |  | BASE TABLE |
 | [public.note_mention](public.note_mention.md) | 2 |  | BASE TABLE |
+| [public.communication_preference](public.communication_preference.md) | 8 |  | BASE TABLE |
 
 ## Stored procedures and functions
 
@@ -52,7 +53,7 @@
 | Name | Values |
 | ---- | ------- |
 | public.contactfieldtype | EMAIL, PHONE |
-| public.contactsource | GOOGLE, ICLOUD, MANUAL |
+| public.contactsource | CARDDAV, GOOGLE, MANUAL, VCARD_IMPORT, WEBHOOK |
 | public.debtdirection | I_OWE, THEY_OWE |
 | public.giftstatus | GIVEN, IDEA, RECEIVED |
 | public.interactionchannel | CALL, EMAIL, IN_PERSON, OTHER, SOCIAL, TEXT, VIDEO |
@@ -105,6 +106,7 @@ erDiagram
 "public.oauth_credential" }o--|| "public.user" : "FOREIGN KEY (user_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.note_mention" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.note_mention" }o--|| "public.note" : "FOREIGN KEY (note_id) REFERENCES note(id) ON DELETE CASCADE"
+"public.communication_preference" |o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 
 "public.alembic_version" {
   varchar_32_ version_num
@@ -161,8 +163,8 @@ erDiagram
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
   timestamp_with_time_zone deleted_at
-  contactsource source_provider
-  varchar_255_ source_external_id
+  contactsource source
+  varchar_500_ source_external_id
 }
 "public.contact_tag" {
   uuid contact_id FK
@@ -362,6 +364,16 @@ erDiagram
 "public.note_mention" {
   uuid note_id FK
   uuid contact_id FK
+}
+"public.communication_preference" {
+  uuid id
+  uuid contact_id FK
+  varchar_20_ preferred_channel
+  varchar_11_ best_time_local
+  boolean do_not_contact
+  varchar_500_ do_not_contact_reason
+  timestamp_with_time_zone created_at
+  timestamp_with_time_zone updated_at
 }
 ```
 
