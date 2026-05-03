@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers
 revision = "a0b1c2d3e4f5"
-down_revision = "f5a6b7c8d9e0"
+down_revision = "add_do_not_contact_fields"
 branch_labels = None
 depends_on = None
 
