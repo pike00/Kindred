@@ -99,6 +99,8 @@ erDiagram
   contactsource source
   varchar_500_ source_external_id
   uuid organization_id FK
+  boolean do_not_contact
+  varchar_500_ do_not_contact_reason
 }
 "public.user" {
   varchar_255_ email
