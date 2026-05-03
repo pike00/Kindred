@@ -621,6 +621,11 @@
           "name": "source_external_id",
           "type": "varchar(500)",
           "nullable": true
+        },
+        {
+          "name": "organization_id",
+          "type": "uuid",
+          "nullable": true
         }
       ],
       "indexes": [
@@ -807,6 +812,19 @@
             "owner_id",
             "source",
             "source_external_id"
+          ]
+        },
+        {
+          "name": "fk_contact_organization_id",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (organization_id) REFERENCES organization(id) ON DELETE SET NULL",
+          "table": "public.contact",
+          "referenced_table": "public.organization",
+          "columns": [
+            "organization_id"
+          ],
+          "referenced_columns": [
+            "id"
           ]
         }
       ]
@@ -3889,6 +3907,11 @@
           "name": "occurred_at",
           "type": "timestamp with time zone",
           "nullable": false
+        },
+        {
+          "name": "acting_api_key_id",
+          "type": "uuid",
+          "nullable": true
         }
       ],
       "indexes": [
@@ -3922,6 +3945,14 @@
           "table": "public.activity_log",
           "columns": [
             "entity_id"
+          ]
+        },
+        {
+          "name": "ix_activity_log_acting_api_key_id",
+          "def": "CREATE INDEX ix_activity_log_acting_api_key_id ON public.activity_log USING btree (acting_api_key_id)",
+          "table": "public.activity_log",
+          "columns": [
+            "acting_api_key_id"
           ]
         }
       ],
@@ -4019,6 +4050,19 @@
           "table": "public.activity_log",
           "referenced_table": "",
           "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "fk_activity_log_acting_api_key_id",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (acting_api_key_id) REFERENCES api_key(id) ON DELETE SET NULL",
+          "table": "public.activity_log",
+          "referenced_table": "public.api_key",
+          "columns": [
+            "acting_api_key_id"
+          ],
+          "referenced_columns": [
             "id"
           ]
         }
@@ -4473,6 +4517,606 @@
           ]
         }
       ]
+    },
+    {
+      "name": "public.api_key",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "varchar(255)",
+          "nullable": false
+        },
+        {
+          "name": "key_hash",
+          "type": "varchar(64)",
+          "nullable": false
+        },
+        {
+          "name": "key_prefix",
+          "type": "varchar(16)",
+          "nullable": false
+        },
+        {
+          "name": "owned_by_user_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "last_used_at",
+          "type": "timestamp with time zone",
+          "nullable": true
+        },
+        {
+          "name": "revoked_at",
+          "type": "timestamp with time zone",
+          "nullable": true
+        },
+        {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "nullable": true
+        }
+      ],
+      "indexes": [
+        {
+          "name": "api_key_pkey",
+          "def": "CREATE UNIQUE INDEX api_key_pkey ON public.api_key USING btree (id)",
+          "table": "public.api_key",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "uq_api_key_key_hash",
+          "def": "CREATE UNIQUE INDEX uq_api_key_key_hash ON public.api_key USING btree (key_hash)",
+          "table": "public.api_key",
+          "columns": [
+            "key_hash"
+          ]
+        },
+        {
+          "name": "ix_api_key_key_hash",
+          "def": "CREATE INDEX ix_api_key_key_hash ON public.api_key USING btree (key_hash)",
+          "table": "public.api_key",
+          "columns": [
+            "key_hash"
+          ]
+        },
+        {
+          "name": "ix_api_key_owned_by_user_id",
+          "def": "CREATE INDEX ix_api_key_owned_by_user_id ON public.api_key USING btree (owned_by_user_id)",
+          "table": "public.api_key",
+          "columns": [
+            "owned_by_user_id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "api_key_created_at_not_null",
+          "type": "n",
+          "def": "NOT NULL created_at",
+          "table": "public.api_key",
+          "referenced_table": "",
+          "columns": [
+            "created_at"
+          ]
+        },
+        {
+          "name": "api_key_id_not_null",
+          "type": "n",
+          "def": "NOT NULL id",
+          "table": "public.api_key",
+          "referenced_table": "",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "api_key_key_hash_not_null",
+          "type": "n",
+          "def": "NOT NULL key_hash",
+          "table": "public.api_key",
+          "referenced_table": "",
+          "columns": [
+            "key_hash"
+          ]
+        },
+        {
+          "name": "api_key_key_prefix_not_null",
+          "type": "n",
+          "def": "NOT NULL key_prefix",
+          "table": "public.api_key",
+          "referenced_table": "",
+          "columns": [
+            "key_prefix"
+          ]
+        },
+        {
+          "name": "api_key_name_not_null",
+          "type": "n",
+          "def": "NOT NULL name",
+          "table": "public.api_key",
+          "referenced_table": "",
+          "columns": [
+            "name"
+          ]
+        },
+        {
+          "name": "api_key_owned_by_user_id_not_null",
+          "type": "n",
+          "def": "NOT NULL owned_by_user_id",
+          "table": "public.api_key",
+          "referenced_table": "",
+          "columns": [
+            "owned_by_user_id"
+          ]
+        },
+        {
+          "name": "api_key_owned_by_user_id_fkey",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (owned_by_user_id) REFERENCES \"user\"(id) ON DELETE CASCADE",
+          "table": "public.api_key",
+          "referenced_table": "public.user",
+          "columns": [
+            "owned_by_user_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "api_key_pkey",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "public.api_key",
+          "referenced_table": "",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "uq_api_key_key_hash",
+          "type": "UNIQUE",
+          "def": "UNIQUE (key_hash)",
+          "table": "public.api_key",
+          "referenced_table": "",
+          "columns": [
+            "key_hash"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.api_key_impersonate",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "api_key_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "user_id",
+          "type": "uuid",
+          "nullable": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "api_key_impersonate_pkey",
+          "def": "CREATE UNIQUE INDEX api_key_impersonate_pkey ON public.api_key_impersonate USING btree (api_key_id, user_id)",
+          "table": "public.api_key_impersonate",
+          "columns": [
+            "api_key_id",
+            "user_id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "api_key_impersonate_api_key_id_not_null",
+          "type": "n",
+          "def": "NOT NULL api_key_id",
+          "table": "public.api_key_impersonate",
+          "referenced_table": "",
+          "columns": [
+            "api_key_id"
+          ]
+        },
+        {
+          "name": "api_key_impersonate_user_id_not_null",
+          "type": "n",
+          "def": "NOT NULL user_id",
+          "table": "public.api_key_impersonate",
+          "referenced_table": "",
+          "columns": [
+            "user_id"
+          ]
+        },
+        {
+          "name": "api_key_impersonate_user_id_fkey",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (user_id) REFERENCES \"user\"(id) ON DELETE CASCADE",
+          "table": "public.api_key_impersonate",
+          "referenced_table": "public.user",
+          "columns": [
+            "user_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "api_key_impersonate_api_key_id_fkey",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (api_key_id) REFERENCES api_key(id) ON DELETE CASCADE",
+          "table": "public.api_key_impersonate",
+          "referenced_table": "public.api_key",
+          "columns": [
+            "api_key_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "api_key_impersonate_pkey",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (api_key_id, user_id)",
+          "table": "public.api_key_impersonate",
+          "referenced_table": "",
+          "columns": [
+            "api_key_id",
+            "user_id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.organization",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "name",
+          "type": "varchar(255)",
+          "nullable": false
+        },
+        {
+          "name": "domain",
+          "type": "varchar(255)",
+          "nullable": true
+        },
+        {
+          "name": "industry",
+          "type": "varchar(255)",
+          "nullable": true
+        },
+        {
+          "name": "notes",
+          "type": "varchar(2000)",
+          "nullable": true
+        },
+        {
+          "name": "address_label",
+          "type": "varchar(100)",
+          "nullable": false
+        },
+        {
+          "name": "address_street",
+          "type": "varchar(500)",
+          "nullable": true
+        },
+        {
+          "name": "address_extended",
+          "type": "varchar(500)",
+          "nullable": true
+        },
+        {
+          "name": "address_city",
+          "type": "varchar(255)",
+          "nullable": true
+        },
+        {
+          "name": "address_region",
+          "type": "varchar(255)",
+          "nullable": true
+        },
+        {
+          "name": "address_postal_code",
+          "type": "varchar(50)",
+          "nullable": true
+        },
+        {
+          "name": "address_country",
+          "type": "varchar(255)",
+          "nullable": true
+        },
+        {
+          "name": "address_latitude",
+          "type": "double precision",
+          "nullable": true
+        },
+        {
+          "name": "address_longitude",
+          "type": "double precision",
+          "nullable": true
+        },
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "owner_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": false
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "nullable": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "organization_pkey",
+          "def": "CREATE UNIQUE INDEX organization_pkey ON public.organization USING btree (id)",
+          "table": "public.organization",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "ix_organization_owner_id",
+          "def": "CREATE INDEX ix_organization_owner_id ON public.organization USING btree (owner_id)",
+          "table": "public.organization",
+          "columns": [
+            "owner_id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "organization_address_label_not_null",
+          "type": "n",
+          "def": "NOT NULL address_label",
+          "table": "public.organization",
+          "referenced_table": "",
+          "columns": [
+            "address_label"
+          ]
+        },
+        {
+          "name": "organization_created_at_not_null",
+          "type": "n",
+          "def": "NOT NULL created_at",
+          "table": "public.organization",
+          "referenced_table": "",
+          "columns": [
+            "created_at"
+          ]
+        },
+        {
+          "name": "organization_id_not_null",
+          "type": "n",
+          "def": "NOT NULL id",
+          "table": "public.organization",
+          "referenced_table": "",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "organization_name_not_null",
+          "type": "n",
+          "def": "NOT NULL name",
+          "table": "public.organization",
+          "referenced_table": "",
+          "columns": [
+            "name"
+          ]
+        },
+        {
+          "name": "organization_owner_id_not_null",
+          "type": "n",
+          "def": "NOT NULL owner_id",
+          "table": "public.organization",
+          "referenced_table": "",
+          "columns": [
+            "owner_id"
+          ]
+        },
+        {
+          "name": "organization_updated_at_not_null",
+          "type": "n",
+          "def": "NOT NULL updated_at",
+          "table": "public.organization",
+          "referenced_table": "",
+          "columns": [
+            "updated_at"
+          ]
+        },
+        {
+          "name": "organization_owner_id_fkey",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (owner_id) REFERENCES \"user\"(id) ON DELETE CASCADE",
+          "table": "public.organization",
+          "referenced_table": "public.user",
+          "columns": [
+            "owner_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "organization_pkey",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "public.organization",
+          "referenced_table": "",
+          "columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.reminder_snooze",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "reminder_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "snoozed_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "snoozed_until",
+          "type": "timestamp with time zone",
+          "nullable": false
+        },
+        {
+          "name": "reason",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "reminder_snooze_pkey",
+          "def": "CREATE UNIQUE INDEX reminder_snooze_pkey ON public.reminder_snooze USING btree (id)",
+          "table": "public.reminder_snooze",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "ix_reminder_snooze_reminder_id",
+          "def": "CREATE INDEX ix_reminder_snooze_reminder_id ON public.reminder_snooze USING btree (reminder_id)",
+          "table": "public.reminder_snooze",
+          "columns": [
+            "reminder_id"
+          ]
+        },
+        {
+          "name": "ix_reminder_snooze_snoozed_at",
+          "def": "CREATE INDEX ix_reminder_snooze_snoozed_at ON public.reminder_snooze USING btree (snoozed_at)",
+          "table": "public.reminder_snooze",
+          "columns": [
+            "snoozed_at"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "reminder_snooze_created_at_not_null",
+          "type": "n",
+          "def": "NOT NULL created_at",
+          "table": "public.reminder_snooze",
+          "referenced_table": "",
+          "columns": [
+            "created_at"
+          ]
+        },
+        {
+          "name": "reminder_snooze_id_not_null",
+          "type": "n",
+          "def": "NOT NULL id",
+          "table": "public.reminder_snooze",
+          "referenced_table": "",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "reminder_snooze_reminder_id_not_null",
+          "type": "n",
+          "def": "NOT NULL reminder_id",
+          "table": "public.reminder_snooze",
+          "referenced_table": "",
+          "columns": [
+            "reminder_id"
+          ]
+        },
+        {
+          "name": "reminder_snooze_snoozed_at_not_null",
+          "type": "n",
+          "def": "NOT NULL snoozed_at",
+          "table": "public.reminder_snooze",
+          "referenced_table": "",
+          "columns": [
+            "snoozed_at"
+          ]
+        },
+        {
+          "name": "reminder_snooze_snoozed_until_not_null",
+          "type": "n",
+          "def": "NOT NULL snoozed_until",
+          "table": "public.reminder_snooze",
+          "referenced_table": "",
+          "columns": [
+            "snoozed_until"
+          ]
+        },
+        {
+          "name": "reminder_snooze_reminder_id_fkey",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (reminder_id) REFERENCES reminder(id) ON DELETE CASCADE",
+          "table": "public.reminder_snooze",
+          "referenced_table": "public.reminder",
+          "columns": [
+            "reminder_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "reminder_snooze_pkey",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "public.reminder_snooze",
+          "referenced_table": "",
+          "columns": [
+            "id"
+          ]
+        }
+      ]
     }
   ],
   "relations": [
@@ -4514,6 +5158,19 @@
       ],
       "parent_cardinality": "exactly_one",
       "def": "FOREIGN KEY (owner_id) REFERENCES \"user\"(id) ON DELETE CASCADE"
+    },
+    {
+      "table": "public.contact",
+      "columns": [
+        "organization_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.organization",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "zero_or_one",
+      "def": "FOREIGN KEY (organization_id) REFERENCES organization(id) ON DELETE SET NULL"
     },
     {
       "table": "public.contact_tag",
@@ -4958,6 +5615,19 @@
       "def": "FOREIGN KEY (owner_id) REFERENCES \"user\"(id) ON DELETE CASCADE"
     },
     {
+      "table": "public.activity_log",
+      "columns": [
+        "acting_api_key_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.api_key",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "zero_or_one",
+      "def": "FOREIGN KEY (acting_api_key_id) REFERENCES api_key(id) ON DELETE SET NULL"
+    },
+    {
       "table": "public.oauth_credential",
       "columns": [
         "user_id"
@@ -5008,6 +5678,71 @@
       ],
       "parent_cardinality": "exactly_one",
       "def": "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
+    },
+    {
+      "table": "public.api_key",
+      "columns": [
+        "owned_by_user_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.user",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (owned_by_user_id) REFERENCES \"user\"(id) ON DELETE CASCADE"
+    },
+    {
+      "table": "public.api_key_impersonate",
+      "columns": [
+        "user_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.user",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (user_id) REFERENCES \"user\"(id) ON DELETE CASCADE"
+    },
+    {
+      "table": "public.api_key_impersonate",
+      "columns": [
+        "api_key_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.api_key",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (api_key_id) REFERENCES api_key(id) ON DELETE CASCADE"
+    },
+    {
+      "table": "public.organization",
+      "columns": [
+        "owner_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.user",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (owner_id) REFERENCES \"user\"(id) ON DELETE CASCADE"
+    },
+    {
+      "table": "public.reminder_snooze",
+      "columns": [
+        "reminder_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.reminder",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (reminder_id) REFERENCES reminder(id) ON DELETE CASCADE"
     }
   ],
   "functions": [
@@ -5102,7 +5837,9 @@
       "values": [
         "GIVEN",
         "IDEA",
-        "RECEIVED"
+        "PURCHASED",
+        "RECEIVED",
+        "WRAPPED"
       ]
     },
     {
