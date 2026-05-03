@@ -36,12 +36,16 @@ Core contact entity — the subject of everything else in the CRM.
 | deleted_at | timestamp with time zone |  | true |  |  |  |
 | source | contactsource | 'MANUAL'::contactsource | false |  |  |  |
 | source_external_id | varchar(500) |  | true |  |  |  |
+| organization_id | uuid |  | true |  | [public.organization](public.organization.md) |  |
+| do_not_contact | boolean | false | false |  |  |  |
+| do_not_contact_reason | varchar(500) |  | true |  |  |  |
 
 ## Constraints
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
 | contact_created_at_not_null | n | NOT NULL created_at |
+| contact_do_not_contact_not_null | n | NOT NULL do_not_contact |
 | contact_first_name_not_null | n | NOT NULL first_name |
 | contact_id_not_null | n | NOT NULL id |
 | contact_is_archived_not_null | n | NOT NULL is_archived |
@@ -53,6 +57,7 @@ Core contact entity — the subject of everything else in the CRM.
 | contact_owner_id_fkey | FOREIGN KEY | FOREIGN KEY (owner_id) REFERENCES "user"(id) ON DELETE CASCADE |
 | contact_pkey | PRIMARY KEY | PRIMARY KEY (id) |
 | uq_contact_owner_source_external_id | UNIQUE | UNIQUE (owner_id, source, source_external_id) |
+| fk_contact_organization_id | FOREIGN KEY | FOREIGN KEY (organization_id) REFERENCES organization(id) ON DELETE SET NULL |
 
 ## Indexes
 
@@ -89,6 +94,7 @@ erDiagram
 "public.note_mention" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.communication_preference" |o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.contact" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
+"public.contact" }o--o| "public.organization" : "FOREIGN KEY (organization_id) REFERENCES organization(id) ON DELETE SET NULL"
 
 "public.contact" {
   uuid id
@@ -119,6 +125,9 @@ erDiagram
   timestamp_with_time_zone deleted_at
   contactsource source
   varchar_500_ source_external_id
+  uuid organization_id FK
+  boolean do_not_contact
+  varchar_500_ do_not_contact_reason
 }
 "public.contact_tag" {
   uuid contact_id FK
@@ -270,6 +279,25 @@ erDiagram
   timestamp_with_time_zone created_at
   varchar_512_ oidc_iss
   varchar_255_ oidc_sub
+}
+"public.organization" {
+  varchar_255_ name
+  varchar_255_ domain
+  varchar_255_ industry
+  varchar_2000_ notes
+  varchar_100_ address_label
+  varchar_500_ address_street
+  varchar_500_ address_extended
+  varchar_255_ address_city
+  varchar_255_ address_region
+  varchar_50_ address_postal_code
+  varchar_255_ address_country
+  double_precision address_latitude
+  double_precision address_longitude
+  uuid id
+  uuid owner_id FK
+  timestamp_with_time_zone created_at
+  timestamp_with_time_zone updated_at
 }
 ```
 
