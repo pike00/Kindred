@@ -36,6 +36,7 @@
 | [public.api_key_impersonate](public.api_key_impersonate.md) | 2 |  | BASE TABLE |
 | [public.organization](public.organization.md) | 17 |  | BASE TABLE |
 | [public.reminder_snooze](public.reminder_snooze.md) | 6 |  | BASE TABLE |
+| [public.setup_state](public.setup_state.md) | 3 |  | BASE TABLE |
 
 ## Stored procedures and functions
 
@@ -431,6 +432,11 @@ erDiagram
   timestamp_with_time_zone snoozed_until
   text reason
   timestamp_with_time_zone created_at
+}
+"public.setup_state" {
+  integer id
+  boolean complete
+  varchar_128_ token_hash
 }
 ```
 

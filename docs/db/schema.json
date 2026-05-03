@@ -5138,6 +5138,71 @@
           ]
         }
       ]
+    },
+    {
+      "name": "public.setup_state",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "nullable": false,
+          "default": "nextval('setup_state_id_seq'::regclass)"
+        },
+        {
+          "name": "complete",
+          "type": "boolean",
+          "nullable": false,
+          "default": "false"
+        },
+        {
+          "name": "token_hash",
+          "type": "varchar(128)",
+          "nullable": true
+        }
+      ],
+      "indexes": [
+        {
+          "name": "setup_state_pkey",
+          "def": "CREATE UNIQUE INDEX setup_state_pkey ON public.setup_state USING btree (id)",
+          "table": "public.setup_state",
+          "columns": [
+            "id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "setup_state_complete_not_null",
+          "type": "n",
+          "def": "NOT NULL complete",
+          "table": "public.setup_state",
+          "referenced_table": "",
+          "columns": [
+            "complete"
+          ]
+        },
+        {
+          "name": "setup_state_id_not_null",
+          "type": "n",
+          "def": "NOT NULL id",
+          "table": "public.setup_state",
+          "referenced_table": "",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "setup_state_pkey",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "public.setup_state",
+          "referenced_table": "",
+          "columns": [
+            "id"
+          ]
+        }
+      ]
     }
   ],
   "relations": [
