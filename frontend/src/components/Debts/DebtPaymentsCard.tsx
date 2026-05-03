@@ -1,17 +1,20 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { format } from "date-fns"
 import { useState } from "react"
-import { DebtPublic, DebtPaymentPublic } from "@/client"
-import { DebtsService } from "@/client"
+import { type DebtPublic, DebtsService } from "@/client"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Calendar } from "@/components/ui/calendar"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import { Textarea } from "@/components/ui/textarea"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { format } from "date-fns"
-import { CalendarIcon, Trash2 } from "@/lib/icons"
 import { useToast } from "@/hooks/use-toast"
-import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query"
+import { CalendarIcon, Trash2 } from "@/lib/icons"
 
 interface DebtPaymentsCardProps {
   debt: DebtPublic
@@ -61,7 +64,7 @@ export function DebtPaymentsCard({ debt }: DebtPaymentsCardProps) {
 
   const handleAddPayment = () => {
     const numAmount = parseFloat(amount)
-    if (isNaN(numAmount) || numAmount <= 0) {
+    if (Number.isNaN(numAmount) || numAmount <= 0) {
       toast({ title: "Please enter a valid amount", variant: "destructive" })
       return
     }
@@ -164,7 +167,9 @@ export function DebtPaymentsCard({ debt }: DebtPaymentsCardProps) {
                   {payment.paid_at && format(new Date(payment.paid_at), "PPP")}
                 </p>
                 {payment.note && (
-                  <p className="text-xs text-muted-foreground">{payment.note}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {payment.note}
+                  </p>
                 )}
               </div>
               <Button
@@ -182,7 +187,9 @@ export function DebtPaymentsCard({ debt }: DebtPaymentsCardProps) {
           ))}
           <div className="pt-2 border-t">
             <p className="text-sm">
-              <span className="font-medium">Paid: ${paidAmount.toFixed(2)}</span>
+              <span className="font-medium">
+                Paid: ${paidAmount.toFixed(2)}
+              </span>
               {" / "}
               <span>Total: ${debt.amount?.toFixed(2)}</span>
             </p>
@@ -194,7 +201,9 @@ export function DebtPaymentsCard({ debt }: DebtPaymentsCardProps) {
           </div>
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground">No payments recorded yet.</p>
+        <p className="text-sm text-muted-foreground">
+          No payments recorded yet.
+        </p>
       )}
     </div>
   )
