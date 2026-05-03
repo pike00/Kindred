@@ -498,6 +498,38 @@ export type DebtCreate = {
 
 export type DebtDirection = 'i_owe' | 'they_owe';
 
+export type DebtPaymentCreate = {
+    /**
+     * Payment amount; must be greater than zero.
+     */
+    amount: number;
+    /**
+     * Date the payment was made.
+     */
+    paid_at: string;
+    /**
+     * Optional note about the payment.
+     */
+    note?: (string | null);
+};
+
+export type DebtPaymentPublic = {
+    /**
+     * Payment amount; must be greater than zero.
+     */
+    amount: number;
+    /**
+     * Date the payment was made.
+     */
+    paid_at: string;
+    /**
+     * Optional note about the payment.
+     */
+    note?: (string | null);
+    id: string;
+    created_at: string;
+};
+
 export type DebtPublic = {
     /**
      * Who owes whom: i_owe (you owe them) or they_owe (they owe you).
@@ -526,6 +558,8 @@ export type DebtPublic = {
     id: string;
     contact_id: string;
     created_at: string;
+    payments?: Array<DebtPaymentPublic>;
+    paid_amount?: (number | null);
 };
 
 export type DebtsPublic = {
@@ -1486,6 +1520,25 @@ export type DebtsDeleteDebtData = {
 };
 
 export type DebtsDeleteDebtResponse = (unknown);
+
+export type DebtsListDebtPaymentsData = {
+    debtId: string;
+};
+
+export type DebtsListDebtPaymentsResponse = (Array<DebtPaymentPublic>);
+
+export type DebtsCreateDebtPaymentData = {
+    debtId: string;
+    requestBody: DebtPaymentCreate;
+};
+
+export type DebtsCreateDebtPaymentResponse = (DebtPaymentPublic);
+
+export type DebtsDeleteDebtPaymentData = {
+    paymentId: string;
+};
+
+export type DebtsDeleteDebtPaymentResponse = (unknown);
 
 export type GiftsListGiftsData = {
     contactId: string;

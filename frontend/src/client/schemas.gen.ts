@@ -1807,6 +1807,82 @@ export const DebtDirectionSchema = {
     title: 'DebtDirection'
 } as const;
 
+export const DebtPaymentCreateSchema = {
+    properties: {
+        amount: {
+            type: 'number',
+            exclusiveMinimum: 0,
+            title: 'Amount',
+            description: 'Payment amount; must be greater than zero.'
+        },
+        paid_at: {
+            type: 'string',
+            format: 'date',
+            title: 'Paid At',
+            description: 'Date the payment was made.'
+        },
+        note: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 1000
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Note',
+            description: 'Optional note about the payment.'
+        }
+    },
+    type: 'object',
+    required: ['amount', 'paid_at'],
+    title: 'DebtPaymentCreate'
+} as const;
+
+export const DebtPaymentPublicSchema = {
+    properties: {
+        amount: {
+            type: 'number',
+            exclusiveMinimum: 0,
+            title: 'Amount',
+            description: 'Payment amount; must be greater than zero.'
+        },
+        paid_at: {
+            type: 'string',
+            format: 'date',
+            title: 'Paid At',
+            description: 'Date the payment was made.'
+        },
+        note: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 1000
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Note',
+            description: 'Optional note about the payment.'
+        },
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        }
+    },
+    type: 'object',
+    required: ['amount', 'paid_at', 'id', 'created_at'],
+    title: 'DebtPaymentPublic'
+} as const;
+
 export const DebtPublicSchema = {
     properties: {
         direction: {
@@ -1872,6 +1948,25 @@ export const DebtPublicSchema = {
             type: 'string',
             format: 'date-time',
             title: 'Created At'
+        },
+        payments: {
+            items: {
+                '$ref': '#/components/schemas/DebtPaymentPublic'
+            },
+            type: 'array',
+            title: 'Payments',
+            default: []
+        },
+        paid_amount: {
+            anyOf: [
+                {
+                    type: 'number'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Paid Amount'
         }
     },
     type: 'object',

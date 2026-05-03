@@ -1246,6 +1246,55 @@ class GiftsPublic(SQLModel):
 # ─── Debt ─────────────────────────────────────────────────────────────────────
 
 
+# ─── DebtPayment ───────────────────────────────────────────────────────
+
+
+class DebtPaymentBase(SQLModel):
+    amount: float = Field(
+        gt=0,
+        description="Payment amount; must be greater than zero.",
+    )
+    paid_at: date = Field(
+        description="Date the payment was made.",
+    )
+    note: str | None = Field(
+        default=None,
+        max_length=1000,
+        description="Optional note about the payment.",
+    )
+
+
+class DebtPaymentCreate(DebtPaymentBase):
+    pass
+
+
+class DebtPaymentPublic(DebtPaymentBase):
+    id: uuid.UUID
+    created_at: datetime
+
+
+class DebtPayment(DebtPaymentBase, table=True):
+    """Individual payment made toward a debt."""
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
+    debt_id: uuid.UUID = Field(
+        foreign_key="debt.id",
+        nullable=False,
+        ondelete="CASCADE",
+        index=True,
+        description="Parent debt; cascades on delete.",
+    )
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        description="When the payment was recorded (UTC).",
+    )
+
+
 class DebtBase(SQLModel):
     direction: DebtDirection = Field(
         description="Who owes whom: i_owe (you owe them) or they_owe (they owe you).",
@@ -1318,6 +1367,8 @@ class DebtPublic(DebtBase):
     id: uuid.UUID
     contact_id: uuid.UUID
     created_at: datetime
+    payments: list[DebtPaymentPublic] = []
+    paid_amount: float | None = None  # computed field
 
 
 class DebtsPublic(SQLModel):
