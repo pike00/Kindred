@@ -15,6 +15,7 @@ import {
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
 import { EmptyState } from "@/components/Common/EmptyState"
 import { AddressesCard } from "@/components/Contacts/AddressesCard"
+import { AvatarUploadDialog } from "@/components/Contacts/AvatarUploadDialog"
 import { ContactFieldsCard } from "@/components/Contacts/ContactFieldsCard"
 import { CustomFieldsCard } from "@/components/Contacts/CustomFieldsCard"
 import { EditContactDialog } from "@/components/Contacts/EditContactDialog"
@@ -39,6 +40,7 @@ import {
 import {
   Archive,
   Cake,
+  Camera,
   Clock,
   Film,
   Info,
@@ -135,7 +137,22 @@ function ContactDetailPage() {
     <div className="space-y-6 max-w-5xl">
       {/* Header */}
       <div className="flex items-start gap-5">
-        <ContactAvatar contact={contact} size="lg" />
+        <div className="relative group">
+          <ContactAvatar contact={contact} size="lg" />
+          <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+            <AvatarUploadDialog
+              contact={contact}
+              trigger={
+                <button
+                  type="button"
+                  className="text-white hover:text-white/80"
+                >
+                  <Camera className="size-6" />
+                </button>
+              }
+            />
+          </div>
+        </div>
         <div className="flex-1 min-w-0 space-y-2">
           <div className="flex items-start justify-between gap-3">
             <div className="flex flex-wrap items-center gap-3 min-w-0">
@@ -250,7 +267,7 @@ function ContactDetailPage() {
                   Groups
                   <InfoHint>
                     Named collections of people with a shared context, like
-                    "Family", "D&D Group", or "Work Team". Groups have a
+                    "Family", "D&amp;D Group", or "Work Team". Groups have a
                     description; tags don't.
                   </InfoHint>
                 </CardTitle>

@@ -162,6 +162,22 @@ export type APIKeysPublic = {
     count: number;
 };
 
+/**
+ * Response model for avatar upload.
+ */
+export type AvatarUploadResponse = {
+    avatar_url: string;
+    message?: string;
+};
+
+export type Body_contacts_upload_avatar = {
+    file: (Blob | File);
+};
+
+export type Body_contacts_upload_avatar_file = {
+    file: (Blob | File);
+};
+
 export type Body_import_export_import_vcard = {
     file: (Blob | File);
 };
@@ -1646,11 +1662,25 @@ export type ContactsRestoreContactData = {
 
 export type ContactsRestoreContactResponse = (ContactPublic);
 
-export type ContactsListContactMentionsData = {
+export type ContactsUploadAvatarFileData = {
+    contactId: string;
+    formData: Body_contacts_upload_avatar_file;
+};
+
+export type ContactsUploadAvatarFileResponse = (AvatarUploadResponse);
+
+export type ContactsDeleteAvatarData = {
     contactId: string;
 };
 
-export type ContactsListContactMentionsResponse = (Array<_MentionPublic>);
+export type ContactsDeleteAvatarResponse = (unknown);
+
+export type ContactsUploadAvatarData = {
+    contactId: string;
+    formData: Body_contacts_upload_avatar;
+};
+
+export type ContactsUploadAvatarResponse = (Array<_MentionPublic>);
 
 export type CustomFieldsListFieldDefinitionsResponse = (unknown);
 

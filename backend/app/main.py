@@ -1,8 +1,12 @@
+from pathlib import Path
+
 import sentry_sdk
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from fastapi.routing import APIRoute
+from fastapi.staticfiles import StaticFiles
 from radicale import Application as RadicaleApp
+from radicale.config import DEFAULT_CONFIG_SCHEMA  # noqa: E402
 from radicale.config import Configuration as RadicaleConfig
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.wsgi import WSGIMiddleware
@@ -36,8 +40,6 @@ if settings.all_cors_origins:
     )
 
 # Configure Radicale CardDAV server with PostgreSQL storage backend
-from radicale.config import DEFAULT_CONFIG_SCHEMA  # noqa: E402
-
 radicale_configuration = RadicaleConfig(DEFAULT_CONFIG_SCHEMA)
 radicale_configuration.update(
     {
@@ -54,6 +56,12 @@ app.mount("/dav", WSGIMiddleware(radicale_app))
 def well_known_carddav():
     """Redirect to CardDAV server for iOS/macOS client discovery."""
     return RedirectResponse(url="/dav/", status_code=301)
+
+
+# Serve uploaded files (avatars, etc.)
+uploads_dir = Path("uploads")
+if uploads_dir.exists():
+    app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 
 app.include_router(api_router, prefix=settings.API_V1_STR)

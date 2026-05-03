@@ -1,5 +1,7 @@
-import { useState, useRef, useEffect, useCallback } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useCallback, useEffect, useRef, useState } from "react"
+import type { ContactPublic } from "@/client"
+import { ContactsService } from "@/client"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -9,13 +11,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Slider } from "@/components/ui/slider"
 import { Label } from "@/components/ui/label"
+import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
-import { ContactsService } from "@/client"
-import type { ContactPublic } from "@/client"
 import useCustomToast from "@/hooks/useCustomToast"
-import { Camera, Upload, Crop, RefreshCw, AlertCircle } from "@/lib/icons"
+import { AlertCircle, Camera, Crop, RefreshCw, Upload } from "@/lib/icons"
 
 // Face detection types
 interface DetectedFace {
@@ -42,7 +42,10 @@ interface AvatarUploadDialogProps {
 // Default JPEG quality for avatar compression
 const DEFAULT_JPEG_QUALITY = 0.85
 
-export function AvatarUploadDialog({ contact, trigger }: AvatarUploadDialogProps) {
+export function AvatarUploadDialog({
+  contact,
+  trigger,
+}: AvatarUploadDialogProps) {
   const [open, setOpen] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
@@ -88,10 +91,12 @@ export function AvatarUploadDialog({ contact, trigger }: AvatarUploadDialogProps
 
     try {
       // Dynamic import of MediaPipe tasks-vision
-      const { FilesetResolver, FaceDetector } = await import("@mediapipe/tasks-vision")
+      const { FilesetResolver, FaceDetector } = await import(
+        "@mediapipe/tasks-vision"
+      )
 
-      const filesetResolver = await FilesetResolver.forVisionTasks(
-        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/wasm"
+      const _filesetResolver = await FilesetResolver.forVisionTasks(
+        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/wasm",
       )
 
       const detector = await FaceDetector.createFromOptions({
@@ -121,7 +126,7 @@ export function AvatarUploadDialog({ contact, trigger }: AvatarUploadDialogProps
         detectedFaces.sort(
           (a, b) =>
             b.boundingBox.width * b.boundingBox.height -
-            a.boundingBox.width * a.boundingBox.height
+            a.boundingBox.width * a.boundingBox.height,
         )
 
         setFaces(detectedFaces)
@@ -134,11 +139,20 @@ export function AvatarUploadDialog({ contact, trigger }: AvatarUploadDialogProps
           const scaleX = imgEl.naturalWidth / imgEl.width
           const scaleY = imgEl.naturalHeight / imgEl.height
 
-          const faceCenterX = (largestFace.boundingBox.originX + largestFace.boundingBox.width / 2) / scaleX
-          const faceCenterY = (largestFace.boundingBox.originY + largestFace.boundingBox.height / 2) / scaleY
+          const faceCenterX =
+            (largestFace.boundingBox.originX +
+              largestFace.boundingBox.width / 2) /
+            scaleX
+          const faceCenterY =
+            (largestFace.boundingBox.originY +
+              largestFace.boundingBox.height / 2) /
+            scaleY
 
           // Start crop at 60% of face width, minimum 50px
-          const cropSize = Math.max(largestFace.boundingBox.width / scaleX * 0.6, 50)
+          const cropSize = Math.max(
+            (largestFace.boundingBox.width / scaleX) * 0.6,
+            50,
+          )
 
           setCropArea({
             x: Math.max(0, faceCenterX - cropSize / 2),
@@ -247,9 +261,11 @@ export function AvatarUploadDialog({ contact, trigger }: AvatarUploadDialogProps
     const scaleX = imgEl.naturalWidth / imgEl.width
     const scaleY = imgEl.naturalHeight / imgEl.height
 
-    const faceCenterX = (face.boundingBox.originX + face.boundingBox.width / 2) / scaleX
-    const faceCenterY = (face.boundingBox.originY + face.boundingBox.height / 2) / scaleY
-    const cropSize = Math.max(face.boundingBox.width / scaleX * 0.6, 50)
+    const faceCenterX =
+      (face.boundingBox.originX + face.boundingBox.width / 2) / scaleX
+    const faceCenterY =
+      (face.boundingBox.originY + face.boundingBox.height / 2) / scaleY
+    const cropSize = Math.max((face.boundingBox.width / scaleX) * 0.6, 50)
 
     setCropArea({
       x: Math.max(0, faceCenterX - cropSize / 2),
@@ -287,7 +303,7 @@ export function AvatarUploadDialog({ contact, trigger }: AvatarUploadDialogProps
         0,
         0,
         canvas.width,
-        canvas.height
+        canvas.height,
       )
 
       // Convert to blob with compression
@@ -298,13 +314,15 @@ export function AvatarUploadDialog({ contact, trigger }: AvatarUploadDialogProps
             else reject(new Error("Failed to create image blob"))
           },
           "image/jpeg",
-          jpegQuality
+          jpegQuality,
         )
       })
     },
     onSuccess: async (blob) => {
       // Upload to backend
-      const file = new File([blob], `avatar_${Date.now()}.jpg`, { type: "image/jpeg" })
+      const file = new File([blob], `avatar_${Date.now()}.jpg`, {
+        type: "image/jpeg",
+      })
 
       try {
         await ContactsService.uploadAvatar({
@@ -315,7 +333,7 @@ export function AvatarUploadDialog({ contact, trigger }: AvatarUploadDialogProps
         queryClient.invalidateQueries({ queryKey: ["contacts", contact.id] })
         queryClient.invalidateQueries({ queryKey: ["contacts"] })
         setOpen(false)
-      } catch {
+      } catch (_error) {
         showErrorToast("Failed to upload avatar")
       }
     },
@@ -386,27 +404,25 @@ export function AvatarUploadDialog({ contact, trigger }: AvatarUploadDialogProps
                   onLoad={handleImageLoad}
                 />
 
-                {/* Crop Overlay - only show when manual crop is enabled */}
-                {manualCrop && (
-                  <div
-                    className="absolute border-2 border-primary bg-primary/10 cursor-move"
-                    style={{
-                      left: cropArea.x,
-                      top: cropArea.y,
-                      width: cropArea.size,
-                      height: cropArea.size,
-                    }}
-                    onMouseDown={handleCropMouseDown}
-                  >
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Crop className="h-6 w-6 text-primary/50" />
-                    </div>
-                    {/* Resize handles */}
-                    <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-primary border-2 border-background rounded-full cursor-se-resize" />
+                {/* Crop Overlay */}
+                <div
+                  className="absolute border-2 border-primary bg-primary/10 cursor-move"
+                  style={{
+                    left: cropArea.x,
+                    top: cropArea.y,
+                    width: cropArea.size,
+                    height: cropArea.size,
+                  }}
+                  onMouseDown={handleCropMouseDown}
+                >
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Crop className="h-6 w-6 text-primary/50" />
                   </div>
-                )}
+                  {/* Resize handles */}
+                  <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-primary border-2 border-background rounded-full cursor-se-resize" />
+                </div>
 
-                {/* Face detection indicators - using buttons for accessibility */}
+                {/* Face detection indicators */}
                 {faces.map((face, index) => {
                   const imgEl = imageRef.current
                   if (!imgEl) return null
@@ -414,14 +430,13 @@ export function AvatarUploadDialog({ contact, trigger }: AvatarUploadDialogProps
                   const scaleY = imgEl.height / imgEl.naturalHeight
 
                   return (
-                    <button
+                    <div
                       key={index}
-                      type="button"
                       className={`absolute border-2 ${
                         index === selectedFaceIndex
                           ? "border-green-500"
                           : "border-yellow-500/50"
-                      } rounded cursor-pointer bg-transparent p-0`}
+                      } rounded cursor-pointer`}
                       style={{
                         left: face.boundingBox.originX * scaleX,
                         top: face.boundingBox.originY * scaleY,
@@ -429,10 +444,11 @@ export function AvatarUploadDialog({ contact, trigger }: AvatarUploadDialogProps
                         height: face.boundingBox.height * scaleY,
                       }}
                       onClick={() => handleFaceSelect(index)}
-                      aria-label={`Select face ${index + 1}`}
                     >
-                      <span className="sr-only">Face {index + 1}</span>
-                    </button>
+                      <span className="absolute -top-5 left-0 text-xs bg-background px-1 rounded">
+                        Face {index + 1}
+                      </span>
+                    </div>
                   )
                 })}
               </div>
