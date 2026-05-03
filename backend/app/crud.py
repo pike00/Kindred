@@ -10,6 +10,9 @@ from app.core.security import get_password_hash, verify_password
 from app.models import (
     Address,
     AddressCreate,
+    APIKey,
+    APIKeyCreate,
+    APIKeyImpersonate,
     Contact,
     ContactCreate,
     ContactField,
@@ -183,39 +186,13 @@ def create_address(*, session: Session, address_in: AddressCreate) -> Address:
 
 
 def create_relationship(
-    *,
-    session: Session,
-    relationship_in: RelationshipCreate,
-    inverse_type: str,
+    *, session: Session, relationship_in: RelationshipCreate
 ) -> Relationship:
-    """Create a directional relationship plus its inverse, cross-linked.
-
-    The caller resolves ``inverse_type`` (either explicitly from the
-    user or via ``infer_inverse``) so this function stays purely
-    persistence — it never falls back silently to a wrong inverse.
-    """
-    forward = Relationship(
-        contact_id=relationship_in.contact_id,
-        related_contact_id=relationship_in.related_contact_id,
-        relationship_type=relationship_in.relationship_type,
-        notes=relationship_in.notes,
-    )
-    inverse = Relationship(
-        contact_id=relationship_in.related_contact_id,
-        related_contact_id=relationship_in.contact_id,
-        relationship_type=inverse_type,
-        notes=relationship_in.notes,
-    )
-    session.add(forward)
-    session.add(inverse)
-    session.flush()
-    forward.inverse_id = inverse.id
-    inverse.inverse_id = forward.id
-    session.add(forward)
-    session.add(inverse)
+    db_obj = Relationship.model_validate(relationship_in)
+    session.add(db_obj)
     session.commit()
-    session.refresh(forward)
-    return forward
+    session.refresh(db_obj)
+    return db_obj
 
 
 # ─── Pet CRUD ──────────────────────────────────────────────────────────────────
@@ -376,7 +353,6 @@ _MENTION_RE = re.compile(r"@\[[^\]]+\]\(([a-f0-9-]{36})\)")
 
 
 def _extract_mention_ids(body: str | None) -> set[uuid.UUID]:
-    """Pull every contact UUID out of @[Name](uuid) tokens in a note body."""
     if not body:
         return set()
     ids: set[uuid.UUID] = set()
@@ -389,7 +365,6 @@ def _extract_mention_ids(body: str | None) -> set[uuid.UUID]:
 
 
 def _sync_note_mentions(*, session: Session, note: Note) -> None:
-    """Replace note_mention rows for ``note`` with the IDs currently in its body."""
     session.exec(sql_delete(NoteMention).where(NoteMention.note_id == note.id))
     for cid in _extract_mention_ids(note.body):
         session.add(NoteMention(note_id=note.id, contact_id=cid))
@@ -511,3 +486,75 @@ def get_or_create_user_from_claims(
     session.commit()
     session.refresh(new_user)
     return new_user
+
+
+# ─── API Keys ─────────────────────────────────────────────────────────────────
+
+
+def create_api_key(
+    *, session: Session, owner_id: uuid.UUID, key_in: APIKeyCreate
+) -> tuple[APIKey, str]:
+    """Create a new API key, returning the model and the plaintext token."""
+    from app.core.api_keys import generate_key
+
+    plaintext, key_hash, key_prefix = generate_key()
+    api_key = APIKey(
+        name=key_in.name,
+        key_hash=key_hash,
+        key_prefix=key_prefix,
+        owned_by_user_id=owner_id,
+        expires_at=key_in.expires_at,
+    )
+    session.add(api_key)
+    session.flush()  # get api_key.id before adding impersonation rows
+
+    for user_id in key_in.can_impersonate:
+        session.add(APIKeyImpersonate(api_key_id=api_key.id, user_id=user_id))
+
+    session.commit()
+    session.refresh(api_key)
+    return api_key, plaintext
+
+
+def list_api_keys(*, session: Session, owner_id: uuid.UUID) -> list[APIKey]:
+    return list(
+        session.exec(select(APIKey).where(APIKey.owned_by_user_id == owner_id)).all()
+    )
+
+
+def revoke_api_key(*, session: Session, api_key: APIKey) -> None:
+    from datetime import datetime, timezone
+
+    api_key.revoked_at = datetime.now(timezone.utc)
+    session.add(api_key)
+    session.commit()
+
+
+def get_api_key_impersonate_targets(
+    *, session: Session, api_key_id: uuid.UUID
+) -> list[uuid.UUID]:
+    rows = session.exec(
+        select(APIKeyImpersonate).where(APIKeyImpersonate.api_key_id == api_key_id)
+    ).all()
+    return [r.user_id for r in rows]
+
+
+def get_api_key_by_hash(*, session: Session, key_hash: str) -> APIKey | None:
+    return session.exec(select(APIKey).where(APIKey.key_hash == key_hash)).first()
+
+
+def get_api_key_by_plaintext(*, session: Session, plaintext: str) -> APIKey | None:
+    from datetime import datetime, timezone
+
+    from app.core.api_keys import hash_key
+
+    api_key = get_api_key_by_hash(session=session, key_hash=hash_key(plaintext))
+    if api_key is None:
+        return None
+    if api_key.revoked_at is not None:
+        return None
+    if api_key.expires_at is not None and api_key.expires_at < datetime.now(
+        timezone.utc
+    ):
+        return None
+    return api_key

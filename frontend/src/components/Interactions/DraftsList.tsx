@@ -1,24 +1,25 @@
-import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query"
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query"
 import type { InteractionPublic } from "@/client"
 import { InteractionsService } from "@/client"
 import { EmptyState } from "@/components/Common/EmptyState"
 import { RowActionsMenu } from "@/components/Common/RowActionsMenu"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import useCustomToast from "@/hooks/useCustomToast"
 import {
   AtSign,
-  Clock,
   Coffee,
   Mail,
   MessageSquare,
   MoreHorizontal,
   Phone,
-  Trash2,
   Video,
 } from "@/lib/icons"
 import { cn } from "@/lib/utils"
-import { AddInteractionDialog } from "./AddInteractionDialog"
 
 type ChannelTone =
   | "blue"
@@ -97,7 +98,8 @@ export const DraftsList = () => {
   const { showSuccess, showError } = useCustomToast()
 
   const confirmMutation = useMutation({
-    mutationFn: (id: string) => InteractionsService.confirmDraft({ interactionId: id }),
+    mutationFn: (id: string) =>
+      InteractionsService.confirmDraft({ interactionId: id }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["drafts"] })
       queryClient.invalidateQueries({ queryKey: ["interactions"] })
@@ -109,7 +111,8 @@ export const DraftsList = () => {
   })
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => InteractionsService.deleteInteraction({ interactionId: id }),
+    mutationFn: (id: string) =>
+      InteractionsService.deleteInteraction({ interactionId: id }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["drafts"] })
       showSuccess("Draft deleted")
@@ -164,7 +167,8 @@ export const DraftsList = () => {
                           {formatTime(ix.occurred_at)}
                           {ix.draft_source && (
                             <Badge variant="outline" className="ml-2">
-                              {draftSourceLabels[ix.draft_source] || ix.draft_source}
+                              {draftSourceLabels[ix.draft_source] ||
+                                ix.draft_source}
                             </Badge>
                           )}
                         </div>

@@ -14,8 +14,8 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic
-revision = "f6a7b8c9d0e1"
-down_revision = "a7b8c9d0e1f2"
+revision = "add_interaction_drafts"
+down_revision = "add_do_not_contact_fields"
 branch_labels = None
 depends_on = None
 
