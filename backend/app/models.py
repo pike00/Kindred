@@ -131,6 +131,7 @@ class InteractionChannel(str, enum.Enum):
     VIDEO = "video"
     SOCIAL = "social"
     OTHER = "other"
+    SKIP = "skip"
 
 
 class ReminderFrequency(str, enum.Enum):
@@ -427,6 +428,16 @@ class ContactBase(SQLModel):
         le=3650,
         description="Target days between interactions; drives losing-touch cadence.",
     )
+
+    do_not_contact: bool = Field(
+        default=False,
+        description="If True, suppress all contact reminders and actions for this contact.",
+    )
+    do_not_contact_reason: str | None = Field(
+        default=None,
+        max_length=500,
+        description="Optional reason why the contact was marked do-not-contact.",
+    )
     # Kanban stage for relationship tracking
     stage: str | None = Field(
         default=None,
@@ -458,6 +469,8 @@ class ContactUpdate(SQLModel):
     deceased_at: date | None = None
     contact_frequency_days: int | None = None
     stage: str | None = None
+    do_not_contact: bool | None = None
+    do_not_contact_reason: str | None = None
     tag_ids: list[uuid.UUID] | None = None
     group_ids: list[uuid.UUID] | None = None
 
@@ -534,12 +547,24 @@ class ContactPublic(ContactBase):
     created_at: datetime
     updated_at: datetime
     deleted_at: datetime | None = None
+    contact_frequency_days: int | None = None
+    do_not_contact: bool = False
+    do_not_contact_reason: str | None = None
     tags: list[TagPublic] = []
     groups: list[GroupPublic] = []
 
 
 class ContactsPublic(SQLModel):
     data: list[ContactPublic]
+    count: int
+
+
+class OverdueContactPublic(ContactPublic):
+    days_overdue: int | None = None
+
+
+class OverdueContactsPublic(SQLModel):
+    data: list[OverdueContactPublic]
     count: int
 
 

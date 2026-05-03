@@ -688,6 +688,25 @@ export const ContactCreateSchema = {
             title: 'Contact Frequency Days',
             description: 'Target days between interactions; drives losing-touch cadence.'
         },
+        do_not_contact: {
+            type: 'boolean',
+            title: 'Do Not Contact',
+            description: 'If True, suppress all contact reminders and actions for this contact.',
+            default: false
+        },
+        do_not_contact_reason: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 500
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Do Not Contact Reason',
+            description: 'Optional reason why the contact was marked do-not-contact.'
+        },
         stage: {
             anyOf: [
                 {
@@ -1066,16 +1085,29 @@ export const ContactPublicSchema = {
         contact_frequency_days: {
             anyOf: [
                 {
-                    type: 'integer',
-                    maximum: 3650,
-                    minimum: 1
+                    type: 'integer'
                 },
                 {
                     type: 'null'
                 }
             ],
-            title: 'Contact Frequency Days',
-            description: 'Target days between interactions; drives losing-touch cadence.'
+            title: 'Contact Frequency Days'
+        },
+        do_not_contact: {
+            type: 'boolean',
+            title: 'Do Not Contact',
+            default: false
+        },
+        do_not_contact_reason: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Do Not Contact Reason'
         },
         stage: {
             anyOf: [
@@ -1127,6 +1159,18 @@ export const ContactPublicSchema = {
             type: 'string',
             format: 'date-time',
             title: 'Updated At'
+        },
+        deleted_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Deleted At'
         },
         tags: {
             items: {
@@ -1342,6 +1386,28 @@ export const ContactUpdateSchema = {
                 }
             ],
             title: 'Stage'
+        },
+        do_not_contact: {
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Do Not Contact'
+        },
+        do_not_contact_reason: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Do Not Contact Reason'
         },
         tag_ids: {
             anyOf: [
@@ -2398,7 +2464,7 @@ export const InteractionAttendeeSummarySchema = {
 
 export const InteractionChannelSchema = {
     type: 'string',
-    enum: ['call', 'in_person', 'text', 'email', 'video', 'social', 'other'],
+    enum: ['call', 'in_person', 'text', 'email', 'video', 'social', 'other', 'skip'],
     title: 'InteractionChannel'
 } as const;
 
@@ -3329,6 +3395,318 @@ export const NotesPublicSchema = {
     title: 'NotesPublic'
 } as const;
 
+export const OverdueContactPublicSchema = {
+    properties: {
+        first_name: {
+            type: 'string',
+            maxLength: 255,
+            minLength: 1,
+            title: 'First Name',
+            description: 'Given name; required.'
+        },
+        last_name: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Last Name',
+            description: 'Family name.'
+        },
+        middle_name: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Middle Name',
+            description: 'Middle name or initial.'
+        },
+        prefix: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 50
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Prefix',
+            description: 'Honorific like Dr., Mr., Ms.'
+        },
+        suffix: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 50
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Suffix',
+            description: 'Suffix like Jr., PhD.'
+        },
+        nickname: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Nickname',
+            description: 'Preferred or informal name.'
+        },
+        company: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Company',
+            description: 'Organization name.'
+        },
+        department: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Department',
+            description: 'Department within the company.'
+        },
+        title: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Title',
+            description: 'Job title.'
+        },
+        birthday: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Birthday',
+            description: 'Date of birth; used for milestone and birthday reminders.'
+        },
+        how_we_met: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 2000
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'How We Met',
+            description: 'Short story of how the introduction happened.'
+        },
+        is_favorite: {
+            type: 'boolean',
+            title: 'Is Favorite',
+            description: 'Pinned to the top of contact lists.',
+            default: false
+        },
+        is_archived: {
+            type: 'boolean',
+            title: 'Is Archived',
+            description: 'Soft-deleted; excluded from default lists.',
+            default: false
+        },
+        is_deceased: {
+            type: 'boolean',
+            title: 'Is Deceased',
+            description: 'Marks the contact as deceased.',
+            default: false
+        },
+        deceased_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Deceased At',
+            description: 'Date the contact passed away.'
+        },
+        contact_frequency_days: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Contact Frequency Days'
+        },
+        do_not_contact: {
+            type: 'boolean',
+            title: 'Do Not Contact',
+            default: false
+        },
+        do_not_contact_reason: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Do Not Contact Reason'
+        },
+        stage: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 100
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Stage',
+            description: 'Kanban stage like Active, Dormant, Lost.'
+        },
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        avatar_url: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Avatar Url'
+        },
+        last_contacted_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Last Contacted At'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        },
+        updated_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Updated At'
+        },
+        deleted_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Deleted At'
+        },
+        tags: {
+            items: {
+                '$ref': '#/components/schemas/TagPublic'
+            },
+            type: 'array',
+            title: 'Tags',
+            default: []
+        },
+        groups: {
+            items: {
+                '$ref': '#/components/schemas/GroupPublic'
+            },
+            type: 'array',
+            title: 'Groups',
+            default: []
+        },
+        days_overdue: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Days Overdue'
+        }
+    },
+    type: 'object',
+    required: ['first_name', 'id', 'avatar_url', 'last_contacted_at', 'created_at', 'updated_at'],
+    title: 'OverdueContactPublic'
+} as const;
+
+export const OverdueContactsPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/OverdueContactPublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'OverdueContactsPublic'
+} as const;
+
 export const PetCreateSchema = {
     properties: {
         name: {
@@ -3503,6 +3881,31 @@ export const PetUpdateSchema = {
     },
     type: 'object',
     title: 'PetUpdate'
+} as const;
+
+export const PrivateUserCreateSchema = {
+    properties: {
+        email: {
+            type: 'string',
+            title: 'Email'
+        },
+        password: {
+            type: 'string',
+            title: 'Password'
+        },
+        full_name: {
+            type: 'string',
+            title: 'Full Name'
+        },
+        is_verified: {
+            type: 'boolean',
+            title: 'Is Verified',
+            default: false
+        }
+    },
+    type: 'object',
+    required: ['email', 'password', 'full_name'],
+    title: 'PrivateUserCreate'
 } as const;
 
 export const RelationshipCreateSchema = {

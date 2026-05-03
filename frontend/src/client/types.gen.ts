@@ -195,6 +195,14 @@ export type ContactCreate = {
      */
     contact_frequency_days?: (number | null);
     /**
+     * If True, suppress all contact reminders and actions for this contact.
+     */
+    do_not_contact?: boolean;
+    /**
+     * Optional reason why the contact was marked do-not-contact.
+     */
+    do_not_contact_reason?: (string | null);
+    /**
      * Kanban stage like Active, Dormant, Lost.
      */
     stage?: (string | null);
@@ -322,10 +330,9 @@ export type ContactPublic = {
      * Date the contact passed away.
      */
     deceased_at?: (string | null);
-    /**
-     * Target days between interactions; drives losing-touch cadence.
-     */
     contact_frequency_days?: (number | null);
+    do_not_contact?: boolean;
+    do_not_contact_reason?: (string | null);
     /**
      * Kanban stage like Active, Dormant, Lost.
      */
@@ -335,6 +342,7 @@ export type ContactPublic = {
     last_contacted_at: (string | null);
     created_at: string;
     updated_at: string;
+    deleted_at?: (string | null);
     tags?: Array<TagPublic>;
     groups?: Array<GroupPublic>;
 };
@@ -362,6 +370,8 @@ export type ContactUpdate = {
     deceased_at?: (string | null);
     contact_frequency_days?: (number | null);
     stage?: (string | null);
+    do_not_contact?: (boolean | null);
+    do_not_contact_reason?: (string | null);
     tag_ids?: (Array<(string)> | null);
     group_ids?: (Array<(string)> | null);
 };
@@ -657,7 +667,7 @@ export type InteractionAttendeeSummary = {
     avatar_url?: (string | null);
 };
 
-export type InteractionChannel = 'call' | 'in_person' | 'text' | 'email' | 'video' | 'social' | 'other';
+export type InteractionChannel = 'call' | 'in_person' | 'text' | 'email' | 'video' | 'social' | 'other' | 'skip';
 
 export type InteractionCreate = {
     /**
@@ -939,6 +949,90 @@ export type NoteUpdate = {
     body?: (string | null);
 };
 
+export type OverdueContactPublic = {
+    /**
+     * Given name; required.
+     */
+    first_name: string;
+    /**
+     * Family name.
+     */
+    last_name?: (string | null);
+    /**
+     * Middle name or initial.
+     */
+    middle_name?: (string | null);
+    /**
+     * Honorific like Dr., Mr., Ms.
+     */
+    prefix?: (string | null);
+    /**
+     * Suffix like Jr., PhD.
+     */
+    suffix?: (string | null);
+    /**
+     * Preferred or informal name.
+     */
+    nickname?: (string | null);
+    /**
+     * Organization name.
+     */
+    company?: (string | null);
+    /**
+     * Department within the company.
+     */
+    department?: (string | null);
+    /**
+     * Job title.
+     */
+    title?: (string | null);
+    /**
+     * Date of birth; used for milestone and birthday reminders.
+     */
+    birthday?: (string | null);
+    /**
+     * Short story of how the introduction happened.
+     */
+    how_we_met?: (string | null);
+    /**
+     * Pinned to the top of contact lists.
+     */
+    is_favorite?: boolean;
+    /**
+     * Soft-deleted; excluded from default lists.
+     */
+    is_archived?: boolean;
+    /**
+     * Marks the contact as deceased.
+     */
+    is_deceased?: boolean;
+    /**
+     * Date the contact passed away.
+     */
+    deceased_at?: (string | null);
+    contact_frequency_days?: (number | null);
+    do_not_contact?: boolean;
+    do_not_contact_reason?: (string | null);
+    /**
+     * Kanban stage like Active, Dormant, Lost.
+     */
+    stage?: (string | null);
+    id: string;
+    avatar_url: (string | null);
+    last_contacted_at: (string | null);
+    created_at: string;
+    updated_at: string;
+    deleted_at?: (string | null);
+    tags?: Array<TagPublic>;
+    groups?: Array<GroupPublic>;
+    days_overdue?: (number | null);
+};
+
+export type OverdueContactsPublic = {
+    data: Array<OverdueContactPublic>;
+    count: number;
+};
+
 export type PetCreate = {
     /**
      * Pet's name.
@@ -985,6 +1079,13 @@ export type PetUpdate = {
     species?: (string | null);
     breed?: (string | null);
     notes?: (string | null);
+};
+
+export type PrivateUserCreate = {
+    email: string;
+    password: string;
+    full_name: string;
+    is_verified?: boolean;
 };
 
 export type RelationshipCreate = {
@@ -1320,9 +1421,11 @@ export type ContactFieldsDeleteContactFieldResponse = (unknown);
 export type ContactsListContactsData = {
     groupId?: (string | null);
     ids?: (Array<(string)> | null);
+    includeDeleted?: boolean;
     isArchived?: (boolean | null);
     isFavorite?: (boolean | null);
     limit?: number;
+    onlyDeleted?: boolean;
     search?: (string | null);
     skip?: number;
     stage?: (string | null);
@@ -1343,6 +1446,19 @@ export type ContactsListLosingTouchData = {
 
 export type ContactsListLosingTouchResponse = (ContactsPublic);
 
+export type ContactsListOverdueContactsData = {
+    limit?: number;
+    offset?: number;
+};
+
+export type ContactsListOverdueContactsResponse = (OverdueContactsPublic);
+
+export type ContactsSkipContactData = {
+    contactId: string;
+};
+
+export type ContactsSkipContactResponse = (ContactPublic);
+
 export type ContactsGetContactData = {
     contactId: string;
 };
@@ -1361,6 +1477,12 @@ export type ContactsDeleteContactData = {
 };
 
 export type ContactsDeleteContactResponse = (unknown);
+
+export type ContactsRestoreContactData = {
+    contactId: string;
+};
+
+export type ContactsRestoreContactResponse = (ContactPublic);
 
 export type CustomFieldsListFieldDefinitionsResponse = (unknown);
 
@@ -1674,6 +1796,12 @@ export type PetsDeletePetData = {
 };
 
 export type PetsDeletePetResponse = (unknown);
+
+export type PrivateCreateUserData = {
+    requestBody: PrivateUserCreate;
+};
+
+export type PrivateCreateUserResponse = (UserPublic);
 
 export type RelationshipsListRelationshipsData = {
     contactId: string;
