@@ -1,17 +1,30 @@
-import { useMutation, useQuery } from "@tanstack/react-query"
-import { useRef, useState } from "react"
+import { useMutation } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
-import { IcalService, OpenAPI } from "@/client"
-import { LoadingButton } from "@/components/ui/loading-button"
-import useCustomToast from "@/hooks/useCustomToast"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Button } from "@/components/ui/button"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { CalendarIcon, UploadIcon, CheckIcon, XIcon, InfoIcon } from "lucide-react"
 import { format } from "date-fns"
+import { CalendarIcon, CheckIcon, InfoIcon, UploadIcon } from "lucide-react"
+import { useRef, useState } from "react"
+import { IcalService } from "@/client"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
+import { LoadingButton } from "@/components/ui/loading-button"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import useCustomToast from "@/hooks/useCustomToast"
 
 interface Proposal {
   uid: string | null
@@ -38,6 +51,7 @@ interface UploadResponse {
   skipped_future: number
   parse_errors: string[]
   total_contacts: number
+  already_imported: boolean
 }
 
 interface ConfirmResponse {
@@ -53,13 +67,14 @@ export default function IcalImport() {
   const [proposals, setProposals] = useState<Proposal[]>([])
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set())
   const [uploadResult, setUploadResult] = useState<UploadResponse | null>(null)
-  const [confirmResult, setConfirmResult] = useState<ConfirmResponse | null>(null)
+  const [confirmResult, setConfirmResult] = useState<ConfirmResponse | null>(
+    null,
+  )
   const { showSuccessToast, showErrorToast } = useCustomToast()
-  const navigate = useNavigate()
+  const _navigate = useNavigate()
 
   const uploadMutation = useMutation({
-    mutationFn: (file: File) =>
-      IcalService.uploadIcal({ formData: { file } }),
+    mutationFn: (file: File) => IcalService.uploadIcal({ formData: { file } }),
     onSuccess: (data) => {
       const result = data as unknown as UploadResponse
       setUploadResult(result)
@@ -80,15 +95,17 @@ export default function IcalImport() {
       const result = data as unknown as ConfirmResponse
       setConfirmResult(result)
       showSuccessToast(
-        `Created ${result.created_interactions} interaction(s) and ${result.created_life_events} life event(s)`
+        `Created ${result.created_interactions} interaction(s) and ${result.created_life_events} life event(s)`,
       )
     },
     onError: (err) =>
-      showErrorToast(err instanceof Error ? err.message : "Confirmation failed"),
+      showErrorToast(
+        err instanceof Error ? err.message : "Confirmation failed",
+      ),
   })
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] ?? null
+    const file = e.target.files && e.target.files[0] ?? null
     setSelectedFile(file)
     setProposals([])
     setUploadResult(null)
@@ -124,7 +141,10 @@ export default function IcalImport() {
     }
   }
 
-  const getClassificationBadge = (classification: string, eventType: string) => {
+  const getClassificationBadge = (
+    classification: string,
+    _eventType: string,
+  ) => {
     if (classification === "interaction") {
       return (
         <Badge variant="default" className="bg-blue-100 text-blue-800">
@@ -146,7 +166,6 @@ export default function IcalImport() {
     } catch {
       return dateStr
     }
-  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -154,9 +173,9 @@ export default function IcalImport() {
         <div>
           <h2 className="text-lg font-semibold">Import iCal File</h2>
           <p className="text-sm text-muted-foreground">
-            Upload a <code>.ics</code> calendar export file to backfill historical
-            interactions and life events. Events are matched to your contacts and
-            require confirmation before importing.
+            Upload a <code>.ics</code> calendar export file to backfill
+            historical interactions and life events. Events are matched to your
+            contacts and require confirmation before importing.
           </p>
         </div>
 
@@ -170,26 +189,35 @@ export default function IcalImport() {
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <div
+              role="button"
+              tabIndex={0}
               className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:bg-muted/50 transition-colors"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => fileInputRef.current && fileInputRef.current.click()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  fileInputRef.current && fileInputRef.current.click();
+                }
+              }
               onDragOver={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
+                e.preventDefault();
+                e.stopPropagation();
               }}
               onDrop={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                const file = e.dataTransfer.files?.[0]
+                e.preventDefault();
+                e.stopPropagation();
+                const file = e.dataTransfer.files && e.dataTransfer.files[0];
                 if (file) {
-                  setSelectedFile(file)
-                  setProposals([])
-                  setUploadResult(null)
+                  setSelectedFile(file);
+                  setProposals([]);
+                  setUploadResult(null);
                 }
-              }}
+              }
             >
               <UploadIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
               <p className="text-sm text-muted-foreground mb-2">
-                Drag and drop your <code>.ics</code> file here, or click to browse
+                Drag and drop your <code>.ics</code> file here, or click to
+                browse
               </p>
               <input
                 ref={fileInputRef}
@@ -204,7 +232,9 @@ export default function IcalImport() {
               <div className="flex items-center justify-between gap-2 p-3 bg-muted rounded-md">
                 <div className="flex items-center gap-2">
                   <CalendarIcon className="h-4 w-4" />
-                  <span className="text-sm font-medium">{selectedFile.name}</span>
+                  <span className="text-sm font-medium">
+                    {selectedFile.name}
+                  </span>
                   <span className="text-xs text-muted-foreground">
                     ({(selectedFile.size / 1024).toFixed(1)} KB)
                   </span>
@@ -232,18 +262,17 @@ export default function IcalImport() {
                 {uploadResult.skipped_future} future event(s) skipped.
                 {uploadResult.total_contacts === 0 && (
                   <span className="text-yellow-600">
-                    {" "}No contacts found for matching.
+                    {" "}
+                    No contacts found for matching.
                   </span>
                 )}
               </p>
             </div>
             <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={toggleAll}
-              >
-                {selectedRows.size === proposals.length ? "Deselect All" : "Select All"}
+              <Button variant="outline" size="sm" onClick={toggleAll}>
+                {selectedRows.size === proposals.length
+                  ? "Deselect All"
+                  : "Select All"}
               </Button>
               <LoadingButton
                 size="sm"
@@ -262,8 +291,8 @@ export default function IcalImport() {
               <InfoIcon className="h-4 w-4" />
               <AlertTitle>Future Events Skipped</AlertTitle>
               <AlertDescription>
-                {uploadResult.skipped_future} event(s) in the future were skipped
-                (backfill only imports past events).
+                {uploadResult.skipped_future} event(s) in the future were
+                skipped (backfill only imports past events).
               </AlertDescription>
             </Alert>
           )}
@@ -301,7 +330,10 @@ export default function IcalImport() {
                 </TableHeader>
                 <TableBody>
                   {proposals.map((prop, index) => (
-                    <TableRow key={index} className={!selectedRows.has(index) ? "opacity-50" : ""}>
+                    <TableRow
+                      key={index}
+                      className={!selectedRows.has(index) ? "opacity-50" : ""}
+                    >
                       <TableCell>
                         <Checkbox
                           checked={selectedRows.has(index)}
@@ -310,7 +342,9 @@ export default function IcalImport() {
                       </TableCell>
                       <TableCell>
                         <div>
-                          <div className="font-medium">{prop.summary || "Untitled Event"}</div>
+                          <div className="font-medium">
+                            {prop.summary || "Untitled Event"}
+                          </div>
                           {prop.description && (
                             <div className="text-xs text-muted-foreground line-clamp-2">
                               {prop.description}
@@ -319,7 +353,10 @@ export default function IcalImport() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        {getClassificationBadge(prop.classification, prop.event_type)}
+                        {getClassificationBadge(
+                          prop.classification,
+                          prop.event_type,
+                        )}
                         <div className="text-xs text-muted-foreground mt-1">
                           {prop.event_type}
                         </div>
@@ -328,8 +365,15 @@ export default function IcalImport() {
                         {formatDate(prop.occurred_at)}
                       </TableCell>
                       <TableCell>
+                        {prop.already_imported && (
+                          <Badge variant="outline" className="text-yellow-600">
+                            Already imported
+                          </Badge>
+                        )}
                         {prop.attendees.length === 0 ? (
-                          <span className="text-xs text-muted-foreground">No attendees</span>
+                          <span className="text-xs text-muted-foreground">
+                            No attendees
+                          </span>
                         ) : (
                           <div className="flex flex-col gap-1">
                             {prop.attendees.map((att, i) => (
@@ -340,14 +384,18 @@ export default function IcalImport() {
                                       {att.matches[0].contact_name}
                                     </span>
                                     <span className="text-xs text-muted-foreground ml-2">
-                                      ({Math.round(att.matches[0].confidence)}% match)
+                                      ({Math.round(att.matches[0].confidence)}%
+                                      match)
                                     </span>
                                   </div>
                                 ) : (
                                   <span className="text-xs text-muted-foreground">
-                                    {att.attendee.cn || att.attendee.email || "Unknown"}
-                                    {" "}
-                                    <span className="text-yellow-600">(no match)</span>
+                                    {att.attendee.cn ||
+                                      att.attendee.email ||
+                                      "Unknown"}{" "}
+                                    <span className="text-yellow-600">
+                                      (no match)
+                                    </span>
                                   </span>
                                 )}
                               </div>
@@ -369,8 +417,8 @@ export default function IcalImport() {
             <Alert>
               <AlertTitle>No Events Found</AlertTitle>
               <AlertDescription>
-                No past events were found in the uploaded file. Future events are
-                skipped during backfill.
+                No past events were found in the uploaded file. Future events
+                are skipped during backfill.
               </AlertDescription>
             </Alert>
           )}
@@ -386,15 +434,21 @@ export default function IcalImport() {
               <div className="flex flex-col gap-1 mt-2">
                 <div>
                   Created{" "}
-                  <span className="font-medium">{confirmResult.created_interactions}</span>{" "}
+                  <span className="font-medium">
+                    {confirmResult.created_interactions}
+                  </span>{" "}
                   interaction(s) and{" "}
-                  <span className="font-medium">{confirmResult.created_life_events}</span>{" "}
+                  <span className="font-medium">
+                    {confirmResult.created_life_events}
+                  </span>{" "}
                   life event(s).
                 </div>
                 {confirmResult.skipped_duplicates > 0 && (
                   <div>
                     Skipped{" "}
-                    <span className="font-medium">{confirmResult.skipped_duplicates}</span>{" "}
+                    <span className="font-medium">
+                      {confirmResult.skipped_duplicates}
+                    </span>{" "}
                     duplicate(s).
                   </div>
                 )}
@@ -403,7 +457,9 @@ export default function IcalImport() {
                     <p className="font-medium text-destructive">Errors:</p>
                     <ul className="list-disc pl-5">
                       {confirmResult.errors.map((err, i) => (
-                        <li key={i} className="text-destructive">{err}</li>
+                        <li key={i} className="text-destructive">
+                          {err}
+                        </li>
                       ))}
                     </ul>
                   </div>

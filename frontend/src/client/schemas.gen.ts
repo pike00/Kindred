@@ -642,6 +642,19 @@ export const AddressUpdateSchema = {
     title: 'AddressUpdate'
 } as const;
 
+export const Body_ical_upload_icalSchema = {
+    properties: {
+        file: {
+            type: 'string',
+            format: 'binary',
+            title: 'File'
+        }
+    },
+    type: 'object',
+    required: ['file'],
+    title: 'Body_ical-upload_ical'
+} as const;
+
 export const Body_import_export_import_vcardSchema = {
     properties: {
         file: {

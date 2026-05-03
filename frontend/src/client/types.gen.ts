@@ -162,6 +162,10 @@ export type APIKeysPublic = {
     count: number;
 };
 
+export type Body_ical_upload_ical = {
+    file: (Blob | File);
+};
+
 export type Body_import_export_import_vcard = {
     file: (Blob | File);
 };
@@ -1785,6 +1789,20 @@ export type GroupsDeleteGroupData = {
 
 export type GroupsDeleteGroupResponse = (unknown);
 
+export type IcalUploadIcalData = {
+    formData: Body_ical_upload_ical;
+};
+
+export type IcalUploadIcalResponse = (unknown);
+
+export type IcalConfirmIcalImportData = {
+    requestBody: Array<{
+        [key: string]: unknown;
+    }>;
+};
+
+export type IcalConfirmIcalImportResponse = (unknown);
+
 export type ImportExportImportVcardData = {
     formData: Body_import_export_import_vcard;
 };
@@ -2187,72 +2205,3 @@ export type WebhooksInboundWebhookData = {
 };
 
 export type WebhooksInboundWebhookResponse = (unknown);
-
-// Ical types
-export type IcalUploadIcalData = {
-    formData: {
-        file: File;
-    };
-};
-
-export type IcalUploadIcalResponse = {
-    proposals: Array<{
-        uid: string | null;
-        summary: string;
-        description: string | null;
-        occurred_at: string | null;
-        attendees: Array<{
-            attendee: {
-                email: string | null;
-                cn: string | null;
-                role: string | null;
-            };
-            matches: Array<{
-                contact_id: string;
-                contact_name: string;
-                confidence: number;
-                match_method: string;
-            }>;
-        }>;
-        classification: string;
-        event_type: string;
-        channel: string | null;
-        skipped: boolean;
-    }>;
-    skipped_future: number;
-    parse_errors: string[];
-    total_contacts: number;
-};
-
-export type IcalConfirmIcalImportData = {
-    requestBody: Array<{
-        uid: string | null;
-        summary: string;
-        description: string | null;
-        occurred_at: string | null;
-        attendees: Array<{
-            attendee: {
-                email: string | null;
-                cn: string | null;
-                role: string | null;
-            };
-            matches: Array<{
-                contact_id: string;
-                contact_name: string;
-                confidence: number;
-                match_method: string;
-            }>;
-        }>;
-        classification: string;
-        event_type: string;
-        channel: string | null;
-        skipped: boolean;
-    }>;
-};
-
-export type IcalConfirmIcalImportResponse = {
-    created_interactions: number;
-    created_life_events: number;
-    skipped_duplicates: number;
-    errors: string[];
-};

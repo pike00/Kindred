@@ -1,7 +1,6 @@
 """iCal importer routes for uploading and confirming calendar event imports."""
 
-import re
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, File, UploadFile
@@ -14,12 +13,10 @@ from app.models import (
     Contact,
     ContactField,
     ContactFieldType,
+    IcalImportLog,
     Interaction,
     InteractionChannel,
-    InteractionCreate,
     LifeEvent,
-    LifeEventCreate,
-    User,
 )
 
 router = APIRouter(prefix="/ical", tags=["ical"])
@@ -122,7 +119,12 @@ def _classify_event(summary: str, description: str | None, attendee_count: int) 
         }
 
     # Anniversary patterns
-    anniversary_keywords = ["anniversary", "anniv", "wedding anniversary", "work anniversary"]
+    anniversary_keywords = [
+        "anniversary",
+        "anniv",
+        "wedding anniversary",
+        "work anniversary",
+    ]
     if any(kw in combined for kw in anniversary_keywords):
         return {
             "event_type": "anniversary",
@@ -132,9 +134,22 @@ def _classify_event(summary: str, description: str | None, attendee_count: int) 
 
     # Meeting keywords → Interaction
     meeting_keywords = [
-        "meeting", "call", "sync", "1:1", "1-1", "one on one",
-        "standup", "stand-up", "review", "interview", "discussion",
-        "catch-up", "catchup", "coffee chat", "lunch", "dinner",
+        "meeting",
+        "call",
+        "sync",
+        "1:1",
+        "1-1",
+        "one on one",
+        "standup",
+        "stand-up",
+        "review",
+        "interview",
+        "discussion",
+        "catch-up",
+        "catchup",
+        "coffee chat",
+        "lunch",
+        "dinner",
     ]
     if any(kw in combined for kw in meeting_keywords):
         # Infer channel
@@ -167,7 +182,10 @@ def _infer_channel(summary: str, full_text: str) -> str | None:
         return "call"
     if any(kw in full_text for kw in ["zoom", "meet", "teams", "video", "faceTime"]):
         return "video"
-    if any(kw in full_text for kw in ["lunch", "dinner", "coffee", "in person", "face to face"]):
+    if any(
+        kw in full_text
+        for kw in ["lunch", "dinner", "coffee", "in person", "face to face"]
+    ):
         return "in_person"
     if any(kw in full_text for kw in ["text", "sms", "chat", "message"]):
         return "text"
@@ -292,8 +310,11 @@ async def upload_ical(
     ).all()
 
     # Get existing UIDs to detect duplicates
-    # We'll store UID in a temporary table or check against a proposed list
-    # For now, we'll return proposals and handle dedup on confirm
+    existing_uids = set()
+    for row in session.exec(
+        select(IcalImportLog.uid).where(IcalImportLog.owner_id == current_user.id)
+    ).all():
+        existing_uids.add(row[0])
 
     proposals = []
     skipped_future = 0
@@ -307,7 +328,9 @@ async def upload_ical(
 
         # Extract basic event info
         summary = str(vevent.get("SUMMARY", ""))
-        description = str(vevent.get("DESCRIPTION", "")) if vevent.get("DESCRIPTION") else None
+        description = (
+            str(vevent.get("DESCRIPTION", "")) if vevent.get("DESCRIPTION") else None
+        )
         dtstart = _parse_datetime(vevent.get("DTSTART"))
         uid = _get_vevent_uid(vevent)
 
@@ -322,18 +345,20 @@ async def upload_ical(
 
         for att in attendees:
             matches = _match_attendee_to_contacts(att, contacts, session)
-            attendee_matches.append({
-                "attendee": att,
-                "matches": [
-                    {
-                        "contact_id": str(m[0].id),
-                        "contact_name": f"{m[0].first_name} {m[0].last_name or ''}".strip(),
-                        "confidence": m[1],
-                        "match_method": m[2],
-                    }
-                    for m in matches
-                ],
-            })
+            attendee_matches.append(
+                {
+                    "attendee": att,
+                    "matches": [
+                        {
+                            "contact_id": str(m[0].id),
+                            "contact_name": f"{m[0].first_name} {m[0].last_name or ''}".strip(),
+                            "confidence": m[1],
+                            "match_method": m[2],
+                        }
+                        for m in matches
+                    ],
+                }
+            )
 
         # Classify event
         classification = _classify_event(summary, description, len(attendees))
@@ -349,6 +374,7 @@ async def upload_ical(
             "event_type": classification["event_type"],
             "channel": classification.get("channel"),
             "skipped": False,
+            "already_imported": uid in existing_uids if uid else False,
         }
         proposals.append(proposal)
 
@@ -389,12 +415,26 @@ async def confirm_ical_import(
             skipped_duplicates += 1
             continue
 
-        # Check if this UID was already imported (would need a dedup table)
-        # For now, we'll proceed and let the user handle duplicates
+        # Check if this UID was already imported
+        if uid and uid in processed_uids:
+            skipped_duplicates += 1
+            continue
+        if uid:
+            existing = session.exec(
+                select(IcalImportLog).where(
+                    (IcalImportLog.owner_id == current_user.id)
+                    & (IcalImportLog.uid == uid)
+                )
+            ).first()
+            if existing:
+                skipped_duplicates += 1
+                continue
 
         occurred_at_str = prop.get("occurred_at")
         if not occurred_at_str:
-            errors.append(f"Missing occurred_at for event: {prop.get('summary', 'Unknown')}")
+            errors.append(
+                f"Missing occurred_at for event: {prop.get('summary', 'Unknown')}"
+            )
             continue
 
         try:
@@ -413,7 +453,9 @@ async def confirm_ical_import(
                 contact_ids.append(matches[0]["contact_id"])
 
         if not contact_ids:
-            errors.append(f"No contacts matched for event: {prop.get('summary', 'Unknown')}")
+            errors.append(
+                f"No contacts matched for event: {prop.get('summary', 'Unknown')}"
+            )
             continue
 
         try:
@@ -443,6 +485,7 @@ async def confirm_ical_import(
 
                 # Add attendees
                 from app.models import InteractionAttendee
+
                 for cid in contact_ids:
                     ia = InteractionAttendee(
                         interaction_id=interaction.id,
@@ -472,12 +515,23 @@ async def confirm_ical_import(
 
             if uid:
                 processed_uids.add(uid)
+                # Log the import for future dedup
+                if uid:
+                    log = IcalImportLog(
+                        owner_id=current_user.id,
+                        uid=uid,
+                        contact_id=contact_ids[0] if contact_ids else None,
+                        event_type=classification,
+                    )
+                    session.add(log)
 
             session.commit()
 
         except Exception as e:
             session.rollback()
-            errors.append(f"Error creating record for {prop.get('summary', 'Unknown')}: {str(e)}")
+            errors.append(
+                f"Error creating record for {prop.get('summary', 'Unknown')}: {str(e)}"
+            )
 
     return {
         "created_interactions": created_interactions,
