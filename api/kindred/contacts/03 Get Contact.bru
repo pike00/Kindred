@@ -1,0 +1,15 @@
+meta {
+  name: Get Contact
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/api/v1/contacts/{{contact_id}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt_token}}
+}
