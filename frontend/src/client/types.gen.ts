@@ -828,6 +828,7 @@ export type JournalEntryCreate = {
      * Date the entry is about (may differ from created_at).
      */
     entry_date: string;
+    contact_ids?: (Array<(string)> | null);
 };
 
 export type JournalEntryPublic = {
@@ -846,12 +847,14 @@ export type JournalEntryPublic = {
     id: string;
     created_at: string;
     updated_at: string;
+    contact_ids?: Array<(string)>;
 };
 
 export type JournalEntryUpdate = {
     body?: (string | null);
     mood?: (string | null);
     entry_date?: (string | null);
+    contact_ids?: (Array<(string)> | null);
 };
 
 export type LifeEventCreate = {
@@ -1158,13 +1161,6 @@ export type PetUpdate = {
     species?: (string | null);
     breed?: (string | null);
     notes?: (string | null);
-};
-
-export type PrivateUserCreate = {
-    email: string;
-    password: string;
-    full_name: string;
-    is_verified?: boolean;
 };
 
 export type RelationshipCreate = {
@@ -1583,6 +1579,12 @@ export type ContactsRestoreContactData = {
 
 export type ContactsRestoreContactResponse = (ContactPublic);
 
+export type ContactsListContactReflectionsData = {
+    contactId: string;
+};
+
+export type ContactsListContactReflectionsResponse = (Array<JournalEntryPublic>);
+
 export type CustomFieldsListFieldDefinitionsResponse = (unknown);
 
 export type CustomFieldsCreateFieldDefinitionData = {
@@ -1906,12 +1908,6 @@ export type PetsDeletePetData = {
 };
 
 export type PetsDeletePetResponse = (unknown);
-
-export type PrivateCreateUserData = {
-    requestBody: PrivateUserCreate;
-};
-
-export type PrivateCreateUserResponse = (UserPublic);
 
 export type RelationshipsLookupInverseData = {
     type: string;
