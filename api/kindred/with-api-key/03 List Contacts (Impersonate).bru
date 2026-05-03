@@ -1,0 +1,25 @@
+meta {
+  name: List Contacts (API Key + Impersonate)
+  type: http
+  seq: 3
+}
+
+
+get {
+  url: {{base_url}}/api/v1/contacts/
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{api_key}}
+}
+
+headers {
+  X-On-Behalf-Of: {{impersonate_user_id}}
+}
+
+params:query {
+  skip: 0
+  limit: 20
+}

@@ -1,0 +1,34 @@
+meta {
+  name: Create API Key (with Impersonation)
+  type: http
+  seq: 4
+}
+
+
+post {
+  url: {{base_url}}/api/v1/users/me/api-keys/
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt_token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "janet-bot",
+    "can_impersonate": ["{{impersonate_user_id}}"]
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setEnvVar("api_key", res.body.plaintext_key);
+    bru.setEnvVar("api_key_id", res.body.id);
+  }
+}
