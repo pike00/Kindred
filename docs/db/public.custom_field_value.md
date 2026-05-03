@@ -76,6 +76,7 @@ erDiagram
   timestamp_with_time_zone deleted_at
   contactsource source
   varchar_500_ source_external_id
+  uuid organization_id FK
 }
 "public.custom_field_definition" {
   uuid id
