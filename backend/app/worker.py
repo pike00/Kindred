@@ -123,7 +123,9 @@ async def check_cadences(ctx: dict) -> None:
                 contact_now = _contact_now(contact.timezone)
                 # 9am in contact's local time, converted to UTC
                 try:
-                    local_tz = ZoneInfo(contact.timezone) if contact.timezone else timezone.utc
+                    local_tz = (
+                        ZoneInfo(contact.timezone) if contact.timezone else timezone.utc
+                    )
                 except Exception:
                     local_tz = timezone.utc
                 nine_am_local = contact_now.astimezone(local_tz).replace(
@@ -132,16 +134,16 @@ async def check_cadences(ctx: dict) -> None:
                 nine_am_utc = nine_am_local.astimezone(timezone.utc)
                 overdue = (now > deadline) and (now > nine_am_utc)
         if overdue:
-                name = f"{contact.first_name} {contact.last_name or ''}".strip()
-                try:
-                    apobj.notify(
-                        title=f"Losing touch: {name}",
-                        body=f"You haven't contacted {name} in over {contact.contact_frequency_days} days.",
-                    )
-                except Exception as e:
-                    logger.error(
-                        f"Failed to send cadence notification for contact {contact.id}: {e}"
-                    )
+            name = f"{contact.first_name} {contact.last_name or ''}".strip()
+            try:
+                apobj.notify(
+                    title=f"Losing touch: {name}",
+                    body=f"You haven't contacted {name} in over {contact.contact_frequency_days} days.",
+                )
+            except Exception as e:
+                logger.error(
+                    f"Failed to send cadence notification for contact {contact.id}: {e}"
+                )
 
 
 async def index_contact_in_search(

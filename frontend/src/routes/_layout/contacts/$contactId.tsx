@@ -178,7 +178,8 @@ function ContactDetailPage() {
             )}
             {contact.pronouns && (
               <span className="flex items-center gap-1">
-                <UserRoundSearch className="size-3.5" /> Pronouns: {contact.pronouns}
+                <UserRoundSearch className="size-3.5" /> Pronouns:{" "}
+                {contact.pronouns}
               </span>
             )}
 

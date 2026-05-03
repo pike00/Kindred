@@ -59,9 +59,9 @@ export const EditContactDialog = ({ contact }: EditContactDialogProps) => {
       how_we_met: contact.how_we_met || "",
       contact_frequency_days: contact.contact_frequency_days || 0,
       is_favorite: contact.is_favorite,
-        is_archived: contact.is_archived,
-        timezone: contact.timezone || "",
-        pronouns: contact.pronouns || "",
+      is_archived: contact.is_archived,
+      timezone: contact.timezone || "",
+      pronouns: contact.pronouns || "",
     },
   })
 

@@ -384,9 +384,7 @@ def test_delete_contact_is_soft_delete(
         params={"only_deleted": True},
     )
     assert r.status_code == 200
-    payload = next(
-        (c for c in r.json()["data"] if c["id"] == contact_id), None
-    )
+    payload = next((c for c in r.json()["data"] if c["id"] == contact_id), None)
     assert payload is not None
     assert payload["deleted_at"] is not None
 
@@ -523,7 +521,8 @@ def test_addresses_on_soft_deleted_contact_hidden(
         headers=superuser_token_headers,
     )
     assert r.status_code == 404
-}
+
+
 def test_create_contact_with_timezone_and_pronouns(
     client: TestClient, superuser_token_headers: dict[str, str]
 ) -> None:
@@ -573,8 +572,6 @@ def test_timezone_conversion(
     client: TestClient, superuser_token_headers: dict[str, str]
 ) -> None:
     """Test that timezone conversion works for reminder calculations."""
-    from datetime import datetime, timezone as tz
-    from zoneinfo import ZoneInfo
 
     # Create contact with timezone
     r = client.post(
@@ -619,4 +616,3 @@ def test_pronouns_in_contact_list(
     contacts = r.json()["data"]
     pronoun_contact = next(c for c in contacts if c["first_name"] == "PronounTest")
     assert pronoun_contact["pronouns"] == "he/him"
-
