@@ -4,10 +4,13 @@ import { TagsService } from "@/client"
 import { DataTable } from "@/components/Common/DataTable"
 import { EmptyState } from "@/components/Common/EmptyState"
 import { Tag } from "@/lib/icons"
+import { useSeedDemo } from "@/lib/seed"
 import { AddTagDialog } from "./AddTagDialog"
 import { columns } from "./columns"
 
 export const TagsList = () => {
+  const seedMutation = useSeedDemo()
+
   const { data } = useSuspenseQuery({
     queryKey: ["tags"],
     queryFn: () => TagsService.listTags(),
@@ -34,9 +37,10 @@ export const TagsList = () => {
                 <button
                   type="button"
                   className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3"
-                  disabled
+                  disabled={seedMutation.isPending}
+                  onClick={() => seedMutation.mutate({ count: 8 })}
                 >
-                  Seed demo tags
+                  {seedMutation.isPending ? "Seeding..." : "Seed demo tags"}
                 </button>
               </div>
             ) : (

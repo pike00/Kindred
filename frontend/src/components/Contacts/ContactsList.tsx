@@ -16,6 +16,7 @@ import {
   Star,
   Users,
 } from "@/lib/icons"
+import { useSeedDemo } from "@/lib/seed"
 import { cn } from "@/lib/utils"
 import { AddContactDialog } from "./AddContactDialog"
 
@@ -132,6 +133,8 @@ function ContactRow({ contact }: { contact: ContactPublic }) {
 }
 
 export const ContactsList = () => {
+  const seedMutation = useSeedDemo()
+
   const navigate = useNavigate({ from: "/contacts" })
   const { search: urlSearch } = useSearch({ from: "/_layout/contacts/" })
   const [search, setSearch] = useState(urlSearch ?? "")
@@ -204,7 +207,24 @@ export const ContactsList = () => {
           icon={Users}
           title="No contacts yet"
           description="Add your first contact to start tracking relationships."
-          action={<AddContactDialog />}
+          action={
+            import.meta.env.DEV ? (
+              <div className="flex flex-col items-center gap-2">
+                <AddContactDialog />
+                <p className="text-xs text-muted-foreground">or</p>
+                <button
+                  type="button"
+                  className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3"
+                  disabled={seedMutation.isPending}
+                  onClick={() => seedMutation.mutate({ count: 8 })}
+                >
+                  {seedMutation.isPending ? "Seeding..." : "Seed demo contacts"}
+                </button>
+              </div>
+            ) : (
+              <AddContactDialog />
+            )
+          }
         />
       )}
 
