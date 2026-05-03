@@ -196,13 +196,16 @@ def create_relationship(
     db_obj = Relationship.model_validate(relationship_in)
     session.add(db_obj)
     if inverse_type:
-        inverse_in = RelationshipCreate(
+        inverse = Relationship(
             contact_id=relationship_in.related_contact_id,
             related_contact_id=relationship_in.contact_id,
             relationship_type=inverse_type,
             notes=relationship_in.notes,
         )
-        session.add(Relationship.model_validate(inverse_in))
+        session.add(inverse)
+        session.flush()  # materialise IDs before cross-linking
+        db_obj.inverse_id = inverse.id
+        inverse.inverse_id = db_obj.id
     session.commit()
     session.refresh(db_obj)
     return db_obj
