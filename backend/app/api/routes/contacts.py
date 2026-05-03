@@ -21,6 +21,8 @@ from app.models import (
     ContactsPublic,
     ContactTag,
     ContactUpdate,
+    OverdueContactPublic,
+    OverdueContactsPublic,
 )
 
 logger = logging.getLogger(__name__)
@@ -103,6 +105,8 @@ def list_contacts(
     is_favorite: bool | None = None,
     is_archived: bool | None = None,
     stage: str | None = None,
+    include_deleted: bool = False,
+    only_deleted: bool = False,
     ids: list[uuid.UUID] | None = Query(default=None),
 ) -> Any:
     """List contacts with filtering.
@@ -110,9 +114,24 @@ def list_contacts(
     Pass `ids=<uuid>&ids=<uuid>` to fetch a specific batch of contacts (useful for
     hydrating references from other resources). When `ids` is provided, the default
     `is_archived=false` filter is lifted so callers can resolve archived rows too.
+
+    Soft-deleted contacts (``deleted_at`` set) are hidden by default. Pass
+    ``include_deleted=true`` to surface them alongside live rows, or
+    ``only_deleted=true`` to fetch the trash view exclusively.
     """
+    # Trash view implies surfacing deleted rows.
+    if only_deleted:
+        include_deleted = True
+
     # Build base query
-    statement = select(Contact).where(Contact.id.in_(visible_contact_ids(current_user)))
+    statement = select(Contact).where(
+        Contact.id.in_(
+            visible_contact_ids(current_user, include_deleted=include_deleted)
+        )
+    )
+
+    if only_deleted:
+        statement = statement.where(Contact.deleted_at.is_not(None))
 
     if ids is not None:
         if not ids:
@@ -222,6 +241,105 @@ def list_losing_touch(
     return ContactsPublic(data=result, count=len(overdue))
 
 
+@router.get("/overdue", response_model=OverdueContactsPublic)
+def list_overdue_contacts(
+    session: SessionDep,
+    current_user: CurrentUser,
+    limit: int = 50,
+    offset: int = 0,
+) -> Any:
+    """Return contacts sorted by days_overdue descending.
+
+    Days overdue = (now - last_contacted_at).days - contact_frequency_days.
+    Contacts with no frequency set or no interactions are excluded.
+    """
+    now = datetime.now(timezone.utc)
+    statement = (
+        select(Contact)
+        .where(
+            Contact.id.in_(visible_contact_ids(current_user)),
+            Contact.is_archived.is_(False),
+            Contact.contact_frequency_days.is_not(None),
+            Contact.do_not_contact.is_(False),
+        )
+        .options(
+            selectinload(Contact.tags),
+            selectinload(Contact.groups),
+        )
+    )
+    contacts = session.exec(statement).all()
+
+    overdue_data = []
+    for contact in contacts:
+        if contact.last_contacted_at is None:
+            # Never contacted - use created_at as reference or just use frequency
+            days_since = contact.contact_frequency_days or 0
+            days_overdue = days_since
+        else:
+            days_since = (now - contact.last_contacted_at).days
+            days_overdue = days_since - (contact.contact_frequency_days or 0)
+
+        if days_overdue >= 0:
+            overdue_data.append(
+                {
+                    "contact": contact,
+                    "days_overdue": days_overdue,
+                }
+            )
+
+    # Sort by days_overdue descending
+    overdue_data.sort(key=lambda x: x["days_overdue"], reverse=True)
+
+    # Apply pagination
+    total = len(overdue_data)
+    paginated = overdue_data[offset : offset + limit]
+
+    result = []
+    for item in paginated:
+        contact_public = OverdueContactPublic.model_validate(item["contact"])
+        contact_public.days_overdue = item["days_overdue"]
+        result.append(contact_public)
+
+    return OverdueContactsPublic(data=result, count=total)
+
+
+@router.patch("/{contact_id}/skip", response_model=ContactPublic)
+def skip_contact(
+    session: SessionDep,
+    current_user: CurrentUser,
+    contact_id: uuid.UUID,
+) -> Any:
+    """Skip a contact for 7 days by creating a SKIP interaction.
+
+    This advances the next due date without recording a user-facing interaction.
+    """
+    contact = session.get(Contact, contact_id)
+    if not contact or contact.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="Contact not found")
+    if contact.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
+    # Create a SKIP interaction
+    from app.crud import create_interaction
+    from app.models import InteractionCreate
+
+    skip_interaction = InteractionCreate(
+        attendee_ids=[contact_id],
+        channel="skip",
+        occurred_at=datetime.now(timezone.utc),
+        notes="Skipped for 7 days",
+    )
+
+    create_interaction(
+        session=session,
+        interaction_in=skip_interaction,
+        owner_id=current_user.id,
+    )
+
+    session.refresh(contact)
+    return ContactPublic.model_validate(contact)
+
+
 @router.get("/{contact_id}", response_model=ContactPublic)
 def get_contact(
     session: SessionDep,
@@ -307,7 +425,7 @@ def update_contact(
         )
     )
     contact = session.exec(statement).first()
-    if not contact:
+    if not contact or contact.deleted_at is not None:
         raise HTTPException(status_code=404, detail="Contact not found")
     if contact.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not enough permissions")
@@ -366,15 +484,57 @@ def delete_contact(
     contact_id: uuid.UUID,
     background_tasks: BackgroundTasks,
 ) -> Any:
-    """Delete a contact."""
+    """Soft-delete a contact.
+
+    Sets ``deleted_at`` instead of removing the row, so the contact and its
+    related data (notes, interactions, addresses, etc.) can be restored. Use
+    ``POST /contacts/{id}/restore`` to recover, or pass ``only_deleted=true``
+    to ``GET /contacts/`` to view the trash.
+    """
+    contact = session.get(Contact, contact_id)
+    if not contact or contact.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="Contact not found")
+    if contact.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
+    contact.deleted_at = datetime.now(timezone.utc)
+    session.add(contact)
+    session.commit()
+
+    # Hide from search results while soft-deleted; restore re-indexes.
+    background_tasks.add_task(_enqueue_contact_removal, str(contact_id))
+    return {"ok": True}
+
+
+@router.post("/{contact_id}/restore", response_model=ContactPublic)
+def restore_contact(
+    session: SessionDep,
+    current_user: CurrentUser,
+    contact_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
+) -> Any:
+    """Restore a soft-deleted contact (clear ``deleted_at``)."""
     contact = session.get(Contact, contact_id)
     if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
     if contact.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not enough permissions")
+    if contact.deleted_at is None:
+        raise HTTPException(status_code=400, detail="Contact is not deleted")
 
-    # Enqueue removal from search index (non-blocking)
-    background_tasks.add_task(_enqueue_contact_removal, str(contact_id))
-    session.delete(contact)
+    contact.deleted_at = None
+    session.add(contact)
     session.commit()
-    return {"ok": True}
+
+    # Reload with eager loading so the response carries tags/groups.
+    statement = (
+        select(Contact)
+        .where(Contact.id == contact.id)
+        .options(
+            selectinload(Contact.tags),
+            selectinload(Contact.groups),
+        )
+    )
+    contact = session.exec(statement).first()
+    background_tasks.add_task(_enqueue_contact_index, contact)
+    return ContactPublic.model_validate(contact)

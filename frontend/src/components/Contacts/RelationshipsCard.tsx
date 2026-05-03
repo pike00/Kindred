@@ -70,10 +70,18 @@ function formatContactName(c: ContactPublic) {
   return [c.first_name, c.last_name].filter(Boolean).join(" ") || "(unnamed)"
 }
 
-function AddRelationshipInline({ contactId }: { contactId: string }) {
+function AddRelationshipInline({
+  contactId,
+  contactName,
+}: {
+  contactId: string
+  contactName: string
+}) {
   const [pickerOpen, setPickerOpen] = useState(false)
   const [selected, setSelected] = useState<ContactPublic | null>(null)
   const [relationshipType, setRelationshipType] = useState("")
+  const [inverseType, setInverseType] = useState("")
+  const [inverseTouched, setInverseTouched] = useState(false)
   const typeInputRef = useRef<HTMLInputElement>(null)
 
   const queryClient = useQueryClient()
@@ -89,6 +97,21 @@ function AddRelationshipInline({ contactId }: { contactId: string }) {
     [contactsResp, contactId],
   )
 
+  const trimmedType = relationshipType.trim()
+  const inverseQuery = useQuery({
+    queryKey: ["relationship-inverse", trimmedType.toLowerCase()],
+    queryFn: () => RelationshipsService.lookupInverse({ type: trimmedType }),
+    enabled: trimmedType.length > 0,
+    staleTime: 5 * 60 * 1000,
+  })
+  const inferredInverse =
+    (inverseQuery.data as { inverse?: string | null } | undefined)?.inverse ??
+    null
+  const lookupSettled = inverseQuery.isFetched && !inverseQuery.isFetching
+  const needsManualInverse =
+    lookupSettled && trimmedType.length > 0 && inferredInverse === null
+  const effectiveInverse = inferredInverse ?? inverseType.trim()
+
   const mutation = useMutation({
     mutationFn: (data: RelationshipCreate) =>
       RelationshipsService.createRelationshipRoute({ requestBody: data }),
@@ -96,7 +119,10 @@ function AddRelationshipInline({ contactId }: { contactId: string }) {
       showSuccessToast("Relationship added")
       setSelected(null)
       setRelationshipType("")
+      setInverseType("")
+      setInverseTouched(false)
       queryClient.invalidateQueries({ queryKey: ["relationships", contactId] })
+      queryClient.invalidateQueries({ queryKey: ["contacts", "picker"] })
     },
     onError: (err) =>
       showErrorToast(
@@ -108,19 +134,25 @@ function AddRelationshipInline({ contactId }: { contactId: string }) {
     if (selected) typeInputRef.current?.focus()
   }, [selected])
 
+  useEffect(() => {
+    if (!inverseTouched) setInverseType(trimmedType)
+  }, [trimmedType, inverseTouched])
+
   const reset = () => {
     setSelected(null)
     setRelationshipType("")
+    setInverseType("")
+    setInverseTouched(false)
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    const trimmed = relationshipType.trim()
-    if (!selected || !trimmed) return
+    if (!selected || !trimmedType || !effectiveInverse) return
     mutation.mutate({
       contact_id: contactId,
       related_contact_id: selected.id,
-      relationship_type: trimmed,
+      relationship_type: trimmedType,
+      inverse_relationship_type: effectiveInverse,
       notes: null,
     } as RelationshipCreate)
   }
@@ -183,7 +215,9 @@ function AddRelationshipInline({ contactId }: { contactId: string }) {
         <Badge variant="secondary" className="shrink-0">
           {formatContactName(selected)}
         </Badge>
-        <span className="text-muted-foreground text-sm">is my</span>
+        <span className="text-muted-foreground text-sm">
+          is {contactName ? `${contactName}'s` : "their"}
+        </span>
         <button
           type="button"
           onClick={reset}
@@ -211,11 +245,41 @@ function AddRelationshipInline({ contactId }: { contactId: string }) {
           type="submit"
           size="sm"
           loading={mutation.isPending}
-          disabled={!relationshipType.trim()}
+          disabled={!trimmedType || !effectiveInverse}
         >
           Save
         </LoadingButton>
       </div>
+      {inferredInverse && (
+        <p className="text-muted-foreground text-xs">
+          {contactName || "this contact"} will appear as{" "}
+          {formatContactName(selected)}'s{" "}
+          <span className="font-medium">{inferredInverse}</span>.
+        </p>
+      )}
+      {needsManualInverse && (
+        <div className="space-y-1">
+          <p className="text-muted-foreground text-xs">
+            And {contactName || "this contact"} is {formatContactName(selected)}
+            's…
+          </p>
+          <Input
+            placeholder="reverse relationship"
+            value={inverseType}
+            onChange={(e) => {
+              setInverseType(e.target.value)
+              setInverseTouched(true)
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                e.preventDefault()
+                reset()
+              }
+            }}
+            className="h-8"
+          />
+        </div>
+      )}
     </form>
   )
 }
@@ -413,7 +477,13 @@ function RelationshipRow({ rel }: { rel: RelationshipPublic }) {
   )
 }
 
-export function RelationshipsCard({ contactId }: { contactId: string }) {
+export function RelationshipsCard({
+  contactId,
+  contactName,
+}: {
+  contactId: string
+  contactName: string
+}) {
   const { data, isLoading } = useQuery({
     queryKey: ["relationships", contactId],
     queryFn: () => RelationshipsService.listRelationships({ contactId }),
@@ -429,7 +499,10 @@ export function RelationshipsCard({ contactId }: { contactId: string }) {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        <AddRelationshipInline contactId={contactId} />
+        <AddRelationshipInline
+          contactId={contactId}
+          contactName={contactName}
+        />
         {isLoading ? (
           <Skeleton className="h-4 w-2/3" />
         ) : relationships.length > 0 ? (

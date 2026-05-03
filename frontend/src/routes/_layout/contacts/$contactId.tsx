@@ -172,7 +172,7 @@ function ContactDetailPage() {
             )}
             {contact.how_we_met && (
               <span className="flex items-center gap-1">
-                <UserRoundSearch className="size-3.5" /> Met:{" "}
+                <UserRoundSearch className="size-3.5" /> How we met:{" "}
                 {contact.how_we_met}
               </span>
             )}
@@ -204,7 +204,7 @@ function ContactDetailPage() {
         {/* Right column (1/3 width) */}
         <div className="space-y-6">
           <div className="flex justify-end">
-            <AddInteractionDialog contactId={contactId} />
+            <AddInteractionDialog seedContact={contact} />
           </div>
 
           {/* Tags */}
@@ -267,7 +267,10 @@ function ContactDetailPage() {
             </Card>
           )}
 
-          <RelationshipsCard contactId={contactId} />
+          <RelationshipsCard
+            contactId={contactId}
+            contactName={contact.first_name ?? ""}
+          />
         </div>
       </div>
 

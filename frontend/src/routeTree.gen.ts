@@ -23,6 +23,7 @@ import { Route as LayoutCalendarRouteImport } from './routes/_layout/calendar'
 import { Route as LayoutInteractionsRouteImport } from './routes/_layout/interactions'
 import { Route as LayoutGroupsRouteImport } from './routes/_layout/groups'
 import { Route as LayoutContactsRouteImport } from './routes/_layout/contacts'
+import { Route as LayoutCalendarRouteImport } from './routes/_layout/calendar'
 import { Route as LayoutAdminRouteImport } from './routes/_layout/admin'
 import { Route as LayoutContactsIndexRouteImport } from './routes/_layout/contacts/index'
 import { Route as LayoutAdminIndexRouteImport } from './routes/_layout/admin/index'
@@ -97,6 +98,11 @@ const LayoutGroupsRoute = LayoutGroupsRouteImport.update({
 const LayoutContactsRoute = LayoutContactsRouteImport.update({
   id: '/contacts',
   path: '/contacts',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutCalendarRoute = LayoutCalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
   getParentRoute: () => LayoutRoute,
 } as any)
 const LayoutAdminRoute = LayoutAdminRouteImport.update({
@@ -364,6 +370,13 @@ declare module '@tanstack/react-router' {
       path: '/contacts'
       fullPath: '/contacts'
       preLoaderRoute: typeof LayoutContactsRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/calendar': {
+      id: '/_layout/calendar'
+      path: '/calendar'
+      fullPath: '/calendar'
+      preLoaderRoute: typeof LayoutCalendarRouteImport
       parentRoute: typeof LayoutRoute
     }
     '/_layout/admin': {

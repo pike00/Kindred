@@ -1,9 +1,9 @@
 ---
 title: Multi-Party Interactions
-status: completed
+status: archived
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-04-24
+last_updated: 2026-05-01
 next_step: Investigate @-mention timeline follow-ups below before archiving.
 ---
 
@@ -24,6 +24,9 @@ Replace the current one-to-one `Interaction.contact_id` design with a many-to-ma
 
 ## Session Log
 
+### 2026-05-01
+- Project archived. Both @-mention follow-ups in "Look into later" were resolved by the note-mentions project (merged 6799ac5): backlink timeline via `GET /contacts/{id}/mentions` + extended `GET /notes/contact/{id}` UNION; self-mention is implicit (no `@A` needed in A's own note).
+
 ### 2026-04-24
 - Shipped multi-party interactions end-to-end in commit ecc2b5f. Migration a7b8c9d0e1f2 creates `interaction_attendee`, backfills from the old column, and drops `Interaction.contact_id`.
 - Backend: `InteractionCreate.attendee_ids: list[UUID]` (min 1); `InteractionPublic.attendees: [{id, first_name, last_name, avatar_url}]`; crud.recompute_last_contacted_at bumps/repairs each attendee on create / attendee-diff / delete; "any visible attendee" access control with non-visible attendees filtered from responses.
@@ -35,6 +38,10 @@ Replace the current one-to-one `Interaction.contact_id` design with a many-to-ma
 - Project created.
 
 ## Notes
+
+### 2026-04-26
+- **State sync:** all claims verified clean; bumped last_updated to today
+- **Verified clean:** 5 claims matched reality (PLAN.md, commit ecc2b5f, migration a7b8c9d0e1f2, InteractionAttendee model, 8 commits since last save)
 
 ### 2026-04-24
 - **Decisions:**

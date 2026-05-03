@@ -351,3 +351,175 @@ def test_shared_tag_exposes_contact(client: TestClient, db: Session) -> None:
 
     r = client.get(f"{settings.API_V1_STR}/contacts/{contact['id']}", headers=bob_h)
     assert r.status_code == 200
+
+
+def test_delete_contact_is_soft_delete(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
+    """DELETE sets deleted_at; row is hidden but recoverable."""
+    r = client.post(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=superuser_token_headers,
+        json={"first_name": "SoftDelete"},
+    )
+    contact_id = r.json()["id"]
+
+    r = client.delete(
+        f"{settings.API_V1_STR}/contacts/{contact_id}",
+        headers=superuser_token_headers,
+    )
+    assert r.status_code == 200
+
+    # Hidden from default list
+    r = client.get(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=superuser_token_headers,
+    )
+    assert contact_id not in [c["id"] for c in r.json()["data"]]
+
+    # Visible with only_deleted=true
+    r = client.get(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=superuser_token_headers,
+        params={"only_deleted": True},
+    )
+    assert r.status_code == 200
+    payload = next(
+        (c for c in r.json()["data"] if c["id"] == contact_id), None
+    )
+    assert payload is not None
+    assert payload["deleted_at"] is not None
+
+    # Also visible with include_deleted=true alongside live rows
+    r = client.get(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=superuser_token_headers,
+        params={"include_deleted": True},
+    )
+    assert r.status_code == 200
+    assert contact_id in [c["id"] for c in r.json()["data"]]
+
+
+def test_restore_contact(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
+    r = client.post(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=superuser_token_headers,
+        json={"first_name": "Restorable"},
+    )
+    contact_id = r.json()["id"]
+
+    client.delete(
+        f"{settings.API_V1_STR}/contacts/{contact_id}",
+        headers=superuser_token_headers,
+    )
+
+    # Restore
+    r = client.post(
+        f"{settings.API_V1_STR}/contacts/{contact_id}/restore",
+        headers=superuser_token_headers,
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["id"] == contact_id
+    assert body["deleted_at"] is None
+
+    # Now visible again on default list
+    r = client.get(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=superuser_token_headers,
+    )
+    assert contact_id in [c["id"] for c in r.json()["data"]]
+
+
+def test_restore_contact_not_deleted_400(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
+    r = client.post(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=superuser_token_headers,
+        json={"first_name": "Live"},
+    )
+    contact_id = r.json()["id"]
+
+    r = client.post(
+        f"{settings.API_V1_STR}/contacts/{contact_id}/restore",
+        headers=superuser_token_headers,
+    )
+    assert r.status_code == 400
+
+
+def test_update_soft_deleted_contact_404(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
+    r = client.post(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=superuser_token_headers,
+        json={"first_name": "DeletedUpdate"},
+    )
+    contact_id = r.json()["id"]
+    client.delete(
+        f"{settings.API_V1_STR}/contacts/{contact_id}",
+        headers=superuser_token_headers,
+    )
+
+    r = client.patch(
+        f"{settings.API_V1_STR}/contacts/{contact_id}",
+        headers=superuser_token_headers,
+        json={"first_name": "Updated"},
+    )
+    assert r.status_code == 404
+
+
+def test_delete_already_soft_deleted_404(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
+    r = client.post(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=superuser_token_headers,
+        json={"first_name": "DoubleDelete"},
+    )
+    contact_id = r.json()["id"]
+    r = client.delete(
+        f"{settings.API_V1_STR}/contacts/{contact_id}",
+        headers=superuser_token_headers,
+    )
+    assert r.status_code == 200
+
+    r = client.delete(
+        f"{settings.API_V1_STR}/contacts/{contact_id}",
+        headers=superuser_token_headers,
+    )
+    assert r.status_code == 404
+
+
+def test_addresses_on_soft_deleted_contact_hidden(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
+    """Soft-deleted contact's child resources (e.g. addresses) become inaccessible."""
+    r = client.post(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=superuser_token_headers,
+        json={"first_name": "WithAddress"},
+    )
+    contact_id = r.json()["id"]
+    r = client.post(
+        f"{settings.API_V1_STR}/addresses/",
+        headers=superuser_token_headers,
+        json={"contact_id": contact_id, "city": "Seattle"},
+    )
+    assert r.status_code == 200
+
+    client.delete(
+        f"{settings.API_V1_STR}/contacts/{contact_id}",
+        headers=superuser_token_headers,
+    )
+
+    # Listing addresses for a soft-deleted contact should 404 (contact_visible
+    # flips to false because visible_contact_ids hides deleted rows by default).
+    r = client.get(
+        f"{settings.API_V1_STR}/addresses/contact/{contact_id}",
+        headers=superuser_token_headers,
+    )
+    assert r.status_code == 404

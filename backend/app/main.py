@@ -7,6 +7,7 @@ from radicale.config import Configuration as RadicaleConfig
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.wsgi import WSGIMiddleware
 
+import app.audit  # noqa: F401 — registers before_flush listener
 from app.api.main import api_router
 from app.core.config import settings
 
