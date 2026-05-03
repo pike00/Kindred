@@ -2542,6 +2542,71 @@ export const InteractionCreateSchema = {
             title: 'Duration Minutes',
             description: 'Length of the interaction in minutes.'
         },
+        message_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 998
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Message Id',
+            description: 'RFC 2822 Message-ID for deduplication (EMAIL channel only).'
+        },
+        email_subject: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 998
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Email Subject',
+            description: 'Email subject line (EMAIL channel only).'
+        },
+        email_from: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 2048
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Email From',
+            description: 'Email From header (EMAIL channel only).'
+        },
+        email_to: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 2048
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Email To',
+            description: 'Email To header (EMAIL channel only).'
+        },
+        email_date: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Email Date',
+            description: 'Email Date header (EMAIL channel only).'
+        },
         attendee_ids: {
             items: {
                 type: 'string',
@@ -2608,6 +2673,71 @@ export const InteractionPublicSchema = {
             ],
             title: 'Duration Minutes',
             description: 'Length of the interaction in minutes.'
+        },
+        message_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 998
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Message Id',
+            description: 'RFC 2822 Message-ID for deduplication (EMAIL channel only).'
+        },
+        email_subject: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 998
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Email Subject',
+            description: 'Email subject line (EMAIL channel only).'
+        },
+        email_from: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 2048
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Email From',
+            description: 'Email From header (EMAIL channel only).'
+        },
+        email_to: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 2048
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Email To',
+            description: 'Email To header (EMAIL channel only).'
+        },
+        email_date: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Email Date',
+            description: 'Email Date header (EMAIL channel only).'
         },
         id: {
             type: 'string',
@@ -3617,6 +3747,31 @@ export const PetUpdateSchema = {
     },
     type: 'object',
     title: 'PetUpdate'
+} as const;
+
+export const PrivateUserCreateSchema = {
+    properties: {
+        email: {
+            type: 'string',
+            title: 'Email'
+        },
+        password: {
+            type: 'string',
+            title: 'Password'
+        },
+        full_name: {
+            type: 'string',
+            title: 'Full Name'
+        },
+        is_verified: {
+            type: 'boolean',
+            title: 'Is Verified',
+            default: false
+        }
+    },
+    type: 'object',
+    required: ['email', 'password', 'full_name'],
+    title: 'PrivateUserCreate'
 } as const;
 
 export const RelationshipCreateSchema = {

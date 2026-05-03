@@ -1004,6 +1004,7 @@ class InteractionBase(SQLModel):
         description="Email Date header (EMAIL channel only).",
     )
 
+
 class InteractionCreate(InteractionBase):
     attendee_ids: list[uuid.UUID] = Field(
         min_length=1,
@@ -1792,11 +1793,13 @@ class Token(SQLModel):
 class TokenPayload(SQLModel):
     sub: str | None = None
 
+
 # ─── Email OAuth Token Storage ───────────────────────────────────────────────
 
 
 class EmailOAuthTokenBase(SQLModel):
     """Encrypted OAuth tokens for Gmail API access."""
+
     provider: str = Field(
         default="gmail",
         max_length=50,
@@ -1878,8 +1881,6 @@ class EmailOAuthTokenPublic(EmailOAuthTokenBase):
 class EmailOAuthTokensPublic(SQLModel):
     data: list[EmailOAuthTokenPublic]
     count: int
-
-
 
 
 class NewPassword(SQLModel):

@@ -3,11 +3,12 @@
 Uses Fernet (symmetric encryption) from the cryptography package
 with a key derived from the application's SECRET_KEY.
 """
+
+import base64
+
 from cryptography.fernet import Fernet, InvalidToken
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-import base64
-import os
 
 from app.core.config import settings
 

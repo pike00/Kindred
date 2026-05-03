@@ -712,6 +712,26 @@ export type InteractionCreate = {
      */
     duration_minutes?: (number | null);
     /**
+     * RFC 2822 Message-ID for deduplication (EMAIL channel only).
+     */
+    message_id?: (string | null);
+    /**
+     * Email subject line (EMAIL channel only).
+     */
+    email_subject?: (string | null);
+    /**
+     * Email From header (EMAIL channel only).
+     */
+    email_from?: (string | null);
+    /**
+     * Email To header (EMAIL channel only).
+     */
+    email_to?: (string | null);
+    /**
+     * Email Date header (EMAIL channel only).
+     */
+    email_date?: (string | null);
+    /**
      * Contacts that attended; must have at least one.
      */
     attendee_ids: Array<(string)>;
@@ -738,6 +758,26 @@ export type InteractionPublic = {
      * Length of the interaction in minutes.
      */
     duration_minutes?: (number | null);
+    /**
+     * RFC 2822 Message-ID for deduplication (EMAIL channel only).
+     */
+    message_id?: (string | null);
+    /**
+     * Email subject line (EMAIL channel only).
+     */
+    email_subject?: (string | null);
+    /**
+     * Email From header (EMAIL channel only).
+     */
+    email_from?: (string | null);
+    /**
+     * Email To header (EMAIL channel only).
+     */
+    email_to?: (string | null);
+    /**
+     * Email Date header (EMAIL channel only).
+     */
+    email_date?: (string | null);
     id: string;
     attendees?: Array<InteractionAttendeeSummary>;
     created_at: string;
@@ -1023,6 +1063,13 @@ export type PetUpdate = {
     species?: (string | null);
     breed?: (string | null);
     notes?: (string | null);
+};
+
+export type PrivateUserCreate = {
+    email: string;
+    password: string;
+    full_name: string;
+    is_verified?: boolean;
 };
 
 export type RelationshipCreate = {
@@ -1737,6 +1784,12 @@ export type PetsDeletePetData = {
 };
 
 export type PetsDeletePetResponse = (unknown);
+
+export type PrivateCreateUserData = {
+    requestBody: PrivateUserCreate;
+};
+
+export type PrivateCreateUserResponse = (UserPublic);
 
 export type RelationshipsLookupInverseData = {
     type: string;
