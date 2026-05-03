@@ -1,11 +1,13 @@
 import logging
+import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 import sentry_sdk
-from fastapi import FastAPI
-from fastapi.responses import RedirectResponse
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.routing import APIRoute
+from fastapi.staticfiles import StaticFiles
 from radicale import Application as RadicaleApp
 from radicale.config import Configuration as RadicaleConfig
 from sqlmodel import Session
@@ -113,6 +115,25 @@ def health() -> dict[str, str]:
 # /setup is not under /api/v1 — see app/api/setup.py for the rationale.
 app.include_router(setup_router)
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+# SPA mount. In prod (Dockerfile.prod) STATIC_DIR=/app/static contains the
+# vite build output; in dev STATIC_DIR is unset and the SPA is served by
+# `bun run dev` on port 5173 via Traefik (compose.dev.yml).
+_static_dir = os.environ.get("STATIC_DIR")
+if _static_dir and os.path.isdir(_static_dir):
+    _assets_dir = os.path.join(_static_dir, "assets")
+    if os.path.isdir(_assets_dir):
+        app.mount("/assets", StaticFiles(directory=_assets_dir), name="assets")
+    _index_html = os.path.join(_static_dir, "index.html")
+
+    @app.get("/{full_path:path}", include_in_schema=False, tags=["spa"])
+    async def spa_fallback(full_path: str):
+        # API routes are matched by their own routers first; this is a
+        # belt-and-braces guard against accidental future ordering changes.
+        if full_path.startswith(("api/", "setup", "dav/", ".well-known/")):
+            raise HTTPException(status_code=404)
+        return FileResponse(_index_html)
+
 
 # Setup-gate middleware MUST be registered AFTER all routes so it sits
 # outermost in the Starlette stack and intercepts every request.
