@@ -8,7 +8,7 @@ from typing import Any
 from arq.connections import RedisSettings
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
 from sqlalchemy.orm import selectinload
-from sqlmodel import col, func, select
+from sqlmodel import SQLModel, col, func, select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.core.config import settings as app_settings
@@ -21,6 +21,8 @@ from app.models import (
     ContactsPublic,
     ContactTag,
     ContactUpdate,
+    Note,
+    NoteMention,
     OverdueContactPublic,
     OverdueContactsPublic,
 )
@@ -533,3 +535,33 @@ def restore_contact(
     contact = session.exec(statement).first()
     background_tasks.add_task(_enqueue_contact_index, contact)
     return ContactPublic.model_validate(contact)
+
+
+class _MentionPublic(SQLModel):
+    note_id: uuid.UUID
+    source_contact: ContactPublic
+
+
+@router.get("/{contact_id}/mentions", response_model=list[_MentionPublic])
+def list_contact_mentions(
+    session: SessionDep,
+    current_user: CurrentUser,
+    contact_id: uuid.UUID,
+) -> Any:
+    """Return notes that @-mention this contact, grouped with the source contact."""
+    stmt = (
+        select(NoteMention, Note, Contact)
+        .join(Note, Note.id == NoteMention.note_id)
+        .join(Contact, Contact.id == Note.contact_id)
+        .where(NoteMention.contact_id == contact_id)
+        .where(Contact.owner_id == current_user.id)
+        .options(selectinload(Contact.tags), selectinload(Contact.groups))
+    )
+    rows = session.exec(stmt).all()
+    return [
+        _MentionPublic(
+            note_id=note_mention.note_id,
+            source_contact=ContactPublic.model_validate(source),
+        )
+        for note_mention, _note, source in rows
+    ]
