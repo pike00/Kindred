@@ -12,8 +12,8 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = "f6a7b8c9d0e1"
-down_revision = "merge_heads"
+revision = "add_debt_payment_table"
+down_revision = "add_do_not_contact_fields"
 branch_labels = None
 depends_on = None
 

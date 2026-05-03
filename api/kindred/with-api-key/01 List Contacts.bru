@@ -1,0 +1,23 @@
+meta {
+  name: List Contacts (API Key)
+  type: http
+  seq: 1
+}
+
+// Authenticate with a kk_ API key instead of a JWT.
+// Run api-keys/02 Create API Key first to populate {{api_key}}.
+
+get {
+  url: {{base_url}}/api/v1/contacts/
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{api_key}}
+}
+
+params:query {
+  skip: 0
+  limit: 20
+}
