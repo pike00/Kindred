@@ -1,0 +1,26 @@
+meta {
+  name: Update Contact
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{base_url}}/api/v1/contacts/{{contact_id}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt_token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "title": "Senior Engineer",
+    "is_favorite": true
+  }
+}

@@ -13,7 +13,7 @@ import uuid
 
 # revision identifiers, used by Alembic.
 revision = "add_calendar_token"
-down_revision = "fe56fa70289e"
+down_revision = "add_do_not_contact_fields"
 branch_labels = None
 depends_on = None
 
