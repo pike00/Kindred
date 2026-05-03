@@ -1,0 +1,10 @@
+declare module 'leaflet' {
+  export const Map: any;
+  export const TileLayer: any;
+  export const Marker: any;
+  export const Popup: any;
+  export const useMap: any;
+  export namespace Icon {
+    const Default: any;
+  }
+}

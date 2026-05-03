@@ -15,11 +15,11 @@ import {
   Search,
   Star,
   Users,
+  Map,
 } from "@/lib/icons"
 import { cn } from "@/lib/utils"
-import { AddContactDialog } from "./AddContactDialog"
-
 const PAGE_SIZE = 25
+import { AddContactDialog } from "./AddContactDialog"
 
 function fullName(contact: ContactPublic): string {
   return (
@@ -166,7 +166,15 @@ export const ContactsList = () => {
             {allContacts.length === 1 ? "person" : "people"}
           </p>
         </div>
-        <AddContactDialog />
+        <div className="flex items-center gap-2">
+          <Button variant="outline" asChild>
+            <a href="/contacts/map">
+              <Map className="size-4" />
+              Map View
+            </a>
+          </Button>
+          <AddContactDialog />
+        </div>
       </div>
 
       <div className="relative">

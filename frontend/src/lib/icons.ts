@@ -42,6 +42,8 @@ export {
   Mail,
   // Card section icons
   MapPin,
+  Map,
+
   // Interaction channels
   MessageSquare,
   MessageSquareText,
