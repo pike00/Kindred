@@ -40,10 +40,9 @@ export {
   LogOut,
   // Contact field types
   Mail,
+  Map,
   // Card section icons
   MapPin,
-  Map,
-
   // Interaction channels
   MessageSquare,
   MessageSquareText,
