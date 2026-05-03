@@ -141,7 +141,7 @@ def test_unique_constraint_prevents_duplicate_external_id(db: Session, user_fact
 
     # Try to create another with same (owner, source, external_id)
     # This should fail due to unique constraint
-    with pytest.raises(Exception):
+    with pytest.raises(Exception):  # noqa: B017
         create_contact(session=db, contact_in=contact_in, owner_id=user.id)
         db.commit()
 
