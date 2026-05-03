@@ -557,6 +557,12 @@ Table "reminder_snooze" {
   }
 }
 
+Table "setup_state" {
+  "id" int4 [pk, not null, increment]
+  "complete" bool [not null, default: false]
+  "token_hash" varchar(128)
+}
+
 Ref "activity_log_actor_id_fkey":"user"."id" < "activity_log"."actor_id" [delete: set null]
 
 Ref "activity_log_owner_id_fkey":"user"."id" < "activity_log"."owner_id" [delete: cascade]
