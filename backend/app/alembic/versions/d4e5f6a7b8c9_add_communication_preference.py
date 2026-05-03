@@ -11,8 +11,8 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic
-revision = "d4e5f6a7b8c9"
-down_revision = "c2d3e4f5a6b7"
+revision = "add_communication_preference"
+down_revision = "add_do_not_contact_fields"
 branch_labels = None
 depends_on = None
 
