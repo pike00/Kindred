@@ -1934,3 +1934,11 @@ export type WebhooksInboundWebhookData = {
 };
 
 export type WebhooksInboundWebhookResponse = (unknown);
+export type WeekBucket = {
+    week_start: string;
+    count: number;
+};
+
+export type ContactHeatmap = {
+    data: Array<WeekBucket>;
+};

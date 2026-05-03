@@ -25,6 +25,8 @@ import { AddDebt } from "@/components/Debts/AddDebt"
 import { AddGift } from "@/components/Gifts/AddGift"
 import { AddInteractionDialog } from "@/components/Interactions/AddInteractionDialog"
 import { AddMediaRecommendation } from "@/components/MediaRecommendations/AddMediaRecommendation"
+
+import { InteractionHeatmap } from "@/components/Contacts/InteractionHeatmap"
 import { NotesCard } from "@/components/Notes/NotesCard"
 import { UnifiedTimeline } from "@/components/Timeline/UnifiedTimeline"
 import { Badge } from "@/components/ui/badge"
@@ -137,6 +139,8 @@ function ContactDetailPage() {
       <div className="flex items-start gap-5">
         <ContactAvatar contact={contact} size="lg" />
         <div className="flex-1 min-w-0 space-y-2">
+          {/* Heatmap */}
+          <InteractionHeatmap />
           <div className="flex items-start justify-between gap-3">
             <div className="flex flex-wrap items-center gap-3 min-w-0">
               <h1 className="font-display text-4xl font-bold tracking-tight">
