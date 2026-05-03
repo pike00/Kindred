@@ -186,10 +186,24 @@ def create_address(*, session: Session, address_in: AddressCreate) -> Address:
 
 
 def create_relationship(
-    *, session: Session, relationship_in: RelationshipCreate
+    *,
+    session: Session,
+    relationship_in: RelationshipCreate,
+    inverse_type: str | None = None,
 ) -> Relationship:
     db_obj = Relationship.model_validate(relationship_in)
     session.add(db_obj)
+    if inverse_type:
+        inverse = Relationship(
+            contact_id=relationship_in.related_contact_id,
+            related_contact_id=relationship_in.contact_id,
+            relationship_type=inverse_type,
+            notes=relationship_in.notes,
+        )
+        session.add(inverse)
+        session.flush()  # materialise IDs before cross-linking
+        db_obj.inverse_id = inverse.id
+        inverse.inverse_id = db_obj.id
     session.commit()
     session.refresh(db_obj)
     return db_obj

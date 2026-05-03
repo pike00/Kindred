@@ -712,6 +712,241 @@ export const Body_login_login_access_tokenSchema = {
     title: 'Body_login-login_access_token'
 } as const;
 
+export const BulkContactFilterSchema = {
+    properties: {
+        search: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Search'
+        },
+        tag_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'uuid'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Tag Id'
+        },
+        group_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'uuid'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Group Id'
+        },
+        is_favorite: {
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Is Favorite'
+        },
+        is_archived: {
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Is Archived'
+        },
+        stage: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Stage'
+        }
+    },
+    type: 'object',
+    title: 'BulkContactFilter'
+} as const;
+
+export const BulkContactOperationSchema = {
+    properties: {
+        add_tag_ids: {
+            anyOf: [
+                {
+                    items: {
+                        type: 'string',
+                        format: 'uuid'
+                    },
+                    type: 'array'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Add Tag Ids'
+        },
+        remove_tag_ids: {
+            anyOf: [
+                {
+                    items: {
+                        type: 'string',
+                        format: 'uuid'
+                    },
+                    type: 'array'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Remove Tag Ids'
+        },
+        add_group_ids: {
+            anyOf: [
+                {
+                    items: {
+                        type: 'string',
+                        format: 'uuid'
+                    },
+                    type: 'array'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Add Group Ids'
+        },
+        remove_group_ids: {
+            anyOf: [
+                {
+                    items: {
+                        type: 'string',
+                        format: 'uuid'
+                    },
+                    type: 'array'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Remove Group Ids'
+        },
+        set_is_archived: {
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Set Is Archived'
+        },
+        set_is_favorite: {
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Set Is Favorite'
+        }
+    },
+    type: 'object',
+    title: 'BulkContactOperation'
+} as const;
+
+export const BulkContactRequestSchema = {
+    properties: {
+        contact_ids: {
+            anyOf: [
+                {
+                    items: {
+                        type: 'string',
+                        format: 'uuid'
+                    },
+                    type: 'array'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Contact Ids'
+        },
+        select_all_filtered: {
+            type: 'boolean',
+            title: 'Select All Filtered',
+            default: false
+        },
+        filters: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/BulkContactFilter'
+                },
+                {
+                    type: 'null'
+                }
+            ]
+        },
+        limit: {
+            type: 'integer',
+            title: 'Limit',
+            default: 500
+        },
+        operations: {
+            '$ref': '#/components/schemas/BulkContactOperation'
+        }
+    },
+    type: 'object',
+    required: ['operations'],
+    title: 'BulkContactRequest'
+} as const;
+
+export const BulkContactResultSchema = {
+    properties: {
+        updated_count: {
+            type: 'integer',
+            title: 'Updated Count'
+        },
+        skipped_count: {
+            type: 'integer',
+            title: 'Skipped Count'
+        },
+        failed_ids: {
+            items: {
+                type: 'string',
+                format: 'uuid'
+            },
+            type: 'array',
+            title: 'Failed Ids',
+            default: []
+        }
+    },
+    type: 'object',
+    required: ['updated_count', 'skipped_count'],
+    title: 'BulkContactResult'
+} as const;
+
 export const CalendarEntrySchema = {
     properties: {
         contact_id: {
@@ -3675,31 +3910,6 @@ export const NoteCreateSchema = {
     title: 'NoteCreate'
 } as const;
 
-export const NoteMentionPublicSchema = {
-    properties: {
-        note_id: {
-            type: 'string',
-            format: 'uuid',
-            title: 'Note Id'
-        },
-        note_body: {
-            type: 'string',
-            title: 'Note Body'
-        },
-        note_created_at: {
-            type: 'string',
-            format: 'date-time',
-            title: 'Note Created At'
-        },
-        source_contact: {
-            '$ref': '#/components/schemas/_MentionSourceContact'
-        }
-    },
-    type: 'object',
-    required: ['note_id', 'note_body', 'note_created_at', 'source_contact'],
-    title: 'NoteMentionPublic'
-} as const;
-
 export const NotePublicSchema = {
     properties: {
         body: {
@@ -4345,6 +4555,19 @@ export const RelationshipCreateSchema = {
             type: 'string',
             format: 'uuid',
             title: 'Related Contact Id'
+        },
+        inverse_relationship_type: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 100
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Inverse Relationship Type',
+            description: "Type for the auto-created inverse row (e.g. 'parent' for 'child'). Inferred when omitted."
         }
     },
     type: 'object',
@@ -4387,6 +4610,18 @@ export const RelationshipPublicSchema = {
             type: 'string',
             format: 'uuid',
             title: 'Related Contact Id'
+        },
+        inverse_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'uuid'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Inverse Id'
         }
     },
     type: 'object',
@@ -5216,43 +5451,29 @@ export const WebhookEndpointBaseSchema = {
     title: 'WebhookEndpointBase'
 } as const;
 
-export const _MentionSourceContactSchema = {
+export const _MentionPublicSchema = {
     properties: {
-        id: {
+        note_id: {
             type: 'string',
             format: 'uuid',
-            title: 'Id'
+            title: 'Note Id'
         },
-        first_name: {
+        note_body: {
             type: 'string',
-            title: 'First Name'
+            title: 'Note Body'
         },
-        last_name: {
-            anyOf: [
-                {
-                    type: 'string'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Last Name'
+        note_created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Note Created At'
         },
-        avatar_url: {
-            anyOf: [
-                {
-                    type: 'string'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Avatar Url'
+        source_contact: {
+            '$ref': '#/components/schemas/ContactPublic'
         }
     },
     type: 'object',
-    required: ['id', 'first_name'],
-    title: '_MentionSourceContact'
+    required: ['note_id', 'note_body', 'note_created_at', 'source_contact'],
+    title: '_MentionPublic'
 } as const;
 
 export const _ShareInSchema = {
