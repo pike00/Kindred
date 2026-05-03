@@ -22,7 +22,9 @@ from app.api.routes import (
     relationships,
     reminders,
     tag_shares,
+    saved_filters,
     tags,
+
     users,
     utils,
     webhooks,
@@ -38,6 +40,7 @@ api_router.include_router(utils.router)
 api_router.include_router(contacts.router)
 api_router.include_router(tags.router)
 api_router.include_router(tag_shares.router)
+api_router.include_router(saved_filters.router)
 api_router.include_router(groups.router)
 api_router.include_router(contact_fields.router)
 api_router.include_router(addresses.router)

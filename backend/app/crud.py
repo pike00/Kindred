@@ -51,6 +51,9 @@ from app.models import (
     User,
     UserCreate,
     UserUpdate,
+    SavedFilter,
+    SavedFilterCreate,
+    SavedFilterUpdate,
 )
 
 
@@ -427,6 +430,33 @@ def create_journal_entry(
     session.commit()
     session.refresh(db_obj)
     return db_obj
+
+
+# ─── SavedFilter CRUD ─────────────────────────────────────────────
+
+def create_saved_filter(
+    *, session: Session, filter_in: SavedFilterCreate, owner_id: uuid.UUID
+) -> SavedFilter:
+    """Create a new saved filter / smart list."""
+    db_obj = SavedFilter.model_validate(
+        filter_in, update={"owner_id": owner_id}
+    )
+    session.add(db_obj)
+    session.commit()
+    session.refresh(db_obj)
+    return db_obj
+
+
+def update_saved_filter(
+    *, session: Session, db_filter: SavedFilter, filter_in: SavedFilterUpdate
+) -> SavedFilter:
+    """Update an existing saved filter."""
+    update_data = filter_in.model_dump(exclude_unset=True)
+    db_filter.sqlmodel_update(update_data)
+    session.add(db_filter)
+    session.commit()
+    session.refresh(db_filter)
+    return db_filter
 
 
 # ─── Visibility helpers ───────────────────────────────────────────────────────
