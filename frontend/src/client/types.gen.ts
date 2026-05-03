@@ -219,6 +219,10 @@ export type ContactCreate = {
      * Kanban stage like Active, Dormant, Lost.
      */
     stage?: (string | null);
+    /**
+     * Enable automatic email log ingestion for this contact.
+     */
+    auto_log_email?: boolean;
     tag_ids?: (Array<(string)> | null);
     group_ids?: (Array<(string)> | null);
 };
@@ -351,6 +355,10 @@ export type ContactPublic = {
      * Kanban stage like Active, Dormant, Lost.
      */
     stage?: (string | null);
+    /**
+     * Enable automatic email log ingestion for this contact.
+     */
+    auto_log_email?: boolean;
     id: string;
     avatar_url: (string | null);
     last_contacted_at: (string | null);
@@ -384,6 +392,7 @@ export type ContactUpdate = {
     deceased_at?: (string | null);
     contact_frequency_days?: (number | null);
     stage?: (string | null);
+    auto_log_email?: (boolean | null);
     tag_ids?: (Array<(string)> | null);
     group_ids?: (Array<(string)> | null);
 };

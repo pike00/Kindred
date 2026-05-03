@@ -755,6 +755,12 @@ export const ContactCreateSchema = {
             title: 'Stage',
             description: 'Kanban stage like Active, Dormant, Lost.'
         },
+        auto_log_email: {
+            type: 'boolean',
+            title: 'Auto Log Email',
+            description: 'Enable automatic email log ingestion for this contact.',
+            default: false
+        },
         tag_ids: {
             anyOf: [
                 {
@@ -1144,6 +1150,12 @@ export const ContactPublicSchema = {
             title: 'Stage',
             description: 'Kanban stage like Active, Dormant, Lost.'
         },
+        auto_log_email: {
+            type: 'boolean',
+            title: 'Auto Log Email',
+            description: 'Enable automatic email log ingestion for this contact.',
+            default: false
+        },
         id: {
             type: 'string',
             format: 'uuid',
@@ -1408,6 +1420,17 @@ export const ContactUpdateSchema = {
                 }
             ],
             title: 'Stage'
+        },
+        auto_log_email: {
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Auto Log Email'
         },
         tag_ids: {
             anyOf: [

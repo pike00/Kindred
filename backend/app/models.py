@@ -433,6 +433,10 @@ class ContactBase(SQLModel):
         max_length=100,
         description="Kanban stage like Active, Dormant, Lost.",
     )
+    auto_log_email: bool = Field(
+        default=False,
+        description="Enable automatic email log ingestion for this contact.",
+    )
 
 
 class ContactCreate(ContactBase):
@@ -458,6 +462,7 @@ class ContactUpdate(SQLModel):
     deceased_at: date | None = None
     contact_frequency_days: int | None = None
     stage: str | None = None
+    auto_log_email: bool | None = None
     tag_ids: list[uuid.UUID] | None = None
     group_ids: list[uuid.UUID] | None = None
 
