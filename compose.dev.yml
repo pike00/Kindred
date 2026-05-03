@@ -17,8 +17,9 @@ services:
     working_dir: /app/backend
     command: ["bash", "-c", "bash scripts/prestart.sh && fastapi run --reload app/main.py"]
     labels:
+      # Hard-coded kindred.localhost so a misset DOMAIN can never claim the prod hostname.
       - "traefik.enable=true"
-      - "traefik.http.routers.crm-api.rule=Host(`kindred.${DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/docs`) || PathPrefix(`/redoc`) || PathPrefix(`/openapi.json`) || PathPrefix(`/dav`) || PathPrefix(`/.well-known`))"
+      - "traefik.http.routers.crm-api.rule=Host(`kindred.localhost`) && (PathPrefix(`/api`) || PathPrefix(`/docs`) || PathPrefix(`/redoc`) || PathPrefix(`/openapi.json`) || PathPrefix(`/dav`) || PathPrefix(`/.well-known`))"
       - "traefik.http.routers.crm-api.entrypoints=websecure"
       - "traefik.http.routers.crm-api.tls=true"
       - "traefik.http.services.crm-api.loadbalancer.server.port=8000"
@@ -40,8 +41,8 @@ services:
     working_dir: /app/frontend
     env_file: .env
     environment:
-      - VITE_API_URL=https://kindred.${DOMAIN}
-      - VITE_PUBLIC_HOST=kindred.${DOMAIN}
+      - VITE_API_URL=https://kindred.localhost
+      - VITE_PUBLIC_HOST=kindred.localhost
       - VITE_AUTH_MODE=${AUTH_MODE:-local}
       - VITE_CF_LOGOUT_URL=${VITE_CF_LOGOUT_URL:-}
     volumes:
@@ -61,7 +62,7 @@ services:
       - 172.20.2.253
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.crm.rule=Host(`kindred.${DOMAIN}`)"
+      - "traefik.http.routers.crm.rule=Host(`kindred.localhost`)"
       - "traefik.http.routers.crm.entrypoints=websecure"
       - "traefik.http.routers.crm.tls=true"
       - "traefik.http.services.crm.loadbalancer.server.port=5173"
@@ -141,12 +142,12 @@ services:
       retries: 5
 
 volumes:
+  # Project-local. Dev never shares storage with prod (apps/kindred uses
+  # its own kindred-prod-* volumes). After Track A cutover the legacy
+  # external crm-db/crm-redis/crm-meili volumes are gone anyway.
   crm-db:
-    external: true
   crm-redis:
-    external: true
   crm-meili:
-    external: true
   crm-frontend-node-modules:
 
 networks:
