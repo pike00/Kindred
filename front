@@ -1,0 +1,107 @@
+import { useState } from "react"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+
+import { OrganizationsService } from "@/client"
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { toast } from "sonner"
+
+interface AddOrganizationDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}
+
+export function AddOrganizationDialog({
+  open,
+  onOpenChange,
+}: AddOrganizationDialogProps) {
+  const queryClient = useQueryClient()
+  const [name, setName] = useState("")
+  const [domain, setDomain] = useState("")
+  const [industry, setIndustry] = useState("")
+
+  const createMutation = useMutation({
+    mutationFn: (data: { name: string; domain?: string; industry?: string }) =>
+      OrganizationsService.createOrganization({ requestBody: data }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["organizations"] })
+      toast.success("Organization created")
+      setName("")
+      setDomain("")
+      setIndustry("")
+      onOpenChange(false)
+    },
+    onError: (error: any) => {
+      toast.error(error?.body?.detail || "Failed to create organization")
+    },
+  })
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!name.trim()) return
+    createMutation.mutate({
+      name: name.trim(),
+      ...(domain.trim() && { domain: domain.trim() }),
+      ...(industry.trim() && { industry: industry.trim() }),
+    })
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Add organization</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="org-name">Name *</Label>
+            <Input
+              id="org-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Acme Corp"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="org-domain">Domain</Label>
+            <Input
+              id="org-domain"
+              value={domain}
+              onChange={(e) => setDomain(e.target.value)}
+              placeholder="acme.com"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="org-industry">Industry</Label>
+            <Input
+              id="org-industry"
+              value={industry}
+              onChange={(e) => setIndustry(e.target.value)}
+              placeholder="Technology"
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={createMutation.isPending || !name.trim()}>
+              {createMutation.isPending ? "Creating..." : "Create"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}

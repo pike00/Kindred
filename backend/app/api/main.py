@@ -26,6 +26,7 @@ from app.api.routes import (
     users,
     utils,
     webhooks,
+    organizations,
 )
 from app.core.config import settings
 
@@ -55,6 +56,7 @@ api_router.include_router(journal.router)
 api_router.include_router(import_export.router)
 api_router.include_router(webhooks.router)
 api_router.include_router(activity_logs.router)
+api_router.include_router(organizations.router)
 api_router.include_router(calendar.router)
 
 
