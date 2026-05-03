@@ -1,0 +1,500 @@
+import { useCallback, useRef, useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
+import { useFaceDetection, type DetectedFace } from "@/hooks/useFaceDetection";
+import { ContactAvatar } from "@/components/Common/ContactAvatar";
+import { ContactPublic } from "@/client";
+import { cn } from "@/lib/utils";
+import { Upload, Crop, RefreshCw, Loader2 } from "lucide-react";
+
+interface AvatarUploadDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  contact: ContactPublic;
+  onUploadComplete?: (avatarUrl: string) => void;
+}
+
+interface CropRegion {
+  x: number;
+  y: number;
+  size: number;
+}
+
+const JPEG_QUALITY = 0.85;
+
+export function AvatarUploadDialog({
+  open,
+  onOpenChange,
+  contact,
+  onUploadComplete,
+}: AvatarUploadDialogProps) {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [cropRegion, setCropRegion] = useState<CropRegion>({ x: 0, y: 0, size: 100 });
+  const [faces, setFaces] = useState<DetectedFace[]>([]);
+  const [selectedFaceIndex, setSelectedFaceIndex] = useState<number>(0);
+  const [manualMode, setManualMode] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  const imageRef = useRef<HTMLImageElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const { detectFaces, loading: detecting } = useFaceDetection();
+
+  // Reset state when dialog opens/closes
+  useEffect(() => {
+    if (!open) {
+      setSelectedFile(null);
+      setPreviewUrl(null);
+      setFaces([]);
+      setSelectedFaceIndex(0);
+      setManualMode(false);
+      setIsUploading(false);
+      setUploadError(null);
+      setCropRegion({ x: 0, y: 0, size: 100 });
+    }
+  }, [open]);
+
+  // Handle file selection
+  const handleFileSelect = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        setUploadError("Please select an image file");
+        return;
+      }
+
+      setSelectedFile(file);
+      setUploadError(null);
+
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+
+      // Wait for image to load, then detect faces
+      const img = new Image();
+      img.onload = async () => {
+        try {
+          const detectedFaces = await detectFaces(img);
+          setFaces(detectedFaces);
+
+          if (detectedFaces.length > 0) {
+            // Pick the largest face by bounding box area
+            const largestFaceIndex = detectedFaces.reduce(
+              (maxIdx, face, idx, arr) =>
+                face.boundingBox.width * face.boundingBox.height >
+                arr[maxIdx].boundingBox.width * arr[maxIdx].boundingBox.height
+                  ? idx
+                  : maxIdx,
+              0
+            );
+            setSelectedFaceIndex(largestFaceIndex);
+            centerCropOnFace(detectedFaces[largestFaceIndex], img.naturalWidth, img.naturalHeight);
+          } else {
+            // No faces detected - use center crop
+            setManualMode(true);
+            centerCropOnCenter(img.naturalWidth, img.naturalHeight);
+          }
+        } catch {
+          // Face detection failed - fallback to center crop
+          setManualMode(true);
+          centerCropOnCenter(img.naturalWidth, img.naturalHeight);
+        }
+      };
+      img.src = url;
+    },
+    [detectFaces]
+  );
+
+  // Center crop on a detected face
+  const centerCropOnFace = useCallback(
+    (face: DetectedFace, imgWidth: number, imgHeight: number) => {
+      const { originX, originY, width, height } = face.boundingBox;
+      const centerX = originX + width / 2;
+      const centerY = originY + height / 2;
+
+      // Start with 60% of face width, minimum 50px
+      const cropSize = Math.max(width * 0.6, 50);
+
+      const x = Math.max(0, Math.min(centerX - cropSize / 2, imgWidth - cropSize));
+      const y = Math.max(0, Math.min(centerY - cropSize / 2, imgHeight - cropSize));
+
+      setCropRegion({ x, y, size: cropSize });
+    },
+    []
+  );
+
+  // Center crop on image center
+  const centerCropOnCenter = useCallback(
+    (imgWidth: number, imgHeight: number) => {
+      const size = Math.min(imgWidth, imgHeight) * 0.8;
+      const x = (imgWidth - size) / 2;
+      const y = (imgHeight - size) / 2;
+      setCropRegion({ x, y, size });
+    },
+    []
+  );
+
+  // Handle crop region changes from mouse/touch interaction
+  const handleCropMouseDown = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (!manualMode) return;
+
+      const rect = e.currentTarget.getBoundingClientRect();
+      const scaleX = (imageRef.current?.naturalWidth || 1) / rect.width;
+      const scaleY = (imageRef.current?.naturalHeight || 1) / rect.height;
+
+      const startX = e.clientX - rect.left;
+      const startY = e.clientY - rect.top;
+
+      const handleMouseMove = (moveEvent: MouseEvent) => {
+        const dx = (moveEvent.clientX - rect.left - startX) * scaleX;
+        const dy = (moveEvent.clientY - rect.top - startY) * scaleY;
+
+        setCropRegion((prev) => {
+          const img = imageRef.current;
+          if (!img) return prev;
+
+          const newX = Math.max(0, Math.min(prev.x + dx, img.naturalWidth - prev.size));
+          const newY = Math.max(0, Math.min(prev.y + dy, img.naturalHeight - prev.size));
+
+          return { ...prev, x: newX, y: newY };
+        });
+      };
+
+      const handleMouseUp = () => {
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
+      };
+
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+    },
+    [manualMode]
+  );
+
+  // Generate cropped image as base64 JPEG
+  const generateCroppedImage = useCallback((): Promise<string | null> => {
+    return new Promise((resolve) => {
+      const img = imageRef.current;
+      if (!img || !previewUrl) {
+        resolve(null);
+        return;
+      }
+
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        resolve(null);
+        return;
+      }
+
+      // Output size for avatar (square)
+      const outputSize = 400;
+      canvas.width = outputSize;
+      canvas.height = outputSize;
+
+      // Draw cropped region
+      ctx.drawImage(
+        img,
+        cropRegion.x,
+        cropRegion.y,
+        cropRegion.size,
+        cropRegion.size,
+        0,
+        0,
+        outputSize,
+        outputSize
+      );
+
+      // Convert to JPEG base64
+      const dataUrl = canvas.toDataURL("image/jpeg", JPEG_QUALITY);
+      resolve(dataUrl);
+    });
+  }, [cropRegion, previewUrl]);
+
+  // Upload the cropped image
+  const handleUpload = useCallback(async () => {
+    setIsUploading(true);
+    setUploadError(null);
+
+    try {
+      const croppedDataUrl = await generateCroppedImage();
+      if (!croppedDataUrl) {
+        throw new Error("Failed to generate cropped image");
+      }
+
+      // Convert base64 to blob
+      const response = await fetch(croppedDataUrl);
+      const blob = await response.blob();
+
+      // Create form data
+      const formData = new FormData();
+      formData.append("file", blob, "avatar.jpg");
+
+      // Upload to backend
+      const uploadResponse = await fetch(`/api/v1/contacts/${contact.id}/avatar`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!uploadResponse.ok) {
+        const errorText = await uploadResponse.text();
+        throw new Error(`Upload failed: ${errorText}`);
+      }
+
+      const result = await uploadResponse.json();
+
+      onUploadComplete?.(result.avatar_url);
+      onOpenChange(false);
+    } catch (err) {
+      console.error("Upload failed:", err);
+      setUploadError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setIsUploading(false);
+    }
+  }, [generateCroppedImage, contact.id, onUploadComplete, onOpenChange]);
+
+  // Switch to manual mode
+  const handleManualToggle = useCallback(() => {
+    setManualMode(!manualMode);
+    if (!manualMode && imageRef.current) {
+      centerCropOnCenter(imageRef.current.naturalWidth, imageRef.current.naturalHeight);
+    }
+  }, [manualMode, centerCropOnCenter]);
+
+  // Handle face selection
+  const handleFaceSelect = useCallback(
+    (index: number) => {
+      setSelectedFaceIndex(index);
+      if (faces[index] && imageRef.current) {
+        centerCropOnFace(faces[index], imageRef.current.naturalWidth, imageRef.current.naturalHeight);
+      }
+    },
+    [faces, centerCropOnFace]
+  );
+
+  // Update crop size via slider
+  const handleCropSizeChange = useCallback((value: number[]) => {
+    setCropRegion((prev) => ({ ...prev, size: value[0] }));
+  }, []);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Upload Avatar for {contact.first_name}</DialogTitle>
+          <DialogDescription>
+            Upload a photo and crop it to create an avatar. Face detection will
+            automatically center the crop on the detected face.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-4">
+          {/* File Input */}
+          <div className="space-y-2">
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={handleFileSelect}
+              disabled={isUploading}
+            />
+          </div>
+
+          {/* Image Preview with Crop Overlay */}
+          {previewUrl && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Original Image with Crop Overlay */}
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Original Image</p>
+                  <div
+                    ref={containerRef}
+                    className="relative inline-block max-w-full overflow-hidden border rounded-lg"
+                    onMouseDown={handleCropMouseDown}
+                  >
+                    <img
+                      ref={imageRef}
+                      src={previewUrl}
+                      alt="Preview"
+                      className="max-w-full h-auto"
+                      draggable={false}
+                    />
+                    {/* Crop Overlay */}
+                    <div
+                      className={cn(
+                        "absolute border-2 border-primary bg-primary/10 pointer-events-none",
+                        manualMode && "cursor-move"
+                      )}
+                      style={{
+                        left: `${(cropRegion.x / (imageRef.current?.naturalWidth || 1)) * 100}%`,
+                        top: `${(cropRegion.y / (imageRef.current?.naturalHeight || 1)) * 100}%`,
+                        width: `${(cropRegion.size / (imageRef.current?.naturalWidth || 1)) * 100}%`,
+                        height: `${(cropRegion.size / (imageRef.current?.naturalHeight || 1)) * 100}%`,
+                      }}
+                    />
+                    {/* Face Detection Boxes */}
+                    {!manualMode &&
+                      faces.map((face, idx) => (
+                        <div
+                          key={idx}
+                          className={cn(
+                            "absolute border-2 pointer-events-none",
+                            idx === selectedFaceIndex
+                              ? "border-green-500"
+                              : "border-yellow-500 opacity-50"
+                          )}
+                          style={{
+                            left: `${(face.boundingBox.originX / (imageRef.current?.naturalWidth || 1)) * 100}%`,
+                            top: `${(face.boundingBox.originY / (imageRef.current?.naturalHeight || 1)) * 100}%`,
+                            width: `${(face.boundingBox.width / (imageRef.current?.naturalWidth || 1)) * 100}%`,
+                            height: `${(face.boundingBox.height / (imageRef.current?.naturalHeight || 1)) * 100}%`,
+                          }}
+                        />
+                      ))}
+                  </div>
+                </div>
+
+                {/* Preview */}
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Avatar Preview</p>
+                  <div className="flex items-center justify-center p-4 border rounded-lg bg-muted/50">
+                    <div className="size-32 rounded-full overflow-hidden border-4 border-background shadow-lg">
+                      {previewUrl && (
+                        <img
+                          src={previewUrl}
+                          alt="Avatar preview"
+                          className="w-full h-full object-cover"
+                          style={{
+                            objectPosition: `${(cropRegion.x / (imageRef.current?.naturalWidth || 1)) * 100}% ${(cropRegion.y / (imageRef.current?.naturalHeight || 1)) * 100}%`,
+                            transform: `scale(${(imageRef.current?.naturalWidth || 1) / cropRegion.size})`,
+                          }}
+                        />
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Face Detection Results */}
+              {detecting && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Detecting faces...
+                </div>
+              )}
+
+              {faces.length > 0 && !detecting && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">
+                    Detected {faces.length} face(s)
+                  </p>
+                  <div className="flex gap-2 flex-wrap">
+                    {faces.map((_, idx) => (
+                      <Button
+                        key={idx}
+                        variant={idx === selectedFaceIndex ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handleFaceSelect(idx)}
+                      >
+                        Face {idx + 1}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {faces.length === 0 && !detecting && previewUrl && (
+                <div className="text-sm text-muted-foreground">
+                  No faces detected. Using center crop.
+                </div>
+              )}
+
+              {/* Crop Size Slider */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium">Crop Size</p>
+                  <span className="text-sm text-muted-foreground">
+                    {Math.round(cropRegion.size)}px
+                  </span>
+                </div>
+                <Slider
+                  value={[cropRegion.size]}
+                  min={50}
+                  max={Math.min(
+                    imageRef.current?.naturalWidth || 400,
+                    imageRef.current?.naturalHeight || 400
+                  )}
+                  step={1}
+                  onValueChange={handleCropSizeChange}
+                />
+              </div>
+
+              {/* Manual Mode Toggle */}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={manualMode ? "default" : "outline"}
+                  size="sm"
+                  onClick={handleManualToggle}
+                >
+                  <Crop className="h-4 w-4 mr-2" />
+                  {manualMode ? "Auto Face Detection" : "Manual Crop"}
+                </Button>
+                {manualMode && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (imageRef.current) {
+                        centerCropOnCenter(
+                          imageRef.current.naturalWidth,
+                          imageRef.current.naturalHeight
+                        );
+                      }
+                    }}
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Reset to Center
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Upload Error */}
+          {uploadError && (
+            <div className="text-sm text-destructive">{uploadError}</div>
+          )}
+        </div>
+
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleUpload}
+            disabled={!selectedFile || isUploading}
+          >
+            {isUploading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Uploading...
+              </>
+            ) : (
+              <>
+                <Upload className="h-4 w-4 mr-2" />
+                Upload Avatar
+              </>
+            )}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
