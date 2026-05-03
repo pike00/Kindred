@@ -31,7 +31,8 @@ def _reminder_accessible(user: Any, reminder: Reminder, session: Any) -> bool:
 @router.get("/", response_model=RemindersPublic)
 def list_reminders(
     session: SessionDep,
-skip: int = 0,
+    current_user: CurrentUser,
+    skip: int = 0,
     limit: int = 100,
     is_active: bool | None = None,
 ) -> Any:
@@ -62,7 +63,8 @@ skip: int = 0,
 def create_reminder_route(
     *,
     session: SessionDep,
-reminder_in: ReminderCreate,
+    current_user: CurrentUser,
+    reminder_in: ReminderCreate,
 ) -> Any:
     """Create a new reminder."""
     if reminder_in.contact_id is not None and not contact_visible(
@@ -79,7 +81,8 @@ reminder_in: ReminderCreate,
 def update_reminder(
     *,
     session: SessionDep,
-reminder_id: uuid.UUID,
+    current_user: CurrentUser,
+    reminder_id: uuid.UUID,
     reminder_in: ReminderUpdate,
 ) -> Any:
     """Update a reminder."""
@@ -99,7 +102,8 @@ reminder_id: uuid.UUID,
 def snooze_reminder(
     *,
     session: SessionDep,
-reminder_id: uuid.UUID,
+    current_user: CurrentUser,
+    reminder_id: uuid.UUID,
     minutes: int = 30,
 ) -> Any:
     """Snooze a reminder."""
@@ -119,7 +123,8 @@ reminder_id: uuid.UUID,
 @router.delete("/{reminder_id}")
 def delete_reminder(
     session: SessionDep,
-reminder_id: uuid.UUID,
+    current_user: CurrentUser,
+    reminder_id: uuid.UUID,
 ) -> Any:
     """Soft-delete a reminder by setting deleted_at."""
     reminder = session.get(Reminder, reminder_id)
@@ -137,7 +142,7 @@ reminder_id: uuid.UUID,
 @router.post("/{reminder_id}/restore")
 def restore_reminder(
     session: SessionDep,
-reminder_id: uuid.UUID,
+    reminder_id: uuid.UUID,
 ) -> Any:
     """Restore a soft-deleted reminder by clearing deleted_at."""
     from sqlalchemy import text, update

@@ -24,7 +24,8 @@ router = APIRouter(prefix="/notes", tags=["notes"])
 @router.get("/contact/{contact_id}", response_model=NotesPublic)
 def list_notes(
     session: SessionDep,
-contact_id: uuid.UUID,
+    current_user: CurrentUser,
+    contact_id: uuid.UUID,
     skip: int = 0,
     limit: int = 100,
 ) -> Any:
@@ -68,7 +69,8 @@ contact_id: uuid.UUID,
 def create_note_route(
     *,
     session: SessionDep,
-note_in: NoteCreate,
+    current_user: CurrentUser,
+    note_in: NoteCreate,
 ) -> Any:
     """Create a new note."""
     contact = session.get(Contact, note_in.contact_id)
@@ -85,7 +87,8 @@ note_in: NoteCreate,
 def update_note_route(
     *,
     session: SessionDep,
-note_id: uuid.UUID,
+    current_user: CurrentUser,
+    note_id: uuid.UUID,
     note_in: NoteUpdate,
 ) -> Any:
     """Update a note."""
@@ -102,7 +105,8 @@ note_id: uuid.UUID,
 @router.delete("/{note_id}")
 def delete_note(
     session: SessionDep,
-note_id: uuid.UUID,
+    current_user: CurrentUser,
+    note_id: uuid.UUID,
 ) -> Any:
     """Soft-delete a note by setting deleted_at."""
     note = session.get(Note, note_id)
@@ -122,7 +126,7 @@ note_id: uuid.UUID,
 @router.post("/{note_id}/restore")
 def restore_note(
     session: SessionDep,
-note_id: uuid.UUID,
+    note_id: uuid.UUID,
 ) -> Any:
     """Restore a soft-deleted note by clearing deleted_at."""
     from sqlalchemy import text, update

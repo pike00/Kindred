@@ -21,7 +21,8 @@ def _require_contact_visible(session: Any, user: Any, contact_id: uuid.UUID) -> 
 @router.get("/contact/{contact_id}", response_model=DebtsPublic)
 def list_debts(
     session: SessionDep,
-contact_id: uuid.UUID,
+    current_user: CurrentUser,
+    contact_id: uuid.UUID,
 ) -> Any:
     """List debts for a contact."""
     _require_contact_visible(session, current_user, contact_id)
@@ -39,7 +40,8 @@ contact_id: uuid.UUID,
 def create_debt_route(
     *,
     session: SessionDep,
-debt_in: DebtCreate,
+    current_user: CurrentUser,
+    debt_in: DebtCreate,
 ) -> Any:
     """Create a new debt."""
     _require_contact_visible(session, current_user, debt_in.contact_id)
@@ -52,7 +54,8 @@ debt_in: DebtCreate,
 def update_debt(
     *,
     session: SessionDep,
-debt_id: uuid.UUID,
+    current_user: CurrentUser,
+    debt_id: uuid.UUID,
     debt_in: DebtUpdate,
 ) -> Any:
     """Update a debt."""
@@ -72,11 +75,16 @@ debt_id: uuid.UUID,
 @router.delete("/{debt_id}")
 def delete_debt(
     session: SessionDep,
-debt_id: uuid.UUID,
+    current_user: CurrentUser,
+    debt_id: uuid.UUID,
 ) -> Any:
     """Soft-delete a debt by setting deleted_at."""
     debt = session.get(Debt, debt_id)
     if debt is None:
+        raise HTTPException(status_code=404, detail="Debt not found")
+    if debt.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
         raise HTTPException(status_code=404, detail="Debt not found")
     _require_contact_visible(session, current_user, debt.contact_id)
 
@@ -91,7 +99,7 @@ debt_id: uuid.UUID,
 @router.post("/{debt_id}/restore")
 def restore_debt(
     session: SessionDep,
-debt_id: uuid.UUID,
+    debt_id: uuid.UUID,
 ) -> Any:
     """Restore a soft-deleted debt by clearing deleted_at."""
     from sqlalchemy import text, update

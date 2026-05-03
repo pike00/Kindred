@@ -526,6 +526,7 @@ export type DebtPublic = {
     id: string;
     contact_id: string;
     created_at: string;
+    deleted_at?: (string | null);
 };
 
 export type DebtsPublic = {
@@ -614,6 +615,7 @@ export type GiftPublic = {
     id: string;
     contact_id: string;
     created_at: string;
+    deleted_at?: (string | null);
 };
 
 export type GiftsPublic = {
@@ -732,6 +734,7 @@ export type InteractionPublic = {
     id: string;
     attendees?: Array<InteractionAttendeeSummary>;
     created_at: string;
+    deleted_at?: (string | null);
 };
 
 export type InteractionsPublic = {
@@ -843,6 +846,7 @@ export type LifeEventPublic = {
     id: string;
     contact_id: string;
     created_at: string;
+    deleted_at?: (string | null);
 };
 
 export type LifeEventsPublic = {
@@ -957,6 +961,7 @@ export type NotePublic = {
     contact_id: string;
     created_at: string;
     updated_at: string;
+    deleted_at?: (string | null);
 };
 
 export type NotesPublic = {
@@ -1014,6 +1019,13 @@ export type PetUpdate = {
     species?: (string | null);
     breed?: (string | null);
     notes?: (string | null);
+};
+
+export type PrivateUserCreate = {
+    email: string;
+    password: string;
+    full_name: string;
+    is_verified?: boolean;
 };
 
 export type RelationshipCreate = {
@@ -1105,6 +1117,7 @@ export type ReminderPublic = {
     last_sent_at: (string | null);
     snoozed_until: (string | null);
     created_at: string;
+    deleted_at?: (string | null);
 };
 
 export type RemindersPublic = {
@@ -1487,6 +1500,12 @@ export type DebtsDeleteDebtData = {
 
 export type DebtsDeleteDebtResponse = (unknown);
 
+export type DebtsRestoreDebtData = {
+    debtId: string;
+};
+
+export type DebtsRestoreDebtResponse = (unknown);
+
 export type GiftsListGiftsData = {
     contactId: string;
 };
@@ -1511,6 +1530,12 @@ export type GiftsDeleteGiftData = {
 };
 
 export type GiftsDeleteGiftResponse = (unknown);
+
+export type GiftsRestoreGiftData = {
+    giftId: string;
+};
+
+export type GiftsRestoreGiftResponse = (unknown);
 
 export type GroupsListGroupsData = {
     limit?: number;
@@ -1575,6 +1600,12 @@ export type InteractionsDeleteInteractionData = {
 
 export type InteractionsDeleteInteractionResponse = (unknown);
 
+export type InteractionsRestoreInteractionData = {
+    interactionId: string;
+};
+
+export type InteractionsRestoreInteractionResponse = (unknown);
+
 export type JournalListJournalEntriesData = {
     limit?: number;
     skip?: number;
@@ -1625,6 +1656,12 @@ export type LifeEventsDeleteLifeEventData = {
 };
 
 export type LifeEventsDeleteLifeEventResponse = (unknown);
+
+export type LifeEventsRestoreLifeEventData = {
+    eventId: string;
+};
+
+export type LifeEventsRestoreLifeEventResponse = (unknown);
 
 export type LoginLoginAccessTokenData = {
     formData: Body_login_login_access_token;
@@ -1704,6 +1741,12 @@ export type NotesDeleteNoteData = {
 
 export type NotesDeleteNoteResponse = (unknown);
 
+export type NotesRestoreNoteData = {
+    noteId: string;
+};
+
+export type NotesRestoreNoteResponse = (unknown);
+
 export type PetsListPetsData = {
     contactId: string;
 };
@@ -1728,6 +1771,12 @@ export type PetsDeletePetData = {
 };
 
 export type PetsDeletePetResponse = (unknown);
+
+export type PrivateCreateUserData = {
+    requestBody: PrivateUserCreate;
+};
+
+export type PrivateCreateUserResponse = (UserPublic);
 
 export type RelationshipsLookupInverseData = {
     type: string;
@@ -1795,6 +1844,12 @@ export type RemindersSnoozeReminderData = {
 };
 
 export type RemindersSnoozeReminderResponse = (unknown);
+
+export type RemindersRestoreReminderData = {
+    reminderId: string;
+};
+
+export type RemindersRestoreReminderResponse = (unknown);
 
 export type TagsListTagsData = {
     limit?: number;

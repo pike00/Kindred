@@ -97,7 +97,8 @@ def _remove_contact_safe(contact_id: str) -> None:
 @router.get("/", response_model=ContactsPublic)
 def list_contacts(
     session: SessionDep,
-skip: int = 0,
+    current_user: CurrentUser,
+    skip: int = 0,
     limit: int = 100,
     search: str | None = None,
     tag_id: uuid.UUID | None = None,
@@ -195,7 +196,8 @@ skip: int = 0,
 @router.get("/losing-touch", response_model=ContactsPublic)
 def list_losing_touch(
     session: SessionDep,
-limit: int = 20,
+    current_user: CurrentUser,
+    limit: int = 20,
 ) -> Any:
     """Return contacts whose cadence has been exceeded.
 
@@ -243,7 +245,8 @@ limit: int = 20,
 @router.get("/{contact_id}", response_model=ContactPublic)
 def get_contact(
     session: SessionDep,
-contact_id: uuid.UUID,
+    current_user: CurrentUser,
+    contact_id: uuid.UUID,
 ) -> Any:
     """Get a single contact by ID."""
     statement = (
@@ -268,7 +271,8 @@ contact_id: uuid.UUID,
 def create_contact(
     *,
     session: SessionDep,
-contact_in: ContactCreate,
+    current_user: CurrentUser,
+    contact_in: ContactCreate,
     background_tasks: BackgroundTasks,
 ) -> Any:
     """Create a new contact."""
@@ -308,7 +312,8 @@ contact_in: ContactCreate,
 def update_contact(
     *,
     session: SessionDep,
-contact_id: uuid.UUID,
+    current_user: CurrentUser,
+    contact_id: uuid.UUID,
     contact_in: ContactUpdate,
     background_tasks: BackgroundTasks,
 ) -> Any:
@@ -377,7 +382,8 @@ contact_id: uuid.UUID,
 @router.delete("/{contact_id}")
 def delete_contact(
     session: SessionDep,
-contact_id: uuid.UUID,
+    current_user: CurrentUser,
+    contact_id: uuid.UUID,
     background_tasks: BackgroundTasks,
 ) -> Any:
     """Soft-delete a contact.
@@ -419,7 +425,8 @@ class NoteMentionPublic(BaseModel):
 @router.get("/{contact_id}/mentions", response_model=list[NoteMentionPublic])
 def list_contact_mentions(
     session: SessionDep,
-contact_id: uuid.UUID,
+    current_user: CurrentUser,
+    contact_id: uuid.UUID,
 ) -> Any:
     """List notes that @-mention this contact, with the source (authoring) contact."""
     contact = session.exec(
@@ -439,7 +446,6 @@ contact_id: uuid.UUID,
         .where(
             NoteMention.contact_id == contact_id,
             Note.owner_id == current_user.id,
-            Note.contact_id != contact_id,
         )
         .order_by(Note.created_at.desc())
     ).all()
@@ -463,7 +469,8 @@ contact_id: uuid.UUID,
 @router.post("/{contact_id}/restore", response_model=ContactPublic)
 def restore_contact(
     session: SessionDep,
-contact_id: uuid.UUID,
+    current_user: CurrentUser,
+    contact_id: uuid.UUID,
     background_tasks: BackgroundTasks,
 ) -> Any:
     """Restore a soft-deleted contact (clear ``deleted_at``)."""

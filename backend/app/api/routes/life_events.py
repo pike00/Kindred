@@ -27,7 +27,8 @@ def _require_contact_visible(session: Any, user: Any, contact_id: uuid.UUID) -> 
 @router.get("/contact/{contact_id}", response_model=LifeEventsPublic)
 def list_life_events(
     session: SessionDep,
-contact_id: uuid.UUID,
+    current_user: CurrentUser,
+    contact_id: uuid.UUID,
 ) -> Any:
     """List life events for a contact."""
     _require_contact_visible(session, current_user, contact_id)
@@ -45,7 +46,8 @@ contact_id: uuid.UUID,
 def create_life_event_route(
     *,
     session: SessionDep,
-event_in: LifeEventCreate,
+    current_user: CurrentUser,
+    event_in: LifeEventCreate,
 ) -> Any:
     """Create a new life event."""
     _require_contact_visible(session, current_user, event_in.contact_id)
@@ -60,13 +62,18 @@ event_in: LifeEventCreate,
 def update_life_event(
     *,
     session: SessionDep,
-event_id: uuid.UUID,
+    current_user: CurrentUser,
+    event_id: uuid.UUID,
     event_in: LifeEventUpdate,
 ) -> Any:
     """Update a life event."""
     event = session.get(LifeEvent, event_id)
     if event is None:
         raise HTTPException(status_code=404, detail="Life event not found")
+
+    if event.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
     _require_contact_visible(session, current_user, event.contact_id)
 
     update_data = event_in.model_dump(exclude_unset=True)
@@ -80,7 +87,8 @@ event_id: uuid.UUID,
 @router.delete("/{event_id}")
 def delete_life_event(
     session: SessionDep,
-event_id: uuid.UUID,
+    current_user: CurrentUser,
+    event_id: uuid.UUID,
 ) -> Any:
     """Soft-delete a life event by setting deleted_at."""
     event = session.get(LifeEvent, event_id)
@@ -99,7 +107,7 @@ event_id: uuid.UUID,
 @router.post("/{event_id}/restore")
 def restore_life_event(
     session: SessionDep,
-event_id: uuid.UUID,
+    event_id: uuid.UUID,
 ) -> Any:
     """Restore a soft-deleted life event by clearing deleted_at."""
     from sqlalchemy import text, update

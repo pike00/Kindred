@@ -21,7 +21,8 @@ def _require_contact_visible(session: Any, user: Any, contact_id: uuid.UUID) -> 
 @router.get("/contact/{contact_id}", response_model=GiftsPublic)
 def list_gifts(
     session: SessionDep,
-contact_id: uuid.UUID,
+    current_user: CurrentUser,
+    contact_id: uuid.UUID,
 ) -> Any:
     """List gifts for a contact."""
     _require_contact_visible(session, current_user, contact_id)
@@ -39,7 +40,8 @@ contact_id: uuid.UUID,
 def create_gift_route(
     *,
     session: SessionDep,
-gift_in: GiftCreate,
+    current_user: CurrentUser,
+    gift_in: GiftCreate,
 ) -> Any:
     """Create a new gift."""
     _require_contact_visible(session, current_user, gift_in.contact_id)
@@ -52,7 +54,8 @@ gift_in: GiftCreate,
 def update_gift(
     *,
     session: SessionDep,
-gift_id: uuid.UUID,
+    current_user: CurrentUser,
+    gift_id: uuid.UUID,
     gift_in: GiftUpdate,
 ) -> Any:
     """Update a gift."""
@@ -72,12 +75,17 @@ gift_id: uuid.UUID,
 @router.delete("/{gift_id}")
 def delete_gift(
     session: SessionDep,
-gift_id: uuid.UUID,
+    current_user: CurrentUser,
+    gift_id: uuid.UUID,
 ) -> Any:
     """Soft-delete a gift by setting deleted_at."""
     gift = session.get(Gift, gift_id)
     if gift is None:
         raise HTTPException(status_code=404, detail="Gift not found")
+
+    if gift.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
     _require_contact_visible(session, current_user, gift.contact_id)
 
     from datetime import datetime, timezone
@@ -91,7 +99,7 @@ gift_id: uuid.UUID,
 @router.post("/{gift_id}/restore")
 def restore_gift(
     session: SessionDep,
-gift_id: uuid.UUID,
+    gift_id: uuid.UUID,
 ) -> Any:
     """Restore a soft-deleted gift by clearing deleted_at."""
     from sqlalchemy import text, update

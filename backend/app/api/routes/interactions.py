@@ -77,7 +77,8 @@ def _resolve_visible_contact_ids(
 @router.get("/", response_model=InteractionsPublic)
 def list_interactions(
     session: SessionDep,
-contact_id: uuid.UUID | None = None,
+    current_user: CurrentUser,
+    contact_id: uuid.UUID | None = None,
     skip: int = 0,
     limit: int = 100,
 ) -> Any:
@@ -118,7 +119,8 @@ contact_id: uuid.UUID | None = None,
 def create_interaction_route(
     *,
     session: SessionDep,
-interaction_in: InteractionCreate,
+    current_user: CurrentUser,
+    interaction_in: InteractionCreate,
 ) -> Any:
     """Create a new interaction with one or more attendees."""
     visible_ids = _resolve_visible_contact_ids(session, current_user)
@@ -136,7 +138,8 @@ interaction_in: InteractionCreate,
 def update_interaction(
     *,
     session: SessionDep,
-interaction_id: uuid.UUID,
+    current_user: CurrentUser,
+    interaction_id: uuid.UUID,
     interaction_in: InteractionUpdate,
 ) -> Any:
     """Update an interaction; ``attendee_ids`` replaces the attendee set."""
@@ -201,7 +204,8 @@ interaction_id: uuid.UUID,
 @router.delete("/{interaction_id}")
 def delete_interaction(
     session: SessionDep,
-interaction_id: uuid.UUID,
+    current_user: CurrentUser,
+    interaction_id: uuid.UUID,
 ) -> Any:
     """Soft-delete an interaction by setting deleted_at."""
     interaction = session.get(Interaction, interaction_id)
@@ -233,7 +237,7 @@ interaction_id: uuid.UUID,
 @router.post("/{interaction_id}/restore")
 def restore_interaction(
     session: SessionDep,
-interaction_id: uuid.UUID,
+    interaction_id: uuid.UUID,
 ) -> Any:
     """Restore a soft-deleted interaction by clearing deleted_at."""
     from sqlalchemy import text, update
