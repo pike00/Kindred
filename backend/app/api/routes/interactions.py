@@ -77,8 +77,7 @@ def _resolve_visible_contact_ids(
 @router.get("/", response_model=InteractionsPublic)
 def list_interactions(
     session: SessionDep,
-    current_user: CurrentUser,
-    contact_id: uuid.UUID | None = None,
+contact_id: uuid.UUID | None = None,
     skip: int = 0,
     limit: int = 100,
 ) -> Any:
@@ -119,8 +118,7 @@ def list_interactions(
 def create_interaction_route(
     *,
     session: SessionDep,
-    current_user: CurrentUser,
-    interaction_in: InteractionCreate,
+interaction_in: InteractionCreate,
 ) -> Any:
     """Create a new interaction with one or more attendees."""
     visible_ids = _resolve_visible_contact_ids(session, current_user)
@@ -138,8 +136,7 @@ def create_interaction_route(
 def update_interaction(
     *,
     session: SessionDep,
-    current_user: CurrentUser,
-    interaction_id: uuid.UUID,
+interaction_id: uuid.UUID,
     interaction_in: InteractionUpdate,
 ) -> Any:
     """Update an interaction; ``attendee_ids`` replaces the attendee set."""
@@ -204,10 +201,9 @@ def update_interaction(
 @router.delete("/{interaction_id}")
 def delete_interaction(
     session: SessionDep,
-    current_user: CurrentUser,
-    interaction_id: uuid.UUID,
+interaction_id: uuid.UUID,
 ) -> Any:
-    """Delete an interaction and recompute each attendee's last_contacted_at."""
+    """Soft-delete an interaction by setting deleted_at."""
     interaction = session.get(Interaction, interaction_id)
     if interaction is None:
         raise HTTPException(status_code=404, detail="Interaction not found")
@@ -223,9 +219,38 @@ def delete_interaction(
     if not (attendee_ids & visible_ids):
         raise HTTPException(status_code=404, detail="Interaction not found")
 
-    session.delete(interaction)
+    from datetime import datetime, timezone
+
+    interaction.deleted_at = datetime.now(timezone.utc)
+    session.add(interaction)
     session.flush()
     for aid in attendee_ids:
         recompute_last_contacted_at(session=session, contact_id=aid)
+    session.commit()
+    return {"ok": True}
+
+
+@router.post("/{interaction_id}/restore")
+def restore_interaction(
+    session: SessionDep,
+interaction_id: uuid.UUID,
+) -> Any:
+    """Restore a soft-deleted interaction by clearing deleted_at."""
+    from sqlalchemy import text, update
+
+    # Bypass the soft-delete filter
+    result = session.exec(
+        text("SELECT id FROM interaction WHERE id = :id AND deleted_at IS NOT NULL"),
+        params={"id": str(interaction_id)},
+    ).first()
+    if result is None:
+        raise HTTPException(
+            status_code=404, detail="Interaction not found or not deleted"
+        )
+    session.exec(
+        update(Interaction)
+        .where(Interaction.id == interaction_id)
+        .values(deleted_at=None)
+    )
     session.commit()
     return {"ok": True}

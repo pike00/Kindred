@@ -24,8 +24,7 @@ router = APIRouter(prefix="/notes", tags=["notes"])
 @router.get("/contact/{contact_id}", response_model=NotesPublic)
 def list_notes(
     session: SessionDep,
-    current_user: CurrentUser,
-    contact_id: uuid.UUID,
+contact_id: uuid.UUID,
     skip: int = 0,
     limit: int = 100,
 ) -> Any:
@@ -69,8 +68,7 @@ def list_notes(
 def create_note_route(
     *,
     session: SessionDep,
-    current_user: CurrentUser,
-    note_in: NoteCreate,
+note_in: NoteCreate,
 ) -> Any:
     """Create a new note."""
     contact = session.get(Contact, note_in.contact_id)
@@ -87,8 +85,7 @@ def create_note_route(
 def update_note_route(
     *,
     session: SessionDep,
-    current_user: CurrentUser,
-    note_id: uuid.UUID,
+note_id: uuid.UUID,
     note_in: NoteUpdate,
 ) -> Any:
     """Update a note."""
@@ -105,16 +102,37 @@ def update_note_route(
 @router.delete("/{note_id}")
 def delete_note(
     session: SessionDep,
-    current_user: CurrentUser,
-    note_id: uuid.UUID,
+note_id: uuid.UUID,
 ) -> Any:
-    """Delete a note."""
+    """Soft-delete a note by setting deleted_at."""
     note = session.get(Note, note_id)
     if not note:
         raise HTTPException(status_code=404, detail="Note not found")
     if note.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not enough permissions")
 
-    session.delete(note)
+    from datetime import datetime, timezone
+
+    note.deleted_at = datetime.now(timezone.utc)
+    session.add(note)
+    session.commit()
+    return {"ok": True}
+
+
+@router.post("/{note_id}/restore")
+def restore_note(
+    session: SessionDep,
+note_id: uuid.UUID,
+) -> Any:
+    """Restore a soft-deleted note by clearing deleted_at."""
+    from sqlalchemy import text, update
+
+    result = session.exec(
+        text("SELECT id FROM note WHERE id = :id AND deleted_at IS NOT NULL"),
+        params={"id": str(note_id)},
+    ).first()
+    if result is None:
+        raise HTTPException(status_code=404, detail="Note not found or not deleted")
+    session.exec(update(Note).where(Note.id == note_id).values(deleted_at=None))
     session.commit()
     return {"ok": True}

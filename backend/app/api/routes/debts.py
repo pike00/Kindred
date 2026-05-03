@@ -21,8 +21,7 @@ def _require_contact_visible(session: Any, user: Any, contact_id: uuid.UUID) -> 
 @router.get("/contact/{contact_id}", response_model=DebtsPublic)
 def list_debts(
     session: SessionDep,
-    current_user: CurrentUser,
-    contact_id: uuid.UUID,
+contact_id: uuid.UUID,
 ) -> Any:
     """List debts for a contact."""
     _require_contact_visible(session, current_user, contact_id)
@@ -40,8 +39,7 @@ def list_debts(
 def create_debt_route(
     *,
     session: SessionDep,
-    current_user: CurrentUser,
-    debt_in: DebtCreate,
+debt_in: DebtCreate,
 ) -> Any:
     """Create a new debt."""
     _require_contact_visible(session, current_user, debt_in.contact_id)
@@ -54,8 +52,7 @@ def create_debt_route(
 def update_debt(
     *,
     session: SessionDep,
-    current_user: CurrentUser,
-    debt_id: uuid.UUID,
+debt_id: uuid.UUID,
     debt_in: DebtUpdate,
 ) -> Any:
     """Update a debt."""
@@ -75,15 +72,36 @@ def update_debt(
 @router.delete("/{debt_id}")
 def delete_debt(
     session: SessionDep,
-    current_user: CurrentUser,
-    debt_id: uuid.UUID,
+debt_id: uuid.UUID,
 ) -> Any:
-    """Delete a debt."""
+    """Soft-delete a debt by setting deleted_at."""
     debt = session.get(Debt, debt_id)
     if debt is None:
         raise HTTPException(status_code=404, detail="Debt not found")
     _require_contact_visible(session, current_user, debt.contact_id)
 
-    session.delete(debt)
+    from datetime import datetime, timezone
+
+    debt.deleted_at = datetime.now(timezone.utc)
+    session.add(debt)
+    session.commit()
+    return {"ok": True}
+
+
+@router.post("/{debt_id}/restore")
+def restore_debt(
+    session: SessionDep,
+debt_id: uuid.UUID,
+) -> Any:
+    """Restore a soft-deleted debt by clearing deleted_at."""
+    from sqlalchemy import text, update
+
+    result = session.exec(
+        text("SELECT id FROM debt WHERE id = :id AND deleted_at IS NOT NULL"),
+        params={"id": str(debt_id)},
+    ).first()
+    if result is None:
+        raise HTTPException(status_code=404, detail="Debt not found or not deleted")
+    session.exec(update(Debt).where(Debt.id == debt_id).values(deleted_at=None))
     session.commit()
     return {"ok": True}

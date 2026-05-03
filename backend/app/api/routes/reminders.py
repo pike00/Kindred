@@ -31,8 +31,7 @@ def _reminder_accessible(user: Any, reminder: Reminder, session: Any) -> bool:
 @router.get("/", response_model=RemindersPublic)
 def list_reminders(
     session: SessionDep,
-    current_user: CurrentUser,
-    skip: int = 0,
+skip: int = 0,
     limit: int = 100,
     is_active: bool | None = None,
 ) -> Any:
@@ -63,8 +62,7 @@ def list_reminders(
 def create_reminder_route(
     *,
     session: SessionDep,
-    current_user: CurrentUser,
-    reminder_in: ReminderCreate,
+reminder_in: ReminderCreate,
 ) -> Any:
     """Create a new reminder."""
     if reminder_in.contact_id is not None and not contact_visible(
@@ -81,8 +79,7 @@ def create_reminder_route(
 def update_reminder(
     *,
     session: SessionDep,
-    current_user: CurrentUser,
-    reminder_id: uuid.UUID,
+reminder_id: uuid.UUID,
     reminder_in: ReminderUpdate,
 ) -> Any:
     """Update a reminder."""
@@ -102,8 +99,7 @@ def update_reminder(
 def snooze_reminder(
     *,
     session: SessionDep,
-    current_user: CurrentUser,
-    reminder_id: uuid.UUID,
+reminder_id: uuid.UUID,
     minutes: int = 30,
 ) -> Any:
     """Snooze a reminder."""
@@ -123,14 +119,37 @@ def snooze_reminder(
 @router.delete("/{reminder_id}")
 def delete_reminder(
     session: SessionDep,
-    current_user: CurrentUser,
-    reminder_id: uuid.UUID,
+reminder_id: uuid.UUID,
 ) -> Any:
-    """Delete a reminder."""
+    """Soft-delete a reminder by setting deleted_at."""
     reminder = session.get(Reminder, reminder_id)
     if reminder is None or not _reminder_accessible(current_user, reminder, session):
         raise HTTPException(status_code=404, detail="Reminder not found")
 
-    session.delete(reminder)
+    from datetime import datetime, timezone
+
+    reminder.deleted_at = datetime.now(timezone.utc)
+    session.add(reminder)
+    session.commit()
+    return {"ok": True}
+
+
+@router.post("/{reminder_id}/restore")
+def restore_reminder(
+    session: SessionDep,
+reminder_id: uuid.UUID,
+) -> Any:
+    """Restore a soft-deleted reminder by clearing deleted_at."""
+    from sqlalchemy import text, update
+
+    result = session.exec(
+        text("SELECT id FROM reminder WHERE id = :id AND deleted_at IS NOT NULL"),
+        params={"id": str(reminder_id)},
+    ).first()
+    if result is None:
+        raise HTTPException(status_code=404, detail="Reminder not found or not deleted")
+    session.exec(
+        update(Reminder).where(Reminder.id == reminder_id).values(deleted_at=None)
+    )
     session.commit()
     return {"ok": True}

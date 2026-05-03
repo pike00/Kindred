@@ -27,8 +27,7 @@ def _require_contact_visible(session: Any, user: Any, contact_id: uuid.UUID) -> 
 @router.get("/contact/{contact_id}", response_model=LifeEventsPublic)
 def list_life_events(
     session: SessionDep,
-    current_user: CurrentUser,
-    contact_id: uuid.UUID,
+contact_id: uuid.UUID,
 ) -> Any:
     """List life events for a contact."""
     _require_contact_visible(session, current_user, contact_id)
@@ -46,8 +45,7 @@ def list_life_events(
 def create_life_event_route(
     *,
     session: SessionDep,
-    current_user: CurrentUser,
-    event_in: LifeEventCreate,
+event_in: LifeEventCreate,
 ) -> Any:
     """Create a new life event."""
     _require_contact_visible(session, current_user, event_in.contact_id)
@@ -62,8 +60,7 @@ def create_life_event_route(
 def update_life_event(
     *,
     session: SessionDep,
-    current_user: CurrentUser,
-    event_id: uuid.UUID,
+event_id: uuid.UUID,
     event_in: LifeEventUpdate,
 ) -> Any:
     """Update a life event."""
@@ -83,15 +80,40 @@ def update_life_event(
 @router.delete("/{event_id}")
 def delete_life_event(
     session: SessionDep,
-    current_user: CurrentUser,
-    event_id: uuid.UUID,
+event_id: uuid.UUID,
 ) -> Any:
-    """Delete a life event."""
+    """Soft-delete a life event by setting deleted_at."""
     event = session.get(LifeEvent, event_id)
     if event is None:
         raise HTTPException(status_code=404, detail="Life event not found")
     _require_contact_visible(session, current_user, event.contact_id)
 
-    session.delete(event)
+    from datetime import datetime, timezone
+
+    event.deleted_at = datetime.now(timezone.utc)
+    session.add(event)
+    session.commit()
+    return {"ok": True}
+
+
+@router.post("/{event_id}/restore")
+def restore_life_event(
+    session: SessionDep,
+event_id: uuid.UUID,
+) -> Any:
+    """Restore a soft-deleted life event by clearing deleted_at."""
+    from sqlalchemy import text, update
+
+    result = session.exec(
+        text("SELECT id FROM life_event WHERE id = :id AND deleted_at IS NOT NULL"),
+        params={"id": str(event_id)},
+    ).first()
+    if result is None:
+        raise HTTPException(
+            status_code=404, detail="Life event not found or not deleted"
+        )
+    session.exec(
+        update(LifeEvent).where(LifeEvent.id == event_id).values(deleted_at=None)
+    )
     session.commit()
     return {"ok": True}

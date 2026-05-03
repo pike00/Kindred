@@ -1030,6 +1030,15 @@ class Interaction(InteractionBase, table=True):
         ondelete="CASCADE",
         description="Owner user; cascades on delete.",
     )
+    deleted_at: datetime | None = Field(
+        default=None,
+        index=True,
+        sa_type=DateTime(timezone=True),
+        description=(
+            "Soft-delete marker. When non-null, the row is hidden from the "
+            "default visibility helpers; restore by clearing this column."
+        ),
+    )
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
         nullable=False,
@@ -1048,6 +1057,7 @@ class InteractionPublic(InteractionBase):
     id: uuid.UUID
     attendees: list[InteractionAttendeeSummary] = []
     created_at: datetime
+    deleted_at: datetime | None = None
 
 
 class InteractionsPublic(SQLModel):
@@ -1114,6 +1124,15 @@ class Reminder(ReminderBase, table=True):
         ondelete="CASCADE",
         description="Owner user; cascades on delete.",
     )
+    deleted_at: datetime | None = Field(
+        default=None,
+        index=True,
+        sa_type=DateTime(timezone=True),
+        description=(
+            "Soft-delete marker. When non-null, the row is hidden from the "
+            "default visibility helpers; restore by clearing this column."
+        ),
+    )
     last_sent_at: datetime | None = Field(
         default=None,
         description="When the ARQ worker last fired this reminder.",
@@ -1135,6 +1154,7 @@ class ReminderPublic(ReminderBase):
     last_sent_at: datetime | None
     snoozed_until: datetime | None
     created_at: datetime
+    deleted_at: datetime | None = None
 
 
 class RemindersPublic(SQLModel):
@@ -1220,6 +1240,15 @@ class Gift(GiftBase, table=True):
         ondelete="CASCADE",
         description="Owner user; cascades on delete.",
     )
+    deleted_at: datetime | None = Field(
+        default=None,
+        index=True,
+        sa_type=DateTime(timezone=True),
+        description=(
+            "Soft-delete marker. When non-null, the row is hidden from the "
+            "default visibility helpers; restore by clearing this column."
+        ),
+    )
     gift_date: date | None = Field(
         default=None,
         sa_column=sa.Column("date", sa.Date, nullable=True),
@@ -1236,6 +1265,7 @@ class GiftPublic(GiftBase):
     id: uuid.UUID
     contact_id: uuid.UUID
     created_at: datetime
+    deleted_at: datetime | None = None
 
 
 class GiftsPublic(SQLModel):
@@ -1307,6 +1337,15 @@ class Debt(DebtBase, table=True):
         ondelete="CASCADE",
         description="Owner user; cascades on delete.",
     )
+    deleted_at: datetime | None = Field(
+        default=None,
+        index=True,
+        sa_type=DateTime(timezone=True),
+        description=(
+            "Soft-delete marker. When non-null, the row is hidden from the "
+            "default visibility helpers; restore by clearing this column."
+        ),
+    )
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
         nullable=False,
@@ -1318,6 +1357,7 @@ class DebtPublic(DebtBase):
     id: uuid.UUID
     contact_id: uuid.UUID
     created_at: datetime
+    deleted_at: datetime | None = None
 
 
 class DebtsPublic(SQLModel):
@@ -1385,6 +1425,15 @@ class LifeEvent(LifeEventBase, table=True):
         ondelete="CASCADE",
         description="Owner user; cascades on delete.",
     )
+    deleted_at: datetime | None = Field(
+        default=None,
+        index=True,
+        sa_type=DateTime(timezone=True),
+        description=(
+            "Soft-delete marker. When non-null, the row is hidden from the "
+            "default visibility helpers; restore by clearing this column."
+        ),
+    )
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
         nullable=False,
@@ -1396,6 +1445,7 @@ class LifeEventPublic(LifeEventBase):
     id: uuid.UUID
     contact_id: uuid.UUID
     created_at: datetime
+    deleted_at: datetime | None = None
 
 
 class LifeEventsPublic(SQLModel):
@@ -1460,6 +1510,15 @@ class Note(NoteBase, table=True):
         ondelete="CASCADE",
         description="Owner user; cascades on delete.",
     )
+    deleted_at: datetime | None = Field(
+        default=None,
+        index=True,
+        sa_type=DateTime(timezone=True),
+        description=(
+            "Soft-delete marker. When non-null, the row is hidden from the "
+            "default visibility helpers; restore by clearing this column."
+        ),
+    )
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
         nullable=False,
@@ -1478,6 +1537,7 @@ class NotePublic(NoteBase):
     contact_id: uuid.UUID
     created_at: datetime
     updated_at: datetime
+    deleted_at: datetime | None = None
 
 
 class NotesPublic(SQLModel):
