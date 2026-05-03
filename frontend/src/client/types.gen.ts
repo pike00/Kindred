@@ -1652,6 +1652,12 @@ export type ContactsListContactMentionsData = {
 
 export type ContactsListContactMentionsResponse = (Array<_MentionPublic>);
 
+export type ContactsGetContactPdfData = {
+    contactId: string;
+};
+
+export type ContactsGetContactPdfResponse = (unknown);
+
 export type CustomFieldsListFieldDefinitionsResponse = (unknown);
 
 export type CustomFieldsCreateFieldDefinitionData = {

@@ -28,7 +28,6 @@ import { AddMediaRecommendation } from "@/components/MediaRecommendations/AddMed
 import { NotesCard } from "@/components/Notes/NotesCard"
 import { UnifiedTimeline } from "@/components/Timeline/UnifiedTimeline"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -41,7 +40,6 @@ import {
   Archive,
   Cake,
   Clock,
-  Download,
   Film,
   Info,
   MessagesSquare,
@@ -155,19 +153,7 @@ function ContactDetailPage() {
                 </Badge>
               )}
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  window.open(`/api/v1/contacts/${contactId}.pdf`, "_blank")
-                }}
-              >
-                <Download className="size-4 mr-2" />
-                Download PDF
-              </Button>
-              <EditContactDialog contact={contact} />
-            </div>
+            <EditContactDialog contact={contact} />
           </div>
           {contact.company && (
             <p className="text-lg text-muted-foreground">
