@@ -1,4 +1,4 @@
-# Personal CRM
+# Kindred
 
 A self-hosted personal CRM for tracking your relationships — contacts, interactions, reminders, gifts, debts, journal entries — with CardDAV sync, full-text search, and a React frontend. Built on the
 [FastAPI full-stack template](https://github.com/fastapi/full-stack-fastapi-template) and deployed to a homelab via Docker Compose behind Traefik.
