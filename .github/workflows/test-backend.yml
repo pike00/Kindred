@@ -3,7 +3,7 @@ name: Test Backend
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
     types:
       - opened
@@ -12,26 +12,31 @@ on:
 jobs:
   test-backend:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: changethis
+          POSTGRES_DB: crm
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Checkout
         uses: actions/checkout@v6
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: "3.10"
+          python-version: "3.12"
       - name: Install uv
         uses: astral-sh/setup-uv@v7
       - name: Create .env from example
         run: cp .env.example .env
-      - name: Pre-create external networks and volumes
-        run: |
-          docker network create kindred-private || true
-          docker network create kindred-internal-crm || true
-          docker volume create crm-db || true
-          docker volume create crm-redis || true
-          docker volume create crm-meili || true
-      - run: docker compose -f compose.yml -f compose.ci.yml down -v --remove-orphans
-      - run: docker compose -f compose.yml -f compose.ci.yml up -d db
       - name: Migrate DB
         env:
           POSTGRES_SERVER: localhost
@@ -43,7 +48,6 @@ jobs:
           POSTGRES_SERVER: localhost
         run: uv run bash scripts/tests-start.sh "Coverage for $SHA"
         working-directory: backend
-      - run: docker compose -f compose.yml -f compose.ci.yml down -v --remove-orphans
       - name: Store coverage files
         uses: actions/upload-artifact@v7
         with:

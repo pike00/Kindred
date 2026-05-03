@@ -1,0 +1,15 @@
+meta {
+  name: List Contact Notes
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/api/v1/notes/contact/{{contact_id}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt_token}}
+}
