@@ -766,6 +766,9 @@ export type InteractionCreate = {
      * Length of the interaction in minutes.
      */
     duration_minutes?: (number | null);
+    location_label?: (string | null);
+    latitude?: (number | null);
+    longitude?: (number | null);
     /**
      * Contacts that attended; must have at least one.
      */
@@ -793,6 +796,9 @@ export type InteractionPublic = {
      * Length of the interaction in minutes.
      */
     duration_minutes?: (number | null);
+    location_label?: (string | null);
+    latitude?: (number | null);
+    longitude?: (number | null);
     id: string;
     attendees?: Array<InteractionAttendeeSummary>;
     created_at: string;
@@ -809,6 +815,9 @@ export type InteractionUpdate = {
     notes?: (string | null);
     mood?: (string | null);
     duration_minutes?: (number | null);
+    location_label?: (string | null);
+    latitude?: (number | null);
+    longitude?: (number | null);
     /**
      * Replace the attendee set; must have at least one if provided.
      */

@@ -2823,6 +2823,39 @@ export const InteractionCreateSchema = {
             title: 'Duration Minutes',
             description: 'Length of the interaction in minutes.'
         },
+        location_label: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Location Label'
+        },
+        latitude: {
+            anyOf: [
+                {
+                    type: 'number'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Latitude'
+        },
+        longitude: {
+            anyOf: [
+                {
+                    type: 'number'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Longitude'
+        },
         attendee_ids: {
             items: {
                 type: 'string',
@@ -2889,6 +2922,39 @@ export const InteractionPublicSchema = {
             ],
             title: 'Duration Minutes',
             description: 'Length of the interaction in minutes.'
+        },
+        location_label: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Location Label'
+        },
+        latitude: {
+            anyOf: [
+                {
+                    type: 'number'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Latitude'
+        },
+        longitude: {
+            anyOf: [
+                {
+                    type: 'number'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Longitude'
         },
         id: {
             type: 'string',
@@ -2970,6 +3036,39 @@ export const InteractionUpdateSchema = {
                 }
             ],
             title: 'Duration Minutes'
+        },
+        location_label: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Location Label'
+        },
+        latitude: {
+            anyOf: [
+                {
+                    type: 'number'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Latitude'
+        },
+        longitude: {
+            anyOf: [
+                {
+                    type: 'number'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Longitude'
         },
         attendee_ids: {
             anyOf: [

@@ -1094,14 +1094,11 @@ class InteractionBase(SQLModel):
     )
 
 
-
-
 class InteractionCreate(InteractionBase):
-        location_label: str | None = None
+    location_label: str | None = None
     latitude: float | None = None
     longitude: float | None = None
-
-attendee_ids: list[uuid.UUID] = Field(
+    attendee_ids: list[uuid.UUID] = Field(
         min_length=1,
         description="Contacts that attended; must have at least one.",
     )
@@ -1121,7 +1118,6 @@ class InteractionUpdate(SQLModel):
         min_length=1,
         description="Replace the attendee set; must have at least one if provided.",
     )
-
 
 
 class InteractionAttendee(SQLModel, table=True):
@@ -1181,7 +1177,6 @@ class InteractionPublic(InteractionBase):
     location_label: str | None = None
     latitude: float | None = None
     longitude: float | None = None
-
 
 
 class InteractionsPublic(SQLModel):
