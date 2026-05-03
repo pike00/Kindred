@@ -3,9 +3,9 @@ import { useSuspenseQuery } from "@tanstack/react-query"
 import { TagsService } from "@/client"
 import { DataTable } from "@/components/Common/DataTable"
 import { EmptyState } from "@/components/Common/EmptyState"
+import { Tag } from "@/lib/icons"
 import { AddTagDialog } from "./AddTagDialog"
 import { columns } from "./columns"
-import { Tag } from "@/lib/icons"
 
 export const TagsList = () => {
   const { data } = useSuspenseQuery({
