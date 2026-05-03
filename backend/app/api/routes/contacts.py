@@ -276,12 +276,12 @@ def create_contact(
     background_tasks: BackgroundTasks,
 ) -> Any:
     """Create a new contact.
-    
+
     If source_external_id is provided, uses upsert logic to update existing
     contact with same (owner_id, source, source_external_id) or create new.
     """
     from app.crud import upsert_contact
-    
+
     contact = upsert_contact(
         session=session, contact_in=contact_in, owner_id=current_user.id
     )

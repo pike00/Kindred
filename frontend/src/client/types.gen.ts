@@ -219,6 +219,14 @@ export type ContactCreate = {
      * Kanban stage like Active, Dormant, Lost.
      */
     stage?: (string | null);
+    /**
+     * Source system that created this contact.
+     */
+    source?: ContactSource;
+    /**
+     * External ID from the source system (e.g. Google contact ID, CardDAV UID).
+     */
+    source_external_id?: (string | null);
     tag_ids?: (Array<(string)> | null);
     group_ids?: (Array<(string)> | null);
 };
@@ -351,6 +359,14 @@ export type ContactPublic = {
      * Kanban stage like Active, Dormant, Lost.
      */
     stage?: (string | null);
+    /**
+     * Source system that created this contact.
+     */
+    source?: ContactSource;
+    /**
+     * External ID from the source system.
+     */
+    source_external_id?: (string | null);
     id: string;
     avatar_url: (string | null);
     last_contacted_at: (string | null);
@@ -360,6 +376,11 @@ export type ContactPublic = {
     tags?: Array<TagPublic>;
     groups?: Array<GroupPublic>;
 };
+
+/**
+ * Source system that created a contact.
+ */
+export type ContactSource = 'manual' | 'vcard_import' | 'carddav' | 'google' | 'webhook';
 
 export type ContactsPublic = {
     data: Array<ContactPublic>;
@@ -384,6 +405,8 @@ export type ContactUpdate = {
     deceased_at?: (string | null);
     contact_frequency_days?: (number | null);
     stage?: (string | null);
+    source?: (ContactSource | null);
+    source_external_id?: (string | null);
     tag_ids?: (Array<(string)> | null);
     group_ids?: (Array<(string)> | null);
 };
@@ -1014,6 +1037,13 @@ export type PetUpdate = {
     species?: (string | null);
     breed?: (string | null);
     notes?: (string | null);
+};
+
+export type PrivateUserCreate = {
+    email: string;
+    password: string;
+    full_name: string;
+    is_verified?: boolean;
 };
 
 export type RelationshipCreate = {
@@ -1728,6 +1758,12 @@ export type PetsDeletePetData = {
 };
 
 export type PetsDeletePetResponse = (unknown);
+
+export type PrivateCreateUserData = {
+    requestBody: PrivateUserCreate;
+};
+
+export type PrivateCreateUserResponse = (UserPublic);
 
 export type RelationshipsLookupInverseData = {
     type: string;

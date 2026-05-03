@@ -78,14 +78,12 @@ def db() -> Generator[Session, None, None]:
         yield session
 
 
-
 @pytest.fixture
 def user_factory(db: Session):
     """Factory fixture to create users."""
-    from tests.utils.utils import random_email, random_lower_string
-    from app.models import UserCreate
     from app.crud import create_user
-    from app.core.security import get_password_hash
+    from app.models import UserCreate
+    from tests.utils.utils import random_email, random_lower_string
 
     def _user_factory(email=None, password=None):
         if email is None:
@@ -101,12 +99,13 @@ def user_factory(db: Session):
 @pytest.fixture
 def tag_factory(db: Session):
     """Factory fixture to create tags."""
-    from app.models import TagCreate
     from app.crud import create_tag
+    from app.models import TagCreate
 
     def _tag_factory(user, name=None):
         if name is None:
             import uuid
+
             name = f"tag-{uuid.uuid4().hex[:8]}"
         tag_in = TagCreate(name=name, color="#ff0000")
         return create_tag(session=db, tag_in=tag_in, owner_id=user.id)

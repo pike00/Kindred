@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import pytest
-from sqlmodel import Session, select
+from sqlmodel import Session
 
-from app.models import Contact, ContactCreate, ContactSource
 from app.crud import create_contact, upsert_contact
+from app.models import ContactCreate, ContactSource
 
 
 def test_create_manual_contact_default_source(db: Session, user_factory):
@@ -128,9 +128,7 @@ def test_upsert_no_external_id_creates_new(db: Session, user_factory):
     assert contact1.id != contact2.id
 
 
-def test_unique_constraint_prevents_duplicate_external_id(
-    db: Session, user_factory
-):
+def test_unique_constraint_prevents_duplicate_external_id(db: Session, user_factory):
     """Unique constraint on (owner_id, source, source_external_id) prevents duplicates."""
     user = user_factory()
 
@@ -143,7 +141,7 @@ def test_unique_constraint_prevents_duplicate_external_id(
 
     # Try to create another with same (owner, source, external_id)
     # This should fail due to unique constraint
-    with pytest.raises(Exception):
+    with pytest.raises(Exception):  # noqa: B017
         create_contact(session=db, contact_in=contact_in, owner_id=user.id)
         db.commit()
 

@@ -7,7 +7,6 @@ from pydantic import EmailStr
 from sqlalchemy import DateTime
 from sqlmodel import Field, Relationship, SQLModel
 
-from sqlalchemy.orm import Mapped, relationship
 
 def get_datetime_utc() -> datetime:
     return datetime.now(timezone.utc)
