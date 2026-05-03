@@ -1,0 +1,32 @@
+meta {
+  name: Create Group
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/api/v1/groups/
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt_token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "College Friends",
+    "description": "Friends from college"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    bru.setEnvVar("group_id", res.body.id);
+  }
+}

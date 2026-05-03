@@ -1,0 +1,32 @@
+meta {
+  name: Create Note
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/api/v1/notes/
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt_token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "contact_id": "{{contact_id}}",
+    "body": "Caught up over coffee. Mentioned looking for a new role in ML."
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    bru.setEnvVar("note_id", res.body.id);
+  }
+}

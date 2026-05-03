@@ -154,6 +154,17 @@ VERIFICATION (best-effort, run before declaring done):
 - \`docker compose exec -T frontend bun run typecheck\` if you touched frontend/
 - If verification fails, fix what you can; if you cannot fix in 2 attempts, note it in NOTES.md and stop
 
+FILE PATHS — CRITICAL:
+- Every file path you write MUST include the full filename and extension.
+  CORRECT:   backend/app/api/routes/contacts.py
+  CORRECT:   frontend/src/components/ContactCard.tsx
+  WRONG:     backend          ← directory, not a file — this is a fatal error
+  WRONG:     frontend         ← directory, not a file — this is a fatal error
+  WRONG:     /tmp             ← directory, not a file — this is a fatal error
+- If the tool rejects your path as "is a directory", you are missing the filename.
+  Append the filename and extension and retry once. If it fails again, stop and note it in NOTES.md.
+- This rule applies to write_to_file, editFile, and any other file-writing tool.
+
 COMMITS:
 - Make focused, atomic commits with clear messages
 - Sign-off not required; conventional-commit style preferred (\`feat(area): …\`)

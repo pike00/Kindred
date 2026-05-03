@@ -1,0 +1,28 @@
+meta {
+  name: List Contacts (API Key + Impersonate)
+  type: http
+  seq: 3
+}
+
+// X-On-Behalf-Of lets a key act as another user whose ID is in the
+// key's can_impersonate list.  Set the target user's ID below.
+// The key must have been created with that user in can_impersonate[].
+
+get {
+  url: {{base_url}}/api/v1/contacts/
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{api_key}}
+}
+
+headers {
+  X-On-Behalf-Of: {{impersonate_user_id}}
+}
+
+params:query {
+  skip: 0
+  limit: 20
+}
