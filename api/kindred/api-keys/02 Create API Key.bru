@@ -1,0 +1,33 @@
+meta {
+  name: Create API Key
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/api/v1/users/me/api-keys/
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt_token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "bruno-test-key",
+    "can_impersonate": []
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setEnvVar("api_key", res.body.plaintext_key);
+    bru.setEnvVar("api_key_id", res.body.id);
+  }
+}
