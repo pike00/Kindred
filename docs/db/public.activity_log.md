@@ -12,6 +12,7 @@
 | action | varchar(32) |  | false |  |  |  |
 | changes_json | json |  | true |  |  |  |
 | occurred_at | timestamp with time zone |  | false |  |  |  |
+| acting_api_key_id | uuid |  | true |  | [public.api_key](public.api_key.md) |  |
 
 ## Constraints
 
@@ -26,6 +27,7 @@
 | activity_log_actor_id_fkey | FOREIGN KEY | FOREIGN KEY (actor_id) REFERENCES "user"(id) ON DELETE SET NULL |
 | activity_log_owner_id_fkey | FOREIGN KEY | FOREIGN KEY (owner_id) REFERENCES "user"(id) ON DELETE CASCADE |
 | activity_log_pkey | PRIMARY KEY | PRIMARY KEY (id) |
+| fk_activity_log_acting_api_key_id | FOREIGN KEY | FOREIGN KEY (acting_api_key_id) REFERENCES api_key(id) ON DELETE SET NULL |
 
 ## Indexes
 
@@ -35,6 +37,7 @@
 | ix_activity_log_owner_id | CREATE INDEX ix_activity_log_owner_id ON public.activity_log USING btree (owner_id) |
 | ix_activity_log_actor_id | CREATE INDEX ix_activity_log_actor_id ON public.activity_log USING btree (actor_id) |
 | ix_activity_log_entity_id | CREATE INDEX ix_activity_log_entity_id ON public.activity_log USING btree (entity_id) |
+| ix_activity_log_acting_api_key_id | CREATE INDEX ix_activity_log_acting_api_key_id ON public.activity_log USING btree (acting_api_key_id) |
 
 ## Relations
 
@@ -43,6 +46,7 @@ erDiagram
 
 "public.activity_log" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.activity_log" }o--o| "public.user" : "FOREIGN KEY (actor_id) REFERENCES #quot;user#quot;(id) ON DELETE SET NULL"
+"public.activity_log" }o--o| "public.api_key" : "FOREIGN KEY (acting_api_key_id) REFERENCES api_key(id) ON DELETE SET NULL"
 
 "public.activity_log" {
   uuid id
@@ -53,6 +57,7 @@ erDiagram
   varchar_32_ action
   json changes_json
   timestamp_with_time_zone occurred_at
+  uuid acting_api_key_id FK
 }
 "public.user" {
   varchar_255_ email
@@ -64,6 +69,17 @@ erDiagram
   timestamp_with_time_zone created_at
   varchar_512_ oidc_iss
   varchar_255_ oidc_sub
+}
+"public.api_key" {
+  uuid id
+  varchar_255_ name
+  varchar_64_ key_hash
+  varchar_16_ key_prefix
+  uuid owned_by_user_id FK
+  timestamp_with_time_zone created_at
+  timestamp_with_time_zone last_used_at
+  timestamp_with_time_zone revoked_at
+  timestamp_with_time_zone expires_at
 }
 ```
 
