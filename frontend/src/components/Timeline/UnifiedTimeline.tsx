@@ -1,3 +1,4 @@
+import { format, parseISO, isWithinInterval } from "date-fns"
 import { useQuery } from "@tanstack/react-query"
 import { useMemo, useState } from "react"
 
@@ -117,7 +118,15 @@ function formatTime(iso: string) {
   })
 }
 
-export function UnifiedTimeline({ contactId }: { contactId: string }) {
+export function UnifiedTimeline({
+  contactId,
+  startDate,
+  endDate,
+}: {
+  contactId: string
+  startDate?: string | null
+  endDate?: string | null
+}) {
   const [enabled, setEnabled] = useState<Set<TimelineEventType>>(
     new Set(ALL_TYPES),
   )
@@ -196,6 +205,17 @@ export function UnifiedTimeline({ contactId }: { contactId: string }) {
     [events, enabled],
   )
 
+  // Apply date range filter if provided
+  const filtered = useMemo(() => {
+    if (!startDate || !endDate) return visible
+    const start = parseISO(startDate)
+    const end = parseISO(endDate)
+    return visible.filter((e) => {
+      const d = parseISO(e.date)
+      return isWithinInterval(d, { start, end })
+    })
+  }, [visible, startDate, endDate])
+
   const counts = useMemo(() => {
     const c: Record<TimelineEventType, number> = {
       interaction: 0,
@@ -224,10 +244,16 @@ export function UnifiedTimeline({ contactId }: { contactId: string }) {
           <Clock className="size-4" /> Timeline
           {!isLoading && events.length > 0 && (
             <span className="text-muted-foreground font-normal">
-              ({events.length})
+              ({filtered.length})
             </span>
           )}
         </CardTitle>
+        {startDate && endDate && (
+          <p className="text-xs text-muted-foreground">
+            Showing events from {format(parseISO(startDate), "MMM d")} -{" "}
+            {format(parseISO(endDate), "MMM d, yyyy")}
+          </p>
+        )}
         <div className="flex flex-wrap gap-1.5 pt-2">
           {ALL_TYPES.map((t) => {
             const meta = TYPE_META[t]
@@ -257,15 +283,17 @@ export function UnifiedTimeline({ contactId }: { contactId: string }) {
             <Skeleton className="h-6 w-3/4" />
             <Skeleton className="h-6 w-2/3" />
           </div>
-        ) : visible.length === 0 ? (
+        ) : filtered.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            {events.length === 0
-              ? "Nothing here yet. Log an interaction or capture a note to get started."
-              : "All event types are filtered out."}
+            {visible.length === 0
+              ? events.length === 0
+                ? "Nothing here yet. Log an interaction or capture a note to get started."
+                : "All event types are filtered out."
+              : "No events in the selected date range."}
           </p>
         ) : (
           <ol className="relative space-y-3 border-l-2 border-muted pl-5 ml-2">
-            {visible.map((e) => (
+            {filtered.map((e) => (
               <TimelineRow
                 key={`${e.type}:${e.id}`}
                 event={e}

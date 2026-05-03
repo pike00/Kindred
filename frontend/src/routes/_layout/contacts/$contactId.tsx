@@ -96,6 +96,17 @@ function SectionSkeleton() {
 }
 
 function ContactDetailPage() {
+  const [heatmapFilter, setHeatmapFilter] = useState<{
+    startDate: string
+    endDate: string
+  } | null>(null)
+
+  const handleWeekClick = (weekStart: string, weekEnd: string, count: number) => {
+    if (count === 0) return
+    setHeatmapFilter({ startDate: weekStart, endDate: weekEnd })
+  }
+
+  const clearHeatmapFilter = () => setHeatmapFilter(null)
   const { contactId } = Route.useParams()
   const { data: contact } = useSuspenseQuery({
     queryKey: ["contacts", contactId],
@@ -139,7 +150,21 @@ function ContactDetailPage() {
         <ContactAvatar contact={contact} size="lg" />
         <div className="flex-1 min-w-0 space-y-2">
           {/* Heatmap */}
-          <InteractionHeatmap />
+          <InteractionHeatmap onWeekClick={handleWeekClick} />
+          {heatmapFilter && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span>
+                Filtered to week of {new Date(heatmapFilter.startDate).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+              </span>
+              <button
+                type="button"
+                onClick={clearHeatmapFilter}
+                className="underline hover:text-foreground"
+              >
+                Clear filter
+              </button>
+            </div>
+          )}
           <div className="flex items-start justify-between gap-3">
             <div className="flex flex-wrap items-center gap-3 min-w-0">
               <h1 className="font-display text-4xl font-bold tracking-tight">
@@ -193,7 +218,11 @@ function ContactDetailPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Left column (2/3 width) */}
         <div className="md:col-span-2 space-y-6">
-          <UnifiedTimeline contactId={contactId} />
+          <UnifiedTimeline
+            contactId={contactId}
+            startDate={heatmapFilter?.startDate ?? null}
+            endDate={heatmapFilter?.endDate ?? null}
+          />
           <NotesCard contactId={contactId} />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <ContactFieldsCard contactId={contactId} />
