@@ -1,0 +1,32 @@
+meta {
+  name: Create Tag
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/api/v1/tags/
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt_token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "close-friend",
+    "color": "#4f46e5"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    bru.setEnvVar("tag_id", res.body.id);
+  }
+}
