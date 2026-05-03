@@ -43,6 +43,9 @@ export {
   // Card section icons
   MapPin,
   // Interaction channels
+
+  // FAB / Quick actions
+  MessageSquarePlus,
   MessageSquare,
   MessageSquareText,
   MessagesSquare,
