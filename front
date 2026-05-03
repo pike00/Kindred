@@ -1,51 +1,53 @@
 import { useSuspenseQuery } from "@tanstack/react-query"
 
-import { TagsService } from "@/client"
+import { JournalService } from "@/client"
 import { DataTable } from "@/components/Common/DataTable"
 import { EmptyState } from "@/components/Common/EmptyState"
-import { AddTagDialog } from "./AddTagDialog"
+import { AddJournalDialog } from "./AddJournalDialog"
 import { columns } from "./columns"
-import { Tag } from "@/lib/icons"
+import { NotebookPen } from "@/lib/icons"
 
-export const TagsList = () => {
+export const JournalList = () => {
   const { data } = useSuspenseQuery({
-    queryKey: ["tags"],
-    queryFn: () => TagsService.listTags(),
+    queryKey: ["journal"],
+    queryFn: () => JournalService.listJournalEntries(),
   })
 
-  const tags = data?.data || []
+  const entries = data?.data || []
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h1 className="font-display text-4xl font-bold tracking-tight">Tags</h1>
-        {tags.length > 0 && <AddTagDialog />}
+        <h1 className="font-display text-4xl font-bold tracking-tight">
+          Journal
+        </h1>
+        {entries.length > 0 && <AddJournalDialog />}
       </div>
-      {tags.length === 0 ? (
+      {entries.length === 0 ? (
         <EmptyState
-          icon={Tag}
-          title="No tags yet"
-          description="Create tags like 'college', 'book club', or 'runner' to organize your contacts."
+          icon={NotebookPen}
+          title="No journal entries yet"
+          description="Write your first journal entry to capture thoughts, reflections, or daily notes."
           action={
             import.meta.env.DEV ? (
               <div className="flex flex-col items-center gap-2">
-                <AddTagDialog />
+                <AddJournalDialog />
                 <p className="text-xs text-muted-foreground">or</p>
                 <button
                   type="button"
                   className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3"
                   disabled
                 >
-                  Seed demo tags
+                  Seed demo entries
                 </button>
               </div>
             ) : (
-              <AddTagDialog />
+              <AddJournalDialog />
             )
           }
         />
       ) : (
-        <DataTable columns={columns} data={tags} />
+        <DataTable columns={columns} data={entries} />
       )}
     </div>
   )
