@@ -133,6 +133,16 @@ class InteractionChannel(str, enum.Enum):
     OTHER = "other"
 
 
+
+class InteractionDraftSource(str, enum.Enum):
+    """Origin of a draft interaction."""
+
+    VOICE_MEMO = "voice_memo"
+    EMAIL_SUGGESTION = "email_suggestion"
+    MANUAL = "manual"
+    IMPORT = "import"
+
+
 class ReminderFrequency(str, enum.Enum):
     ONCE = "once"
     DAILY = "daily"
@@ -973,6 +983,15 @@ class InteractionBase(SQLModel):
         description="Length of the interaction in minutes.",
     )
 
+    is_draft: bool = Field(
+        default=False,
+        description="If True, this interaction is a draft and excluded from engagement metrics.",
+    )
+    draft_source: InteractionDraftSource | None = Field(
+        default=None,
+        description="Origin of the draft (voice_memo, email_suggestion, manual, import).",
+    )
+
 
 class InteractionCreate(InteractionBase):
     attendee_ids: list[uuid.UUID] = Field(
@@ -1048,6 +1067,18 @@ class InteractionPublic(InteractionBase):
     id: uuid.UUID
     attendees: list[InteractionAttendeeSummary] = []
     created_at: datetime
+    is_draft: bool = False
+    draft_source: InteractionDraftSource | None = None
+
+
+
+# ─── Draft Interaction helpers ──────────────────────────────────────────────
+
+
+class InteractionConfirm(SQLModel):
+    """Payload to confirm (promote) a draft interaction."""
+
+    confirm: bool = True
 
 
 class InteractionsPublic(SQLModel):

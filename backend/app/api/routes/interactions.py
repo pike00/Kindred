@@ -21,7 +21,9 @@ from app.models import (
     InteractionPublic,
     InteractionsPublic,
     InteractionUpdate,
-)
+    InteractionConfirm,
+    InteractionDraftSource,
+    )
 
 router = APIRouter(prefix="/interactions", tags=["interactions"])
 
@@ -80,6 +82,7 @@ def list_interactions(
     current_user: CurrentUser,
     contact_id: uuid.UUID | None = None,
     skip: int = 0,
+    is_draft: bool | None = None,
     limit: int = 100,
 ) -> Any:
     """List interactions. Pass ``contact_id`` to filter by attendee."""
@@ -97,6 +100,8 @@ def list_interactions(
         )
         .where(InteractionAttendee.contact_id.in_(visible_ids))  # type: ignore[union-attr]
     )
+    if is_draft is not None:
+        base = base.where(Interaction.is_draft == is_draft)
     if contact_id is not None:
         base = base.where(InteractionAttendee.contact_id == contact_id)
 
@@ -229,3 +234,49 @@ def delete_interaction(
         recompute_last_contacted_at(session=session, contact_id=aid)
     session.commit()
     return {"ok": True}
+
+
+
+@router.post("/{interaction_id}/confirm", response_model=InteractionPublic)
+def confirm_draft(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    interaction_id: uuid.UUID,
+    confirm_in: InteractionConfirm | None = None,
+) -> Any:
+    """Confirm (promote) a draft interaction to a real interaction.
+    
+    Sets is_draft=False and recomputes last_contacted_at for attendees.
+    """
+    interaction = session.get(Interaction, interaction_id)
+    if interaction is None:
+        raise HTTPException(status_code=404, detail="Interaction not found")
+    
+    visible_ids = _resolve_visible_contact_ids(session, current_user)
+    attendee_ids = set(
+        session.exec(
+            select(InteractionAttendee.contact_id).where(
+                InteractionAttendee.interaction_id == interaction_id
+            )
+        ).all()
+    )
+    if not (attendee_ids & visible_ids):
+        raise HTTPException(status_code=404, detail="Interaction not found")
+    
+    if not interaction.is_draft:
+        raise HTTPException(status_code=400, detail="Interaction is already confirmed")
+    
+    # Promote the draft
+    interaction.is_draft = False
+    interaction.draft_source = None
+    session.add(interaction)
+    session.flush()
+    
+    # Recompute last_contacted_at for all attendees
+    for aid in attendee_ids:
+        recompute_last_contacted_at(session=session, contact_id=aid)
+    
+    session.commit()
+    session.refresh(interaction)
+    return _interaction_to_public(session, interaction, visible_ids)

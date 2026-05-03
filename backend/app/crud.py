@@ -272,9 +272,10 @@ def recompute_last_contacted_at(*, session: Session, contact_id: uuid.UUID) -> N
             InteractionAttendee.interaction_id == Interaction.id,  # type: ignore[arg-type]
         )
         .where(InteractionAttendee.contact_id == contact_id)
+        .where(Interaction.is_draft == False)  # noqa: E712
         .order_by(Interaction.occurred_at.desc())
         .limit(1)
-    )
+)
     latest = session.exec(stmt).first()
     contact.last_contacted_at = latest
     session.add(contact)
