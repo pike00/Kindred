@@ -2,6 +2,8 @@
 
 export type _MentionPublic = {
     note_id: string;
+    note_body: string;
+    note_created_at: string;
     source_contact: ContactPublic;
 };
 
@@ -171,6 +173,38 @@ export type Body_login_login_access_token = {
     scope?: string;
     client_id?: (string | null);
     client_secret?: (string | null);
+};
+
+export type BulkContactFilter = {
+    search?: (string | null);
+    tag_id?: (string | null);
+    group_id?: (string | null);
+    is_favorite?: (boolean | null);
+    is_archived?: (boolean | null);
+    stage?: (string | null);
+};
+
+export type BulkContactOperation = {
+    add_tag_ids?: (Array<(string)> | null);
+    remove_tag_ids?: (Array<(string)> | null);
+    add_group_ids?: (Array<(string)> | null);
+    remove_group_ids?: (Array<(string)> | null);
+    set_is_archived?: (boolean | null);
+    set_is_favorite?: (boolean | null);
+};
+
+export type BulkContactRequest = {
+    contact_ids?: (Array<(string)> | null);
+    select_all_filtered?: boolean;
+    filters?: (BulkContactFilter | null);
+    limit?: number;
+    operations: BulkContactOperation;
+};
+
+export type BulkContactResult = {
+    updated_count: number;
+    skipped_count: number;
+    failed_ids?: Array<(string)>;
 };
 
 export type CalendarEntry = {
@@ -1525,6 +1559,25 @@ export type ContactFieldsDeleteContactFieldData = {
 };
 
 export type ContactFieldsDeleteContactFieldResponse = (unknown);
+
+export type ContactsBulkUpdateContactsData = {
+    requestBody: BulkContactRequest;
+};
+
+export type ContactsBulkUpdateContactsResponse = (BulkContactResult);
+
+export type ContactsPreviewBulkContactsData = {
+    groupId?: (string | null);
+    isArchived?: (boolean | null);
+    isFavorite?: (boolean | null);
+    limit?: number;
+    search?: (string | null);
+    selectAllFiltered?: boolean;
+    stage?: (string | null);
+    tagId?: (string | null);
+};
+
+export type ContactsPreviewBulkContactsResponse = (ContactsPublic);
 
 export type ContactsListContactsData = {
     groupId?: (string | null);
