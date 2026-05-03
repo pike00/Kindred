@@ -13,6 +13,7 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 from app.models import Contact, Reminder, ReminderFrequency  # noqa: E402
+from app.email_service import poll_all_email_accounts  # noqa: E402
 
 
 def _get_apprise() -> apprise.Apprise:
@@ -152,6 +153,22 @@ async def remove_contact_from_search(
         logger.warning(f"Failed to remove contact {contact_id} from search: {e}")
 
 
+
+
+async def poll_email_accounts(ctx: dict) -> None:
+    """Poll all configured email accounts and create interactions."""
+    from sqlmodel import Session
+
+    engine = ctx["engine"]
+    with Session(engine) as session:
+        try:
+            results = poll_all_email_accounts(session=session)
+            total = sum(results.values())
+            if total > 0:
+                logger.info(f"Email poll created {total} new interaction(s)")
+        except Exception as e:
+            logger.error(f"Email poll failed: {e}")
+
 class WorkerSettings:
     """ARQ worker settings."""
 
@@ -160,10 +177,12 @@ class WorkerSettings:
         check_cadences,
         index_contact_in_search,
         remove_contact_from_search,
+        poll_email_accounts,
     ]
     cron_jobs = [
         cron(check_reminders, minute={0, 30}),  # Every 30 minutes
         cron(check_cadences, hour={9}, minute={0}),  # Daily at 9 AM UTC
+        cron(poll_email_accounts, hour={6, 12, 18}, minute={0}),  # 6AM, noon, 6PM UTC
     ]
     redis_settings = RedisSettings.from_dsn(settings.REDIS_URL)
 
