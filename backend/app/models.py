@@ -647,13 +647,16 @@ class Contact(ContactBase, table=True):
         link_model=ContactGroup,
     )
     # Relationships for merge tracking
-    merged_into: "Contact" = Relationship(
+    merged_into: "Contact | None" = Relationship(
         back_populates="merged_contacts",
-        sa_relationship_kwargs={"foreign_keys": "Contact.merged_into_id"},
+        sa_relationship_kwargs={
+            "foreign_keys": "[Contact.merged_into_id]",
+            "remote_side": "[Contact.id]",
+        },
     )
     merged_contacts: list["Contact"] = Relationship(
         back_populates="merged_into",
-        sa_relationship_kwargs={"foreign_keys": "Contact.merged_into_id"},
+        sa_relationship_kwargs={"foreign_keys": "[Contact.merged_into_id]"},
     )
     # Merge log entries where this contact is the survivor
     merge_logs_survivor: list["ContactMerge"] = Relationship(
