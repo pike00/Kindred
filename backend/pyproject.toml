@@ -24,6 +24,7 @@ dependencies = [
     "arq>=0.26",
     "apprise>=1.9.0",
     "meilisearch>=0.31.0",
+    "phonenumbers>=9.0.29",
 ]
 
 [dependency-groups]
