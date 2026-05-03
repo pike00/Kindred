@@ -14,7 +14,9 @@ from app.models import (
     ReminderCreate,
     ReminderPublic,
     RemindersPublic,
+    ReminderSnooze,
     ReminderUpdate,
+    ReminderSnooze,
 )
 
 router = APIRouter(prefix="/reminders", tags=["reminders"])
@@ -105,16 +107,31 @@ def snooze_reminder(
     current_user: CurrentUser,
     reminder_id: uuid.UUID,
     minutes: int = 30,
+    reason: str | None = None,
 ) -> Any:
-    """Snooze a reminder."""
+    """Snooze a reminder: write a log row and update denormalized snoozed_until."""
     reminder = session.get(Reminder, reminder_id)
     if reminder is None or not _reminder_accessible(current_user, reminder, session):
         raise HTTPException(status_code=404, detail="Reminder not found")
 
     from datetime import timedelta
 
-    reminder.snoozed_until = datetime.now(timezone.utc) + timedelta(minutes=minutes)
+    now = datetime.now(timezone.utc)
+    new_snoozed_until = now + timedelta(minutes=minutes)
+
+    # Write snooze log row
+    snooze_log = ReminderSnooze(
+        reminder_id=reminder.id,
+        snoozed_at=now,
+        snoozed_until=new_snoozed_until,
+        reason=reason,
+    )
+    session.add(snooze_log)
+
+    # Update denormalized cache on Reminder
+    reminder.snoozed_until = new_snoozed_until
     session.add(reminder)
+
     session.commit()
     session.refresh(reminder)
     return ReminderPublic.model_validate(reminder)
