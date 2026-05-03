@@ -23,15 +23,9 @@ import {
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query"
-import { useNavigate } from "@tanstack/react-router"
 import { useCallback, useMemo, useState } from "react"
 import { toast } from "sonner"
-import {
-  type ContactPublic,
-  ContactsKanbanService,
-  type ContactsPublic,
-  ContactsService,
-} from "@/client"
+import { type ContactPublic, ContactsService } from "@/client"
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
 import { EmptyState } from "@/components/Common/EmptyState"
 import { Badge } from "@/components/ui/badge"
@@ -175,7 +169,6 @@ function KanbanColumn({
 }
 
 export const KanbanBoard = () => {
-  const _navigate = useNavigate({ from: "/contacts" })
   const [search, setSearch] = useState("")
   const [activeContact, setActiveContact] = useState<ContactPublic | null>(null)
   const queryClient = useQueryClient()
@@ -183,7 +176,7 @@ export const KanbanBoard = () => {
   // Fetch stages
   const { data: stagesData } = useSuspenseQuery({
     queryKey: ["contact-stages"],
-    queryFn: () => ContactsKanbanService.getDistinctStages(),
+    queryFn: () => ContactsService.getDistinctStages(),
   })
 
   const stages = useMemo(() => {
@@ -197,7 +190,7 @@ export const KanbanBoard = () => {
   const { data: boardData, refetch } = useSuspenseQuery({
     queryKey: ["kanban-board", search],
     queryFn: () =>
-      ContactsKanbanService.getKanbanBoard({
+      ContactsService.getKanbanBoard({
         search: search || null,
       }),
   })
@@ -245,7 +238,7 @@ export const KanbanBoard = () => {
       // Find the contact in the board data
       if (boardData) {
         for (const stage of Object.keys(boardData)) {
-          const col = boardData[stage] as ContactsPublic
+          const col = boardData[stage] as { data?: ContactPublic[] }
           const contact = col?.data?.find((c) => c.id === contactId)
           if (contact) {
             setActiveContact(contact)
@@ -274,7 +267,7 @@ export const KanbanBoard = () => {
       // Find current stage of the contact
       let oldStage: string | undefined
       for (const stage of Object.keys(boardData)) {
-        const col = boardData[stage] as ContactsPublic
+        const col = boardData[stage] as { data?: ContactPublic[] }
         if (col?.data?.some((c) => c.id === contactId)) {
           oldStage = stage
           break
@@ -324,7 +317,9 @@ export const KanbanBoard = () => {
       >
         <div className="flex gap-4 overflow-x-auto pb-4">
           {stages.map((stage) => {
-            const col = boardData?.[stage] as ContactsPublic | undefined
+            const col = boardData?.[stage] as
+              | { data?: ContactPublic[] }
+              | undefined
             const contacts = col?.data ?? []
             return (
               <KanbanColumn key={stage} stage={stage} contacts={contacts} />
@@ -344,7 +339,7 @@ export const KanbanBoard = () => {
       {/* Empty State */}
       {(!boardData ||
         Object.values(boardData).every(
-          (col) => (col as ContactsPublic)?.data?.length === 0,
+          (col) => (col as { data?: ContactPublic[] })?.data?.length === 0,
         )) &&
         !search && (
           <EmptyState
