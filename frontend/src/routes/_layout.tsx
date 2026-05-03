@@ -6,8 +6,8 @@ import {
   useCommandPalette,
 } from "@/components/CommandPalette/CommandPaletteContext"
 import { Footer } from "@/components/Common/Footer"
-import { ReminderBell } from "@/components/Reminders/ReminderBell"
 import { QuickLogFAB } from "@/components/Common/QuickLogFAB"
+import { ReminderBell } from "@/components/Reminders/ReminderBell"
 import AppSidebar from "@/components/Sidebar/AppSidebar"
 import { Button } from "@/components/ui/button"
 import {

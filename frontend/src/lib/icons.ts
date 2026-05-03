@@ -42,11 +42,11 @@ export {
   Mail,
   // Card section icons
   MapPin,
+  MessageSquare,
   // Interaction channels
 
   // FAB / Quick actions
   MessageSquarePlus,
-  MessageSquare,
   MessageSquareText,
   MessagesSquare,
   Monitor,
