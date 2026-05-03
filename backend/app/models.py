@@ -1,5 +1,7 @@
 import enum
 import uuid
+from decimal import Decimal
+
 from datetime import date, datetime, timezone
 
 import sqlalchemy as sa
@@ -1395,6 +1397,8 @@ class DebtPayment(DebtPaymentBase, table=True):
         nullable=False,
         description="When the payment was recorded (UTC).",
     )
+    # Relationship back to debt
+    debt: "Debt" = Relationship(back_populates="payments")
 
 
 class DebtBase(SQLModel):
@@ -1415,13 +1419,13 @@ class DebtBase(SQLModel):
         max_length=1000,
         description="What the debt is for.",
     )
-    is_settled: bool = Field(
-        default=False,
-        description="Marked paid off.",
-    )
     settled_at: date | None = Field(
         default=None,
         description="Date the debt was settled.",
+    )
+    is_settled: bool = Field(
+        default=False,
+        description="Marked paid off.",
     )
 
 
@@ -1432,7 +1436,6 @@ class DebtCreate(DebtBase):
 class DebtUpdate(SQLModel):
     direction: DebtDirection | None = None
     amount: float | None = None
-    currency: str | None = None
     reason: str | None = None
     is_settled: bool | None = None
     settled_at: date | None = None
@@ -1463,6 +1466,9 @@ class Debt(DebtBase, table=True):
         nullable=False,
         description="When the debt was recorded (UTC).",
     )
+
+    # Relationship to payments
+    payments: list["DebtPayment"] = Relationship(back_populates="debt")
 
 
 class DebtPublic(DebtBase):
