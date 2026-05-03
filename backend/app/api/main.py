@@ -1,5 +1,4 @@
 from fastapi import APIRouter
-from app.api.routes import search
 
 from app.api.routes import (
     activity_logs,
@@ -22,6 +21,7 @@ from app.api.routes import (
     private,
     relationships,
     reminders,
+    search,
     tag_shares,
     tags,
     users,

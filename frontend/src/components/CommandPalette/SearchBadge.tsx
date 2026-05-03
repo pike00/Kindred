@@ -1,15 +1,41 @@
+import {
+  BookOpen,
+  MessagesSquare,
+  NotebookPen,
+  UserRoundSearch,
+} from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { UserRoundSearch, NotebookPen, MessagesSquare, BookOpen } from "lucide-react"
+
 type SearchResultType = "contact" | "note" | "interaction" | "journal_entry"
 
 const typeConfig: Record<
   SearchResultType,
-  { label: string; icon: React.ReactNode; variant: "default" | "secondary" | "destructive" | "outline" }
+  {
+    label: string
+    icon: React.ReactNode
+    variant: "default" | "secondary" | "destructive" | "outline"
+  }
 > = {
-  contact: { label: "Contact", icon: <UserRoundSearch className="h-3 w-3" />, variant: "default" },
-  note: { label: "Note", icon: <NotebookPen className="h-3 w-3" />, variant: "secondary" },
-  interaction: { label: "Interaction", icon: <MessagesSquare className="h-3 w-3" />, variant: "outline" },
-  journal_entry: { label: "Journal", icon: <BookOpen className="h-3 w-3" />, variant: "destructive" },
+  contact: {
+    label: "Contact",
+    icon: <UserRoundSearch className="h-3 w-3" />,
+    variant: "default",
+  },
+  note: {
+    label: "Note",
+    icon: <NotebookPen className="h-3 w-3" />,
+    variant: "secondary",
+  },
+  interaction: {
+    label: "Interaction",
+    icon: <MessagesSquare className="h-3 w-3" />,
+    variant: "outline",
+  },
+  journal_entry: {
+    label: "Journal",
+    icon: <BookOpen className="h-3 w-3" />,
+    variant: "destructive",
+  },
 }
 
 interface SearchBadgeProps {

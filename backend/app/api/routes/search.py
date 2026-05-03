@@ -3,26 +3,23 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query
-from sqlmodel import Session, select, func, or_
-from sqlalchemy import text
+from sqlmodel import Session, SQLModel, func, or_, select
 
 from app.api.deps import get_current_user, get_db
 from app.models import (
-    User,
     Contact,
-    Note,
+    ContactTag,
     Interaction,
     JournalEntry,
+    Note,
     TagShare,
-    Tag,
-    ContactTag,
+    User,
 )
 
 router = APIRouter(prefix="/search", tags=["search"])
 
 
 # ─── Response models ────────────────────────────────────────────────────
-from sqlmodel import SQLModel
 
 
 class SearchResultItem(SQLModel):

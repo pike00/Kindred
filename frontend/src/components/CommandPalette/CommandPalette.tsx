@@ -5,9 +5,9 @@ import { useEffect, useMemo, useState } from "react"
 import {
   type ContactPublic,
   ContactsService,
-  SearchService,
   type SearchResponse,
   type SearchResultItem,
+  SearchService,
 } from "@/client"
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
 import {
@@ -30,11 +30,11 @@ import {
   ShieldCheck,
   Tag,
   Users,
+  UsersRound,
 } from "@/lib/icons"
-
-import { UsersRound } from "@/lib/icons"
 import { useCommandPalette } from "./CommandPaletteContext"
 import { SearchBadge } from "./SearchBadge"
+
 const CONTACT_LIMIT = 8
 const SEARCH_LIMIT = 20
 
@@ -77,17 +77,18 @@ export function CommandPalette() {
   }, [toggle])
 
   // Full-text search
-  const { data: searchData, isFetching: searchLoading } = useQuery<SearchResponse>({
-    queryKey: ["search", searchQuery],
-    queryFn: async () => {
-      if (searchQuery.length < 1) {
-        return { results: [], total: 0, query: searchQuery }
-      }
-      return SearchService.search({ q: searchQuery, limit: SEARCH_LIMIT })
-    },
-    enabled: open && searchQuery.length >= 1,
-    staleTime: 30_000,
-  })
+  const { data: searchData, isFetching: searchLoading } =
+    useQuery<SearchResponse>({
+      queryKey: ["search", searchQuery],
+      queryFn: async () => {
+        if (searchQuery.length < 1) {
+          return { results: [], total: 0, query: searchQuery }
+        }
+        return SearchService.search({ q: searchQuery, limit: SEARCH_LIMIT })
+      },
+      enabled: open && searchQuery.length >= 1,
+      staleTime: 30_000,
+    })
 
   const searchResults: SearchResultItem[] = searchData?.results ?? []
   const { data: contactsData } = useQuery({
@@ -129,7 +130,9 @@ export function CommandPalette() {
               )}
               {!searchLoading && searchResults.length === 0 && (
                 <CommandItem disabled>
-                  <span className="text-muted-foreground">No results found.</span>
+                  <span className="text-muted-foreground">
+                    No results found.
+                  </span>
                 </CommandItem>
               )}
               {searchResults.slice(0, 10).map((result) => (
