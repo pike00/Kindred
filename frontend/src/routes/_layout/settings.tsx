@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router"
 
+import ApiKeys from "@/components/UserSettings/ApiKeys"
 import ChangePassword from "@/components/UserSettings/ChangePassword"
 import CustomFieldDefinitions from "@/components/UserSettings/CustomFieldDefinitions"
 import DeleteAccount from "@/components/UserSettings/DeleteAccount"
@@ -15,6 +16,7 @@ const tabsConfig = [
     title: "Custom fields",
     component: CustomFieldDefinitions,
   },
+  { value: "api-keys", title: "API keys", component: ApiKeys },
   { value: "danger-zone", title: "Danger zone", component: DeleteAccount },
 ]
 
@@ -32,7 +34,7 @@ export const Route = createFileRoute("/_layout/settings")({
 function UserSettings() {
   const { user: currentUser } = useAuth()
   const finalTabs = currentUser?.is_superuser
-    ? tabsConfig.slice(0, 3)
+    ? tabsConfig.slice(0, -1)
     : tabsConfig
 
   if (!currentUser) {

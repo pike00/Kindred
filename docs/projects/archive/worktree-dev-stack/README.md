@@ -1,9 +1,9 @@
 ---
 title: Per-Worktree Dev Stack
-status: active
+status: archived
 repos: [personal-crm, Homelab]
 started: 2026-04-26
-last_updated: 2026-04-26
+last_updated: 2026-05-01
 next_step: Apply the NextDNS terraform module (infra/gateway/nextdns/) once the API key is created and stored in Bitwarden, then verify browser access on tailnet.
 ---
 
@@ -23,6 +23,9 @@ Each personal-crm worktree boots an isolated served app via `just worktree <slug
 - [ ] Optional: evaluate Dokploy / Easypanel as a future PaaS replacement for the bespoke stack
 
 ## Session Log
+
+### 2026-05-01
+- Project archived with 8 open tasks. Personal-crm side is shipped (commit 92cb3c5: compose.worktree.yml + justfile recipes). NextDNS terraform module scaffolded at Homelab/infra/gateway/nextdns/ but unapplied — gated on user-supplied API key in Bitwarden. Browser access on tailnet remains unverified. Resume by populating the NextDNS key and running the apply.
 
 ### 2026-04-26
 - Built `compose.worktree.yml` + 10 justfile recipes (`env`, `up`, `down`, `down-clean`, `logs`, `ps`, `pytest`, `shell`, `worktree`, `worktree-rm`); each worktree gets a slug-derived `COMPOSE_PROJECT_NAME` and SHA1-mod-1000 port offset so localhost ports never collide

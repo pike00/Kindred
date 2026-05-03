@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+# dirac-free-only — refuse any Dirac invocation that is not OpenRouter + a :free model.
+#
+# Defaults (tencent/hy3-preview:free, openrouter) are injected when the caller does
+# not pass -m/--model or --provider. Any explicit model not ending in ':free' or any
+# explicit provider other than 'openrouter' aborts with a non-zero exit before Dirac
+# is launched.
+
+set -uo pipefail
+
+DEFAULT_MODEL="tencent/hy3-preview:free"
+DEFAULT_PROVIDER="openrouter"
+
+err() { printf 'dirac-free-only: %s\n' "$*" >&2; }
+
+DIRAC_BIN="$(command -v dirac || true)"
+if [ -z "$DIRAC_BIN" ] || [ "$DIRAC_BIN" = "$(realpath "$0")" ]; then
+  for c in /home/will/.nvm/versions/node/v25.7.0/bin/dirac /usr/local/bin/dirac; do
+    [ -x "$c" ] && DIRAC_BIN="$c" && break
+  done
+fi
+[ -x "$DIRAC_BIN" ] || { err "dirac binary not found on PATH"; exit 2; }
+
+args=("$@")
+saw_model=0
+saw_provider=0
+model=""
+provider=""
+
+i=0
+while [ $i -lt ${#args[@]} ]; do
+  a="${args[$i]}"
+  case "$a" in
+    -m|--model)
+      saw_model=1
+      i=$((i+1))
+      model="${args[$i]:-}"
+      ;;
+    --model=*)
+      saw_model=1
+      model="${a#*=}"
+      ;;
+    --provider)
+      saw_provider=1
+      i=$((i+1))
+      provider="${args[$i]:-}"
+      ;;
+    --provider=*)
+      saw_provider=1
+      provider="${a#*=}"
+      ;;
+  esac
+  i=$((i+1))
+done
+
+if [ $saw_model -eq 1 ]; then
+  case "$model" in
+    *:free) ;;
+    *)
+      err "refusing non-free model: '$model' (must end in ':free')"
+      exit 3
+      ;;
+  esac
+else
+  args+=(-m "$DEFAULT_MODEL")
+fi
+
+if [ $saw_provider -eq 1 ]; then
+  if [ "$provider" != "openrouter" ]; then
+    err "refusing non-openrouter provider: '$provider'"
+    exit 3
+  fi
+else
+  args+=(--provider "$DEFAULT_PROVIDER")
+fi
+
+exec "$DIRAC_BIN" "${args[@]}"

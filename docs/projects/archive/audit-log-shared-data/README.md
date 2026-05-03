@@ -1,11 +1,11 @@
 ---
 title: Audit Log for Shared Data
-status: active
+status: completed
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-04-26
-next_step: Add PII redaction for sensitive fields in changes_json before returning to grantees (task 6)
-progress: 4/7 tasks
+last_updated: 2026-05-01
+next_step: none — MVP complete; PII redaction and retention deferred
+progress: 5/5 in-scope tasks (2 deferred)
 ---
 
 # Audit Log for Shared Data
@@ -16,13 +16,27 @@ Track edits to shared rows in personal-crm with owner and actor identity. Any us
 ## Tasks
 - [x] Design activity_log table schema (owner_id, actor_id, entity_type, entity_id, action, changes_json, occurred_at)
 - [x] Create Alembic migration for activity_log table
-- [ ] Implement activity log service layer (insert, query by tag scope)
+- [x] Implement activity log service layer (insert, query by tag scope)
 - [x] Wire SQLAlchemy event listeners or explicit service calls to log mutations
 - [x] Build read API endpoint scoped via TagShare (GET /activity-logs?tag_id=...)
-- [ ] Add PII redaction for sensitive fields in changes_json
-- [ ] Document retention policy and archival strategy
+
+### Deferred (out of MVP scope)
+- [ ] Add PII redaction for sensitive fields in changes_json — deferred 2026-05-01
+- [ ] Document retention policy and archival strategy — deferred 2026-05-01
 
 ## Session Log
+
+### 2026-05-01
+- Committed session 5's service-layer extraction (`87a1e14`): `query_activity_logs()` + `TagAccessDenied` in `app/audit.py`, route slimmed to a thin handler
+- Committed SDK regen for soft-delete drift (`96b870a`); merged main into the branch (`16eb87a`) and regenerated db docs to capture activity_log + tag_share alongside main's provenance + oauth_credential
+- Re-ran the activity_logs test suite against the worktree stack: 13/13 passing
+- PII redaction (task 6) and retention policy (task 7) deferred per user direction; in-scope MVP closed
+
+### 2026-04-26 (session 5)
+- Extracted activity log service layer: added `query_activity_logs()` helper + `TagAccessDenied` exception to `app/audit.py`; route slimmed to a thin handler that delegates and translates the exception to HTTP 403
+- All 13 integration tests still green via `docker compose exec backend pytest`
+- Task 3 (service layer) flipped to complete; progress 5/7
+- Changes remain uncommitted on the `worktree-audit-log-shared-data` branch
 
 ### 2026-04-26 (session 4)
 - Extended GET /activity-logs with TagShare scoping: grantees can now query contact-entity logs for contacts shared via a tag; `tag_id` filter narrows to contacts bearing that tag with 403 for unauthorized callers
@@ -49,6 +63,18 @@ Track edits to shared rows in personal-crm with owner and actor identity. Any us
 - README drafted with accurate schema references and design notes.
 
 ## Notes
+
+### 2026-05-01
+- **Decisions:** Closed scope at the MVP — PII redaction and retention deferred. Both are real concerns, but neither is needed to satisfy the original goal (grantees seeing what changed on shared rows). Reopen as fresh projects when the use case forces them.
+- **Gotchas:** Pre-commit hook regenerated the frontend SDK on the audit-refactor commit because the soft-delete commit (`0760ebd`) had introduced `deleted_at`/`ContactsRestoreContact` without updating the SDK — committed the SDK delta separately so the audit-refactor commit stayed pure code-motion. Merge of main introduced db-docs conflicts (both branches had regen commits); resolved by taking main's version and re-running `just db-docs` against the worktree DB to capture the union.
+- **Accomplished:** Branch reconciled with main (merge `16eb87a`); db docs regenerated to include activity_log + tag_share + provenance + oauth_credential; 13/13 tests green; project committed and ready to archive.
+- **Issues:** None outstanding for the in-scope MVP.
+
+### 2026-04-26 (session 5)
+- **Decisions:** Service layer landed in `app/audit.py` next to the listener (single-file convention matches `crud.py`/`search.py`/`vcard.py`); rejected splitting into a new `app/services/` directory for consistency with the codebase. `TagAccessDenied` exception keeps the service HTTP-agnostic — the route catches it and translates to 403.
+- **Gotchas:** The backend container bind-mounts `/home/will/projects/personal-crm/backend`, not the worktree path — running `pytest` against worktree code requires copying the changed files into main first. Cleaned up afterward by reverting main and keeping the audit-log changes only on the worktree branch so the diff stays atomic.
+- **Accomplished:** Task 3 closed; `query_activity_logs()` + `TagAccessDenied` extracted; route slimmed to a delegating handler; 13/13 tests pass.
+- **Issues:** Audit-log changes still uncommitted on `worktree-audit-log-shared-data`.
 
 ### 2026-04-26 (session 4)
 - **Decisions:** TagShare scoping covers contact-entity logs only for MVP; non-contact entities (notes, interactions) only visible to owner — extend when needed

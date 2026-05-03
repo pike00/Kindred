@@ -3,6 +3,8 @@ from fastapi import APIRouter
 from app.api.routes import (
     activity_logs,
     addresses,
+    api_keys,
+    calendar,
     communication_preferences,
     contact_fields,
     contacts,
@@ -33,6 +35,7 @@ api_router = APIRouter()
 api_router.include_router(communication_preferences.router)
 api_router.include_router(login.router)
 api_router.include_router(users.router)
+api_router.include_router(api_keys.router)
 api_router.include_router(utils.router)
 
 # CRM routes
@@ -56,6 +59,7 @@ api_router.include_router(journal.router)
 api_router.include_router(import_export.router)
 api_router.include_router(webhooks.router)
 api_router.include_router(activity_logs.router)
+api_router.include_router(calendar.router)
 
 if settings.ENVIRONMENT == "local":
     api_router.include_router(private.router)
