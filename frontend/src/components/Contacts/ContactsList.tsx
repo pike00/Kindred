@@ -222,7 +222,7 @@ export const ContactsList = () => {
 
   const { data } = useSuspenseQuery({
     queryKey: ["contacts"],
-    queryFn: () => ContactsService.listContactsContacts(),
+    queryFn: () => ContactsService.listContacts(),
   })
 
   const allContacts = useMemo(() => data?.data ?? [], [data?.data])
@@ -280,10 +280,9 @@ export const ContactsList = () => {
     } else {
       // Preview how many contacts would be selected
       try {
-        const result =
-          await ContactsService.previewBulkContactsContactsBulkPreview({
-            search: search || undefined,
-          })
+        const result = await ContactsService.previewBulkContacts({
+          search: search || undefined,
+        })
         setPreviewModal({
           open: true,
           action: null,
@@ -355,7 +354,7 @@ export const ContactsList = () => {
           break
       }
       try {
-        await ContactsService.bulkUpdateContactsContactsBulk({
+        await ContactsService.bulkUpdateContacts({
           requestBody: {
             contact_ids: undoData.ids,
             operations,
@@ -414,7 +413,7 @@ export const ContactsList = () => {
             : undefined,
         }
 
-        const result = await ContactsService.bulkUpdateContactsContactsBulk({
+        const result = await ContactsService.bulkUpdateContacts({
           requestBody: body,
         })
         toast.success(`Updated ${result.updated_count} contacts`, {
