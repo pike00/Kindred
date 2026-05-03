@@ -116,6 +116,7 @@ def _audit_before_flush(
     _instances: object,
 ) -> None:
     actor_id: uuid.UUID | None = session.info.get("actor_id")
+    acting_api_key_id: uuid.UUID | None = session.info.get("acting_api_key_id")
     logs: list[ActivityLog] = []
 
     # Collect InteractionAttendee changes grouped by interaction_id
@@ -137,6 +138,7 @@ def _audit_before_flush(
             ActivityLog(
                 owner_id=owner_id,
                 actor_id=actor_id,
+                acting_api_key_id=acting_api_key_id,
                 entity_type=_AUDITABLE[type(instance)],
                 entity_id=instance.id,
                 action="create",
@@ -161,6 +163,7 @@ def _audit_before_flush(
             ActivityLog(
                 owner_id=owner_id,
                 actor_id=actor_id,
+                acting_api_key_id=acting_api_key_id,
                 entity_type=_AUDITABLE[type(instance)],
                 entity_id=instance.id,
                 action="delete",
@@ -194,6 +197,7 @@ def _audit_before_flush(
             ActivityLog(
                 owner_id=owner_id,
                 actor_id=actor_id,
+                acting_api_key_id=acting_api_key_id,
                 entity_type=_AUDITABLE[type(instance)],
                 entity_id=instance.id,
                 action=action,

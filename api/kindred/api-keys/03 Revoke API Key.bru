@@ -1,0 +1,15 @@
+meta {
+  name: Revoke API Key
+  type: http
+  seq: 3
+}
+
+delete {
+  url: {{base_url}}/api/v1/users/me/api-keys/{{api_key_id}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt_token}}
+}
