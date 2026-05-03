@@ -40,12 +40,18 @@ jobs:
       - name: Migrate DB
         env:
           POSTGRES_SERVER: localhost
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: changethis
+          POSTGRES_DB: crm
         run: uv run bash scripts/prestart.sh
         working-directory: backend
       - name: Run tests
         env:
           SHA: ${{ github.sha }}
           POSTGRES_SERVER: localhost
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: changethis
+          POSTGRES_DB: crm
         run: uv run bash scripts/tests-start.sh "Coverage for $SHA"
         working-directory: backend
       - name: Store coverage files
