@@ -1125,6 +1125,7 @@ export type RelationshipPublic = {
     id: string;
     contact_id: string;
     related_contact_id: string;
+    inverse_id?: (string | null);
 };
 
 export type RelationshipUpdate = {
