@@ -9,8 +9,8 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy import DateTime
 
-revision = "f6a7b8c9d0e1"
-down_revision = "d7d81f2"
+revision = "add_soft_delete_entities"
+down_revision = "add_do_not_contact_fields"
 branch_labels = None
 depends_on = None
 
