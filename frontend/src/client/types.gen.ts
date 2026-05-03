@@ -621,7 +621,7 @@ export type GiftsPublic = {
     count: number;
 };
 
-export type GiftStatus = 'idea' | 'given' | 'received';
+export type GiftStatus = 'idea' | 'purchased' | 'wrapped' | 'given' | 'received';
 
 export type GiftUpdate = {
     name?: (string | null);

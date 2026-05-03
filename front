@@ -1,0 +1,18 @@
+import { createFileRoute } from "@tanstack/react-router"
+import { KanbanBoard } from "@/components/Gifts/KanbanBoard"
+
+export const Route = createFileRoute("/_layout/gifts/kanban")({
+  component: KanbanPage,
+  head: () => ({
+    meta: [{ title: "Gift Kanban · Kindred" }],
+  }),
+})
+
+function KanbanPage() {
+  return (
+    <div className="mx-auto max-w-7xl">
+      <h1 className="text-3xl font-bold tracking-tight mb-6">Gift Kanban Board</h1>
+      <KanbanBoard />
+    </div>
+  )
+}

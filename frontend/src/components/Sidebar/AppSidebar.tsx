@@ -10,6 +10,7 @@ import useAuth from "@/hooks/useAuth"
 import {
   Bell,
   CalendarHeart,
+  Gift,
   Home,
   MessagesSquare,
   NotebookPen,
@@ -29,6 +30,7 @@ const baseItems: Item[] = [
   { icon: UsersRound, title: "Groups", path: "/groups" },
   { icon: Bell, title: "Reminders", path: "/reminders" },
   { icon: CalendarHeart, title: "Calendar", path: "/calendar" },
+  { icon: Gift, title: "Gift Kanban", path: "/gifts/kanban" },
   { icon: NotebookPen, title: "Journal", path: "/journal" },
 ]
 
