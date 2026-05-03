@@ -150,6 +150,33 @@ export type CalendarMonthResponse = {
     };
 };
 
+export type CalendarTokenCreate = {
+    /**
+     * Optional expiration date; null means never expires.
+     */
+    expires_at?: (string | null);
+};
+
+export type CalendarTokenPublic = {
+    /**
+     * Optional expiration date; null means never expires.
+     */
+    expires_at?: (string | null);
+    id: string;
+    status: string;
+    last_used_at: (string | null);
+    created_at: string;
+};
+
+export type CalendarTokensPublic = {
+    data: Array<CalendarTokenPublic>;
+    count: number;
+    month: string;
+    days: {
+        [key: string]: Array<CalendarEntry>;
+    };
+};
+
 export type ContactCreate = {
     /**
      * Given name; required.
@@ -1016,6 +1043,13 @@ export type PetUpdate = {
     notes?: (string | null);
 };
 
+export type PrivateUserCreate = {
+    email: string;
+    password: string;
+    full_name: string;
+    is_verified?: boolean;
+};
+
 export type RelationshipCreate = {
     /**
      * Kind of relationship: spouse, child, parent, sibling, friend, colleague, etc.
@@ -1327,6 +1361,29 @@ export type CalendarGetCalendarMonthData = {
 };
 
 export type CalendarGetCalendarMonthResponse = (CalendarMonthResponse);
+
+export type CalendarCreateCalendarTokenData = {
+    requestBody: CalendarTokenCreate;
+};
+
+export type CalendarCreateCalendarTokenResponse = (CalendarTokenPublic);
+
+export type CalendarListCalendarTokensResponse = (CalendarTokensPublic);
+
+export type CalendarRevokeCalendarTokenData = {
+    tokenId: string;
+};
+
+export type CalendarRevokeCalendarTokenResponse = (unknown);
+
+export type CalendarGetCalendarIcsData = {
+    /**
+     * Optional timezone for output (e.g., America/Chicago)
+     */
+    tz?: (string | null);
+};
+
+export type CalendarGetCalendarIcsResponse = (unknown);
 
 export type CarddavWellKnownCarddavResponse = (unknown);
 
@@ -1728,6 +1785,12 @@ export type PetsDeletePetData = {
 };
 
 export type PetsDeletePetResponse = (unknown);
+
+export type PrivateCreateUserData = {
+    requestBody: PrivateUserCreate;
+};
+
+export type PrivateCreateUserResponse = (UserPublic);
 
 export type RelationshipsLookupInverseData = {
     type: string;
