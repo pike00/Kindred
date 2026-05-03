@@ -1,0 +1,22 @@
+meta {
+  name: Login
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/api/v1/login/access-token
+  body: form
+  auth: none
+}
+
+body:form {
+  username: {{email}}
+  password: {{password}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    bru.setEnvVar("jwt_token", res.body.access_token);
+  }
+}

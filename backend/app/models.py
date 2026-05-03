@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import enum
 import uuid
 from datetime import date, datetime, timezone
@@ -109,12 +111,99 @@ class UsersPublic(SQLModel):
     count: int
 
 
+# ─── API Keys ─────────────────────────────────────────────────────────────────
+
+
+class APIKey(SQLModel, table=True):
+    __tablename__ = "api_key"
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    name: str = Field(max_length=255)
+    key_hash: str = Field(
+        max_length=64, sa_column=sa.Column(sa.String(64), unique=True, index=True)
+    )
+    key_prefix: str = Field(max_length=16)
+    owned_by_user_id: uuid.UUID = Field(
+        foreign_key="user.id",
+        ondelete="CASCADE",
+        index=True,
+    )
+    created_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),
+    )
+    last_used_at: datetime | None = Field(
+        default=None,
+        sa_type=DateTime(timezone=True),
+    )
+    revoked_at: datetime | None = Field(
+        default=None,
+        sa_type=DateTime(timezone=True),
+    )
+    expires_at: datetime | None = Field(
+        default=None,
+        sa_type=DateTime(timezone=True),
+    )
+
+
+class APIKeyImpersonate(SQLModel, table=True):
+    __tablename__ = "api_key_impersonate"
+
+    api_key_id: uuid.UUID = Field(
+        foreign_key="api_key.id",
+        primary_key=True,
+        ondelete="CASCADE",
+    )
+    user_id: uuid.UUID = Field(
+        foreign_key="user.id",
+        primary_key=True,
+        ondelete="CASCADE",
+    )
+
+
+class APIKeyCreate(SQLModel):
+    name: str = Field(min_length=1, max_length=255)
+    can_impersonate: list[uuid.UUID] = Field(default_factory=list)
+    expires_at: datetime | None = None
+
+
+class APIKeyPublic(SQLModel):
+    id: uuid.UUID
+    name: str
+    key_prefix: str
+    owned_by_user_id: uuid.UUID
+    can_impersonate: list[uuid.UUID]
+    created_at: datetime
+    last_used_at: datetime | None
+    revoked_at: datetime | None
+    expires_at: datetime | None
+
+
+class APIKeyCreated(APIKeyPublic):
+    """Returned once at creation — plaintext_key is never stored."""
+
+    plaintext_key: str
+
+
+class APIKeysPublic(SQLModel):
+    data: list[APIKeyPublic]
+    count: int
+
+
 # ─── Enums ────────────────────────────────────────────────────────────────────
 
 
 class ContactFieldType(str, enum.Enum):
     EMAIL = "email"
     PHONE = "phone"
+
+
+class ContactSource(str, enum.Enum):
+    MANUAL = "MANUAL"
+    VCARD_IMPORT = "VCARD_IMPORT"
+    CARDDAV = "CARDDAV"
+    GOOGLE = "GOOGLE"
+    WEBHOOK = "WEBHOOK"
 
 
 class GiftStatus(str, enum.Enum):
@@ -131,6 +220,7 @@ class InteractionChannel(str, enum.Enum):
     VIDEO = "video"
     SOCIAL = "social"
     OTHER = "other"
+    SKIP = "skip"
 
 
 class ReminderFrequency(str, enum.Enum):
@@ -347,8 +437,8 @@ class ContactGroup(SQLModel, table=True):
     )
 
 
-
 # ─── Organization ────────────────────────────────────────────────────────────
+
 
 class OrganizationBase(SQLModel):
     name: str = Field(
@@ -438,6 +528,7 @@ class OrganizationUpdate(SQLModel):
 
 class Organization(OrganizationBase, table=True):
     """First-class organization entity, replacing free-text Contact.company."""
+
     __tablename__ = "organization"
 
     id: uuid.UUID = Field(
@@ -463,7 +554,7 @@ class Organization(OrganizationBase, table=True):
         description="Auto-bumped on edit (UTC).",
     )
     # Relationships
-    contacts: list["Contact"] = Relationship(back_populates="organization")
+    contacts: list[Contact] = Relationship(back_populates="organization")
 
 
 class OrganizationPublic(OrganizationBase):
@@ -477,6 +568,7 @@ class OrganizationPublic(OrganizationBase):
 class OrganizationsPublic(SQLModel):
     data: list[OrganizationPublic]
     count: int
+
 
 # ─── Contact ─────────────────────────────────────────────────────────────────
 
@@ -558,11 +650,30 @@ class ContactBase(SQLModel):
         le=3650,
         description="Target days between interactions; drives losing-touch cadence.",
     )
+
+    do_not_contact: bool = Field(
+        default=False,
+        description="If True, suppress all contact reminders and actions for this contact.",
+    )
+    do_not_contact_reason: str | None = Field(
+        default=None,
+        max_length=500,
+        description="Optional reason why the contact was marked do-not-contact.",
+    )
     # Kanban stage for relationship tracking
     stage: str | None = Field(
         default=None,
         max_length=100,
         description="Kanban stage like Active, Dormant, Lost.",
+    )
+    source: ContactSource = Field(
+        default=ContactSource.MANUAL,
+        description="Where this contact originated.",
+    )
+    source_external_id: str | None = Field(
+        default=None,
+        max_length=500,
+        description="Opaque external ID for idempotent upserts from integrations.",
     )
 
 
@@ -589,6 +700,8 @@ class ContactUpdate(SQLModel):
     deceased_at: date | None = None
     contact_frequency_days: int | None = None
     stage: str | None = None
+    do_not_contact: bool | None = None
+    do_not_contact_reason: str | None = None
     tag_ids: list[uuid.UUID] | None = None
     group_ids: list[uuid.UUID] | None = None
 
@@ -656,15 +769,15 @@ class Contact(ContactBase, table=True):
     )
     # Relationships
     # Relationships
-    tags: list["Tag"] = Relationship(
+    tags: list[Tag] = Relationship(
         back_populates=None,
         link_model=ContactTag,
     )
-    groups: list["Group"] = Relationship(
+    groups: list[Group] = Relationship(
         back_populates=None,
         link_model=ContactGroup,
     )
-    organization: "Organization" | None = Relationship(back_populates="contacts")
+    organization: Organization | None = Relationship(back_populates="contacts")
 
 
 class ContactPublic(ContactBase):
@@ -674,13 +787,25 @@ class ContactPublic(ContactBase):
     created_at: datetime
     updated_at: datetime
     deleted_at: datetime | None = None
+    contact_frequency_days: int | None = None
+    do_not_contact: bool = False
+    do_not_contact_reason: str | None = None
     tags: list[TagPublic] = []
     groups: list[GroupPublic] = []
-    organization: "OrganizationPublic" | None = None
+    organization: OrganizationPublic | None = None
 
 
 class ContactsPublic(SQLModel):
     data: list[ContactPublic]
+    count: int
+
+
+class OverdueContactPublic(ContactPublic):
+    days_overdue: int | None = None
+
+
+class OverdueContactsPublic(SQLModel):
+    data: list[OverdueContactPublic]
     count: int
 
 
@@ -848,15 +973,6 @@ class RelationshipBase(SQLModel):
 class RelationshipCreate(RelationshipBase):
     contact_id: uuid.UUID  # "from" contact
     related_contact_id: uuid.UUID  # "to" contact
-    inverse_relationship_type: str | None = Field(
-        default=None,
-        max_length=100,
-        description=(
-            "Type for the auto-generated inverse row. If omitted, the "
-            "server infers it from a known map of symmetric/asymmetric "
-            "types and returns 422 when it cannot."
-        ),
-    )
 
 
 class RelationshipUpdate(SQLModel):
@@ -867,9 +983,7 @@ class RelationshipUpdate(SQLModel):
 class Relationship(RelationshipBase, table=True):
     """Directional link between two contacts (spouse, child, friend, etc.).
 
-    Every row is paired with an inverse row pointing the opposite
-    direction; ``inverse_id`` cross-links them. Deleting one side
-    cascades to the other so both contacts stay in sync.
+    To model a symmetric relationship, create two rows (one per direction).
     """
 
     id: uuid.UUID = Field(
@@ -889,20 +1003,12 @@ class Relationship(RelationshipBase, table=True):
         ondelete="CASCADE",
         description='"To" contact in the directional relationship.',
     )
-    inverse_id: uuid.UUID | None = Field(
-        default=None,
-        foreign_key="relationship.id",
-        nullable=True,
-        ondelete="SET NULL",
-        description="The paired row pointing the opposite direction.",
-    )
 
 
 class RelationshipPublic(RelationshipBase):
     id: uuid.UUID
     contact_id: uuid.UUID
     related_contact_id: uuid.UUID
-    inverse_id: uuid.UUID | None = None
 
 
 # ─── Pet ──────────────────────────────────────────────────────────────────────
@@ -1865,6 +1971,13 @@ class ActivityLog(SQLModel, table=True):
         default=None,
         sa_column=sa.Column("changes_json", sa.JSON, nullable=True),
     )
+    acting_api_key_id: uuid.UUID | None = Field(
+        default=None,
+        foreign_key="api_key.id",
+        nullable=True,
+        ondelete="SET NULL",
+        index=True,
+    )
     occurred_at: datetime = Field(
         default_factory=get_datetime_utc,
         sa_type=DateTime(timezone=True),
@@ -1907,9 +2020,6 @@ class TokenPayload(SQLModel):
 class NewPassword(SQLModel):
     token: str
     new_password: str = Field(min_length=8, max_length=128)
-
-
-# ─── Calendar ─────────────────────────────────────────────────────────────────
 
 
 class CalendarEntry(SQLModel):

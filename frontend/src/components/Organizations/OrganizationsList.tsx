@@ -7,13 +7,7 @@ import { EmptyState } from "@/components/Common/EmptyState"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import {
-  Building2,
-  ChevronLeft,
-  ChevronRight,
-  Search,
-} from "@/lib/icons"
-import { cn } from "@/lib/utils"
+import { Building2, ChevronLeft, ChevronRight, Search } from "@/lib/icons"
 import { AddOrganizationDialog } from "./AddOrganizationDialog"
 
 const PAGE_SIZE = 25
@@ -29,7 +23,7 @@ function matchesSearch(org: OrganizationPublic, q: string): boolean {
 }
 
 export function OrganizationsList() {
-  const navigate = useNavigate()
+  const _navigate = useNavigate()
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(0)
   const [addOpen, setAddOpen] = useState(false)
@@ -38,7 +32,7 @@ export function OrganizationsList() {
     OrganizationsService.listOrganizationsQueryOptions({
       skip: page * PAGE_SIZE,
       limit: PAGE_SIZE,
-    })
+    }),
   )
 
   const orgs = (data?.data ?? []).filter((o) => matchesSearch(o, search))
@@ -77,9 +71,7 @@ export function OrganizationsList() {
           title="No organizations yet"
           description="Add your first organization to get started."
           action={
-            <Button onClick={() => setAddOpen(true)}>
-              Add organization
-            </Button>
+            <Button onClick={() => setAddOpen(true)}>Add organization</Button>
           }
         />
       ) : (
@@ -107,7 +99,8 @@ export function OrganizationsList() {
                       {org.industry && <span>{org.industry}</span>}
                       {org.contact_count > 0 && (
                         <span>
-                          {org.contact_count} contact{org.contact_count !== 1 ? "s" : ""}
+                          {org.contact_count} contact
+                          {org.contact_count !== 1 ? "s" : ""}
                         </span>
                       )}
                     </div>
