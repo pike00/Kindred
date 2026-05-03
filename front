@@ -1,0 +1,62 @@
+import { useMutation } from "@tanstack/react-query"
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Loader2, Download } from "@/lib/icons"
+import { ImportExportService } from "@/client"
+import useCustomToast from "@/hooks/useCustomToast"
+
+export const CsvExportButton = () => {
+  const [isExporting, setIsExporting] = useState(false)
+  const { showErrorToast } = useCustomToast()
+
+  const exportMutation = useMutation({
+    mutationFn: async () => {
+      setIsExporting(true)
+      const response = await ImportExportService.exportCsv({
+        includeFields: true,
+        includeTags: true,
+        includeGroups: true,
+      })
+
+      // The response is a Blob/File response
+      return response
+    },
+    onSuccess: (data) => {
+      // Create a download link for the CSV file
+      const url = window.URL.createObjectURL(new Blob([data as unknown as Blob]))
+      const link = document.createElement("a")
+      link.href = url
+      link.setAttribute("download", `contacts_${new Date().toISOString().split("T")[0]}.csv`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+      setIsExporting(false)
+    },
+    onError: () => {
+      showErrorToast("Failed to export contacts")
+      setIsExporting(false)
+    },
+  })
+
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={() => exportMutation.mutate()}
+      disabled={isExporting}
+    >
+      {isExporting ? (
+        <>
+          <Loader2 className="mr-2 size-4 animate-spin" />
+          Exporting...
+        </>
+      ) : (
+        <>
+          <Download className="mr-2 size-4" />
+          Export CSV
+        </>
+      )}
+    </Button>
+  )
+}
