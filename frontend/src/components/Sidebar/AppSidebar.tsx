@@ -27,6 +27,7 @@ const baseItems: Item[] = [
   { icon: MessagesSquare, title: "Interactions", path: "/interactions" },
   { icon: Tag, title: "Tags", path: "/tags" },
   { icon: UsersRound, title: "Groups", path: "/groups" },
+  { icon: Users, title: "Graph", path: "/graph" },
   { icon: Bell, title: "Reminders", path: "/reminders" },
   { icon: CalendarHeart, title: "Calendar", path: "/calendar" },
   { icon: NotebookPen, title: "Journal", path: "/journal" },

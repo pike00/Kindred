@@ -9,6 +9,7 @@ from app.api.routes import (
     custom_fields,
     debts,
     gifts,
+    graph,
     groups,
     import_export,
     interactions,
@@ -56,7 +57,7 @@ api_router.include_router(import_export.router)
 api_router.include_router(webhooks.router)
 api_router.include_router(activity_logs.router)
 api_router.include_router(calendar.router)
-
+api_router.include_router(graph.router)
 
 if settings.ENVIRONMENT == "local":
     api_router.include_router(private.router)

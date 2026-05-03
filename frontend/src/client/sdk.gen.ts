@@ -2317,3 +2317,27 @@ export class WebhooksService {
         });
     }
 }
+export class GraphService {
+    /**
+     * Get Contacts Graph
+     * Returns contacts + relationships as a graph (nodes + edges).
+     * @param data The data for the request.
+     * @param data.depth
+     * @param data.rootContactId
+     * @returns object Successful Response
+     * @throws ApiError
+     */
+    public static getGraphContacts(data: { depth?: number; rootContactId?: string } = {}): CancelablePromise<{ nodes: Array<{ id: string; label: string; avatar_url?: string | null; company?: string | null; is_favorite: boolean }>; edges: Array<{ source: string; target: string; label: string }> }> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/graph/contacts',
+            query: {
+                depth: data.depth,
+                root_contact_id: data.rootContactId,
+            },
+            errors: {
+                422: 'Validation Error',
+            }
+        });
+    }
+}

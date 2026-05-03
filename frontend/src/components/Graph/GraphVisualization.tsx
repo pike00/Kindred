@@ -1,0 +1,202 @@
+import { useCallback, useEffect, useRef } from "react"
+import type { GraphEdge, GraphNode } from "./types"
+
+interface GraphVisualizationProps {
+  nodes: GraphNode[]
+  edges: GraphEdge[]
+}
+
+export function GraphVisualization({ nodes, edges }: GraphVisualizationProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  const draw = useCallback(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return
+
+    const container = containerRef.current
+    if (!container) return
+
+    const width = container.clientWidth
+    const height = 600
+    canvas.width = width
+    canvas.height = height
+
+    // Clear canvas
+    ctx.clearRect(0, 0, width, height)
+
+    // Simple force-directed layout
+    const nodeMap = new Map<
+      string,
+      { x: number; y: number; vx: number; vy: number }
+    >()
+    const nodeRadius = 20
+
+    // Initialize positions in a circle
+    const centerX = width / 2
+    const centerY = height / 2
+    const radius = Math.min(width, height) / 3
+
+    nodes.forEach((node, i) => {
+      const angle = (2 * Math.PI * i) / nodes.length
+      nodeMap.set(node.id, {
+        x: centerX + radius * Math.cos(angle),
+        y: centerY + radius * Math.sin(angle),
+        vx: 0,
+        vy: 0,
+      })
+    })
+
+    // Run simulation steps
+    const steps = 100
+    const alpha = 0.3
+    const alphaDecay = 0.99
+    const alphaMin = 0.001
+    const velocityDecay = 0.4
+    const strength = -300
+
+    let currentAlpha = alpha
+
+    for (let step = 0; step < steps && currentAlpha > alphaMin; step++) {
+      // Apply forces
+      const forces = new Map<string, { fx: number; fy: number }>()
+
+      // Initialize forces
+      nodes.forEach((node) => {
+        forces.set(node.id, { fx: 0, fy: 0 })
+      })
+
+      // Repulsion between all nodes
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const nodeA = nodes[i]
+          const nodeB = nodes[j]
+          const posA = nodeMap.get(nodeA.id)!
+          const posB = nodeMap.get(nodeB.id)!
+
+          const dx = posB.x - posA.x
+          const dy = posB.y - posA.y
+          const dist = Math.sqrt(dx * dx + dy * dy) || 1
+
+          const force = strength / (dist * dist)
+          const fx = (dx / dist) * force
+          const fy = (dy / dist) * force
+
+          forces.get(nodeA.id)!.fx -= fx
+          forces.get(nodeA.id)!.fy -= fy
+          forces.get(nodeB.id)!.fx += fx
+          forces.get(nodeB.id)!.fy += fy
+        }
+      }
+
+      // Attraction along edges
+      edges.forEach((edge) => {
+        const sourcePos = nodeMap.get(edge.source)
+        const targetPos = nodeMap.get(edge.target)
+        if (!sourcePos || !targetPos) return
+
+        const dx = targetPos.x - sourcePos.x
+        const dy = targetPos.y - sourcePos.y
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1
+
+        const force = dist * 0.01
+        const fx = (dx / dist) * force
+        const fy = (dy / dist) * force
+
+        forces.get(edge.source)!.fx += fx
+        forces.get(edge.source)!.fy += fy
+        forces.get(edge.target)!.fx -= fx
+        forces.get(edge.target)!.fy -= fy
+      })
+
+      // Apply forces
+      nodes.forEach((node) => {
+        const pos = nodeMap.get(node.id)!
+        const force = forces.get(node.id)!
+
+        pos.vx = pos.vx * velocityDecay + force.fx * currentAlpha
+        pos.vy = pos.vy * velocityDecay + force.fy * currentAlpha
+
+        pos.x += pos.vx
+        pos.y += pos.vy
+
+        // Keep within bounds
+        pos.x = Math.max(nodeRadius, Math.min(width - nodeRadius, pos.x))
+        pos.y = Math.max(nodeRadius, Math.min(height - nodeRadius, pos.y))
+      })
+
+      currentAlpha *= alphaDecay
+    }
+
+    // Draw edges
+    ctx.strokeStyle = "#94a3b8"
+    ctx.lineWidth = 2
+
+    edges.forEach((edge) => {
+      const sourcePos = nodeMap.get(edge.source)
+      const targetPos = nodeMap.get(edge.target)
+      if (!sourcePos || !targetPos) return
+
+      ctx.beginPath()
+      ctx.moveTo(sourcePos.x, sourcePos.y)
+      ctx.lineTo(targetPos.x, targetPos.y)
+      ctx.stroke()
+
+      // Draw edge label
+      const midX = (sourcePos.x + targetPos.x) / 2
+      const midY = (sourcePos.y + targetPos.y) / 2
+      ctx.fillStyle = "#64748b"
+      ctx.font = "10px sans-serif"
+      ctx.textAlign = "center"
+      ctx.fillText(edge.label, midX, midY - 5)
+    })
+
+    // Draw nodes
+    nodes.forEach((node) => {
+      const pos = nodeMap.get(node.id)!
+      const radius = node.is_favorite ? 25 : 20
+      const color = node.is_favorite ? "#f59e0b" : "#3b82f6"
+
+      // Draw circle
+      ctx.beginPath()
+      ctx.arc(pos.x, pos.y, radius, 0, 2 * Math.PI)
+      ctx.fillStyle = color
+      ctx.fill()
+      ctx.strokeStyle = "#1e293b"
+      ctx.lineWidth = 2
+      ctx.stroke()
+
+      // Draw label
+      ctx.fillStyle = "#1e293b"
+      ctx.font = "12px sans-serif"
+      ctx.textAlign = "center"
+      ctx.fillText(node.label, pos.x, pos.y + radius + 15)
+    })
+  }, [nodes, edges])
+
+  useEffect(() => {
+    draw()
+  }, [draw])
+
+  useEffect(() => {
+    const handleResize = () => {
+      draw()
+    }
+
+    window.addEventListener("resize", handleResize)
+    return () => window.removeEventListener("resize", handleResize)
+  }, [draw])
+
+  return (
+    <div ref={containerRef} className="w-full h-[600px] relative">
+      <canvas
+        ref={canvasRef}
+        className="w-full h-full"
+        style={{ cursor: "grab" }}
+      />
+    </div>
+  )
+}
