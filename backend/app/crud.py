@@ -540,3 +540,20 @@ def get_api_key_impersonate_targets(
 
 def get_api_key_by_hash(*, session: Session, key_hash: str) -> APIKey | None:
     return session.exec(select(APIKey).where(APIKey.key_hash == key_hash)).first()
+
+
+def get_api_key_by_plaintext(*, session: Session, plaintext: str) -> APIKey | None:
+    from datetime import datetime, timezone
+
+    from app.core.api_keys import hash_key
+
+    api_key = get_api_key_by_hash(session=session, key_hash=hash_key(plaintext))
+    if api_key is None:
+        return None
+    if api_key.revoked_at is not None:
+        return None
+    if api_key.expires_at is not None and api_key.expires_at < datetime.now(
+        timezone.utc
+    ):
+        return None
+    return api_key
