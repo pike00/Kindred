@@ -419,6 +419,7 @@ export type ContactPublic = {
     deleted_at?: (string | null);
     tags?: Array<TagPublic>;
     groups?: Array<GroupPublic>;
+    vcard_sha256?: (string | null);
 };
 
 export type ContactSource = 'MANUAL' | 'VCARD_IMPORT' | 'CARDDAV' | 'GOOGLE' | 'WEBHOOK';
@@ -1109,6 +1110,7 @@ export type OverdueContactPublic = {
     deleted_at?: (string | null);
     tags?: Array<TagPublic>;
     groups?: Array<GroupPublic>;
+    vcard_sha256?: (string | null);
     days_overdue?: (number | null);
 };
 

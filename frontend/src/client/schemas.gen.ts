@@ -1485,6 +1485,17 @@ export const ContactPublicSchema = {
             type: 'array',
             title: 'Groups',
             default: []
+        },
+        vcard_sha256: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Vcard Sha256'
         }
     },
     type: 'object',
@@ -3992,6 +4003,17 @@ export const OverdueContactPublicSchema = {
             type: 'array',
             title: 'Groups',
             default: []
+        },
+        vcard_sha256: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Vcard Sha256'
         },
         days_overdue: {
             anyOf: [

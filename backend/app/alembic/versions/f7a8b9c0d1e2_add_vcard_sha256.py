@@ -13,7 +13,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic
 revision = "f7a8b9c0d1e2"
-down_revision = "e5f6a7b8c9d0"
+down_revision = "add_do_not_contact_fields"
 branch_labels = None
 depends_on = None
 
