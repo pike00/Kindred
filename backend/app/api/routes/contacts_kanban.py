@@ -4,17 +4,20 @@ import uuid
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
+from sqlalchemy.orm import selectinload
 from sqlmodel import col, select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.crud import visible_contact_ids
 from app.models import (
     Contact,
+    ContactGroup,
     ContactPublic,
     ContactsPublic,
     ContactStageEvent,
     ContactStageEventPublic,
     ContactStageEventsPublic,
+    ContactTag,
 )
 
 router = APIRouter(prefix="/contacts", tags=["contacts"])

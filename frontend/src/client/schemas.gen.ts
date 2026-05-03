@@ -438,7 +438,7 @@ export const Body_import_export_import_vcardSchema = {
     properties: {
         file: {
             type: 'string',
-            contentMediaType: 'application/octet-stream',
+            format: 'binary',
             title: 'File'
         }
     },
@@ -502,6 +502,60 @@ export const Body_login_login_access_tokenSchema = {
     type: 'object',
     required: ['username', 'password'],
     title: 'Body_login-login_access_token'
+} as const;
+
+export const CalendarEntrySchema = {
+    properties: {
+        contact_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Contact Id'
+        },
+        name: {
+            type: 'string',
+            title: 'Name'
+        },
+        type: {
+            type: 'string',
+            title: 'Type'
+        },
+        age: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Age'
+        }
+    },
+    type: 'object',
+    required: ['contact_id', 'name', 'type', 'age'],
+    title: 'CalendarEntry'
+} as const;
+
+export const CalendarMonthResponseSchema = {
+    properties: {
+        month: {
+            type: 'string',
+            title: 'Month'
+        },
+        days: {
+            additionalProperties: {
+                items: {
+                    '$ref': '#/components/schemas/CalendarEntry'
+                },
+                type: 'array'
+            },
+            type: 'object',
+            title: 'Days'
+        }
+    },
+    type: 'object',
+    required: ['month', 'days'],
+    title: 'CalendarMonthResponse'
 } as const;
 
 export const ContactCreateSchema = {
@@ -700,24 +754,6 @@ export const ContactCreateSchema = {
             ],
             title: 'Stage',
             description: 'Kanban stage like Active, Dormant, Lost.'
-        },
-        source: {
-            '$ref': '#/components/schemas/ContactSource',
-            description: 'Source system that created this contact.',
-            default: 'manual'
-        },
-        source_external_id: {
-            anyOf: [
-                {
-                    type: 'string',
-                    maxLength: 500
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Source External Id',
-            description: 'External ID from the source system (e.g. Google contact ID, CardDAV UID).'
         },
         tag_ids: {
             anyOf: [
@@ -1108,23 +1144,6 @@ export const ContactPublicSchema = {
             title: 'Stage',
             description: 'Kanban stage like Active, Dormant, Lost.'
         },
-        source: {
-            '$ref': '#/components/schemas/ContactSource',
-            description: 'Source system that created this contact.',
-            default: 'manual'
-        },
-        source_external_id: {
-            anyOf: [
-                {
-                    type: 'string'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Source External Id',
-            description: 'External ID from the source system.'
-        },
         id: {
             type: 'string',
             format: 'uuid',
@@ -1190,6 +1209,14 @@ export const ContactPublicSchema = {
             type: 'array',
             title: 'Groups',
             default: []
+        },
+        stage_events: {
+            items: {
+                '$ref': '#/components/schemas/ContactStageEventPublic'
+            },
+            type: 'array',
+            title: 'Stage Events',
+            default: []
         }
     },
     type: 'object',
@@ -1197,11 +1224,90 @@ export const ContactPublicSchema = {
     title: 'ContactPublic'
 } as const;
 
-export const ContactSourceSchema = {
-    type: 'string',
-    enum: ['manual', 'vcard_import', 'carddav', 'google', 'webhook'],
-    title: 'ContactSource',
-    description: 'Source system that created a contact.'
+export const ContactStageEventPublicSchema = {
+    properties: {
+        old_stage: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 100
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Old Stage',
+            description: 'Previous stage value; null when the contact is first assigned a stage.'
+        },
+        new_stage: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 100
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'New Stage',
+            description: 'New stage value; null when the contact is cleared.'
+        },
+        changed_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Changed At',
+            description: 'When the stage change occurred (UTC).'
+        },
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        contact_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Contact Id'
+        },
+        owner_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Owner Id'
+        },
+        changed_by_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'uuid'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Changed By Id'
+        }
+    },
+    type: 'object',
+    required: ['id', 'contact_id', 'owner_id', 'changed_by_id'],
+    title: 'ContactStageEventPublic'
+} as const;
+
+export const ContactStageEventsPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/ContactStageEventPublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'ContactStageEventsPublic'
 } as const;
 
 export const ContactUpdateSchema = {
@@ -1396,27 +1502,6 @@ export const ContactUpdateSchema = {
                 }
             ],
             title: 'Stage'
-        },
-        source: {
-            anyOf: [
-                {
-                    '$ref': '#/components/schemas/ContactSource'
-                },
-                {
-                    type: 'null'
-                }
-            ]
-        },
-        source_external_id: {
-            anyOf: [
-                {
-                    type: 'string'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Source External Id'
         },
         tag_ids: {
             anyOf: [
@@ -3332,6 +3417,31 @@ export const NoteCreateSchema = {
     title: 'NoteCreate'
 } as const;
 
+export const NoteMentionPublicSchema = {
+    properties: {
+        note_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Note Id'
+        },
+        note_body: {
+            type: 'string',
+            title: 'Note Body'
+        },
+        note_created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Note Created At'
+        },
+        source_contact: {
+            '$ref': '#/components/schemas/_MentionSourceContact'
+        }
+    },
+    type: 'object',
+    required: ['note_id', 'note_body', 'note_created_at', 'source_contact'],
+    title: 'NoteMentionPublic'
+} as const;
+
 export const NotePublicSchema = {
     properties: {
         body: {
@@ -3578,6 +3688,31 @@ export const PetUpdateSchema = {
     },
     type: 'object',
     title: 'PetUpdate'
+} as const;
+
+export const PrivateUserCreateSchema = {
+    properties: {
+        email: {
+            type: 'string',
+            title: 'Email'
+        },
+        password: {
+            type: 'string',
+            title: 'Password'
+        },
+        full_name: {
+            type: 'string',
+            title: 'Full Name'
+        },
+        is_verified: {
+            type: 'boolean',
+            title: 'Is Verified',
+            default: false
+        }
+    },
+    type: 'object',
+    required: ['email', 'password', 'full_name'],
+    title: 'PrivateUserCreate'
 } as const;
 
 export const RelationshipCreateSchema = {
@@ -4492,6 +4627,45 @@ export const WebhookEndpointBaseSchema = {
     type: 'object',
     required: ['name', 'direction'],
     title: 'WebhookEndpointBase'
+} as const;
+
+export const _MentionSourceContactSchema = {
+    properties: {
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        first_name: {
+            type: 'string',
+            title: 'First Name'
+        },
+        last_name: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Last Name'
+        },
+        avatar_url: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Avatar Url'
+        }
+    },
+    type: 'object',
+    required: ['id', 'first_name'],
+    title: '_MentionSourceContact'
 } as const;
 
 export const _ShareInSchema = {

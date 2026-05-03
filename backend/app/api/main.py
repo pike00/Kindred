@@ -1,5 +1,4 @@
 from fastapi import APIRouter
-from app.api.routes import contacts_kanban
 
 from app.api.routes import (
     activity_logs,
@@ -7,6 +6,7 @@ from app.api.routes import (
     calendar,
     contact_fields,
     contacts,
+    contacts_kanban,
     custom_fields,
     debts,
     gifts,

@@ -1,58 +1,61 @@
-import { useCallback, useMemo, useState } from "react";
 import {
+  closestCenter,
   DndContext,
-  DragEndEvent,
+  type DragEndEvent,
+  type DragOverEvent,
   DragOverlay,
-  DragStartEvent,
-  PointerSensor,
+  type DragStartEvent,
   KeyboardSensor,
+  PointerSensor,
+  useDroppable,
   useSensor,
   useSensors,
-  closestCenter,
-  DragOverEvent,
-  useDroppable,
-} from "@dnd-kit/core";
+} from "@dnd-kit/core"
 import {
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
-
+} from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 import {
-  ContactsKanbanService,
-  ContactsService,
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query"
+import { useNavigate } from "@tanstack/react-router"
+import { useCallback, useMemo, useState } from "react"
+import { toast } from "sonner"
+import {
   type ContactPublic,
+  ContactsKanbanService,
   type ContactsPublic,
-} from "@/client";
-import { ContactAvatar } from "@/components/Common/ContactAvatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Search, GripVertical, Users } from "@/lib/icons";
-import { cn } from "@/lib/utils";
-import { EmptyState } from "@/components/Common/EmptyState";
-import { AddContactDialog } from "./AddContactDialog";
-import { toast } from "sonner";
+  ContactsService,
+} from "@/client"
+import { ContactAvatar } from "@/components/Common/ContactAvatar"
+import { EmptyState } from "@/components/Common/EmptyState"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { GripVertical, Search, Users } from "@/lib/icons"
+import { cn } from "@/lib/utils"
+import { AddContactDialog } from "./AddContactDialog"
 
-const DEFAULT_STAGES = ["Active", "Dormant", "Lost", "Archived"];
+const DEFAULT_STAGES = ["Active", "Dormant", "Lost", "Archived"]
 
 function fullName(contact: ContactPublic): string {
   return (
     [contact.first_name, contact.last_name].filter(Boolean).join(" ") ||
     "Unnamed contact"
-  );
+  )
 }
 
 function SortableContactCard({
   contact,
   isDragging,
 }: {
-  contact: ContactPublic;
-  isDragging?: boolean;
+  contact: ContactPublic
+  isDragging?: boolean
 }) {
   const {
     attributes,
@@ -67,12 +70,12 @@ function SortableContactCard({
       type: "contact",
       contact,
     },
-  });
+  })
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-  };
+  }
 
   return (
     <div
@@ -100,7 +103,7 @@ function SortableContactCard({
         )}
       </div>
     </div>
-  );
+  )
 }
 
 function KanbanColumn({
@@ -109,10 +112,10 @@ function KanbanColumn({
   isOver,
   onAddContact,
 }: {
-  stage: string;
-  contacts: ContactPublic[];
-  isOver?: boolean;
-  onAddContact?: () => void;
+  stage: string
+  contacts: ContactPublic[]
+  isOver?: boolean
+  onAddContact?: () => void
 }) {
   const { setNodeRef } = useDroppable({
     id: stage,
@@ -120,7 +123,7 @@ function KanbanColumn({
       type: "column",
       stage,
     },
-  });
+  })
 
   return (
     <div
@@ -162,36 +165,33 @@ function KanbanColumn({
             </div>
           ) : (
             contacts.map((contact) => (
-              <SortableContactCard
-                key={contact.id}
-                contact={contact}
-              />
+              <SortableContactCard key={contact.id} contact={contact} />
             ))
           )}
         </SortableContext>
       </div>
     </div>
-  );
+  )
 }
 
 export const KanbanBoard = () => {
-  const navigate = useNavigate({ from: "/contacts" });
-  const [search, setSearch] = useState("");
-  const [activeContact, setActiveContact] = useState<ContactPublic | null>(null);
-  const queryClient = useQueryClient();
+  const _navigate = useNavigate({ from: "/contacts" })
+  const [search, setSearch] = useState("")
+  const [activeContact, setActiveContact] = useState<ContactPublic | null>(null)
+  const queryClient = useQueryClient()
 
   // Fetch stages
   const { data: stagesData } = useSuspenseQuery({
     queryKey: ["contact-stages"],
     queryFn: () => ContactsKanbanService.getDistinctStages(),
-  });
+  })
 
   const stages = useMemo(() => {
-    const serverStages = stagesData ?? [];
+    const serverStages = stagesData ?? []
     // Merge server stages with defaults
-    const allStages = new Set([...DEFAULT_STAGES, ...serverStages]);
-    return Array.from(allStages);
-  }, [stagesData]);
+    const allStages = new Set([...DEFAULT_STAGES, ...serverStages])
+    return Array.from(allStages)
+  }, [stagesData])
 
   // Fetch kanban board data
   const { data: boardData, refetch } = useSuspenseQuery({
@@ -200,25 +200,31 @@ export const KanbanBoard = () => {
       ContactsKanbanService.getKanbanBoard({
         search: search || null,
       }),
-  });
+  })
 
   // Mutation for updating contact stage
   const updateStageMutation = useMutation({
-    mutationFn: ({ contactId, newStage }: { contactId: string; newStage: string }) =>
+    mutationFn: ({
+      contactId,
+      newStage,
+    }: {
+      contactId: string
+      newStage: string
+    }) =>
       ContactsService.updateContact({
         contactId,
         requestBody: { stage: newStage },
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["kanban-board"] });
+      queryClient.invalidateQueries({ queryKey: ["kanban-board"] })
     },
     onError: (error) => {
-      console.error("Failed to update contact stage:", error);
-      toast.error("Failed to update contact stage. Please try again.");
+      console.error("Failed to update contact stage:", error)
+      toast.error("Failed to update contact stage. Please try again.")
       // Refetch to get correct state
-      refetch();
+      refetch()
     },
-  });
+  })
 
   // Sensors for dnd-kit
   const sensors = useSensors(
@@ -230,56 +236,59 @@ export const KanbanBoard = () => {
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     }),
-  );
+  )
 
-  const handleDragStart = useCallback((event: DragStartEvent) => {
-    const { active } = event;
-    const contactId = active.id as string;
-    // Find the contact in the board data
-    if (boardData) {
-      for (const stage of Object.keys(boardData)) {
-        const col = boardData[stage] as ContactsPublic;
-        const contact = col?.data?.find((c) => c.id === contactId);
-        if (contact) {
-          setActiveContact(contact);
-          break;
+  const handleDragStart = useCallback(
+    (event: DragStartEvent) => {
+      const { active } = event
+      const contactId = active.id as string
+      // Find the contact in the board data
+      if (boardData) {
+        for (const stage of Object.keys(boardData)) {
+          const col = boardData[stage] as ContactsPublic
+          const contact = col?.data?.find((c) => c.id === contactId)
+          if (contact) {
+            setActiveContact(contact)
+            break
+          }
         }
       }
-    }
-  }, [boardData]);
+    },
+    [boardData],
+  )
 
-  const handleDragOver = useCallback((event: DragOverEvent) => {
+  const handleDragOver = useCallback((_event: DragOverEvent) => {
     // Visual feedback is handled by the droppable columns
-  }, []);
+  }, [])
 
   const handleDragEnd = useCallback(
     async (event: DragEndEvent) => {
-      const { active, over } = event;
-      setActiveContact(null);
+      const { active, over } = event
+      setActiveContact(null)
 
-      if (!over || !boardData) return;
+      if (!over || !boardData) return
 
-      const contactId = active.id as string;
-      const newStage = over.id as string;
+      const contactId = active.id as string
+      const newStage = over.id as string
 
       // Find current stage of the contact
-      let oldStage: string | undefined;
+      let oldStage: string | undefined
       for (const stage of Object.keys(boardData)) {
-        const col = boardData[stage] as ContactsPublic;
+        const col = boardData[stage] as ContactsPublic
         if (col?.data?.some((c) => c.id === contactId)) {
-          oldStage = stage;
-          break;
+          oldStage = stage
+          break
         }
       }
 
-      if (!oldStage || oldStage === newStage) return;
+      if (!oldStage || oldStage === newStage) return
 
       // Optimistic update: move contact in local state
       // We'll refetch after the mutation
-      updateStageMutation.mutate({ contactId, newStage });
+      updateStageMutation.mutate({ contactId, newStage })
     },
     [boardData, updateStageMutation],
-  );
+  )
 
   return (
     <div className="space-y-6">
@@ -315,15 +324,11 @@ export const KanbanBoard = () => {
       >
         <div className="flex gap-4 overflow-x-auto pb-4">
           {stages.map((stage) => {
-            const col = boardData?.[stage] as ContactsPublic | undefined;
-            const contacts = col?.data ?? [];
+            const col = boardData?.[stage] as ContactsPublic | undefined
+            const contacts = col?.data ?? []
             return (
-              <KanbanColumn
-                key={stage}
-                stage={stage}
-                contacts={contacts}
-              />
-            );
+              <KanbanColumn key={stage} stage={stage} contacts={contacts} />
+            )
           })}
         </div>
 
@@ -350,5 +355,5 @@ export const KanbanBoard = () => {
           />
         )}
     </div>
-  );
-};
+  )
+}

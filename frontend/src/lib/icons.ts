@@ -29,6 +29,7 @@ export {
   Eye,
   EyeOff,
   Film,
+  GripVertical,
   HeartHandshake,
   // Sidebar nav
   Home,
@@ -70,7 +71,6 @@ export {
   UserRoundSearch,
   Users,
   UsersRound,
-  GripVertical,
   Video,
   X,
 } from "lucide-react"
