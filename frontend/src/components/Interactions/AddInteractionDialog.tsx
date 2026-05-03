@@ -68,7 +68,7 @@ const interactionCreateSchema = z.object({
 type InteractionCreateFormData = z.infer<typeof interactionCreateSchema>
 
 interface AddInteractionDialogProps {
-  contactId?: string
+  seedContact?: ContactPublic
 }
 
 function contactLabel(contact: ContactPublic): string {
@@ -79,7 +79,7 @@ function contactLabel(contact: ContactPublic): string {
 }
 
 export const AddInteractionDialog = ({
-  contactId,
+  seedContact,
 }: AddInteractionDialogProps) => {
   const [open, setOpen] = useState(false)
   const { showSuccessToast, showErrorToast } = useCustomToast()
@@ -88,7 +88,7 @@ export const AddInteractionDialog = ({
   const form = useForm<InteractionCreateFormData>({
     resolver: zodResolver(interactionCreateSchema),
     defaultValues: {
-      attendee_ids: contactId ? [contactId] : [],
+      attendee_ids: seedContact ? [seedContact.id] : [],
       channel: "",
       occurred_at: toLocalDateTimeInput(new Date()),
       notes: "",
@@ -145,7 +145,7 @@ export const AddInteractionDialog = ({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <AttendeePicker control={form.control} />
+            <AttendeePicker control={form.control} seedContact={seedContact} />
             <FormField
               control={form.control}
               name="channel"
@@ -246,8 +246,10 @@ export const AddInteractionDialog = ({
 
 function AttendeePicker({
   control,
+  seedContact,
 }: {
   control: ReturnType<typeof useForm<InteractionCreateFormData>>["control"]
+  seedContact?: ContactPublic
 }) {
   const [pickerOpen, setPickerOpen] = useState(false)
   const { data } = useQuery({
@@ -257,9 +259,10 @@ function AttendeePicker({
   const contacts = useMemo(() => data?.data ?? [], [data])
   const contactById = useMemo(() => {
     const m = new Map<string, ContactPublic>()
+    if (seedContact) m.set(seedContact.id, seedContact)
     for (const c of contacts) m.set(c.id, c)
     return m
-  }, [contacts])
+  }, [contacts, seedContact])
 
   return (
     <FormField

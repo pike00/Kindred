@@ -1,4 +1,6 @@
-"""SQLAlchemy before_flush listener that writes ActivityLog rows for all audited entities.
+"""Audit subsystem: a before_flush listener that writes ActivityLog rows for
+audited entities, plus a query helper that scopes reads via ownership and
+TagShare grants.
 
 Import this module at app startup (main.py) to activate the listener.
 actor_id is read from session.info["actor_id"], which is stamped by the
@@ -10,14 +12,16 @@ import uuid
 from datetime import date, datetime
 
 import sqlalchemy as sa
-from sqlalchemy import event
+from sqlalchemy import and_, event, func, or_
 from sqlalchemy.orm import Session
+from sqlmodel import select
 
 from app.models import (
     ActivityLog,
     Address,
     Contact,
     ContactField,
+    ContactTag,
     Debt,
     Gift,
     Interaction,
@@ -28,6 +32,9 @@ from app.models import (
     Pet,
     Relationship,
     Reminder,
+    Tag,
+    TagShare,
+    User,
 )
 
 _AUDITABLE: dict[type, str] = {
@@ -109,6 +116,7 @@ def _audit_before_flush(
     _instances: object,
 ) -> None:
     actor_id: uuid.UUID | None = session.info.get("actor_id")
+    acting_api_key_id: uuid.UUID | None = session.info.get("acting_api_key_id")
     logs: list[ActivityLog] = []
 
     # Collect InteractionAttendee changes grouped by interaction_id
@@ -130,6 +138,7 @@ def _audit_before_flush(
             ActivityLog(
                 owner_id=owner_id,
                 actor_id=actor_id,
+                acting_api_key_id=acting_api_key_id,
                 entity_type=_AUDITABLE[type(instance)],
                 entity_id=instance.id,
                 action="create",
@@ -154,6 +163,7 @@ def _audit_before_flush(
             ActivityLog(
                 owner_id=owner_id,
                 actor_id=actor_id,
+                acting_api_key_id=acting_api_key_id,
                 entity_type=_AUDITABLE[type(instance)],
                 entity_id=instance.id,
                 action="delete",
@@ -187,6 +197,7 @@ def _audit_before_flush(
             ActivityLog(
                 owner_id=owner_id,
                 actor_id=actor_id,
+                acting_api_key_id=acting_api_key_id,
                 entity_type=_AUDITABLE[type(instance)],
                 entity_id=instance.id,
                 action=action,
@@ -242,3 +253,82 @@ def _audit_before_flush(
 
     for log in logs:
         session.add(log)
+
+
+class TagAccessDenied(Exception):
+    """Raised by query_activity_logs when the caller lacks access to tag_id."""
+
+
+def query_activity_logs(
+    *,
+    session: Session,
+    current_user: User,
+    entity_type: str | None = None,
+    entity_id: uuid.UUID | None = None,
+    tag_id: uuid.UUID | None = None,
+    limit: int = 50,
+    offset: int = 0,
+) -> tuple[list[ActivityLog], int]:
+    """Return (rows, total_count) of activity logs visible to current_user.
+
+    Visibility:
+    - Owned logs (any entity type) are always included.
+    - Contact-entity logs are also included when the contact is visible to the
+      caller via a TagShare grant (resolved through visible_contact_ids).
+
+    When tag_id is given, the result is narrowed to contact-entity logs whose
+    contact bears that tag, and the caller must own the tag or have a
+    TagShare grant on it (else TagAccessDenied is raised).
+    """
+    # Local import avoids circular import (crud → models, audit registers
+    # the listener at import time).
+    from app.crud import visible_contact_ids
+
+    visible = visible_contact_ids(current_user)
+    base = select(ActivityLog).where(
+        or_(
+            ActivityLog.owner_id == current_user.id,
+            and_(
+                ActivityLog.entity_type == "contact",
+                ActivityLog.entity_id.in_(visible),
+            ),
+        )
+    )
+
+    if tag_id is not None:
+        has_access = session.exec(
+            select(Tag.id).where(
+                Tag.id == tag_id,
+                or_(
+                    Tag.owner_id == current_user.id,
+                    select(TagShare.tag_id)
+                    .where(
+                        TagShare.tag_id == tag_id,
+                        TagShare.grantee_id == current_user.id,
+                    )
+                    .exists(),
+                ),
+            )
+        ).first()
+        if has_access is None:
+            raise TagAccessDenied
+        contacts_for_tag = select(ContactTag.contact_id).where(
+            ContactTag.tag_id == tag_id
+        )
+        base = base.where(
+            ActivityLog.entity_type == "contact",
+            ActivityLog.entity_id.in_(contacts_for_tag),
+        )
+
+    if entity_type is not None:
+        base = base.where(ActivityLog.entity_type == entity_type)
+    if entity_id is not None:
+        base = base.where(ActivityLog.entity_id == entity_id)
+
+    count = session.exec(select(func.count()).select_from(base.subquery())).one()
+    rows = session.exec(
+        base.order_by(ActivityLog.occurred_at.desc())  # type: ignore[union-attr]
+        .offset(offset)
+        .limit(limit)
+    ).all()
+    return list(rows), count

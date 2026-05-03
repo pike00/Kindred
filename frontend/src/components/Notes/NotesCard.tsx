@@ -105,7 +105,7 @@ function EditNoteDialog({
 
   const mutation = useMutation({
     mutationFn: (text: string) =>
-      NotesService.updateNote({
+      NotesService.updateNoteRoute({
         noteId: note.id,
         requestBody: { body: text },
       }),

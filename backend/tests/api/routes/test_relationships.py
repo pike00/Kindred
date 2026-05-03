@@ -205,9 +205,150 @@ def test_delete_relationship_not_found(
     assert r.status_code == 404
 
 
-def test_relationship_isolation_between_users(
-    client: TestClient, db: Session
+def test_create_relationship_pairs_symmetric(
+    client: TestClient, superuser_token_headers: dict[str, str]
 ) -> None:
+    """Symmetric type ('friend') auto-creates the inverse with same type."""
+    a_id = _create_contact(client, superuser_token_headers, "PairA")
+    b_id = _create_contact(client, superuser_token_headers, "PairB")
+
+    r = client.post(
+        f"{settings.API_V1_STR}/relationships/",
+        headers=superuser_token_headers,
+        json={
+            "contact_id": a_id,
+            "related_contact_id": b_id,
+            "relationship_type": "friend",
+        },
+    )
+    assert r.status_code == 200
+    forward = r.json()
+    assert forward["inverse_id"]
+
+    # B's profile shows A as a friend.
+    r = client.get(
+        f"{settings.API_V1_STR}/relationships/contact/{b_id}",
+        headers=superuser_token_headers,
+    )
+    assert r.status_code == 200
+    rels = r.json()["data"]
+    assert len(rels) == 1
+    inv = rels[0]
+    assert inv["relationship_type"] == "friend"
+    assert inv["related_contact_id"] == a_id
+    assert inv["inverse_id"] == forward["id"]
+
+
+def test_create_relationship_pairs_asymmetric(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
+    """Asymmetric type ('parent') auto-creates 'child' on the other side."""
+    parent_id = _create_contact(client, superuser_token_headers, "Parent")
+    kid_id = _create_contact(client, superuser_token_headers, "Kid")
+
+    r = client.post(
+        f"{settings.API_V1_STR}/relationships/",
+        headers=superuser_token_headers,
+        json={
+            "contact_id": parent_id,
+            "related_contact_id": kid_id,
+            "relationship_type": "child",
+        },
+    )
+    assert r.status_code == 200
+
+    r = client.get(
+        f"{settings.API_V1_STR}/relationships/contact/{kid_id}",
+        headers=superuser_token_headers,
+    )
+    rels = r.json()["data"]
+    assert len(rels) == 1
+    assert rels[0]["relationship_type"] == "parent"
+
+
+def test_create_relationship_unknown_type_requires_inverse(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
+    a_id = _create_contact(client, superuser_token_headers)
+    b_id = _create_contact(client, superuser_token_headers)
+    r = client.post(
+        f"{settings.API_V1_STR}/relationships/",
+        headers=superuser_token_headers,
+        json={
+            "contact_id": a_id,
+            "related_contact_id": b_id,
+            "relationship_type": "guildmate",
+        },
+    )
+    assert r.status_code == 422
+
+    # Same call but with inverse provided should succeed.
+    r = client.post(
+        f"{settings.API_V1_STR}/relationships/",
+        headers=superuser_token_headers,
+        json={
+            "contact_id": a_id,
+            "related_contact_id": b_id,
+            "relationship_type": "guildmate",
+            "inverse_relationship_type": "guildmate",
+        },
+    )
+    assert r.status_code == 200
+
+
+def test_delete_relationship_cascades_inverse(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
+    a_id = _create_contact(client, superuser_token_headers)
+    b_id = _create_contact(client, superuser_token_headers)
+    r = client.post(
+        f"{settings.API_V1_STR}/relationships/",
+        headers=superuser_token_headers,
+        json={
+            "contact_id": a_id,
+            "related_contact_id": b_id,
+            "relationship_type": "spouse",
+        },
+    )
+    rel_id = r.json()["id"]
+
+    r = client.delete(
+        f"{settings.API_V1_STR}/relationships/{rel_id}",
+        headers=superuser_token_headers,
+    )
+    assert r.status_code == 200
+
+    # Both contacts now show no relationships.
+    for cid in (a_id, b_id):
+        r = client.get(
+            f"{settings.API_V1_STR}/relationships/contact/{cid}",
+            headers=superuser_token_headers,
+        )
+        assert r.json()["count"] == 0
+
+
+def test_lookup_inverse(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
+    cases = {
+        "spouse": "spouse",
+        "Friend": "friend",
+        "parent": "child",
+        "child": "parent",
+        "mentor": "mentee",
+        "guildmate": None,
+    }
+    for input_type, expected in cases.items():
+        r = client.get(
+            f"{settings.API_V1_STR}/relationships/inverse",
+            headers=superuser_token_headers,
+            params={"type": input_type},
+        )
+        assert r.status_code == 200, input_type
+        assert r.json()["inverse"] == expected, input_type
+
+
+def test_relationship_isolation_between_users(client: TestClient, db: Session) -> None:
     from tests.utils.user import (
         authentication_token_from_email,
         create_random_user,
