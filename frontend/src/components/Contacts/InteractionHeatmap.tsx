@@ -1,7 +1,11 @@
 import { useQuery } from "@tanstack/react-query"
 import { useParams } from "@tanstack/react-router"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { ContactsService } from "@/client"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 
 /**
@@ -28,13 +32,13 @@ function formatWeekRange(weekStart: string): string {
   const start = new Date(weekStart)
   const end = new Date(start)
   end.setDate(end.getDate() + 6)
-  
+
   const startMonth = start.toLocaleDateString(undefined, { month: "short" })
   const endMonth = end.toLocaleDateString(undefined, { month: "short" })
   const startDay = start.getDate()
   const endDay = end.getDate()
   const year = start.getFullYear()
-  
+
   if (startMonth === endMonth) {
     return `${startMonth} ${startDay}-${endDay}, ${year}`
   }
@@ -50,7 +54,7 @@ interface HeatmapCellProps {
 function HeatmapCell({ weekStart, count, onClick }: HeatmapCellProps) {
   const step = getIntensityStep(count)
   const [lightColor, darkColor] = INTENSITY_COLORS[step]
-  
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -59,7 +63,7 @@ function HeatmapCell({ weekStart, count, onClick }: HeatmapCellProps) {
           onClick={() => onClick?.(weekStart, count)}
           className={cn(
             "w-3.5 h-3.5 rounded-sm transition-colors hover:ring-1 hover:ring-ring",
-            "dark:hidden"
+            "dark:hidden",
           )}
           style={{ backgroundColor: lightColor }}
           aria-label={`Week of ${formatWeekRange(weekStart)}: ${count} interaction${count !== 1 ? "s" : ""}`}
@@ -69,7 +73,7 @@ function HeatmapCell({ weekStart, count, onClick }: HeatmapCellProps) {
           onClick={() => onClick?.(weekStart, count)}
           className={cn(
             "w-3.5 h-3.5 rounded-sm transition-colors hover:ring-1 hover:ring-ring hidden",
-            "dark:block"
+            "dark:block",
           )}
           style={{ backgroundColor: darkColor }}
           aria-label={`Week of ${formatWeekRange(weekStart)}: ${count} interaction${count !== 1 ? "s" : ""}`}
@@ -87,7 +91,7 @@ function HeatmapCell({ weekStart, count, onClick }: HeatmapCellProps) {
 
 export function InteractionHeatmap() {
   const { contactId } = useParams({ from: "/_layout/contacts/$contactId" })
-  
+
   const { data, isLoading, error } = useQuery({
     queryKey: ["contacts", contactId, "heatmap"],
     queryFn: () =>
@@ -100,7 +104,10 @@ export function InteractionHeatmap() {
         <div className="h-4 w-32 bg-muted animate-pulse rounded" />
         <div className="grid grid-cols-52 gap-0.5">
           {Array.from({ length: 52 }).map((_, i) => (
-            <div key={i} className="w-3.5 h-3.5 rounded-sm bg-muted animate-pulse" />
+            <div
+              key={i}
+              className="w-3.5 h-3.5 rounded-sm bg-muted animate-pulse"
+            />
           ))}
         </div>
       </div>
@@ -112,9 +119,9 @@ export function InteractionHeatmap() {
   }
 
   const buckets = data.data
-  
+
   // Group weeks into rows of ~13 weeks (quarterly view)
-  const rows: typeof buckets[] = []
+  const rows: (typeof buckets)[] = []
   for (let i = 0; i < buckets.length; i += 13) {
     rows.push(buckets.slice(i, i + 13))
   }
@@ -132,7 +139,7 @@ export function InteractionHeatmap() {
         <h3 className="text-sm font-medium">Interaction Activity</h3>
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <span>Less</span>
-          {INTENSITY_COLORS.map(([light, dark], i) => (
+          {INTENSITY_COLORS.map(([light, _dark], i) => (
             <div
               key={i}
               className="w-3 h-3 rounded-sm dark:hidden"
@@ -142,7 +149,7 @@ export function InteractionHeatmap() {
           <span>More</span>
         </div>
       </div>
-      
+
       <div className="space-y-0.5">
         {rows.map((row, rowIndex) => (
           <div key={rowIndex} className="flex gap-0.5">
@@ -157,7 +164,7 @@ export function InteractionHeatmap() {
           </div>
         ))}
       </div>
-      
+
       <p className="text-xs text-muted-foreground">
         Last 52 weeks of interaction activity
       </p>

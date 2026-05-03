@@ -947,6 +947,22 @@ export const ContactFieldUpdateSchema = {
     title: 'ContactFieldUpdate'
 } as const;
 
+export const ContactHeatmapSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/WeekBucket'
+            },
+            type: 'array',
+            title: 'Data'
+        }
+    },
+    type: 'object',
+    required: ['data'],
+    title: 'ContactHeatmap',
+    description: '52-week interaction heatmap for a contact.'
+} as const;
+
 export const ContactPublicSchema = {
     properties: {
         first_name: {
@@ -3596,6 +3612,31 @@ export const PetUpdateSchema = {
     title: 'PetUpdate'
 } as const;
 
+export const PrivateUserCreateSchema = {
+    properties: {
+        email: {
+            type: 'string',
+            title: 'Email'
+        },
+        password: {
+            type: 'string',
+            title: 'Password'
+        },
+        full_name: {
+            type: 'string',
+            title: 'Full Name'
+        },
+        is_verified: {
+            type: 'boolean',
+            title: 'Is Verified',
+            default: false
+        }
+    },
+    type: 'object',
+    required: ['email', 'password', 'full_name'],
+    title: 'PrivateUserCreate'
+} as const;
+
 export const RelationshipCreateSchema = {
     properties: {
         relationship_type: {
@@ -4508,6 +4549,24 @@ export const WebhookEndpointBaseSchema = {
     type: 'object',
     required: ['name', 'direction'],
     title: 'WebhookEndpointBase'
+} as const;
+
+export const WeekBucketSchema = {
+    properties: {
+        week_start: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Week Start'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['week_start', 'count'],
+    title: 'WeekBucket',
+    description: 'A single week bucket for the interaction heatmap.'
 } as const;
 
 export const _MentionSourceContactSchema = {

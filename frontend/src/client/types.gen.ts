@@ -282,6 +282,13 @@ export type ContactFieldUpdate = {
     sort_order?: (number | null);
 };
 
+/**
+ * 52-week interaction heatmap for a contact.
+ */
+export type ContactHeatmap = {
+    data: Array<WeekBucket>;
+};
+
 export type ContactPublic = {
     /**
      * Given name; required.
@@ -1016,6 +1023,13 @@ export type PetUpdate = {
     notes?: (string | null);
 };
 
+export type PrivateUserCreate = {
+    email: string;
+    password: string;
+    full_name: string;
+    is_verified?: boolean;
+};
+
 export type RelationshipCreate = {
     /**
      * Kind of relationship: spouse, child, parent, sibling, friend, colleague, etc.
@@ -1287,6 +1301,14 @@ export type WebhookEndpointBase = {
     secret?: (string | null);
 };
 
+/**
+ * A single week bucket for the interaction heatmap.
+ */
+export type WeekBucket = {
+    week_start: string;
+    count: number;
+};
+
 export type ActivityLogsListActivityLogsData = {
     entityId?: (string | null);
     entityType?: (string | null);
@@ -1415,6 +1437,12 @@ export type ContactsRestoreContactData = {
 };
 
 export type ContactsRestoreContactResponse = (ContactPublic);
+
+export type ContactsGetContactHeatmapData = {
+    contactId: string;
+};
+
+export type ContactsGetContactHeatmapResponse = (ContactHeatmap);
 
 export type CustomFieldsListFieldDefinitionsResponse = (unknown);
 
@@ -1729,6 +1757,12 @@ export type PetsDeletePetData = {
 
 export type PetsDeletePetResponse = (unknown);
 
+export type PrivateCreateUserData = {
+    requestBody: PrivateUserCreate;
+};
+
+export type PrivateCreateUserResponse = (UserPublic);
+
 export type RelationshipsLookupInverseData = {
     type: string;
 };
@@ -1934,11 +1968,3 @@ export type WebhooksInboundWebhookData = {
 };
 
 export type WebhooksInboundWebhookResponse = (unknown);
-export type WeekBucket = {
-    week_start: string;
-    count: number;
-};
-
-export type ContactHeatmap = {
-    data: Array<WeekBucket>;
-};

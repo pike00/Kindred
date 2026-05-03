@@ -17,9 +17,6 @@ from app.api.deps import CurrentUser, SessionDep
 from app.core.config import settings as app_settings
 from app.crud import visible_contact_ids
 from app.models import (
-    ContactHeatmap,
-    WeekBucket,
-
     Contact,
     ContactCreate,
     ContactGroup,
@@ -27,6 +24,8 @@ from app.models import (
     ContactsPublic,
     ContactTag,
     ContactUpdate,
+    Interaction,
+    InteractionAttendee,
     Note,
     NoteMention,
 )
@@ -547,7 +546,9 @@ def get_contact_heatmap(
     today = datetime.now(timezone.utc).date()
     # ISO week starts on Monday; find the Monday of the current week
     days_since_monday = today.isoweekday() - 1  # Monday=0
-    week_end = today - timedelta(days=days_since_monday) + timedelta(days=7)  # Next Monday
+    week_end = (
+        today - timedelta(days=days_since_monday) + timedelta(days=7)
+    )  # Next Monday
     week_start = week_end - timedelta(weeks=52)
 
     # Query: count interactions per ISO week for this contact
@@ -591,6 +592,3 @@ def get_contact_heatmap(
         current = current + timedelta(weeks=1)
 
     return ContactHeatmap(data=buckets)
-
-
-
