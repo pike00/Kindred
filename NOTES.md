@@ -31,17 +31,20 @@
 - Added `JournalEntry`, `JournalEntryContact`, `JournalEntryPublic` to imports
 - Added `GET /{contact_id}/reflections` endpoint to list journal entries referencing a contact
 
+## Committed
+- Commit: `82fa306` - `feat(journal): add journal_entry_contact junction table and API`
+
 ## Remaining Tasks
-- [ ] Test cascade behavior on contact/journal entry deletion (needs running backend)
+- [ ] Apply migration (needs running backend service)
+- [ ] Test cascade behavior on contact/journal entry deletion
 - [ ] Implement journal entry editor person picker UI component (frontend)
 - [ ] Add "reflections" section to contact detail page (frontend)
-
-## Blocker
-- Docker services are not running (backend container is down)
-- Cannot run migration or tests without starting services (forbidden by guardrails)
-- Migration file is ready and will be applied when services are started
 
 ## Privacy Model
 - Journal entries remain private to owner even when linked to contacts
 - Contact's `visible_contact_ids` query does NOT grant access to linked journal entries
 - The `/{contact_id}/reflections` endpoint only returns journal entries owned by the requesting user
+
+## Cascade Behavior
+- Deleting a contact: Removes junction table rows (CASCADE), journal entry remains intact
+- Deleting a journal entry: Removes junction table rows (CASCADE), contact remains intact
