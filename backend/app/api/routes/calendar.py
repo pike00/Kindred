@@ -4,6 +4,7 @@ import re
 import secrets
 import uuid
 from datetime import date, datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 from email.utils import format_datetime
 from hashlib import md5
 from typing import Any
@@ -96,7 +97,6 @@ def get_calendar_month(
 
 # ─── Calendar Token Management ─────────────────────────────────────────────
 
-
 @router.post("/token", response_model=CalendarTokenPublic)
 def create_calendar_token(
     session: SessionDep,
@@ -176,8 +176,8 @@ def _build_ics_feed(
     session: Session,
     user: User,
     tz_param: str | None = None,
-) -> tuple[str, str]:
-    """Build the ICS calendar feed and return (ics_string, etag).
+) -> tuple[str, str, datetime]:
+    """Build the ICS calendar feed and return (ics_string, etag, last_modified).
 
     Args:
         session: Database session
@@ -185,7 +185,7 @@ def _build_ics_feed(
         tz_param: Optional timezone parameter (e.g., "America/Chicago")
 
     Returns:
-        Tuple of (ics_string, etag_hash)
+        Tuple of (ics_string, etag_hash, last_modified)
     """
     cal = Calendar()
     cal.add("prodid", "-//Personal CRM//Calendar Export//EN")
@@ -195,9 +195,14 @@ def _build_ics_feed(
     cal.add("x-wr-calname", vText(f"Personal CRM - {user.full_name or user.email}"))
 
     # Determine output timezone if specified
-    # output_tz is reserved for future timezone conversion
+    output_tz = None
+    if tz_param:
+        try:
+            output_tz = ZoneInfo(tz_param)
+        except Exception:
+            # Invalid timezone name; ignore and fall back to UTC
+            output_tz = None
 
-    # Track last modified for ETag
     # Track last modified for ETag
     last_modified = datetime.now(timezone.utc)
 
@@ -218,6 +223,7 @@ def _build_ics_feed(
         event = Event()
         event.add("uid", f"birthday-{contact.id}@personal-crm")
         event.add("summary", f"{name}'s Birthday")
+        # Birthdays are all-day events (DATE value); no timezone conversion needed
         event.add("dtstart", contact.birthday)  # DATE value for all-day
         event.add("dtstamp", datetime.now(timezone.utc))
 
@@ -258,12 +264,11 @@ def _build_ics_feed(
         event = Event()
         event.add("uid", f"lifeevent-{life_event.id}@personal-crm")
         event.add("summary", event_name)
+        # Life events are all-day events (DATE value)
         event.add("dtstart", life_event.occurred_at)  # DATE value
         event.add("dtstamp", datetime.now(timezone.utc))
 
         # Add RRULE for yearly recurrence
-        from icalendar import vRecur
-
         recur = vRecur()
         recur["freq"] = "YEARLY"
         event.add("rrule", recur)
@@ -291,13 +296,14 @@ def _build_ics_feed(
         event.add("summary", reminder.title)
 
         # Handle recurrence based on frequency
-        if reminder.frequency == "once":
-            event.add("dtstart", reminder.remind_at)
+        # Apply timezone conversion if specified
+        if output_tz and reminder.remind_at:
+            dt = reminder.remind_at.astimezone(output_tz)
         else:
-            # For recurring reminders, use the first occurrence
-            event.add("dtstart", reminder.remind_at)
-            from icalendar import vRecur
+            dt = reminder.remind_at
+        event.add("dtstart", dt)
 
+        if reminder.frequency != "once":
             recur = vRecur()
             freq_map = {
                 "daily": "DAILY",
