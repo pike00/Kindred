@@ -1934,3 +1934,72 @@ export type WebhooksInboundWebhookData = {
 };
 
 export type WebhooksInboundWebhookResponse = (unknown);
+
+// Ical types
+export type IcalUploadIcalData = {
+    formData: {
+        file: File;
+    };
+};
+
+export type IcalUploadIcalResponse = {
+    proposals: Array<{
+        uid: string | null;
+        summary: string;
+        description: string | null;
+        occurred_at: string | null;
+        attendees: Array<{
+            attendee: {
+                email: string | null;
+                cn: string | null;
+                role: string | null;
+            };
+            matches: Array<{
+                contact_id: string;
+                contact_name: string;
+                confidence: number;
+                match_method: string;
+            }>;
+        }>;
+        classification: string;
+        event_type: string;
+        channel: string | null;
+        skipped: boolean;
+    }>;
+    skipped_future: number;
+    parse_errors: string[];
+    total_contacts: number;
+};
+
+export type IcalConfirmIcalImportData = {
+    requestBody: Array<{
+        uid: string | null;
+        summary: string;
+        description: string | null;
+        occurred_at: string | null;
+        attendees: Array<{
+            attendee: {
+                email: string | null;
+                cn: string | null;
+                role: string | null;
+            };
+            matches: Array<{
+                contact_id: string;
+                contact_name: string;
+                confidence: number;
+                match_method: string;
+            }>;
+        }>;
+        classification: string;
+        event_type: string;
+        channel: string | null;
+        skipped: boolean;
+    }>;
+};
+
+export type IcalConfirmIcalImportResponse = {
+    created_interactions: number;
+    created_life_events: number;
+    skipped_duplicates: number;
+    errors: string[];
+};

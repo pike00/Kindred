@@ -2317,3 +2317,45 @@ export class WebhooksService {
         });
     }
 }
+
+export class IcalService {
+    /**
+     * Upload Ical
+     * Upload and parse a .ics file, returning proposed imports.
+     * @param data The data for the request.
+     * @param data.formData
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static uploadIcal(data: IcalUploadIcalData): CancelablePromise<IcalUploadIcalResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/ical/upload',
+            body: data.formData,
+            mediaType: 'multipart/form-data',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+
+    /**
+     * Confirm Ical Import
+     * Confirm and import selected iCal proposals.
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static confirmIcalImport(data: IcalConfirmIcalImportData): CancelablePromise<IcalConfirmIcalImportResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/ical/confirm',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+}
