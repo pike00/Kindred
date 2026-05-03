@@ -11,8 +11,8 @@ import { ApiError, OpenAPI } from "./client"
 import { ThemeProvider } from "./components/theme-provider"
 import { Toaster } from "./components/ui/sonner"
 import "./index.css"
-import { ShortcutRegistryProvider } from "./hooks/useKeyboardShortcuts"
 import KeyboardShortcutOverlay from "./components/KeyboardShortcutOverlay"
+import { ShortcutRegistryProvider } from "./hooks/useKeyboardShortcuts"
 import { routeTree } from "./routeTree.gen"
 
 OpenAPI.BASE = import.meta.env.VITE_API_URL

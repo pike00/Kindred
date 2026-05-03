@@ -1,8 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
 import { useMemo } from "react"
-import { useRegisterShortcuts } from "@/hooks/useKeyboardShortcuts"
-
 import { type ContactPublic, ContactsService } from "@/client"
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
 import {
@@ -15,6 +13,7 @@ import {
   CommandSeparator,
 } from "@/components/ui/command"
 import useAuth from "@/hooks/useAuth"
+import { useRegisterShortcuts } from "@/hooks/useKeyboardShortcuts"
 import {
   Bell,
   Home,
@@ -70,7 +69,6 @@ export function CommandPalette() {
   const { open, setOpen, toggle } = useCommandPalette()
   const navigate = useNavigate()
   const { user } = useAuth()
-
 
   const { data: contactsData } = useQuery({
     queryKey: ["contacts"],

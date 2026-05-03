@@ -7,7 +7,7 @@ import {
   useMemo,
   useState,
 } from "react"
-// @ts-ignore: tinykeys has types but they're not resolved correctly due to package.json exports
+// @ts-expect-error: tinykeys has types but they're not resolved correctly due to package.json exports
 import { tinykeys } from "tinykeys"
 
 export type ShortcutGroup =
@@ -45,9 +45,8 @@ interface ShortcutRegistryContextValue {
   toggleOverlay: () => void
 }
 
-const ShortcutRegistryContext = createContext<ShortcutRegistryContextValue | null>(
-  null,
-)
+const ShortcutRegistryContext =
+  createContext<ShortcutRegistryContextValue | null>(null)
 
 export function ShortcutRegistryProvider({
   children,
@@ -61,18 +60,46 @@ export function ShortcutRegistryProvider({
     setShortcuts((prev) => {
       // Avoid duplicates based on keys + description
       const exists = prev.some(
-        (s) => s.keys === shortcut.keys && s.description === shortcut.description,
+        (s) =>
+          s.keys === shortcut.keys && s.description === shortcut.description,
       )
       if (exists) return prev
       return [...prev, shortcut]
     })
   }, [])
 
+  // Register the overlay toggle shortcuts so they appear in the overlay
+  useEffect(() => {
+    // Register Help group shortcuts for the overlay itself
+    const helpShortcuts: ShortcutDefinition[] = [
+      {
+        keys: "?",
+        description: "Open keyboard shortcut help",
+        group: "Help",
+        enabled: true,
+      },
+      {
+        keys: "Meta+/",
+        description: "Open keyboard shortcut help",
+        group: "Help",
+        enabled: true,
+      },
+      {
+        keys: "Control+/",
+        description: "Open keyboard shortcut help",
+        group: "Help",
+        enabled: true,
+      },
+    ]
+
+    for (const shortcut of helpShortcuts) {
+      register(shortcut)
+    }
+  }, [register])
+
   const unregister = useCallback((keys: string, description: string) => {
     setShortcuts((prev) =>
-      prev.filter(
-        (s) => !(s.keys === keys && s.description === description),
-      ),
+      prev.filter((s) => !(s.keys === keys && s.description === description)),
     )
   }, [])
 
@@ -82,30 +109,34 @@ export function ShortcutRegistryProvider({
 
   // Global keybinding for Cmd+/ or ? to open overlay
   useEffect(() => {
-    const unsubscribe = tinykeys(window, {
-      "?": (event) => {
-        // Only trigger if not in input/textarea/contenteditable
-        if (shouldSuppress(event)) return
-        event.preventDefault()
-        toggleOverlay()
+    const unsubscribe = tinykeys(
+      window,
+      {
+        "?": (event) => {
+          // Only trigger if not in input/textarea/contenteditable
+          if (shouldSuppress(event)) return
+          event.preventDefault()
+          toggleOverlay()
+        },
+        "Meta+/": (event) => {
+          if (shouldSuppress(event)) return
+          event.preventDefault()
+          toggleOverlay()
+        },
+        "Control+/": (event) => {
+          if (shouldSuppress(event)) return
+          event.preventDefault()
+          toggleOverlay()
+        },
+        // Escape always closes overlay regardless of focus
+        Escape: () => {
+          if (overlayOpen) {
+            setOverlayOpen(false)
+          }
+        },
       },
-      "Meta+/": (event) => {
-        if (shouldSuppress(event)) return
-        event.preventDefault()
-        toggleOverlay()
-      },
-      "Control+/": (event) => {
-        if (shouldSuppress(event)) return
-        event.preventDefault()
-        toggleOverlay()
-      },
-      // Escape always closes overlay regardless of focus
-      Escape: () => {
-        if (overlayOpen) {
-          setOverlayOpen(false)
-        }
-      },
-    })
+      { timeout: 1500 },
+    )
 
     return unsubscribe
   }, [toggleOverlay, overlayOpen])
@@ -130,7 +161,7 @@ export function ShortcutRegistryProvider({
 
     if (Object.keys(keyMap).length === 0) return
 
-    const unsubscribe = tinykeys(window, keyMap)
+    const unsubscribe = tinykeys(window, keyMap, { timeout: 1500 })
     return unsubscribe
   }, [shortcuts])
 
@@ -166,9 +197,7 @@ export function ShortcutRegistryProvider({
  * })
  */
 export function useRegisterShortcuts(shortcut: ShortcutDefinition): void
-export function useRegisterShortcuts(
-  shortcuts: ShortcutDefinition[],
-): void
+export function useRegisterShortcuts(shortcuts: ShortcutDefinition[]): void
 export function useRegisterShortcuts(
   arg: ShortcutDefinition | ShortcutDefinition[],
 ): void {

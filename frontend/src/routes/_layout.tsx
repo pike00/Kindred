@@ -1,5 +1,9 @@
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router"
-
+import {
+  createFileRoute,
+  Outlet,
+  redirect,
+  useNavigate,
+} from "@tanstack/react-router"
 import { CommandPalette } from "@/components/CommandPalette/CommandPalette"
 import {
   CommandPaletteProvider,
@@ -15,9 +19,8 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { isLoggedIn } from "@/hooks/useAuth"
-import { Search } from "@/lib/icons"
 import { useRegisterShortcuts } from "@/hooks/useKeyboardShortcuts"
-import { useNavigate } from "@tanstack/react-router"
+import { Search } from "@/lib/icons"
 
 export const Route = createFileRoute("/_layout")({
   component: Layout,
@@ -75,7 +78,6 @@ function Layout() {
     </CommandPaletteProvider>
   )
 }
-
 
 function LayoutShortcuts() {
   const navigate = useNavigate()
