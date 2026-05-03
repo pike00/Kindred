@@ -978,6 +978,31 @@ class InteractionBase(SQLModel):
         description="Length of the interaction in minutes.",
     )
 
+    # Email-specific fields (for EMAIL channel)
+    message_id: str | None = Field(
+        default=None,
+        max_length=998,
+        description="RFC 2822 Message-ID for deduplication (EMAIL channel only).",
+    )
+    email_subject: str | None = Field(
+        default=None,
+        max_length=998,
+        description="Email subject line (EMAIL channel only).",
+    )
+    email_from: str | None = Field(
+        default=None,
+        max_length=2048,
+        description="Email From header (EMAIL channel only).",
+    )
+    email_to: str | None = Field(
+        default=None,
+        max_length=2048,
+        description="Email To header (EMAIL channel only).",
+    )
+    email_date: datetime | None = Field(
+        default=None,
+        description="Email Date header (EMAIL channel only).",
+    )
 
 class InteractionCreate(InteractionBase):
     attendee_ids: list[uuid.UUID] = Field(
@@ -1766,6 +1791,95 @@ class Token(SQLModel):
 # Contents of JWT token
 class TokenPayload(SQLModel):
     sub: str | None = None
+
+# ─── Email OAuth Token Storage ───────────────────────────────────────────────
+
+
+class EmailOAuthTokenBase(SQLModel):
+    """Encrypted OAuth tokens for Gmail API access."""
+    provider: str = Field(
+        default="gmail",
+        max_length=50,
+        description="OAuth provider name (e.g. 'gmail').",
+    )
+    email_address: str = Field(
+        max_length=255,
+        description="The email address these tokens are for.",
+    )
+    encrypted_access_token: str = Field(
+        description="Encrypted access token for the Gmail API.",
+    )
+    encrypted_refresh_token: str | None = Field(
+        default=None,
+        description="Encrypted refresh token for obtaining new access tokens.",
+    )
+    token_expires_at: datetime | None = Field(
+        default=None,
+        description="When the access token expires (UTC).",
+    )
+
+
+class EmailOAuthTokenCreate(EmailOAuthTokenBase):
+    pass
+
+
+class EmailOAuthTokenUpdate(SQLModel):
+    encrypted_access_token: str | None = None
+    encrypted_refresh_token: str | None = None
+    token_expires_at: datetime | None = None
+
+
+class EmailOAuthToken(EmailOAuthTokenBase, table=True):
+    """Stored OAuth tokens for a contact's email account.
+
+    Tokens are encrypted at rest using Fernet (symmetric encryption)
+    with a key derived from the SECRET_KEY in settings.
+    """
+
+    __tablename__ = "email_oauth_token"
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description="User who owns this token; cascades on delete.",
+    )
+    contact_id: uuid.UUID = Field(
+        foreign_key="contact.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description="Contact these tokens belong to; cascades on delete.",
+    )
+    created_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        nullable=False,
+        description="When the token was first stored (UTC).",
+    )
+    updated_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
+        nullable=False,
+        description="Auto-bumped on token refresh (UTC).",
+    )
+
+
+class EmailOAuthTokenPublic(EmailOAuthTokenBase):
+    id: uuid.UUID
+    contact_id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
+
+
+class EmailOAuthTokensPublic(SQLModel):
+    data: list[EmailOAuthTokenPublic]
+    count: int
+
+
 
 
 class NewPassword(SQLModel):
