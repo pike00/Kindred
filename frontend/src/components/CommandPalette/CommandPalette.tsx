@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
-import { useEffect, useMemo } from "react"
+import { useMemo } from "react"
+import { useRegisterShortcuts } from "@/hooks/useKeyboardShortcuts"
 
 import { type ContactPublic, ContactsService } from "@/client"
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
@@ -51,20 +52,25 @@ function contactHaystack(contact: ContactPublic): string {
 }
 
 export function CommandPalette() {
+  // Register the Cmd+K / Ctrl+K shortcut in the global registry
+  useRegisterShortcuts([
+    {
+      keys: "Meta+k",
+      description: "Open command palette",
+      group: "Search",
+      callback: () => toggle(),
+    },
+    {
+      keys: "Control+k",
+      description: "Open command palette",
+      group: "Search",
+      callback: () => toggle(),
+    },
+  ])
   const { open, setOpen, toggle } = useCommandPalette()
   const navigate = useNavigate()
   const { user } = useAuth()
 
-  useEffect(() => {
-    function onKeyDown(e: KeyboardEvent) {
-      if ((e.key === "k" || e.key === "K") && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault()
-        toggle()
-      }
-    }
-    window.addEventListener("keydown", onKeyDown)
-    return () => window.removeEventListener("keydown", onKeyDown)
-  }, [toggle])
 
   const { data: contactsData } = useQuery({
     queryKey: ["contacts"],
