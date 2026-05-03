@@ -123,6 +123,45 @@ export type AddressUpdate = {
     longitude?: (number | null);
 };
 
+export type APIKeyCreate = {
+    name: string;
+    can_impersonate?: Array<(string)>;
+    expires_at?: (string | null);
+};
+
+/**
+ * Returned once at creation — plaintext_key is never stored.
+ */
+export type APIKeyCreated = {
+    id: string;
+    name: string;
+    key_prefix: string;
+    owned_by_user_id: string;
+    can_impersonate: Array<(string)>;
+    created_at: string;
+    last_used_at: (string | null);
+    revoked_at: (string | null);
+    expires_at: (string | null);
+    plaintext_key: string;
+};
+
+export type APIKeyPublic = {
+    id: string;
+    name: string;
+    key_prefix: string;
+    owned_by_user_id: string;
+    can_impersonate: Array<(string)>;
+    created_at: string;
+    last_used_at: (string | null);
+    revoked_at: (string | null);
+    expires_at: (string | null);
+};
+
+export type APIKeysPublic = {
+    data: Array<APIKeyPublic>;
+    count: number;
+};
+
 export type Body_import_export_import_vcard = {
     file: (Blob | File);
 };
@@ -216,9 +255,25 @@ export type ContactCreate = {
      */
     contact_frequency_days?: (number | null);
     /**
+     * If True, suppress all contact reminders and actions for this contact.
+     */
+    do_not_contact?: boolean;
+    /**
+     * Optional reason why the contact was marked do-not-contact.
+     */
+    do_not_contact_reason?: (string | null);
+    /**
      * Kanban stage like Active, Dormant, Lost.
      */
     stage?: (string | null);
+    /**
+     * Where this contact originated.
+     */
+    source?: ContactSource;
+    /**
+     * Opaque external ID for idempotent upserts from integrations.
+     */
+    source_external_id?: (string | null);
     tag_ids?: (Array<(string)> | null);
     group_ids?: (Array<(string)> | null);
 };
@@ -350,14 +405,21 @@ export type ContactPublic = {
      * Date the contact passed away.
      */
     deceased_at?: (string | null);
-    /**
-     * Target days between interactions; drives losing-touch cadence.
-     */
     contact_frequency_days?: (number | null);
+    do_not_contact?: boolean;
+    do_not_contact_reason?: (string | null);
     /**
      * Kanban stage like Active, Dormant, Lost.
      */
     stage?: (string | null);
+    /**
+     * Where this contact originated.
+     */
+    source?: ContactSource;
+    /**
+     * Opaque external ID for idempotent upserts from integrations.
+     */
+    source_external_id?: (string | null);
     id: string;
     avatar_url: (string | null);
     last_contacted_at: (string | null);
@@ -367,6 +429,8 @@ export type ContactPublic = {
     tags?: Array<TagPublic>;
     groups?: Array<GroupPublic>;
 };
+
+export type ContactSource = 'MANUAL' | 'VCARD_IMPORT' | 'CARDDAV' | 'GOOGLE' | 'WEBHOOK';
 
 export type ContactsPublic = {
     data: Array<ContactPublic>;
@@ -391,6 +455,8 @@ export type ContactUpdate = {
     deceased_at?: (string | null);
     contact_frequency_days?: (number | null);
     stage?: (string | null);
+    do_not_contact?: (boolean | null);
+    do_not_contact_reason?: (string | null);
     tag_ids?: (Array<(string)> | null);
     group_ids?: (Array<(string)> | null);
 };
@@ -686,7 +752,7 @@ export type InteractionAttendeeSummary = {
     avatar_url?: (string | null);
 };
 
-export type InteractionChannel = 'call' | 'in_person' | 'text' | 'email' | 'video' | 'social' | 'other';
+export type InteractionChannel = 'call' | 'in_person' | 'text' | 'email' | 'video' | 'social' | 'other' | 'skip';
 
 export type InteractionCreate = {
     /**
@@ -1042,7 +1108,7 @@ export type RelationshipCreate = {
     contact_id: string;
     related_contact_id: string;
     /**
-     * Type for the auto-generated inverse row. If omitted, the server infers it from a known map of symmetric/asymmetric types and returns 422 when it cannot.
+     * Type for the auto-created inverse row (e.g. 'parent' for 'child'). Inferred when omitted.
      */
     inverse_relationship_type?: (string | null);
 };
@@ -1059,7 +1125,6 @@ export type RelationshipPublic = {
     id: string;
     contact_id: string;
     related_contact_id: string;
-    inverse_id?: (string | null);
 };
 
 export type RelationshipUpdate = {
@@ -1344,6 +1409,20 @@ export type AddressesDeleteAddressData = {
 
 export type AddressesDeleteAddressResponse = (unknown);
 
+export type ApiKeysListMyApiKeysResponse = (APIKeysPublic);
+
+export type ApiKeysCreateMyApiKeyData = {
+    requestBody: APIKeyCreate;
+};
+
+export type ApiKeysCreateMyApiKeyResponse = (APIKeyCreated);
+
+export type ApiKeysRevokeMyApiKeyData = {
+    apiKeyId: string;
+};
+
+export type ApiKeysRevokeMyApiKeyResponse = (Message);
+
 export type CalendarGetCalendarMonthData = {
     yyyyMm: string;
 };
@@ -1539,6 +1618,17 @@ export type GiftsDeleteGiftData = {
 };
 
 export type GiftsDeleteGiftResponse = (unknown);
+
+export type GiftsGetKanbanBoardResponse = ({
+    [key: string]: unknown;
+});
+
+export type GiftsChangeGiftStatusData = {
+    giftId: string;
+    newStatus: GiftStatus;
+};
+
+export type GiftsChangeGiftStatusResponse = (GiftPublic);
 
 export type GroupsListGroupsData = {
     limit?: number;

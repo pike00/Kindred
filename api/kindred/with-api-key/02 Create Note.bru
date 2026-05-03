@@ -1,0 +1,27 @@
+meta {
+  name: Create Note (API Key)
+  type: http
+  seq: 2
+}
+
+
+post {
+  url: {{base_url}}/api/v1/notes/
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{api_key}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "contact_id": "{{contact_id}}",
+    "body": "Note written via M2M API key (no JWT needed)."
+  }
+}
