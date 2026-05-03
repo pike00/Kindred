@@ -8,7 +8,7 @@
 | [public.user](public.user.md) | 9 | Authenticated user; tenant-scope owner of every row below. | BASE TABLE |
 | [public.tag](public.tag.md) | 5 | User-defined tag for grouping contacts. | BASE TABLE |
 | [public.group](public.group.md) | 5 | Named collection of contacts (e.g. 'Family', 'Work Team'). | BASE TABLE |
-| [public.contact](public.contact.md) | 28 | Core contact entity — the subject of everything else in the CRM. | BASE TABLE |
+| [public.contact](public.contact.md) | 31 | Core contact entity — the subject of everything else in the CRM. | BASE TABLE |
 | [public.contact_tag](public.contact_tag.md) | 2 | Many-to-many link between contacts and tags. | BASE TABLE |
 | [public.contact_group](public.contact_group.md) | 2 | Many-to-many link between contacts and groups. | BASE TABLE |
 | [public.contact_field](public.contact_field.md) | 7 | Flexible contact info (emails, phones) attached to a contact. | BASE TABLE |
@@ -28,10 +28,14 @@
 | [public.tag_share](public.tag_share.md) | 3 | Grants another user read access to all rows bearing a given tag. | BASE TABLE |
 | [public.media_recommendation](public.media_recommendation.md) | 10 | Media (book, show, podcast, etc.) recommended to or by a contact. | BASE TABLE |
 | [public.interaction_attendee](public.interaction_attendee.md) | 2 | Many-to-many link between interactions and contacts (attendees). | BASE TABLE |
-| [public.activity_log](public.activity_log.md) | 8 |  | BASE TABLE |
+| [public.activity_log](public.activity_log.md) | 9 |  | BASE TABLE |
 | [public.oauth_credential](public.oauth_credential.md) | 11 |  | BASE TABLE |
 | [public.note_mention](public.note_mention.md) | 2 |  | BASE TABLE |
 | [public.communication_preference](public.communication_preference.md) | 8 |  | BASE TABLE |
+| [public.api_key](public.api_key.md) | 9 |  | BASE TABLE |
+| [public.api_key_impersonate](public.api_key_impersonate.md) | 2 |  | BASE TABLE |
+| [public.organization](public.organization.md) | 17 |  | BASE TABLE |
+| [public.reminder_snooze](public.reminder_snooze.md) | 6 |  | BASE TABLE |
 
 ## Stored procedures and functions
 
@@ -55,7 +59,7 @@
 | public.contactfieldtype | EMAIL, PHONE |
 | public.contactsource | CARDDAV, GOOGLE, MANUAL, VCARD_IMPORT, WEBHOOK |
 | public.debtdirection | I_OWE, THEY_OWE |
-| public.giftstatus | GIVEN, IDEA, RECEIVED |
+| public.giftstatus | GIVEN, IDEA, PURCHASED, RECEIVED, WRAPPED |
 | public.interactionchannel | CALL, EMAIL, IN_PERSON, OTHER, SOCIAL, TEXT, VIDEO |
 | public.mediacategory | BOOK, MOVIE, MUSICIAN, OTHER, PODCAST, TV_SHOW |
 | public.oauthprovider | GOOGLE |
@@ -69,6 +73,7 @@ erDiagram
 "public.tag" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.group" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.contact" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
+"public.contact" }o--o| "public.organization" : "FOREIGN KEY (organization_id) REFERENCES organization(id) ON DELETE SET NULL"
 "public.contact_tag" }o--|| "public.tag" : "FOREIGN KEY (tag_id) REFERENCES tag(id) ON DELETE CASCADE"
 "public.contact_tag" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.contact_group" }o--|| "public.group" : "FOREIGN KEY (group_id) REFERENCES #quot;group#quot;(id) ON DELETE CASCADE"
@@ -103,10 +108,16 @@ erDiagram
 "public.interaction_attendee" }o--|| "public.interaction" : "FOREIGN KEY (interaction_id) REFERENCES interaction(id) ON DELETE CASCADE"
 "public.activity_log" }o--o| "public.user" : "FOREIGN KEY (actor_id) REFERENCES #quot;user#quot;(id) ON DELETE SET NULL"
 "public.activity_log" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
+"public.activity_log" }o--o| "public.api_key" : "FOREIGN KEY (acting_api_key_id) REFERENCES api_key(id) ON DELETE SET NULL"
 "public.oauth_credential" }o--|| "public.user" : "FOREIGN KEY (user_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.note_mention" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.note_mention" }o--|| "public.note" : "FOREIGN KEY (note_id) REFERENCES note(id) ON DELETE CASCADE"
 "public.communication_preference" |o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
+"public.api_key" }o--|| "public.user" : "FOREIGN KEY (owned_by_user_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
+"public.api_key_impersonate" }o--|| "public.user" : "FOREIGN KEY (user_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
+"public.api_key_impersonate" }o--|| "public.api_key" : "FOREIGN KEY (api_key_id) REFERENCES api_key(id) ON DELETE CASCADE"
+"public.organization" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
+"public.reminder_snooze" }o--|| "public.reminder" : "FOREIGN KEY (reminder_id) REFERENCES reminder(id) ON DELETE CASCADE"
 
 "public.alembic_version" {
   varchar_32_ version_num
@@ -165,6 +176,9 @@ erDiagram
   timestamp_with_time_zone deleted_at
   contactsource source
   varchar_500_ source_external_id
+  uuid organization_id FK
+  boolean do_not_contact
+  varchar_500_ do_not_contact_reason
 }
 "public.contact_tag" {
   uuid contact_id FK
@@ -347,6 +361,7 @@ erDiagram
   varchar_32_ action
   json changes_json
   timestamp_with_time_zone occurred_at
+  uuid acting_api_key_id FK
 }
 "public.oauth_credential" {
   uuid id
@@ -374,6 +389,48 @@ erDiagram
   varchar_500_ do_not_contact_reason
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
+}
+"public.api_key" {
+  uuid id
+  varchar_255_ name
+  varchar_64_ key_hash
+  varchar_16_ key_prefix
+  uuid owned_by_user_id FK
+  timestamp_with_time_zone created_at
+  timestamp_with_time_zone last_used_at
+  timestamp_with_time_zone revoked_at
+  timestamp_with_time_zone expires_at
+}
+"public.api_key_impersonate" {
+  uuid api_key_id FK
+  uuid user_id FK
+}
+"public.organization" {
+  varchar_255_ name
+  varchar_255_ domain
+  varchar_255_ industry
+  varchar_2000_ notes
+  varchar_100_ address_label
+  varchar_500_ address_street
+  varchar_500_ address_extended
+  varchar_255_ address_city
+  varchar_255_ address_region
+  varchar_50_ address_postal_code
+  varchar_255_ address_country
+  double_precision address_latitude
+  double_precision address_longitude
+  uuid id
+  uuid owner_id FK
+  timestamp_with_time_zone created_at
+  timestamp_with_time_zone updated_at
+}
+"public.reminder_snooze" {
+  uuid id
+  uuid reminder_id FK
+  timestamp_with_time_zone snoozed_at
+  timestamp_with_time_zone snoozed_until
+  text reason
+  timestamp_with_time_zone created_at
 }
 ```
 
