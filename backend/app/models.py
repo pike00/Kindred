@@ -855,6 +855,11 @@ class RelationshipBase(SQLModel):
 class RelationshipCreate(RelationshipBase):
     contact_id: uuid.UUID  # "from" contact
     related_contact_id: uuid.UUID  # "to" contact
+    inverse_relationship_type: str | None = Field(
+        default=None,
+        max_length=100,
+        description="Type for the auto-created inverse row (e.g. 'parent' for 'child'). Inferred when omitted.",
+    )
 
 
 class RelationshipUpdate(SQLModel):
