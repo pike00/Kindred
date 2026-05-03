@@ -168,6 +168,10 @@ export type Body_login_login_access_token = {
     client_secret?: (string | null);
 };
 
+export type Body_transcribe_transcribe_audio = {
+    file: (Blob | File);
+};
+
 export type CalendarEntry = {
     contact_id: string;
     name: string;
@@ -2026,6 +2030,12 @@ export type TagSharesDeleteTagShareData = {
 export type TagSharesDeleteTagShareResponse = ({
     [key: string]: (string);
 });
+
+export type TranscribeTranscribeAudioData = {
+    formData: Body_transcribe_transcribe_audio;
+};
+
+export type TranscribeTranscribeAudioResponse = (unknown);
 
 export type UsersReadUsersData = {
     limit?: number;

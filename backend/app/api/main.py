@@ -24,6 +24,7 @@ from app.api.routes import (
     reminders,
     tag_shares,
     tags,
+    transcribe,
     users,
     utils,
     webhooks,
@@ -56,6 +57,8 @@ api_router.include_router(media_recommendations.router)
 api_router.include_router(journal.router)
 api_router.include_router(import_export.router)
 api_router.include_router(webhooks.router)
+
+api_router.include_router(transcribe.router)
 api_router.include_router(activity_logs.router)
 api_router.include_router(calendar.router)
 

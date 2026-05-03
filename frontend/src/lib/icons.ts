@@ -46,6 +46,8 @@ export {
   MessageSquare,
   MessageSquareText,
   MessagesSquare,
+  Mic,
+  MicOff,
   Monitor,
   Moon,
   // Action icons (monochrome, inherit text color)

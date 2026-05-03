@@ -712,6 +712,19 @@ export const Body_login_login_access_tokenSchema = {
     title: 'Body_login-login_access_token'
 } as const;
 
+export const Body_transcribe_transcribe_audioSchema = {
+    properties: {
+        file: {
+            type: 'string',
+            format: 'binary',
+            title: 'File'
+        }
+    },
+    type: 'object',
+    required: ['file'],
+    title: 'Body_transcribe-transcribe_audio'
+} as const;
+
 export const CalendarEntrySchema = {
     properties: {
         contact_id: {
