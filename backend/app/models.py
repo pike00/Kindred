@@ -868,12 +868,20 @@ class Relationship(RelationshipBase, table=True):
         ondelete="CASCADE",
         description='"To" contact in the directional relationship.',
     )
+    inverse_id: uuid.UUID | None = Field(
+        default=None,
+        foreign_key="relationship.id",
+        nullable=True,
+        ondelete="SET NULL",
+        description="ID of the paired inverse row; NULL for one-way links.",
+    )
 
 
 class RelationshipPublic(RelationshipBase):
     id: uuid.UUID
     contact_id: uuid.UUID
     related_contact_id: uuid.UUID
+    inverse_id: uuid.UUID | None = None
 
 
 # ─── Pet ──────────────────────────────────────────────────────────────────────
