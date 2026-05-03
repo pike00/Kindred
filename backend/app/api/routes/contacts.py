@@ -7,7 +7,6 @@ from typing import Any
 
 from arq.connections import RedisSettings
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
-from pydantic import BaseModel
 from sqlalchemy.orm import selectinload
 from sqlmodel import col, func, select
 
@@ -22,8 +21,8 @@ from app.models import (
     ContactsPublic,
     ContactTag,
     ContactUpdate,
-    Note,
-    NoteMention,
+    OverdueContactPublic,
+    OverdueContactsPublic,
 )
 
 logger = logging.getLogger(__name__)
@@ -242,6 +241,105 @@ def list_losing_touch(
     return ContactsPublic(data=result, count=len(overdue))
 
 
+@router.get("/overdue", response_model=OverdueContactsPublic)
+def list_overdue_contacts(
+    session: SessionDep,
+    current_user: CurrentUser,
+    limit: int = 50,
+    offset: int = 0,
+) -> Any:
+    """Return contacts sorted by days_overdue descending.
+
+    Days overdue = (now - last_contacted_at).days - contact_frequency_days.
+    Contacts with no frequency set or no interactions are excluded.
+    """
+    now = datetime.now(timezone.utc)
+    statement = (
+        select(Contact)
+        .where(
+            Contact.id.in_(visible_contact_ids(current_user)),
+            Contact.is_archived.is_(False),
+            Contact.contact_frequency_days.is_not(None),
+            Contact.do_not_contact.is_(False),
+        )
+        .options(
+            selectinload(Contact.tags),
+            selectinload(Contact.groups),
+        )
+    )
+    contacts = session.exec(statement).all()
+
+    overdue_data = []
+    for contact in contacts:
+        if contact.last_contacted_at is None:
+            # Never contacted - use created_at as reference or just use frequency
+            days_since = contact.contact_frequency_days or 0
+            days_overdue = days_since
+        else:
+            days_since = (now - contact.last_contacted_at).days
+            days_overdue = days_since - (contact.contact_frequency_days or 0)
+
+        if days_overdue >= 0:
+            overdue_data.append(
+                {
+                    "contact": contact,
+                    "days_overdue": days_overdue,
+                }
+            )
+
+    # Sort by days_overdue descending
+    overdue_data.sort(key=lambda x: x["days_overdue"], reverse=True)
+
+    # Apply pagination
+    total = len(overdue_data)
+    paginated = overdue_data[offset : offset + limit]
+
+    result = []
+    for item in paginated:
+        contact_public = OverdueContactPublic.model_validate(item["contact"])
+        contact_public.days_overdue = item["days_overdue"]
+        result.append(contact_public)
+
+    return OverdueContactsPublic(data=result, count=total)
+
+
+@router.patch("/{contact_id}/skip", response_model=ContactPublic)
+def skip_contact(
+    session: SessionDep,
+    current_user: CurrentUser,
+    contact_id: uuid.UUID,
+) -> Any:
+    """Skip a contact for 7 days by creating a SKIP interaction.
+
+    This advances the next due date without recording a user-facing interaction.
+    """
+    contact = session.get(Contact, contact_id)
+    if not contact or contact.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="Contact not found")
+    if contact.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
+    # Create a SKIP interaction
+    from app.crud import create_interaction
+    from app.models import InteractionCreate
+
+    skip_interaction = InteractionCreate(
+        attendee_ids=[contact_id],
+        channel="skip",
+        occurred_at=datetime.now(timezone.utc),
+        notes="Skipped for 7 days",
+    )
+
+    create_interaction(
+        session=session,
+        interaction_in=skip_interaction,
+        owner_id=current_user.id,
+    )
+
+    session.refresh(contact)
+    return ContactPublic.model_validate(contact)
+
+
 @router.get("/{contact_id}", response_model=ContactPublic)
 def get_contact(
     session: SessionDep,
@@ -401,65 +499,6 @@ def delete_contact(
     # Hide from search results while soft-deleted; restore re-indexes.
     background_tasks.add_task(_enqueue_contact_removal, str(contact_id))
     return {"ok": True}
-
-
-class _MentionSourceContact(BaseModel):
-    id: uuid.UUID
-    first_name: str
-    last_name: str | None = None
-    avatar_url: str | None = None
-
-
-class NoteMentionPublic(BaseModel):
-    note_id: uuid.UUID
-    note_body: str
-    note_created_at: datetime
-    source_contact: _MentionSourceContact
-
-
-@router.get("/{contact_id}/mentions", response_model=list[NoteMentionPublic])
-def list_contact_mentions(
-    session: SessionDep,
-    current_user: CurrentUser,
-    contact_id: uuid.UUID,
-) -> Any:
-    """List notes that @-mention this contact, with the source (authoring) contact."""
-    contact = session.exec(
-        select(Contact).where(
-            Contact.id == contact_id,
-            Contact.id.in_(visible_contact_ids(current_user)),
-        )
-    ).first()
-    if not contact:
-        raise HTTPException(status_code=404, detail="Contact not found")
-
-    # Note's contact (its "page") is the source contact for the mention.
-    rows = session.exec(
-        select(Note, Contact)
-        .join(NoteMention, NoteMention.note_id == Note.id)
-        .join(Contact, Contact.id == Note.contact_id)
-        .where(
-            NoteMention.contact_id == contact_id,
-            Note.owner_id == current_user.id,
-            Note.contact_id != contact_id,
-        )
-        .order_by(Note.created_at.desc())
-    ).all()
-
-    return [
-        NoteMentionPublic(
-            note_id=note.id,
-            note_body=note.body,
-            note_created_at=note.created_at,
-            source_contact=_MentionSourceContact(
-                id=src.id,
-                first_name=src.first_name,
-                last_name=src.last_name,
-                avatar_url=src.avatar_url,
-            ),
-        )
-        for note, src in rows
-    ]
 
 
 @router.post("/{contact_id}/restore", response_model=ContactPublic)
