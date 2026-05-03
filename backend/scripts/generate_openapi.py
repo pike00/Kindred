@@ -22,12 +22,9 @@ os.environ.setdefault("MEILI_URL", "http://localhost:7700")
 os.environ.setdefault("MEILI_MASTER_KEY", "test")
 
 # Now import and generate
-from fastapi import FastAPI
+from fastapi import FastAPI  # noqa: E402
 
-# noqa: E402
-from app.api.main import api_router
-
-# noqa: E402
+from app.api.main import api_router  # noqa: E402
 
 app = FastAPI()
 app.include_router(api_router)

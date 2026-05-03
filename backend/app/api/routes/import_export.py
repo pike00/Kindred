@@ -1,23 +1,24 @@
 """Import and export routes for vCard and CSV files."""
 
-from typing import Any
 import uuid
+from typing import Any
 
 from fastapi import APIRouter, File, UploadFile
 from fastapi.responses import Response
-from sqlmodel import select, col
+from sqlalchemy.orm import selectinload
+from sqlmodel import col, select
 
 from app.api.deps import CurrentUser, SessionDep
+from app.crud import visible_contact_ids
 from app.models import (
     Address,
     Contact,
     ContactField,
     ContactFieldType,
-    ContactTag,
     ContactGroup,
+    ContactTag,
 )
 from app.vcard import contact_to_vcard, vcard_to_contact_data
-from app.crud import visible_contact_ids
 
 router = APIRouter(prefix="/import-export", tags=["import-export"])
 
@@ -146,8 +147,8 @@ def export_csv(
     limit: int = 500,
 ) -> Any:
     """Export contacts as CSV file."""
-    from io import StringIO
     import csv
+    from io import StringIO
 
     limit = min(max(1, limit), 500)
 
@@ -190,49 +191,80 @@ def export_csv(
     writer = csv.writer(output)
 
     # Write header
-    writer.writerow([
-        "id", "first_name", "middle_name", "last_name", "nickname",
-        "prefix", "suffix", "company", "title", "department",
-        "email", "phone", "birthday", "how_we_met",
-        "is_favorite", "is_archived", "stage", "contact_frequency_days",
-        "tags", "groups", "created_at", "last_contacted_at",
-    ])
+    writer.writerow(
+        [
+            "id",
+            "first_name",
+            "middle_name",
+            "last_name",
+            "nickname",
+            "prefix",
+            "suffix",
+            "company",
+            "title",
+            "department",
+            "email",
+            "phone",
+            "birthday",
+            "how_we_met",
+            "is_favorite",
+            "is_archived",
+            "stage",
+            "contact_frequency_days",
+            "tags",
+            "groups",
+            "created_at",
+            "last_contacted_at",
+        ]
+    )
 
     for contact in contacts:
         # Get primary email and phone
         primary_email = next(
-            (f.value for f in contact.fields if f.field_type == "email" and f.is_primary),
+            (
+                f.value
+                for f in contact.fields
+                if f.field_type == "email" and f.is_primary
+            ),
             next((f.value for f in contact.fields if f.field_type == "email"), ""),
         )
         primary_phone = next(
-            (f.value for f in contact.fields if f.field_type == "phone" and f.is_primary),
+            (
+                f.value
+                for f in contact.fields
+                if f.field_type == "phone" and f.is_primary
+            ),
             next((f.value for f in contact.fields if f.field_type == "phone"), ""),
         )
 
-        writer.writerow([
-            str(contact.id),
-            contact.first_name,
-            contact.middle_name or "",
-            contact.last_name or "",
-            contact.nickname or "",
-            contact.prefix or "",
-            contact.suffix or "",
-            contact.company or "",
-            contact.title or "",
-            contact.department or "",
-            primary_email,
-            primary_phone,
-            str(contact.birthday) if contact.birthday else "",
-            contact.how_we_met or "",
-            contact.is_favorite,
-            contact.is_archived,
-            contact.stage or "",
-            contact.contact_frequency_days or "",
-            ", ".join(t.name for t in contact.tags) if contact.tags else "",
-            ", ".join(g.name for g in contact.groups) if contact.groups else "",
-            contact.created_at.isoformat() if contact.created_at else "",
-            contact.last_contacted_at.isoformat() if contact.last_contacted_at else "",
-        ])
+        writer.writerow(
+            [
+                str(contact.id),
+                contact.first_name,
+                contact.middle_name or "",
+                contact.last_name or "",
+                contact.nickname or "",
+                contact.prefix or "",
+                contact.suffix or "",
+                contact.company or "",
+                contact.title or "",
+                contact.department or "",
+                primary_email,
+                primary_phone,
+                str(contact.birthday) if contact.birthday else "",
+                contact.how_we_met or "",
+                contact.is_favorite,
+                contact.is_archived,
+                contact.stage or "",
+                contact.contact_frequency_days or "",
+                ", ".join(t.name for t in contact.tags) if contact.tags else "",
+                ", ".join(g.name for g in contact.groups) if contact.groups else "",
+                contact.created_at.isoformat() if contact.created_at else "",
+                contact.last_contacted_at.isoformat()
+                if contact.last_contacted_at
+                else "",
+            ]
+        )
 
     csv_content = output.getvalue()
     output.close()

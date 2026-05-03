@@ -8,7 +8,7 @@ from typing import Any
 from fastapi.testclient import TestClient
 from sqlmodel import Session, select
 
-from app.models import Contact, ContactTag, ContactGroup, Tag, Group
+from app.models import Contact, ContactGroup, ContactTag, Group, Tag
 
 
 def get_superuser_id(db: Session) -> uuid.UUID:
@@ -21,9 +21,7 @@ def get_superuser_id(db: Session) -> uuid.UUID:
     raise ValueError("No user found in database")
 
 
-def create_test_contact(
-    db: Session, owner_id: uuid.UUID, **kwargs: Any
-) -> Contact:
+def create_test_contact(db: Session, owner_id: uuid.UUID, **kwargs: Any) -> Contact:
     """Helper to create a test contact."""
     data = {
         "first_name": "Test",
@@ -127,7 +125,6 @@ def test_bulk_add_tags(
     client: TestClient, superuser_token_headers: dict[str, str], db: Session
 ) -> None:
     """Test bulk add tags operation."""
-    from app.models import Tag
 
     user_id = get_superuser_id(db)
 
@@ -166,7 +163,7 @@ def test_bulk_remove_tags(
     client: TestClient, superuser_token_headers: dict[str, str], db: Session
 ) -> None:
     """Test bulk remove tags operation."""
-    from app.models import Tag, ContactTag
+    from app.models import ContactTag
 
     user_id = get_superuser_id(db)
 
@@ -210,7 +207,6 @@ def test_bulk_add_groups(
     client: TestClient, superuser_token_headers: dict[str, str], db: Session
 ) -> None:
     """Test bulk add groups operation."""
-    from app.models import Group
 
     user_id = get_superuser_id(db)
 
@@ -248,7 +244,7 @@ def test_bulk_remove_groups(
     client: TestClient, superuser_token_headers: dict[str, str], db: Session
 ) -> None:
     """Test bulk remove groups operation."""
-    from app.models import Group, ContactGroup
+    from app.models import ContactGroup
 
     user_id = get_superuser_id(db)
 
@@ -435,7 +431,9 @@ def test_bulk_other_user_contacts_not_affected(
     user_id = get_superuser_id(db)
 
     # Create another user
-    other_user = User(email="other@example.com", hashed_password="fakehash", is_active=True)
+    other_user = User(
+        email="other@example.com", hashed_password="fakehash", is_active=True
+    )
     db.add(other_user)
     db.commit()
     db.refresh(other_user)
@@ -444,7 +442,7 @@ def test_bulk_other_user_contacts_not_affected(
     other_contact = create_test_contact(db, other_user.id, first_name="Other")
 
     # Create contact for superuser
-    my_contact = create_test_contact(db, user_id, first_name="Mine")
+    create_test_contact(db, user_id, first_name="Mine")
 
     # Bulk update all - should only affect my contact
     response = client.patch(

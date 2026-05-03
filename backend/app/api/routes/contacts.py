@@ -1,6 +1,6 @@
-from __future__ import annotations
-
 """Contact management routes."""
+
+from __future__ import annotations
 
 import logging
 import uuid
@@ -26,6 +26,7 @@ from app.models import (
     ContactUpdate,
     Note,
     NoteMention,
+    User,
 )
 
 logger = logging.getLogger(__name__)
