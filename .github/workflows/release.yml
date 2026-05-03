@@ -1,0 +1,80 @@
+name: Release
+
+# Triggered by `vX.Y.Z` (and pre-release `vX.Y.Z-rc.N`) tag pushes.
+# Builds the combined image from Dockerfile.prod, pushes to GHCR, then
+# (for non-pre-release tags only) SSHes to ares as the kindred-deploy
+# user via a Tailscale ephemeral node and runs `just bump <tag>`.
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  # Don't deploy two tags concurrently — second waits for the first.
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: tag
+        run: echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.prod
+          push: true
+          # Always tag with the version + immutable sha; a "latest" floats
+          # to whichever production-deployable tag last shipped (skips -rc).
+          tags: |
+            ghcr.io/pike00/kindred:${{ steps.tag.outputs.tag }}
+            ghcr.io/pike00/kindred:sha-${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    # Pre-release tags (vX.Y.Z-rc.N, vX.Y.Z-beta.1, etc.) build and push
+    # to GHCR but do NOT trigger the deploy step. Operator can still
+    # `just bump <tag>` manually on ares to test the image before
+    # promoting.
+    if: ${{ !contains(needs.build.outputs.tag, '-') }}
+    steps:
+      - name: Connect to tailnet
+        uses: tailscale/github-action@v2
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:gha-deploy
+          # Auth-key is fine; the OAuth client already scopes us to
+          # tag:gha-deploy and the ACL only opens ares:22 for that tag.
+
+      - name: Deploy via SSH to ares
+        env:
+          DEPLOY_KEY: ${{ secrets.ARES_DEPLOY_SSH_KEY }}
+          TAG: ${{ needs.build.outputs.tag }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh -o StrictHostKeyChecking=accept-new \
+              -o IdentitiesOnly=yes \
+              -i ~/.ssh/id_ed25519 \
+              kindred-deploy@ares.savannah-mimosa.ts.net \
+              "cd ~/Documents/Homelab/apps/kindred && just bump ${TAG}"
