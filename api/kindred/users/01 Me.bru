@@ -1,0 +1,21 @@
+meta {
+  name: Me
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/api/v1/users/me
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt_token}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    bru.setEnvVar("my_user_id", res.body.id);
+  }
+}
