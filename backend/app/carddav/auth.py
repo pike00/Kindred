@@ -6,7 +6,6 @@ via HTTP Basic Auth.
 """
 
 import base64
-from typing import Tuple
 
 from radicale import config as radicale_config
 from radicale.auth import BaseAuth
@@ -45,7 +44,7 @@ class Auth(BaseAuth):
 
     def login(
         self, login: str, password: str, context: object | None = None
-    ) -> Tuple[str, str] | None:
+    ) -> tuple[str, str] | None:
         """Authenticate a user given their credentials.
 
         Args:

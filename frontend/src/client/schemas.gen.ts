@@ -755,6 +755,24 @@ export const ContactCreateSchema = {
             title: 'Stage',
             description: 'Kanban stage like Active, Dormant, Lost.'
         },
+        source: {
+            '$ref': '#/components/schemas/ContactSource',
+            description: 'Source system that created this contact.',
+            default: 'manual'
+        },
+        source_external_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 500
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Source External Id',
+            description: 'External ID from the source system (e.g. Google contact ID, CardDAV UID).'
+        },
         tag_ids: {
             anyOf: [
                 {
@@ -1144,6 +1162,23 @@ export const ContactPublicSchema = {
             title: 'Stage',
             description: 'Kanban stage like Active, Dormant, Lost.'
         },
+        source: {
+            '$ref': '#/components/schemas/ContactSource',
+            description: 'Source system that created this contact.',
+            default: 'manual'
+        },
+        source_external_id: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Source External Id',
+            description: 'External ID from the source system.'
+        },
         id: {
             type: 'string',
             format: 'uuid',
@@ -1214,6 +1249,13 @@ export const ContactPublicSchema = {
     type: 'object',
     required: ['first_name', 'id', 'avatar_url', 'last_contacted_at', 'created_at', 'updated_at'],
     title: 'ContactPublic'
+} as const;
+
+export const ContactSourceSchema = {
+    type: 'string',
+    enum: ['manual', 'vcard_import', 'carddav', 'google', 'webhook'],
+    title: 'ContactSource',
+    description: 'Source system that created a contact.'
 } as const;
 
 export const ContactUpdateSchema = {
@@ -1408,6 +1450,27 @@ export const ContactUpdateSchema = {
                 }
             ],
             title: 'Stage'
+        },
+        source: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/ContactSource'
+                },
+                {
+                    type: 'null'
+                }
+            ]
+        },
+        source_external_id: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Source External Id'
         },
         tag_ids: {
             anyOf: [

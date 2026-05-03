@@ -1,8 +1,5 @@
 """Radicale storage plugin backed by the CRM's PostgreSQL database.
 
-from app.vcard import compute_etag
-
-
 This module exposes a `Storage` class that Radicale loads via config.
 It reads/writes contacts from the same database as the FastAPI app.
 """
@@ -21,6 +18,7 @@ from sqlmodel import Session, create_engine, select
 
 from app.core.config import settings
 from app.models import Address, Contact, ContactField, ContactFieldType, User
+from app.vcard import compute_etag
 
 
 def _http_datetime(dt: datetime) -> str:

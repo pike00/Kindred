@@ -275,21 +275,16 @@ def create_contact(
     contact_in: ContactCreate,
     background_tasks: BackgroundTasks,
 ) -> Any:
-    """Create a new contact."""
-    contact = Contact.model_validate(contact_in, update={"owner_id": current_user.id})
-    session.add(contact)
-    session.flush()  # Flush to get contact.id without committing
+    """Create a new contact.
 
-    # Handle tag associations
-    if contact_in.tag_ids:
-        for tag_id in contact_in.tag_ids:
-            session.add(ContactTag(contact_id=contact.id, tag_id=tag_id))
+    If source_external_id is provided, uses upsert logic to update existing
+    contact with same (owner_id, source, source_external_id) or create new.
+    """
+    from app.crud import upsert_contact
 
-    # Handle group associations
-    if contact_in.group_ids:
-        for group_id in contact_in.group_ids:
-            session.add(ContactGroup(contact_id=contact.id, group_id=group_id))
-
+    contact = upsert_contact(
+        session=session, contact_in=contact_in, owner_id=current_user.id
+    )
     session.commit()
 
     # Reload contact with eager-loaded relationships

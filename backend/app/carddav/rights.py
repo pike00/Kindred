@@ -11,8 +11,9 @@ class Rights:
         """Initialize the rights module."""
         pass
 
-    def authorize(self, user: str, owner: str, collection: object,
-                  permission: str) -> bool:
+    def authorize(
+        self, user: str, owner: str, collection: object, permission: str
+    ) -> bool:
         """Check if the user is authorized for the given permission.
 
         Args:

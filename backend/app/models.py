@@ -155,6 +155,16 @@ class MediaCategory(str, enum.Enum):
     OTHER = "other"
 
 
+class ContactSource(str, enum.Enum):
+    """Source system that created a contact."""
+
+    MANUAL = "manual"
+    VCARD_IMPORT = "vcard_import"
+    CARDDAV = "carddav"
+    GOOGLE = "google"
+    WEBHOOK = "webhook"
+
+
 # ─── Tag ──────────────────────────────────────────────────────────────────────
 
 
@@ -434,6 +444,17 @@ class ContactBase(SQLModel):
         description="Kanban stage like Active, Dormant, Lost.",
     )
 
+    # Provenance
+    source: ContactSource = Field(
+        default=ContactSource.MANUAL,
+        description="Source system that created this contact.",
+    )
+    source_external_id: str | None = Field(
+        default=None,
+        max_length=500,
+        description="External ID from the source system (e.g. Google contact ID, CardDAV UID).",
+    )
+
 
 class ContactCreate(ContactBase):
     tag_ids: list[uuid.UUID] | None = None
@@ -458,6 +479,8 @@ class ContactUpdate(SQLModel):
     deceased_at: date | None = None
     contact_frequency_days: int | None = None
     stage: str | None = None
+    source: ContactSource | None = None
+    source_external_id: str | None = None
     tag_ids: list[uuid.UUID] | None = None
     group_ids: list[uuid.UUID] | None = None
 
@@ -517,18 +540,29 @@ class Contact(ContactBase, table=True):
         ),
     )
     # Relationships
-    tags: list["Tag"] = Relationship(
-        back_populates=None,
-        link_model=ContactTag,
-    )
-    groups: list["Group"] = Relationship(
-        back_populates=None,
-        link_model=ContactGroup,
+    tags: list["Tag"] = Relationship(back_populates=None, link_model=ContactTag)
+    groups: list["Group"] = Relationship(back_populates=None, link_model=ContactGroup)
+    # Unique constraint for idempotent upserts
+    __table_args__ = (
+        sa.UniqueConstraint(
+            "owner_id",
+            "source",
+            "source_external_id",
+            name="uq_contact_owner_source_external_id",
+        ),
     )
 
 
 class ContactPublic(ContactBase):
     id: uuid.UUID
+    source: ContactSource = Field(
+        default=ContactSource.MANUAL,
+        description="Source system that created this contact.",
+    )
+    source_external_id: str | None = Field(
+        default=None,
+        description="External ID from the source system.",
+    )
     avatar_url: str | None
     last_contacted_at: datetime | None
     created_at: datetime

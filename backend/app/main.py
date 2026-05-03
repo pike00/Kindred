@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from fastapi.routing import APIRoute
 from radicale import Application as RadicaleApp
+from radicale.config import DEFAULT_CONFIG_SCHEMA  # noqa: E402
 from radicale.config import Configuration as RadicaleConfig
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.wsgi import WSGIMiddleware
@@ -10,8 +11,6 @@ from starlette.middleware.wsgi import WSGIMiddleware
 import app.audit  # noqa: F401 — registers before_flush listener
 from app.api.main import api_router
 from app.core.config import settings
-
-from radicale.config import DEFAULT_CONFIG_SCHEMA  # noqa: E402
 
 
 def custom_generate_unique_id(route: APIRoute) -> str:
