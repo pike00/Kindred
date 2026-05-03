@@ -1,63 +1,103 @@
-"""{resource_name} resource for Kindred SDK."""
+"""Journal resource for Kindred SDK."""
 
 from personal_crm_client import AuthenticatedClient, Client
-from personal_crm_client.models import {model}Create, {model}Update, {models}, {model}Public
-from personal_crm_client.models import HTTPValidationError
+from personal_crm_client.models import (
+    JournalEntryCreate,
+    JournalEntryUpdate,
+    JournalEntryPublic,
+    JournalEntriesPublic,
+    HTTPValidationError,
+)
 from uuid import UUID
 
+from typing import Optional
 
-class {class_name}:
-    """Resource for managing {module}."""
 
-    def __init__(self, client: AuthenticatedClient | Client):
+class JournalResource:
+    """Resource for managing journal entries."""
+
+    def __init__(self, client: AuthenticatedClient | Client) -> None:
         self._client = client
 
-    def list(self, *, skip: int = 0, limit: int = 100) -> {models} | HTTPValidationError | None:
-        """List {module}."""
-        from personal_crm_client.api.{module} import {list_func}
-        return {list_func}.sync(client=self._client, skip=skip, limit=limit)
+    def list(
+        self,
+        *,
+        skip: int = 0,
+        limit: int = 100,
+    ) -> JournalEntriesPublic | HTTPValidationError | None:
+        """List journal entries."""
+        from personal_crm_client.api.journal.journal_list_journal_entries import sync
 
-    async def list_async(self, *, skip: int = 0, limit: int = 100) -> {models} | HTTPValidationError | None:
+        return sync(
+            client=self._client,
+            skip=skip,
+            limit=limit,
+        )
+
+    async def list_async(
+        self,
+        *,
+        skip: int = 0,
+        limit: int = 100,
+    ) -> JournalEntriesPublic | HTTPValidationError | None:
         """Async version of list()."""
-        from personal_crm_client.api.{module} import {list_func}
-        return await {list_func}.asyncio(client=self._client, skip=skip, limit=limit)
+        from personal_crm_client.api.journal.journal_list_journal_entries import asyncio
 
-    def get(self, {item_id}: UUID) -> {model}Public | HTTPValidationError | None:
-        """Get a single {singular} by ID."""
-        from personal_crm_client.api.{module} import {get_func}
-        return {get_func}.sync(client=self._client, {item_id}={item_id})
+        return await asyncio(
+            client=self._client,
+            skip=skip,
+            limit=limit,
+        )
 
-    async def get_async(self, {item_id}: UUID) -> {model}Public | HTTPValidationError | None:
-        """Async version of get()."""
-        from personal_crm_client.api.{module} import {get_func}
-        return await {get_func}.asyncio(client=self._client, {item_id}={item_id})
+    def get(self, entry_id: UUID) -> JournalEntryPublic | HTTPValidationError | None:
+        """Get a single journal entry by ID."""
+        from personal_crm_client.api.journal.journal_list_journal_entries import sync
 
-    def create(self, item: {model}Create) -> {model}Public | HTTPValidationError | None:
-        """Create a new {singular}."""
-        from personal_crm_client.api.{module} import {create_func}
-        return {create_func}.sync(client=self._client, json_body=item)
+        entries = self.list()
+        if entries and hasattr(entries, 'data'):
+            for entry in entries.data:
+                if entry.id == entry_id:
+                    return entry
+        return None
 
-    async def create_async(self, item: {model}Create) -> {model}Public | HTTPValidationError | None:
+    def create(self, item: JournalEntryCreate) -> JournalEntryPublic | HTTPValidationError | None:
+        """Create a new journal entry."""
+        from personal_crm_client.api.journal.journal_create_journal_entry_route import sync
+
+        return sync(client=self._client, body=item)
+
+    async def create_async(self, item: JournalEntryCreate) -> JournalEntryPublic | HTTPValidationError | None:
         """Async version of create()."""
-        from personal_crm_client.api.{module} import {create_func}
-        return await {create_func}.asyncio(client=self._client, json_body=item)
+        from personal_crm_client.api.journal.journal_create_journal_entry_route import asyncio
 
-    def update(self, {item_id}: UUID, item: {model}Update) -> {model}Public | HTTPValidationError | None:
-        """Update an existing {singular}."""
-        from personal_crm_client.api.{module} import {update_func}
-        return {update_func}.sync(client=self._client, {item_id}={item_id}, json_body=item)
+        return await asyncio(client=self._client, body=item)
 
-    async def update_async(self, {item_id}: UUID, item: {model}Update) -> {model}Public | HTTPValidationError | None:
+    def update(
+        self, entry_id: UUID, item: JournalEntryUpdate
+    ) -> JournalEntryPublic | HTTPValidationError | None:
+        """Update an existing journal entry."""
+        from personal_crm_client.api.journal.journal_update_journal_entry import sync
+
+        return sync(client=self._client, entry_id=entry_id, body=item)
+
+    async def update_async(
+        self, entry_id: UUID, item: JournalEntryUpdate
+    ) -> JournalEntryPublic | HTTPValidationError | None:
         """Async version of update()."""
-        from personal_crm_client.api.{module} import {update_func}
-        return await {update_func}.asyncio(client=self._client, {item_id}={item_id}, json_body=item)
+        from personal_crm_client.api.journal.journal_update_journal_entry import asyncio
 
-    def delete(self, {item_id}: UUID) -> {model}Public | HTTPValidationError | None:
-        """Delete a {singular}."""
-        from personal_crm_client.api.{module} import {delete_func}
-        return {delete_func}.sync(client=self._client, {item_id}={item_id})
+        return await asyncio(client=self._client, entry_id=entry_id, body=item)
 
-    async def delete_async(self, {item_id}: UUID) -> {model}Public | HTTPValidationError | None:
+    def delete(self, entry_id: UUID) -> JournalEntryPublic | HTTPValidationError | None:
+        """Delete a journal entry."""
+        from personal_crm_client.api.journal.journal_delete_journal_entry import sync
+
+        return sync(client=self._client, entry_id=entry_id)
+
+    async def delete_async(
+        self, entry_id: UUID
+    ) -> JournalEntryPublic | HTTPValidationError | None:
         """Async version of delete()."""
-        from personal_crm_client.api.{module} import {delete_func}
-        return await {delete_func}.asyncio(client=self._client, {item_id}={item_id})
+        from personal_crm_client.api.journal.journal_delete_journal_entry import asyncio
+
+        return await asyncio(client=self._client, entry_id=entry_id)

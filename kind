@@ -1,120 +1,131 @@
-# Kindred SDK
+"""Reminders resource for Kindred SDK."""
 
-A typed Python client for [Personal CRM](https://github.com/willff/personal-crm) (Kindred), generated from its OpenAPI schema.
-
-## Installation
-
-```bash
-pip install kindred-sdk
-```
-
-Or with Poetry:
-
-```bash
-poetry add kindred-sdk
-```
-
-## Quick Start
-
-```python
-from kindred_sdk import KindredClient
-
-# Create a client (unauthenticated)
-client = KindredClient(base_url="https://kindred.example.com")
-
-# Or with authentication
-client = KindredClient(
-    base_url="https://kindred.example.com",
-    token="your-api-token"
+from personal_crm_client import AuthenticatedClient, Client
+from personal_crm_client.models import (
+    ReminderCreate,
+    ReminderUpdate,
+    ReminderPublic,
+    RemindersPublic,
+    HTTPValidationError,
 )
+from uuid import UUID
 
-# List contacts
-contacts = client.contacts.list()
-for contact in contacts.data:
-    print(contact.name)
+from typing import Optional
 
-# Get a specific contact
-contact = client.contacts.get(contact_id="uuid-here")
 
-# Create a contact
-from personal_crm_client.models import ContactCreate
-new_contact = client.contacts.create(
-    ContactCreate(name="John Doe", email="john@example.com")
-)
+class RemindersResource:
+    """Resource for managing reminders."""
 
-# Async support
-import asyncio
+    def __init__(self, client: AuthenticatedClient | Client) -> None:
+        self._client = client
 
-async def main():
-    contacts = await client.contacts.list_async()
-    print(contacts)
+    def list(
+        self,
+        *,
+        skip: int = 0,
+        limit: int = 100,
+        contact_id: Optional[UUID] = None,
+    ) -> RemindersPublic | HTTPValidationError | None:
+        """List reminders."""
+        from personal_crm_client.api.reminders.reminders_list_reminders import sync
 
-asyncio.run(main())
-```
+        return sync(
+            client=self._client,
+            skip=skip,
+            limit=limit,
+            contact_id=contact_id,
+        )
 
-## Available Resources
+    async def list_async(
+        self,
+        *,
+        skip: int = 0,
+        limit: int = 100,
+        contact_id: Optional[UUID] = None,
+    ) -> RemindersPublic | HTTPValidationError | None:
+        """Async version of list()."""
+        from personal_crm_client.api.reminders.reminders_list_reminders import asyncio
 
-The SDK provides a thin facade over the generated OpenAPI client with these resources:
+        return await asyncio(
+            client=self._client,
+            skip=skip,
+            limit=limit,
+            contact_id=contact_id,
+        )
 
-| Resource | Methods |
-|----------|---------|
-| `client.contacts` | `list()`, `get()`, `create()`, `update()`, `delete()`, `restore()`, `list_mentions()`, `get_household()` |
-| `client.groups` | `list()`, `get()`, `create()`, `update()`, `delete()` |
-| `client.interactions` | `list()`, `get()`, `create()`, `update()`, `delete()` |
-| `client.tags` | `list()`, `get()`, `create()`, `update()`, `delete()` |
-| `client.notes` | `list()`, `get()`, `create()`, `update()`, `delete()` |
-| `client.gifts` | `list()`, `get()`, `create()`, `update()`, `delete()` |
-| `client.debts` | `list()`, `get()`, `create()`, `update()`, `delete()` |
-| `client.pets` | `list()`, `get()`, `create()`, `update()`, `delete()` |
-| `client.addresses` | `list()`, `get()`, `create()`, `update()`, `delete()` |
-| `client.relationships` | `list()`, `get()`, `create()`, `update()`, `delete()` |
-| `client.reminders` | `list()`, `get()`, `create()`, `update()`, `delete()` |
-| `client.life_events` | `list()`, `get()`, `create()`, `update()`, `delete()` |
-| `client.journal` | `list()`, `get()`, `create()`, `update()`, `delete()` |
-| `client.custom_fields` | `list_definitions()`, `create_definition()`, `update_definition()`, `delete_definition()`, `list_values()`, `create_value()`, `update_value()`, `delete_value()` |
-| `client.activity_logs` | `list()` |
-| `client.calendar` | `get_month()` |
+    def get(self, reminder_id: UUID) -> ReminderPublic | HTTPValidationError | None:
+        """Get a single reminder by ID."""
+        from personal_crm_client.api.reminders.reminders_list_reminders import sync
 
-## Regenerating the SDK
+        reminders = self.list()
+        if reminders and hasattr(reminders, 'data'):
+            for reminder in reminders.data:
+                if reminder.id == reminder_id:
+                    return reminder
+        return None
 
-The SDK is generated from the backend's OpenAPI schema using [`openapi-python-client`](https://github.com/openapi-generators/openapi-python-client):
+    def create(self, item: ReminderCreate) -> ReminderPublic | HTTPValidationError | None:
+        """Create a new reminder."""
+        from personal_crm_client.api.reminders.reminders_create_reminder_route import sync
 
-```bash
-# Fetch the OpenAPI schema
-curl http://localhost:8000/api/v1/openapi.json > openapi.json
+        return sync(client=self._client, body=item)
 
-# Generate the client
-openapi-python-client generate --path openapi.json --output-path kindred-sdk --overwrite
+    async def create_async(self, item: ReminderCreate) -> ReminderPublic | HTTPValidationError | None:
+        """Async version of create()."""
+        from personal_crm_client.api.reminders.reminders_create_reminder_route import asyncio
 
-# The kindred_sdk/ package wraps the generated personal_crm_client/
-```
+        return await asyncio(client=self._client, body=item)
 
-## Schema Drift Detection
+    def update(
+        self, reminder_id: UUID, item: ReminderUpdate
+    ) -> ReminderPublic | HTTPValidationError | None:
+        """Update an existing reminder."""
+        from personal_crm_client.api.reminders.reminders_update_reminder import sync
 
-The CI workflow (`.github/workflows/sdk-drift.yml`) automatically:
-1. Fetches the OpenAPI schema from the running backend
-2. Regenerates the SDK
-3. Fails if there are changes (indicating the SDK is out of date)
+        return sync(client=self._client, reminder_id=reminder_id, body=item)
 
-To manually check for drift:
+    async def update_async(
+        self, reminder_id: UUID, item: ReminderUpdate
+    ) -> ReminderPublic | HTTPValidationError | None:
+        """Async version of update()."""
+        from personal_crm_client.api.reminders.reminders_update_reminder import asyncio
 
-```bash
-just sdk-check  # If added to justfile
-```
+        return await asyncio(client=self._client, reminder_id=reminder_id, body=item)
 
-## Development
+    def delete(self, reminder_id: UUID) -> ReminderPublic | HTTPValidationError | None:
+        """Delete a reminder."""
+        from personal_crm_client.api.reminders.reminders_delete_reminder import sync
 
-```bash
-# Install dependencies
-pip install -e kindred-sdk/
+        return sync(client=self._client, reminder_id=reminder_id)
 
-# Run type checks
-cd kindred-sdk && pyright
+    async def delete_async(
+        self, reminder_id: UUID
+    ) -> ReminderPublic | HTTPValidationError | None:
+        """Async version of delete()."""
+        from personal_crm_client.api.reminders.reminders_delete_reminder import asyncio
 
-# Build the package
-cd kindred-sdk && pip build
-```
+        return await asyncio(client=self._client, reminder_id=reminder_id)
 
-## License
+    def snooze(
+        self, reminder_id: UUID, *, snooze_until: str
+    ) -> ReminderPublic | HTTPValidationError | None:
+        """Snooze a reminder until a specified time."""
+        from personal_crm_client.api.reminders.reminders_snooze_reminder import sync
 
-MIT (same as Personal CRM)
+        return sync(
+            client=self._client,
+            reminder_id=reminder_id,
+            snooze_until=snooze_until,
+        )
+
+    async def snooze_async(
+        self, reminder_id: UUID, *, snooze_until: str
+    ) -> ReminderPublic | HTTPValidationError | None:
+        """Async version of snooze()."""
+        from personal_crm_client.api.reminders.reminders_snooze_reminder import asyncio
+
+        return await asyncio(
+            client=self._client,
+            reminder_id=reminder_id,
+            snooze_until=snooze_until,
+        )

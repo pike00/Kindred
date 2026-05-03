@@ -1,124 +1,107 @@
-# personal-crm-client
-A client library for accessing Personal CRM
+# Kindred SDK
 
-## Usage
-First, create a client:
+A typed Python client for [Personal CRM](https://github.com/will/personal-crm), generated from its OpenAPI schema.
 
-```python
-from personal_crm_client import Client
+The SDK provides a clean, resource-oriented interface (`kindred_sdk`) built on top of the mechanically generated `personal_crm_client`. Use it for scripting, automations (including n8n custom nodes), and any future third-party integrations.
 
-client = Client(base_url="https://api.example.com")
+## Installation
+
+```bash
+pip install kindred-sdk
 ```
 
-If the endpoints you're going to hit require authentication, use `AuthenticatedClient` instead:
+Or, if you're using Poetry:
 
-```python
-from personal_crm_client import AuthenticatedClient
-
-client = AuthenticatedClient(base_url="https://api.example.com", token="SuperSecretToken")
+```bash
+poetry add kindred-sdk
 ```
 
-Now call your endpoint and use your models:
+## Quick Start
 
 ```python
-from personal_crm_client.models import MyDataModel
-from personal_crm_client.api.my_tag import get_my_data_model
-from personal_crm_client.types import Response
+from kindred_sdk import KindredClient
 
-with client as client:
-    my_data: MyDataModel = get_my_data_model.sync(client=client)
-    # or if you need more info (e.g. status_code)
-    response: Response[MyDataModel] = get_my_data_model.sync_detailed(client=client)
-```
-
-Or do the same thing with an async version:
-
-```python
-from personal_crm_client.models import MyDataModel
-from personal_crm_client.api.my_tag import get_my_data_model
-from personal_crm_client.types import Response
-
-async with client as client:
-    my_data: MyDataModel = await get_my_data_model.asyncio(client=client)
-    response: Response[MyDataModel] = await get_my_data_model.asyncio_detailed(client=client)
-```
-
-By default, when you're calling an HTTPS API it will attempt to verify that SSL is working correctly. Using certificate verification is highly recommended most of the time, but sometimes you may need to authenticate to a server (especially an internal server) using a custom certificate bundle.
-
-```python
-client = AuthenticatedClient(
-    base_url="https://internal_api.example.com", 
-    token="SuperSecretToken",
-    verify_ssl="/path/to/certificate_bundle.pem",
-)
-```
-
-You can also disable certificate validation altogether, but beware that **this is a security risk**.
-
-```python
-client = AuthenticatedClient(
-    base_url="https://internal_api.example.com", 
-    token="SuperSecretToken", 
-    verify_ssl=False
-)
-```
-
-Things to know:
-1. Every path/method combo becomes a Python module with four functions:
-    1. `sync`: Blocking request that returns parsed data (if successful) or `None`
-    1. `sync_detailed`: Blocking request that always returns a `Request`, optionally with `parsed` set if the request was successful.
-    1. `asyncio`: Like `sync` but async instead of blocking
-    1. `asyncio_detailed`: Like `sync_detailed` but async instead of blocking
-
-1. All path/query params, and bodies become method arguments.
-1. If your endpoint had any tags on it, the first tag will be used as a module name for the function (my_tag above)
-1. Any endpoint which did not have a tag will be in `personal_crm_client.api.default`
-
-## Advanced customizations
-
-There are more settings on the generated `Client` class which let you control more runtime behavior, check out the docstring on that class for more info. You can also customize the underlying `httpx.Client` or `httpx.AsyncClient` (depending on your use-case):
-
-```python
-from personal_crm_client import Client
-
-def log_request(request):
-    print(f"Request event hook: {request.method} {request.url} - Waiting for response")
-
-def log_response(response):
-    request = response.request
-    print(f"Response event hook: {request.method} {request.url} - Status {response.status_code}")
-
-client = Client(
-    base_url="https://api.example.com",
-    httpx_args={"event_hooks": {"request": [log_request], "response": [log_response]}},
+# Create a client (authenticated)
+client = KindredClient(
+    base_url="http://localhost:8000",
+    token="your-api-token",
 )
 
-# Or get the underlying httpx client to modify directly with client.get_httpx_client() or client.get_async_httpx_client()
-```
+# List contacts
+contacts = client.contacts.list()
+if contacts and hasattr(contacts, 'data'):
+    for contact in contacts.data:
+        print(f"{contact.first_name} {contact.last_name}")
 
-You can even set the httpx client directly, but beware that this will override any existing settings (e.g., base_url):
+# Get a specific contact
+from uuid import UUID
+contact = client.contacts.get(contact_id=UUID("your-contact-uuid"))
 
-```python
-import httpx
-from personal_crm_client import Client
-
-client = Client(
-    base_url="https://api.example.com",
+# Create a new contact
+from personal_crm_client.models import ContactCreate
+new_contact = client.contacts.create(
+    ContactCreate(first_name="John", last_name="Doe")
 )
-# Note that base_url needs to be re-set, as would any shared cookies, headers, etc.
-client.set_httpx_client(httpx.Client(base_url="https://api.example.com", proxies="http://localhost:8030"))
+
+# Use async
+import asyncio
+
+async def main():
+    async with KindredClient(
+        base_url="http://localhost:8000",
+        token="your-api-token",
+    ) as client:
+        contacts = await client.contacts.list_async()
+        print(contacts)
+
+asyncio.run(main())
 ```
 
-## Building / publishing this package
-This project uses [Poetry](https://python-poetry.org/) to manage dependencies  and packaging.  Here are the basics:
-1. Update the metadata in pyproject.toml (e.g. authors, version)
-1. If you're using a private repository, configure it with Poetry
-    1. `poetry config repositories.<your-repository-name> <url-to-your-repository>`
-    1. `poetry config http-basic.<your-repository-name> <username> <password>`
-1. Publish the client with `poetry publish --build -r <your-repository-name>` or, if for public PyPI, just `poetry publish --build`
+## Resources
 
-If you want to install this client into another project without publishing it (e.g. for development) then:
-1. If that project **is using Poetry**, you can simply do `poetry add <path-to-this-client>` from that project
-1. If that project is not using Poetry:
-    1. Build a wheel with `poetry build -f wheel`
-    1. Install that wheel from the other project `pip install <path-to-wheel>`
+The SDK provides the following resource-oriented interfaces:
+
+- `client.contacts` - Manage contacts (list, get, create, update, delete, restore, mentions, losing touch, household)
+- `client.groups` - Manage contact groups
+- `client.interactions` - Log and manage interactions
+- `client.tags` - Manage tags
+- `client.notes` - Manage notes with contact mentions
+- `client.gifts` - Track gifts
+- `client.debts` - Track debts between contacts
+- `client.pets` - Manage contact pets
+- `client.addresses` - Manage contact addresses
+- `client.relationships` - Manage relationships between contacts
+- `client.reminders` - Manage reminders (with snooze support)
+- `client.life_events` - Track life events for contacts
+- `client.journal` - Personal journal entries
+- `client.custom_fields` - Custom field definitions and values
+- `client.activity_logs` - Read-only access to activity logs
+- `client.calendar` - Calendar views by month
+
+## Regeneration
+
+The `personal_crm_client` package is generated from the backend's OpenAPI schema using [openapi-python-client](https://github.com/openapi-generators/openapi-python-client). To regenerate:
+
+```bash
+# From the project root
+docker compose exec backend uv run python -c "import json; from app.main import app; print(json.dumps(app.openapi()))" > openapi.json
+cd kindred-sdk
+openapi-python-client generate --url ../openapi.json --output . --overwrite
+```
+
+## Development
+
+```bash
+cd kindred-sdk
+poetry install
+poetry shell
+```
+
+Run linting:
+```bash
+ruff check .
+```
+
+## License
+
+MIT (or your chosen license)

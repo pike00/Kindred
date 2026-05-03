@@ -1,63 +1,88 @@
-"""{resource_name} resource for Kindred SDK."""
+"""Tags resource for Kindred SDK."""
 
 from personal_crm_client import AuthenticatedClient, Client
-from personal_crm_client.models import {model}Create, {model}Update, {models}, {model}Public
-from personal_crm_client.models import HTTPValidationError
+from personal_crm_client.models import (
+    TagCreate,
+    TagUpdate,
+    TagPublic,
+    TagsPublic,
+    HTTPValidationError,
+)
 from uuid import UUID
 
+from typing import Optional
 
-class {class_name}:
-    """Resource for managing {module}."""
 
-    def __init__(self, client: AuthenticatedClient | Client):
+class TagsResource:
+    """Resource for managing tags."""
+
+    def __init__(self, client: AuthenticatedClient | Client) -> None:
         self._client = client
 
-    def list(self, *, skip: int = 0, limit: int = 100) -> {models} | HTTPValidationError | None:
-        """List {module}."""
-        from personal_crm_client.api.{module} import {list_func}
-        return {list_func}.sync(client=self._client, skip=skip, limit=limit)
+    def list(
+        self, *, skip: int = 0, limit: int = 100
+    ) -> TagsPublic | HTTPValidationError | None:
+        """List tags."""
+        from personal_crm_client.api.tags.tags_list_tags import sync
 
-    async def list_async(self, *, skip: int = 0, limit: int = 100) -> {models} | HTTPValidationError | None:
+        return sync(client=self._client, skip=skip, limit=limit)
+
+    async def list_async(
+        self, *, skip: int = 0, limit: int = 100
+    ) -> TagsPublic | HTTPValidationError | None:
         """Async version of list()."""
-        from personal_crm_client.api.{module} import {list_func}
-        return await {list_func}.asyncio(client=self._client, skip=skip, limit=limit)
+        from personal_crm_client.api.tags.tags_list_tags import asyncio
 
-    def get(self, {item_id}: UUID) -> {model}Public | HTTPValidationError | None:
-        """Get a single {singular} by ID."""
-        from personal_crm_client.api.{module} import {get_func}
-        return {get_func}.sync(client=self._client, {item_id}={item_id})
+        return await asyncio(client=self._client, skip=skip, limit=limit)
 
-    async def get_async(self, {item_id}: UUID) -> {model}Public | HTTPValidationError | None:
-        """Async version of get()."""
-        from personal_crm_client.api.{module} import {get_func}
-        return await {get_func}.asyncio(client=self._client, {item_id}={item_id})
+    def get(self, tag_id: UUID) -> TagPublic | HTTPValidationError | None:
+        """Get a single tag by ID."""
+        from personal_crm_client.api.tags.tags_list_tags import sync
 
-    def create(self, item: {model}Create) -> {model}Public | HTTPValidationError | None:
-        """Create a new {singular}."""
-        from personal_crm_client.api.{module} import {create_func}
-        return {create_func}.sync(client=self._client, json_body=item)
+        # Note: The generated client may not have a separate get function
+        tags = self.list()
+        if tags and hasattr(tags, 'data'):
+            for tag in tags.data:
+                if tag.id == tag_id:
+                    return tag
+        return None
 
-    async def create_async(self, item: {model}Create) -> {model}Public | HTTPValidationError | None:
+    def create(self, item: TagCreate) -> TagPublic | HTTPValidationError | None:
+        """Create a new tag."""
+        from personal_crm_client.api.tags.tags_create_tag_route import sync
+
+        return sync(client=self._client, body=item)
+
+    async def create_async(self, item: TagCreate) -> TagPublic | HTTPValidationError | None:
         """Async version of create()."""
-        from personal_crm_client.api.{module} import {create_func}
-        return await {create_func}.asyncio(client=self._client, json_body=item)
+        from personal_crm_client.api.tags.tags_create_tag_route import asyncio
 
-    def update(self, {item_id}: UUID, item: {model}Update) -> {model}Public | HTTPValidationError | None:
-        """Update an existing {singular}."""
-        from personal_crm_client.api.{module} import {update_func}
-        return {update_func}.sync(client=self._client, {item_id}={item_id}, json_body=item)
+        return await asyncio(client=self._client, body=item)
 
-    async def update_async(self, {item_id}: UUID, item: {model}Update) -> {model}Public | HTTPValidationError | None:
+    def update(
+        self, tag_id: UUID, item: TagUpdate
+    ) -> TagPublic | HTTPValidationError | None:
+        """Update an existing tag."""
+        from personal_crm_client.api.tags.tags_update_tag import sync
+
+        return sync(client=self._client, tag_id=tag_id, body=item)
+
+    async def update_async(
+        self, tag_id: UUID, item: TagUpdate
+    ) -> TagPublic | HTTPValidationError | None:
         """Async version of update()."""
-        from personal_crm_client.api.{module} import {update_func}
-        return await {update_func}.asyncio(client=self._client, {item_id}={item_id}, json_body=item)
+        from personal_crm_client.api.tags.tags_update_tag import asyncio
 
-    def delete(self, {item_id}: UUID) -> {model}Public | HTTPValidationError | None:
-        """Delete a {singular}."""
-        from personal_crm_client.api.{module} import {delete_func}
-        return {delete_func}.sync(client=self._client, {item_id}={item_id})
+        return await asyncio(client=self._client, tag_id=tag_id, body=item)
 
-    async def delete_async(self, {item_id}: UUID) -> {model}Public | HTTPValidationError | None:
+    def delete(self, tag_id: UUID) -> TagPublic | HTTPValidationError | None:
+        """Delete a tag."""
+        from personal_crm_client.api.tags.tags_delete_tag import sync
+
+        return sync(client=self._client, tag_id=tag_id)
+
+    async def delete_async(self, tag_id: UUID) -> TagPublic | HTTPValidationError | None:
         """Async version of delete()."""
-        from personal_crm_client.api.{module} import {delete_func}
-        return await {delete_func}.asyncio(client=self._client, {item_id}={item_id})
+        from personal_crm_client.api.tags.tags_delete_tag import asyncio
+
+        return await asyncio(client=self._client, tag_id=tag_id)

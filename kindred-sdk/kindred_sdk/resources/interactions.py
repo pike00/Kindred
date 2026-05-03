@@ -1,63 +1,118 @@
-"""{resource_name} resource for Kindred SDK."""
+"""Interactions resource for Kindred SDK."""
 
 from personal_crm_client import AuthenticatedClient, Client
-from personal_crm_client.models import {model}Create, {model}Update, {models}, {model}Public
-from personal_crm_client.models import HTTPValidationError
+from personal_crm_client.models import (
+    InteractionCreate,
+    InteractionUpdate,
+    InteractionPublic,
+    InteractionsPublic,
+    HTTPValidationError,
+)
 from uuid import UUID
 
+from typing import Optional
 
-class {class_name}:
-    """Resource for managing {module}."""
 
-    def __init__(self, client: AuthenticatedClient | Client):
+class InteractionsResource:
+    """Resource for managing interactions."""
+
+    def __init__(self, client: AuthenticatedClient | Client) -> None:
         self._client = client
 
-    def list(self, *, skip: int = 0, limit: int = 100) -> {models} | HTTPValidationError | None:
-        """List {module}."""
-        from personal_crm_client.api.{module} import {list_func}
-        return {list_func}.sync(client=self._client, skip=skip, limit=limit)
+    def list(
+        self,
+        *,
+        skip: int = 0,
+        limit: int = 100,
+        contact_id: Optional[UUID] = None,
+        search: Optional[str] = None,
+    ) -> InteractionsPublic | HTTPValidationError | None:
+        """List interactions."""
+        from personal_crm_client.api.interactions.interactions_list_interactions import sync
 
-    async def list_async(self, *, skip: int = 0, limit: int = 100) -> {models} | HTTPValidationError | None:
+        return sync(
+            client=self._client,
+            skip=skip,
+            limit=limit,
+            contact_id=contact_id,
+            search=search,
+        )
+
+    async def list_async(
+        self,
+        *,
+        skip: int = 0,
+        limit: int = 100,
+        contact_id: Optional[UUID] = None,
+        search: Optional[str] = None,
+    ) -> InteractionsPublic | HTTPValidationError | None:
         """Async version of list()."""
-        from personal_crm_client.api.{module} import {list_func}
-        return await {list_func}.asyncio(client=self._client, skip=skip, limit=limit)
+        from personal_crm_client.api.interactions.interactions_list_interactions import asyncio
 
-    def get(self, {item_id}: UUID) -> {model}Public | HTTPValidationError | None:
-        """Get a single {singular} by ID."""
-        from personal_crm_client.api.{module} import {get_func}
-        return {get_func}.sync(client=self._client, {item_id}={item_id})
+        return await asyncio(
+            client=self._client,
+            skip=skip,
+            limit=limit,
+            contact_id=contact_id,
+            search=search,
+        )
 
-    async def get_async(self, {item_id}: UUID) -> {model}Public | HTTPValidationError | None:
+    def get(self, interaction_id: UUID) -> InteractionPublic | HTTPValidationError | None:
+        """Get a single interaction by ID."""
+        from personal_crm_client.api.interactions.interactions_get_interaction import sync
+
+        return sync(client=self._client, interaction_id=interaction_id)
+
+    async def get_async(
+        self, interaction_id: UUID
+    ) -> InteractionPublic | HTTPValidationError | None:
         """Async version of get()."""
-        from personal_crm_client.api.{module} import {get_func}
-        return await {get_func}.asyncio(client=self._client, {item_id}={item_id})
+        from personal_crm_client.api.interactions.interactions_get_interaction import asyncio
 
-    def create(self, item: {model}Create) -> {model}Public | HTTPValidationError | None:
-        """Create a new {singular}."""
-        from personal_crm_client.api.{module} import {create_func}
-        return {create_func}.sync(client=self._client, json_body=item)
+        return await asyncio(client=self._client, interaction_id=interaction_id)
 
-    async def create_async(self, item: {model}Create) -> {model}Public | HTTPValidationError | None:
+    def create(
+        self, item: InteractionCreate
+    ) -> InteractionPublic | HTTPValidationError | None:
+        """Create a new interaction."""
+        from personal_crm_client.api.interactions.interactions_create_interaction import sync
+
+        return sync(client=self._client, body=item)
+
+    async def create_async(
+        self, item: InteractionCreate
+    ) -> InteractionPublic | HTTPValidationError | None:
         """Async version of create()."""
-        from personal_crm_client.api.{module} import {create_func}
-        return await {create_func}.asyncio(client=self._client, json_body=item)
+        from personal_crm_client.api.interactions.interactions_create_interaction import asyncio
 
-    def update(self, {item_id}: UUID, item: {model}Update) -> {model}Public | HTTPValidationError | None:
-        """Update an existing {singular}."""
-        from personal_crm_client.api.{module} import {update_func}
-        return {update_func}.sync(client=self._client, {item_id}={item_id}, json_body=item)
+        return await asyncio(client=self._client, body=item)
 
-    async def update_async(self, {item_id}: UUID, item: {model}Update) -> {model}Public | HTTPValidationError | None:
+    def update(
+        self, interaction_id: UUID, item: InteractionUpdate
+    ) -> InteractionPublic | HTTPValidationError | None:
+        """Update an existing interaction."""
+        from personal_crm_client.api.interactions.interactions_update_interaction import sync
+
+        return sync(client=self._client, interaction_id=interaction_id, body=item)
+
+    async def update_async(
+        self, interaction_id: UUID, item: InteractionUpdate
+    ) -> InteractionPublic | HTTPValidationError | None:
         """Async version of update()."""
-        from personal_crm_client.api.{module} import {update_func}
-        return await {update_func}.asyncio(client=self._client, {item_id}={item_id}, json_body=item)
+        from personal_crm_client.api.interactions.interactions_update_interaction import asyncio
 
-    def delete(self, {item_id}: UUID) -> {model}Public | HTTPValidationError | None:
-        """Delete a {singular}."""
-        from personal_crm_client.api.{module} import {delete_func}
-        return {delete_func}.sync(client=self._client, {item_id}={item_id})
+        return await asyncio(client=self._client, interaction_id=interaction_id, body=item)
 
-    async def delete_async(self, {item_id}: UUID) -> {model}Public | HTTPValidationError | None:
+    def delete(self, interaction_id: UUID) -> InteractionPublic | HTTPValidationError | None:
+        """Delete an interaction."""
+        from personal_crm_client.api.interactions.interactions_delete_interaction import sync
+
+        return sync(client=self._client, interaction_id=interaction_id)
+
+    async def delete_async(
+        self, interaction_id: UUID
+    ) -> InteractionPublic | HTTPValidationError | None:
         """Async version of delete()."""
-        from personal_crm_client.api.{module} import {delete_func}
-        return await {delete_func}.asyncio(client=self._client, {item_id}={item_id})
+        from personal_crm_client.api.interactions.interactions_delete_interaction import asyncio
+
+        return await asyncio(client=self._client, interaction_id=interaction_id)
