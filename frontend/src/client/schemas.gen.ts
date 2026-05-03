@@ -4833,6 +4833,38 @@ export const RemindersPublicSchema = {
     title: 'RemindersPublic'
 } as const;
 
+export const SetupSubmitSchema = {
+    properties: {
+        token: {
+            type: 'string',
+            title: 'Token'
+        },
+        email: {
+            type: 'string',
+            format: 'email',
+            title: 'Email'
+        },
+        password: {
+            type: 'string',
+            title: 'Password'
+        },
+        full_name: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Full Name'
+        }
+    },
+    type: 'object',
+    required: ['token', 'email', 'password'],
+    title: 'SetupSubmit'
+} as const;
+
 export const TagCreateSchema = {
     properties: {
         name: {

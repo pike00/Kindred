@@ -1310,6 +1310,13 @@ export type ReminderUpdate = {
     is_active?: (boolean | null);
 };
 
+export type SetupSubmit = {
+    token: string;
+    email: string;
+    password: string;
+    full_name?: (string | null);
+};
+
 export type TagCreate = {
     /**
      * Tag name, 1-100 chars.
@@ -1785,6 +1792,10 @@ export type GroupsDeleteGroupData = {
 
 export type GroupsDeleteGroupResponse = (unknown);
 
+export type HealthHealthResponse = ({
+    [key: string]: (string);
+});
+
 export type ImportExportImportVcardData = {
     formData: Body_import_export_import_vcard;
 };
@@ -2048,6 +2059,18 @@ export type RemindersSnoozeReminderData = {
 };
 
 export type RemindersSnoozeReminderResponse = (unknown);
+
+export type SetupSetupPageData = {
+    token: string;
+};
+
+export type SetupSetupPageResponse = (string);
+
+export type SetupSetupSubmitData = {
+    requestBody: SetupSubmit;
+};
+
+export type SetupSetupSubmitResponse = (UserPublic);
 
 export type TagsListTagsData = {
     limit?: number;

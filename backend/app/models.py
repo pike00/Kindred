@@ -1900,3 +1900,8 @@ class CalendarEntry(SQLModel):
 class CalendarMonthResponse(SQLModel):
     month: str
     days: dict[str, list[CalendarEntry]]
+
+
+# Register the SetupState table with SQLModel.metadata so Alembic and the
+# test bootstrap (alembic upgrade head) see it.
+from app.core.setup_state import SetupState  # noqa: E402,F401
