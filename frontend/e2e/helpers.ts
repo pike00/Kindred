@@ -146,21 +146,26 @@ export async function navigateTo(page: Page, linkText: string): Promise<void> {
   }
 }
 
-/**
- * Click the "Add" button inside a specific card by card title.
- */
 export async function clickAddInCard(
   page: Page,
   cardTitle: string,
 ): Promise<void> {
+  // Find the card by title
   const card = page.locator('[data-slot="card"]').filter({
     has: page
       .locator('[data-slot="card-title"]')
       .filter({ hasText: new RegExp(cardTitle, "i") }),
-  })
-  const addButton = card.getByRole("button").first()
-  await addButton.click()
-  await page.waitForTimeout(500)
+  });
+
+  // Look for the Add button inside the card header
+  const addButton = card
+    .getByRole("button")
+    .filter({ hasText: /add/i })
+    .or(card.getByRole("button").filter({ has: page.locator("svg") }))
+    .first();
+
+  await addButton.click();
+  await page.waitForTimeout(500);
 }
 
 /**
@@ -179,44 +184,44 @@ export async function isDialogOpen(page: Page): Promise<boolean> {
   return (await page.getByRole("dialog").count()) > 0
 }
 
-/**
- * Fill a form field by its label text.
- */
 export async function fillFieldByLabel(
   page: Page,
   labelText: string,
   value: string,
 ): Promise<void> {
-  const dialog = page.getByRole("dialog")
-  const target = dialog.locator("label").filter({ hasText: labelText }).first()
-  const _input = dialog
-    .locator("input, textarea")
-    .filter({ has: target })
-    .or(
-      dialog.locator(
-        `input[aria-label*="${labelText}"], textarea[aria-label*="${labelText}"]`,
-      ),
-    )
-    .first()
-
-  // Try to find input associated with the label
-  const label = dialog.locator("label").filter({ hasText: labelText }).first()
-  const inputId = await label.getAttribute("for")
-  let field: any
-  if (inputId) {
-    field = page.locator(`#${inputId}`)
-  } else {
-    // Look for input within the label's parent
-    field = label.locator("..").locator("input, textarea").first()
+  // Try to find the input by placeholder first (more reliable in this UI)
+  let field = page.getByPlaceholder(new RegExp(labelText, "i")).first();
+  
+  if ((await field.count()) === 0) {
+    // Try by label text
+    const dialog = page.getByRole("dialog");
+    const labels = dialog.getByText(new RegExp(labelText, "i")).all();
+    const count = await labels.count();
+    
+    for (let i = 0; i < count; i++) {
+      const label = labels.nth(i);
+      const forAttr = await label.getAttribute("for");
+      if (forAttr) {
+        field = page.locator(`#${forAttr}`);
+        break;
+      }
+    }
+  }
+  
+  if ((await field.count()) === 0) {
+    // Last resort: find input near the label text
+    field = page
+      .getByRole("dialog")
+      .getByText(new RegExp(labelText, "i"))
+      .locator("..")
+      .locator("input, textarea")
+      .first();
   }
 
-  await field.clear()
-  await field.fill(value)
+  await field.clear();
+  await field.fill(value);
 }
 
-/**
- * Open the row actions menu for an item in a card, then click the menu item.
- */
 export async function clickRowAction(
   page: Page,
   cardTitle: string,
@@ -227,18 +232,29 @@ export async function clickRowAction(
     has: page
       .locator('[data-slot="card-title"]')
       .filter({ hasText: new RegExp(cardTitle, "i") }),
-  })
+  });
 
-  // Click the actions trigger button in the card
+  // Click the actions trigger button (three dots menu or similar)
   const trigger = card
-    .getByRole("button", { name: /open actions menu/i })
-    .first()
-  await trigger.click()
-  await page.waitForTimeout(400)
+    .getByRole("button", { name: /open actions menu|edit|delete/i })
+    .first();
+
+  if ((await trigger.count()) > 0) {
+    await trigger.click();
+  } else {
+    // Try clicking on the row first to reveal actions
+    const row = card.locator(".flex.items-start.justify-between").first();
+    await row.hover();
+    await page.waitForTimeout(200);
+    const menuButton = card.getByRole("button").last();
+    await menuButton.click();
+  }
+
+  await page.waitForTimeout(400);
 
   // Click the menu item
-  await page.getByRole("menuitem", { name: menuItemText }).click()
-  await page.waitForTimeout(400)
+  await page.getByRole("menuitem", { name: new RegExp(menuItemText, "i") }).click();
+  await page.waitForTimeout(400);
 }
 
 /**
