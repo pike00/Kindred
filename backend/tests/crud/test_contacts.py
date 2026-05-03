@@ -144,6 +144,8 @@ def test_unique_constraint_prevents_duplicate_external_id(db: Session, user_fact
     with pytest.raises(Exception):  # noqa: B017
         create_contact(session=db, contact_in=contact_in, owner_id=user.id)
         db.commit()
+    # Rollback the aborted transaction so subsequent tests can continue
+    db.rollback()
 
 
 def test_multiple_manual_contacts_no_external_id(db: Session, user_factory):
