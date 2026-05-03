@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = "add_contact_merge_history"
+revision = "f6a7b8c9d0e1"
 down_revision = "fe56fa70289e"
 branch_labels = None
 depends_on = None
