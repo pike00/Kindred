@@ -56,7 +56,7 @@ jobs:
     if: ${{ !contains(needs.build.outputs.tag, '-') }}
     steps:
       - name: Connect to tailnet
-        uses: tailscale/github-action@v2
+        uses: tailscale/github-action@v4
         with:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
