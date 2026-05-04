@@ -14,6 +14,8 @@ from app.models import (
     ReminderPublic,
     RemindersPublic,
     ReminderUpdate,
+    ReminderWithContactPublic,
+    RemindersWithContactPublic,
 )
 
 router = APIRouter(prefix="/reminders", tags=["reminders"])
@@ -58,7 +60,7 @@ def list_reminders(
     )
 
 
-@router.get("/due", response_model=RemindersPublic)
+@router.get("/due", response_model=RemindersWithContactPublic)
 def list_due_reminders(
     session: SessionDep,
     current_user: CurrentUser,
@@ -72,30 +74,62 @@ def list_due_reminders(
     - snoozed_until is NULL or snoozed_until <= now (not snoozed)
     - is_active is True
     - owned by current user or tied to visible contacts
+
+    Also joins with Contact to include contact_name.
     """
     now = datetime.now(timezone.utc)
 
-    statement = select(Reminder).where(
-        Reminder.remind_at <= now,
-        or_(
-            Reminder.snoozed_until.is_(None),
-            Reminder.snoozed_until <= now,
-        ),
-        Reminder.is_active == True,
-        or_(
-            Reminder.owner_id == current_user.id,
-            Reminder.contact_id.in_(visible_contact_ids(current_user)),
-        ),
+    statement = (
+        select(Reminder, Contact.first_name, Contact.last_name)
+        .outerjoin(Contact, Reminder.contact_id == Contact.id)
+        .where(
+            Reminder.remind_at <= now,
+            or_(
+                Reminder.snoozed_until.is_(None),
+                Reminder.snoozed_until <= now,
+            ),
+            Reminder.is_active == True,
+            or_(
+                Reminder.owner_id == current_user.id,
+                Reminder.contact_id.in_(visible_contact_ids(current_user)),
+            ),
+        )
     )
 
-    count_statement = select(func.count()).select_from(statement.subquery())
+    count_statement = select(func.count()).select_from(
+        select(Reminder.id)
+        .outerjoin(Contact, Reminder.contact_id == Contact.id)
+        .where(
+            Reminder.remind_at <= now,
+            or_(
+                Reminder.snoozed_until.is_(None),
+                Reminder.snoozed_until <= now,
+            ),
+            Reminder.is_active == True,
+            or_(
+                Reminder.owner_id == current_user.id,
+                Reminder.contact_id.in_(visible_contact_ids(current_user)),
+            ),
+        )
+        .subquery()
+    )
     count = session.exec(count_statement).one()
 
     statement = statement.order_by(Reminder.remind_at.asc()).offset(skip).limit(limit)
-    reminders = session.exec(statement).all()
+    results = session.exec(statement).all()
 
-    return RemindersPublic(
-        data=[ReminderPublic.model_validate(r) for r in reminders],
+    reminders_with_contact = []
+    for row in results:
+        reminder = row[0]
+        first_name = row[1]
+        last_name = row[2]
+        reminder_data = ReminderWithContactPublic.model_validate(reminder)
+        if first_name:
+            reminder_data.contact_name = f"{first_name} {last_name or ''}".strip()
+        reminders_with_contact.append(reminder_data)
+
+    return RemindersWithContactPublic(
+        data=reminders_with_contact,
         count=count,
     )
 
