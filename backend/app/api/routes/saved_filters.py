@@ -12,8 +12,8 @@ from app.models import (
     SavedFilter,
     SavedFilterCreate,
     SavedFilterPublic,
-    SavedFilterUpdate,
     SavedFiltersPublic,
+    SavedFilterUpdate,
     Tag,
     TagShare,
 )
@@ -119,9 +119,7 @@ def list_saved_filters(
 ) -> Any:
     """List saved filters visible to the current user (owned + shared via tag)."""
     # Owned filters
-    owned_stmt = select(SavedFilter).where(
-        SavedFilter.owner_id == current_user.id
-    )
+    owned_stmt = select(SavedFilter).where(SavedFilter.owner_id == current_user.id)
     # Shared filters: filter's tag_id is shared with current_user via TagShare
     shared_stmt = (
         select(SavedFilter)
@@ -131,11 +129,7 @@ def list_saved_filters(
     )
 
     # Combine: owned + shared (deduplicated)
-    stmt = (
-        owned_stmt.union(shared_stmt)
-        .offset(skip)
-        .limit(limit)
-    )
+    stmt = owned_stmt.union(shared_stmt).offset(skip).limit(limit)
     filters = session.exec(stmt).all()
 
     # Count
@@ -232,3 +226,7 @@ def delete_saved_filter_route(
     session.delete(saved_filter)
     session.commit()
     return {"ok": True}
+
+
+# Starter built-in filter templates
+# (Removed - will be handled by frontend)

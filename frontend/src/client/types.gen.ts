@@ -1576,6 +1576,7 @@ export type ContactsListContactsData = {
     isFavorite?: (boolean | null);
     limit?: number;
     onlyDeleted?: boolean;
+    savedFilterId?: (string | null);
     search?: (string | null);
     skip?: number;
     stage?: (string | null);

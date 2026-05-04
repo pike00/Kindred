@@ -1,18 +1,18 @@
-import { useSuspenseQuery } from "@tanstack/react-query"
-import { Link, useNavigate, useSearch } from "@tanstack/react-router"
-import { useMemo } from "react"
+import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
+import { Link, useNavigate, useSearch } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
 
 import {
   type ContactPublic,
   ContactsService,
   SavedFiltersService,
-} from "@/client"
-import type { SavedFilterPublic } from "@/client/types.gen"
-import { ContactAvatar } from "@/components/Common/ContactAvatar"
-import { EmptyState } from "@/components/Common/EmptyState"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+} from "@/client";
+import type { SavedFilterPublic } from "@/client/types.gen";
+import { ContactAvatar } from "@/components/Common/ContactAvatar";
+import { EmptyState } from "@/components/Common/EmptyState";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   ChevronLeft,
   ChevronRight,
@@ -20,13 +20,19 @@ import {
   Search,
   Star,
   Users,
-} from "@/lib/icons"
-import { cn } from "@/lib/utils"
-import { AddContactDialog } from "./AddContactDialog"
+} from "@/lib/icons";
+import { cn } from "@/lib/utils";
+import { AddContactDialog } from "./AddContactDialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
-const PAGE_SIZE = 25
-
-import { useState } from "react"
+const PAGE_SIZE = 25;
 
 function fullName(contact: ContactPublic): string {
   return (
@@ -39,20 +45,20 @@ function fullName(contact: ContactPublic): string {
     ]
       .filter(Boolean)
       .join(" ") || "Unnamed contact"
-  )
+  );
 }
 
 function titleLine(contact: ContactPublic): string {
   if (contact.title && contact.company)
-    return `${contact.title} at ${contact.company}`
-  if (contact.title) return contact.title
-  if (contact.company) return contact.company
-  return ""
+    return `${contact.title} at ${contact.company}`;
+  if (contact.title) return contact.title;
+  if (contact.company) return contact.company;
+  return "";
 }
 
 function matchesSearch(contact: ContactPublic, q: string): boolean {
-  if (!q) return true
-  const needle = q.toLowerCase()
+  if (!q) return true;
+  const needle = q.toLowerCase();
   const haystack = [
     contact.first_name,
     contact.last_name,
@@ -65,27 +71,27 @@ function matchesSearch(contact: ContactPublic, q: string): boolean {
   ]
     .filter(Boolean)
     .join(" ")
-    .toLowerCase()
-  return haystack.includes(needle)
+    .toLowerCase();
+  return haystack.includes(needle);
 }
 
 function daysSince(iso: string | null | undefined): number | null {
-  if (!iso) return null
-  return Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000)
+  if (!iso) return null;
+  return Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
 }
 
 function lastContactTone(days: number | null): string {
-  if (days == null) return "text-muted-foreground"
-  if (days >= 60) return "text-accent-rose-fg font-medium"
-  if (days >= 30) return "text-accent-amber-fg font-medium"
-  return "text-muted-foreground"
+  if (days == null) return "text-muted-foreground";
+  if (days >= 60) return "text-accent-rose-fg font-medium";
+  if (days >= 30) return "text-accent-amber-fg font-medium";
+  return "text-muted-foreground";
 }
 
 function ContactRow({ contact }: { contact: ContactPublic }) {
-  const days = daysSince(contact.last_contacted_at)
-  const tags = contact.tags ?? []
-  const visibleTags = tags.slice(0, 3)
-  const extraTags = tags.length - visibleTags.length
+  const days = daysSince(contact.last_contacted_at);
+  const tags = contact.tags ?? [];
+  const visibleTags = tags.slice(0, 3);
+  const extraTags = tags.length - visibleTags.length;
 
   return (
     <Link
@@ -135,28 +141,32 @@ function ContactRow({ contact }: { contact: ContactPublic }) {
         )}
       </div>
     </Link>
-  )
+  );
 }
 
 export const ContactsList = () => {
-  const navigate = useNavigate({ from: "/contacts" })
+  const navigate = useNavigate({ from: "/contacts" });
   const { search: urlSearch, saved_filter_id: urlFilterId } = useSearch({
     from: "/_layout/contacts/",
-  })
-  const [search, setSearch] = useState(urlSearch ?? "")
-  const [pageIndex, setPageIndex] = useState(0)
+  });
+  const [search, setSearch] = useState(urlSearch ?? "");
+  const [pageIndex, setPageIndex] = useState(0);
+  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
+  const [newFilterName, setNewFilterName] = useState("");
+
+  const queryClient = useQueryClient();
 
   // Fetch saved filters to find active filter name
   const { data: filtersData } = useSuspenseQuery({
     queryKey: ["saved-filters"],
     queryFn: () =>
       SavedFiltersService.listSavedFilters().then((res) => res.data),
-  })
+  });
 
-  const activeFilterId = urlFilterId
+  const activeFilterId = urlFilterId;
   const activeFilter = filtersData?.data?.find(
     (f: SavedFilterPublic) => f.id === activeFilterId,
-  )
+  );
 
   const { data } = useSuspenseQuery({
     queryKey: ["contacts", activeFilterId],
@@ -164,19 +174,47 @@ export const ContactsList = () => {
       ContactsService.listContacts(
         activeFilterId ? { saved_filter_id: activeFilterId as any } : {},
       ),
-  })
+  });
 
-  const allContacts = useMemo(() => data?.data ?? [], [data?.data])
+  // Save current filter mutation
+  const saveFilterMutation = useMutation({
+    mutationFn: (data: { name: string; filter_json: any }) =>
+      SavedFiltersService.createSavedFilterRoute({
+        requestBody: { name: data.name, filter_json: data.filter_json },
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["saved-filters"] });
+      setIsSaveDialogOpen(false);
+      setNewFilterName("");
+    },
+  });
+
+  const allContacts = useMemo(() => data?.data ?? [], [data?.data]);
   const filtered = useMemo(
     () => allContacts.filter((c) => matchesSearch(c, search)),
     [allContacts, search],
-  )
-  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
-  const safePageIndex = Math.min(pageIndex, pageCount - 1)
+  );
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePageIndex = Math.min(pageIndex, pageCount - 1);
   const paged = filtered.slice(
     safePageIndex * PAGE_SIZE,
     (safePageIndex + 1) * PAGE_SIZE,
-  )
+  );
+
+  // Build filter_json from current search
+  const buildFilterJson = () => {
+    const conditions: Array<{ field: string; operator: string; value: any }> = [];
+    if (search) {
+      conditions.push({ field: "first_name", operator: "contains", value: search });
+    }
+    return { conditions, op: "and" as const };
+  };
+
+  const handleSaveFilter = () => {
+    if (!newFilterName) return;
+    const filter_json = buildFilterJson();
+    saveFilterMutation.mutate({ name: newFilterName, filter_json });
+  };
 
   return (
     <div className="space-y-6">
@@ -192,8 +230,9 @@ export const ContactsList = () => {
               <span className="text-primary">
                 · Filtered by: {activeFilter.name}
                 <button
-                  type="button"
-                  onClick={() => navigate({ search: search ? { search } : {} })}
+                  onClick={() =>
+                    navigate({ search: search ? { search } : {} })
+                  }
                   className="ml-2 text-xs underline"
                 >
                   Clear filter
@@ -202,7 +241,18 @@ export const ContactsList = () => {
             )}
           </p>
         </div>
-        <AddContactDialog />
+        <div className="flex gap-2">
+          {!activeFilter && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsSaveDialogOpen(true)}
+            >
+              Save as Smart List
+            </Button>
+          )}
+          <AddContactDialog />
+        </div>
       </div>
 
       <div className="relative">
@@ -210,13 +260,13 @@ export const ContactsList = () => {
         <Input
           value={search}
           onChange={(e) => {
-            const next = e.target.value
-            setSearch(next)
-            setPageIndex(0)
+            const next = e.target.value;
+            setSearch(next);
+            setPageIndex(0);
             navigate({
               search: next ? { search: next } : {},
               replace: true,
-            })
+            });
           }}
           placeholder="Search by name, company, or tag..."
           className="pl-10"
@@ -274,6 +324,40 @@ export const ContactsList = () => {
           </div>
         </div>
       )}
+
+      {/* Save as Smart List Dialog */}
+      <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save as Smart List</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="filter-name">Name</Label>
+              <Input
+                id="filter-name"
+                value={newFilterName}
+                onChange={(e) => setNewFilterName(e.target.value)}
+                placeholder="e.g., Colleagues overdue > 30d"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsSaveDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveFilter}
+              disabled={!newFilterName || saveFilterMutation.isPending}
+            >
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
-  )
-}
+  );
+};

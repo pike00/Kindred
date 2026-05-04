@@ -337,6 +337,7 @@ export class ContactsService {
      * @param data.includeDeleted
      * @param data.onlyDeleted
      * @param data.ids
+     * @param data.savedFilterId
      * @returns ContactsPublic Successful Response
      * @throws ApiError
      */
@@ -355,7 +356,8 @@ export class ContactsService {
                 stage: data.stage,
                 include_deleted: data.includeDeleted,
                 only_deleted: data.onlyDeleted,
-                ids: data.ids
+                ids: data.ids,
+                saved_filter_id: data.savedFilterId
             },
             errors: {
                 422: 'Validation Error'

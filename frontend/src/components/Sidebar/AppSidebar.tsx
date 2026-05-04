@@ -19,6 +19,7 @@ import {
   UsersRound,
 } from "@/lib/icons"
 import { type Item, Main } from "./Main"
+import { SmartLists } from "./SmartLists"
 import { User } from "./User"
 
 const baseItems: Item[] = [
@@ -46,6 +47,7 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <Main items={items} />
+        Reward2§ <SmartLists />
       </SidebarContent>
       <SidebarFooter>
         <SidebarAppearance />
