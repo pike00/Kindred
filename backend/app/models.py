@@ -1,3 +1,42 @@
+from typing import Any
+
+from sqlalchemy.orm import Query as SQLAlchemyQuery
+
+
+class SoftDeleteMixin:
+    """Mixin that adds ``deleted_at`` for soft-delete support.
+
+    Apply to SQLModel table classes to get:
+    * ``deleted_at`` nullable datetime column (indexed)
+    * ``is_deleted`` property for readability
+    * ``mark_deleted()`` / ``restore()`` convenience helpers
+    """
+
+    deleted_at: datetime | None = Field(
+        default=None,
+        index=True,
+        sa_type=DateTime(timezone=True),
+        description=(
+            "Soft-delete marker. When non-null, the row is hidden from the "
+            "default query filter; restore by clearing this column."
+        ),
+    )
+
+    @property
+    def is_deleted(self) -> bool:
+        """Return True if the row has been soft-deleted."""
+        return self.deleted_at is not None
+
+    def mark_deleted(self) -> None:
+        """Set deleted_at to now (UTC)."""
+        self.deleted_at = datetime.now(timezone.utc)
+
+    def restore(self) -> None:
+        """Clear deleted_at to un-delete the row."""
+        self.deleted_at = None
+
+
+
 import enum
 import uuid
 from datetime import date, datetime, timezone
@@ -571,7 +610,7 @@ class ContactUpdate(SQLModel):
     group_ids: list[uuid.UUID] | None = None
 
 
-class Contact(ContactBase, table=True):
+class Contact(SoftDeleteMixin, ContactBase, table=True):
     """Core contact entity — the subject of everything else in the CRM."""
 
     id: uuid.UUID = Field(
@@ -616,14 +655,6 @@ class Contact(ContactBase, table=True):
         sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
         nullable=False,
         description="Auto-bumped on any column change (UTC).",
-    )
-    deleted_at: datetime | None = Field(
-        default=None,
-        index=True,
-        description=(
-            "Soft-delete marker. When non-null, the row is hidden from the "
-            "default visibility helpers; restore by clearing this column."
-        ),
     )
     # Relationships
     tags: list["Tag"] = Relationship(
@@ -1127,7 +1158,7 @@ class InteractionAttendee(SQLModel, table=True):
     )
 
 
-class Interaction(InteractionBase, table=True):
+class Interaction(SoftDeleteMixin, InteractionBase, table=True):
     """Logged touchpoint with one or more contacts (call, meeting, text, etc.).
 
     A single interaction can have multiple attendees via ``interaction_attendee``.
@@ -1144,15 +1175,6 @@ class Interaction(InteractionBase, table=True):
         nullable=False,
         ondelete="CASCADE",
         description="Owner user; cascades on delete.",
-    )
-    deleted_at: datetime | None = Field(
-        default=None,
-        index=True,
-        sa_type=DateTime(timezone=True),
-        description=(
-            "Soft-delete marker. When non-null, the row is hidden from the "
-            "default visibility helpers; restore by clearing this column."
-        ),
     )
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
@@ -1219,7 +1241,7 @@ class ReminderUpdate(SQLModel):
     is_active: bool | None = None
 
 
-class Reminder(ReminderBase, table=True):
+class Reminder(SoftDeleteMixin, ReminderBase, table=True):
     """Scheduled reminder; contact-specific or standalone."""
 
     id: uuid.UUID = Field(
@@ -1238,15 +1260,6 @@ class Reminder(ReminderBase, table=True):
         nullable=False,
         ondelete="CASCADE",
         description="Owner user; cascades on delete.",
-    )
-    deleted_at: datetime | None = Field(
-        default=None,
-        index=True,
-        sa_type=DateTime(timezone=True),
-        description=(
-            "Soft-delete marker. When non-null, the row is hidden from the "
-            "default visibility helpers; restore by clearing this column."
-        ),
     )
     last_sent_at: datetime | None = Field(
         default=None,
@@ -1335,7 +1348,7 @@ class GiftUpdate(SQLModel):
     url: str | None = None
 
 
-class Gift(GiftBase, table=True):
+class Gift(SoftDeleteMixin, GiftBase, table=True):
     """Gift idea or record for a contact."""
 
     id: uuid.UUID = Field(
@@ -1354,15 +1367,6 @@ class Gift(GiftBase, table=True):
         nullable=False,
         ondelete="CASCADE",
         description="Owner user; cascades on delete.",
-    )
-    deleted_at: datetime | None = Field(
-        default=None,
-        index=True,
-        sa_type=DateTime(timezone=True),
-        description=(
-            "Soft-delete marker. When non-null, the row is hidden from the "
-            "default visibility helpers; restore by clearing this column."
-        ),
     )
     gift_date: date | None = Field(
         default=None,
@@ -1432,7 +1436,7 @@ class DebtUpdate(SQLModel):
     settled_at: date | None = None
 
 
-class Debt(DebtBase, table=True):
+class Debt(SoftDeleteMixin, DebtBase, table=True):
     """Money owed to or from a contact."""
 
     id: uuid.UUID = Field(
@@ -1451,15 +1455,6 @@ class Debt(DebtBase, table=True):
         nullable=False,
         ondelete="CASCADE",
         description="Owner user; cascades on delete.",
-    )
-    deleted_at: datetime | None = Field(
-        default=None,
-        index=True,
-        sa_type=DateTime(timezone=True),
-        description=(
-            "Soft-delete marker. When non-null, the row is hidden from the "
-            "default visibility helpers; restore by clearing this column."
-        ),
     )
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
@@ -1519,7 +1514,7 @@ class LifeEventUpdate(SQLModel):
     create_annual_reminder: bool | None = None
 
 
-class LifeEvent(LifeEventBase, table=True):
+class LifeEvent(SoftDeleteMixin, LifeEventBase, table=True):
     """Milestone on a contact's timeline (job change, wedding, move, etc.)."""
 
     __tablename__ = "life_event"
@@ -1539,15 +1534,6 @@ class LifeEvent(LifeEventBase, table=True):
         nullable=False,
         ondelete="CASCADE",
         description="Owner user; cascades on delete.",
-    )
-    deleted_at: datetime | None = Field(
-        default=None,
-        index=True,
-        sa_type=DateTime(timezone=True),
-        description=(
-            "Soft-delete marker. When non-null, the row is hidden from the "
-            "default visibility helpers; restore by clearing this column."
-        ),
     )
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
@@ -1605,7 +1591,7 @@ class NoteMention(SQLModel, table=True):
     )
 
 
-class Note(NoteBase, table=True):
+class Note(SoftDeleteMixin, NoteBase, table=True):
     """Timestamped freeform note attached to a specific contact."""
 
     id: uuid.UUID = Field(
@@ -1624,15 +1610,6 @@ class Note(NoteBase, table=True):
         nullable=False,
         ondelete="CASCADE",
         description="Owner user; cascades on delete.",
-    )
-    deleted_at: datetime | None = Field(
-        default=None,
-        index=True,
-        sa_type=DateTime(timezone=True),
-        description=(
-            "Soft-delete marker. When non-null, the row is hidden from the "
-            "default visibility helpers; restore by clearing this column."
-        ),
     )
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
