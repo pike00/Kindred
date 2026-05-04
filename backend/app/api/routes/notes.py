@@ -4,11 +4,19 @@ import uuid
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
-from sqlmodel import func, select
+from sqlmodel import func, or_, select
 
 from app.api.deps import CurrentUser, SessionDep
-from app.crud import create_note
-from app.models import Contact, Note, NoteCreate, NotePublic, NotesPublic, NoteUpdate
+from app.crud import create_note, update_note
+from app.models import (
+    Contact,
+    Note,
+    NoteCreate,
+    NoteMention,
+    NotePublic,
+    NotesPublic,
+    NoteUpdate,
+)
 
 router = APIRouter(prefix="/notes", tags=["notes"])
 
@@ -28,16 +36,27 @@ def list_notes(
     if contact.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not enough permissions")
 
+    # Notes authored on this contact's page UNION notes that @-mention this
+    # contact via note_mention. Self-mentions (notes whose contact_id already
+    # matches) are deduped by the OR condition's exclusive arms.
+    mention_subq = select(NoteMention.note_id).where(
+        NoteMention.contact_id == contact_id
+    )
+    where_clause = or_(
+        Note.contact_id == contact_id,
+        Note.id.in_(mention_subq),
+    )
+
     statement = (
         select(Note)
-        .where(Note.contact_id == contact_id)
+        .where(where_clause)
         .order_by(Note.created_at.desc())
         .offset(skip)
         .limit(limit)
     )
     notes = session.exec(statement).all()
 
-    count_statement = select(func.count(Note.id)).where(Note.contact_id == contact_id)
+    count_statement = select(func.count(Note.id.distinct())).where(where_clause)
     count = session.exec(count_statement).one()
 
     return NotesPublic(
@@ -65,7 +84,7 @@ def create_note_route(
 
 
 @router.patch("/{note_id}", response_model=NotePublic)
-def update_note(
+def update_note_route(
     *,
     session: SessionDep,
     current_user: CurrentUser,
@@ -79,11 +98,7 @@ def update_note(
     if note.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not enough permissions")
 
-    update_data = note_in.model_dump(exclude_unset=True)
-    note.sqlmodel_update(update_data)
-    session.add(note)
-    session.commit()
-    session.refresh(note)
+    note = update_note(session=session, note=note, note_in=note_in)
     return NotePublic.model_validate(note)
 
 

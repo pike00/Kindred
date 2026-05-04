@@ -15,11 +15,20 @@ node_modules/
 # superpowers brainstorming mockups
 .superpowers/
 
+# playwright MCP tool artifacts
+.playwright-mcp/
+
 # git worktrees
 .worktrees/
+
+# Claude Code internal state (worktrees, sessions, etc.)
+.claude/
 
 # Generated DB docs renderings (markdown is checked in, HTML is regenerable)
 docs/db/*.html
 
 # dbml conversion stderr from `just db-docs`; regenerable
 dbml-error.log
+
+# scripts/run-dirac-projects.sh state, logs, and prompts
+.dirac-runner/

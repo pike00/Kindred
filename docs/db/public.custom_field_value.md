@@ -74,6 +74,11 @@ erDiagram
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
   timestamp_with_time_zone deleted_at
+  contactsource source
+  varchar_500_ source_external_id
+  uuid organization_id FK
+  boolean do_not_contact
+  varchar_500_ do_not_contact_reason
 }
 "public.custom_field_definition" {
   uuid id

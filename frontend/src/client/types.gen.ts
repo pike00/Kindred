@@ -116,6 +116,45 @@ export type AddressUpdate = {
     longitude?: (number | null);
 };
 
+export type APIKeyCreate = {
+    name: string;
+    can_impersonate?: Array<(string)>;
+    expires_at?: (string | null);
+};
+
+/**
+ * Returned once at creation — plaintext_key is never stored.
+ */
+export type APIKeyCreated = {
+    id: string;
+    name: string;
+    key_prefix: string;
+    owned_by_user_id: string;
+    can_impersonate: Array<(string)>;
+    created_at: string;
+    last_used_at: (string | null);
+    revoked_at: (string | null);
+    expires_at: (string | null);
+    plaintext_key: string;
+};
+
+export type APIKeyPublic = {
+    id: string;
+    name: string;
+    key_prefix: string;
+    owned_by_user_id: string;
+    can_impersonate: Array<(string)>;
+    created_at: string;
+    last_used_at: (string | null);
+    revoked_at: (string | null);
+    expires_at: (string | null);
+};
+
+export type APIKeysPublic = {
+    data: Array<APIKeyPublic>;
+    count: number;
+};
+
 export type Body_import_export_import_vcard = {
     file: (Blob | File);
 };
@@ -127,6 +166,20 @@ export type Body_login_login_access_token = {
     scope?: string;
     client_id?: (string | null);
     client_secret?: (string | null);
+};
+
+export type CalendarEntry = {
+    contact_id: string;
+    name: string;
+    type: string;
+    age: (number | null);
+};
+
+export type CalendarMonthResponse = {
+    month: string;
+    days: {
+        [key: string]: Array<CalendarEntry>;
+    };
 };
 
 export type ContactCreate = {
@@ -206,6 +259,14 @@ export type ContactCreate = {
      * Kanban stage like Active, Dormant, Lost.
      */
     stage?: (string | null);
+    /**
+     * Where this contact originated.
+     */
+    source?: ContactSource;
+    /**
+     * Opaque external ID for idempotent upserts from integrations.
+     */
+    source_external_id?: (string | null);
     tag_ids?: (Array<(string)> | null);
     group_ids?: (Array<(string)> | null);
 };
@@ -337,6 +398,14 @@ export type ContactPublic = {
      * Kanban stage like Active, Dormant, Lost.
      */
     stage?: (string | null);
+    /**
+     * Where this contact originated.
+     */
+    source?: ContactSource;
+    /**
+     * Opaque external ID for idempotent upserts from integrations.
+     */
+    source_external_id?: (string | null);
     id: string;
     avatar_url: (string | null);
     last_contacted_at: (string | null);
@@ -346,6 +415,8 @@ export type ContactPublic = {
     tags?: Array<TagPublic>;
     groups?: Array<GroupPublic>;
 };
+
+export type ContactSource = 'MANUAL' | 'VCARD_IMPORT' | 'CARDDAV' | 'GOOGLE' | 'WEBHOOK';
 
 export type ContactsPublic = {
     data: Array<ContactPublic>;
@@ -1017,6 +1088,14 @@ export type OverdueContactPublic = {
      * Kanban stage like Active, Dormant, Lost.
      */
     stage?: (string | null);
+    /**
+     * Where this contact originated.
+     */
+    source?: ContactSource;
+    /**
+     * Opaque external ID for idempotent upserts from integrations.
+     */
+    source_external_id?: (string | null);
     id: string;
     avatar_url: (string | null);
     last_contacted_at: (string | null);
@@ -1389,6 +1468,26 @@ export type AddressesDeleteAddressData = {
 
 export type AddressesDeleteAddressResponse = (unknown);
 
+export type ApiKeysListMyApiKeysResponse = (APIKeysPublic);
+
+export type ApiKeysCreateMyApiKeyData = {
+    requestBody: APIKeyCreate;
+};
+
+export type ApiKeysCreateMyApiKeyResponse = (APIKeyCreated);
+
+export type ApiKeysRevokeMyApiKeyData = {
+    apiKeyId: string;
+};
+
+export type ApiKeysRevokeMyApiKeyResponse = (Message);
+
+export type CalendarGetCalendarMonthData = {
+    yyyyMm: string;
+};
+
+export type CalendarGetCalendarMonthResponse = (CalendarMonthResponse);
+
 export type CarddavWellKnownCarddavResponse = (unknown);
 
 export type ContactFieldsListContactFieldsData = {
@@ -1580,6 +1679,17 @@ export type GiftsDeleteGiftData = {
 
 export type GiftsDeleteGiftResponse = (unknown);
 
+export type GiftsGetKanbanBoardResponse = ({
+    [key: string]: unknown;
+});
+
+export type GiftsChangeGiftStatusData = {
+    giftId: string;
+    newStatus: GiftStatus;
+};
+
+export type GiftsChangeGiftStatusResponse = (GiftPublic);
+
 export type GroupsListGroupsData = {
     limit?: number;
     skip?: number;
@@ -1759,12 +1869,12 @@ export type NotesCreateNoteRouteData = {
 
 export type NotesCreateNoteRouteResponse = (NotePublic);
 
-export type NotesUpdateNoteData = {
+export type NotesUpdateNoteRouteData = {
     noteId: string;
     requestBody: NoteUpdate;
 };
 
-export type NotesUpdateNoteResponse = (NotePublic);
+export type NotesUpdateNoteRouteResponse = (NotePublic);
 
 export type NotesDeleteNoteData = {
     noteId: string;
@@ -1802,6 +1912,15 @@ export type PrivateCreateUserData = {
 };
 
 export type PrivateCreateUserResponse = (UserPublic);
+
+export type RelationshipsLookupInverseData = {
+    type: string;
+    [key: string]: (string | null);
+};
+
+export type RelationshipsLookupInverseResponse = ({
+  [key: string]: (string | null);
+});
 
 export type RelationshipsListRelationshipsData = {
     contactId: string;

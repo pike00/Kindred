@@ -1,13 +1,18 @@
+import re
 import uuid
 from typing import Any
 
 from sqlalchemy import union
 from sqlmodel import Session, select
+from sqlmodel import delete as sql_delete
 
 from app.core.security import get_password_hash, verify_password
 from app.models import (
     Address,
     AddressCreate,
+    APIKey,
+    APIKeyCreate,
+    APIKeyImpersonate,
     Contact,
     ContactCreate,
     ContactField,
@@ -35,6 +40,8 @@ from app.models import (
     MediaRecommendationCreate,
     Note,
     NoteCreate,
+    NoteMention,
+    NoteUpdate,
     Pet,
     PetCreate,
     Relationship,
@@ -341,12 +348,47 @@ def create_media_recommendation(
 # ─── Note CRUD ─────────────────────────────────────────────────────────────────
 
 
+_MENTION_RE = re.compile(r"@\[[^\]]+\]\(([a-f0-9-]{36})\)")
+
+
+def _extract_mention_ids(body: str | None) -> set[uuid.UUID]:
+    if not body:
+        return set()
+    ids: set[uuid.UUID] = set()
+    for raw in _MENTION_RE.findall(body):
+        try:
+            ids.add(uuid.UUID(raw))
+        except ValueError:
+            continue
+    return ids
+
+
+def _sync_note_mentions(*, session: Session, note: Note) -> None:
+    session.exec(sql_delete(NoteMention).where(NoteMention.note_id == note.id))
+    for cid in _extract_mention_ids(note.body):
+        session.add(NoteMention(note_id=note.id, contact_id=cid))
+
+
 def create_note(*, session: Session, note_in: NoteCreate, owner_id: uuid.UUID) -> Note:
     db_obj = Note.model_validate(note_in, update={"owner_id": owner_id})
     session.add(db_obj)
+    session.flush()
+    _sync_note_mentions(session=session, note=db_obj)
     session.commit()
     session.refresh(db_obj)
     return db_obj
+
+
+def update_note(*, session: Session, note: Note, note_in: NoteUpdate) -> Note:
+    update_data = note_in.model_dump(exclude_unset=True)
+    note.sqlmodel_update(update_data)
+    session.add(note)
+    session.flush()
+    if "body" in update_data:
+        _sync_note_mentions(session=session, note=note)
+    session.commit()
+    session.refresh(note)
+    return note
 
 
 # ─── JournalEntry CRUD ────────────────────────────────────────────────────────
@@ -443,3 +485,75 @@ def get_or_create_user_from_claims(
     session.commit()
     session.refresh(new_user)
     return new_user
+
+
+# ─── API Keys ─────────────────────────────────────────────────────────────────
+
+
+def create_api_key(
+    *, session: Session, owner_id: uuid.UUID, key_in: APIKeyCreate
+) -> tuple[APIKey, str]:
+    """Create a new API key, returning the model and the plaintext token."""
+    from app.core.api_keys import generate_key
+
+    plaintext, key_hash, key_prefix = generate_key()
+    api_key = APIKey(
+        name=key_in.name,
+        key_hash=key_hash,
+        key_prefix=key_prefix,
+        owned_by_user_id=owner_id,
+        expires_at=key_in.expires_at,
+    )
+    session.add(api_key)
+    session.flush()  # get api_key.id before adding impersonation rows
+
+    for user_id in key_in.can_impersonate:
+        session.add(APIKeyImpersonate(api_key_id=api_key.id, user_id=user_id))
+
+    session.commit()
+    session.refresh(api_key)
+    return api_key, plaintext
+
+
+def list_api_keys(*, session: Session, owner_id: uuid.UUID) -> list[APIKey]:
+    return list(
+        session.exec(select(APIKey).where(APIKey.owned_by_user_id == owner_id)).all()
+    )
+
+
+def revoke_api_key(*, session: Session, api_key: APIKey) -> None:
+    from datetime import datetime, timezone
+
+    api_key.revoked_at = datetime.now(timezone.utc)
+    session.add(api_key)
+    session.commit()
+
+
+def get_api_key_impersonate_targets(
+    *, session: Session, api_key_id: uuid.UUID
+) -> list[uuid.UUID]:
+    rows = session.exec(
+        select(APIKeyImpersonate).where(APIKeyImpersonate.api_key_id == api_key_id)
+    ).all()
+    return [r.user_id for r in rows]
+
+
+def get_api_key_by_hash(*, session: Session, key_hash: str) -> APIKey | None:
+    return session.exec(select(APIKey).where(APIKey.key_hash == key_hash)).first()
+
+
+def get_api_key_by_plaintext(*, session: Session, plaintext: str) -> APIKey | None:
+    from datetime import datetime, timezone
+
+    from app.core.api_keys import hash_key
+
+    api_key = get_api_key_by_hash(session=session, key_hash=hash_key(plaintext))
+    if api_key is None:
+        return None
+    if api_key.revoked_at is not None:
+        return None
+    if api_key.expires_at is not None and api_key.expires_at < datetime.now(
+        timezone.utc
+    ):
+        return None
+    return api_key

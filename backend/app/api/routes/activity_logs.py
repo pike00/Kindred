@@ -4,12 +4,10 @@ import uuid
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
-from sqlalchemy import and_, func, or_
-from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
-from app.crud import visible_contact_ids
-from app.models import ActivityLog, ActivityLogsPublic, ContactTag, Tag, TagShare
+from app.audit import TagAccessDenied, query_activity_logs
+from app.models import ActivityLogsPublic
 
 router = APIRouter(prefix="/activity-logs", tags=["activity-logs"])
 
@@ -29,49 +27,16 @@ def list_activity_logs(
     Owned logs (any entity type) are always included.  Contact-entity logs are
     also included when the contact is visible via a TagShare grant.
     """
-    visible = visible_contact_ids(current_user)
-    base = select(ActivityLog).where(
-        or_(
-            ActivityLog.owner_id == current_user.id,
-            and_(
-                ActivityLog.entity_type == "contact",
-                ActivityLog.entity_id.in_(visible),
-            ),
+    try:
+        rows, count = query_activity_logs(
+            session=session,
+            current_user=current_user,
+            entity_type=entity_type,
+            entity_id=entity_id,
+            tag_id=tag_id,
+            limit=limit,
+            offset=offset,
         )
-    )
-
-    if tag_id is not None:
-        has_access = session.exec(
-            select(Tag.id).where(
-                Tag.id == tag_id,
-                or_(
-                    Tag.owner_id == current_user.id,
-                    select(TagShare.tag_id)
-                    .where(
-                        TagShare.tag_id == tag_id,
-                        TagShare.grantee_id == current_user.id,
-                    )
-                    .exists(),
-                ),
-            )
-        ).first()
-        if has_access is None:
-            raise HTTPException(status_code=403)
-        contacts_for_tag = select(ContactTag.contact_id).where(
-            ContactTag.tag_id == tag_id
-        )
-        base = base.where(
-            ActivityLog.entity_type == "contact",
-            ActivityLog.entity_id.in_(contacts_for_tag),
-        )
-
-    if entity_type is not None:
-        base = base.where(ActivityLog.entity_type == entity_type)
-    if entity_id is not None:
-        base = base.where(ActivityLog.entity_id == entity_id)
-
-    count = session.exec(select(func.count()).select_from(base.subquery())).one()
-    rows = session.exec(
-        base.order_by(ActivityLog.occurred_at.desc()).offset(offset).limit(limit)  # type: ignore[union-attr]
-    ).all()
-    return ActivityLogsPublic(data=list(rows), count=count)
+    except TagAccessDenied:
+        raise HTTPException(status_code=403)
+    return ActivityLogsPublic(data=rows, count=count)

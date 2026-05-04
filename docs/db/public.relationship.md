@@ -8,11 +8,12 @@ Directional link between two contacts (spouse, child, friend, etc.).
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | uuid |  | false |  |  | Primary key. |
+| id | uuid |  | false | [public.relationship](public.relationship.md) |  | Primary key. |
 | contact_id | uuid |  | false |  | [public.contact](public.contact.md) | "From" contact in the directional relationship. |
 | related_contact_id | uuid |  | false |  | [public.contact](public.contact.md) | "To" contact in the directional relationship. |
 | relationship_type | varchar(100) |  | false |  |  | Kind of relationship: spouse, child, parent, sibling, friend, colleague, etc. |
 | notes | varchar(1000) |  | true |  |  | Additional context about the relationship. |
+| inverse_id | uuid |  | true |  | [public.relationship](public.relationship.md) |  |
 
 ## Constraints
 
@@ -24,6 +25,7 @@ Directional link between two contacts (spouse, child, friend, etc.).
 | relationship_relationship_type_not_null | n | NOT NULL relationship_type |
 | relationship_contact_id_fkey | FOREIGN KEY | FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE |
 | relationship_related_contact_id_fkey | FOREIGN KEY | FOREIGN KEY (related_contact_id) REFERENCES contact(id) ON DELETE CASCADE |
+| fk_relationship_inverse_id | FOREIGN KEY | FOREIGN KEY (inverse_id) REFERENCES relationship(id) ON DELETE SET NULL |
 | relationship_pkey | PRIMARY KEY | PRIMARY KEY (id) |
 
 ## Indexes
@@ -33,12 +35,14 @@ Directional link between two contacts (spouse, child, friend, etc.).
 | relationship_pkey | CREATE UNIQUE INDEX relationship_pkey ON public.relationship USING btree (id) |
 | ix_relationship_contact_id | CREATE INDEX ix_relationship_contact_id ON public.relationship USING btree (contact_id) |
 | ix_relationship_related_contact_id | CREATE INDEX ix_relationship_related_contact_id ON public.relationship USING btree (related_contact_id) |
+| ix_relationship_inverse_id | CREATE INDEX ix_relationship_inverse_id ON public.relationship USING btree (inverse_id) |
 
 ## Relations
 
 ```mermaid
 erDiagram
 
+"public.relationship" }o--o| "public.relationship" : "FOREIGN KEY (inverse_id) REFERENCES relationship(id) ON DELETE SET NULL"
 "public.relationship" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.relationship" }o--|| "public.contact" : "FOREIGN KEY (related_contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 
@@ -48,6 +52,7 @@ erDiagram
   uuid related_contact_id FK
   varchar_100_ relationship_type
   varchar_1000_ notes
+  uuid inverse_id FK
 }
 "public.contact" {
   uuid id
@@ -76,6 +81,11 @@ erDiagram
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
   timestamp_with_time_zone deleted_at
+  contactsource source
+  varchar_500_ source_external_id
+  uuid organization_id FK
+  boolean do_not_contact
+  varchar_500_ do_not_contact_reason
 }
 ```
 

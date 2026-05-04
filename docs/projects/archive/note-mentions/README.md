@@ -1,10 +1,11 @@
 ---
 title: Note Mentions
-status: active
+status: in-progress
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-04-26
-next_step: Create Alembic migration for note_mention (note_id, contact_id composite PK, no offset/length)
+last_updated: 2026-05-01
+progress: 6/6
+next_step: Manual smoke in worktree dev stack, then merge note-mentions to main
 ---
 
 # Note Mentions
@@ -13,14 +14,21 @@ next_step: Create Alembic migration for note_mention (note_id, contact_id compos
 Enable `@contact` mentions within note text so mentions surface on the contact's timeline without duplicating the note content. Modelled after Notion's bidirectional backlinks: a `note_mention` junction table links notes to mentioned contacts; the contact's timeline union-queries against it. The UI already captures `@[Name](contact_id)` tokens via MentionTextarea (shipped in commit 52edbc4) — this project builds the backend that makes them meaningful.
 
 ## Tasks
-- [ ] Create Alembic migration for `note_mention` table (note_id FK, contact_id FK, composite PK, both cascade)
-- [ ] Add NoteMention model to [models.py](../../../backend/app/models.py) (fields: note_id, contact_id only — no offset/length)
-- [ ] Parse @-mentions from note body and upsert NoteMention rows on note create/update in crud.py
-- [ ] Add `GET /contacts/{id}/mentions` endpoint returning notes that mention this contact with source contact info
-- [ ] Extend `GET /notes/contact/{id}` to also return notes where this contact is mentioned (UNION approach)
-- [ ] Fix MentionText renderer to resolve contact name at render time from contact_id (rename propagation)
+- [x] Create Alembic migration for `note_mention` table (note_id FK, contact_id FK, composite PK, both cascade)
+- [x] Add NoteMention model to [models.py](../../../backend/app/models.py) (fields: note_id, contact_id only — no offset/length)
+- [x] Parse @-mentions from note body and upsert NoteMention rows on note create/update in crud.py
+- [x] Add `GET /contacts/{id}/mentions` endpoint returning notes that mention this contact with source contact info
+- [x] Extend `GET /notes/contact/{id}` to also return notes where this contact is mentioned (UNION approach)
+- [x] Fix MentionText renderer to resolve contact name at render time from contact_id (rename propagation)
 
 ## Session Log
+
+### 2026-05-01
+- Discovered a parallel uncommitted implementation in `.claude/worktrees/note-mentions` (older worktree convention) that the dev stack was bind-mounted to. Promoted that work onto the rebased `note-mentions` branch in `.worktrees/note-mentions` (the project-local convention) after diffing — single source of truth on this branch now.
+- Tore down the stack against the legacy path; brought it up against `.worktrees/note-mentions` so future containers bind-mount the right tree.
+- All 10 tests in `tests/api/routes/test_note_mentions.py` pass against the promoted code; full backend suite has 3 unrelated pre-existing failures (auth-mode + email config) that also fail on `main`.
+- Backend changes: `NoteMention` model, `d4e5f6a7b8c9_add_note_mention.py` migration, `_sync_note_mentions` helper in `crud.py`, new `update_note` CRUD function, route renamed to `update_note_route` for consistency, `GET /contacts/{id}/mentions` endpoint, `GET /notes/contact/{id}` extended via OR-clause to return both direct and backlinked notes.
+- Frontend changes: `MentionText` resolves names live from `["contacts"]` query (no more stale baked-in names); `NotesService.updateNote` call site updated to `updateNoteRoute` after operation_id change; SDK regenerated against new openapi.
 
 ### 2026-04-26
 - Design locked in after research + ideation session. Notion-style bidirectional backlinks.
@@ -36,6 +44,11 @@ Enable `@contact` mentions within note text so mentions surface on the contact's
 - Project created.
 
 ## Notes
+
+### 2026-05-01
+- **State sync:** bumped last_updated; flipped status active→in-progress; rebased onto main; promoted prior session's implementation (see Session Log entry); progress 6/6.
+- **Discrepancies at load:** initial sync reported no implementation, but a parallel `.claude/worktrees/note-mentions` worktree held an uncommitted full implementation that the dev stack was bind-mounted to. README didn't reflect it because nothing was committed there.
+- **Resolution:** prior session's code copied into this worktree, dev stack repointed, tests rerun (10/10 pass), branch ready for merge after manual smoke.
 
 ### Design decisions (2026-04-26)
 

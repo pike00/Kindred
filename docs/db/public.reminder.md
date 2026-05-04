@@ -8,7 +8,7 @@ Scheduled reminder; contact-specific or standalone.
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | uuid |  | false |  |  | Primary key. |
+| id | uuid |  | false | [public.reminder_snooze](public.reminder_snooze.md) |  | Primary key. |
 | owner_id | uuid |  | false |  | [public.user](public.user.md) | Owner user; cascades on delete. |
 | contact_id | uuid |  | true |  | [public.contact](public.contact.md) | Optional contact; null for standalone reminders. |
 | title | varchar(500) |  | false |  |  | Reminder title. |
@@ -50,6 +50,7 @@ Scheduled reminder; contact-specific or standalone.
 ```mermaid
 erDiagram
 
+"public.reminder_snooze" }o--|| "public.reminder" : "FOREIGN KEY (reminder_id) REFERENCES reminder(id) ON DELETE CASCADE"
 "public.reminder" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.reminder" }o--o| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 
@@ -64,6 +65,14 @@ erDiagram
   boolean is_active
   timestamp_with_time_zone last_sent_at
   timestamp_with_time_zone snoozed_until
+  timestamp_with_time_zone created_at
+}
+"public.reminder_snooze" {
+  uuid id
+  uuid reminder_id FK
+  timestamp_with_time_zone snoozed_at
+  timestamp_with_time_zone snoozed_until
+  text reason
   timestamp_with_time_zone created_at
 }
 "public.user" {
@@ -104,6 +113,11 @@ erDiagram
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
   timestamp_with_time_zone deleted_at
+  contactsource source
+  varchar_500_ source_external_id
+  uuid organization_id FK
+  boolean do_not_contact
+  varchar_500_ do_not_contact_reason
 }
 ```
 

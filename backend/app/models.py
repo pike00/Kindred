@@ -109,12 +109,99 @@ class UsersPublic(SQLModel):
     count: int
 
 
+# ─── API Keys ─────────────────────────────────────────────────────────────────
+
+
+class APIKey(SQLModel, table=True):
+    __tablename__ = "api_key"
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    name: str = Field(max_length=255)
+    key_hash: str = Field(
+        max_length=64, sa_column=sa.Column(sa.String(64), unique=True, index=True)
+    )
+    key_prefix: str = Field(max_length=16)
+    owned_by_user_id: uuid.UUID = Field(
+        foreign_key="user.id",
+        ondelete="CASCADE",
+        index=True,
+    )
+    created_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),
+    )
+    last_used_at: datetime | None = Field(
+        default=None,
+        sa_type=DateTime(timezone=True),
+    )
+    revoked_at: datetime | None = Field(
+        default=None,
+        sa_type=DateTime(timezone=True),
+    )
+    expires_at: datetime | None = Field(
+        default=None,
+        sa_type=DateTime(timezone=True),
+    )
+
+
+class APIKeyImpersonate(SQLModel, table=True):
+    __tablename__ = "api_key_impersonate"
+
+    api_key_id: uuid.UUID = Field(
+        foreign_key="api_key.id",
+        primary_key=True,
+        ondelete="CASCADE",
+    )
+    user_id: uuid.UUID = Field(
+        foreign_key="user.id",
+        primary_key=True,
+        ondelete="CASCADE",
+    )
+
+
+class APIKeyCreate(SQLModel):
+    name: str = Field(min_length=1, max_length=255)
+    can_impersonate: list[uuid.UUID] = Field(default_factory=list)
+    expires_at: datetime | None = None
+
+
+class APIKeyPublic(SQLModel):
+    id: uuid.UUID
+    name: str
+    key_prefix: str
+    owned_by_user_id: uuid.UUID
+    can_impersonate: list[uuid.UUID]
+    created_at: datetime
+    last_used_at: datetime | None
+    revoked_at: datetime | None
+    expires_at: datetime | None
+
+
+class APIKeyCreated(APIKeyPublic):
+    """Returned once at creation — plaintext_key is never stored."""
+
+    plaintext_key: str
+
+
+class APIKeysPublic(SQLModel):
+    data: list[APIKeyPublic]
+    count: int
+
+
 # ─── Enums ────────────────────────────────────────────────────────────────────
 
 
 class ContactFieldType(str, enum.Enum):
     EMAIL = "email"
     PHONE = "phone"
+
+
+class ContactSource(str, enum.Enum):
+    MANUAL = "MANUAL"
+    VCARD_IMPORT = "VCARD_IMPORT"
+    CARDDAV = "CARDDAV"
+    GOOGLE = "GOOGLE"
+    WEBHOOK = "WEBHOOK"
 
 
 class GiftStatus(str, enum.Enum):
@@ -443,6 +530,15 @@ class ContactBase(SQLModel):
         default=None,
         max_length=100,
         description="Kanban stage like Active, Dormant, Lost.",
+    )
+    source: ContactSource = Field(
+        default=ContactSource.MANUAL,
+        description="Where this contact originated.",
+    )
+    source_external_id: str | None = Field(
+        default=None,
+        max_length=500,
+        description="Opaque external ID for idempotent upserts from integrations.",
     )
 
 
@@ -1428,6 +1524,24 @@ class NoteUpdate(SQLModel):
     body: str | None = None
 
 
+class NoteMention(SQLModel, table=True):
+    """Many-to-many link between notes and contacts referenced via @[Name](uuid) tokens."""
+
+    __tablename__ = "note_mention"
+    note_id: uuid.UUID = Field(
+        foreign_key="note.id",
+        primary_key=True,
+        ondelete="CASCADE",
+        description="Note side of the link; cascades on delete.",
+    )
+    contact_id: uuid.UUID = Field(
+        foreign_key="contact.id",
+        primary_key=True,
+        ondelete="CASCADE",
+        description="Mentioned contact; cascades on delete.",
+    )
+
+
 class Note(NoteBase, table=True):
     """Timestamped freeform note attached to a specific contact."""
 
@@ -1712,6 +1826,13 @@ class ActivityLog(SQLModel, table=True):
         default=None,
         sa_column=sa.Column("changes_json", sa.JSON, nullable=True),
     )
+    acting_api_key_id: uuid.UUID | None = Field(
+        default=None,
+        foreign_key="api_key.id",
+        nullable=True,
+        ondelete="SET NULL",
+        index=True,
+    )
     occurred_at: datetime = Field(
         default_factory=get_datetime_utc,
         sa_type=DateTime(timezone=True),
@@ -1754,3 +1875,15 @@ class TokenPayload(SQLModel):
 class NewPassword(SQLModel):
     token: str
     new_password: str = Field(min_length=8, max_length=128)
+
+
+class CalendarEntry(SQLModel):
+    contact_id: uuid.UUID
+    name: str
+    type: str
+    age: int | None
+
+
+class CalendarMonthResponse(SQLModel):
+    month: str
+    days: dict[str, list[CalendarEntry]]

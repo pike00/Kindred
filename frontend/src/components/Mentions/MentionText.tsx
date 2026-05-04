@@ -1,7 +1,43 @@
+import { useQuery } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
 import { Fragment } from "react"
 
+import { ContactsService } from "@/client"
+
 import { parseMentions } from "./mentionToken"
+
+function formatName(c: { first_name: string; last_name?: string | null }) {
+  return [c.first_name, c.last_name].filter(Boolean).join(" ") || "(unnamed)"
+}
+
+function MentionLink({
+  contactId,
+  fallbackName,
+}: {
+  contactId: string
+  fallbackName: string
+}) {
+  // Resolve the current contact name at render time so renames propagate
+  // without rewriting note bodies. The cached name on the token is a fallback
+  // for unresolved IDs (deleted contact, network error).
+  const { data } = useQuery({
+    queryKey: ["contacts", contactId],
+    queryFn: () => ContactsService.getContact({ contactId }),
+    staleTime: 30_000,
+  })
+
+  const displayName = data ? formatName(data) : fallbackName
+
+  return (
+    <Link
+      to="/contacts/$contactId"
+      params={{ contactId }}
+      className="font-medium text-primary hover:underline"
+    >
+      @{displayName}
+    </Link>
+  )
+}
 
 export function MentionText({
   text,
@@ -24,14 +60,11 @@ export function MentionText({
       )
     }
     nodes.push(
-      <Link
+      <MentionLink
         key={`m-${i}`}
-        to="/contacts/$contactId"
-        params={{ contactId: m.contactId }}
-        className="font-medium text-primary hover:underline"
-      >
-        @{m.name}
-      </Link>,
+        contactId={m.contactId}
+        fallbackName={m.name}
+      />,
     )
     cursor = m.end
   })
