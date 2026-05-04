@@ -1,202 +1,329 @@
-import { useCallback, useEffect, useRef } from "react"
+import { useCallback, useEffect, useRef, useState, useMemo } from "react"
+import { select, drag, zoom, zoomIdentity } from "d3-selection"
+import { forceSimulation, forceLink, forceManyBody, forceCenter, forceCollide } from "d3-force"
 import type { GraphEdge, GraphNode } from "./types"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { ZoomIn, ZoomOut, RotateCcw, Focus } from "@/lib/icons"
 
 interface GraphVisualizationProps {
   nodes: GraphNode[]
   edges: GraphEdge[]
+  onNodeClick?: (nodeId: string) => void
+  rootContactId?: string | null
 }
 
-export function GraphVisualization({ nodes, edges }: GraphVisualizationProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+// Color map for relationship types
+const typeColors: Record<string, string> = {
+  spouse: "#ec4899",
+  parent: "#8b5cf6",
+  child: "#a78bfa",
+  sibling: "#6366f1",
+  friend: "#10b981",
+  colleague: "#3b82f6",
+  manager: "#f59e0b",
+  reports_to: "#f97316",
+  partner: "#ef4444",
+  neighbor: "#14b8a6",
+}
+
+function getEdgeColor(type: string): string {
+  return typeColors[type] || "#94a3b8"
+}
+
+export function GraphVisualization({ nodes, edges, onNodeClick, rootContactId }: GraphVisualizationProps) {
+  const svgRef = useRef<SVGSVGElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const simulationRef = useRef<any>(null)
+  const [selectedNode, setSelectedNode] = useState<string | null>(null)
 
-  const draw = useCallback(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
+  // Get unique relationship types for legend
+  const relationshipTypes = useMemo(() => {
+    const types = new Set(edges.map((e) => e.label))
+    return Array.from(types)
+  }, [edges])
 
-    const ctx = canvas.getContext("2d")
-    if (!ctx) return
+  // Initialize simulation when nodes/edges change
+  useEffect(() => {
+    if (!svgRef.current || nodes.length === 0) return
 
+    const svg = select(svgRef.current)
     const container = containerRef.current
     if (!container) return
 
     const width = container.clientWidth
     const height = 600
-    canvas.width = width
-    canvas.height = height
 
-    // Clear canvas
-    ctx.clearRect(0, 0, width, height)
+    // Clear previous
+    svg.selectAll("*").remove()
 
-    // Simple force-directed layout
-    const nodeMap = new Map<
-      string,
-      { x: number; y: number; vx: number; vy: number }
-    >()
-    const nodeRadius = 20
+    // Create the container group for zoom/pan
+    const g = svg.append("g").attr("class", "graph-container")
 
-    // Initialize positions in a circle
-    const centerX = width / 2
-    const centerY = height / 2
-    const radius = Math.min(width, height) / 3
-
-    nodes.forEach((node, i) => {
-      const angle = (2 * Math.PI * i) / nodes.length
-      nodeMap.set(node.id, {
-        x: centerX + radius * Math.cos(angle),
-        y: centerY + radius * Math.sin(angle),
-        vx: 0,
-        vy: 0,
-      })
-    })
-
-    // Run simulation steps
-    const steps = 100
-    const alpha = 0.3
-    const alphaDecay = 0.99
-    const alphaMin = 0.001
-    const velocityDecay = 0.4
-    const strength = -300
-
-    let currentAlpha = alpha
-
-    for (let step = 0; step < steps && currentAlpha > alphaMin; step++) {
-      // Apply forces
-      const forces = new Map<string, { fx: number; fy: number }>()
-
-      // Initialize forces
-      nodes.forEach((node) => {
-        forces.set(node.id, { fx: 0, fy: 0 })
+    // Setup zoom
+    const zoomBehavior = zoom()
+      .scaleExtent([0.1, 4])
+      .on("zoom", (event) => {
+        g.attr("transform", event.transform)
       })
 
-      // Repulsion between all nodes
-      for (let i = 0; i < nodes.length; i++) {
-        for (let j = i + 1; j < nodes.length; j++) {
-          const nodeA = nodes[i]
-          const nodeB = nodes[j]
-          const posA = nodeMap.get(nodeA.id)!
-          const posB = nodeMap.get(nodeB.id)!
+    svg.call(zoomBehavior)
 
-          const dx = posB.x - posA.x
-          const dy = posB.y - posA.y
-          const dist = Math.sqrt(dx * dx + dy * dy) || 1
+    // Prepare nodes with initial positions
+    const simNodes: any[] = nodes.map((n, i) => ({
+      ...n,
+      x: width / 2 + (Math.random() - 0.5) * 100,
+      y: height / 2 + (Math.random() - 0.5) * 100,
+      radius: n.is_favorite ? 25 : 20,
+    }))
 
-          const force = strength / (dist * dist)
-          const fx = (dx / dist) * force
-          const fy = (dy / dist) * force
+    const simEdges = edges.map((e) => ({
+      source: e.source,
+      target: e.target,
+      label: e.label,
+    }))
 
-          forces.get(nodeA.id)!.fx -= fx
-          forces.get(nodeA.id)!.fy -= fy
-          forces.get(nodeB.id)!.fx += fx
-          forces.get(nodeB.id)!.fy += fy
-        }
-      }
+    // Create simulation
+    const simulation = forceSimulation(simNodes)
+      .force(
+        "link",
+        forceLink(simEdges)
+          .id((d: any) => d.id)
+          .distance(100)
+          .strength(0.5)
+      )
+      .force("charge", forceManyBody().strength(-300).distanceMax(500))
+      .force("center", forceCenter(width / 2, height / 2))
+      .force(
+        "collide",
+        forceCollide().radius((d: any) => d.radius + 5)
+      )
+      .alphaDecay(0.02)
+      .on("tick", ticked)
 
-      // Attraction along edges
-      edges.forEach((edge) => {
-        const sourcePos = nodeMap.get(edge.source)
-        const targetPos = nodeMap.get(edge.target)
-        if (!sourcePos || !targetPos) return
-
-        const dx = targetPos.x - sourcePos.x
-        const dy = targetPos.y - sourcePos.y
-        const dist = Math.sqrt(dx * dx + dy * dy) || 1
-
-        const force = dist * 0.01
-        const fx = (dx / dist) * force
-        const fy = (dy / dist) * force
-
-        forces.get(edge.source)!.fx += fx
-        forces.get(edge.source)!.fy += fy
-        forces.get(edge.target)!.fx -= fx
-        forces.get(edge.target)!.fy -= fy
-      })
-
-      // Apply forces
-      nodes.forEach((node) => {
-        const pos = nodeMap.get(node.id)!
-        const force = forces.get(node.id)!
-
-        pos.vx = pos.vx * velocityDecay + force.fx * currentAlpha
-        pos.vy = pos.vy * velocityDecay + force.fy * currentAlpha
-
-        pos.x += pos.vx
-        pos.y += pos.vy
-
-        // Keep within bounds
-        pos.x = Math.max(nodeRadius, Math.min(width - nodeRadius, pos.x))
-        pos.y = Math.max(nodeRadius, Math.min(height - nodeRadius, pos.y))
-      })
-
-      currentAlpha *= alphaDecay
-    }
+    simulationRef.current = simulation
 
     // Draw edges
-    ctx.strokeStyle = "#94a3b8"
-    ctx.lineWidth = 2
+    const edgeGroup = g.append("g").attr("class", "edges")
+    const edgeSelection = edgeGroup
+      .selectAll("line")
+      .data(simEdges)
+      .enter()
+      .append("line")
+      .attr("stroke", (d) => getEdgeColor(d.label))
+      .attr("stroke-width", 2)
+      .attr("stroke-opacity", 0.6)
 
-    edges.forEach((edge) => {
-      const sourcePos = nodeMap.get(edge.source)
-      const targetPos = nodeMap.get(edge.target)
-      if (!sourcePos || !targetPos) return
-
-      ctx.beginPath()
-      ctx.moveTo(sourcePos.x, sourcePos.y)
-      ctx.lineTo(targetPos.x, targetPos.y)
-      ctx.stroke()
-
-      // Draw edge label
-      const midX = (sourcePos.x + targetPos.x) / 2
-      const midY = (sourcePos.y + targetPos.y) / 2
-      ctx.fillStyle = "#64748b"
-      ctx.font = "10px sans-serif"
-      ctx.textAlign = "center"
-      ctx.fillText(edge.label, midX, midY - 5)
-    })
+    // Draw edge labels
+    const edgeLabelGroup = g.append("g").attr("class", "edge-labels")
+    const edgeLabelSelection = edgeLabelGroup
+      .selectAll("text")
+      .data(simEdges)
+      .enter()
+      .append("text")
+      .attr("font-size", "10px")
+      .attr("fill", "#64748b")
+      .attr("text-anchor", "middle")
+      .text((d) => d.label)
 
     // Draw nodes
-    nodes.forEach((node) => {
-      const pos = nodeMap.get(node.id)!
-      const radius = node.is_favorite ? 25 : 20
-      const color = node.is_favorite ? "#f59e0b" : "#3b82f6"
+    const nodeGroup = g.append("g").attr("class", "nodes")
+    const nodeSelection = nodeGroup
+      .selectAll("g")
+      .data(simNodes)
+      .enter()
+      .append("g")
+      .attr("class", "node")
+      .call(
+        drag()
+          .on("start", dragstarted)
+          .on("drag", dragged)
+          .on("end", dragended)
+      )
+      .on("click", (event, d) => {
+        event.stopPropagation()
+        setSelectedNode(d.id)
+        if (onNodeClick) onNodeClick(d.id)
+      })
 
-      // Draw circle
-      ctx.beginPath()
-      ctx.arc(pos.x, pos.y, radius, 0, 2 * Math.PI)
-      ctx.fillStyle = color
-      ctx.fill()
-      ctx.strokeStyle = "#1e293b"
-      ctx.lineWidth = 2
-      ctx.stroke()
+    // Node circles
+    nodeSelection
+      .append("circle")
+      .attr("r", (d: any) => d.radius)
+      .attr("fill", (d: any) => (d.is_favorite ? "#f59e0b" : "#3b82f6"))
+      .attr("stroke", (d: any) =>
+        d.id === selectedNode || d.id === rootContactId ? "#ef4444" : "#1e293b"
+      )
+      .attr("stroke-width", (d: any) =>
+        d.id === selectedNode || d.id === rootContactId ? 3 : 2
+      )
 
-      // Draw label
-      ctx.fillStyle = "#1e293b"
-      ctx.font = "12px sans-serif"
-      ctx.textAlign = "center"
-      ctx.fillText(node.label, pos.x, pos.y + radius + 15)
-    })
-  }, [nodes, edges])
+    // Node labels
+    nodeSelection
+      .append("text")
+      .text((d: any) => d.label)
+      .attr("text-anchor", "middle")
+      .attr("dy", (d: any) => d.radius + 15)
+      .attr("font-size", "12px")
+      .attr("fill", "#1e293b")
 
-  useEffect(() => {
-    draw()
-  }, [draw])
+    // Tick function
+    function ticked() {
+      edgeSelection
+        .attr("x1", (d: any) => d.source.x)
+        .attr("y1", (d: any) => d.source.y)
+        .attr("x2", (d: any) => d.target.x)
+        .attr("y2", (d: any) => d.target.y)
 
-  useEffect(() => {
-    const handleResize = () => {
-      draw()
+      edgeLabelSelection
+        .attr("x", (d: any) => (d.source.x + d.target.x) / 2)
+        .attr("y", (d: any) => (d.source.y + d.target.y) / 2 - 5)
+
+      nodeSelection.attr("transform", (d: any) => `translate(${d.x},${d.y})`)
     }
 
-    window.addEventListener("resize", handleResize)
-    return () => window.removeEventListener("resize", handleResize)
-  }, [draw])
+    // Drag functions
+    function dragstarted(event: any, d: any) {
+      if (!event.active) simulation.alphaTarget(0.3).restart()
+      d.fx = d.x
+      d.fy = d.y
+    }
+
+    function dragged(event: any, d: any) {
+      d.fx = event.x
+      d.fy = event.y
+    }
+
+    function dragended(event: any, d: any) {
+      if (!event.active) simulation.alphaTarget(0)
+      d.fx = null
+      d.fy = null
+    }
+
+    // Zoom to root contact if specified
+    if (rootContactId && simNodes.length > 0) {
+      const rootNode = simNodes.find((n) => n.id === rootContactId)
+      if (rootNode) {
+        const scale = 1.5
+        const x = width / 2 - rootNode.x * scale
+        const y = height / 2 - rootNode.y * scale
+        svg.transition().duration(750).call(
+          zoomBehavior.transform,
+          zoomIdentity.translate(x, y).scale(scale)
+        )
+      }
+    }
+
+    return () => {
+      simulation.stop()
+    }
+  }, [nodes, edges, selectedNode, rootContactId, onNodeClick])
+
+  const handleZoomIn = () => {
+    if (!svgRef.current) return
+    select(svgRef.current).transition().call(
+      zoom().scaleBy,
+      1.3
+    )
+  }
+
+  const handleZoomOut = () => {
+    if (!svgRef.current) return
+    select(svgRef.current).transition().call(
+      zoom().scaleBy,
+      0.7
+    )
+  }
+
+  const handleReset = () => {
+    if (!svgRef.current) return
+    select(svgRef.current).transition().call(
+      zoom().transform,
+      zoomIdentity
+    )
+  }
+
+  const handleFocusNode = (nodeId: string) => {
+    if (!svgRef.current || !simulationRef.current) return
+    const node = simulationRef.current.nodes().find((n: any) => n.id === nodeId)
+    if (!node) return
+    const svg = select(svgRef.current)
+    const container = containerRef.current
+    if (!container) return
+    const width = container.clientWidth
+    const height = 600
+    const scale = 1.5
+    const x = width / 2 - node.x * scale
+    const y = height / 2 - node.y * scale
+    svg.transition().duration(750).call(
+      zoom().transform,
+      zoomIdentity.translate(x, y).scale(scale)
+    )
+    setSelectedNode(nodeId)
+  }
 
   return (
-    <div ref={containerRef} className="w-full h-[600px] relative">
-      <canvas
-        ref={canvasRef}
-        className="w-full h-full"
-        style={{ cursor: "grab" }}
-      />
+    <div className="space-y-4">
+      {/* Controls */}
+      <div className="flex items-center gap-2">
+        <Button variant="outline" size="icon" onClick={handleZoomIn} title="Zoom In">
+          <ZoomIn className="size-4" />
+        </Button>
+        <Button variant="outline" size="icon" onClick={handleZoomOut} title="Zoom Out">
+          <ZoomOut className="size-4" />
+        </Button>
+        <Button variant="outline" size="icon" onClick={handleReset} title="Reset View">
+          <RotateCcw className="size-4" />
+        </Button>
+        {selectedNode && (
+          <Button variant="outline" size="sm" onClick={() => handleFocusNode(selectedNode)}>
+            <Focus className="size-4 mr-2" />
+            Focus: {nodes.find((n) => n.id === selectedNode)?.label}
+          </Button>
+        )}
+      </div>
+
+      {/* Graph Visualization */}
+      <div ref={containerRef} className="w-full h-[600px] relative border rounded-lg overflow-hidden bg-slate-50">
+        {nodes.length === 0 ? (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-muted-foreground">No data to display</p>
+          </div>
+        ) : (
+          <svg
+            ref={svgRef}
+            className="w-full h-full"
+            style={{ cursor: "grab" }}
+          />
+        )}
+      </div>
+
+      {/* Legend */}
+      {relationshipTypes.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Relationship Types</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-3">
+              {relationshipTypes.map((type) => (
+                <Badge
+                  key={type}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <div
+                    className="size-3 rounded-full"
+                    style={{ backgroundColor: getEdgeColor(type) }}
+                  />
+                  <span className="capitalize">{type.replace(/_/g, " ")}</span>
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }
