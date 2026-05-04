@@ -1,7 +1,31 @@
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import type { TagPublic, TagSharePreview, TagSharePublic } from "@/client";
 import { TagSharesService } from "@/client";
-import type { TagSharePublic, TagPublic } from "@/client";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import useCustomToast from "@/hooks/useCustomToast";
+import { Loader2, Share2, AlertTriangle, CheckCircle2, Trash2, Users } from "@/lib/icons";
 import {
   Table,
   TableBody,
@@ -10,28 +34,91 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Trash2 } from "@/lib/icons";
-import useCustomToast from "@/hooks/useCustomToast";
-import { Loader2 } from "@/lib/icons";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 
-interface TagSharesListProps {
+interface TagShareDialogProps {
   tag: TagPublic;
+  children?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export const TagSharesList = ({ tag }: TagSharesListProps) => {
+const shareSchema = z.object({
+  granteeEmail: z.string().email("Please enter a valid email address"),
+});
+
+type ShareFormData = z.infer<typeof shareSchema>;
+
+export const TagShareDialog = ({ tag, children, open: controlledOpen, onOpenChange }: TagShareDialogProps) => {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const [step, setStep] = useState<"select" | "preview" | "confirm">("select");
+  const [preview, setPreview] = useState<TagSharePreview | null>(null);
+  const [confirmText, setConfirmText] = useState("");
   const { showSuccessToast, showErrorToast } = useCustomToast();
   const queryClient = useQueryClient();
 
-  const { data: shares, isLoading } = useQuery({
-    queryKey: ["tag-shares", tag.id],
-    queryFn: () => TagSharesService.listTagShares({ tagId: tag.id }),
+  // Use controlled or uncontrolled open state
+  const isOpen = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setIsOpen = (value: boolean) => {
+    if (onOpenChange) {
+      onOpenChange(value);
+    } else {
+      setInternalOpen(value);
+    }
+    if (!value) resetState();
+  };
+
+  const form = useForm<ShareFormData>({
+    resolver: zodResolver(shareSchema),
+    defaultValues: {
+      granteeEmail: "",
+    },
   });
 
-  const revokeMutation = useMutation({
-    mutationFn: (granteeId: string) =>
+  // Query existing shares
+  const { data: sharesData, isLoading: sharesLoading } = useQuery({
+    queryKey: ["tag-shares", tag.id],
+    queryFn: () => TagSharesService.listTagShares({ tagId: tag.id }),
+    enabled: isOpen,
+  });
+
+  const previewMutation = useMutation({
+    mutationFn: (tagId: string) => TagSharesService.previewTagShare({ tagId }),
+    onSuccess: (data) => {
+      setPreview(data);
+      setStep("preview");
+    },
+    onError: () => {
+      showErrorToast("Failed to load preview");
+    },
+  });
+
+  const shareMutation = useMutation({
+    mutationFn: (data: { tagId: string; granteeEmail: string }) =>
+      TagSharesService.createTagShare({
+        requestBody: { tag_id: data.tagId, grantee_email: data.granteeEmail },
+      }),
+    onSuccess: () => {
+      showSuccessToast(`Tag "${tag.name}" shared successfully`);
+      queryClient.invalidateQueries({ queryKey: ["tag-shares", tag.id] });
+      setIsOpen(false);
+      resetState();
+    },
+    onError: () => {
+      showErrorToast("Failed to share tag");
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (data: { tagId: string; granteeId: string }) =>
       TagSharesService.deleteTagShare({
-        tagId: tag.id,
-        granteeId,
+        tagId: data.tagId,
+        granteeId: data.granteeId,
       }),
     onSuccess: () => {
       showSuccessToast("Share revoked successfully");
@@ -42,60 +129,246 @@ export const TagSharesList = ({ tag }: TagSharesListProps) => {
     },
   });
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center p-4">
-        <Loader2 className="h-6 w-6 animate-spin" />
-      </div>
-    );
-  }
+  const resetState = () => {
+    setStep("select");
+    setPreview(null);
+    setConfirmText("");
+    form.reset();
+  };
 
-  if (!shares?.data || shares.data.length === 0) {
-    return (
-      <div className="text-center p-4 text-muted-foreground">
-        No shares yet. Share this tag with another user to grant them access.
-      </div>
-    );
-  }
+  const handleFindGrantee = (data: ShareFormData) => {
+    previewMutation.mutate(tag.id);
+  };
+
+  const handleShare = () => {
+    const email = form.getValues("granteeEmail");
+    shareMutation.mutate({ tagId: tag.id, granteeEmail: email });
+  };
+
+  const handleDeleteShare = (share: TagSharePublic) => {
+    deleteMutation.mutate({ tagId: tag.id, granteeId: share.grantee_id });
+  };
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Grantee Email</TableHead>
-          <TableHead>Shared On</TableHead>
-          <TableHead className="text-right">Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {shares.data.map((share: TagSharePublic) => (
-          <TableRow key={share.grantee_id}>
-            <TableCell>{share.grantee_email}</TableCell>
-            <TableCell>
-              {new Date(share.created_at).toLocaleDateString()}
-            </TableCell>
-            <TableCell className="text-right">
+    <Dialog
+      open={isOpen}
+      onOpenChange={setIsOpen}
+    >
+      <DialogTrigger asChild>
+        {children || (
+          <Button variant="outline" size="sm">
+            <Share2 className="h-4 w-4 mr-2" />
+            Share
+          </Button>
+        )}
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Share Tag: {tag.name}</DialogTitle>
+          <DialogDescription>
+            Grant another user read access to all contacts with this tag.
+          </DialogDescription>
+        </DialogHeader>
+
+        {/* Existing Shares Section */}
+        {sharesData && sharesData.data && sharesData.data.length > 0 && (
+          <div className="space-y-2 border-b pb-4 mb-4">
+            <h4 className="font-medium flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Current Shares ({sharesData.data.length})
+            </h4>
+            <div className="space-y-2">
+              {sharesData.data.map((share) => (
+                <div key={share.grantee_id} className="flex items-center justify-between p-2 border rounded-md">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary">{share.grantee_email}</Badge>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(share.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDeleteShare(share)}
+                    disabled={deleteMutation.isPending}
+                  >
+                    {deleteMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    )}
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {step === "select" && (
+          <div className="space-y-4">
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(handleFindGrantee)}
+                className="space-y-4"
+              >
+                <FormField
+                  control={form.control}
+                  name="granteeEmail"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Grantee Email</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Enter the email of the user to share with"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button
+                  type="submit"
+                  disabled={
+                    previewMutation.isPending || !form.watch("granteeEmail")
+                  }
+                  className="w-full"
+                >
+                  {previewMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Loading Preview...
+                    </>
+                  ) : (
+                    "Continue to Preview"
+                  )}
+                </Button>
+              </form>
+            </Form>
+          </div>
+        )}
+
+        {step === "preview" && preview && (
+          <div className="space-y-4">
+            <Alert>
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Sharing Scope Warning</AlertTitle>
+              <AlertDescription>
+                You are about to share the tag <strong>"{tag.name}"</strong>.
+                This will grant the selected user read access to:
+              </AlertDescription>
+            </Alert>
+
+            <div className="space-y-2">
+              <h4 className="font-medium">Scope Preview</h4>
+              <p className="text-sm text-muted-foreground">
+                {preview.contact_count} contact(s) with{" "}
+                {preview.total_related_rows} related records
+              </p>
+
+              {preview.sample_contacts && preview.sample_contacts.length > 0 && (
+                <div className="text-sm">
+                  <span className="font-medium">Sample contacts: </span>
+                  {preview.sample_contacts.join(", ")}
+                  {preview.contact_count > 3 && "..."}
+                </div>
+              )}
+
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Entity Type</TableHead>
+                    <TableHead className="text-right">Count</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {preview.entities
+                    ?.sort((a, b) => b.count - a.count)
+                    .map((entity) => (
+                      <TableRow key={entity.entity_type}>
+                        <TableCell>{entity.entity_type}</TableCell>
+                        <TableCell className="text-right">
+                          {entity.count}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setStep("select")}>
+                Back
+              </Button>
+              <Button
+                onClick={() => setStep("confirm")}
+                disabled={preview.contact_count === 0}
+              >
+                Continue to Confirm
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {step === "confirm" && preview && (
+          <div className="space-y-4">
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Final Confirmation Required</AlertTitle>
+              <AlertDescription>
+                Please type <strong>"I understand"</strong> to confirm sharing
+                this tag.
+              </AlertDescription>
+            </Alert>
+
+            <div className="space-y-2">
+              <p className="text-sm">
+                You are sharing <strong>{preview.contact_count} contacts</strong>{" "}
+                and <strong>{preview.total_related_rows} related rows</strong> with
+                this tag.
+              </p>
+
+              <RadioGroup
+                value={confirmText}
+                onValueChange={setConfirmText}
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="I understand" id="confirm" />
+                  <Label htmlFor="confirm">
+                    I understand I am sharing {preview.contact_count} contacts and{" "}
+                    {preview.total_related_rows} related rows
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setStep("preview")}>
+                Back
+              </Button>
               <Button
                 variant="destructive"
-                size="sm"
-                onClick={() =>
-                  revokeMutation.mutate(share.grantee_id as string)
+                onClick={handleShare}
+                disabled={
+                  confirmText !== "I understand" || shareMutation.isPending
                 }
-                disabled={revokeMutation.isPending}
               >
-                {revokeMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                {shareMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sharing...
+                  </>
                 ) : (
                   <>
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Revoke
+                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                    Confirm Share
                   </>
                 )}
               </Button>
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 };
