@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react"
 import {
   MutationCache,
   QueryCache,
@@ -6,7 +5,7 @@ import {
   QueryClientProvider,
 } from "@tanstack/react-query"
 import { createRouter, RouterProvider } from "@tanstack/react-router"
-import { StrictMode } from "react"
+import { StrictMode, useEffect, useState } from "react"
 import ReactDOM from "react-dom/client"
 import { ApiError, OpenAPI } from "./client"
 import { PwaInstallPrompt } from "./components/PwaInstallPrompt"
