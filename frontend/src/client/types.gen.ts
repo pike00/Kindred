@@ -1452,6 +1452,47 @@ export type ValidationError = {
     };
 };
 
+/**
+ * Public schema for returning conflict data to the API.
+ */
+export type VCardConflictPublic = {
+    /**
+     * The contact that has a conflict.
+     */
+    contact_id: string;
+    incoming_vcard_raw: string;
+    /**
+     * SHA-256 hash of the incoming normalized vCard.
+     */
+    incoming_hash: string;
+    /**
+     * SHA-256 hash of the locally-stored normalized vCard at time of conflict.
+     */
+    local_hash: string;
+    /**
+     * When the conflict was resolved; None means pending.
+     */
+    resolved_at?: (string | null);
+    /**
+     * How the conflict was resolved: 'keep_local', 'accept_remote', 'manual_merge'.
+     */
+    resolution_type?: (string | null);
+    id: string;
+    created_at: string;
+    /**
+     * The locally-stored vCard at time of conflict.
+     */
+    local_vcard_raw?: (string | null);
+};
+
+/**
+ * Paginated response for listing conflicts.
+ */
+export type VCardConflictsPublic = {
+    data: Array<VCardConflictPublic>;
+    count: number;
+};
+
 export type WebhookEndpointBase = {
     /**
      * Human-readable endpoint name.
@@ -2159,6 +2200,26 @@ export type UtilsTestEmailData = {
 export type UtilsTestEmailResponse = (Message);
 
 export type UtilsHealthCheckResponse = (boolean);
+
+export type VCardConflictsListVcardConflictsData = {
+    limit?: number;
+    skip?: number;
+};
+
+export type VCardConflictsListVcardConflictsResponse = (VCardConflictsPublic);
+
+export type VCardConflictsResolveVcardConflictData = {
+    conflictId: string;
+    resolutionType: string;
+};
+
+export type VCardConflictsResolveVcardConflictResponse = (VCardConflictPublic);
+
+export type VCardConflictsDeleteVcardConflictData = {
+    conflictId: string;
+};
+
+export type VCardConflictsDeleteVcardConflictResponse = (void);
 
 export type WebhooksListWebhooksResponse = (unknown);
 

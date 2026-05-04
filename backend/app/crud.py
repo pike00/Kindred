@@ -55,6 +55,7 @@ from app.models import (
     UserCreate,
     UserUpdate,
 )
+from app.vcard import compute_vcard_hash
 
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
@@ -117,6 +118,9 @@ def create_contact(
     *, session: Session, contact_in: ContactCreate, owner_id: uuid.UUID
 ) -> Contact:
     db_obj = Contact.model_validate(contact_in, update={"owner_id": owner_id})
+    # Compute vcard_sha256 if vcard_raw is present
+    if db_obj.vcard_raw:
+        db_obj.vcard_sha256 = compute_vcard_hash(db_obj.vcard_raw)
     session.add(db_obj)
     session.commit()
     session.refresh(db_obj)

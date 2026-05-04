@@ -5298,6 +5298,105 @@ export const UsersPublicSchema = {
     title: 'UsersPublic'
 } as const;
 
+export const VCardConflictPublicSchema = {
+    properties: {
+        contact_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Contact Id',
+            description: 'The contact that has a conflict.'
+        },
+        incoming_vcard_raw: {
+            type: 'string',
+            title: 'Incoming Vcard Raw'
+        },
+        incoming_hash: {
+            type: 'string',
+            maxLength: 64,
+            title: 'Incoming Hash',
+            description: 'SHA-256 hash of the incoming normalized vCard.'
+        },
+        local_hash: {
+            type: 'string',
+            maxLength: 64,
+            title: 'Local Hash',
+            description: 'SHA-256 hash of the locally-stored normalized vCard at time of conflict.'
+        },
+        resolved_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Resolved At',
+            description: 'When the conflict was resolved; None means pending.'
+        },
+        resolution_type: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 50
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Resolution Type',
+            description: "How the conflict was resolved: 'keep_local', 'accept_remote', 'manual_merge'."
+        },
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        },
+        local_vcard_raw: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Local Vcard Raw',
+            description: 'The locally-stored vCard at time of conflict.'
+        }
+    },
+    type: 'object',
+    required: ['contact_id', 'incoming_vcard_raw', 'incoming_hash', 'local_hash', 'id', 'created_at'],
+    title: 'VCardConflictPublic',
+    description: 'Public schema for returning conflict data to the API.'
+} as const;
+
+export const VCardConflictsPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/VCardConflictPublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'VCardConflictsPublic',
+    description: 'Paginated response for listing conflicts.'
+} as const;
+
 export const ValidationErrorSchema = {
     properties: {
         loc: {

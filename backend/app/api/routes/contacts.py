@@ -28,6 +28,7 @@ from app.models import (
     OverdueContactsPublic,
     User,
 )
+from app.vcard import compute_vcard_hash
 
 
 class BulkContactFilter(BaseModel):
@@ -641,6 +642,9 @@ def update_contact(
     group_ids = update_data.pop("group_ids", None)
 
     contact.sqlmodel_update(update_data)
+    # Compute vcard_sha256 if vcard_raw was updated
+    if "vcard_raw" in update_data and contact.vcard_raw:
+        contact.vcard_sha256 = compute_vcard_hash(contact.vcard_raw)
     session.add(contact)
 
     # Update tag associations if provided

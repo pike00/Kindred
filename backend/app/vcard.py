@@ -4,6 +4,7 @@ Converts between Contact/ContactField/Address database models and vCard format.
 Preserves unknown vCard properties through round-trips by storing raw vCard text.
 """
 
+import hashlib
 import uuid
 
 import vobject
@@ -16,9 +17,6 @@ from app.models import (
     ContactField,
     ContactFieldType,
 )
-
-import hashlib
-import re
 
 
 def normalize_vcard_for_hash(vcard_text: str) -> str:
@@ -103,6 +101,8 @@ def compute_vcard_hash(vcard_text: str) -> str:
     """
     normalized = normalize_vcard_for_hash(vcard_text)
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+
 def contact_to_vcard(
     contact: Contact,
     fields: list[ContactField],
@@ -228,6 +228,7 @@ def contact_to_vcard(
     return card.serialize()
     vcard_text = card.serialize()
     return vcard_text, compute_vcard_hash(vcard_text)
+
 
 def vcard_to_contact_data(vcard_text: str) -> dict:
     """Parse a vCard string and return a dict of Contact fields + related data.
