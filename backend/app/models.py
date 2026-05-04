@@ -1531,6 +1531,11 @@ class NoteBase(SQLModel):
 
 class NoteCreate(NoteBase):
     contact_id: uuid.UUID
+    client_id: str | None = Field(
+        default=None,
+        max_length=36,
+        description="Client-generated UUID for idempotent POSTs; optional.",
+    )
 
 
 class NoteUpdate(SQLModel):
@@ -1563,6 +1568,12 @@ class Note(NoteBase, table=True):
         primary_key=True,
         description="Primary key.",
     )
+    client_id: str | None = Field(
+        default=None,
+        index=True,
+        unique=True,
+        description="Client-generated UUID for idempotent POSTs; unique if set.",
+    )
     contact_id: uuid.UUID = Field(
         foreign_key="contact.id",
         nullable=False,
@@ -1593,6 +1604,7 @@ class NotePublic(NoteBase):
     contact_id: uuid.UUID
     created_at: datetime
     updated_at: datetime
+    client_id: str | None = None
 
 
 class NotesPublic(SQLModel):

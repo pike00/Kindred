@@ -3855,6 +3855,19 @@ export const NoteCreateSchema = {
             type: 'string',
             format: 'uuid',
             title: 'Contact Id'
+        },
+        client_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 36
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Client Id',
+            description: 'Client-generated UUID for idempotent POSTs; optional.'
         }
     },
     type: 'object',
@@ -3890,6 +3903,17 @@ export const NotePublicSchema = {
             type: 'string',
             format: 'date-time',
             title: 'Updated At'
+        },
+        client_id: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Client Id'
         }
     },
     type: 'object',

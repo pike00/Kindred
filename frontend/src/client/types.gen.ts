@@ -1037,6 +1037,10 @@ export type NoteCreate = {
      */
     body: string;
     contact_id: string;
+    /**
+     * Client-generated UUID for idempotent POSTs; optional.
+     */
+    client_id?: (string | null);
 };
 
 export type NotePublic = {
@@ -1048,6 +1052,7 @@ export type NotePublic = {
     contact_id: string;
     created_at: string;
     updated_at: string;
+    client_id?: (string | null);
 };
 
 export type NotesPublic = {
