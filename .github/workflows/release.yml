@@ -25,7 +25,7 @@ jobs:
           printf '{"auths":{"ghcr.io":{"auth":"%s"}}}' "$token" \
             > "$RUNNER_TEMP/docker-config/config.json"
           echo "DOCKER_CONFIG=$RUNNER_TEMP/docker-config" >> "$GITHUB_ENV"
-      - uses: docker/build-push-action@v5
+      - uses: docker/build-push-action@v7
         with:
           context: .
           file: Dockerfile.prod
