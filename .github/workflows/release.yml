@@ -23,7 +23,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/docker-config"
           echo '{"auths":{}}' > "$RUNNER_TEMP/docker-config/config.json"
           echo "DOCKER_CONFIG=$RUNNER_TEMP/docker-config" >> "$GITHUB_ENV"
-      - uses: docker/login-action@v3
+      - uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
