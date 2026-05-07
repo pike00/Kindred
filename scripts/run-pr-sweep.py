@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shlex
 import subprocess
 import sys
@@ -31,6 +32,8 @@ import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+
+import httpx
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -317,12 +320,24 @@ def gather_conflict_context(wt: Path) -> str:
 
 
 def llm_repair_conflicts(wt: Path, pr: PR, conflict_blob: str) -> bool:
-    """
-    Stub: returns False. Real implementation arrives in Task 6.
-    When True, caller must `git add -A && git commit --no-edit` to finalize the merge.
-    """
-    log(f"PR #{pr.number}: LLM conflict-repair stub (returning False)")
-    return False
+    sys_prompt = (
+        REPAIR_SYSTEM
+        + "\nYou are resolving merge conflict markers (<<<<<<<, =======, >>>>>>>) "
+        "left by `git merge`. Output a diff that removes the markers and chooses "
+        "the correct content for each hunk."
+    )
+    user = f"# Conflict files for PR #{pr.number}\n\n{conflict_blob}"
+    save_prompt(pr, "merge-conflict", user)
+    try:
+        reply = litellm_chat(sys_prompt, user)
+    except Exception as e:
+        log(f"PR #{pr.number}: litellm call failed: {e}")
+        return False
+    diff = extract_diff(reply)
+    if diff is None:
+        log(f"PR #{pr.number}: LLM declined or returned no diff")
+        return False
+    return apply_patch(wt, pr, "merge-conflict", diff)
 
 
 def handle_update_branch(wt: Path, pr: PR) -> bool:
@@ -435,6 +450,129 @@ def run_gauntlet(wt: Path) -> tuple[list[GateResult], GateResult | None]:
     return passed, None
 
 
+def litellm_chat(system: str, user: str, *, timeout_s: int = 300) -> str:
+    """Single-shot chat completion against the homelab LiteLLM proxy.
+    Returns assistant message text. Uses OpenAI-compatible /v1/chat/completions."""
+    api_key = os.environ.get("LITELLM_API_KEY")
+    if not api_key:
+        raise RuntimeError(
+            "LITELLM_API_KEY not set; ensure .env has it and run via `just sweep`"
+        )
+    payload = {
+        "model": LITELLM_MODEL,
+        "messages": [
+            {"role": "system", "content": system},
+            {"role": "user", "content": user},
+        ],
+        "stream": False,
+        "temperature": 0.0,
+    }
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+    with httpx.Client(timeout=timeout_s) as client:
+        r = client.post(LITELLM_CHAT_URL, json=payload, headers=headers)
+    r.raise_for_status()
+    body = r.json()
+    return body["choices"][0]["message"]["content"]
+
+
+REPAIR_SYSTEM = """\
+You are a senior engineer fixing CI failures in the Kindred personal-CRM repo.
+
+Stack: FastAPI + SQLModel backend (uv), React + Bun frontend (Vite + TypeScript), Postgres, Alembic, prek (pre-commit), pytest, puppeteer e2e via bun.
+
+Your job: read the failure log + recent diff, return a minimal unified diff that fixes the failure WITHOUT changing the PR's intended feature behavior.
+
+Output rules — STRICT:
+- Reply with EXACTLY one fenced code block tagged `diff` containing a unified diff applicable from the repo root with `git apply -p1`.
+- If the failure is structural / requires more context than provided / you can't fix it confidently, reply with the single line `DECLINE: <one-sentence reason>`.
+- No prose outside the diff or the DECLINE line. No markdown headers. No explanations.
+- Do NOT touch files unrelated to the failure. Do NOT add new dependencies. Do NOT rewrite formatting unless a formatter explicitly demands it.
+- Keep the diff small. The smaller, the better.
+"""
+
+
+def build_repair_prompt(pr: PR, gate: GateResult, wt: Path) -> str:
+    failure_log = gate.log_path.read_text(errors="replace")
+    failure_tail = failure_log[-8000:]
+    # Diff the PR vs main, capped to keep prompt size sane.
+    diff_proc = run(["git", "-C", str(wt), "diff", f"origin/{DEFAULT_BRANCH}...HEAD"])
+    diff_text = diff_proc.stdout
+    if len(diff_text) > 30000:
+        diff_text = diff_text[:30000] + "\n... [diff truncated at 30KB]"
+    files_proc = run(
+        ["git", "-C", str(wt), "diff", "--name-only", f"origin/{DEFAULT_BRANCH}...HEAD"]
+    )
+    return f"""\
+# PR #{pr.number}: {pr.title}
+Branch: {pr.head_ref}
+
+## Failed gate: `{gate.name}` (exit={gate.exit_code})
+
+### Failure log (tail)
+```
+{failure_tail}
+```
+
+### Files changed in this PR
+```
+{files_proc.stdout}
+```
+
+### Diff vs origin/main
+```diff
+{diff_text}
+```
+
+Produce the minimal `diff` to make `{gate.name}` pass.
+"""
+
+
+_DIFF_RE = re.compile(r"```diff\n(.*?)```", re.DOTALL)
+
+
+def extract_diff(reply: str) -> str | None:
+    if reply.strip().startswith("DECLINE"):
+        return None
+    m = _DIFF_RE.search(reply)
+    return m.group(1) if m else None
+
+
+def save_prompt(pr: PR, label: str, body: str) -> Path:
+    d = PROMPT_DIR / str(pr.number)
+    d.mkdir(parents=True, exist_ok=True)
+    p = d / f"{label}.txt"
+    p.write_text(body)
+    return p
+
+
+def save_patch(pr: PR, label: str, diff: str) -> Path:
+    d = PATCH_DIR / str(pr.number)
+    d.mkdir(parents=True, exist_ok=True)
+    p = d / f"{label}.diff"
+    p.write_text(diff)
+    return p
+
+
+def apply_patch(wt: Path, pr: PR, label: str, diff: str) -> bool:
+    patch_path = save_patch(pr, label, diff)
+    proc = subprocess.run(
+        ["git", "-C", str(wt), "apply", "--whitespace=fix", str(patch_path)],
+        text=True,
+        capture_output=True,
+        stdin=subprocess.DEVNULL,
+    )
+    if proc.returncode != 0:
+        log(
+            f"PR #{pr.number}: git apply failed for {label}:\n{proc.stderr.strip()[-1000:]}"
+        )
+        return False
+    log(f"PR #{pr.number}: applied patch {label}")
+    return True
+
+
 def _smoketest_discover() -> None:
     prs = discover_prs()
     log(
@@ -472,6 +610,11 @@ if __name__ == "__main__":
         wt = ensure_worktree(target)
         ok = handle_update_branch(wt, target)
         log(f"update-branch result for #{pr_num}: {'OK' if ok else 'FAILED'}")
+    elif len(sys.argv) >= 2 and sys.argv[1] == "chat-test":
+        out = litellm_chat(
+            "You are a calculator.", "What is 2+2? Reply with only the digit."
+        )
+        log(f"LLM reply: {out!r}")
     elif len(sys.argv) >= 3 and sys.argv[1] == "gauntlet":
         pr_num = int(sys.argv[2])
         prs = discover_prs()
@@ -490,6 +633,6 @@ if __name__ == "__main__":
             tear_stack_down(wt)
     else:
         log(
-            "usage: run-pr-sweep.py {discover|worktree <pr_number>|update-branch <pr_number>|gauntlet <pr_number>}"
+            "usage: run-pr-sweep.py {discover|worktree <pr_number>|update-branch <pr_number>|gauntlet <pr_number>|chat-test}"
         )
         sys.exit(2)
