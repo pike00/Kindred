@@ -1179,6 +1179,38 @@ class RemindersPublic(SQLModel):
     count: int
 
 
+class ReminderContactSummary(SQLModel):
+    id: uuid.UUID
+    first_name: str
+    last_name: str | None = None
+    nickname: str | None = None
+    avatar_url: str | None = None
+
+
+class ReminderDuePublic(ReminderPublic):
+    """Reminder enriched with the linked contact (if any) for the bell popover."""
+
+    contact: ReminderContactSummary | None = None
+
+
+class RemindersDuePublic(SQLModel):
+    data: list[ReminderDuePublic]
+    count: int
+
+
+class ReminderSnoozeRequest(SQLModel):
+    snoozed_until: datetime | None = Field(
+        default=None,
+        description="Absolute time to snooze until (UTC). Mutually exclusive with minutes.",
+    )
+    minutes: int | None = Field(
+        default=None,
+        ge=1,
+        le=60 * 24 * 30,
+        description="Minutes from now to snooze for. Mutually exclusive with snoozed_until.",
+    )
+
+
 # ─── Gift ─────────────────────────────────────────────────────────────────────
 
 

@@ -4406,6 +4406,56 @@ export const RelationshipUpdateSchema = {
     title: 'RelationshipUpdate'
 } as const;
 
+export const ReminderContactSummarySchema = {
+    properties: {
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        first_name: {
+            type: 'string',
+            title: 'First Name'
+        },
+        last_name: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Last Name'
+        },
+        nickname: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Nickname'
+        },
+        avatar_url: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Avatar Url'
+        }
+    },
+    type: 'object',
+    required: ['id', 'first_name'],
+    title: 'ReminderContactSummary'
+} as const;
+
 export const ReminderCreateSchema = {
     properties: {
         title: {
@@ -4461,6 +4511,108 @@ export const ReminderCreateSchema = {
     type: 'object',
     required: ['title', 'remind_at'],
     title: 'ReminderCreate'
+} as const;
+
+export const ReminderDuePublicSchema = {
+    properties: {
+        title: {
+            type: 'string',
+            maxLength: 500,
+            minLength: 1,
+            title: 'Title',
+            description: 'Reminder title.'
+        },
+        description: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 2000
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Description',
+            description: 'Extra details shown with the reminder.'
+        },
+        remind_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Remind At',
+            description: 'When to fire the reminder.'
+        },
+        frequency: {
+            '$ref': '#/components/schemas/ReminderFrequency',
+            description: 'How often the reminder repeats.',
+            default: 'once'
+        },
+        is_active: {
+            type: 'boolean',
+            title: 'Is Active',
+            description: 'Enable or disable without deleting.',
+            default: true
+        },
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        contact_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'uuid'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Contact Id'
+        },
+        last_sent_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Last Sent At'
+        },
+        snoozed_until: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Snoozed Until'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        },
+        contact: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/ReminderContactSummary'
+                },
+                {
+                    type: 'null'
+                }
+            ]
+        }
+    },
+    type: 'object',
+    required: ['title', 'remind_at', 'id', 'contact_id', 'last_sent_at', 'snoozed_until', 'created_at'],
+    title: 'ReminderDuePublic',
+    description: 'Reminder enriched with the linked contact (if any) for the bell popover.'
 } as const;
 
 export const ReminderFrequencySchema = {
@@ -4560,6 +4712,40 @@ export const ReminderPublicSchema = {
     title: 'ReminderPublic'
 } as const;
 
+export const ReminderSnoozeRequestSchema = {
+    properties: {
+        snoozed_until: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Snoozed Until',
+            description: 'Absolute time to snooze until (UTC). Mutually exclusive with minutes.'
+        },
+        minutes: {
+            anyOf: [
+                {
+                    type: 'integer',
+                    maximum: 43200,
+                    minimum: 1
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Minutes',
+            description: 'Minutes from now to snooze for. Mutually exclusive with snoozed_until.'
+        }
+    },
+    type: 'object',
+    title: 'ReminderSnoozeRequest'
+} as const;
+
 export const ReminderUpdateSchema = {
     properties: {
         title: {
@@ -4620,6 +4806,25 @@ export const ReminderUpdateSchema = {
     },
     type: 'object',
     title: 'ReminderUpdate'
+} as const;
+
+export const RemindersDuePublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/ReminderDuePublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'RemindersDuePublic'
 } as const;
 
 export const RemindersPublicSchema = {

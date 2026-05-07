@@ -1206,6 +1206,14 @@ export type RelationshipUpdate = {
     notes?: (string | null);
 };
 
+export type ReminderContactSummary = {
+    id: string;
+    first_name: string;
+    last_name?: (string | null);
+    nickname?: (string | null);
+    avatar_url?: (string | null);
+};
+
 export type ReminderCreate = {
     /**
      * Reminder title.
@@ -1228,6 +1236,38 @@ export type ReminderCreate = {
      */
     is_active?: boolean;
     contact_id?: (string | null);
+};
+
+/**
+ * Reminder enriched with the linked contact (if any) for the bell popover.
+ */
+export type ReminderDuePublic = {
+    /**
+     * Reminder title.
+     */
+    title: string;
+    /**
+     * Extra details shown with the reminder.
+     */
+    description?: (string | null);
+    /**
+     * When to fire the reminder.
+     */
+    remind_at: string;
+    /**
+     * How often the reminder repeats.
+     */
+    frequency?: ReminderFrequency;
+    /**
+     * Enable or disable without deleting.
+     */
+    is_active?: boolean;
+    id: string;
+    contact_id: (string | null);
+    last_sent_at: (string | null);
+    snoozed_until: (string | null);
+    created_at: string;
+    contact?: (ReminderContactSummary | null);
 };
 
 export type ReminderFrequency = 'once' | 'daily' | 'weekly' | 'monthly' | 'yearly';
@@ -1258,6 +1298,22 @@ export type ReminderPublic = {
     last_sent_at: (string | null);
     snoozed_until: (string | null);
     created_at: string;
+};
+
+export type RemindersDuePublic = {
+    data: Array<ReminderDuePublic>;
+    count: number;
+};
+
+export type ReminderSnoozeRequest = {
+    /**
+     * Absolute time to snooze until (UTC). Mutually exclusive with minutes.
+     */
+    snoozed_until?: (string | null);
+    /**
+     * Minutes from now to snooze for. Mutually exclusive with snoozed_until.
+     */
+    minutes?: (number | null);
 };
 
 export type RemindersPublic = {
@@ -1984,6 +2040,12 @@ export type RemindersCreateReminderRouteData = {
 
 export type RemindersCreateReminderRouteResponse = (ReminderPublic);
 
+export type RemindersListDueRemindersData = {
+    limit?: number;
+};
+
+export type RemindersListDueRemindersResponse = (RemindersDuePublic);
+
 export type RemindersUpdateReminderData = {
     reminderId: string;
     requestBody: ReminderUpdate;
@@ -1998,11 +2060,18 @@ export type RemindersDeleteReminderData = {
 export type RemindersDeleteReminderResponse = (unknown);
 
 export type RemindersSnoozeReminderData = {
-    minutes?: number;
+    minutes?: (number | null);
+    reminderId: string;
+    requestBody?: (ReminderSnoozeRequest | null);
+};
+
+export type RemindersSnoozeReminderResponse = (ReminderPublic);
+
+export type RemindersDismissReminderData = {
     reminderId: string;
 };
 
-export type RemindersSnoozeReminderResponse = (unknown);
+export type RemindersDismissReminderResponse = (ReminderPublic);
 
 export type SetupSetupPageData = {
     token: string;
