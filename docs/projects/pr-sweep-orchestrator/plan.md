@@ -4,9 +4,11 @@
 
 **Goal:** Bring the 50 open `[dirac]` draft PRs to "ready for review" by iterating each through rebase → sanity gauntlet → LLM repair loop → push → `gh pr ready`. Stops short of merging.
 
-**Architecture:** Single Python script (`scripts/run-pr-sweep.py`, `uv`-inline) drives the loop. The LLM (DeepSeek-V4-Pro on Ollama Cloud, OpenAI-compatible endpoint) is a pure repair function: in = failure log + diff vs main; out = unified diff. The script does all tool use (gh, git, docker, just). State persisted to `.pr-sweep-runner/state.json` so the run is resumable. Sequential because two PRs can't share loopback ports 5173/8001. Patterned on the existing `scripts/run-dirac-projects.sh`.
+**Architecture:** Single Python script (`scripts/run-pr-sweep.py`, `uv`-inline) drives the loop. The LLM (`deepseek-v4-pro-cloud` via the homelab LiteLLM proxy at `http://127.0.0.1:4000`, OpenAI-compatible endpoint) is a pure repair function: in = failure log + diff vs main; out = unified diff. The script does all tool use (gh, git, docker, just). State persisted to `.pr-sweep-runner/state.json` so the run is resumable. Sequential because two PRs can't share loopback ports 5173/8001. Patterned on the existing `scripts/run-dirac-projects.sh`.
 
-**Tech Stack:** Python 3.14 (uv inline-script), `gh` CLI, `git`, `docker compose`, `just`, `prek` (pre-commit), `puppeteer` via `bun`, Ollama Cloud REST API (OpenAI-compatible).
+**Why LiteLLM and not direct Ollama Cloud:** the homelab proxy already wraps Ollama Cloud with auth, fallback chains (`deepseek-v4-pro-cloud → deepseek-v4-flash-cloud → glm-5-cloud → kimi-k2.6-cloud`), and per-app virtual keys with budget caps. Direct Ollama Cloud would re-implement all of that.
+
+**Tech Stack:** Python 3.14 (uv inline-script), `gh` CLI, `git`, `docker compose`, `just`, `prek` (pre-commit), `puppeteer` via `bun`, LiteLLM `/v1/chat/completions` (OpenAI-compatible REST).
 
 ---
 
@@ -22,68 +24,75 @@
 
 ---
 
-## Task 1: Project scaffolding + Ollama Cloud auth
+## Task 1: Project scaffolding + LiteLLM auth
+
+**Status as of 2026-05-07:** Auth steps already completed inline (key minted via LiteLLM `/key/generate` with alias `personal-crm-pr-sweep-v2`, scoped to `deepseek-v4-pro-cloud` + flash/glm5/kimi fallbacks; written to `.env`; smoke test returned `pong` over 42 tokens). Remaining work is just gitignore + state dirs + commit.
 
 **Files:**
 - Create: `.pr-sweep-runner/` (just `mkdir`; gitignored)
 - Modify: `.gitignore`
-- Modify: `.env.sops` (decrypt → add `OLLAMA_API_KEY` → re-encrypt)
+- Already done: `.env` carries `LITELLM_BASE_URL`, `LITELLM_API_KEY`, `LITELLM_MODEL`
 
 - [ ] **Step 1: Add `.pr-sweep-runner/` to `.gitignore`**
 
 ```bash
-echo '.pr-sweep-runner/' >> .gitignore
+grep -q '^\.pr-sweep-runner/' .gitignore || echo '.pr-sweep-runner/' >> .gitignore
 git diff .gitignore
 ```
 
-Expected: one new line at the bottom.
+Expected: one new line at the bottom (or unchanged if already present).
 
 - [ ] **Step 2: Create runtime directories**
 
 ```bash
 mkdir -p .pr-sweep-runner/{logs,patches,prompts}
+ls -la .pr-sweep-runner/
 ```
 
-- [ ] **Step 3: Get an Ollama Cloud API key**
-
-Visit https://ollama.com/settings/keys (or whatever the Ollama account portal is) and generate a key. Store in Bitwarden with item name `Ollama Cloud API`.
+- [ ] **Step 3: Verify LiteLLM auth is wired**
 
 ```bash
-bw get password "Ollama Cloud API" | tr -d '\n' > /tmp/ollama-key
-wc -c /tmp/ollama-key  # sanity check non-empty
+grep '^LITELLM_' .env | sed -E 's/(sk-[A-Za-z0-9_-]{6})[A-Za-z0-9_-]+/\1***REDACTED***/g'
 ```
 
-- [ ] **Step 4: Add `OLLAMA_API_KEY` to `.env.sops`**
+Expected: prints three lines — `LITELLM_BASE_URL=http://127.0.0.1:4000`, `LITELLM_API_KEY=sk-***REDACTED***`, `LITELLM_MODEL=deepseek-v4-pro-cloud`.
+
+If missing (e.g. running on a fresh host), re-mint via the homelab repo:
 
 ```bash
-sops -d .env.sops > /tmp/.env.plain
-echo "OLLAMA_API_KEY=$(cat /tmp/ollama-key)" >> /tmp/.env.plain
-sops -e /tmp/.env.plain > .env.sops
-shred -u /tmp/.env.plain /tmp/ollama-key
-sops -d .env.sops | grep '^OLLAMA_API_KEY='   # verify roundtrip
-```
-
-Expected: prints `OLLAMA_API_KEY=...`.
-
-- [ ] **Step 5: Smoke-test Ollama Cloud auth**
-
-```bash
-export OLLAMA_API_KEY=$(sops -d .env.sops | grep '^OLLAMA_API_KEY=' | cut -d= -f2-)
-curl -fsS https://ollama.com/api/chat \
-  -H "Authorization: Bearer $OLLAMA_API_KEY" \
+# From ~/Documents/Homelab
+MASTER=$(just secrets sopsx ai/litellm/.env.sops -d | awk -F= '/^LITELLM_MASTER_KEY=/{print $2; exit}')
+RESP=$(curl -sS -X POST http://127.0.0.1:4000/key/generate \
+  -H "Authorization: Bearer $MASTER" \
   -H "Content-Type: application/json" \
-  -d '{"model":"deepseek-v4-pro:cloud","messages":[{"role":"user","content":"reply with the single word: pong"}],"stream":false}' \
-  | jq -r '.message.content'
+  -d '{"key_alias":"personal-crm-pr-sweep","models":["deepseek-v4-pro-cloud","deepseek-v4-flash-cloud","glm-5-cloud","kimi-k2.6-cloud"],"metadata":{"project":"personal-crm","purpose":"pr-sweep-orchestrator"}}')
+KEY=$(echo "$RESP" | jq -r '.key')
+{ echo ""; echo "LITELLM_BASE_URL=http://127.0.0.1:4000"; echo "LITELLM_API_KEY=$KEY"; echo "LITELLM_MODEL=deepseek-v4-pro-cloud"; } >> /home/will/projects/personal-crm/.env
 ```
 
-Expected: `pong` (or close — model variation OK; non-empty + 200 status is what matters). If 401, key is wrong; if 404, model tag is wrong (try `deepseek-v4-pro` without `:cloud`); if 429, you've already exhausted quota — sort that before continuing.
-
-- [ ] **Step 6: Commit**
+- [ ] **Step 4: Smoke-test the chat call**
 
 ```bash
-git add .gitignore .env.sops
-git commit -m "feat(pr-sweep): scaffold runner state dir + Ollama Cloud auth"
+LITELLM_API_KEY=$(grep '^LITELLM_API_KEY=' .env | cut -d= -f2-)
+LITELLM_BASE_URL=$(grep '^LITELLM_BASE_URL=' .env | cut -d= -f2-)
+LITELLM_MODEL=$(grep '^LITELLM_MODEL=' .env | cut -d= -f2-)
+curl -fsS -X POST "$LITELLM_BASE_URL/v1/chat/completions" \
+  -H "Authorization: Bearer $LITELLM_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d "{\"model\":\"$LITELLM_MODEL\",\"messages\":[{\"role\":\"user\",\"content\":\"reply pong\"}],\"temperature\":0,\"stream\":false}" \
+  | jq -r '.choices[0].message.content'
 ```
+
+Expected: a one-word `pong`-ish response. If 401, the key is wrong; if 404, the model alias is wrong (check `~/Documents/Homelab/ai/litellm/config.yaml`); if connection refused, the LiteLLM container isn't running on this host (needs to run on ares, or you need an SSH tunnel).
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add .gitignore
+git commit -m "feat(pr-sweep): gitignore .pr-sweep-runner runtime dir"
+```
+
+(`.env` is gitignored; nothing to commit there. The plan and README were committed earlier.)
 
 ---
 
@@ -112,7 +121,9 @@ Knobs (env):
   MAX_TOTAL_ITERS      total repair iterations per PR (default 8)
   COOLDOWN_S           sleep between PRs (default 30)
   DRY_RUN              print plan and exit
-  OLLAMA_API_KEY       required (read from .env via `just env` upstream)
+  LITELLM_API_KEY      required — virtual key from homelab proxy
+  LITELLM_BASE_URL     default http://127.0.0.1:4000
+  LITELLM_MODEL        default deepseek-v4-pro-cloud
 """
 
 from __future__ import annotations
@@ -147,8 +158,9 @@ STATE_FILE = STATE_DIR / "state.json"
 RUNNER_LOG = STATE_DIR / "runner.log"
 MM_WEBHOOK_FILE = STATE_DIR / "mm-webhook"
 
-OLLAMA_URL = "https://ollama.com/api/chat"
-OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "deepseek-v4-pro:cloud")
+LITELLM_BASE_URL = os.environ.get("LITELLM_BASE_URL", "http://127.0.0.1:4000")
+LITELLM_MODEL = os.environ.get("LITELLM_MODEL", "deepseek-v4-pro-cloud")
+LITELLM_CHAT_URL = LITELLM_BASE_URL.rstrip("/") + "/v1/chat/completions"
 
 DEFAULT_BRANCH = "main"
 PER_PR_TIMEOUT = int(os.environ.get("PER_PR_TIMEOUT", "3600"))
@@ -682,31 +694,32 @@ git commit -m "feat(pr-sweep): sanity gauntlet runner (precommit/typecheck/pytes
 **Files:**
 - Modify: `scripts/run-pr-sweep.py`
 
-- [ ] **Step 1: Build the Ollama Cloud chat call**
+- [ ] **Step 1: Build the LiteLLM chat call**
 
 Append:
 
 ```python
-def ollama_chat(system: str, user: str, *, timeout_s: int = 300) -> str:
-    """Single-shot chat completion against Ollama Cloud. Returns assistant message text."""
-    api_key = os.environ.get("OLLAMA_API_KEY")
+def litellm_chat(system: str, user: str, *, timeout_s: int = 300) -> str:
+    """Single-shot chat completion against the homelab LiteLLM proxy.
+    Returns assistant message text. Uses OpenAI-compatible /v1/chat/completions."""
+    api_key = os.environ.get("LITELLM_API_KEY")
     if not api_key:
-        raise RuntimeError("OLLAMA_API_KEY not set; run via `just sweep` or `eval $(just env)`")
+        raise RuntimeError("LITELLM_API_KEY not set; ensure .env has it and run via `just sweep`")
     payload = {
-        "model": OLLAMA_MODEL,
+        "model": LITELLM_MODEL,
         "messages": [
             {"role": "system", "content": system},
             {"role": "user", "content": user},
         ],
         "stream": False,
-        "options": {"temperature": 0.0},
+        "temperature": 0.0,
     }
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     with httpx.Client(timeout=timeout_s) as client:
-        r = client.post(OLLAMA_URL, json=payload, headers=headers)
+        r = client.post(LITELLM_CHAT_URL, json=payload, headers=headers)
     r.raise_for_status()
     body = r.json()
-    return body["message"]["content"]
+    return body["choices"][0]["message"]["content"]
 ```
 
 - [ ] **Step 2: Build the repair prompt for a gauntlet failure**
@@ -789,7 +802,7 @@ def llm_repair_conflicts(wt: Path, pr: PR, conflict_blob: str) -> bool:
     user = f"# Conflict files for PR #{pr.number}\n\n{conflict_blob}"
     save_prompt(pr, "rebase-conflict", user)
     try:
-        reply = ollama_chat(sys_prompt, user)
+        reply = litellm_chat(sys_prompt, user)
     except Exception as e:
         log(f"PR #{pr.number}: ollama call failed: {e}")
         return False
@@ -840,7 +853,7 @@ Add `chat-test` smoketest:
 
 ```python
 elif len(sys.argv) >= 2 and sys.argv[1] == "chat-test":
-    out = ollama_chat("You are a calculator.", "What is 2+2? Reply with only the digit.")
+    out = litellm_chat("You are a calculator.", "What is 2+2? Reply with only the digit.")
     log(f"LLM reply: {out!r}")
 ```
 
@@ -896,7 +909,7 @@ def run_gauntlet_with_repair(wt: Path, pr: PR) -> tuple[bool, list[GateResult]]:
             user = build_repair_prompt(pr, failure, wt)
             save_prompt(pr, label, user)
             try:
-                reply = ollama_chat(REPAIR_SYSTEM, user)
+                reply = litellm_chat(REPAIR_SYSTEM, user)
             except Exception as e:
                 log(f"PR #{pr.number}: ollama call failed (iter {total_iters}): {e}")
                 break
@@ -1049,7 +1062,7 @@ def comment_failure(pr: PR, attempts: list[GateResult], reason: str) -> None:
         icon = "✅" if g.passed else "❌"
         body_lines.append(f"- {icon} `{name}` exit={g.exit_code} ({g.duration_s:.1f}s)")
     body_lines.append("")
-    body_lines.append(f"_Repairs attempted with `{OLLAMA_MODEL}` via Ollama Cloud. Audit trail in `.pr-sweep-runner/{{prompts,patches,logs}}/{pr.number}/`._")
+    body_lines.append(f"_Repairs attempted with `{LITELLM_MODEL}` via the homelab LiteLLM proxy. Audit trail in `.pr-sweep-runner/{{prompts,patches,logs}}/{pr.number}/`._")
     body = "\n".join(body_lines)
     proc = subprocess.run(
         ["gh", "pr", "comment", str(pr.number), "--body", body],
@@ -1216,8 +1229,8 @@ def main() -> int:
         if shutil.which(tool) is None:
             log(f"FATAL: `{tool}` not on PATH")
             return 2
-    if not os.environ.get("OLLAMA_API_KEY"):
-        log("FATAL: OLLAMA_API_KEY not set. Run via `just sweep` or `eval $(just env)`.")
+    if not os.environ.get("LITELLM_API_KEY"):
+        log("FATAL: LITELLM_API_KEY not set. Run via `just sweep` (auto-sources .env).")
         return 2
 
     prs = discover_prs()
@@ -1237,7 +1250,7 @@ def main() -> int:
         return 0
 
     state = state_load()
-    mm_post(f"🚀 PR sweep starting — {len(prs)} PRs queued, model `{OLLAMA_MODEL}`")
+    mm_post(f"🚀 PR sweep starting — {len(prs)} PRs queued, model `{LITELLM_MODEL}` via LiteLLM")
     counts: dict[str, int] = {"ok": 0, "rebase-failed": 0, "repair-failed": 0, "error": 0, "already-done": 0}
     for i, pr in enumerate(prs, 1):
         log(f"[{i}/{len(prs)}] PR #{pr.number}")

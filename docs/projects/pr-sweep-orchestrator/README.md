@@ -11,7 +11,7 @@ next_step: Implement Task 1 (project scaffolding + auth bootstrap)
 
 ## Goal
 
-Land the 50 open `[dirac]` draft PRs on this repo by iterating through them sequentially: rebase against `main`, run the sanity gauntlet (pre-commit / typecheck / pytest / e2e), hand each failure to **DeepSeek-V4-Pro on Ollama Cloud** for repair, retry until green, then `git push --force-with-lease` and `gh pr ready`. Stop short of merging — humans review the ready queue.
+Land the 50 open `[dirac]` draft PRs on this repo by iterating through them sequentially: rebase against `main`, run the sanity gauntlet (pre-commit / typecheck / pytest / e2e), hand each failure to **`deepseek-v4-pro-cloud` via the homelab LiteLLM proxy** for repair, retry until green, then `git push --force-with-lease` and `gh pr ready`. Stop short of merging — humans review the ready queue.
 
 ## Why this shape
 
@@ -42,8 +42,9 @@ See [plan.md](plan.md) for the full implementation steps.
 ### 2026-05-07
 - Project created. Plan drafted via `writing-plans` skill.
 - Decision: stop at `gh pr ready`, no auto-merge.
-- Decision: `deepseek-v4-pro` on Ollama Cloud (direct, not via the homelab LiteLLM proxy).
+- Decision: route through the homelab LiteLLM proxy (`deepseek-v4-pro-cloud` with flash/glm5/kimi fallbacks) — not direct Ollama Cloud. Cleaner than reimplementing auth + retry + key management.
 - Decision: Python `uv`-inline single-file script under `scripts/run-pr-sweep.py`, mirroring shape of `scripts/run-dirac-projects.sh`.
+- Done inline: minted virtual key `personal-crm-pr-sweep-v2`, wrote `LITELLM_*` to `.env`, smoke-tested chat call (200 OK, "pong", 42 tokens).
 
 ## Notes
 
@@ -54,7 +55,8 @@ See [plan.md](plan.md) for the full implementation steps.
 - **Pre-commit hooks** are managed by `prek` (see `just install-hooks`). Run `prek run --all-files` to surface what's broken.
 - **Backend tests** via `just pytest -x -q` (runs inside the worktree's backend container).
 - **Frontend typecheck** via `docker compose -f compose.worktree.yml exec -T frontend bun run typecheck` from the worktree root.
-- **Auth:** `OLLAMA_API_KEY` lives in `.env.sops`. Surface via `just env`.
+- **Auth:** `LITELLM_API_KEY` (virtual key, alias `personal-crm-pr-sweep-v2`) lives in gitignored `.env`. Allowlist: `deepseek-v4-pro-cloud`, `deepseek-v4-flash-cloud`, `glm-5-cloud`, `kimi-k2.6-cloud` (built-in fallback chain). Cost = $0/token (subscription tier). Re-mint via `~/Documents/Homelab` recipe in plan Task 1 Step 3 if the key is lost.
+- **Runtime location:** the script needs network reach to the LiteLLM proxy at `127.0.0.1:4000`, which is bound loopback-only on ares. Either run the orchestrator on ares, or set up an SSH tunnel (`ssh -L 4000:127.0.0.1:4000 ares`) and override `LITELLM_BASE_URL`.
 - **Mattermost:** webhook URL stored in `.dirac-runner/mm-webhook` — reuse the same file (or a parallel `.pr-sweep-runner/mm-webhook`).
 - **Output layout** under `.pr-sweep-runner/`:
   - `state.json` — per-PR outcome map (resumable)

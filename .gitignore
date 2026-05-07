@@ -32,3 +32,4 @@ dbml-error.log
 
 # scripts/run-dirac-projects.sh state, logs, and prompts
 .dirac-runner/
+.pr-sweep-runner/
