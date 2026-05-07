@@ -4,7 +4,8 @@ status: active
 repos: [personal-crm]
 started: 2026-05-07
 last_updated: 2026-05-07
-next_step: Implement Task 1 (project scaffolding + auth bootstrap)
+next_step: Resume Task 8 (disposition — push + gh pr ready, comment on failure). Paused for user authorization on --push to public PRs.
+progress: 7/12
 ---
 
 # PR Sweep Orchestrator
@@ -22,14 +23,14 @@ Land the 50 open `[dirac]` draft PRs on this repo by iterating through them sequ
 
 ## Tasks
 
-- [ ] Project scaffolding + state dir + Ollama Cloud auth (Task 1)
-- [ ] PR discovery + filtering (Task 2)
-- [ ] Worktree management + branch checkout (Task 3)
-- [ ] Rebase handler with LLM conflict-resolution fallback (Task 4)
-- [ ] Sanity gauntlet runner — pre-commit, typecheck, pytest, e2e (Task 5)
-- [ ] Ollama Cloud client + repair-prompt construction (Task 6)
-- [ ] Repair loop — apply patch, re-run cheapest-first, cap iterations (Task 7)
-- [ ] Disposition — push, mark ready, comment on failure (Task 8)
+- [x] Project scaffolding + state dir + Ollama Cloud auth (Task 1) — `575f142`
+- [x] PR discovery + filtering (Task 2) — `f749525`
+- [x] Worktree management + branch checkout (Task 3) — `6657746`
+- [x] Rebase handler with LLM conflict-resolution fallback (Task 4) — `7be0fb8` + `c4c4b5a` (revised: rebase → merge)
+- [x] Sanity gauntlet runner — pre-commit, typecheck, pytest, e2e (Task 5) — `7fa3f93`
+- [x] Ollama Cloud client + repair-prompt construction (Task 6) — `1c8b949` (LiteLLM proxy, not direct)
+- [x] Repair loop — apply patch, re-run cheapest-first, cap iterations (Task 7) — `5c88de2`
+- [ ] Disposition — push, mark ready, comment on failure (Task 8) — paused, needs `--push` authorization
 - [ ] Top-level driver + Mattermost integration + summary (Task 9)
 - [ ] Smoke-test against one mergeable PR (Task 10)
 - [ ] First batch run against 5 PRs, observe, tune prompts (Task 11)
@@ -41,19 +42,26 @@ See [plan.md](plan.md) for the full implementation steps.
 
 ### 2026-05-07
 - Project created. Plan drafted via `writing-plans` skill.
-- Task 1 (scaffolding + LiteLLM auth): done inline. Commit `575f142`.
-- Task 2 (PR discovery): done via subagent. Commit `f749525`. Discovers 43 draft PRs, sorts MERGEABLE-first.
-- **Gotcha discovered:** `gh pr list` returns `mergeable: "UNKNOWN"` on a cold cache; second invocation gets the real value once GitHub has computed it. Fold into Task 9 (`main()`) by re-polling discovery once if any PR is UNKNOWN, before processing.
-- **Strategy revision (Task 4):** rebase → merge. PRs have merge commits in history, so rebase conflicts where merge wouldn't. Switched to `git merge origin/main --no-edit`, mirroring GitHub's "Update branch" behavior.
-- **Bigger gotcha:** local dirac branches were left stale by the 2026-05-07 `git filter-repo` public-release rewrite (different root commit from current main). `ensure_worktree` now always fetches origin first and hard-resets stale clean worktrees to `origin/<head_ref>`. Refuses to reset if uncommitted work present.
-- Task 3 done via subagent. Commit `6657746`.
-- Task 4 done inline (subagent + tech corrections). Strategy revised: merge instead of rebase.
-- Decision: stop at `gh pr ready`, no auto-merge.
-- Decision: route through the homelab LiteLLM proxy (`deepseek-v4-pro-cloud` with flash/glm5/kimi fallbacks) — not direct Ollama Cloud. Cleaner than reimplementing auth + retry + key management.
-- Decision: Python `uv`-inline single-file script under `scripts/run-pr-sweep.py`, mirroring shape of `scripts/run-dirac-projects.sh`.
-- Done inline: minted virtual key `personal-crm-pr-sweep-v2`, wrote `LITELLM_*` to `.env`, smoke-tested chat call (200 OK, "pong", 42 tokens).
+- Tasks 1–7 of 12 committed in one session (575f142 → 5c88de2). Script at `scripts/run-pr-sweep.py` is 738 lines, md5 `d49cbc6770bf52a1fc0553ec52abf7b6`, intact.
+- **Auth:** minted LiteLLM virtual key (alias `personal-crm-pr-sweep-v2`), allowlisted to `deepseek-v4-pro-cloud` + flash/glm5/kimi fallbacks. Stored in gitignored `.env`. Smoke-test pong came back 200 OK in 42 tokens.
+- **Discovery:** finds 43 draft PRs (`dirac/*` + `worktree-*`), MERGEABLE-first sort.
+- **Strategy revision (Task 4):** rebase → merge. PRs have merge commits in their history, so rebase conflicts where merge wouldn't. Switched to `git merge origin/main --no-edit`, mirroring GitHub's "Update branch" button.
+- **Worktree refresh:** local dirac branches were stale from the 2026-05-07 filter-repo public-release rewrite (different root commit from current main → `unrelated histories` error). `ensure_worktree` now fetches origin first and hard-resets stale clean worktrees to `origin/<head_ref>`. Refuses if uncommitted work is present.
+- **Sanity gauntlet:** four gates (precommit/typecheck/pytest/e2e), cheapest-first, stop at first failure. Smoke-tested on PR #48 — precommit failed in 12s on 3 ruff-format files, stack torn down via `finally`.
+- **LLM client:** `litellm_chat()` against `http://127.0.0.1:4000/v1/chat/completions`. Strict prompt format (single fenced `diff` block OR `DECLINE: <reason>`).
+- **Repair loop:** `MAX_REPAIR_ITERS=3` per gate, `MAX_TOTAL_ITERS=8` overall. On green re-check, restart full gauntlet from cheapest. Audit trail: every prompt + patch saved to `.pr-sweep-runner/{prompts,patches}/<pr>/`.
+- **Task 7 first real LLM run on PR #48:** LLM declined repair (returned reply but `extract_diff` got None — likely DECLINE or non-fenced text). 1m45s for one failed cycle. Worst-case wall-clock revised to 30–90 min/PR (50 PRs = 25–75 hours).
+- **Infra prep on ares:** pruned 9 orphan `crm-dirac-*_default` networks (Docker pool exhaustion at 55 networks), created `kindred-private` and `kindred-internal-crm` bridges (compose declares them external; were missing).
+- **Paused at Task 8.** Subagent dispatch rejected by user — Task 8's `--push` step would force-push to a public PR + flip its draft status, needs explicit authorization.
 
 ## Notes
+
+### 2026-05-07
+- **Decisions:** rebase → merge; LiteLLM proxy (not direct Ollama Cloud); stop at `gh pr ready` (no auto-merge); single-file Python orchestrator mirroring `run-dirac-projects.sh`.
+- **Gotchas:** stale local dirac/* refs from filter-repo rewrite (handled by ensure_worktree refresh); `gh pr list` cold-cache UNKNOWN mergeable; LLM-reply not saved to audit trail (only prompt) — diagnostic blind spot when extract_diff returns None.
+- **Issues:** Task 8 push step needs explicit user approval per PR or batch; LLM declined repair on first real PR (#48 precommit), root cause unknown without saved reply; pre-existing dirty state in some dirac worktrees aborts merge — needs auto-cleanup or manual sweep.
+- **Accomplished:** 7/12 tasks committed. Script intact (`d49cbc6770bf52a1fc0553ec52abf7b6`). Auth wired. Repair loop end-to-end demonstrated on PR #48 (loop ran cleanly, exited red, audit trail captured).
+- **Resume prompt** for the next session: see [RESUME.md](RESUME.md) — paste-ready.
 
 - **PR landscape (snapshot 2026-05-07):** 50 open draft PRs branched as `dirac/<slug>` or `worktree-<slug>`. ~25 are `MERGEABLE`, ~25 are `CONFLICTING`. Most fail `pre-commit` and `test-backend` GHA checks. All authored by the dirac runner with `--no-verify` on commits.
 - **Existing dirac worktrees** at `.worktrees/dirac-<slug>/` may be reusable — skip re-creating where a worktree already exists for the branch.
