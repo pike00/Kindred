@@ -132,6 +132,13 @@ if _static_dir and os.path.isdir(_static_dir):
         # belt-and-braces guard against accidental future ordering changes.
         if full_path.startswith(("api/", "setup", "dav/", ".well-known/")):
             raise HTTPException(status_code=404)
+        # Serve real static files at the root (site.webmanifest, favicon.ico,
+        # robots.txt, etc.) instead of falling through to index.html, which
+        # makes browsers report "Manifest: Syntax error" when parsing HTML as JSON.
+        if full_path:
+            candidate = os.path.normpath(os.path.join(_static_dir, full_path))
+            if candidate.startswith(_static_dir + os.sep) and os.path.isfile(candidate):
+                return FileResponse(candidate)
         return FileResponse(_index_html)
 
 
