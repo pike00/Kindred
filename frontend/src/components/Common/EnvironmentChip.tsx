@@ -23,10 +23,8 @@ export function EnvironmentChip() {
   if (!data || data.environment === "production") return null
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center pb-3">
-      <div className="pointer-events-auto rounded-full border border-red-400/60 bg-red-600 px-5 py-1.5 text-xs font-bold uppercase tracking-widest text-white shadow-lg shadow-red-900/40">
-        {data.environment} environment
-      </div>
-    </div>
+    <span className="rounded-full border border-red-400/60 bg-red-600 px-3 py-0.5 text-[10px] font-bold uppercase tracking-widest text-white shadow shadow-red-900/40">
+      {data.environment} environment
+    </span>
   )
 }

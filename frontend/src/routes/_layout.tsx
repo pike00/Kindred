@@ -5,7 +5,6 @@ import {
   CommandPaletteProvider,
   useCommandPalette,
 } from "@/components/CommandPalette/CommandPaletteContext"
-import { EnvironmentChip } from "@/components/Common/EnvironmentChip"
 import { Footer } from "@/components/Common/Footer"
 import { ReminderBell } from "@/components/Reminders/ReminderBell"
 import AppSidebar from "@/components/Sidebar/AppSidebar"
@@ -70,7 +69,6 @@ function Layout() {
         </SidebarInset>
       </SidebarProvider>
       <CommandPalette />
-      <EnvironmentChip />
     </CommandPaletteProvider>
   )
 }
