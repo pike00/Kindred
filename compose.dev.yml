@@ -17,11 +17,13 @@ services:
     working_dir: /app/backend
     command: ["bash", "-c", "bash scripts/prestart.sh && fastapi run --reload app/main.py"]
     labels:
-      # Hard-coded kindred.localhost so a misset DOMAIN can never claim the prod hostname.
+      # Hard-coded kindred.dev.example.com (tailnet-only via admin-ipallowlist)
+      # so a misset DOMAIN can never claim the prod hostname.
       - "traefik.enable=true"
-      - "traefik.http.routers.crm-api.rule=Host(`kindred.localhost`) && (PathPrefix(`/api`) || PathPrefix(`/docs`) || PathPrefix(`/redoc`) || PathPrefix(`/openapi.json`) || PathPrefix(`/dav`) || PathPrefix(`/.well-known`))"
+      - "traefik.http.routers.crm-api.rule=Host(`kindred.dev.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/docs`) || PathPrefix(`/redoc`) || PathPrefix(`/openapi.json`) || PathPrefix(`/dav`) || PathPrefix(`/.well-known`))"
       - "traefik.http.routers.crm-api.entrypoints=websecure"
       - "traefik.http.routers.crm-api.tls=true"
+      - "traefik.http.routers.crm-api.middlewares=admin-ipallowlist@file"
       - "traefik.http.services.crm-api.loadbalancer.server.port=8000"
       - "traefik.docker.network=kindred-private"
     healthcheck:
@@ -41,8 +43,8 @@ services:
     working_dir: /app/frontend
     env_file: .env
     environment:
-      - VITE_API_URL=https://kindred.localhost
-      - VITE_PUBLIC_HOST=kindred.localhost
+      - VITE_API_URL=https://kindred.dev.example.com
+      - VITE_PUBLIC_HOST=kindred.dev.example.com
       - VITE_AUTH_MODE=${AUTH_MODE:-local}
       - VITE_CF_LOGOUT_URL=${VITE_CF_LOGOUT_URL:-}
     volumes:
@@ -62,9 +64,10 @@ services:
       - 172.20.2.253
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.crm.rule=Host(`kindred.localhost`)"
+      - "traefik.http.routers.crm.rule=Host(`kindred.dev.example.com`)"
       - "traefik.http.routers.crm.entrypoints=websecure"
       - "traefik.http.routers.crm.tls=true"
+      - "traefik.http.routers.crm.middlewares=admin-ipallowlist@file"
       - "traefik.http.services.crm.loadbalancer.server.port=5173"
       - "traefik.docker.network=kindred-private"
 
