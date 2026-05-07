@@ -41,6 +41,9 @@ See [plan.md](plan.md) for the full implementation steps.
 
 ### 2026-05-07
 - Project created. Plan drafted via `writing-plans` skill.
+- Task 1 (scaffolding + LiteLLM auth): done inline. Commit `575f142`.
+- Task 2 (PR discovery): done via subagent. Commit `f749525`. Discovers 43 draft PRs, sorts MERGEABLE-first.
+- **Gotcha discovered:** `gh pr list` returns `mergeable: "UNKNOWN"` on a cold cache; second invocation gets the real value once GitHub has computed it. Fold into Task 9 (`main()`) by re-polling discovery once if any PR is UNKNOWN, before processing.
 - Decision: stop at `gh pr ready`, no auto-merge.
 - Decision: route through the homelab LiteLLM proxy (`deepseek-v4-pro-cloud` with flash/glm5/kimi fallbacks) — not direct Ollama Cloud. Cleaner than reimplementing auth + retry + key management.
 - Decision: Python `uv`-inline single-file script under `scripts/run-pr-sweep.py`, mirroring shape of `scripts/run-dirac-projects.sh`.
