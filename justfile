@@ -19,6 +19,14 @@ seed-reset count="500" email="":
 seed-fixed count="500" rng="42" email="":
     {{_dc}} exec -T backend python app/seed_fake_data.py --count {{count}} --reset --seed {{rng}} {{ if email == "" { "" } else { "--email " + email } }}
 
+# Regenerate the frontend OpenAPI client AND restart the frontend container
+# so Vite drops its cached SDK from node_modules/.vite/deps. Without the
+# restart, the dev server keeps serving the stale client even though the
+# source files on disk are current.
+regen-client:
+    bash scripts/generate-client.sh
+    {{_dc}} restart frontend
+
 # Regenerate docs/db/ from the live Postgres schema using tbls, then render
 # each .md to a standalone .html via pandoc. Open docs/db/index.html in a
 # browser — no server needed. Requires the `db` service to be running.
