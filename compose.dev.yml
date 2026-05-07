@@ -4,6 +4,8 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     env_file: .env
+    environment:
+      - ENVIRONMENT=development
     networks:
       - kindred-private
       - kindred-internal-crm
@@ -16,6 +18,10 @@ services:
       - ./backend/alembic.ini:/app/backend/alembic.ini:ro
     working_dir: /app/backend
     command: ["bash", "-c", "bash scripts/prestart.sh && fastapi run --reload app/main.py"]
+    # Loopback-only port so the puppeteer e2e suite can hit the API without
+    # going through Traefik. Traefik still fronts the canonical hostname.
+    ports:
+      - "127.0.0.1:8001:8000"
     labels:
       # Hard-coded kindred.dev.example.com (tailnet-only via admin-ipallowlist)
       # so a misset DOMAIN can never claim the prod hostname.
@@ -23,6 +29,8 @@ services:
       - "traefik.http.routers.crm-api.rule=Host(`kindred.dev.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/docs`) || PathPrefix(`/redoc`) || PathPrefix(`/openapi.json`) || PathPrefix(`/dav`) || PathPrefix(`/.well-known`))"
       - "traefik.http.routers.crm-api.entrypoints=websecure"
       - "traefik.http.routers.crm-api.tls=true"
+      - "traefik.http.routers.crm-api.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.crm-api.tls.domains[0].main=*.dev.example.com"
       - "traefik.http.routers.crm-api.middlewares=admin-ipallowlist@file"
       - "traefik.http.services.crm-api.loadbalancer.server.port=8000"
       - "traefik.docker.network=kindred-private"
@@ -62,11 +70,16 @@ services:
       - kindred-private
     dns:
       - 172.20.2.253
+    # Loopback-only port for puppeteer e2e — same rationale as backend.
+    ports:
+      - "127.0.0.1:5173:5173"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.crm.rule=Host(`kindred.dev.example.com`)"
       - "traefik.http.routers.crm.entrypoints=websecure"
       - "traefik.http.routers.crm.tls=true"
+      - "traefik.http.routers.crm.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.crm.tls.domains[0].main=*.dev.example.com"
       - "traefik.http.routers.crm.middlewares=admin-ipallowlist@file"
       - "traefik.http.services.crm.loadbalancer.server.port=5173"
       - "traefik.docker.network=kindred-private"

@@ -1,0 +1,12 @@
+# Override used by the e2e suite so the SPA talks to the loopback-published
+# API (localhost:8001) instead of going through Traefik. The host port bindings
+# themselves now live in compose.dev.yml so they survive ad-hoc restarts.
+#
+#   docker compose -f compose.dev.yml -f compose.dev.override.yml up -d
+services:
+  frontend:
+    environment:
+      - VITE_API_URL=http://localhost:8001
+      - VITE_PUBLIC_HOST=localhost
+      - VITE_AUTH_MODE=${AUTH_MODE:-local}
+      - VITE_CF_LOGOUT_URL=${VITE_CF_LOGOUT_URL:-}
