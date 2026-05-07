@@ -24,8 +24,10 @@ from __future__ import annotations
 
 import json
 import os
+import shlex
 import subprocess
 import sys
+import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -346,6 +348,93 @@ def handle_update_branch(wt: Path, pr: PR) -> bool:
     return False
 
 
+@dataclass
+class GateResult:
+    name: str
+    exit_code: int
+    log_path: Path
+    duration_s: float
+
+    @property
+    def passed(self) -> bool:
+        return self.exit_code == 0
+
+
+def _run_gate(wt: Path, name: str, cmd: list[str], timeout: int) -> GateResult:
+    log_path = LOG_DIR / f"{wt.name}.{name}.log"
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    log(f"  ▶ gate `{name}` in {wt.name}: {' '.join(shlex.quote(c) for c in cmd)}")
+    start = time.monotonic()
+    with log_path.open("w") as f:
+        f.write(f"# {now_iso()} {' '.join(cmd)}\n")
+        f.flush()
+        proc = subprocess.run(
+            cmd,
+            cwd=wt,
+            stdout=f,
+            stderr=subprocess.STDOUT,
+            stdin=subprocess.DEVNULL,
+            timeout=timeout,
+        )
+    dur = time.monotonic() - start
+    log(
+        f"  {'✓' if proc.returncode == 0 else '✗'} gate `{name}` exit={proc.returncode} ({dur:.1f}s) → {log_path}"
+    )
+    return GateResult(
+        name=name, exit_code=proc.returncode, log_path=log_path, duration_s=dur
+    )
+
+
+def gate_precommit(wt: Path) -> GateResult:
+    return _run_gate(wt, "precommit", ["prek", "run", "--all-files"], timeout=600)
+
+
+def gate_typecheck(wt: Path) -> GateResult:
+    return _run_gate(
+        wt,
+        "typecheck",
+        [
+            "docker",
+            "compose",
+            "-f",
+            "compose.worktree.yml",
+            "exec",
+            "-T",
+            "frontend",
+            "bun",
+            "run",
+            "typecheck",
+        ],
+        timeout=300,
+    )
+
+
+def gate_pytest(wt: Path) -> GateResult:
+    return _run_gate(wt, "pytest", ["just", "pytest", "-x", "-q"], timeout=900)
+
+
+def gate_e2e(wt: Path) -> GateResult:
+    # Reuse the existing pre-push e2e script. It auto-brings up the loopback stack.
+    return _run_gate(wt, "e2e", ["bash", "scripts/run-e2e-prepush.sh"], timeout=1800)
+
+
+GAUNTLET = [gate_precommit, gate_typecheck, gate_pytest, gate_e2e]
+
+
+def run_gauntlet(wt: Path) -> tuple[list[GateResult], GateResult | None]:
+    """
+    Run gates cheapest-first. Stop at first failure, return (passed_so_far, failure).
+    If all pass, returns (all_results, None).
+    """
+    passed: list[GateResult] = []
+    for gate_fn in GAUNTLET:
+        result = gate_fn(wt)
+        if not result.passed:
+            return passed, result
+        passed.append(result)
+    return passed, None
+
+
 def _smoketest_discover() -> None:
     prs = discover_prs()
     log(
@@ -383,8 +472,24 @@ if __name__ == "__main__":
         wt = ensure_worktree(target)
         ok = handle_update_branch(wt, target)
         log(f"update-branch result for #{pr_num}: {'OK' if ok else 'FAILED'}")
+    elif len(sys.argv) >= 3 and sys.argv[1] == "gauntlet":
+        pr_num = int(sys.argv[2])
+        prs = discover_prs()
+        target = next((p for p in prs if p.number == pr_num), None)
+        if target is None:
+            log(f"FATAL: PR #{pr_num} not in queue")
+            sys.exit(2)
+        wt = ensure_worktree(target)
+        bring_stack_up(wt)
+        try:
+            passed, failure = run_gauntlet(wt)
+            log(
+                f"gauntlet for #{pr_num}: {len(passed)} passed; failure={failure.name if failure else 'none'}"
+            )
+        finally:
+            tear_stack_down(wt)
     else:
         log(
-            "usage: run-pr-sweep.py {discover|worktree <pr_number>|update-branch <pr_number>}"
+            "usage: run-pr-sweep.py {discover|worktree <pr_number>|update-branch <pr_number>|gauntlet <pr_number>}"
         )
         sys.exit(2)
