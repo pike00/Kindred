@@ -43,10 +43,6 @@ Enum "mediacategory" {
   "OTHER"
 }
 
-Enum "oauthprovider" {
-  "GOOGLE"
-}
-
 Enum "reminderfrequency" {
   "ONCE"
   "DAILY"
@@ -83,21 +79,10 @@ Table "tag" {
   "name" varchar(100) [not null]
   "color" varchar(7)
   "created_at" timestamptz [not null]
+  "description" varchar(1000)
 
   Indexes {
     owner_id [type: btree, name: "ix_tag_owner_id"]
-  }
-}
-
-Table "group" {
-  "id" uuid [pk, not null]
-  "owner_id" uuid [not null]
-  "name" varchar(255) [not null]
-  "description" varchar(1000)
-  "created_at" timestamptz [not null]
-
-  Indexes {
-    owner_id [type: btree, name: "ix_group_owner_id"]
   }
 }
 
@@ -128,9 +113,9 @@ Table "contact" {
   "created_at" timestamptz [not null]
   "updated_at" timestamptz [not null]
   "deleted_at" timestamptz
+  "organization_id" uuid
   "source" contactsource [not null, default: 'MANUAL']
   "source_external_id" varchar(500)
-  "organization_id" uuid
   "do_not_contact" bool [not null, default: false]
   "do_not_contact_reason" varchar(500)
 
@@ -150,15 +135,6 @@ Table "contact_tag" {
 
   Indexes {
     (contact_id, tag_id) [pk, type: btree, name: "contact_tag_pkey"]
-  }
-}
-
-Table "contact_group" {
-  "contact_id" uuid [not null]
-  "group_id" uuid [not null]
-
-  Indexes {
-    (contact_id, group_id) [pk, type: btree, name: "contact_group_pkey"]
   }
 }
 
@@ -452,26 +428,6 @@ Table "activity_log" {
   }
 }
 
-Table "oauth_credential" {
-  "id" uuid [pk, not null]
-  "user_id" uuid [not null]
-  "provider" oauthprovider [not null]
-  "encrypted_refresh_token" varchar [not null]
-  "encrypted_access_token" varchar
-  "access_token_expires_at" timestamptz
-  "scopes" varchar(2000) [not null, default: '']
-  "sync_token" varchar(4000)
-  "last_synced_at" timestamptz
-  "created_at" timestamptz [not null]
-  "updated_at" timestamptz [not null]
-
-  Indexes {
-    (user_id, provider) [type: btree, unique, name: "uq_oauth_credential_user_provider"]
-    provider [type: btree, name: "ix_oauth_credential_provider"]
-    user_id [type: btree, name: "ix_oauth_credential_user_id"]
-  }
-}
-
 Table "note_mention" {
   "note_id" uuid [not null]
   "contact_id" uuid [not null]
@@ -482,15 +438,42 @@ Table "note_mention" {
   }
 }
 
-Table "communication_preference" {
-  "id" uuid [pk, not null, default: `gen_random_uuid()`]
-  "contact_id" uuid [unique, not null]
-  "preferred_channel" varchar(20)
-  "best_time_local" varchar(11)
-  "do_not_contact" bool [not null, default: false]
-  "do_not_contact_reason" varchar(500)
+Table "reminder_snooze" {
+  "id" uuid [pk, not null]
+  "reminder_id" uuid [not null]
+  "snoozed_at" timestamptz [not null, default: `now()`]
+  "snoozed_until" timestamptz [not null]
+  "reason" text
   "created_at" timestamptz [not null, default: `now()`]
-  "updated_at" timestamptz [not null, default: `now()`]
+
+  Indexes {
+    reminder_id [type: btree, name: "ix_reminder_snooze_reminder_id"]
+    snoozed_at [type: btree, name: "ix_reminder_snooze_snoozed_at"]
+  }
+}
+
+Table "organization" {
+  "name" varchar(255) [not null]
+  "domain" varchar(255)
+  "industry" varchar(255)
+  "notes" varchar(2000)
+  "address_label" varchar(100) [not null]
+  "address_street" varchar(500)
+  "address_extended" varchar(500)
+  "address_city" varchar(255)
+  "address_region" varchar(255)
+  "address_postal_code" varchar(50)
+  "address_country" varchar(255)
+  "address_latitude" float8
+  "address_longitude" float8
+  "id" uuid [pk, not null]
+  "owner_id" uuid [not null]
+  "created_at" timestamptz [not null]
+  "updated_at" timestamptz [not null]
+
+  Indexes {
+    owner_id [type: btree, name: "ix_organization_owner_id"]
+  }
 }
 
 Table "api_key" {
@@ -519,44 +502,6 @@ Table "api_key_impersonate" {
   }
 }
 
-Table "organization" {
-  "name" varchar(255) [not null]
-  "domain" varchar(255)
-  "industry" varchar(255)
-  "notes" varchar(2000)
-  "address_label" varchar(100) [not null]
-  "address_street" varchar(500)
-  "address_extended" varchar(500)
-  "address_city" varchar(255)
-  "address_region" varchar(255)
-  "address_postal_code" varchar(50)
-  "address_country" varchar(255)
-  "address_latitude" float8
-  "address_longitude" float8
-  "id" uuid [pk, not null]
-  "owner_id" uuid [not null]
-  "created_at" timestamptz [not null]
-  "updated_at" timestamptz [not null]
-
-  Indexes {
-    owner_id [type: btree, name: "ix_organization_owner_id"]
-  }
-}
-
-Table "reminder_snooze" {
-  "id" uuid [pk, not null]
-  "reminder_id" uuid [not null]
-  "snoozed_at" timestamptz [not null, default: `now()`]
-  "snoozed_until" timestamptz [not null]
-  "reason" text
-  "created_at" timestamptz [not null, default: `now()`]
-
-  Indexes {
-    reminder_id [type: btree, name: "ix_reminder_snooze_reminder_id"]
-    snoozed_at [type: btree, name: "ix_reminder_snooze_snoozed_at"]
-  }
-}
-
 Table "setup_state" {
   "id" int4 [pk, not null, increment]
   "complete" bool [not null, default: false]
@@ -577,17 +522,11 @@ Ref "api_key_impersonate_api_key_id_fkey":"api_key"."id" < "api_key_impersonate"
 
 Ref "api_key_impersonate_user_id_fkey":"user"."id" < "api_key_impersonate"."user_id" [delete: cascade]
 
-Ref "communication_preference_contact_id_fkey":"contact"."id" < "communication_preference"."contact_id" [delete: cascade]
-
 Ref "contact_owner_id_fkey":"user"."id" < "contact"."owner_id" [delete: cascade]
 
 Ref "fk_contact_organization_id":"organization"."id" < "contact"."organization_id" [delete: set null]
 
 Ref "contact_field_contact_id_fkey":"contact"."id" < "contact_field"."contact_id" [delete: cascade]
-
-Ref "contact_group_contact_id_fkey":"contact"."id" < "contact_group"."contact_id" [delete: cascade]
-
-Ref "contact_group_group_id_fkey":"group"."id" < "contact_group"."group_id" [delete: cascade]
 
 Ref "contact_tag_contact_id_fkey":"contact"."id" < "contact_tag"."contact_id" [delete: cascade]
 
@@ -606,8 +545,6 @@ Ref "debt_owner_id_fkey":"user"."id" < "debt"."owner_id" [delete: cascade]
 Ref "gift_contact_id_fkey":"contact"."id" < "gift"."contact_id" [delete: cascade]
 
 Ref "gift_owner_id_fkey":"user"."id" < "gift"."owner_id" [delete: cascade]
-
-Ref "group_owner_id_fkey":"user"."id" < "group"."owner_id" [delete: cascade]
 
 Ref "interaction_owner_id_fkey":"user"."id" < "interaction"."owner_id" [delete: cascade]
 
@@ -632,8 +569,6 @@ Ref "note_owner_id_fkey":"user"."id" < "note"."owner_id" [delete: cascade]
 Ref "note_mention_contact_id_fkey":"contact"."id" < "note_mention"."contact_id" [delete: cascade]
 
 Ref "note_mention_note_id_fkey":"note"."id" < "note_mention"."note_id" [delete: cascade]
-
-Ref "oauth_credential_user_id_fkey":"user"."id" < "oauth_credential"."user_id" [delete: cascade]
 
 Ref "organization_owner_id_fkey":"user"."id" < "organization"."owner_id" [delete: cascade]
 
