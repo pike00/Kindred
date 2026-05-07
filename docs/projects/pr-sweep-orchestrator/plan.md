@@ -414,7 +414,11 @@ git commit -m "feat(pr-sweep): worktree checkout + stack up/down helpers"
 
 ---
 
-## Task 4: Rebase handler with conflict-resolution fallback
+## Task 4: Update-branch handler with conflict-resolution fallback
+
+> **Strategy revision (2026-05-07):** originally specced as `git rebase origin/main` per PR. Changed to `git merge origin/main --no-edit` after discovery: the existing dirac PRs have merge commits in their history, and rebase replays each commit individually — every PR was conflicting on rebase even where merge was clean. Merge mirrors what GitHub's "Update branch" button does and avoids the LLM-conflict path on most PRs.
+>
+> **Also:** `ensure_worktree` now refreshes stale local refs from origin every call, because the 2026-05-07 public-release `git filter-repo` rewrite gave the remote a new history root (`97b7694`) while local dirac branches still root at the pre-rewrite SHA (`0ed36e9`). Without the refresh, `git merge` reports "unrelated histories". The refresh hard-resets only worktrees that are clean (uncommitted changes raise).
 
 **Files:**
 - Modify: `scripts/run-pr-sweep.py`

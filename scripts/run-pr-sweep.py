@@ -150,30 +150,75 @@ def existing_worktree_for(branch: str) -> Path | None:
 
 
 def ensure_worktree(pr: PR) -> Path:
-    """Return a path to a checked-out worktree on `pr.head_ref`. Creates if missing."""
+    """
+    Return a worktree on `pr.head_ref` synced to origin.
+
+    Origin is the source of truth: many local dirac/* refs are stale from the
+    2026-05-07 filter-repo public-release rewrite (their root commit no longer
+    matches main's). This function always fetches first, and resets any stale
+    worktree to the origin SHA. Refuses to reset if uncommitted work is present.
+    """
+    run(["git", "fetch", "origin", pr.head_ref], check=True)
+    origin_sha = run(["git", "rev-parse", f"origin/{pr.head_ref}"]).stdout.strip()
+
     existing = existing_worktree_for(pr.head_ref)
     if existing is not None:
-        log(f"PR #{pr.number}: reusing worktree {existing}")
+        wt_sha = run(["git", "-C", str(existing), "rev-parse", "HEAD"]).stdout.strip()
+        if wt_sha == origin_sha:
+            log(
+                f"PR #{pr.number}: reusing worktree {existing} (HEAD {wt_sha[:8]} matches origin)"
+            )
+            return existing
+        status = run(
+            ["git", "-C", str(existing), "status", "--porcelain"]
+        ).stdout.strip()
+        if status:
+            raise RuntimeError(
+                f"PR #{pr.number}: stale worktree {existing} has uncommitted changes; refusing to reset:\n{status}"
+            )
+        log(
+            f"PR #{pr.number}: worktree {existing} stale ({wt_sha[:8]} != origin {origin_sha[:8]}); resetting"
+        )
+        for state_dir in (
+            "MERGE_HEAD",
+            "rebase-merge",
+            "rebase-apply",
+            "CHERRY_PICK_HEAD",
+        ):
+            if (existing / ".git" / state_dir).exists():
+                subprocess.run(
+                    ["git", "-C", str(existing), "merge", "--abort"],
+                    capture_output=True,
+                    stdin=subprocess.DEVNULL,
+                )
+                break
+        run(
+            ["git", "-C", str(existing), "reset", "--hard", f"origin/{pr.head_ref}"],
+            check=True,
+        )
         return existing
-    # The branch already exists on remote (PR is open). Fetch then add.
-    run(["git", "fetch", "origin", pr.head_ref], check=True)
+
     wt_name = f"sweep-{pr.number}"
     wt_path = REPO_ROOT / ".worktrees" / wt_name
     log(f"PR #{pr.number}: creating worktree {wt_path} on {pr.head_ref}")
-    # Track the remote branch so future pushes go to origin/<head_ref>
-    run(
-        [
-            "git",
-            "worktree",
-            "add",
-            "--track",
-            "-b",
-            pr.head_ref,
-            str(wt_path),
-            f"origin/{pr.head_ref}",
-        ],
-        check=True,
-    )
+    branch_exists = bool(run(["git", "branch", "--list", pr.head_ref]).stdout.strip())
+    if branch_exists:
+        run(["git", "branch", "-f", pr.head_ref, f"origin/{pr.head_ref}"], check=True)
+        run(["git", "worktree", "add", str(wt_path), pr.head_ref], check=True)
+    else:
+        run(
+            [
+                "git",
+                "worktree",
+                "add",
+                "--track",
+                "-b",
+                pr.head_ref,
+                str(wt_path),
+                f"origin/{pr.head_ref}",
+            ],
+            check=True,
+        )
     return wt_path
 
 
@@ -210,28 +255,38 @@ def fetch_main(wt: Path) -> None:
     run(["git", "-C", str(wt), "fetch", "origin", DEFAULT_BRANCH], check=True)
 
 
-def rebase_against_main(wt: Path) -> tuple[bool, str]:
+def merge_main_into_pr(wt: Path) -> tuple[bool, str]:
     """
-    Try `git rebase origin/main`. Return (success, log_excerpt).
-    If conflicts, leaves the rebase in progress so caller can hand it to LLM.
+    Try `git merge origin/main` (no rebase — these PRs have merge commits, so
+    rebase would replay them and conflict where merge would not). Mirrors what
+    GitHub's "Update branch" button does. Returns (success, log_excerpt).
+    Leaves any conflicts in the index for the caller to inspect / hand to LLM.
     """
     fetch_main(wt)
     proc = subprocess.run(
-        ["git", "-C", str(wt), "rebase", f"origin/{DEFAULT_BRANCH}"],
+        [
+            "git",
+            "-C",
+            str(wt),
+            "-c",
+            "core.editor=true",  # accept the auto-generated merge message
+            "merge",
+            "--no-edit",
+            f"origin/{DEFAULT_BRANCH}",
+        ],
         text=True,
         capture_output=True,
         stdin=subprocess.DEVNULL,
     )
     if proc.returncode == 0:
-        return True, "clean rebase"
-    # Conflict path
+        return True, (proc.stdout or "clean merge").strip()
     out = (proc.stdout + "\n" + proc.stderr).strip()
     return False, out[-4000:]
 
 
-def abort_rebase(wt: Path) -> None:
+def abort_merge(wt: Path) -> None:
     subprocess.run(
-        ["git", "-C", str(wt), "rebase", "--abort"],
+        ["git", "-C", str(wt), "merge", "--abort"],
         text=True,
         capture_output=True,
         stdin=subprocess.DEVNULL,
@@ -262,32 +317,32 @@ def gather_conflict_context(wt: Path) -> str:
 def llm_repair_conflicts(wt: Path, pr: PR, conflict_blob: str) -> bool:
     """
     Stub: returns False. Real implementation arrives in Task 6.
-    When True, caller must `git add -A && git rebase --continue`.
+    When True, caller must `git add -A && git commit --no-edit` to finalize the merge.
     """
     log(f"PR #{pr.number}: LLM conflict-repair stub (returning False)")
     return False
 
 
-def handle_rebase(wt: Path, pr: PR) -> bool:
-    """Return True if the worktree is now rebased onto main; False if we gave up."""
-    success, msg = rebase_against_main(wt)
+def handle_update_branch(wt: Path, pr: PR) -> bool:
+    """Bring the PR branch up to date with main via merge. Return True on success."""
+    success, msg = merge_main_into_pr(wt)
     if success:
         return True
-    log(f"PR #{pr.number}: rebase conflicts:\n{msg[-1000:]}")
+    log(f"PR #{pr.number}: merge conflicts:\n{msg[-1000:]}")
     blob = gather_conflict_context(wt)
     if llm_repair_conflicts(wt, pr, blob):
         run(["git", "-C", str(wt), "add", "-A"], check=True)
         cont = subprocess.run(
-            ["git", "-C", str(wt), "-c", "core.editor=true", "rebase", "--continue"],
+            ["git", "-C", str(wt), "-c", "core.editor=true", "commit", "--no-edit"],
             text=True,
             capture_output=True,
             stdin=subprocess.DEVNULL,
         )
         if cont.returncode == 0:
-            log(f"PR #{pr.number}: rebase --continue succeeded after LLM repair")
+            log(f"PR #{pr.number}: merge commit succeeded after LLM repair")
             return True
-        log(f"PR #{pr.number}: rebase --continue still failed:\n{cont.stderr[-1000:]}")
-    abort_rebase(wt)
+        log(f"PR #{pr.number}: merge commit still failed:\n{cont.stderr[-1000:]}")
+    abort_merge(wt)
     return False
 
 
@@ -318,7 +373,7 @@ if __name__ == "__main__":
         _smoketest_discover()
     elif len(sys.argv) >= 3 and sys.argv[1] == "worktree":
         _smoketest_worktree(int(sys.argv[2]))
-    elif len(sys.argv) >= 3 and sys.argv[1] == "rebase":
+    elif len(sys.argv) >= 3 and sys.argv[1] == "update-branch":
         pr_num = int(sys.argv[2])
         prs = discover_prs()
         target = next((p for p in prs if p.number == pr_num), None)
@@ -326,8 +381,10 @@ if __name__ == "__main__":
             log(f"FATAL: PR #{pr_num} not in queue")
             sys.exit(2)
         wt = ensure_worktree(target)
-        ok = handle_rebase(wt, target)
-        log(f"rebase result for #{pr_num}: {'OK' if ok else 'FAILED'}")
+        ok = handle_update_branch(wt, target)
+        log(f"update-branch result for #{pr_num}: {'OK' if ok else 'FAILED'}")
     else:
-        log("usage: run-pr-sweep.py {discover|worktree <pr_number>|rebase <pr_number>}")
+        log(
+            "usage: run-pr-sweep.py {discover|worktree <pr_number>|update-branch <pr_number>}"
+        )
         sys.exit(2)

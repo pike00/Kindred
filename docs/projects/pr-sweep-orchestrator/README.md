@@ -44,6 +44,10 @@ See [plan.md](plan.md) for the full implementation steps.
 - Task 1 (scaffolding + LiteLLM auth): done inline. Commit `575f142`.
 - Task 2 (PR discovery): done via subagent. Commit `f749525`. Discovers 43 draft PRs, sorts MERGEABLE-first.
 - **Gotcha discovered:** `gh pr list` returns `mergeable: "UNKNOWN"` on a cold cache; second invocation gets the real value once GitHub has computed it. Fold into Task 9 (`main()`) by re-polling discovery once if any PR is UNKNOWN, before processing.
+- **Strategy revision (Task 4):** rebase → merge. PRs have merge commits in history, so rebase conflicts where merge wouldn't. Switched to `git merge origin/main --no-edit`, mirroring GitHub's "Update branch" behavior.
+- **Bigger gotcha:** local dirac branches were left stale by the 2026-05-07 `git filter-repo` public-release rewrite (different root commit from current main). `ensure_worktree` now always fetches origin first and hard-resets stale clean worktrees to `origin/<head_ref>`. Refuses to reset if uncommitted work present.
+- Task 3 done via subagent. Commit `6657746`.
+- Task 4 done inline (subagent + tech corrections). Strategy revised: merge instead of rebase.
 - Decision: stop at `gh pr ready`, no auto-merge.
 - Decision: route through the homelab LiteLLM proxy (`deepseek-v4-pro-cloud` with flash/glm5/kimi fallbacks) — not direct Ollama Cloud. Cleaner than reimplementing auth + retry + key management.
 - Decision: Python `uv`-inline single-file script under `scripts/run-pr-sweep.py`, mirroring shape of `scripts/run-dirac-projects.sh`.
