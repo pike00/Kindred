@@ -3,8 +3,8 @@ import puppeteer, { Browser, BrowserContext, Page } from "puppeteer";
 export const BASE_URL = "http://localhost:5173";
 export const API_URL = "http://localhost:8001";
 export const TEST_USER = {
-  email: "admin@example.com",
-  password: "changeme",
+  email: process.env.E2E_TEST_EMAIL || "admin@example.com",
+  password: process.env.E2E_TEST_PASSWORD || "changethis",
   fullName: "Admin",
 };
 
@@ -76,7 +76,6 @@ export async function navigateTo(
       "Contacts": "/contacts",
       "Interactions": "/interactions",
       "Tags": "/tags",
-      "Groups": "/groups",
       "Reminders": "/reminders",
       "Journal": "/journal",
       "Admin": "/admin",
