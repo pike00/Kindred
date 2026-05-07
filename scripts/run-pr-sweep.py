@@ -132,6 +132,80 @@ def discover_prs() -> list[PR]:
     return prs
 
 
+def existing_worktree_for(branch: str) -> Path | None:
+    """Find a worktree whose checkout matches `branch`. Reuses dirac-runner worktrees."""
+    proc = run(["git", "worktree", "list", "--porcelain"])
+    if proc.returncode != 0:
+        return None
+    wt: Path | None = None
+    for line in proc.stdout.splitlines():
+        if line.startswith("worktree "):
+            wt = Path(line.split(" ", 1)[1])
+        elif line.startswith("branch ") and wt is not None:
+            br = line.split(" ", 1)[1]
+            # `branch refs/heads/<name>`; gh head_ref is `<name>`.
+            if br == f"refs/heads/{branch}":
+                return wt
+    return None
+
+
+def ensure_worktree(pr: PR) -> Path:
+    """Return a path to a checked-out worktree on `pr.head_ref`. Creates if missing."""
+    existing = existing_worktree_for(pr.head_ref)
+    if existing is not None:
+        log(f"PR #{pr.number}: reusing worktree {existing}")
+        return existing
+    # The branch already exists on remote (PR is open). Fetch then add.
+    run(["git", "fetch", "origin", pr.head_ref], check=True)
+    wt_name = f"sweep-{pr.number}"
+    wt_path = REPO_ROOT / ".worktrees" / wt_name
+    log(f"PR #{pr.number}: creating worktree {wt_path} on {pr.head_ref}")
+    # Track the remote branch so future pushes go to origin/<head_ref>
+    run(
+        [
+            "git",
+            "worktree",
+            "add",
+            "--track",
+            "-b",
+            pr.head_ref,
+            str(wt_path),
+            f"origin/{pr.head_ref}",
+        ],
+        check=True,
+    )
+    return wt_path
+
+
+def bring_stack_up(wt: Path) -> None:
+    """Use the worktree's `just up` to bring its compose stack online."""
+    log(f"Bringing stack up at {wt}")
+    proc = subprocess.run(
+        ["just", "up"],
+        cwd=wt,
+        text=True,
+        capture_output=True,
+        stdin=subprocess.DEVNULL,
+        timeout=300,
+    )
+    if proc.returncode != 0:
+        log(f"WARN: just up failed in {wt}:\n{proc.stderr[-2000:]}")
+        raise RuntimeError("stack failed to come up")
+
+
+def tear_stack_down(wt: Path) -> None:
+    """Stop the worktree's stack and free its ports/volumes."""
+    log(f"Tearing stack down at {wt}")
+    subprocess.run(
+        ["just", "down-clean"],
+        cwd=wt,
+        text=True,
+        capture_output=True,
+        stdin=subprocess.DEVNULL,
+        timeout=180,
+    )
+
+
 def _smoketest_discover() -> None:
     prs = discover_prs()
     log(
@@ -143,9 +217,22 @@ def _smoketest_discover() -> None:
         log(f"  ... and {len(prs) - 10} more")
 
 
+def _smoketest_worktree(pr_num: int) -> None:
+    prs = discover_prs()
+    target = next((p for p in prs if p.number == pr_num), None)
+    if target is None:
+        log(f"FATAL: PR #{pr_num} not in queue")
+        sys.exit(2)
+    wt = ensure_worktree(target)
+    log(f"OK: worktree at {wt} on branch {target.head_ref}")
+    log(f"Test cleanup: rm with `git worktree remove --force {wt}`")
+
+
 if __name__ == "__main__":
-    if len(sys.argv) > 1 and sys.argv[1] == "discover":
+    if len(sys.argv) >= 2 and sys.argv[1] == "discover":
         _smoketest_discover()
-        sys.exit(0)
-    log("FATAL: full driver not implemented yet — use 'discover' for now")
-    sys.exit(2)
+    elif len(sys.argv) >= 3 and sys.argv[1] == "worktree":
+        _smoketest_worktree(int(sys.argv[2]))
+    else:
+        log("usage: run-pr-sweep.py {discover|worktree <pr_number>}")
+        sys.exit(2)
