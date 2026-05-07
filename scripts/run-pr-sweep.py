@@ -206,6 +206,91 @@ def tear_stack_down(wt: Path) -> None:
     )
 
 
+def fetch_main(wt: Path) -> None:
+    run(["git", "-C", str(wt), "fetch", "origin", DEFAULT_BRANCH], check=True)
+
+
+def rebase_against_main(wt: Path) -> tuple[bool, str]:
+    """
+    Try `git rebase origin/main`. Return (success, log_excerpt).
+    If conflicts, leaves the rebase in progress so caller can hand it to LLM.
+    """
+    fetch_main(wt)
+    proc = subprocess.run(
+        ["git", "-C", str(wt), "rebase", f"origin/{DEFAULT_BRANCH}"],
+        text=True,
+        capture_output=True,
+        stdin=subprocess.DEVNULL,
+    )
+    if proc.returncode == 0:
+        return True, "clean rebase"
+    # Conflict path
+    out = (proc.stdout + "\n" + proc.stderr).strip()
+    return False, out[-4000:]
+
+
+def abort_rebase(wt: Path) -> None:
+    subprocess.run(
+        ["git", "-C", str(wt), "rebase", "--abort"],
+        text=True,
+        capture_output=True,
+        stdin=subprocess.DEVNULL,
+    )
+
+
+def list_conflicted_files(wt: Path) -> list[Path]:
+    proc = run(["git", "-C", str(wt), "diff", "--name-only", "--diff-filter=U"])
+    return [wt / line.strip() for line in proc.stdout.splitlines() if line.strip()]
+
+
+def gather_conflict_context(wt: Path) -> str:
+    """Collect a single text blob suitable for sending to the LLM."""
+    files = list_conflicted_files(wt)
+    parts: list[str] = []
+    for f in files[:20]:  # cap to avoid runaway prompts
+        try:
+            content = f.read_text(errors="replace")
+        except FileNotFoundError:
+            continue
+        # Cap each file at ~8KB so we don't blow the context window
+        if len(content) > 8192:
+            content = content[:8192] + "\n... [truncated]"
+        parts.append(f"=== {f.relative_to(wt)} ===\n{content}\n")
+    return "\n".join(parts)
+
+
+def llm_repair_conflicts(wt: Path, pr: PR, conflict_blob: str) -> bool:
+    """
+    Stub: returns False. Real implementation arrives in Task 6.
+    When True, caller must `git add -A && git rebase --continue`.
+    """
+    log(f"PR #{pr.number}: LLM conflict-repair stub (returning False)")
+    return False
+
+
+def handle_rebase(wt: Path, pr: PR) -> bool:
+    """Return True if the worktree is now rebased onto main; False if we gave up."""
+    success, msg = rebase_against_main(wt)
+    if success:
+        return True
+    log(f"PR #{pr.number}: rebase conflicts:\n{msg[-1000:]}")
+    blob = gather_conflict_context(wt)
+    if llm_repair_conflicts(wt, pr, blob):
+        run(["git", "-C", str(wt), "add", "-A"], check=True)
+        cont = subprocess.run(
+            ["git", "-C", str(wt), "-c", "core.editor=true", "rebase", "--continue"],
+            text=True,
+            capture_output=True,
+            stdin=subprocess.DEVNULL,
+        )
+        if cont.returncode == 0:
+            log(f"PR #{pr.number}: rebase --continue succeeded after LLM repair")
+            return True
+        log(f"PR #{pr.number}: rebase --continue still failed:\n{cont.stderr[-1000:]}")
+    abort_rebase(wt)
+    return False
+
+
 def _smoketest_discover() -> None:
     prs = discover_prs()
     log(
@@ -233,6 +318,16 @@ if __name__ == "__main__":
         _smoketest_discover()
     elif len(sys.argv) >= 3 and sys.argv[1] == "worktree":
         _smoketest_worktree(int(sys.argv[2]))
+    elif len(sys.argv) >= 3 and sys.argv[1] == "rebase":
+        pr_num = int(sys.argv[2])
+        prs = discover_prs()
+        target = next((p for p in prs if p.number == pr_num), None)
+        if target is None:
+            log(f"FATAL: PR #{pr_num} not in queue")
+            sys.exit(2)
+        wt = ensure_worktree(target)
+        ok = handle_rebase(wt, target)
+        log(f"rebase result for #{pr_num}: {'OK' if ok else 'FAILED'}")
     else:
-        log("usage: run-pr-sweep.py {discover|worktree <pr_number>}")
+        log("usage: run-pr-sweep.py {discover|worktree <pr_number>|rebase <pr_number>}")
         sys.exit(2)
