@@ -5,7 +5,7 @@ services:
       dockerfile: backend/Dockerfile
     env_file: .env
     environment:
-      - ENVIRONMENT=development
+      - ENVIRONMENT=local
     networks:
       - kindred-private
       - kindred-internal-crm

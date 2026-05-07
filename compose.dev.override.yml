@@ -4,6 +4,12 @@
 #
 #   docker compose -f compose.dev.yml -f compose.dev.override.yml up -d
 services:
+  backend:
+    environment:
+      # Allow the loopback SPA origin through CORS. The .env value targets the
+      # public hostname; this adds the localhost variants Puppeteer hits.
+      - BACKEND_CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+      - FRONTEND_HOST=http://localhost:5173
   frontend:
     environment:
       - VITE_API_URL=http://localhost:8001
