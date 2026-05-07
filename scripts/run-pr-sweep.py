@@ -595,6 +595,86 @@ def _smoketest_worktree(pr_num: int) -> None:
     log(f"Test cleanup: rm with `git worktree remove --force {wt}`")
 
 
+def run_gauntlet_with_repair(wt: Path, pr: PR) -> tuple[bool, list[GateResult]]:
+    """
+    Iterate: run gauntlet → on failure, ask LLM, apply patch, restart from cheapest.
+    Returns (all_green, all_attempts). Bounded by MAX_TOTAL_ITERS.
+    """
+    attempts: list[GateResult] = []
+    total_iters = 0
+    while total_iters < MAX_TOTAL_ITERS:
+        passed, failure = run_gauntlet(wt)
+        attempts.extend(passed)
+        if failure is None:
+            return True, attempts
+        attempts.append(failure)
+        # Try to repair this gate up to MAX_REPAIR_ITERS times
+        repaired = False
+        for k in range(MAX_REPAIR_ITERS):
+            total_iters += 1
+            if total_iters > MAX_TOTAL_ITERS:
+                log(
+                    f"PR #{pr.number}: hit MAX_TOTAL_ITERS={MAX_TOTAL_ITERS}, giving up"
+                )
+                return False, attempts
+            label = f"iter-{total_iters:02d}-{failure.name}"
+            user = build_repair_prompt(pr, failure, wt)
+            save_prompt(pr, label, user)
+            try:
+                reply = litellm_chat(REPAIR_SYSTEM, user)
+            except Exception as e:
+                log(f"PR #{pr.number}: ollama call failed (iter {total_iters}): {e}")
+                break
+            diff = extract_diff(reply)
+            if diff is None:
+                log(
+                    f"PR #{pr.number}: LLM declined repair on {failure.name} (iter {total_iters})"
+                )
+                break
+            if not apply_patch(wt, pr, label, diff):
+                # Patch wouldn't apply cleanly. Try once more — LLM may recover with the rejection log.
+                continue
+            # Re-run only the failed gate to see if it's fixed
+            recheck = next(g for g in GAUNTLET if g.__name__.endswith(failure.name))(wt)
+            attempts.append(recheck)
+            if recheck.passed:
+                repaired = True
+                break
+            failure = recheck
+        if not repaired:
+            log(
+                f"PR #{pr.number}: could not repair {failure.name} after {MAX_REPAIR_ITERS} attempts"
+            )
+            return False, attempts
+        # Loop back to top: re-run full gauntlet from cheapest
+    return False, attempts
+
+
+def commit_repair_chain(wt: Path, pr: PR, attempts: list[GateResult]) -> int:
+    """Stage everything modified and commit as a single 'pr-sweep repairs' commit if dirty.
+    Returns 1 if a commit was made, 0 otherwise."""
+    status = run(["git", "-C", str(wt), "status", "--porcelain"]).stdout
+    if not status.strip():
+        return 0
+    run(["git", "-C", str(wt), "add", "-A"], check=True)
+    msg = (
+        "chore(pr-sweep): auto-repair failing gates\n\n"
+        + "Repaired by run-pr-sweep.py via deepseek-v4-pro on Ollama Cloud.\n\n"
+        + "Gates touched:\n"
+        + "\n".join(f"  - {g.name} (exit {g.exit_code})" for g in attempts)
+    )
+    proc = subprocess.run(
+        ["git", "-C", str(wt), "commit", "--no-verify", "-m", msg],
+        text=True,
+        capture_output=True,
+        stdin=subprocess.DEVNULL,
+    )
+    if proc.returncode != 0:
+        log(f"PR #{pr.number}: commit failed:\n{proc.stderr[-1000:]}")
+        return 0
+    return 1
+
+
 if __name__ == "__main__":
     if len(sys.argv) >= 2 and sys.argv[1] == "discover":
         _smoketest_discover()
@@ -631,8 +711,28 @@ if __name__ == "__main__":
             )
         finally:
             tear_stack_down(wt)
+    elif len(sys.argv) >= 3 and sys.argv[1] == "repair":
+        pr_num = int(sys.argv[2])
+        prs = discover_prs()
+        target = next((p for p in prs if p.number == pr_num), None)
+        if target is None:
+            log(f"FATAL: PR #{pr_num} not in queue")
+            sys.exit(2)
+        wt = ensure_worktree(target)
+        if not handle_update_branch(wt, target):
+            log(f"PR #{pr_num}: update-branch failed; aborting repair smoketest")
+            sys.exit(1)
+        bring_stack_up(wt)
+        try:
+            green, attempts = run_gauntlet_with_repair(wt, target)
+            commits = commit_repair_chain(wt, target, attempts)
+            log(
+                f"repair for #{pr_num}: green={green} attempts={len(attempts)} commits={commits}"
+            )
+        finally:
+            tear_stack_down(wt)
     else:
         log(
-            "usage: run-pr-sweep.py {discover|worktree <pr_number>|update-branch <pr_number>|gauntlet <pr_number>|chat-test}"
+            "usage: run-pr-sweep.py {discover|worktree <pr_number>|update-branch <pr_number>|gauntlet <pr_number>|repair <pr_number>|chat-test}"
         )
         sys.exit(2)
