@@ -634,6 +634,10 @@ export type DebtUpdate = {
     settled_at?: (string | null);
 };
 
+export type EnvironmentInfo = {
+    environment: string;
+};
+
 export type GiftCreate = {
     /**
      * Gift name.
@@ -2120,6 +2124,8 @@ export type UtilsTestEmailData = {
 export type UtilsTestEmailResponse = (Message);
 
 export type UtilsHealthCheckResponse = (boolean);
+
+export type UtilsEnvironmentResponse = (EnvironmentInfo);
 
 export type WebhooksListWebhooksResponse = (unknown);
 

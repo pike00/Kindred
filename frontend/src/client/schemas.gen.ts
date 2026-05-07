@@ -2430,6 +2430,18 @@ export const DebtsPublicSchema = {
     title: 'DebtsPublic'
 } as const;
 
+export const EnvironmentInfoSchema = {
+    properties: {
+        environment: {
+            type: 'string',
+            title: 'Environment'
+        }
+    },
+    type: 'object',
+    required: ['environment'],
+    title: 'EnvironmentInfo'
+} as const;
+
 export const GiftCreateSchema = {
     properties: {
         name: {
