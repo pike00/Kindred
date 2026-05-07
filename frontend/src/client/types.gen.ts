@@ -178,7 +178,6 @@ export type Body_login_login_access_token = {
 export type BulkContactFilter = {
     search?: (string | null);
     tag_id?: (string | null);
-    group_id?: (string | null);
     is_favorite?: (boolean | null);
     is_archived?: (boolean | null);
     stage?: (string | null);
@@ -187,8 +186,6 @@ export type BulkContactFilter = {
 export type BulkContactOperation = {
     add_tag_ids?: (Array<(string)> | null);
     remove_tag_ids?: (Array<(string)> | null);
-    add_group_ids?: (Array<(string)> | null);
-    remove_group_ids?: (Array<(string)> | null);
     set_is_archived?: (boolean | null);
     set_is_favorite?: (boolean | null);
 };
@@ -307,7 +304,6 @@ export type ContactCreate = {
      */
     source_external_id?: (string | null);
     tag_ids?: (Array<(string)> | null);
-    group_ids?: (Array<(string)> | null);
 };
 
 export type ContactFieldCreate = {
@@ -452,7 +448,6 @@ export type ContactPublic = {
     updated_at: string;
     deleted_at?: (string | null);
     tags?: Array<TagPublic>;
-    groups?: Array<GroupPublic>;
 };
 
 export type ContactSource = 'MANUAL' | 'VCARD_IMPORT' | 'CARDDAV' | 'GOOGLE' | 'WEBHOOK';
@@ -483,7 +478,6 @@ export type ContactUpdate = {
     do_not_contact?: (boolean | null);
     do_not_contact_reason?: (string | null);
     tag_ids?: (Array<(string)> | null);
-    group_ids?: (Array<(string)> | null);
 };
 
 export type CustomFieldDefinitionCreate = {
@@ -730,40 +724,6 @@ export type GiftUpdate = {
     value_amount?: (number | null);
     value_currency?: (string | null);
     url?: (string | null);
-};
-
-export type GroupCreate = {
-    /**
-     * Group name, 1-255 chars.
-     */
-    name: string;
-    /**
-     * Optional group description.
-     */
-    description?: (string | null);
-};
-
-export type GroupPublic = {
-    /**
-     * Group name, 1-255 chars.
-     */
-    name: string;
-    /**
-     * Optional group description.
-     */
-    description?: (string | null);
-    id: string;
-    created_at: string;
-};
-
-export type GroupsPublic = {
-    data: Array<GroupPublic>;
-    count: number;
-};
-
-export type GroupUpdate = {
-    name?: (string | null);
-    description?: (string | null);
 };
 
 export type HTTPValidationError = {
@@ -1142,7 +1102,6 @@ export type OverdueContactPublic = {
     updated_at: string;
     deleted_at?: (string | null);
     tags?: Array<TagPublic>;
-    groups?: Array<GroupPublic>;
     days_overdue?: (number | null);
 };
 
@@ -1326,6 +1285,10 @@ export type TagCreate = {
      * Optional hex color like #ff0000 for UI display.
      */
     color?: (string | null);
+    /**
+     * Optional tag description.
+     */
+    description?: (string | null);
 };
 
 export type TagPublic = {
@@ -1337,6 +1300,10 @@ export type TagPublic = {
      * Optional hex color like #ff0000 for UI display.
      */
     color?: (string | null);
+    /**
+     * Optional tag description.
+     */
+    description?: (string | null);
     id: string;
     created_at: string;
 };
@@ -1361,6 +1328,7 @@ export type TagsPublic = {
 export type TagUpdate = {
     name?: (string | null);
     color?: (string | null);
+    description?: (string | null);
 };
 
 export type Token = {
@@ -1575,7 +1543,6 @@ export type ContactsBulkUpdateContactsData = {
 export type ContactsBulkUpdateContactsResponse = (BulkContactResult);
 
 export type ContactsPreviewBulkContactsData = {
-    groupId?: (string | null);
     isArchived?: (boolean | null);
     isFavorite?: (boolean | null);
     limit?: number;
@@ -1588,7 +1555,6 @@ export type ContactsPreviewBulkContactsData = {
 export type ContactsPreviewBulkContactsResponse = (ContactsPublic);
 
 export type ContactsListContactsData = {
-    groupId?: (string | null);
     ids?: (Array<(string)> | null);
     includeDeleted?: boolean;
     isArchived?: (boolean | null);
@@ -1765,32 +1731,6 @@ export type GiftsChangeGiftStatusData = {
 };
 
 export type GiftsChangeGiftStatusResponse = (GiftPublic);
-
-export type GroupsListGroupsData = {
-    limit?: number;
-    skip?: number;
-};
-
-export type GroupsListGroupsResponse = (GroupsPublic);
-
-export type GroupsCreateGroupRouteData = {
-    requestBody: GroupCreate;
-};
-
-export type GroupsCreateGroupRouteResponse = (GroupPublic);
-
-export type GroupsUpdateGroupData = {
-    groupId: string;
-    requestBody: GroupUpdate;
-};
-
-export type GroupsUpdateGroupResponse = (GroupPublic);
-
-export type GroupsDeleteGroupData = {
-    groupId: string;
-};
-
-export type GroupsDeleteGroupResponse = (unknown);
 
 export type HealthHealthResponse = ({
     [key: string]: (string);

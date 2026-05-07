@@ -17,7 +17,6 @@ from app.crud import visible_contact_ids
 from app.models import (
     Contact,
     ContactCreate,
-    ContactGroup,
     ContactPublic,
     ContactsPublic,
     ContactTag,
@@ -33,7 +32,6 @@ from app.models import (
 class BulkContactFilter(BaseModel):
     search: str | None = None
     tag_id: uuid.UUID | None = None
-    group_id: uuid.UUID | None = None
     is_favorite: bool | None = None
     is_archived: bool | None = None
     stage: str | None = None
@@ -42,8 +40,6 @@ class BulkContactFilter(BaseModel):
 class BulkContactOperation(BaseModel):
     add_tag_ids: list[uuid.UUID] | None = None
     remove_tag_ids: list[uuid.UUID] | None = None
-    add_group_ids: list[uuid.UUID] | None = None
-    remove_group_ids: list[uuid.UUID] | None = None
     set_is_archived: bool | None = None
     set_is_favorite: bool | None = None
 
@@ -158,8 +154,6 @@ def _build_filtered_contact_stmt(
         )
     if filters.tag_id:
         stmt = stmt.join(ContactTag).where(ContactTag.tag_id == filters.tag_id)
-    if filters.group_id:
-        stmt = stmt.join(ContactGroup).where(ContactGroup.group_id == filters.group_id)
     return stmt
 
 
@@ -218,30 +212,6 @@ def bulk_update_contacts(
                         ).first()
                         if ct:
                             session.delete(ct)
-                if ops.add_group_ids is not None:
-                    existing_group_ids = {
-                        cg.group_id
-                        for cg in session.exec(
-                            select(ContactGroup).where(
-                                ContactGroup.contact_id == contact.id
-                            )
-                        ).all()
-                    }
-                    for group_id in ops.add_group_ids:
-                        if group_id not in existing_group_ids:
-                            session.add(
-                                ContactGroup(contact_id=contact.id, group_id=group_id)
-                            )
-                if ops.remove_group_ids is not None:
-                    for group_id in ops.remove_group_ids:
-                        cg = session.exec(
-                            select(ContactGroup).where(
-                                ContactGroup.contact_id == contact.id,
-                                ContactGroup.group_id == group_id,
-                            )
-                        ).first()
-                        if cg:
-                            session.delete(cg)
                 if ops.set_is_archived is not None:
                     contact.is_archived = ops.set_is_archived
                     session.add(contact)
@@ -272,7 +242,6 @@ def preview_bulk_contacts(
     select_all_filtered: bool = False,
     search: str | None = None,
     tag_id: uuid.UUID | None = None,
-    group_id: uuid.UUID | None = None,
     is_favorite: bool | None = None,
     is_archived: bool | None = None,
     stage: str | None = None,
@@ -284,7 +253,6 @@ def preview_bulk_contacts(
         filters = BulkContactFilter(
             search=search,
             tag_id=tag_id,
-            group_id=group_id,
             is_favorite=is_favorite,
             is_archived=is_archived,
             stage=stage,
@@ -307,7 +275,6 @@ def list_contacts(
     limit: int = 100,
     search: str | None = None,
     tag_id: uuid.UUID | None = None,
-    group_id: uuid.UUID | None = None,
     is_favorite: bool | None = None,
     is_archived: bool | None = None,
     stage: str | None = None,
@@ -369,11 +336,6 @@ def list_contacts(
     if tag_id:
         statement = statement.join(ContactTag).where(ContactTag.tag_id == tag_id)
 
-    if group_id:
-        statement = statement.join(ContactGroup).where(
-            ContactGroup.group_id == group_id
-        )
-
     # Count (before pagination)
     count_statement = select(func.count()).select_from(statement.subquery())
     count = session.exec(count_statement).one()
@@ -381,7 +343,6 @@ def list_contacts(
     # Apply eager loading for relationships
     statement = statement.options(
         selectinload(Contact.tags),
-        selectinload(Contact.groups),
     )
 
     # Apply ordering and pagination
@@ -420,7 +381,6 @@ def list_losing_touch(
         )
         .options(
             selectinload(Contact.tags),
-            selectinload(Contact.groups),
         )
     )
     contacts = session.exec(statement).all()
@@ -470,7 +430,6 @@ def list_overdue_contacts(
         )
         .options(
             selectinload(Contact.tags),
-            selectinload(Contact.groups),
         )
     )
     contacts = session.exec(statement).all()
@@ -561,7 +520,6 @@ def get_contact(
         )
         .options(
             selectinload(Contact.tags),
-            selectinload(Contact.groups),
         )
     )
     contact = session.exec(statement).first()
@@ -589,11 +547,6 @@ def create_contact(
         for tag_id in contact_in.tag_ids:
             session.add(ContactTag(contact_id=contact.id, tag_id=tag_id))
 
-    # Handle group associations
-    if contact_in.group_ids:
-        for group_id in contact_in.group_ids:
-            session.add(ContactGroup(contact_id=contact.id, group_id=group_id))
-
     session.commit()
 
     # Reload contact with eager-loaded relationships
@@ -602,7 +555,6 @@ def create_contact(
         .where(Contact.id == contact.id)
         .options(
             selectinload(Contact.tags),
-            selectinload(Contact.groups),
         )
     )
     contact = session.exec(statement).first()
@@ -627,7 +579,6 @@ def update_contact(
         .where(Contact.id == contact_id)
         .options(
             selectinload(Contact.tags),
-            selectinload(Contact.groups),
         )
     )
     contact = session.exec(statement).first()
@@ -638,7 +589,6 @@ def update_contact(
 
     update_data = contact_in.model_dump(exclude_unset=True)
     tag_ids = update_data.pop("tag_ids", None)
-    group_ids = update_data.pop("group_ids", None)
 
     contact.sqlmodel_update(update_data)
     session.add(contact)
@@ -655,16 +605,6 @@ def update_contact(
         for tag_id in tag_ids:
             session.add(ContactTag(contact_id=contact.id, tag_id=tag_id))
 
-    # Update group associations if provided
-    if group_ids is not None:
-        existing = session.exec(
-            select(ContactGroup).where(ContactGroup.contact_id == contact.id)
-        ).all()
-        for cg in existing:
-            session.delete(cg)
-        for group_id in group_ids:
-            session.add(ContactGroup(contact_id=contact.id, group_id=group_id))
-
     session.commit()
 
     # Reload with eager loading
@@ -673,7 +613,6 @@ def update_contact(
         .where(Contact.id == contact.id)
         .options(
             selectinload(Contact.tags),
-            selectinload(Contact.groups),
         )
     )
     contact = session.exec(statement).first()
@@ -732,13 +671,12 @@ def restore_contact(
     session.add(contact)
     session.commit()
 
-    # Reload with eager loading so the response carries tags/groups.
+    # Reload with eager loading so the response carries tags.
     statement = (
         select(Contact)
         .where(Contact.id == contact.id)
         .options(
             selectinload(Contact.tags),
-            selectinload(Contact.groups),
         )
     )
     contact = session.exec(statement).first()
@@ -770,7 +708,7 @@ def list_contact_mentions(
         .join(Contact, Contact.id == Note.contact_id)
         .where(NoteMention.contact_id == contact_id)
         .where(Contact.owner_id == current_user.id)
-        .options(selectinload(Contact.tags), selectinload(Contact.groups))
+        .options(selectinload(Contact.tags))
     )
     rows = session.exec(stmt).all()
     return [

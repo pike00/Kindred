@@ -26,13 +26,11 @@ from app.models import (
     Contact,
     ContactField,
     ContactFieldType,
-    ContactGroup,
     ContactTag,
     Debt,
     DebtDirection,
     Gift,
     GiftStatus,
-    Group,
     Interaction,
     InteractionAttendee,
     InteractionChannel,
@@ -388,19 +386,6 @@ TAG_SPECS = [
     ("Kids' Parents", "#f43f5e"),
 ]
 
-GROUP_SPECS = [
-    ("Immediate Family", "Parents, siblings, spouse, kids"),
-    ("Extended Family", "Aunts, uncles, cousins, in-laws"),
-    ("College Friends", "Undergrad cohort and dorm friends"),
-    ("Work — Current Team", "People on my current team"),
-    ("Work — Past Colleagues", "Former coworkers worth staying in touch with"),
-    ("Climbing Crew", "Weekly indoor climbing partners"),
-    ("Book Club", "Monthly book club members"),
-    ("Neighbors", "People on the block"),
-    ("Investors & Advisors", "Cap table, board, advisory"),
-    ("Band Practice", None),
-]
-
 RELATIONSHIP_TYPES = [
     "spouse",
     "partner",
@@ -595,7 +580,6 @@ def wipe_user_data(session: Session, user_id: uuid.UUID) -> None:
     log.info("Wiping existing data for user %s", user_id)
     session.execute(sql_delete(Contact).where(Contact.owner_id == user_id))
     session.execute(sql_delete(Tag).where(Tag.owner_id == user_id))
-    session.execute(sql_delete(Group).where(Group.owner_id == user_id))
     session.execute(sql_delete(Reminder).where(Reminder.owner_id == user_id))
     session.commit()
 
@@ -611,16 +595,6 @@ def seed_tags(session: Session, owner_id: uuid.UUID) -> list[Tag]:
         session.refresh(t)
     log.info("Seeded %d tags", len(tags))
     return tags
-
-
-def seed_groups(session: Session, owner_id: uuid.UUID) -> list[Group]:
-    groups = [Group(name=n, description=d, owner_id=owner_id) for n, d in GROUP_SPECS]
-    session.add_all(groups)
-    session.commit()
-    for g in groups:
-        session.refresh(g)
-    log.info("Seeded %d groups", len(groups))
-    return groups
 
 
 def make_contact(owner_id: uuid.UUID) -> Contact:
@@ -675,7 +649,6 @@ def seed_contact_children(
     contact: Contact,
     owner_id: uuid.UUID,
     tags: list[Tag],
-    groups: list[Group],
 ) -> None:
     """Fill the one-to-many children of a single contact."""
 
@@ -836,10 +809,6 @@ def seed_contact_children(
     for tag in _pick(tags, tag_count):
         session.add(ContactTag(contact_id=contact.id, tag_id=tag.id))
 
-    group_count = random.choices([0, 1, 2, 3], weights=[2, 5, 3, 1])[0]
-    for group in _pick(groups, group_count):
-        session.add(ContactGroup(contact_id=contact.id, group_id=group.id))
-
 
 def seed_relationships(session: Session, contacts: list[Contact]) -> int:
     """Add a graph of relationships — ~25% of contacts get one."""
@@ -897,7 +866,6 @@ def run(count: int, email: str, reset: bool, rng_seed: int | None) -> None:
             wipe_user_data(session, user.id)
 
         tags = seed_tags(session, user.id)
-        groups = seed_groups(session, user.id)
 
         contacts: list[Contact] = [make_contact(user.id) for _ in range(count)]
         session.add_all(contacts)
@@ -907,7 +875,7 @@ def run(count: int, email: str, reset: bool, rng_seed: int | None) -> None:
         log.info("Inserted %d contact rows", len(contacts))
 
         for i, c in enumerate(contacts):
-            seed_contact_children(session, c, user.id, tags, groups)
+            seed_contact_children(session, c, user.id, tags)
             if (i + 1) % 100 == 0:
                 session.commit()
                 log.info("  … %d contacts worth of children inserted", i + 1)
@@ -936,7 +904,7 @@ def main() -> None:
     parser.add_argument(
         "--reset",
         action="store_true",
-        help="Wipe this user's existing contacts/tags/groups/reminders before seeding.",
+        help="Wipe this user's existing contacts/tags/reminders before seeding.",
     )
     parser.add_argument(
         "--seed",

@@ -257,6 +257,11 @@ class TagBase(SQLModel):
         max_length=7,
         description="Optional hex color like #ff0000 for UI display.",
     )
+    description: str | None = Field(
+        default=None,
+        max_length=1000,
+        description="Optional tag description.",
+    )
 
 
 class TagCreate(TagBase):
@@ -266,6 +271,7 @@ class TagCreate(TagBase):
 class TagUpdate(SQLModel):
     name: str | None = Field(default=None, min_length=1, max_length=100)
     color: str | None = None
+    description: str | None = None
 
 
 class Tag(TagBase, table=True):
@@ -356,83 +362,6 @@ class TagSharePublic(SQLModel):
 class TagSharesPublic(SQLModel):
     data: list[TagSharePublic]
     count: int
-
-
-# ─── Group ────────────────────────────────────────────────────────────────────
-
-
-class GroupBase(SQLModel):
-    name: str = Field(
-        min_length=1,
-        max_length=255,
-        description="Group name, 1-255 chars.",
-    )
-    description: str | None = Field(
-        default=None,
-        max_length=1000,
-        description="Optional group description.",
-    )
-
-
-class GroupCreate(GroupBase):
-    pass
-
-
-class GroupUpdate(SQLModel):
-    name: str | None = Field(default=None, min_length=1, max_length=255)
-    description: str | None = None
-
-
-class Group(GroupBase, table=True):
-    """Named collection of contacts (e.g. 'Family', 'Work Team')."""
-
-    id: uuid.UUID = Field(
-        default_factory=uuid.uuid4,
-        primary_key=True,
-        description="Primary key.",
-    )
-    owner_id: uuid.UUID = Field(
-        foreign_key="user.id",
-        nullable=False,
-        ondelete="CASCADE",
-        description="Owner user; cascades on delete.",
-    )
-    created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
-        nullable=False,
-        description="When the group was created (UTC).",
-    )
-
-
-class GroupPublic(GroupBase):
-    id: uuid.UUID
-    created_at: datetime
-
-
-class GroupsPublic(SQLModel):
-    data: list[GroupPublic]
-    count: int
-
-
-# ─── ContactGroup (junction) ─────────────────────────────────────────────────
-
-
-class ContactGroup(SQLModel, table=True):
-    """Many-to-many link between contacts and groups."""
-
-    __tablename__ = "contact_group"
-    contact_id: uuid.UUID = Field(
-        foreign_key="contact.id",
-        primary_key=True,
-        ondelete="CASCADE",
-        description="Contact side of the link; cascades on delete.",
-    )
-    group_id: uuid.UUID = Field(
-        foreign_key="group.id",
-        primary_key=True,
-        ondelete="CASCADE",
-        description="Group side of the link; cascades on delete.",
-    )
 
 
 # ─── Contact ─────────────────────────────────────────────────────────────────
@@ -544,7 +473,6 @@ class ContactBase(SQLModel):
 
 class ContactCreate(ContactBase):
     tag_ids: list[uuid.UUID] | None = None
-    group_ids: list[uuid.UUID] | None = None
 
 
 class ContactUpdate(SQLModel):
@@ -568,7 +496,6 @@ class ContactUpdate(SQLModel):
     do_not_contact: bool | None = None
     do_not_contact_reason: str | None = None
     tag_ids: list[uuid.UUID] | None = None
-    group_ids: list[uuid.UUID] | None = None
 
 
 class Contact(ContactBase, table=True):
@@ -630,10 +557,6 @@ class Contact(ContactBase, table=True):
         back_populates=None,
         link_model=ContactTag,
     )
-    groups: list["Group"] = Relationship(
-        back_populates=None,
-        link_model=ContactGroup,
-    )
 
 
 class ContactPublic(ContactBase):
@@ -647,7 +570,6 @@ class ContactPublic(ContactBase):
     do_not_contact: bool = False
     do_not_contact_reason: str | None = None
     tags: list[TagPublic] = []
-    groups: list[GroupPublic] = []
 
 
 class ContactsPublic(SQLModel):

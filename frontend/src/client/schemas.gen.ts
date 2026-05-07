@@ -737,18 +737,6 @@ export const BulkContactFilterSchema = {
             ],
             title: 'Tag Id'
         },
-        group_id: {
-            anyOf: [
-                {
-                    type: 'string',
-                    format: 'uuid'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Group Id'
-        },
         is_favorite: {
             anyOf: [
                 {
@@ -818,36 +806,6 @@ export const BulkContactOperationSchema = {
                 }
             ],
             title: 'Remove Tag Ids'
-        },
-        add_group_ids: {
-            anyOf: [
-                {
-                    items: {
-                        type: 'string',
-                        format: 'uuid'
-                    },
-                    type: 'array'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Add Group Ids'
-        },
-        remove_group_ids: {
-            anyOf: [
-                {
-                    items: {
-                        type: 'string',
-                        format: 'uuid'
-                    },
-                    type: 'array'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Remove Group Ids'
         },
         set_is_archived: {
             anyOf: [
@@ -1249,21 +1207,6 @@ export const ContactCreateSchema = {
                 }
             ],
             title: 'Tag Ids'
-        },
-        group_ids: {
-            anyOf: [
-                {
-                    items: {
-                        type: 'string',
-                        format: 'uuid'
-                    },
-                    type: 'array'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Group Ids'
         }
     },
     type: 'object',
@@ -1712,14 +1655,6 @@ export const ContactPublicSchema = {
             type: 'array',
             title: 'Tags',
             default: []
-        },
-        groups: {
-            items: {
-                '$ref': '#/components/schemas/GroupPublic'
-            },
-            type: 'array',
-            title: 'Groups',
-            default: []
         }
     },
     type: 'object',
@@ -1962,21 +1897,6 @@ export const ContactUpdateSchema = {
                 }
             ],
             title: 'Tag Ids'
-        },
-        group_ids: {
-            anyOf: [
-                {
-                    items: {
-                        type: 'string',
-                        format: 'uuid'
-                    },
-                    type: 'array'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Group Ids'
         }
     },
     type: 'object',
@@ -2830,122 +2750,6 @@ export const GiftsPublicSchema = {
     type: 'object',
     required: ['data', 'count'],
     title: 'GiftsPublic'
-} as const;
-
-export const GroupCreateSchema = {
-    properties: {
-        name: {
-            type: 'string',
-            maxLength: 255,
-            minLength: 1,
-            title: 'Name',
-            description: 'Group name, 1-255 chars.'
-        },
-        description: {
-            anyOf: [
-                {
-                    type: 'string',
-                    maxLength: 1000
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Description',
-            description: 'Optional group description.'
-        }
-    },
-    type: 'object',
-    required: ['name'],
-    title: 'GroupCreate'
-} as const;
-
-export const GroupPublicSchema = {
-    properties: {
-        name: {
-            type: 'string',
-            maxLength: 255,
-            minLength: 1,
-            title: 'Name',
-            description: 'Group name, 1-255 chars.'
-        },
-        description: {
-            anyOf: [
-                {
-                    type: 'string',
-                    maxLength: 1000
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Description',
-            description: 'Optional group description.'
-        },
-        id: {
-            type: 'string',
-            format: 'uuid',
-            title: 'Id'
-        },
-        created_at: {
-            type: 'string',
-            format: 'date-time',
-            title: 'Created At'
-        }
-    },
-    type: 'object',
-    required: ['name', 'id', 'created_at'],
-    title: 'GroupPublic'
-} as const;
-
-export const GroupUpdateSchema = {
-    properties: {
-        name: {
-            anyOf: [
-                {
-                    type: 'string',
-                    maxLength: 255,
-                    minLength: 1
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Name'
-        },
-        description: {
-            anyOf: [
-                {
-                    type: 'string'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Description'
-        }
-    },
-    type: 'object',
-    title: 'GroupUpdate'
-} as const;
-
-export const GroupsPublicSchema = {
-    properties: {
-        data: {
-            items: {
-                '$ref': '#/components/schemas/GroupPublic'
-            },
-            type: 'array',
-            title: 'Data'
-        },
-        count: {
-            type: 'integer',
-            title: 'Count'
-        }
-    },
-    type: 'object',
-    required: ['data', 'count'],
-    title: 'GroupsPublic'
 } as const;
 
 export const HTTPValidationErrorSchema = {
@@ -4220,14 +4024,6 @@ export const OverdueContactPublicSchema = {
             title: 'Tags',
             default: []
         },
-        groups: {
-            items: {
-                '$ref': '#/components/schemas/GroupPublic'
-            },
-            type: 'array',
-            title: 'Groups',
-            default: []
-        },
         days_overdue: {
             anyOf: [
                 {
@@ -4886,6 +4682,19 @@ export const TagCreateSchema = {
             ],
             title: 'Color',
             description: 'Optional hex color like #ff0000 for UI display.'
+        },
+        description: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 1000
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Description',
+            description: 'Optional tag description.'
         }
     },
     type: 'object',
@@ -4914,6 +4723,19 @@ export const TagPublicSchema = {
             ],
             title: 'Color',
             description: 'Optional hex color like #ff0000 for UI display.'
+        },
+        description: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 1000
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Description',
+            description: 'Optional tag description.'
         },
         id: {
             type: 'string',
@@ -5002,6 +4824,17 @@ export const TagUpdateSchema = {
                 }
             ],
             title: 'Color'
+        },
+        description: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Description'
         }
     },
     type: 'object',
