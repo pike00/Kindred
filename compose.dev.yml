@@ -10,7 +10,7 @@ services:
       - kindred-private
       - kindred-internal-crm
     dns:
-      - 172.20.2.253
+      - 1.1.1.1
     volumes:
       - ./backend/app:/app/backend/app
       - ./backend/scripts:/app/backend/scripts
@@ -69,7 +69,7 @@ services:
     networks:
       - kindred-private
     dns:
-      - 172.20.2.253
+      - 1.1.1.1
     # Loopback-only port for puppeteer e2e — same rationale as backend.
     ports:
       - "127.0.0.1:5173:5173"
