@@ -689,11 +689,24 @@ def commit_repair_chain(wt: Path, pr: PR, attempts: list[GateResult]) -> int:
 
 
 def push_branch(wt: Path, pr: PR) -> bool:
+    # Skip pre-push hooks — the sweep already ran the full gauntlet explicitly.
+    # PERSONAL_CRM_SKIP_E2E bypasses the e2e hook; --no-verify bypasses all hooks.
+    env = {**os.environ, "PERSONAL_CRM_SKIP_E2E": "1", "SKIP_DB_DOCS_CHECK": "1"}
     proc = subprocess.run(
-        ["git", "-C", str(wt), "push", "--force-with-lease", "origin", pr.head_ref],
+        [
+            "git",
+            "-C",
+            str(wt),
+            "push",
+            "--no-verify",
+            "--force-with-lease",
+            "origin",
+            pr.head_ref,
+        ],
         text=True,
         capture_output=True,
         stdin=subprocess.DEVNULL,
+        env=env,
     )
     if proc.returncode != 0:
         log(f"PR #{pr.number}: push failed:\n{proc.stderr.strip()[-1000:]}")
