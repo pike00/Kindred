@@ -225,6 +225,13 @@ pytest *args:
     eval "$(just env | sed 's/^/export /')"
     docker compose -f compose.worktree.yml exec -T backend pytest {{args}}
 
+# Run frontend TypeScript typecheck inside the worktree's frontend container.
+typecheck:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    eval "$(just env | sed 's/^/export /')"
+    docker compose -f compose.worktree.yml exec -T frontend bun run typecheck
+
 # Open a bash shell inside the worktree's backend container.
 shell:
     #!/usr/bin/env bash

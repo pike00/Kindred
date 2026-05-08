@@ -402,27 +402,27 @@ def _run_gate(wt: Path, name: str, cmd: list[str], timeout: int) -> GateResult:
 
 
 def gate_precommit(wt: Path) -> GateResult:
-    return _run_gate(wt, "precommit", ["prek", "run", "--all-files"], timeout=600)
+    result = _run_gate(wt, "precommit", ["prek", "run", "--all-files"], timeout=600)
+    if result.passed:
+        return result
+    # Pre-commit hooks often auto-fix files (ruff format, biome, trailing-whitespace)
+    # and exit 1 to signal "fixes made — re-stage and re-run". Detect this by
+    # checking for unstaged modifications after the first pass.
+    dirty = subprocess.run(
+        ["git", "status", "--porcelain"],
+        cwd=wt,
+        capture_output=True,
+        text=True,
+    )
+    if dirty.stdout.strip():
+        log("  ↻ gate `precommit`: hooks auto-fixed files, staging + re-running")
+        subprocess.run(["git", "add", "-A"], cwd=wt, check=True)
+        result = _run_gate(wt, "precommit", ["prek", "run", "--all-files"], timeout=600)
+    return result
 
 
 def gate_typecheck(wt: Path) -> GateResult:
-    return _run_gate(
-        wt,
-        "typecheck",
-        [
-            "docker",
-            "compose",
-            "-f",
-            "compose.worktree.yml",
-            "exec",
-            "-T",
-            "frontend",
-            "bun",
-            "run",
-            "typecheck",
-        ],
-        timeout=300,
-    )
+    return _run_gate(wt, "typecheck", ["just", "typecheck"], timeout=300)
 
 
 def gate_pytest(wt: Path) -> GateResult:
