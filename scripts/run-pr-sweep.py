@@ -43,6 +43,7 @@ PATCH_DIR = STATE_DIR / "patches"
 PROMPT_DIR = STATE_DIR / "prompts"
 STATE_FILE = STATE_DIR / "state.json"
 RUNNER_LOG = STATE_DIR / "runner.log"
+REPLY_DIR = STATE_DIR / "replies"
 MM_WEBHOOK_FILE = STATE_DIR / "mm-webhook"
 
 LITELLM_BASE_URL = os.environ.get("LITELLM_BASE_URL", "http://127.0.0.1:4000")
@@ -548,6 +549,14 @@ def save_prompt(pr: PR, label: str, body: str) -> Path:
     return p
 
 
+def save_reply(pr: PR, label: str, reply: str) -> Path:
+    d = REPLY_DIR / str(pr.number)
+    d.mkdir(parents=True, exist_ok=True)
+    p = d / f"{label}.txt"
+    p.write_text(reply)
+    return p
+
+
 def save_patch(pr: PR, label: str, diff: str) -> Path:
     d = PATCH_DIR / str(pr.number)
     d.mkdir(parents=True, exist_ok=True)
@@ -625,6 +634,7 @@ def run_gauntlet_with_repair(wt: Path, pr: PR) -> tuple[bool, list[GateResult]]:
             except Exception as e:
                 log(f"PR #{pr.number}: ollama call failed (iter {total_iters}): {e}")
                 break
+            save_reply(pr, label, reply)
             diff = extract_diff(reply)
             if diff is None:
                 log(
@@ -673,6 +683,225 @@ def commit_repair_chain(wt: Path, pr: PR, attempts: list[GateResult]) -> int:
         log(f"PR #{pr.number}: commit failed:\n{proc.stderr[-1000:]}")
         return 0
     return 1
+
+
+# ── Task 8: Disposition ──────────────────────────────────────────────────────
+
+
+def push_branch(wt: Path, pr: PR) -> bool:
+    proc = subprocess.run(
+        ["git", "-C", str(wt), "push", "--force-with-lease", "origin", pr.head_ref],
+        text=True,
+        capture_output=True,
+        stdin=subprocess.DEVNULL,
+    )
+    if proc.returncode != 0:
+        log(f"PR #{pr.number}: push failed:\n{proc.stderr.strip()[-1000:]}")
+        return False
+    log(f"PR #{pr.number}: pushed {pr.head_ref} to origin")
+    return True
+
+
+def mark_pr_ready(pr: PR) -> bool:
+    proc = run(["gh", "pr", "ready", str(pr.number)])
+    if proc.returncode != 0:
+        log(f"PR #{pr.number}: gh pr ready failed:\n{proc.stderr.strip()}")
+        return False
+    log(f"PR #{pr.number}: marked ready for review")
+    return True
+
+
+def post_failure_comment(pr: PR, reason: str) -> None:
+    body = (
+        f"🤖 **pr-sweep-runner skipped this PR** — could not bring it green.\n\n"
+        f"**Reason:** {reason}\n\n"
+        f"Audit trail: `.pr-sweep-runner/logs/`, `.pr-sweep-runner/patches/`, `.pr-sweep-runner/replies/`"
+    )
+    proc = run(["gh", "pr", "comment", str(pr.number), "--body", body])
+    if proc.returncode != 0:
+        log(f"PR #{pr.number}: failed to post failure comment: {proc.stderr.strip()}")
+
+
+# ── Task 9: Top-level driver ──────────────────────────────────────────────────
+
+
+def load_state() -> dict:
+    if STATE_FILE.exists():
+        return json.loads(STATE_FILE.read_text())
+    return {}
+
+
+def save_state(state: dict) -> None:
+    STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    STATE_FILE.write_text(json.dumps(state, indent=2))
+
+
+def notify_mattermost(msg: str) -> None:
+    if not MM_WEBHOOK_FILE.exists():
+        log("WARN: no Mattermost webhook file, skipping notification")
+        return
+    url = MM_WEBHOOK_FILE.read_text().strip()
+    try:
+        with httpx.Client(timeout=10) as client:
+            r = client.post(url, json={"text": msg})
+        r.raise_for_status()
+    except Exception as e:
+        log(f"WARN: Mattermost notification failed: {e}")
+
+
+def process_pr(pr: PR, state: dict, dry_run: bool) -> str:
+    """
+    Full pipeline for one PR: checkout → merge main → stack up → gauntlet →
+    commit repairs → push → mark ready (or comment on failure).
+    Returns: "ready" | "dry-run" | "skipped:<reason>" | "error:<reason>"
+    """
+    prev = state.get(str(pr.number), {})
+    if prev.get("status") == "ready":
+        log(f"PR #{pr.number}: already ready, skipping")
+        return "ready"
+
+    log(
+        f"{'[DRY RUN] ' if dry_run else ''}PR #{pr.number}: {pr.title} [{pr.mergeable}]"
+    )
+    if dry_run:
+        return "dry-run"
+
+    wt: Path | None = None
+    stack_up = False
+    try:
+        try:
+            wt = ensure_worktree(pr)
+        except Exception as e:
+            reason = f"worktree failed: {e}"
+            log(f"PR #{pr.number}: {reason}")
+            post_failure_comment(pr, reason)
+            return f"skipped:{reason}"
+
+        if not handle_update_branch(wt, pr):
+            reason = "could not merge origin/main (unresolvable conflicts)"
+            log(f"PR #{pr.number}: {reason}")
+            post_failure_comment(pr, reason)
+            return f"skipped:{reason}"
+
+        try:
+            bring_stack_up(wt)
+            stack_up = True
+        except Exception as e:
+            reason = f"stack failed to come up: {e}"
+            log(f"PR #{pr.number}: {reason}")
+            post_failure_comment(pr, reason)
+            return f"skipped:{reason}"
+
+        green, attempts = run_gauntlet_with_repair(wt, pr)
+        commit_repair_chain(wt, pr, attempts)
+
+        if not green:
+            last_fail = next((a for a in reversed(attempts) if not a.passed), None)
+            reason = f"repair exhausted on gate `{last_fail.name if last_fail else 'unknown'}`"
+            log(f"PR #{pr.number}: {reason}")
+            post_failure_comment(pr, reason)
+            return f"skipped:{reason}"
+
+        if not push_branch(wt, pr):
+            reason = "push --force-with-lease failed"
+            log(f"PR #{pr.number}: {reason}")
+            post_failure_comment(pr, reason)
+            return f"skipped:{reason}"
+
+        if not mark_pr_ready(pr):
+            reason = "gh pr ready failed"
+            log(f"PR #{pr.number}: {reason}")
+            return f"skipped:{reason}"
+
+        return "ready"
+
+    except Exception as e:
+        log(f"PR #{pr.number}: UNHANDLED: {e}")
+        return f"error:{e}"
+    finally:
+        if wt is not None and stack_up:
+            tear_stack_down(wt)
+
+
+def print_summary(prs: list[PR], state: dict, results: dict[str, int]) -> None:
+    sep = "=" * 60
+    log(sep)
+    log(f"PR SWEEP COMPLETE — {len(prs)} PRs processed")
+    log(f"  ✅ ready:   {results.get('ready', 0)}")
+    log(f"  ⚠️  skipped: {results.get('skipped', 0)}")
+    log(f"  ❌ error:   {results.get('error', 0)}")
+    log(f"  🔍 dry-run: {results.get('dry-run', 0)}")
+    log(sep)
+    skipped = [
+        (pr, state[str(pr.number)])
+        for pr in prs
+        if state.get(str(pr.number), {}).get("status") not in ("ready", "dry-run")
+    ]
+    if skipped:
+        log("Skipped PRs:")
+        for pr, s in skipped:
+            log(f"  #{pr.number} {pr.title}: {s.get('outcome', '?')}")
+    notify_mattermost(
+        f"🏁 PR sweep done: {results.get('ready', 0)} ready, "
+        f"{results.get('skipped', 0)} skipped, {results.get('error', 0)} errors"
+    )
+
+
+def run_sweep() -> None:
+    dry_run = bool(os.environ.get("DRY_RUN"))
+    only_pr = os.environ.get("ONLY_PR")
+    max_prs_env = os.environ.get("MAX_PRS")
+    max_prs = int(max_prs_env) if max_prs_env else None
+
+    prs = discover_prs()
+    log(
+        f"Discovered {len(prs)} draft PRs "
+        f"({sum(1 for p in prs if p.mergeable == 'MERGEABLE')} mergeable)"
+    )
+
+    if only_pr:
+        prs = [p for p in prs if p.number == int(only_pr)]
+        if not prs:
+            log(f"FATAL: ONLY_PR={only_pr} not in queue")
+            sys.exit(2)
+
+    if max_prs:
+        prs = prs[:max_prs]
+
+    if dry_run:
+        log(f"DRY_RUN=1 — would process {len(prs)} PRs:")
+        for p in prs:
+            log(f"  #{p.number} [{p.mergeable}] {p.head_ref} — {p.title}")
+
+    state = load_state()
+    results: dict[str, int] = {}
+
+    for i, pr in enumerate(prs):
+        if i > 0 and not dry_run:
+            log(f"Cooling down {COOLDOWN_S}s...")
+            time.sleep(COOLDOWN_S)
+
+        outcome = process_pr(pr, state, dry_run)
+        status = outcome.split(":")[0]
+        results[status] = results.get(status, 0) + 1
+
+        state[str(pr.number)] = {
+            "status": status,
+            "outcome": outcome,
+            "updated_at": now_iso(),
+            "title": pr.title,
+            "head_ref": pr.head_ref,
+        }
+        save_state(state)
+
+        if not dry_run:
+            if status == "ready":
+                notify_mattermost(f"✅ PR #{pr.number} ready for review: {pr.title}")
+            elif status in ("skipped", "error"):
+                reason = outcome.split(":", 1)[1] if ":" in outcome else "unknown"
+                notify_mattermost(f"⚠️ PR #{pr.number} skipped ({pr.title}): {reason}")
+
+    print_summary(prs, state, results)
 
 
 if __name__ == "__main__":
@@ -731,8 +960,10 @@ if __name__ == "__main__":
             )
         finally:
             tear_stack_down(wt)
+    elif len(sys.argv) >= 2 and sys.argv[1] == "run":
+        run_sweep()
     else:
         log(
-            "usage: run-pr-sweep.py {discover|worktree <pr_number>|update-branch <pr_number>|gauntlet <pr_number>|repair <pr_number>|chat-test}"
+            "usage: run-pr-sweep.py {run|discover|worktree <pr>|update-branch <pr>|gauntlet <pr>|repair <pr>|chat-test}"
         )
         sys.exit(2)

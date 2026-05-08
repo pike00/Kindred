@@ -7,6 +7,19 @@ compose := "compose.dev.yml"
 
 _dc := "docker compose -f " + compose
 
+# Run the PR sweep orchestrator (Task 8+9). Loads .env, then runs the full pipeline.
+# Set DRY_RUN=1 to print the plan without pushing anything.
+# Set ONLY_PR=<n> to process a single PR for smoke-testing.
+sweep *args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ ! -f .env ]; then
+        echo "ERROR: .env not found — run: sops -d .env.sops > .env" >&2
+        exit 1
+    fi
+    set -a; source .env; set +a
+    exec uv run --script --quiet scripts/run-pr-sweep.py run {{args}}
+
 # Seed fake data for the FIRST_SUPERUSER. Safe to run repeatedly; adds more on top.
 seed count="500" email="":
     {{_dc}} exec -T backend python app/seed_fake_data.py --count {{count}} {{ if email == "" { "" } else { "--email " + email } }}
