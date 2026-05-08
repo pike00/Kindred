@@ -108,12 +108,6 @@ function LayoutShortcuts() {
       callback: () => navigate({ to: "/tags" }),
     },
     {
-      keys: "g g",
-      description: "Go to Groups",
-      group: "Navigation",
-      callback: () => navigate({ to: "/groups" }),
-    },
-    {
       keys: "g r",
       description: "Go to Reminders",
       group: "Navigation",

@@ -112,18 +112,18 @@ export function ShortcutRegistryProvider({
     const unsubscribe = tinykeys(
       window,
       {
-        "?": (event) => {
+        "?": (event: KeyboardEvent) => {
           // Only trigger if not in input/textarea/contenteditable
           if (shouldSuppress(event)) return
           event.preventDefault()
           toggleOverlay()
         },
-        "Meta+/": (event) => {
+        "Meta+/": (event: KeyboardEvent) => {
           if (shouldSuppress(event)) return
           event.preventDefault()
           toggleOverlay()
         },
-        "Control+/": (event) => {
+        "Control+/": (event: KeyboardEvent) => {
           if (shouldSuppress(event)) return
           event.preventDefault()
           toggleOverlay()
