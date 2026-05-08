@@ -17,7 +17,6 @@ from app.models import (
     ContactCreate,
     ContactField,
     ContactFieldCreate,
-    ContactGroup,
     ContactTag,
     CustomFieldDefinition,
     CustomFieldDefinitionCreate,
@@ -27,8 +26,6 @@ from app.models import (
     DebtCreate,
     Gift,
     GiftCreate,
-    Group,
-    GroupCreate,
     Interaction,
     InteractionAttendee,
     InteractionCreate,
@@ -125,11 +122,6 @@ def create_contact(
         for tag_id in contact_in.tag_ids:
             session.add(ContactTag(contact_id=db_obj.id, tag_id=tag_id))
         session.commit()
-    # Handle group associations
-    if contact_in.group_ids:
-        for group_id in contact_in.group_ids:
-            session.add(ContactGroup(contact_id=db_obj.id, group_id=group_id))
-        session.commit()
     session.refresh(db_obj)
     return db_obj
 
@@ -139,19 +131,6 @@ def create_contact(
 
 def create_tag(*, session: Session, tag_in: TagCreate, owner_id: uuid.UUID) -> Tag:
     db_obj = Tag.model_validate(tag_in, update={"owner_id": owner_id})
-    session.add(db_obj)
-    session.commit()
-    session.refresh(db_obj)
-    return db_obj
-
-
-# ─── Group CRUD ────────────────────────────────────────────────────────────────
-
-
-def create_group(
-    *, session: Session, group_in: GroupCreate, owner_id: uuid.UUID
-) -> Group:
-    db_obj = Group.model_validate(group_in, update={"owner_id": owner_id})
     session.add(db_obj)
     session.commit()
     session.refresh(db_obj)

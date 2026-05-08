@@ -87,53 +87,81 @@ async function main() {
     // Test 3: Create an interaction
     results.push(
       await runTest(page, "Create an interaction", async (p) => {
-        // Select contact
-        await selectOption(p, "Select a contact", contact.first_name);
-
-        // Select channel
-        await selectOption(p, "How did you interact?", "Call");
-
-        // Set datetime
-        const dateInput = await p.$('input[type="datetime-local"]');
-        if (dateInput) {
-          await dateInput.click({ count: 3 });
-          const now = new Date();
-          const dateStr = now.toISOString().slice(0, 16);
-          await dateInput.type(dateStr);
-        }
-
-        // Fill duration
-        const durationInput = await p.evaluateHandle(() => {
-          const inputs = Array.from(
-            document.querySelectorAll('input[type="number"]'),
+        // Open the attendee popover and pick the seeded contact.
+        // The dialog uses a Popover + Command (search-as-you-type) for attendees,
+        // not a basic select.
+        await clickButton(p, "Add attendee");
+        await sleep(400);
+        // Type into the CommandInput to filter
+        const commandInput = await p.waitForSelector(
+          '[cmdk-input], input[placeholder="Search contacts..."]',
+          { timeout: 3000 },
+        );
+        await commandInput!.type(contact.first_name);
+        await sleep(300);
+        const picked = await p.evaluate((needle: string) => {
+          const items = Array.from(
+            document.querySelectorAll('[cmdk-item], [role="option"]'),
           );
-          return inputs.find((i) => i.placeholder === "30");
+          const item = items.find((i) =>
+            (i.textContent || "").toLowerCase().includes(needle.toLowerCase()),
+          );
+          if (item) {
+            (item as HTMLElement).click();
+            return true;
+          }
+          return false;
+        }, contact.first_name);
+        if (!picked) {
+          throw new Error(
+            `Contact "${contact.first_name}" not found in attendee picker`,
+          );
+        }
+        await sleep(300);
+        // Close the popover by pressing Escape so the rest of the form is focusable.
+        await p.keyboard.press("Escape");
+        await sleep(200);
+
+        // Channel is a button-pill row. Click the "Call" pill.
+        const channelClicked = await p.evaluate(() => {
+          const buttons = Array.from(document.querySelectorAll("button"));
+          const callBtn = buttons.find(
+            (b) => b.textContent?.trim() === "Call" && b.type === "button",
+          );
+          if (callBtn) {
+            (callBtn as HTMLButtonElement).click();
+            return true;
+          }
+          return false;
         });
-        if (durationInput) {
-          await (durationInput as any).click({ count: 3 });
-          await (durationInput as any).type("15");
+        if (!channelClicked) {
+          throw new Error("Channel pill 'Call' not found");
         }
 
-        // Fill notes
-        const notesArea = await p.evaluateHandle(() => {
-          const areas = Array.from(
-            document.querySelectorAll("textarea"),
-          );
-          return areas.find(
-            (a) =>
-              a.placeholder?.includes("What did you talk about"),
-          );
+        // Set datetime via React-aware setter (datetime-local ignores typing)
+        await p.evaluate(() => {
+          const el = document.querySelector(
+            'input[type="datetime-local"]',
+          ) as HTMLInputElement | null;
+          if (!el) return;
+          const setter = Object.getOwnPropertyDescriptor(
+            window.HTMLInputElement.prototype,
+            "value",
+          )?.set;
+          const now = new Date().toISOString().slice(0, 16);
+          setter?.call(el, now);
+          el.dispatchEvent(new Event("input", { bubbles: true }));
+          el.dispatchEvent(new Event("change", { bubbles: true }));
         });
-        if (notesArea) {
-          await (notesArea as any).type(
-            "Test interaction from Puppeteer",
-          );
-        }
 
-        // Submit - click the submit button (type="submit")
+        // Submit
         const submitted = await p.evaluate(() => {
           const buttons = Array.from(document.querySelectorAll("button"));
-          const submitBtn = buttons.find((b) => b.type === "submit" && b.textContent?.includes("Log Interaction"));
+          const submitBtn = buttons.find(
+            (b) =>
+              b.type === "submit" &&
+              b.textContent?.includes("Log Interaction"),
+          );
           if (submitBtn) {
             (submitBtn as HTMLButtonElement).click();
             return true;
@@ -189,40 +217,56 @@ async function main() {
       ),
     );
 
-    // Test 6: Delete interaction via dropdown
+    // Test 6: Open actions dropdown on the interaction row
     results.push(
       await runTest(
         page,
         "Interaction dropdown menu works",
         async (p) => {
-          // Look for the more menu button (three dots)
-          const found = await p.evaluate(() => {
-            const buttons = Array.from(
-              document.querySelectorAll("button"),
-            );
-            const moreBtn = buttons.find(
-              (b) =>
-                b.querySelector('svg[class*="lucide-more"]') ||
-                b.querySelector('svg[class*="ellipsis"]') ||
-                b.getAttribute("aria-label")?.includes("More") ||
-                b.classList.contains("more-button"),
-            );
-            if (moreBtn) {
-              (moreBtn as HTMLButtonElement).click();
-              return true;
-            }
-            return false;
+          // Make sure the timeline has actually rendered the new interaction —
+          // we navigated here in test 4, but if test 5 ran fast the row may
+          // have had its trigger remounted. Wait for at least one trigger.
+          await p.waitForFunction(
+            () =>
+              document.querySelectorAll(
+                'button[aria-label="Open actions menu"]',
+              ).length > 0,
+            { timeout: 5000 },
+          );
+          // Radix DropdownMenu trigger needs a real PointerEvent — synthetic
+          // .click() inside evaluate() does not open the menu. Use the mouse.
+          const box = await p.evaluate(() => {
+            const t = document.querySelector(
+              'button[aria-label="Open actions menu"]',
+            ) as HTMLButtonElement | null;
+            if (!t) return null;
+            const r = t.getBoundingClientRect();
+            return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
           });
-          if (found) {
-            await sleep(500);
-            const text = await getPageText(p);
-            if (!text.includes("Delete"))
-              throw new Error("Delete option not in dropdown menu");
-          } else {
-            console.log(
-              "  [info] More menu button not found, checking for inline delete",
+          if (!box) {
+            throw new Error(
+              "RowActionsMenu trigger (aria-label=Open actions menu) not found",
             );
           }
+          await p.mouse.click(box.x, box.y);
+          await sleep(500);
+          // Radix DropdownMenu uses data-slot="dropdown-menu-item" + role attr
+          // varies by version. Match either, plus a textContent fallback.
+          const hasDelete = await p.evaluate(() => {
+            const items = Array.from(
+              document.querySelectorAll(
+                '[data-slot="dropdown-menu-item"], [role="menuitem"]',
+              ),
+            );
+            return items.some((i) =>
+              (i.textContent || "").includes("Delete"),
+            );
+          });
+          if (!hasDelete) {
+            throw new Error("Delete option not in dropdown menu");
+          }
+          // Close menu so subsequent runs aren't sticky
+          await p.keyboard.press("Escape");
         },
       ),
     );
