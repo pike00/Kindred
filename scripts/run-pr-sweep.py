@@ -608,6 +608,52 @@ Produce the minimal `diff` to make `{gate.name}` pass.
 
 
 _DIFF_RE = re.compile(r"```diff\n(.*?)```", re.DOTALL)
+_HUNK_HDR_RE = re.compile(r"@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@(.*)")
+
+
+def fix_hunk_counts(diff: str) -> str:
+    """Correct @@ -A,B +C,D @@ line counts that deepseek-v4-pro-cloud gets wrong.
+
+    The model frequently produces hunk headers where B/D don't match the actual
+    number of context/removed/added lines in the hunk body, causing git apply to
+    abort with 'corrupt patch'. This recount pass fixes the headers in-place so
+    git apply sees a consistent diff.
+    """
+    lines = diff.splitlines(keepends=True)
+    result: list[str] = []
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        m = _HUNK_HDR_RE.match(line)
+        if not m:
+            result.append(line)
+            i += 1
+            continue
+        old_start = int(m.group(1))
+        new_start = int(m.group(2))
+        rest = m.group(3)
+        # Count actual lines in this hunk body until the next hunk/file header.
+        j = i + 1
+        old_count = new_count = 0
+        while j < len(lines):
+            ln = lines[j]
+            if ln.startswith("@@ ") or ln.startswith("diff --git "):
+                break
+            if ln.startswith("-"):
+                old_count += 1
+            elif ln.startswith("+"):
+                new_count += 1
+            elif ln.startswith(" "):
+                old_count += 1
+                new_count += 1
+            # lines starting with '\' (no newline at end of file) don't count
+            j += 1
+        new_hdr = f"@@ -{old_start},{old_count} +{new_start},{new_count} @@{rest}"
+        if not new_hdr.endswith("\n"):
+            new_hdr += "\n"
+        result.append(new_hdr)
+        i += 1  # body lines processed naturally in subsequent iterations
+    return "".join(result)
 
 
 def extract_diff(reply: str) -> str | None:
@@ -642,6 +688,7 @@ def save_patch(pr: PR, label: str, diff: str) -> Path:
 
 
 def apply_patch(wt: Path, pr: PR, label: str, diff: str) -> bool:
+    diff = fix_hunk_counts(diff)
     patch_path = save_patch(pr, label, diff)
     proc = subprocess.run(
         ["git", "-C", str(wt), "apply", "--whitespace=fix", str(patch_path)],
