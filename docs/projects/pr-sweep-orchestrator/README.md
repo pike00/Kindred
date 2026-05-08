@@ -3,9 +3,9 @@ title: PR Sweep Orchestrator
 status: active
 repos: [personal-crm]
 started: 2026-05-07
-last_updated: 2026-05-07
-next_step: First batch run against 5 PRs, observe, tune prompts (Task 11) — run: MAX_PRS=5 just sweep
-progress: 10/12
+last_updated: 2026-05-08
+next_step: Batch 1 ran (1 ready, 5 skipped on merge conflicts in types.gen.ts); decide conflict strategy (regen client SDK on branch vs. manual rebase), then run Batch 2 (Task 12)
+progress: 11/12
 ---
 
 # PR Sweep Orchestrator
@@ -33,7 +33,7 @@ Land the 50 open `[dirac]` draft PRs on this repo by iterating through them sequ
 - [x] Disposition — push, mark ready, comment on failure (Task 8) — `cea16a7`
 - [x] Top-level driver + Mattermost integration + summary (Task 9) — `cea16a7`
 - [x] Smoke-test against one mergeable PR (Task 10)
-- [ ] First batch run against 5 PRs, observe, tune prompts (Task 11)
+- [x] First batch run against 5 PRs, observe, tune prompts (Task 11)
 - [ ] Run against the remaining queue (Task 12)
 
 See [plan.md](plan.md) for the full implementation steps.
@@ -73,6 +73,11 @@ See [plan.md](plan.md) for the full implementation steps.
 - **Paused at Task 8.** Subagent dispatch rejected by user — Task 8's `--push` step would force-push to a public PR + flip its draft status, needs explicit authorization.
 
 ## Notes
+
+### 2026-05-08
+- **State sync:** Task 11 flipped to [x] (batch ran overnight — 1 ready, 5 skipped); progress bumped to 11/12
+- **Discrepancies:** `.pr-sweep-runner/mm-webhook` MISSING despite Mattermost integration being wired; PRs 25-29 skipped due to unresolvable `frontend/src/client/types.gen.ts` generated-code conflicts
+- **Verified clean:** 20+ claims matched reality (tasks, commits, docker stack, state.json, worktree)
 
 ### 2026-05-07 (session 4)
 - **Decisions:** `push_branch` uses `--no-verify` — sweep already ran the gauntlet; pre-push hooks are redundant and add ~4min overhead per PR.
