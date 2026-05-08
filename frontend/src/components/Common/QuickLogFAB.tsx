@@ -145,14 +145,17 @@ export function QuickLogFAB() {
     },
   })
 
-  const onSubmit = (data: FormData) => {
-    mutation.mutate({
-      attendee_ids: [data.contact_id],
-      channel: data.channel as InteractionCreate["channel"],
-      notes: data.notes || undefined,
-      occurred_at: new Date().toISOString(),
-    })
-  }
+  const onSubmit = useCallback(
+    (data: FormData) => {
+      mutation.mutate({
+        attendee_ids: [data.contact_id],
+        channel: data.channel as InteractionCreate["channel"],
+        notes: data.notes || undefined,
+        occurred_at: new Date().toISOString(),
+      })
+    },
+    [mutation],
+  )
 
   // Handle Cmd+Enter or Ctrl+Enter to submit
   const handleKeyDown = useCallback(
@@ -162,7 +165,7 @@ export function QuickLogFAB() {
         form.handleSubmit(onSubmit)()
       }
     },
-    [form],
+    [form, onSubmit],
   )
 
   // Reset form when popover closes
