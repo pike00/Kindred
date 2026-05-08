@@ -571,17 +571,67 @@ Output rules — STRICT:
 """
 
 
+_TS_ERROR_FILE_RE = re.compile(r"^src/(.+?)\(\d+,\d+\):", re.MULTILINE)
+_RUFF_ARROW_FILE_RE = re.compile(r"-->\s+([\w./\-]+\.py):\d+", re.MULTILINE)
+_RUFF_INLINE_FILE_RE = re.compile(r"^(backend/[\w./\-]+\.py):\d+:\d+:", re.MULTILINE)
+
+
+def _extract_failing_file_paths(failure_log: str, gate_name: str) -> list[str]:
+    """Extract workspace-relative paths of files mentioned in a gate failure log."""
+    seen: set[str] = set()
+    paths: list[str] = []
+
+    def add(p: str) -> None:
+        if p not in seen:
+            seen.add(p)
+            paths.append(p)
+
+    if gate_name == "typecheck":
+        for m in _TS_ERROR_FILE_RE.finditer(failure_log):
+            add("frontend/src/" + m.group(1))
+    elif gate_name == "precommit":
+        for m in _RUFF_ARROW_FILE_RE.finditer(failure_log):
+            add(m.group(1))
+        for m in _RUFF_INLINE_FILE_RE.finditer(failure_log):
+            add(m.group(1))
+    return paths[:4]  # cap — keep prompt manageable
+
+
 def build_repair_prompt(pr: PR, gate: GateResult, wt: Path) -> str:
     failure_log = gate.log_path.read_text(errors="replace")
-    failure_tail = failure_log[-8000:]
+    failure_tail = failure_log[-5000:]
     # Diff the PR vs main, capped to keep prompt size sane.
     diff_proc = run(["git", "-C", str(wt), "diff", f"origin/{DEFAULT_BRANCH}...HEAD"])
     diff_text = diff_proc.stdout
-    if len(diff_text) > 30000:
-        diff_text = diff_text[:30000] + "\n... [diff truncated at 30KB]"
+    if len(diff_text) > 20000:
+        diff_text = diff_text[:20000] + "\n... [diff truncated at 20KB]"
     files_proc = run(
         ["git", "-C", str(wt), "diff", "--name-only", f"origin/{DEFAULT_BRANCH}...HEAD"]
     )
+
+    # Include actual current file content so the LLM can generate patches that apply.
+    failing_paths = _extract_failing_file_paths(failure_log, gate.name)
+    file_content_blocks = ""
+    for rel_path in failing_paths:
+        full_path = wt / rel_path
+        if full_path.exists():
+            content = full_path.read_text(errors="replace")
+            if len(content) > 6000:
+                content = content[:6000] + "\n... [file truncated at 6KB]"
+            file_content_blocks += (
+                f"\n### Current content of `{rel_path}`\n```\n{content}\n```\n"
+            )
+
+    actual_files_section = ""
+    if file_content_blocks:
+        actual_files_section = (
+            "\n## Actual current file content\n"
+            "The patch must apply to these exact files as they exist now "
+            "(use these as context lines in your diff hunks):\n"
+            + file_content_blocks
+            + "\n"
+        )
+
     return f"""\
 # PR #{pr.number}: {pr.title}
 Branch: {pr.head_ref}
@@ -602,7 +652,7 @@ Branch: {pr.head_ref}
 ```diff
 {diff_text}
 ```
-
+{actual_files_section}
 Produce the minimal `diff` to make `{gate.name}` pass.
 """
 
