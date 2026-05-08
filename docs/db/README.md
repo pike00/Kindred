@@ -57,7 +57,7 @@
 | public.contactsource | CARDDAV, GOOGLE, MANUAL, VCARD_IMPORT, WEBHOOK |
 | public.debtdirection | I_OWE, THEY_OWE |
 | public.giftstatus | GIVEN, IDEA, PURCHASED, RECEIVED, WRAPPED |
-| public.interactionchannel | CALL, EMAIL, IN_PERSON, OTHER, SOCIAL, TEXT, VIDEO |
+| public.interactionchannel | CALL, EMAIL, IN_PERSON, OTHER, SKIP, SOCIAL, TEXT, VIDEO |
 | public.mediacategory | BOOK, MOVIE, MUSICIAN, OTHER, PODCAST, TV_SHOW |
 | public.reminderfrequency | DAILY, MONTHLY, ONCE, WEEKLY, YEARLY |
 

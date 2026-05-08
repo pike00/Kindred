@@ -32,6 +32,7 @@ Enum "interactionchannel" {
   "VIDEO"
   "SOCIAL"
   "OTHER"
+  "SKIP"
 }
 
 Enum "mediacategory" {

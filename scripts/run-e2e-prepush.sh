@@ -37,15 +37,15 @@ if ! stack_up; then
     echo "e2e: stack not reachable on loopback — bringing up dev compose with override"
     docker compose -f compose.dev.yml -f compose.dev.override.yml up -d \
         --force-recreate backend frontend >/dev/null
-    # Wait up to 60s for backend health
-    for i in {1..30}; do
-        if stack_up; then
-            break
-        fi
-        sleep 2
+    # Wait up to 5 min — cold starts include bun install + Vite startup
+    waited=0
+    until stack_up || (( waited >= 300 )); do
+        sleep 5
+        (( waited += 5 ))
+        (( waited % 30 == 0 )) && echo "e2e: waiting for stack... ${waited}s elapsed"
     done
     if ! stack_up; then
-        echo "ERROR: stack failed to come up within 60s — investigate before pushing" >&2
+        echo "ERROR: stack failed to come up within 300s — investigate before pushing" >&2
         exit 1
     fi
 fi
