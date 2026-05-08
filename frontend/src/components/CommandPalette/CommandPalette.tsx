@@ -24,7 +24,6 @@ import {
   ShieldCheck,
   Tag,
   Users,
-  UsersRound,
 } from "@/lib/icons"
 import { useCommandPalette } from "./CommandPaletteContext"
 
@@ -44,7 +43,6 @@ function contactHaystack(contact: ContactPublic): string {
     contact.company,
     contact.title,
     ...(contact.tags?.map((t) => t.name) ?? []),
-    ...(contact.groups?.map((g) => g.name) ?? []),
   ]
     .filter(Boolean)
     .join(" ")
@@ -172,13 +170,6 @@ export function CommandPalette() {
           >
             <Tag />
             <span>Tags</span>
-          </CommandItem>
-          <CommandItem
-            value="nav:groups"
-            onSelect={() => runCommand(() => navigate({ to: "/groups" }))}
-          >
-            <UsersRound />
-            <span>Groups</span>
           </CommandItem>
           <CommandItem
             value="nav:reminders"
