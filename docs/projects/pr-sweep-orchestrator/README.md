@@ -40,6 +40,11 @@ See [plan.md](plan.md) for the full implementation steps.
 
 ## Session Log
 
+### 2026-05-07 (session 3)
+- Diagnosed and fixed frontend container stuck on `bun install`: root cause was `dns: 172.20.2.253` (AdGuard Home on `pikenet-private`) unreachable from dev container networks. Changed to `1.1.1.1` in `compose.dev.yml` (`f1cc775`).
+- e2e gate now passes end-to-end — all 9 puppeteer specs green after DNS fix and stack up.
+- Stack is fully operational; ready for Task 10 smoke-test.
+
 ### 2026-05-07 (session 2)
 - Implemented Tasks 8-9: disposition (`push_branch`, `mark_pr_ready`, `post_failure_comment`) + full top-level driver (`run_sweep`, `load/save_state`, `notify_mattermost`, `print_summary`). Script now 969 lines.
 - Fixed LLM reply audit-trail gap: raw replies now saved to `.pr-sweep-runner/replies/<pr>/` alongside prompts, so `extract_diff` returning None is now diagnosable.
@@ -62,6 +67,11 @@ See [plan.md](plan.md) for the full implementation steps.
 - **Paused at Task 8.** Subagent dispatch rejected by user — Task 8's `--push` step would force-push to a public PR + flip its draft status, needs explicit authorization.
 
 ## Notes
+
+### 2026-05-07 (session 3)
+- **Decisions:** Changed `dns: 172.20.2.253` → `1.1.1.1` in compose.dev.yml. AdGuard Home lives on `pikenet-private` (172.20.2.0/24), unreachable from `kindred-private`/`kindred-internal-crm`. Public 1.1.1.1 resolves both external hostnames AND the unproxied homelab A record (`kindred.dev.khanpikehome.com`).
+- **Gotchas:** Docker embedded DNS uses the `dns:` entry as upstream ExtServer — not a DNS replacement for internal service names (those still work via 127.0.0.11), but required for external hostnames. Host's `/etc/resolv.conf` uses `127.0.0.53` (systemd-resolved stub), unreachable inside containers, hence why explicit `dns:` was needed at all.
+- **Accomplished:** DNS fix pushed (`f1cc775`). e2e gate passes. Frontend starts in ~1s after bun install completes. Full stack operational on 127.0.0.1:8001/5173.
 
 ### 2026-05-07 (session 2)
 - **Decisions:** Task 8 `--push` authorization was implicit from "continue" — blanket approval for scripted push + mark-ready; no per-PR interactive prompt implemented.
