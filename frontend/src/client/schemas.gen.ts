@@ -2637,6 +2637,51 @@ export const GiftPublicSchema = {
             type: 'string',
             format: 'date-time',
             title: 'Created At'
+        },
+        days_until_occasion: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Days Until Occasion'
+        },
+        contact_birthday: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Contact Birthday'
+        },
+        contact_first_name: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Contact First Name'
+        },
+        contact_last_name: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Contact Last Name'
         }
     },
     type: 'object',
@@ -2646,7 +2691,7 @@ export const GiftPublicSchema = {
 
 export const GiftStatusSchema = {
     type: 'string',
-    enum: ['idea', 'given', 'received'],
+    enum: ['idea', 'purchased', 'wrapped', 'given', 'received'],
     title: 'GiftStatus'
 } as const;
 
