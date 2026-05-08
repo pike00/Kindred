@@ -155,17 +155,17 @@ export async function clickAddInCard(
     has: page
       .locator('[data-slot="card-title"]')
       .filter({ hasText: new RegExp(cardTitle, "i") }),
-  });
+  })
 
   // Look for the Add button inside the card header
   const addButton = card
     .getByRole("button")
     .filter({ hasText: /add/i })
     .or(card.getByRole("button").filter({ has: page.locator("svg") }))
-    .first();
+    .first()
 
-  await addButton.click();
-  await page.waitForTimeout(500);
+  await addButton.click()
+  await page.waitForTimeout(500)
 }
 
 /**
@@ -190,24 +190,24 @@ export async function fillFieldByLabel(
   value: string,
 ): Promise<void> {
   // Try to find the input by placeholder first (more reliable in this UI)
-  let field = page.getByPlaceholder(new RegExp(labelText, "i")).first();
-  
+  let field = page.getByPlaceholder(new RegExp(labelText, "i")).first()
+
   if ((await field.count()) === 0) {
     // Try by label text
-    const dialog = page.getByRole("dialog");
-    const labels = dialog.getByText(new RegExp(labelText, "i")).all();
-    const count = await labels.count();
-    
+    const dialog = page.getByRole("dialog")
+    const labels = dialog.getByText(new RegExp(labelText, "i")).all()
+    const count = await labels.count()
+
     for (let i = 0; i < count; i++) {
-      const label = labels.nth(i);
-      const forAttr = await label.getAttribute("for");
+      const label = labels.nth(i)
+      const forAttr = await label.getAttribute("for")
       if (forAttr) {
-        field = page.locator(`#${forAttr}`);
-        break;
+        field = page.locator(`#${forAttr}`)
+        break
       }
     }
   }
-  
+
   if ((await field.count()) === 0) {
     // Last resort: find input near the label text
     field = page
@@ -215,11 +215,11 @@ export async function fillFieldByLabel(
       .getByText(new RegExp(labelText, "i"))
       .locator("..")
       .locator("input, textarea")
-      .first();
+      .first()
   }
 
-  await field.clear();
-  await field.fill(value);
+  await field.clear()
+  await field.fill(value)
 }
 
 export async function clickRowAction(
@@ -232,29 +232,31 @@ export async function clickRowAction(
     has: page
       .locator('[data-slot="card-title"]')
       .filter({ hasText: new RegExp(cardTitle, "i") }),
-  });
+  })
 
   // Click the actions trigger button (three dots menu or similar)
   const trigger = card
     .getByRole("button", { name: /open actions menu|edit|delete/i })
-    .first();
+    .first()
 
   if ((await trigger.count()) > 0) {
-    await trigger.click();
+    await trigger.click()
   } else {
     // Try clicking on the row first to reveal actions
-    const row = card.locator(".flex.items-start.justify-between").first();
-    await row.hover();
-    await page.waitForTimeout(200);
-    const menuButton = card.getByRole("button").last();
-    await menuButton.click();
+    const row = card.locator(".flex.items-start.justify-between").first()
+    await row.hover()
+    await page.waitForTimeout(200)
+    const menuButton = card.getByRole("button").last()
+    await menuButton.click()
   }
 
-  await page.waitForTimeout(400);
+  await page.waitForTimeout(400)
 
   // Click the menu item
-  await page.getByRole("menuitem", { name: new RegExp(menuItemText, "i") }).click();
-  await page.waitForTimeout(400);
+  await page
+    .getByRole("menuitem", { name: new RegExp(menuItemText, "i") })
+    .click()
+  await page.waitForTimeout(400)
 }
 
 /**
