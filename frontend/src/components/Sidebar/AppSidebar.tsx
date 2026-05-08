@@ -16,7 +16,6 @@ import {
   ShieldCheck,
   Tag,
   Users,
-  UsersRound,
 } from "@/lib/icons"
 import { type Item, Main } from "./Main"
 import { User } from "./User"
@@ -26,7 +25,6 @@ const baseItems: Item[] = [
   { icon: Users, title: "Contacts", path: "/contacts" },
   { icon: MessagesSquare, title: "Interactions", path: "/interactions" },
   { icon: Tag, title: "Tags", path: "/tags" },
-  { icon: UsersRound, title: "Groups", path: "/groups" },
   { icon: Bell, title: "Reminders", path: "/reminders" },
   { icon: CalendarHeart, title: "Calendar", path: "/calendar" },
   { icon: NotebookPen, title: "Journal", path: "/journal" },
