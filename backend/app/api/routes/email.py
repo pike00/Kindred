@@ -8,10 +8,9 @@ import uuid
 from typing import Any
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
-from sqlmodel import Session, select
+from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
-from app.core.config import settings
 from app.crud import (
     create_email_oauth_token,
     delete_email_oauth_token,
@@ -38,7 +37,9 @@ router = APIRouter(prefix="/email", tags=["email"])
 @router.get("/oauth/authorize")
 def gmail_authorize(
     current_user: CurrentUser,
-    contact_id: uuid.UUID = Query(..., description="Contact ID to associate with this email"),
+    contact_id: uuid.UUID = Query(
+        ..., description="Contact ID to associate with this email"
+    ),
     email_address: str = Query(..., description="Email address being authorized"),
 ) -> dict[str, Any]:
     """Get Gmail OAuth2 authorization URL.
@@ -83,7 +84,9 @@ def gmail_callback(
         token_data = exchange_gmail_code(code)
     except Exception as e:
         logger.error(f"Failed to exchange Gmail code: {e}")
-        raise HTTPException(status_code=400, detail="Failed to exchange authorization code")
+        raise HTTPException(
+            status_code=400, detail="Failed to exchange authorization code"
+        )
 
     # Store encrypted tokens
     token_in = EmailOAuthTokenCreate(
@@ -138,8 +141,6 @@ def delete_email_token(
     if not token_row or token_row.owner_id != current_user.id:
         raise HTTPException(status_code=404, detail="Token not found")
 
-    from app.crud import delete_email_oauth_token
-
     success = delete_email_oauth_token(session=session, token_id=token_id)
     if not success:
         raise HTTPException(status_code=500, detail="Failed to delete token")
@@ -183,7 +184,6 @@ def poll_contact_email(
         )
 
     # Process emails (run in background for large mailboxes)
-    from app.email_service import process_email_for_contact
 
     count = process_email_for_contact(
         session=session,

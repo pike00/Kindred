@@ -12,8 +12,8 @@ from sqlmodel import Session, create_engine, select
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
-from app.models import Contact, Reminder, ReminderFrequency  # noqa: E402
 from app.email_service import poll_all_email_accounts  # noqa: E402
+from app.models import Contact, Reminder, ReminderFrequency  # noqa: E402
 
 
 def _get_apprise() -> apprise.Apprise:
@@ -153,8 +153,6 @@ async def remove_contact_from_search(
         logger.warning(f"Failed to remove contact {contact_id} from search: {e}")
 
 
-
-
 async def poll_email_accounts(ctx: dict) -> None:
     """Poll all configured email accounts and create interactions."""
     from sqlmodel import Session
@@ -168,6 +166,7 @@ async def poll_email_accounts(ctx: dict) -> None:
                 logger.info(f"Email poll created {total} new interaction(s)")
         except Exception as e:
             logger.error(f"Email poll failed: {e}")
+
 
 class WorkerSettings:
     """ARQ worker settings."""

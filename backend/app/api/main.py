@@ -1,7 +1,5 @@
 from fastapi import APIRouter
 
-from app.api.routes import email
-
 from app.api.routes import (
     activity_logs,
     addresses,
@@ -11,6 +9,7 @@ from app.api.routes import (
     contacts,
     custom_fields,
     debts,
+    email,
     gifts,
     import_export,
     interactions,

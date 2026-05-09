@@ -7,7 +7,6 @@ Never stores email body or attachments.
 import email
 import imaplib
 import logging
-import smtplib
 import ssl
 from datetime import datetime, timezone
 from email.header import decode_header
@@ -16,11 +15,11 @@ from typing import Any
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlmodel import Session
 
 from app.core.config import settings
-from app.core.encryption import decrypt_token, encrypt_token
+from app.core.encryption import decrypt_token
 from app.models import (
     Contact,
     ContactField,
@@ -271,7 +270,9 @@ def fetch_imap_messages(
         return []
 
 
-def find_contact_by_email(session: Session, owner_id: uuid.UUID, email_address: str) -> Contact | None:
+def find_contact_by_email(
+    session: Session, owner_id: uuid.UUID, email_address: str
+) -> Contact | None:
     """Find a contact by matching email address in ContactField.
 
     Returns the first matching Contact, or None.
@@ -355,7 +356,9 @@ def create_interaction_from_email(
     """
     message_id = email_data.get("message_id", "")
     if message_id and interaction_exists(session, contact.id, message_id):
-        logger.debug(f"Skipping duplicate message {message_id} for contact {contact.id}")
+        logger.debug(
+            f"Skipping duplicate message {message_id} for contact {contact.id}"
+        )
         return None
 
     occurred_at = parse_email_date(email_data.get("date"))
@@ -387,10 +390,7 @@ def create_interaction_from_email(
     )
 
     # Update contact's last_contacted_at
-    if (
-        contact.last_contacted_at is None
-        or occurred_at > contact.last_contacted_at
-    ):
+    if contact.last_contacted_at is None or occurred_at > contact.last_contacted_at:
         contact.last_contacted_at = occurred_at
         session.add(contact)
 
@@ -436,10 +436,14 @@ def _process_gmail(
                 token_id=token_row.id,
                 access_token=creds.token,
                 refresh_token=creds.refresh_token,
-                expires_at=creds.expiry.replace(tzinfo=timezone.utc) if creds.expiry else None,
+                expires_at=creds.expiry.replace(tzinfo=timezone.utc)
+                if creds.expiry
+                else None,
             )
         except Exception as e:
-            logger.warning(f"Failed to update tokens for {token_row.email_address}: {e}")
+            logger.warning(
+                f"Failed to update tokens for {token_row.email_address}: {e}"
+            )
 
     messages = fetch_gmail_messages(creds, max_results=50)
     return _process_messages(session, owner_id, messages)
@@ -505,9 +509,7 @@ def poll_all_email_accounts(session: Session) -> dict[str, int]:
             ).first()
 
             if token_row:
-                count = process_email_for_contact(
-                    session, contact.owner_id, token_row
-                )
+                count = process_email_for_contact(session, contact.owner_id, token_row)
                 if count > 0:
                     results[str(contact.id)] = results.get(str(contact.id), 0) + count
 
