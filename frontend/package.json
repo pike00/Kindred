@@ -61,7 +61,7 @@
     "@radix-ui/react-switch": "^1.2.6",
     "@tanstack/router-devtools": "^1.166.7",
     "@tanstack/router-plugin": "^1.167.9",
-    "@types/node": "^25.5.0",
+    "@types/node": "^25.6.2",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react-swc": "^4.2.3",
