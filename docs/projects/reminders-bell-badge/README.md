@@ -3,8 +3,8 @@ title: Reminders Bell and Badge
 status: active
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-04-21
-next_step: Implement /reminders/due GET endpoint (filter reminders due today + overdue, scoped to owner_id)
+last_updated: 2026-05-06
+next_step: Wire "Log as interaction" from the popover into the FAB pre-populated with the reminder's contact_id.
 ---
 
 # Reminders Bell and Badge
@@ -15,18 +15,30 @@ Persistent header bell icon with a badge showing the count of reminders due toda
 
 ## Tasks
 
-- [ ] Implement /reminders/due GET endpoint (filter reminders due today + overdue, scoped to owner_id)
-- [ ] Header bell component with count badge and aria-live region
-- [ ] Popover list showing due reminders with contact name + title + description
-- [ ] Snooze button (15min, 1h, 4h, tomorrow, 1 week) -- writes to Reminder.snoozed_until
+- [x] Implement /reminders/due GET endpoint (filter reminders due today + overdue, scoped to owner_id)
+- [x] Header bell component with count badge and aria-live region
+- [x] Popover list showing due reminders with contact name + title + description
+- [x] Snooze button (15min, 1h, 4h, tomorrow, 1 week) -- writes to Reminder.snoozed_until
 - [ ] Log-as-interaction button (opens FAB for quick interaction record on the linked contact)
-- [ ] Dismiss button (marks as snoozed_until = now, soft-clear from the badge)
-- [ ] Auto-refetch count every 60s (or SSE streaming for near-real-time updates)
+- [x] Dismiss button (marks as snoozed_until = now, soft-clear from the badge)
+- [x] Auto-refetch count every 60s (or SSE streaming for near-real-time updates)
 
 ## Session Log
 
 ### 2026-04-21
 - Project created.
+
+### 2026-05-06
+- Backend: added `GET /api/v1/reminders/due` returning active, currently-due reminders for the current user, with the linked contact (when present) joined in so the popover renders contact name without N+1 fetches. Filter mirrors the spec: `is_active = true AND remind_at <= now() AND (snoozed_until IS NULL OR snoozed_until <= now())`. Order by `remind_at ASC`.
+- Backend: added `POST /api/v1/reminders/{id}/dismiss` which bumps `snoozed_until` to a far-future sentinel (`9999-12-31T23:59:59Z`) so the reminder disappears from `/due` without being deleted. The literal "= now()" wording from the spec didn't survive the filter (`snoozed_until <= now()` re-includes the row immediately); the sentinel preserves the soft-clear semantics.
+- Backend: extended `POST /api/v1/reminders/{id}/snooze` to accept a JSON body with either an absolute `snoozed_until` datetime or a relative `minutes` duration. The legacy `?minutes=` query parameter is still honored for backwards compatibility.
+- Backend: 10 new pytest cases under `backend/tests/api/routes/test_reminders.py` cover the `/due` filter (overdue, inactive-skipped, snoozed-future-skipped, contact summary embedded, standalone reminder, oldest-first ordering), both snooze body shapes, dismiss happy path, and the dismiss 404. All 185 route tests pass.
+- Frontend: refactored `ReminderBell` to poll `/reminders/due` every 60s via TanStack Query (key `["reminders", "due"]`) instead of fetching the full reminder list and filtering client-side. Server-side filtering scales when an instance has thousands of reminders.
+- Frontend: each popover row now renders the linked contact's display name (nickname > "first last"), the title, the description, and an overdue-relative timestamp. Snooze is a Radix dropdown with the canonical 5 options (15m / 1h / 4h / tomorrow / 1 week); dismiss hits the new endpoint. Bell button + per-row buttons are 44px tall on mobile, 36px on desktop. `aria-live="polite"` on a sr-only count span; `aria-label="Reminders, N due"` on the trigger.
+- Frontend: SDK regenerated via `bash scripts/generate-client.sh`. New types: `ReminderDuePublic`, `RemindersDuePublic`, `ReminderContactSummary`, `ReminderSnoozeRequest`. New SDK methods: `RemindersService.listDueReminders`, `dismissReminder`.
+- Verified end-to-end against the live dev stack at `https://kindred.dev.example.com`: created 3 overdue test reminders linked to a contact, confirmed badge shows "3" with `aria-label="Reminders, 3 due"`, opened popover (3 rows visible with contact name + title + description + overdue time), snoozed one for 1 hour (badge → 2), dismissed another (badge → 1). Test reminders cleaned up after.
+- Vite gotcha: the SDK regenerator overwrites `frontend/src/client/*.gen.ts` while Vite has them cached in `node_modules/.vite/deps`. The Vite dev server keeps serving the stale SDK until restarted; saw this when the bell rendered "0 due" despite the API returning 3. `docker compose -f compose.dev.yml restart frontend` cleared it.
+- Deferred: "Log as interaction" — needs the FAB to accept a pre-populated contact_id and the bell needs context access. Left as a TODO in `ReminderBell.tsx` so the next pass can pick it up cleanly.
 
 ## Notes
 
