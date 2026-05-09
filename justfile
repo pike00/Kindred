@@ -20,6 +20,18 @@ sweep *args:
     set -a; source .env; set +a
     exec uv run --script --quiet scripts/run-pr-sweep.py run {{args}}
 
+# Review all already-ready PRs with deepseek-v4-pro-cloud (review) + kimi-k2.6-cloud (fixes).
+# Idempotent — skips PRs already reviewed. Run after `just sweep` completes.
+sweep-review:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ ! -f .env ]; then
+        echo "ERROR: .env not found — run: sops -d .env.sops > .env" >&2
+        exit 1
+    fi
+    set -a; source .env; set +a
+    exec uv run --script --quiet scripts/run-pr-sweep.py review
+
 # Seed fake data for the FIRST_SUPERUSER. Safe to run repeatedly; adds more on top.
 seed count="500" email="":
     {{_dc}} exec -T backend python app/seed_fake_data.py --count {{count}} {{ if email == "" { "" } else { "--email " + email } }}
