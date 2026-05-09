@@ -29,6 +29,7 @@ export {
   Eye,
   EyeOff,
   Film,
+  Gift,
   HeartHandshake,
   // Sidebar nav
   Home,
@@ -52,6 +53,7 @@ export {
   MoreHorizontal,
   NotebookPen,
   OctagonX,
+  Package,
   PanelLeft,
   PawPrint,
   Pencil,
