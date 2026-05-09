@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { ActivityLogsListActivityLogsData, ActivityLogsListActivityLogsResponse, AddressesListAddressesData, AddressesListAddressesResponse, AddressesCreateAddressRouteData, AddressesCreateAddressRouteResponse, AddressesUpdateAddressData, AddressesUpdateAddressResponse, AddressesDeleteAddressData, AddressesDeleteAddressResponse, ApiKeysListMyApiKeysResponse, ApiKeysCreateMyApiKeyData, ApiKeysCreateMyApiKeyResponse, ApiKeysRevokeMyApiKeyData, ApiKeysRevokeMyApiKeyResponse, CalendarGetCalendarMonthData, CalendarGetCalendarMonthResponse, CarddavWellKnownCarddavResponse, ContactFieldsListContactFieldsData, ContactFieldsListContactFieldsResponse, ContactFieldsCreateContactFieldRouteData, ContactFieldsCreateContactFieldRouteResponse, ContactFieldsUpdateContactFieldData, ContactFieldsUpdateContactFieldResponse, ContactFieldsDeleteContactFieldData, ContactFieldsDeleteContactFieldResponse, ContactsBulkUpdateContactsData, ContactsBulkUpdateContactsResponse, ContactsPreviewBulkContactsData, ContactsPreviewBulkContactsResponse, ContactsListContactsData, ContactsListContactsResponse, ContactsCreateContactData, ContactsCreateContactResponse, ContactsListLosingTouchData, ContactsListLosingTouchResponse, ContactsListOverdueContactsData, ContactsListOverdueContactsResponse, ContactsSkipContactData, ContactsSkipContactResponse, ContactsGetContactData, ContactsGetContactResponse, ContactsUpdateContactData, ContactsUpdateContactResponse, ContactsDeleteContactData, ContactsDeleteContactResponse, ContactsRestoreContactData, ContactsRestoreContactResponse, ContactsListContactMentionsData, ContactsListContactMentionsResponse, CustomFieldsListFieldDefinitionsResponse, CustomFieldsCreateFieldDefinitionData, CustomFieldsCreateFieldDefinitionResponse, CustomFieldsUpdateFieldDefinitionData, CustomFieldsUpdateFieldDefinitionResponse, CustomFieldsDeleteFieldDefinitionData, CustomFieldsDeleteFieldDefinitionResponse, CustomFieldsListFieldValuesData, CustomFieldsListFieldValuesResponse, CustomFieldsCreateFieldValueData, CustomFieldsCreateFieldValueResponse, CustomFieldsUpdateFieldValueData, CustomFieldsUpdateFieldValueResponse, CustomFieldsDeleteFieldValueData, CustomFieldsDeleteFieldValueResponse, DebtsListDebtsData, DebtsListDebtsResponse, DebtsCreateDebtRouteData, DebtsCreateDebtRouteResponse, DebtsUpdateDebtData, DebtsUpdateDebtResponse, DebtsDeleteDebtData, DebtsDeleteDebtResponse, GiftsListGiftsData, GiftsListGiftsResponse, GiftsCreateGiftRouteData, GiftsCreateGiftRouteResponse, GiftsUpdateGiftData, GiftsUpdateGiftResponse, GiftsDeleteGiftData, GiftsDeleteGiftResponse, GiftsGetKanbanBoardResponse, GiftsChangeGiftStatusData, GiftsChangeGiftStatusResponse, HealthHealthResponse, ImportExportImportVcardData, ImportExportImportVcardResponse, ImportExportExportVcardResponse, ImportExportExportJsonResponse, InteractionsListInteractionsData, InteractionsListInteractionsResponse, InteractionsCreateInteractionRouteData, InteractionsCreateInteractionRouteResponse, InteractionsUpdateInteractionData, InteractionsUpdateInteractionResponse, InteractionsDeleteInteractionData, InteractionsDeleteInteractionResponse, JournalListJournalEntriesData, JournalListJournalEntriesResponse, JournalCreateJournalEntryRouteData, JournalCreateJournalEntryRouteResponse, JournalUpdateJournalEntryData, JournalUpdateJournalEntryResponse, JournalDeleteJournalEntryData, JournalDeleteJournalEntryResponse, LifeEventsListLifeEventsData, LifeEventsListLifeEventsResponse, LifeEventsCreateLifeEventRouteData, LifeEventsCreateLifeEventRouteResponse, LifeEventsUpdateLifeEventData, LifeEventsUpdateLifeEventResponse, LifeEventsDeleteLifeEventData, LifeEventsDeleteLifeEventResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, MediaRecommendationsListMediaRecommendationsData, MediaRecommendationsListMediaRecommendationsResponse, MediaRecommendationsCreateMediaRecommendationRouteData, MediaRecommendationsCreateMediaRecommendationRouteResponse, MediaRecommendationsUpdateMediaRecommendationData, MediaRecommendationsUpdateMediaRecommendationResponse, MediaRecommendationsDeleteMediaRecommendationData, MediaRecommendationsDeleteMediaRecommendationResponse, NotesListNotesData, NotesListNotesResponse, NotesCreateNoteRouteData, NotesCreateNoteRouteResponse, NotesUpdateNoteRouteData, NotesUpdateNoteRouteResponse, NotesDeleteNoteData, NotesDeleteNoteResponse, PetsListPetsData, PetsListPetsResponse, PetsCreatePetRouteData, PetsCreatePetRouteResponse, PetsUpdatePetData, PetsUpdatePetResponse, PetsDeletePetData, PetsDeletePetResponse, RelationshipsLookupInverseData, RelationshipsLookupInverseResponse, RelationshipsListRelationshipsData, RelationshipsListRelationshipsResponse, RelationshipsCreateRelationshipRouteData, RelationshipsCreateRelationshipRouteResponse, RelationshipsUpdateRelationshipData, RelationshipsUpdateRelationshipResponse, RelationshipsDeleteRelationshipData, RelationshipsDeleteRelationshipResponse, RemindersListRemindersData, RemindersListRemindersResponse, RemindersCreateReminderRouteData, RemindersCreateReminderRouteResponse, RemindersListDueRemindersData, RemindersListDueRemindersResponse, RemindersUpdateReminderData, RemindersUpdateReminderResponse, RemindersDeleteReminderData, RemindersDeleteReminderResponse, RemindersSnoozeReminderData, RemindersSnoozeReminderResponse, RemindersDismissReminderData, RemindersDismissReminderResponse, SetupSetupPageData, SetupSetupPageResponse, SetupSetupSubmitData, SetupSetupSubmitResponse, TagsListTagsData, TagsListTagsResponse, TagsCreateTagRouteData, TagsCreateTagRouteResponse, TagsUpdateTagData, TagsUpdateTagResponse, TagsDeleteTagData, TagsDeleteTagResponse, TagSharesCreateTagShareData, TagSharesCreateTagShareResponse, TagSharesListTagSharesData, TagSharesListTagSharesResponse, TagSharesDeleteTagShareData, TagSharesDeleteTagShareResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse, UtilsEnvironmentResponse, WebhooksListWebhooksResponse, WebhooksCreateWebhookData, WebhooksCreateWebhookResponse, WebhooksUpdateWebhookData, WebhooksUpdateWebhookResponse, WebhooksDeleteWebhookData, WebhooksDeleteWebhookResponse, WebhooksInboundWebhookData, WebhooksInboundWebhookResponse } from './types.gen';
+import type { ActivityLogsListActivityLogsData, ActivityLogsListActivityLogsResponse, AddressesListAddressesData, AddressesListAddressesResponse, AddressesCreateAddressRouteData, AddressesCreateAddressRouteResponse, AddressesUpdateAddressData, AddressesUpdateAddressResponse, AddressesDeleteAddressData, AddressesDeleteAddressResponse, ApiKeysListMyApiKeysResponse, ApiKeysCreateMyApiKeyData, ApiKeysCreateMyApiKeyResponse, ApiKeysRevokeMyApiKeyData, ApiKeysRevokeMyApiKeyResponse, CalendarGetCalendarMonthData, CalendarGetCalendarMonthResponse, CarddavWellKnownCarddavResponse, ContactFieldsListContactFieldsData, ContactFieldsListContactFieldsResponse, ContactFieldsCreateContactFieldRouteData, ContactFieldsCreateContactFieldRouteResponse, ContactFieldsUpdateContactFieldData, ContactFieldsUpdateContactFieldResponse, ContactFieldsDeleteContactFieldData, ContactFieldsDeleteContactFieldResponse, ContactsBulkUpdateContactsData, ContactsBulkUpdateContactsResponse, ContactsPreviewBulkContactsData, ContactsPreviewBulkContactsResponse, ContactsListContactsData, ContactsListContactsResponse, ContactsCreateContactData, ContactsCreateContactResponse, ContactsListLosingTouchData, ContactsListLosingTouchResponse, ContactsListOverdueContactsData, ContactsListOverdueContactsResponse, ContactsSkipContactData, ContactsSkipContactResponse, ContactsGetContactData, ContactsGetContactResponse, ContactsUpdateContactData, ContactsUpdateContactResponse, ContactsDeleteContactData, ContactsDeleteContactResponse, ContactsRestoreContactData, ContactsRestoreContactResponse, ContactsListContactMentionsData, ContactsListContactMentionsResponse, CustomFieldsListFieldDefinitionsResponse, CustomFieldsCreateFieldDefinitionData, CustomFieldsCreateFieldDefinitionResponse, CustomFieldsUpdateFieldDefinitionData, CustomFieldsUpdateFieldDefinitionResponse, CustomFieldsDeleteFieldDefinitionData, CustomFieldsDeleteFieldDefinitionResponse, CustomFieldsListFieldValuesData, CustomFieldsListFieldValuesResponse, CustomFieldsCreateFieldValueData, CustomFieldsCreateFieldValueResponse, CustomFieldsUpdateFieldValueData, CustomFieldsUpdateFieldValueResponse, CustomFieldsDeleteFieldValueData, CustomFieldsDeleteFieldValueResponse, DebtsListDebtsData, DebtsListDebtsResponse, DebtsCreateDebtRouteData, DebtsCreateDebtRouteResponse, DebtsUpdateDebtData, DebtsUpdateDebtResponse, DebtsDeleteDebtData, DebtsDeleteDebtResponse, GiftsListGiftsData, GiftsListGiftsResponse, GiftsCreateGiftRouteData, GiftsCreateGiftRouteResponse, GiftsUpdateGiftData, GiftsUpdateGiftResponse, GiftsDeleteGiftData, GiftsDeleteGiftResponse, GiftsGetKanbanBoardResponse, GiftsChangeGiftStatusData, GiftsChangeGiftStatusResponse, HealthHealthResponse, ImportExportImportVcardData, ImportExportImportVcardResponse, ImportExportExportVcardResponse, ImportExportExportJsonResponse, InteractionsListInteractionsData, InteractionsListInteractionsResponse, InteractionsCreateInteractionRouteData, InteractionsCreateInteractionRouteResponse, InteractionsUpdateInteractionData, InteractionsUpdateInteractionResponse, InteractionsDeleteInteractionData, InteractionsDeleteInteractionResponse, JournalListJournalEntriesData, JournalListJournalEntriesResponse, JournalCreateJournalEntryRouteData, JournalCreateJournalEntryRouteResponse, JournalUpdateJournalEntryData, JournalUpdateJournalEntryResponse, JournalDeleteJournalEntryData, JournalDeleteJournalEntryResponse, LifeEventsListLifeEventsData, LifeEventsListLifeEventsResponse, LifeEventsCreateLifeEventRouteData, LifeEventsCreateLifeEventRouteResponse, LifeEventsUpdateLifeEventData, LifeEventsUpdateLifeEventResponse, LifeEventsDeleteLifeEventData, LifeEventsDeleteLifeEventResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, MediaRecommendationsListMediaRecommendationsData, MediaRecommendationsListMediaRecommendationsResponse, MediaRecommendationsCreateMediaRecommendationRouteData, MediaRecommendationsCreateMediaRecommendationRouteResponse, MediaRecommendationsUpdateMediaRecommendationData, MediaRecommendationsUpdateMediaRecommendationResponse, MediaRecommendationsDeleteMediaRecommendationData, MediaRecommendationsDeleteMediaRecommendationResponse, NotesListNotesData, NotesListNotesResponse, NotesCreateNoteRouteData, NotesCreateNoteRouteResponse, NotesUpdateNoteRouteData, NotesUpdateNoteRouteResponse, NotesDeleteNoteData, NotesDeleteNoteResponse, PetsListPetsData, PetsListPetsResponse, PetsCreatePetRouteData, PetsCreatePetRouteResponse, PetsUpdatePetData, PetsUpdatePetResponse, PetsDeletePetData, PetsDeletePetResponse, RelationshipsLookupInverseData, RelationshipsLookupInverseResponse, RelationshipsListRelationshipsData, RelationshipsListRelationshipsResponse, RelationshipsCreateRelationshipRouteData, RelationshipsCreateRelationshipRouteResponse, RelationshipsUpdateRelationshipData, RelationshipsUpdateRelationshipResponse, RelationshipsDeleteRelationshipData, RelationshipsDeleteRelationshipResponse, RemindersListRemindersData, RemindersListRemindersResponse, RemindersCreateReminderRouteData, RemindersCreateReminderRouteResponse, RemindersListDueRemindersData, RemindersListDueRemindersResponse, RemindersUpdateReminderData, RemindersUpdateReminderResponse, RemindersDeleteReminderData, RemindersDeleteReminderResponse, RemindersSnoozeReminderData, RemindersSnoozeReminderResponse, RemindersDismissReminderData, RemindersDismissReminderResponse, SetupSetupPageData, SetupSetupPageResponse, SetupSetupSubmitData, SetupSetupSubmitResponse, TagsListTagsData, TagsListTagsResponse, TagsCreateTagRouteData, TagsCreateTagRouteResponse, TagsUpdateTagData, TagsUpdateTagResponse, TagsDeleteTagData, TagsDeleteTagResponse, TagSharesPreviewTagShareData, TagSharesPreviewTagShareResponse, TagSharesCreateTagShareData, TagSharesCreateTagShareResponse, TagSharesListTagSharesData, TagSharesListTagSharesResponse, TagSharesDeleteTagShareData, TagSharesDeleteTagShareResponse, TagSharesLogTagShareAuditData, TagSharesLogTagShareAuditResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse, UtilsEnvironmentResponse, WebhooksListWebhooksResponse, WebhooksCreateWebhookData, WebhooksCreateWebhookResponse, WebhooksUpdateWebhookData, WebhooksUpdateWebhookResponse, WebhooksDeleteWebhookData, WebhooksDeleteWebhookResponse, WebhooksInboundWebhookData, WebhooksInboundWebhookResponse } from './types.gen';
 
 export class ActivityLogsService {
     /**
@@ -2129,6 +2129,27 @@ export class TagsService {
 
 export class TagSharesService {
     /**
+     * Preview Tag Share
+     * Preview the scope of sharing a tag - counts of all related entities.
+     * @param data The data for the request.
+     * @param data.tagId
+     * @returns TagSharePreview Successful Response
+     * @throws ApiError
+     */
+    public static previewTagShare(data: TagSharesPreviewTagShareData): CancelablePromise<TagSharesPreviewTagShareResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/tag-shares/preview/{tag_id}',
+            path: {
+                tag_id: data.tagId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
      * Create Tag Share
      * @param data The data for the request.
      * @param data.requestBody
@@ -2188,37 +2209,17 @@ export class TagSharesService {
             }
         });
     }
-    /**
-     * Preview Tag Share Scope
-     * Preview the scope of sharing a tag - counts of all related entities.
-     * @param data The data for the request.
-     * @param data.tagId
-     * @returns TagSharePreview Successful Response
-     * @throws ApiError
-     */
-    public static previewTagShare(data: { tagId: string }): CancelablePromise<TagSharePreview> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/tag-shares/preview/{tag_id}',
-            path: {
-                tag_id: data.tagId
-            },
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-
+    
     /**
      * Log Tag Share Audit
-     * Log an audit entry for tag share creation.
+     * Log an audit entry for tag share creation (deprecated: now auto-logged).
      * @param data The data for the request.
      * @param data.tagId
      * @param data.granteeId
      * @returns string Successful Response
      * @throws ApiError
      */
-    public static logTagShareAudit(data: { tagId: string; granteeId: string }): CancelablePromise<string> {
+    public static logTagShareAudit(data: TagSharesLogTagShareAuditData): CancelablePromise<TagSharesLogTagShareAuditResponse> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/v1/tag-shares/{tag_id}/{grantee_id}/audit',
@@ -2231,7 +2232,6 @@ export class TagSharesService {
             }
         });
     }
-
 }
 
 export class UsersService {

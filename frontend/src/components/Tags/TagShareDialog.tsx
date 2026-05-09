@@ -1,11 +1,12 @@
-import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import type { TagPublic, TagSharePreview } from "@/client";
-import { TagSharesService } from "@/client";
-import { Button } from "@/components/ui/button";
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useState } from "react"
+import { useForm } from "react-hook-form"
+import { z } from "zod"
+import type { TagPublic, TagSharePreview } from "@/client"
+import { TagSharesService } from "@/client"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -13,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from "@/components/ui/dialog"
 import {
   Form,
   FormControl,
@@ -21,12 +22,10 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import useCustomToast from "@/hooks/useCustomToast";
-import { Loader2, Share2, AlertTriangle, CheckCircle2 } from "@/lib/icons";
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import {
   Table,
   TableBody,
@@ -34,49 +33,63 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert";
+} from "@/components/ui/table"
+import useCustomToast from "@/hooks/useCustomToast"
+import { AlertTriangle, CheckCircle2, Loader2, Share2 } from "@/lib/icons"
 
 interface TagShareDialogProps {
-  tag: TagPublic;
-  children?: React.ReactNode;
+  tag: TagPublic
+  children?: React.ReactNode
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
 const shareSchema = z.object({
   granteeEmail: z.string().email("Please enter a valid email address"),
-});
+})
 
-type ShareFormData = z.infer<typeof shareSchema>;
+type ShareFormData = z.infer<typeof shareSchema>
 
-export const TagShareDialog = ({ tag, children }: TagShareDialogProps) => {
-  const [open, setOpen] = useState(false);
-  const [step, setStep] = useState<"select" | "preview" | "confirm">("select");
-  const [preview, setPreview] = useState<TagSharePreview | null>(null);
-  const [confirmText, setConfirmText] = useState("");
-  const { showSuccessToast, showErrorToast } = useCustomToast();
-  const queryClient = useQueryClient();
+export const TagShareDialog = ({
+  tag,
+  children,
+  open: controlledOpen,
+  onOpenChange,
+}: TagShareDialogProps) => {
+  const [internalOpen, setInternalOpen] = useState(false)
+  // Use controlled or uncontrolled open state
+  const isOpen = controlledOpen !== undefined ? controlledOpen : internalOpen
+  const setIsOpen = (value: boolean) => {
+    if (onOpenChange) {
+      onOpenChange(value)
+    } else {
+      setInternalOpen(value)
+    }
+    if (!value) resetState()
+  }
+  const [step, setStep] = useState<"select" | "preview" | "confirm">("select")
+  const [preview, setPreview] = useState<TagSharePreview | null>(null)
+  const [confirmText, setConfirmText] = useState("")
+  const { showSuccessToast, showErrorToast } = useCustomToast()
+  const queryClient = useQueryClient()
 
   const form = useForm<ShareFormData>({
     resolver: zodResolver(shareSchema),
     defaultValues: {
       granteeEmail: "",
     },
-  });
+  })
 
   const previewMutation = useMutation({
     mutationFn: (tagId: string) => TagSharesService.previewTagShare({ tagId }),
     onSuccess: (data) => {
-      setPreview(data);
-      setStep("preview");
+      setPreview(data)
+      setStep("preview")
     },
     onError: () => {
-      showErrorToast("Failed to load preview");
+      showErrorToast("Failed to load preview")
     },
-  });
+  })
 
   const shareMutation = useMutation({
     mutationFn: (data: { tagId: string; granteeEmail: string }) =>
@@ -84,40 +97,34 @@ export const TagShareDialog = ({ tag, children }: TagShareDialogProps) => {
         requestBody: { tag_id: data.tagId, grantee_id: "" as any },
       }),
     onSuccess: () => {
-      showSuccessToast(`Tag "${tag.name}" shared successfully`);
-      queryClient.invalidateQueries({ queryKey: ["tag-shares", tag.id] });
-      setOpen(false);
-      resetState();
+      showSuccessToast(`Tag "${tag.name}" shared successfully`)
+      queryClient.invalidateQueries({ queryKey: ["tag-shares", tag.id] })
+      setIsOpen(false)
+      resetState()
     },
     onError: () => {
-      showErrorToast("Failed to share tag");
+      showErrorToast("Failed to share tag")
     },
-  });
+  })
 
   const resetState = () => {
-    setStep("select");
-    setPreview(null);
-    setConfirmText("");
-    form.reset();
-  };
+    setStep("select")
+    setPreview(null)
+    setConfirmText("")
+    form.reset()
+  }
 
-  const handleFindGrantee = (data: ShareFormData) => {
-    previewMutation.mutate(tag.id);
-  };
+  const handleFindGrantee = (_data: ShareFormData) => {
+    previewMutation.mutate(tag.id)
+  }
 
   const handleShare = () => {
-    const email = form.getValues("granteeEmail");
-    shareMutation.mutate({ tagId: tag.id, granteeEmail: email });
-  };
+    const email = form.getValues("granteeEmail")
+    shareMutation.mutate({ tagId: tag.id, granteeEmail: email })
+  }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(o) => {
-        setOpen(o);
-        if (!o) resetState();
-      }}
-    >
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         {children || (
           <Button variant="outline" size="sm">
@@ -196,13 +203,14 @@ export const TagShareDialog = ({ tag, children }: TagShareDialogProps) => {
                 {preview.total_related_rows} related records
               </p>
 
-              {preview.sample_contacts && preview.sample_contacts.length > 0 && (
-                <div className="text-sm">
-                  <span className="font-medium">Sample contacts: </span>
-                  {preview.sample_contacts.join(", ")}
-                  {preview.contact_count > 3 && "..."}
-                </div>
-              )}
+              {preview.sample_contacts &&
+                preview.sample_contacts.length > 0 && (
+                  <div className="text-sm">
+                    <span className="font-medium">Sample contacts: </span>
+                    {preview.sample_contacts.join(", ")}
+                    {preview.contact_count > 3 && "..."}
+                  </div>
+                )}
 
               <Table>
                 <TableHeader>
@@ -253,20 +261,18 @@ export const TagShareDialog = ({ tag, children }: TagShareDialogProps) => {
 
             <div className="space-y-2">
               <p className="text-sm">
-                You are sharing <strong>{preview.contact_count} contacts</strong>{" "}
-                and <strong>{preview.total_related_rows} related rows</strong> with
+                You are sharing{" "}
+                <strong>{preview.contact_count} contacts</strong> and{" "}
+                <strong>{preview.total_related_rows} related rows</strong> with
                 this tag.
               </p>
 
-              <RadioGroup
-                value={confirmText}
-                onValueChange={setConfirmText}
-              >
+              <RadioGroup value={confirmText} onValueChange={setConfirmText}>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="I understand" id="confirm" />
                   <Label htmlFor="confirm">
-                    I understand I am sharing {preview.contact_count} contacts and{" "}
-                    {preview.total_related_rows} related rows
+                    I understand I am sharing {preview.contact_count} contacts
+                    and {preview.total_related_rows} related rows
                   </Label>
                 </div>
               </RadioGroup>
@@ -300,5 +306,5 @@ export const TagShareDialog = ({ tag, children }: TagShareDialogProps) => {
         )}
       </DialogContent>
     </Dialog>
-  );
-};
+  )
+}

@@ -1,19 +1,18 @@
-import { useState } from "react";
-import { useSuspenseQuery } from "@tanstack/react-query";
-
-import { TagsService } from "@/client";
-import { DataTable } from "@/components/Common/DataTable";
-import { AddTagDialog } from "./AddTagDialog";
-import { columns } from "./columns";
-import type { TagPublic } from "@/client";
-import { TagShareDialog } from "./TagShareDialog";
+import { useSuspenseQuery } from "@tanstack/react-query"
+import { useState } from "react"
+import type { TagPublic } from "@/client"
+import { TagsService } from "@/client"
+import { DataTable } from "@/components/Common/DataTable"
+import { AddTagDialog } from "./AddTagDialog"
+import { columns } from "./columns"
+import { TagShareDialog } from "./TagShareDialog"
 
 export const TagsList = () => {
   const { data } = useSuspenseQuery({
     queryKey: ["tags"],
     queryFn: () => TagsService.listTags(),
-  });
-  const [selectedTag, setSelectedTag] = useState<TagPublic | null>(null);
+  })
+  const [selectedTag, setSelectedTag] = useState<TagPublic | null>(null)
 
   return (
     <div className="space-y-4">
@@ -30,5 +29,5 @@ export const TagsList = () => {
         />
       )}
     </div>
-  );
-};
+  )
+}

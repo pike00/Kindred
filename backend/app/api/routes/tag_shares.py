@@ -1,13 +1,12 @@
 import uuid
-from datetime import datetime
 
-import sqlalchemy as sa
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from sqlmodel import func, select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.models import (
+    ActivityLog,
     Address,
     Contact,
     ContactField,
@@ -27,19 +26,20 @@ from app.models import (
     TagSharesPublic,
     User,
 )
-from app.models import ActivityLog
 
 router = APIRouter(prefix="/tag-shares", tags=["tag-shares"])
 
 
 class SharePreviewEntity(BaseModel):
     """Preview counts for a single entity type."""
+
     entity_type: str
     count: int
 
 
 class TagSharePreview(BaseModel):
     """Preview of what will be shared when granting access to a tag."""
+
     tag_id: uuid.UUID
     tag_name: str
     contact_count: int
@@ -48,7 +48,7 @@ class TagSharePreview(BaseModel):
     total_related_rows: int
 
 
-def _compute_share_preview(session: SessionDep, tag_id: uuid.UUID, tag_name: str) -> dict:
+def _compute_share_preview(session: SessionDep, tag_id: uuid.UUID) -> dict:
     """Compute preview counts for a tag share."""
     # Get all contact IDs that have this tag
     contact_ids_stmt = select(ContactTag.contact_id).where(ContactTag.tag_id == tag_id)
@@ -63,11 +63,7 @@ def _compute_share_preview(session: SessionDep, tag_id: uuid.UUID, tag_name: str
         }
 
     # Get sample contact names (first 3)
-    sample_contacts_stmt = (
-        select(Contact)
-        .where(Contact.id.in_(contact_ids))
-        .limit(3)
-    )
+    sample_contacts_stmt = select(Contact).where(Contact.id.in_(contact_ids)).limit(3)
     sample_contacts = session.exec(sample_contacts_stmt).all()
     sample_names = [
         f"{c.first_name} {c.last_name or ''}".strip() for c in sample_contacts
@@ -185,14 +181,17 @@ def preview_tag_share(
     if not tag or tag.owner_id != current_user.id:
         raise HTTPException(status_code=404, detail="Tag not found")
 
-    preview = _compute_share_preview(session, tag_id, tag.name)
+    preview = _compute_share_preview(session, tag_id)
 
     return TagSharePreview(
         tag_id=tag.id,
         tag_name=tag.name,
         contact_count=preview["contact_count"],
         sample_contacts=preview["sample_contacts"],
-        entities=[SharePreviewEntity(entity_type=e["entity_type"], count=e["count"]) for e in preview["entities"]],
+        entities=[
+            SharePreviewEntity(entity_type=e["entity_type"], count=e["count"])
+            for e in preview["entities"]
+        ],
         total_related_rows=preview["total_related_rows"],
     )
 
@@ -219,7 +218,9 @@ def create_tag_share(
     if body.grantee_id:
         grantee = session.get(User, body.grantee_id)
     elif body.grantee_email:
-        grantee = session.exec(select(User).where(User.email == body.grantee_email)).first()
+        grantee = session.exec(
+            select(User).where(User.email == body.grantee_email)
+        ).first()
 
     if not grantee or not grantee.is_active:
         raise HTTPException(status_code=404, detail="Grantee not found")
@@ -236,7 +237,7 @@ def create_tag_share(
     session.add(share)
 
     # Compute preview for audit log
-    preview = _compute_share_preview(session, body.tag_id, tag.name)
+    preview = _compute_share_preview(session, body.tag_id)
 
     # Log to activity log
     log = ActivityLog(
