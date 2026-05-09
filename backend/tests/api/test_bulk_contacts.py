@@ -8,7 +8,7 @@ from typing import Any
 from fastapi.testclient import TestClient
 from sqlmodel import Session, select
 
-from app.models import Contact, ContactGroup, ContactTag, Group, Tag
+from app.models import Contact, ContactTag, Tag
 
 
 def get_superuser_id(db: Session) -> uuid.UUID:
@@ -201,82 +201,6 @@ def test_bulk_remove_tags(
     stmt = select(ContactTag).where(ContactTag.contact_id == contact1.id)
     tags = db.exec(stmt).all()
     assert len(tags) == 0
-
-
-def test_bulk_add_groups(
-    client: TestClient, superuser_token_headers: dict[str, str], db: Session
-) -> None:
-    """Test bulk add groups operation."""
-
-    user_id = get_superuser_id(db)
-
-    # Create groups with required owner_id
-    group1 = Group(name="Family", description="Family members", owner_id=user_id)
-    group2 = Group(name="Work", description="Work colleagues", owner_id=user_id)
-    db.add(group1)
-    db.add(group2)
-    db.commit()
-    db.refresh(group1)
-    db.refresh(group2)
-
-    # Create contact
-    contact1 = create_test_contact(db, user_id, first_name="Alice")
-
-    response = client.patch(
-        "/api/v1/contacts/bulk",
-        headers=superuser_token_headers,
-        json={
-            "contact_ids": [str(contact1.id)],
-            "operations": {"add_group_ids": [str(group1.id), str(group2.id)]},
-        },
-    )
-    assert response.status_code == 200
-    result = response.json()
-    assert result["updated_count"] == 1
-
-    # Verify groups were added
-    stmt = select(ContactGroup).where(ContactGroup.contact_id == contact1.id)
-    groups = db.exec(stmt).all()
-    assert len(groups) == 2
-
-
-def test_bulk_remove_groups(
-    client: TestClient, superuser_token_headers: dict[str, str], db: Session
-) -> None:
-    """Test bulk remove groups operation."""
-    from app.models import ContactGroup
-
-    user_id = get_superuser_id(db)
-
-    # Create group with required owner_id
-    group1 = Group(name="Family", description="Family members", owner_id=user_id)
-    db.add(group1)
-    db.commit()
-    db.refresh(group1)
-
-    # Create contact with group
-    contact1 = create_test_contact(db, user_id, first_name="Alice")
-    contact_group = ContactGroup(contact_id=contact1.id, group_id=group1.id)
-    db.add(contact_group)
-    db.commit()
-
-    # Remove group via bulk operation
-    response = client.patch(
-        "/api/v1/contacts/bulk",
-        headers=superuser_token_headers,
-        json={
-            "contact_ids": [str(contact1.id)],
-            "operations": {"remove_group_ids": [str(group1.id)]},
-        },
-    )
-    assert response.status_code == 200
-    result = response.json()
-    assert result["updated_count"] == 1
-
-    # Verify group was removed
-    stmt = select(ContactGroup).where(ContactGroup.contact_id == contact1.id)
-    groups = db.exec(stmt).all()
-    assert len(groups) == 0
 
 
 def test_bulk_select_all_filtered(

@@ -26,16 +26,15 @@ from app.models import (
     Contact,
     ContactField,
     ContactFieldType,
-    ContactGroup,
     ContactTag,
     Debt,
     DebtDirection,
     Gift,
     GiftStatus,
-    Group,
     Interaction,
     InteractionAttendee,
     InteractionChannel,
+    JournalEntry,
     LifeEvent,
     MediaCategory,
     MediaRecommendation,
@@ -388,19 +387,6 @@ TAG_SPECS = [
     ("Kids' Parents", "#f43f5e"),
 ]
 
-GROUP_SPECS = [
-    ("Immediate Family", "Parents, siblings, spouse, kids"),
-    ("Extended Family", "Aunts, uncles, cousins, in-laws"),
-    ("College Friends", "Undergrad cohort and dorm friends"),
-    ("Work — Current Team", "People on my current team"),
-    ("Work — Past Colleagues", "Former coworkers worth staying in touch with"),
-    ("Climbing Crew", "Weekly indoor climbing partners"),
-    ("Book Club", "Monthly book club members"),
-    ("Neighbors", "People on the block"),
-    ("Investors & Advisors", "Cap table, board, advisory"),
-    ("Band Practice", None),
-]
-
 RELATIONSHIP_TYPES = [
     "spouse",
     "partner",
@@ -532,6 +518,44 @@ NOTE_BODIES = [
     "Hates phone calls — text only.",
 ]
 
+JOURNAL_BODIES = [
+    "Quiet morning. Coffee on the porch, finished the chapter I'd been stalled on.",
+    "Long walk after work to clear my head. The light through the trees was unreal.",
+    "Stuck on the same problem all day. Slept on it; tomorrow I'll come back fresh.",
+    "Dinner with old friends — laughed harder than I have in months.",
+    "Felt the seasonal slump kick in today. Going to bed early and trying again.",
+    "Climbing session went well. Sent the route I'd been projecting for weeks.",
+    "Hard conversation with a coworker. Glad I didn't dodge it.",
+    "Energy was low all day; got the bare minimum done and called it.",
+    "Spent the afternoon cooking with no plan. Soup turned out great.",
+    "Reread an old letter from my grandmother. Cried a little, in a good way.",
+    "Big idea brewing for the side project. Sketched it out on the back of a receipt.",
+    "Took the long route home and made a playlist for the drive.",
+    "Felt grateful today for nothing in particular. Just a good baseline kind of day.",
+    "Annoyed at myself for procrastinating. Set a 25-minute timer and finally started.",
+    "Beach trip with the family. Sand everywhere, exhausted, completely worth it.",
+    "Tried a new yoga class. Bad at it, but the savasana fixed my whole week.",
+    "Got the news I'd been waiting on. Big shift; need a few days to sit with it.",
+    "Worked on the garden. Planted basil, mint, and two tomato starts.",
+    "Insomnia again. Made tea at 3am and read until I drifted off.",
+    "Studio day. Sketched, painted, threw most of it out, kept the one piece I liked.",
+]
+
+JOURNAL_MOODS = [
+    "🙂",
+    "😌",
+    "😄",
+    "😤",
+    "😔",
+    "🤔",
+    "🌧️",
+    "🌤️",
+    None,
+    None,
+    None,
+    None,
+]
+
 # ─── Helpers ─────────────────────────────────────────────────────────────────
 
 
@@ -595,8 +619,8 @@ def wipe_user_data(session: Session, user_id: uuid.UUID) -> None:
     log.info("Wiping existing data for user %s", user_id)
     session.execute(sql_delete(Contact).where(Contact.owner_id == user_id))
     session.execute(sql_delete(Tag).where(Tag.owner_id == user_id))
-    session.execute(sql_delete(Group).where(Group.owner_id == user_id))
     session.execute(sql_delete(Reminder).where(Reminder.owner_id == user_id))
+    session.execute(sql_delete(JournalEntry).where(JournalEntry.owner_id == user_id))
     session.commit()
 
 
@@ -613,14 +637,30 @@ def seed_tags(session: Session, owner_id: uuid.UUID) -> list[Tag]:
     return tags
 
 
-def seed_groups(session: Session, owner_id: uuid.UUID) -> list[Group]:
-    groups = [Group(name=n, description=d, owner_id=owner_id) for n, d in GROUP_SPECS]
-    session.add_all(groups)
+def seed_journal(session: Session, owner_id: uuid.UUID, count: int = 40) -> int:
+    today = date.today()
+    entries: list[JournalEntry] = []
+    used_dates: set[date] = set()
+    for _ in range(count):
+        for _attempt in range(5):
+            d = today - timedelta(days=random.randint(0, 180))
+            if d not in used_dates:
+                used_dates.add(d)
+                break
+        else:
+            d = today - timedelta(days=random.randint(0, 180))
+        entries.append(
+            JournalEntry(
+                owner_id=owner_id,
+                body=random.choice(JOURNAL_BODIES),
+                mood=random.choice(JOURNAL_MOODS),
+                entry_date=d,
+            )
+        )
+    session.add_all(entries)
     session.commit()
-    for g in groups:
-        session.refresh(g)
-    log.info("Seeded %d groups", len(groups))
-    return groups
+    log.info("Seeded %d journal entries", len(entries))
+    return len(entries)
 
 
 def make_contact(owner_id: uuid.UUID) -> Contact:
@@ -675,7 +715,6 @@ def seed_contact_children(
     contact: Contact,
     owner_id: uuid.UUID,
     tags: list[Tag],
-    groups: list[Group],
 ) -> None:
     """Fill the one-to-many children of a single contact."""
 
@@ -836,10 +875,6 @@ def seed_contact_children(
     for tag in _pick(tags, tag_count):
         session.add(ContactTag(contact_id=contact.id, tag_id=tag.id))
 
-    group_count = random.choices([0, 1, 2, 3], weights=[2, 5, 3, 1])[0]
-    for group in _pick(groups, group_count):
-        session.add(ContactGroup(contact_id=contact.id, group_id=group.id))
-
 
 def seed_relationships(session: Session, contacts: list[Contact]) -> int:
     """Add a graph of relationships — ~25% of contacts get one."""
@@ -897,7 +932,6 @@ def run(count: int, email: str, reset: bool, rng_seed: int | None) -> None:
             wipe_user_data(session, user.id)
 
         tags = seed_tags(session, user.id)
-        groups = seed_groups(session, user.id)
 
         contacts: list[Contact] = [make_contact(user.id) for _ in range(count)]
         session.add_all(contacts)
@@ -907,7 +941,7 @@ def run(count: int, email: str, reset: bool, rng_seed: int | None) -> None:
         log.info("Inserted %d contact rows", len(contacts))
 
         for i, c in enumerate(contacts):
-            seed_contact_children(session, c, user.id, tags, groups)
+            seed_contact_children(session, c, user.id, tags)
             if (i + 1) % 100 == 0:
                 session.commit()
                 log.info("  … %d contacts worth of children inserted", i + 1)
@@ -916,6 +950,8 @@ def run(count: int, email: str, reset: bool, rng_seed: int | None) -> None:
         rel_count = seed_relationships(session, contacts)
         session.commit()
         log.info("Seeded %d relationships", rel_count)
+
+        seed_journal(session, user.id)
 
         del_count = simulate_deletes(session, contacts, fraction=0.03)
         session.commit()
@@ -936,7 +972,7 @@ def main() -> None:
     parser.add_argument(
         "--reset",
         action="store_true",
-        help="Wipe this user's existing contacts/tags/groups/reminders before seeding.",
+        help="Wipe this user's existing contacts/tags/reminders before seeding.",
     )
     parser.add_argument(
         "--seed",

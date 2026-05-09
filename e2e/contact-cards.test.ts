@@ -55,24 +55,52 @@ async function createContact(
 // Click the "Add" button inside the card whose CardTitle contains `cardTitle`.
 // Cards on the contact detail page each render their own "Add" button, so a
 // global text match would always hit the first card on the page.
+//
+// Uses page.mouse.click via bounding rect rather than el.click() — Radix's
+// DialogTrigger registers PointerDown listeners that synthetic clicks miss.
 async function clickAddInCard(page: Page, cardTitle: string): Promise<void> {
-  const found = await page.evaluate((title: string) => {
-    const cards = Array.from(document.querySelectorAll('[data-slot="card"]'));
-    for (const card of cards) {
-      const header = card.querySelector('[data-slot="card-header"]');
-      if (!header) continue;
-      if (!header.textContent?.toLowerCase().includes(title.toLowerCase()))
-        continue;
-      const btn = header.querySelector("button");
-      if (!btn) continue;
-      (btn as HTMLButtonElement).click();
-      return true;
-    }
-    return false;
-  }, cardTitle);
-  if (!found) {
+  // Match against [data-slot="card-title"] specifically — matching against the
+  // whole card-header would also pick up cards (like UnifiedTimeline) whose
+  // headers contain filter pills with the same names ("Life events", etc.).
+  //
+  // Tag the button with a unique data attribute, then use Puppeteer's element
+  // handle .click() which computes the bbox right before clicking and emits a
+  // real PointerEvent. This is more reliable than computing coords ourselves
+  // because layout shifts between scroll and click otherwise stale-out the box.
+  const tag = `__add_${Math.random().toString(36).slice(2)}`;
+  const tagged = await page.evaluate(
+    (title: string, t: string) => {
+      const cards = Array.from(document.querySelectorAll('[data-slot="card"]'));
+      for (const card of cards) {
+        const titleEl = card.querySelector('[data-slot="card-title"]');
+        if (!titleEl) continue;
+        if (!titleEl.textContent?.toLowerCase().includes(title.toLowerCase()))
+          continue;
+        const header = card.querySelector('[data-slot="card-header"]');
+        const btn = header?.querySelector("button") as HTMLButtonElement | null;
+        if (!btn) continue;
+        btn.setAttribute("data-e2e-tag", t);
+        btn.scrollIntoView({
+          block: "center",
+          behavior: "instant" as ScrollBehavior,
+        });
+        return true;
+      }
+      return false;
+    },
+    cardTitle,
+    tag,
+  );
+  if (!tagged) {
     throw new Error(`Add button in card "${cardTitle}" not found`);
   }
+  // Wait for layout to settle (avatar/skeleton swaps can shift the row).
+  await sleep(250);
+  const handle = await page.$(`[data-e2e-tag="${tag}"]`);
+  if (!handle) {
+    throw new Error(`Add button in card "${cardTitle}" disappeared after scroll`);
+  }
+  await handle.click();
   await sleep(500);
 }
 
@@ -112,20 +140,41 @@ async function main() {
     await page.goto(`${BASE_URL}/contacts/${contact.id}`, {
       waitUntil: "networkidle2",
     });
-    await sleep(1500);
+    // Wait for all four expected card titles to be in the DOM rather than
+    // sleeping for an arbitrary duration. The detail page lazy-loads cards
+    // via independent React Query fetches, so the body text grows in waves.
+    await page
+      .waitForFunction(
+        () => {
+          const titles = Array.from(
+            document.querySelectorAll('[data-slot="card-title"]'),
+          ).map((e) => (e.textContent || "").trim());
+          return ["Contact Information", "Addresses", "Pets", "Life events"]
+            .every((needle) => titles.some((t) => t.includes(needle)));
+        },
+        { timeout: 10000 },
+      )
+      .catch(() => {});
 
     // Sanity check
     results.push(
       await runTest(page, "Contact detail page renders cards", async (p) => {
-        const text = await getPageText(p);
+        const titles = await p.evaluate(() =>
+          Array.from(
+            document.querySelectorAll('[data-slot="card-title"]'),
+          ).map((e) => (e.textContent || "").trim()),
+        );
         for (const expected of [
           "Contact Information",
           "Addresses",
           "Pets",
           "Life events",
         ]) {
-          if (!text.includes(expected))
-            throw new Error(`Missing card on detail page: ${expected}`);
+          if (!titles.some((t) => t.includes(expected))) {
+            throw new Error(
+              `Missing card on detail page: ${expected} (titles: ${titles.join(" | ")})`,
+            );
+          }
         }
       }),
     );
@@ -230,8 +279,8 @@ async function main() {
     // Edit one of the cards we just populated — exercise the Edit dialog path.
     results.push(
       await runTest(page, "Edit Pet dialog updates the pet", async (p) => {
-        // Open the row actions menu inside the Pets card.
-        const opened = await p.evaluate(() => {
+        // Open the row actions menu inside the Pets card via real mouse click.
+        const triggerBox = await p.evaluate(() => {
           const cards = Array.from(
             document.querySelectorAll('[data-slot="card"]'),
           );
@@ -240,26 +289,38 @@ async function main() {
             if (!title?.textContent?.toLowerCase().includes("pets")) continue;
             const trigger = card.querySelector(
               'button[aria-label="Open actions menu"]',
-            );
-            if (!trigger) return false;
-            (trigger as HTMLButtonElement).click();
-            return true;
+            ) as HTMLButtonElement | null;
+            if (!trigger) return null;
+            trigger.scrollIntoView({
+              block: "center",
+              behavior: "instant" as ScrollBehavior,
+            });
+            const r = trigger.getBoundingClientRect();
+            return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
           }
-          return false;
+          return null;
         });
-        if (!opened) throw new Error("Pet row actions menu trigger not found");
+        if (!triggerBox) {
+          throw new Error("Pet row actions menu trigger not found");
+        }
+        await sleep(150);
+        await p.mouse.click(triggerBox.x, triggerBox.y);
         await sleep(400);
-        // Radix DropdownMenu items render to role="menuitem" inside a portal.
-        const editClicked = await p.evaluate(() => {
+        // Radix DropdownMenu items also need a real click — same trap as the
+        // trigger. Use mouse.click on the menuitem's center.
+        const editBox = await p.evaluate(() => {
           const items = Array.from(
-            document.querySelectorAll('[role="menuitem"]'),
+            document.querySelectorAll(
+              '[role="menuitem"], [data-slot="dropdown-menu-item"]',
+            ),
           );
           const edit = items.find((i) => i.textContent?.trim() === "Edit");
-          if (!edit) return false;
-          (edit as HTMLElement).click();
-          return true;
+          if (!edit) return null;
+          const r = (edit as HTMLElement).getBoundingClientRect();
+          return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
         });
-        if (!editClicked) throw new Error("Edit menu item not found");
+        if (!editBox) throw new Error("Edit menu item not found");
+        await p.mouse.click(editBox.x, editBox.y);
         await sleep(400);
         const dialogOpened = await waitForText(p, "Edit pet");
         if (!dialogOpened) throw new Error("Edit pet dialog did not open");
