@@ -415,6 +415,62 @@ def _try_merge_commit(wt: Path, pr: PR, context: str) -> bool:
     return False
 
 
+def check_python_syntax(wt: Path) -> list[tuple[Path, str]]:
+    """Return list of (file, error) for any .py files with syntax errors in the worktree."""
+    errors = []
+    proc = subprocess.run(
+        ["git", "-C", str(wt), "diff", "--name-only", "--diff-filter=AM", "HEAD"],
+        capture_output=True,
+        text=True,
+    )
+    for rel in proc.stdout.splitlines():
+        if not rel.endswith(".py"):
+            continue
+        f = wt / rel
+        if not f.exists():
+            continue
+        chk = subprocess.run(
+            [
+                "python3",
+                "-c",
+                f"compile(open({repr(str(f))}).read(), {repr(rel)}, 'exec')",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if chk.returncode != 0:
+            errors.append((f, chk.stderr.strip()))
+    return errors
+
+
+def llm_fix_syntax_errors(wt: Path, pr: PR, errors: list[tuple[Path, str]]) -> bool:
+    """Ask LLM to fix syntax errors in files that a prior patch left broken."""
+    parts = []
+    for f, err in errors[:5]:
+        content = f.read_text(errors="replace")
+        if len(content) > 8192:
+            content = content[:8192] + "\n... [truncated]"
+        parts.append(f"=== {f.relative_to(wt)} ===\nSyntaxError: {err}\n\n{content}\n")
+    blob = "\n".join(parts)
+    sys_prompt = (
+        REPAIR_SYSTEM + "\nThe previous conflict resolution left Python syntax errors. "
+        "Output a unified diff that fixes only the syntax errors — do not change "
+        "any logic. Ensure parentheses, brackets, and indentation are balanced."
+    )
+    user = f"# Syntax errors in PR #{pr.number} after merge-conflict repair\n\n{blob}"
+    save_prompt(pr, "syntax-fix", user)
+    try:
+        reply = litellm_chat(sys_prompt, user)
+    except Exception as e:
+        log(f"PR #{pr.number}: litellm syntax-fix call failed: {e}")
+        return False
+    diff = extract_diff(reply)
+    if diff is None:
+        log(f"PR #{pr.number}: LLM returned no diff for syntax fix")
+        return False
+    return apply_patch(wt, pr, "syntax-fix", diff)
+
+
 def handle_update_branch(wt: Path, pr: PR) -> bool:
     """Bring the PR branch up to date with main via merge. Return True on success."""
     success, msg = merge_main_into_pr(wt)
@@ -436,6 +492,18 @@ def handle_update_branch(wt: Path, pr: PR) -> bool:
     blob = gather_conflict_context(wt)
     if llm_repair_conflicts(wt, pr, blob):
         run(["git", "-C", str(wt), "add", "-A"], check=True)
+
+        # Pass 2a: verify Python syntax before committing — the LLM sometimes
+        # leaves unbalanced parens when resolving conflicts in contacts.py.
+        syntax_errors = check_python_syntax(wt)
+        if syntax_errors:
+            log(
+                f"PR #{pr.number}: LLM repair left {len(syntax_errors)} syntax error(s); "
+                "attempting syntax fix pass"
+            )
+            if llm_fix_syntax_errors(wt, pr, syntax_errors):
+                run(["git", "-C", str(wt), "add", "-A"], check=True)
+
         if _try_merge_commit(wt, pr, "LLM repair"):
             return True
     abort_merge(wt)
@@ -480,7 +548,10 @@ def _run_gate(wt: Path, name: str, cmd: list[str], timeout: int) -> GateResult:
 
 
 def gate_precommit(wt: Path) -> GateResult:
-    result = _run_gate(wt, "precommit", ["prek", "run", "--all-files"], timeout=600)
+    # prek lives in each worktree's .venv, not in system PATH
+    prek_bin = wt / ".venv" / "bin" / "prek"
+    prek_cmd = str(prek_bin) if prek_bin.exists() else "prek"
+    result = _run_gate(wt, "precommit", [prek_cmd, "run", "--all-files"], timeout=600)
     if result.passed:
         return result
     # Pre-commit hooks often auto-fix files (ruff format, biome, trailing-whitespace)
@@ -495,7 +566,9 @@ def gate_precommit(wt: Path) -> GateResult:
     if dirty.stdout.strip():
         log("  ↻ gate `precommit`: hooks auto-fixed files, staging + re-running")
         subprocess.run(["git", "add", "-A"], cwd=wt, check=True)
-        result = _run_gate(wt, "precommit", ["prek", "run", "--all-files"], timeout=600)
+        result = _run_gate(
+            wt, "precommit", [prek_cmd, "run", "--all-files"], timeout=600
+        )
     return result
 
 
