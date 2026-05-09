@@ -1,5 +1,6 @@
 import re
 import uuid
+from datetime import datetime
 from typing import Any
 
 from sqlalchemy import union
@@ -24,6 +25,8 @@ from app.models import (
     CustomFieldValueCreate,
     Debt,
     DebtCreate,
+    EmailOAuthToken,
+    EmailOAuthTokenCreate,
     Gift,
     GiftCreate,
     Interaction,
@@ -550,12 +553,9 @@ def get_api_key_by_plaintext(*, session: Session, plaintext: str) -> APIKey | No
     ):
         return None
     return api_key
-def get_api_key_by_hash(*, session: Session, key_hash: str) -> APIKey | None:
 
 
 # ─── EmailOAuthToken CRUD ───────────────────────────────────────────────
-
-from app.models import EmailOAuthToken, EmailOAuthTokenCreate, EmailOAuthTokenUpdate
 
 
 def create_email_oauth_token(
@@ -565,7 +565,8 @@ def create_email_oauth_token(
     owner_id: uuid.UUID,
     contact_id: uuid.UUID,
 ) -> EmailOAuthToken:
-    """Create a new EmailOAuthToken record.    from app.core.encryption import encrypt_token, encrypt_refresh_token
+    """Create a new EmailOAuthToken record."""
+    from app.core.encryption import encrypt_refresh_token, encrypt_token
 
     db_obj = EmailOAuthToken(
         owner_id=owner_id,
@@ -585,13 +586,15 @@ def create_email_oauth_token(
 def get_email_oauth_token(
     *, session: Session, token_id: uuid.UUID
 ) -> EmailOAuthToken | None:
-    """Get an EmailOAuthToken by ID.    return session.get(EmailOAuthToken, token_id)
+    """Get an EmailOAuthToken by ID."""
+    return session.get(EmailOAuthToken, token_id)
 
 
 def list_email_oauth_tokens(
     *, session: Session, owner_id: uuid.UUID, contact_id: uuid.UUID | None = None
 ) -> list[EmailOAuthToken]:
-    """List EmailOAuthToken records for a user, optionally filtered by contact.    stmt = select(EmailOAuthToken).where(EmailOAuthToken.owner_id == owner_id)
+    """List EmailOAuthToken records for a user, optionally filtered by contact."""
+    stmt = select(EmailOAuthToken).where(EmailOAuthToken.owner_id == owner_id)
     if contact_id:
         stmt = stmt.where(EmailOAuthToken.contact_id == contact_id)
     return list(session.exec(stmt).all())
@@ -605,7 +608,8 @@ def update_email_oauth_token(
     refresh_token: str | None = None,
     expires_at: datetime | None = None,
 ) -> EmailOAuthToken | None:
-    """Update an EmailOAuthToken with new token data (encrypted).    from app.core.encryption import encrypt_token, encrypt_refresh_token
+    """Update an EmailOAuthToken with new token data (encrypted)."""
+    from app.core.encryption import encrypt_refresh_token, encrypt_token
 
     token_row = session.get(EmailOAuthToken, token_id)
     if not token_row:
@@ -622,10 +626,9 @@ def update_email_oauth_token(
     return token_row
 
 
-def delete_email_oauth_token(
-    *, session: Session, token_id: uuid.UUID
-) -> bool:
-    """Delete an EmailOAuthToken. Returns True if deleted.    token_row = session.get(EmailOAuthToken, token_id)
+def delete_email_oauth_token(*, session: Session, token_id: uuid.UUID) -> bool:
+    """Delete an EmailOAuthToken. Returns True if deleted."""
+    token_row = session.get(EmailOAuthToken, token_id)
     if not token_row:
         return False
     session.delete(token_row)

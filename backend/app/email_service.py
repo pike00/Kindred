@@ -8,6 +8,7 @@ import email
 import imaplib
 import logging
 import ssl
+import uuid
 from datetime import datetime, timezone
 from email.header import decode_header
 from typing import Any

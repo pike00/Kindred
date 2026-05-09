@@ -643,6 +643,38 @@ export type DebtUpdate = {
     settled_at?: (string | null);
 };
 
+export type EmailOAuthTokenPublic = {
+    /**
+     * OAuth provider name (e.g. 'gmail').
+     */
+    provider?: string;
+    /**
+     * The email address these tokens are for.
+     */
+    email_address: string;
+    /**
+     * Encrypted access token for the Gmail API.
+     */
+    encrypted_access_token: string;
+    /**
+     * Encrypted refresh token for obtaining new access tokens.
+     */
+    encrypted_refresh_token?: (string | null);
+    /**
+     * When the access token expires (UTC).
+     */
+    token_expires_at?: (string | null);
+    id: string;
+    contact_id: string;
+    created_at: string;
+    updated_at: string;
+};
+
+export type EmailOAuthTokensPublic = {
+    data: Array<EmailOAuthTokenPublic>;
+    count: number;
+};
+
 export type EnvironmentInfo = {
     environment: string;
 };
@@ -1213,6 +1245,13 @@ export type PetUpdate = {
     species?: (string | null);
     breed?: (string | null);
     notes?: (string | null);
+};
+
+export type PrivateUserCreate = {
+    email: string;
+    password: string;
+    full_name: string;
+    is_verified?: boolean;
 };
 
 export type RelationshipCreate = {
@@ -1802,6 +1841,56 @@ export type DebtsDeleteDebtData = {
 
 export type DebtsDeleteDebtResponse = (unknown);
 
+export type EmailGmailAuthorizeData = {
+    /**
+     * Contact ID to associate with this email
+     */
+    contactId: string;
+    /**
+     * Email address being authorized
+     */
+    emailAddress: string;
+};
+
+export type EmailGmailAuthorizeResponse = ({
+    [key: string]: unknown;
+});
+
+export type EmailGmailCallbackData = {
+    code: string;
+    state: string;
+};
+
+export type EmailGmailCallbackResponse = ({
+    [key: string]: unknown;
+});
+
+export type EmailListEmailTokensData = {
+    contactId?: (string | null);
+};
+
+export type EmailListEmailTokensResponse = (EmailOAuthTokensPublic);
+
+export type EmailDeleteEmailTokenData = {
+    tokenId: string;
+};
+
+export type EmailDeleteEmailTokenResponse = ({
+    [key: string]: (string);
+});
+
+export type EmailPollContactEmailData = {
+    contactId: string;
+};
+
+export type EmailPollContactEmailResponse = ({
+    [key: string]: unknown;
+});
+
+export type EmailPollAllEmailsResponse = ({
+    [key: string]: unknown;
+});
+
 export type GiftsListGiftsData = {
     contactId: string;
 };
@@ -2032,6 +2121,12 @@ export type PetsDeletePetData = {
 };
 
 export type PetsDeletePetResponse = (unknown);
+
+export type PrivateCreateUserData = {
+    requestBody: PrivateUserCreate;
+};
+
+export type PrivateCreateUserResponse = (UserPublic);
 
 export type RelationshipsLookupInverseData = {
     type: string;

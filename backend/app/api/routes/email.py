@@ -7,7 +7,7 @@ import logging
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query
 from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
@@ -36,6 +36,7 @@ router = APIRouter(prefix="/email", tags=["email"])
 
 @router.get("/oauth/authorize")
 def gmail_authorize(
+    session: SessionDep,
     current_user: CurrentUser,
     contact_id: uuid.UUID = Query(
         ..., description="Contact ID to associate with this email"
@@ -46,11 +47,9 @@ def gmail_authorize(
 
     The state parameter will encode the contact_id and email_address.
     """
-    # Verify contact exists and belongs to user
-    with SessionDep() as session:
-        contact = session.get(Contact, contact_id)
-        if not contact or contact.owner_id != current_user.id:
-            raise HTTPException(status_code=404, detail="Contact not found")
+    contact = session.get(Contact, contact_id)
+    if not contact or contact.owner_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Contact not found")
 
     state = f"{contact_id}:{email_address}"
     auth_url, _ = get_gmail_auth_url(state)
@@ -153,7 +152,6 @@ def poll_contact_email(
     session: SessionDep,
     current_user: CurrentUser,
     contact_id: uuid.UUID,
-    background_tasks: BackgroundTasks,
 ) -> dict[str, Any]:
     """Manually trigger email polling for a contact.
 
@@ -201,7 +199,7 @@ def poll_contact_email(
 @router.post("/poll/all")
 def poll_all_emails(
     session: SessionDep,
-    current_user: CurrentUser,
+    _current_user: CurrentUser,
 ) -> dict[str, Any]:
     """Manually trigger email polling for all contacts with auto_log_email enabled."""
     from app.email_service import poll_all_email_accounts

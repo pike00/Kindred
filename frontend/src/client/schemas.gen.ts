@@ -2453,6 +2453,96 @@ export const DebtsPublicSchema = {
     title: 'DebtsPublic'
 } as const;
 
+export const EmailOAuthTokenPublicSchema = {
+    properties: {
+        provider: {
+            type: 'string',
+            maxLength: 50,
+            title: 'Provider',
+            description: "OAuth provider name (e.g. 'gmail').",
+            default: 'gmail'
+        },
+        email_address: {
+            type: 'string',
+            maxLength: 255,
+            title: 'Email Address',
+            description: 'The email address these tokens are for.'
+        },
+        encrypted_access_token: {
+            type: 'string',
+            title: 'Encrypted Access Token',
+            description: 'Encrypted access token for the Gmail API.'
+        },
+        encrypted_refresh_token: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Encrypted Refresh Token',
+            description: 'Encrypted refresh token for obtaining new access tokens.'
+        },
+        token_expires_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Token Expires At',
+            description: 'When the access token expires (UTC).'
+        },
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        contact_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Contact Id'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        },
+        updated_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Updated At'
+        }
+    },
+    type: 'object',
+    required: ['email_address', 'encrypted_access_token', 'id', 'contact_id', 'created_at', 'updated_at'],
+    title: 'EmailOAuthTokenPublic'
+} as const;
+
+export const EmailOAuthTokensPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/EmailOAuthTokenPublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'EmailOAuthTokensPublic'
+} as const;
+
 export const EnvironmentInfoSchema = {
     properties: {
         environment: {
@@ -4405,6 +4495,31 @@ export const PetUpdateSchema = {
     },
     type: 'object',
     title: 'PetUpdate'
+} as const;
+
+export const PrivateUserCreateSchema = {
+    properties: {
+        email: {
+            type: 'string',
+            title: 'Email'
+        },
+        password: {
+            type: 'string',
+            title: 'Password'
+        },
+        full_name: {
+            type: 'string',
+            title: 'Full Name'
+        },
+        is_verified: {
+            type: 'boolean',
+            title: 'Is Verified',
+            default: false
+        }
+    },
+    type: 'object',
+    required: ['email', 'password', 'full_name'],
+    title: 'PrivateUserCreate'
 } as const;
 
 export const RelationshipCreateSchema = {
