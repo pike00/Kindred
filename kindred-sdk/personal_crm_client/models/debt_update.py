@@ -1,39 +1,30 @@
 from __future__ import annotations
 
+import datetime
 from collections.abc import Mapping
-from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
+from typing import Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-
-from ..types import UNSET, Unset
+from dateutil.parser import isoparse
 
 from ..models.debt_direction import DebtDirection
 from ..types import UNSET, Unset
-from dateutil.parser import isoparse
-from typing import cast
-import datetime
-
-
-
-
-
 
 T = TypeVar("T", bound="DebtUpdate")
 
 
-
 @_attrs_define
 class DebtUpdate:
-    """ 
-        Attributes:
-            direction (DebtDirection | None | Unset):
-            amount (float | None | Unset):
-            currency (None | str | Unset):
-            reason (None | str | Unset):
-            is_settled (bool | None | Unset):
-            settled_at (datetime.date | None | Unset):
-     """
+    """
+    Attributes:
+        direction (DebtDirection | None | Unset):
+        amount (float | None | Unset):
+        currency (None | str | Unset):
+        reason (None | str | Unset):
+        is_settled (bool | None | Unset):
+        settled_at (datetime.date | None | Unset):
+    """
 
     direction: DebtDirection | None | Unset = UNSET
     amount: float | None | Unset = UNSET
@@ -42,10 +33,6 @@ class DebtUpdate:
     is_settled: bool | None | Unset = UNSET
     settled_at: datetime.date | None | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
-
-
-
 
     def to_dict(self) -> dict[str, Any]:
         direction: None | str | Unset
@@ -88,11 +75,9 @@ class DebtUpdate:
         else:
             settled_at = self.settled_at
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if direction is not UNSET:
             field_dict["direction"] = direction
         if amount is not UNSET:
@@ -108,11 +93,10 @@ class DebtUpdate:
 
         return field_dict
 
-
-
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
+
         def _parse_direction(data: object) -> DebtDirection | None | Unset:
             if data is None:
                 return data
@@ -123,15 +107,12 @@ class DebtUpdate:
                     raise TypeError()
                 direction_type_0 = DebtDirection(data)
 
-
-
                 return direction_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             return cast(DebtDirection | None | Unset, data)
 
         direction = _parse_direction(d.pop("direction", UNSET))
-
 
         def _parse_amount(data: object) -> float | None | Unset:
             if data is None:
@@ -142,7 +123,6 @@ class DebtUpdate:
 
         amount = _parse_amount(d.pop("amount", UNSET))
 
-
         def _parse_currency(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -151,7 +131,6 @@ class DebtUpdate:
             return cast(None | str | Unset, data)
 
         currency = _parse_currency(d.pop("currency", UNSET))
-
 
         def _parse_reason(data: object) -> None | str | Unset:
             if data is None:
@@ -162,7 +141,6 @@ class DebtUpdate:
 
         reason = _parse_reason(d.pop("reason", UNSET))
 
-
         def _parse_is_settled(data: object) -> bool | None | Unset:
             if data is None:
                 return data
@@ -171,7 +149,6 @@ class DebtUpdate:
             return cast(bool | None | Unset, data)
 
         is_settled = _parse_is_settled(d.pop("is_settled", UNSET))
-
 
         def _parse_settled_at(data: object) -> datetime.date | None | Unset:
             if data is None:
@@ -183,15 +160,12 @@ class DebtUpdate:
                     raise TypeError()
                 settled_at_type_0 = isoparse(data).date()
 
-
-
                 return settled_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             return cast(datetime.date | None | Unset, data)
 
         settled_at = _parse_settled_at(d.pop("settled_at", UNSET))
-
 
         debt_update = cls(
             direction=direction,
@@ -201,7 +175,6 @@ class DebtUpdate:
             is_settled=is_settled,
             settled_at=settled_at,
         )
-
 
         debt_update.additional_properties = d
         return debt_update

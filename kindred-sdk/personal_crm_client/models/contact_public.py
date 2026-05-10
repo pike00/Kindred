@@ -1,61 +1,54 @@
 from __future__ import annotations
 
+import datetime
 from collections.abc import Mapping
-from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
+from typing import TYPE_CHECKING, Any, TypeVar, cast
+from uuid import UUID
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-
-from ..types import UNSET, Unset
-
-from ..types import UNSET, Unset
 from dateutil.parser import isoparse
-from typing import cast
-from uuid import UUID
-import datetime
+
+from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-  from ..models.group_public import GroupPublic
-  from ..models.tag_public import TagPublic
-
-
-
+    from ..models.group_public import GroupPublic
+    from ..models.tag_public import TagPublic
 
 
 T = TypeVar("T", bound="ContactPublic")
 
 
-
 @_attrs_define
 class ContactPublic:
-    """ 
-        Attributes:
-            first_name (str): Given name; required.
-            id (UUID):
-            avatar_url (None | str):
-            last_contacted_at (datetime.datetime | None):
-            created_at (datetime.datetime):
-            updated_at (datetime.datetime):
-            last_name (None | str | Unset): Family name.
-            middle_name (None | str | Unset): Middle name or initial.
-            prefix (None | str | Unset): Honorific like Dr., Mr., Ms.
-            suffix (None | str | Unset): Suffix like Jr., PhD.
-            nickname (None | str | Unset): Preferred or informal name.
-            company (None | str | Unset): Organization name.
-            department (None | str | Unset): Department within the company.
-            title (None | str | Unset): Job title.
-            birthday (datetime.date | None | Unset): Date of birth; used for milestone and birthday reminders.
-            how_we_met (None | str | Unset): Short story of how the introduction happened.
-            is_favorite (bool | Unset): Pinned to the top of contact lists. Default: False.
-            is_archived (bool | Unset): Soft-deleted; excluded from default lists. Default: False.
-            is_deceased (bool | Unset): Marks the contact as deceased. Default: False.
-            deceased_at (datetime.date | None | Unset): Date the contact passed away.
-            contact_frequency_days (int | None | Unset): Target days between interactions; drives losing-touch cadence.
-            stage (None | str | Unset): Kanban stage like Active, Dormant, Lost.
-            deleted_at (datetime.datetime | None | Unset):
-            tags (list[TagPublic] | Unset):
-            groups (list[GroupPublic] | Unset):
-     """
+    """
+    Attributes:
+        first_name (str): Given name; required.
+        id (UUID):
+        avatar_url (None | str):
+        last_contacted_at (datetime.datetime | None):
+        created_at (datetime.datetime):
+        updated_at (datetime.datetime):
+        last_name (None | str | Unset): Family name.
+        middle_name (None | str | Unset): Middle name or initial.
+        prefix (None | str | Unset): Honorific like Dr., Mr., Ms.
+        suffix (None | str | Unset): Suffix like Jr., PhD.
+        nickname (None | str | Unset): Preferred or informal name.
+        company (None | str | Unset): Organization name.
+        department (None | str | Unset): Department within the company.
+        title (None | str | Unset): Job title.
+        birthday (datetime.date | None | Unset): Date of birth; used for milestone and birthday reminders.
+        how_we_met (None | str | Unset): Short story of how the introduction happened.
+        is_favorite (bool | Unset): Pinned to the top of contact lists. Default: False.
+        is_archived (bool | Unset): Soft-deleted; excluded from default lists. Default: False.
+        is_deceased (bool | Unset): Marks the contact as deceased. Default: False.
+        deceased_at (datetime.date | None | Unset): Date the contact passed away.
+        contact_frequency_days (int | None | Unset): Target days between interactions; drives losing-touch cadence.
+        stage (None | str | Unset): Kanban stage like Active, Dormant, Lost.
+        deleted_at (datetime.datetime | None | Unset):
+        tags (list[TagPublic] | Unset):
+        groups (list[GroupPublic] | Unset):
+    """
 
     first_name: str
     id: UUID
@@ -84,13 +77,7 @@ class ContactPublic:
     groups: list[GroupPublic] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
-
-
-
-
     def to_dict(self) -> dict[str, Any]:
-        from ..models.group_public import GroupPublic
-        from ..models.tag_public import TagPublic
         first_name = self.first_name
 
         id = str(self.id)
@@ -211,8 +198,6 @@ class ContactPublic:
                 tags_item = tags_item_data.to_dict()
                 tags.append(tags_item)
 
-
-
         groups: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.groups, Unset):
             groups = []
@@ -220,19 +205,18 @@ class ContactPublic:
                 groups_item = groups_item_data.to_dict()
                 groups.append(groups_item)
 
-
-
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-            "first_name": first_name,
-            "id": id,
-            "avatar_url": avatar_url,
-            "last_contacted_at": last_contacted_at,
-            "created_at": created_at,
-            "updated_at": updated_at,
-        })
+        field_dict.update(
+            {
+                "first_name": first_name,
+                "id": id,
+                "avatar_url": avatar_url,
+                "last_contacted_at": last_contacted_at,
+                "created_at": created_at,
+                "updated_at": updated_at,
+            }
+        )
         if last_name is not UNSET:
             field_dict["last_name"] = last_name
         if middle_name is not UNSET:
@@ -274,19 +258,15 @@ class ContactPublic:
 
         return field_dict
 
-
-
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         from ..models.group_public import GroupPublic
         from ..models.tag_public import TagPublic
+
         d = dict(src_dict)
         first_name = d.pop("first_name")
 
         id = UUID(d.pop("id"))
-
-
-
 
         def _parse_avatar_url(data: object) -> None | str:
             if data is None:
@@ -294,7 +274,6 @@ class ContactPublic:
             return cast(None | str, data)
 
         avatar_url = _parse_avatar_url(d.pop("avatar_url"))
-
 
         def _parse_last_contacted_at(data: object) -> datetime.datetime | None:
             if data is None:
@@ -304,8 +283,6 @@ class ContactPublic:
                     raise TypeError()
                 last_contacted_at_type_0 = isoparse(data)
 
-
-
                 return last_contacted_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
@@ -313,16 +290,9 @@ class ContactPublic:
 
         last_contacted_at = _parse_last_contacted_at(d.pop("last_contacted_at"))
 
-
         created_at = isoparse(d.pop("created_at"))
 
-
-
-
         updated_at = isoparse(d.pop("updated_at"))
-
-
-
 
         def _parse_last_name(data: object) -> None | str | Unset:
             if data is None:
@@ -333,7 +303,6 @@ class ContactPublic:
 
         last_name = _parse_last_name(d.pop("last_name", UNSET))
 
-
         def _parse_middle_name(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -342,7 +311,6 @@ class ContactPublic:
             return cast(None | str | Unset, data)
 
         middle_name = _parse_middle_name(d.pop("middle_name", UNSET))
-
 
         def _parse_prefix(data: object) -> None | str | Unset:
             if data is None:
@@ -353,7 +321,6 @@ class ContactPublic:
 
         prefix = _parse_prefix(d.pop("prefix", UNSET))
 
-
         def _parse_suffix(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -362,7 +329,6 @@ class ContactPublic:
             return cast(None | str | Unset, data)
 
         suffix = _parse_suffix(d.pop("suffix", UNSET))
-
 
         def _parse_nickname(data: object) -> None | str | Unset:
             if data is None:
@@ -373,7 +339,6 @@ class ContactPublic:
 
         nickname = _parse_nickname(d.pop("nickname", UNSET))
 
-
         def _parse_company(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -382,7 +347,6 @@ class ContactPublic:
             return cast(None | str | Unset, data)
 
         company = _parse_company(d.pop("company", UNSET))
-
 
         def _parse_department(data: object) -> None | str | Unset:
             if data is None:
@@ -393,7 +357,6 @@ class ContactPublic:
 
         department = _parse_department(d.pop("department", UNSET))
 
-
         def _parse_title(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -402,7 +365,6 @@ class ContactPublic:
             return cast(None | str | Unset, data)
 
         title = _parse_title(d.pop("title", UNSET))
-
 
         def _parse_birthday(data: object) -> datetime.date | None | Unset:
             if data is None:
@@ -414,15 +376,12 @@ class ContactPublic:
                     raise TypeError()
                 birthday_type_0 = isoparse(data).date()
 
-
-
                 return birthday_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             return cast(datetime.date | None | Unset, data)
 
         birthday = _parse_birthday(d.pop("birthday", UNSET))
-
 
         def _parse_how_we_met(data: object) -> None | str | Unset:
             if data is None:
@@ -432,7 +391,6 @@ class ContactPublic:
             return cast(None | str | Unset, data)
 
         how_we_met = _parse_how_we_met(d.pop("how_we_met", UNSET))
-
 
         is_favorite = d.pop("is_favorite", UNSET)
 
@@ -450,15 +408,12 @@ class ContactPublic:
                     raise TypeError()
                 deceased_at_type_0 = isoparse(data).date()
 
-
-
                 return deceased_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             return cast(datetime.date | None | Unset, data)
 
         deceased_at = _parse_deceased_at(d.pop("deceased_at", UNSET))
-
 
         def _parse_contact_frequency_days(data: object) -> int | None | Unset:
             if data is None:
@@ -469,7 +424,6 @@ class ContactPublic:
 
         contact_frequency_days = _parse_contact_frequency_days(d.pop("contact_frequency_days", UNSET))
 
-
         def _parse_stage(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -478,7 +432,6 @@ class ContactPublic:
             return cast(None | str | Unset, data)
 
         stage = _parse_stage(d.pop("stage", UNSET))
-
 
         def _parse_deleted_at(data: object) -> datetime.datetime | None | Unset:
             if data is None:
@@ -490,15 +443,12 @@ class ContactPublic:
                     raise TypeError()
                 deleted_at_type_0 = isoparse(data)
 
-
-
                 return deleted_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             return cast(datetime.datetime | None | Unset, data)
 
         deleted_at = _parse_deleted_at(d.pop("deleted_at", UNSET))
-
 
         _tags = d.pop("tags", UNSET)
         tags: list[TagPublic] | Unset = UNSET
@@ -507,10 +457,7 @@ class ContactPublic:
             for tags_item_data in _tags:
                 tags_item = TagPublic.from_dict(tags_item_data)
 
-
-
                 tags.append(tags_item)
-
 
         _groups = d.pop("groups", UNSET)
         groups: list[GroupPublic] | Unset = UNSET
@@ -519,10 +466,7 @@ class ContactPublic:
             for groups_item_data in _groups:
                 groups_item = GroupPublic.from_dict(groups_item_data)
 
-
-
                 groups.append(groups_item)
-
 
         contact_public = cls(
             first_name=first_name,
@@ -551,7 +495,6 @@ class ContactPublic:
             tags=tags,
             groups=groups,
         )
-
 
         contact_public.additional_properties = d
         return contact_public

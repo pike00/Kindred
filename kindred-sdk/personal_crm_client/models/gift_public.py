@@ -1,45 +1,36 @@
 from __future__ import annotations
 
+import datetime
 from collections.abc import Mapping
-from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
+from typing import Any, TypeVar, cast
+from uuid import UUID
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-
-from ..types import UNSET, Unset
+from dateutil.parser import isoparse
 
 from ..models.gift_status import GiftStatus
 from ..types import UNSET, Unset
-from dateutil.parser import isoparse
-from typing import cast
-from uuid import UUID
-import datetime
-
-
-
-
-
 
 T = TypeVar("T", bound="GiftPublic")
 
 
-
 @_attrs_define
 class GiftPublic:
-    """ 
-        Attributes:
-            name (str): Gift name.
-            id (UUID):
-            contact_id (UUID):
-            created_at (datetime.datetime):
-            description (None | str | Unset): Details about the gift.
-            status (GiftStatus | Unset):
-            occasion (None | str | Unset): Occasion like Birthday, Christmas, Housewarming.
-            gift_date (datetime.date | None | Unset): When the gift was given or received.
-            value_amount (float | None | Unset): Monetary cost or value.
-            value_currency (str | Unset): ISO 4217 currency code. Default: 'USD'.
-            url (None | str | Unset): Link to the product page (e.g. Amazon).
-     """
+    """
+    Attributes:
+        name (str): Gift name.
+        id (UUID):
+        contact_id (UUID):
+        created_at (datetime.datetime):
+        description (None | str | Unset): Details about the gift.
+        status (GiftStatus | Unset):
+        occasion (None | str | Unset): Occasion like Birthday, Christmas, Housewarming.
+        gift_date (datetime.date | None | Unset): When the gift was given or received.
+        value_amount (float | None | Unset): Monetary cost or value.
+        value_currency (str | Unset): ISO 4217 currency code. Default: 'USD'.
+        url (None | str | Unset): Link to the product page (e.g. Amazon).
+    """
 
     name: str
     id: UUID
@@ -50,13 +41,9 @@ class GiftPublic:
     occasion: None | str | Unset = UNSET
     gift_date: datetime.date | None | Unset = UNSET
     value_amount: float | None | Unset = UNSET
-    value_currency: str | Unset = 'USD'
+    value_currency: str | Unset = "USD"
     url: None | str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
-
-
-
 
     def to_dict(self) -> dict[str, Any]:
         name = self.name
@@ -76,7 +63,6 @@ class GiftPublic:
         status: str | Unset = UNSET
         if not isinstance(self.status, Unset):
             status = self.status.value
-
 
         occasion: None | str | Unset
         if isinstance(self.occasion, Unset):
@@ -106,15 +92,16 @@ class GiftPublic:
         else:
             url = self.url
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-            "name": name,
-            "id": id,
-            "contact_id": contact_id,
-            "created_at": created_at,
-        })
+        field_dict.update(
+            {
+                "name": name,
+                "id": id,
+                "contact_id": contact_id,
+                "created_at": created_at,
+            }
+        )
         if description is not UNSET:
             field_dict["description"] = description
         if status is not UNSET:
@@ -132,8 +119,6 @@ class GiftPublic:
 
         return field_dict
 
-
-
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
@@ -141,18 +126,9 @@ class GiftPublic:
 
         id = UUID(d.pop("id"))
 
-
-
-
         contact_id = UUID(d.pop("contact_id"))
 
-
-
-
         created_at = isoparse(d.pop("created_at"))
-
-
-
 
         def _parse_description(data: object) -> None | str | Unset:
             if data is None:
@@ -163,16 +139,12 @@ class GiftPublic:
 
         description = _parse_description(d.pop("description", UNSET))
 
-
         _status = d.pop("status", UNSET)
         status: GiftStatus | Unset
-        if isinstance(_status,  Unset):
+        if isinstance(_status, Unset):
             status = UNSET
         else:
             status = GiftStatus(_status)
-
-
-
 
         def _parse_occasion(data: object) -> None | str | Unset:
             if data is None:
@@ -182,7 +154,6 @@ class GiftPublic:
             return cast(None | str | Unset, data)
 
         occasion = _parse_occasion(d.pop("occasion", UNSET))
-
 
         def _parse_gift_date(data: object) -> datetime.date | None | Unset:
             if data is None:
@@ -194,15 +165,12 @@ class GiftPublic:
                     raise TypeError()
                 gift_date_type_0 = isoparse(data).date()
 
-
-
                 return gift_date_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             return cast(datetime.date | None | Unset, data)
 
         gift_date = _parse_gift_date(d.pop("gift_date", UNSET))
-
 
         def _parse_value_amount(data: object) -> float | None | Unset:
             if data is None:
@@ -212,7 +180,6 @@ class GiftPublic:
             return cast(float | None | Unset, data)
 
         value_amount = _parse_value_amount(d.pop("value_amount", UNSET))
-
 
         value_currency = d.pop("value_currency", UNSET)
 
@@ -224,7 +191,6 @@ class GiftPublic:
             return cast(None | str | Unset, data)
 
         url = _parse_url(d.pop("url", UNSET))
-
 
         gift_public = cls(
             name=name,
@@ -239,7 +205,6 @@ class GiftPublic:
             value_currency=value_currency,
             url=url,
         )
-
 
         gift_public.additional_properties = d
         return gift_public

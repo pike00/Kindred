@@ -1,48 +1,38 @@
 from http import HTTPStatus
-from typing import Any, cast
+from typing import Any
 from urllib.parse import quote
+from uuid import UUID
 
 import httpx
 
-from ...client import AuthenticatedClient, Client
-from ...types import Response, UNSET
 from ... import errors
-
+from ...client import AuthenticatedClient, Client
 from ...models.http_validation_error import HTTPValidationError
-from typing import cast
-from uuid import UUID
-
+from ...types import Response
 
 
 def _get_kwargs(
     group_id: UUID,
-
 ) -> dict[str, Any]:
-    
-
-    
-
-    
-
     _kwargs: dict[str, Any] = {
         "method": "delete",
-        "url": "/api/v1/groups/{group_id}".format(group_id=quote(str(group_id), safe=""),),
+        "url": "/api/v1/groups/{group_id}".format(
+            group_id=quote(str(group_id), safe=""),
+        ),
     }
-
 
     return _kwargs
 
 
-
-def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Any | HTTPValidationError | None:
+def _parse_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> Any | HTTPValidationError | None:
     if response.status_code == 200:
         response_200 = response.json()
         return response_200
 
     if response.status_code == 422:
         response_422 = HTTPValidationError.from_dict(response.json())
-
-
 
         return response_422
 
@@ -52,7 +42,9 @@ def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Res
         return None
 
 
-def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[Any | HTTPValidationError]:
+def _build_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> Response[Any | HTTPValidationError]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -65,9 +57,8 @@ def sync_detailed(
     group_id: UUID,
     *,
     client: AuthenticatedClient,
-
 ) -> Response[Any | HTTPValidationError]:
-    """ Delete Group
+    """Delete Group
 
      Delete a group.
 
@@ -80,12 +71,10 @@ def sync_detailed(
 
     Returns:
         Response[Any | HTTPValidationError]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         group_id=group_id,
-
     )
 
     response = client.get_httpx_client().request(
@@ -94,13 +83,13 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
+
 def sync(
     group_id: UUID,
     *,
     client: AuthenticatedClient,
-
 ) -> Any | HTTPValidationError | None:
-    """ Delete Group
+    """Delete Group
 
      Delete a group.
 
@@ -113,22 +102,20 @@ def sync(
 
     Returns:
         Any | HTTPValidationError
-     """
-
+    """
 
     return sync_detailed(
         group_id=group_id,
-client=client,
-
+        client=client,
     ).parsed
+
 
 async def asyncio_detailed(
     group_id: UUID,
     *,
     client: AuthenticatedClient,
-
 ) -> Response[Any | HTTPValidationError]:
-    """ Delete Group
+    """Delete Group
 
      Delete a group.
 
@@ -141,27 +128,23 @@ async def asyncio_detailed(
 
     Returns:
         Response[Any | HTTPValidationError]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         group_id=group_id,
-
     )
 
-    response = await client.get_async_httpx_client().request(
-        **kwargs
-    )
+    response = await client.get_async_httpx_client().request(**kwargs)
 
     return _build_response(client=client, response=response)
+
 
 async def asyncio(
     group_id: UUID,
     *,
     client: AuthenticatedClient,
-
 ) -> Any | HTTPValidationError | None:
-    """ Delete Group
+    """Delete Group
 
      Delete a group.
 
@@ -174,11 +157,11 @@ async def asyncio(
 
     Returns:
         Any | HTTPValidationError
-     """
+    """
 
-
-    return (await asyncio_detailed(
-        group_id=group_id,
-client=client,
-
-    )).parsed
+    return (
+        await asyncio_detailed(
+            group_id=group_id,
+            client=client,
+        )
+    ).parsed

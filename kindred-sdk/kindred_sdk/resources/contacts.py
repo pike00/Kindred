@@ -1,17 +1,15 @@
 """Contacts resource for Kindred SDK."""
 
+from uuid import UUID
+
 from personal_crm_client import AuthenticatedClient, Client
 from personal_crm_client.models import (
     ContactCreate,
-    ContactUpdate,
     ContactPublic,
     ContactsPublic,
+    ContactUpdate,
     HTTPValidationError,
 )
-from personal_crm_client.models import HTTPValidationError
-from uuid import UUID
-
-from typing import Optional
 
 
 class ContactsResource:
@@ -25,15 +23,15 @@ class ContactsResource:
         *,
         skip: int = 0,
         limit: int = 100,
-        search: Optional[str] = None,
-        tag_id: Optional[UUID] = None,
-        group_id: Optional[UUID] = None,
-        is_favorite: Optional[bool] = None,
-        is_archived: Optional[bool] = None,
-        stage: Optional[str] = None,
+        search: str | None = None,
+        tag_id: UUID | None = None,
+        group_id: UUID | None = None,
+        is_favorite: bool | None = None,
+        is_archived: bool | None = None,
+        stage: str | None = None,
         include_deleted: bool = False,
         only_deleted: bool = False,
-        ids: Optional[list[UUID]] = None,
+        ids: list[UUID] | None = None,
     ) -> ContactsPublic | HTTPValidationError | None:
         """List contacts with filtering.
 
@@ -68,15 +66,15 @@ class ContactsResource:
         *,
         skip: int = 0,
         limit: int = 100,
-        search: Optional[str] = None,
-        tag_id: Optional[UUID] = None,
-        group_id: Optional[UUID] = None,
-        is_favorite: Optional[bool] = None,
-        is_archived: Optional[bool] = None,
-        stage: Optional[str] = None,
+        search: str | None = None,
+        tag_id: UUID | None = None,
+        group_id: UUID | None = None,
+        is_favorite: bool | None = None,
+        is_archived: bool | None = None,
+        stage: str | None = None,
         include_deleted: bool = False,
         only_deleted: bool = False,
-        ids: Optional[list[UUID]] = None,
+        ids: list[UUID] | None = None,
     ) -> ContactsPublic | HTTPValidationError | None:
         """Async version of list()."""
         from personal_crm_client.api.contacts.contacts_list_contacts import asyncio
@@ -132,9 +130,7 @@ class ContactsResource:
             body=item,
         )
 
-    def update(
-        self, contact_id: UUID, item: ContactUpdate
-    ) -> ContactPublic | HTTPValidationError | None:
+    def update(self, contact_id: UUID, item: ContactUpdate) -> ContactPublic | HTTPValidationError | None:
         """Update an existing contact."""
         from personal_crm_client.api.contacts.contacts_update_contact import sync
 
@@ -144,9 +140,7 @@ class ContactsResource:
             body=item,
         )
 
-    async def update_async(
-        self, contact_id: UUID, item: ContactUpdate
-    ) -> ContactPublic | HTTPValidationError | None:
+    async def update_async(self, contact_id: UUID, item: ContactUpdate) -> ContactPublic | HTTPValidationError | None:
         """Async version of update()."""
         from personal_crm_client.api.contacts.contacts_update_contact import asyncio
 
@@ -192,9 +186,7 @@ class ContactsResource:
             contact_id=contact_id,
         )
 
-    def list_mentions(
-        self, contact_id: UUID
-    ) -> list | HTTPValidationError | None:
+    def list_mentions(self, contact_id: UUID) -> list | HTTPValidationError | None:
         """List mentions of a contact in notes."""
         from personal_crm_client.api.contacts.contacts_list_contact_mentions import sync
 
@@ -203,9 +195,7 @@ class ContactsResource:
             contact_id=contact_id,
         )
 
-    async def list_mentions_async(
-        self, contact_id: UUID
-    ) -> list | HTTPValidationError | None:
+    async def list_mentions_async(self, contact_id: UUID) -> list | HTTPValidationError | None:
         """Async version of list_mentions()."""
         from personal_crm_client.api.contacts.contacts_list_contact_mentions import asyncio
 
@@ -219,7 +209,7 @@ class ContactsResource:
         *,
         skip: int = 0,
         limit: int = 100,
-        search: Optional[str] = None,
+        search: str | None = None,
     ) -> list | HTTPValidationError | None:
         """List contacts you're losing touch with."""
         from personal_crm_client.api.contacts.contacts_list_losing_touch import sync
@@ -236,7 +226,7 @@ class ContactsResource:
         *,
         skip: int = 0,
         limit: int = 100,
-        search: Optional[str] = None,
+        search: str | None = None,
     ) -> list | HTTPValidationError | None:
         """Async version of list_losing_touch()."""
         from personal_crm_client.api.contacts.contacts_list_losing_touch import asyncio
@@ -248,9 +238,7 @@ class ContactsResource:
             search=search,
         )
 
-    def get_household(
-        self, contact_id: UUID
-    ) -> list | HTTPValidationError | None:
+    def get_household(self, contact_id: UUID) -> list | HTTPValidationError | None:
         """Get household members for a contact."""
         from personal_crm_client.api.contacts.contacts_get_contact_household import sync
 
@@ -259,9 +247,7 @@ class ContactsResource:
             contact_id=contact_id,
         )
 
-    async def get_household_async(
-        self, contact_id: UUID
-    ) -> list | HTTPValidationError | None:
+    async def get_household_async(self, contact_id: UUID) -> list | HTTPValidationError | None:
         """Async version of get_household()."""
         from personal_crm_client.api.contacts.contacts_get_contact_household import asyncio
 

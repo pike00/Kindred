@@ -1,53 +1,40 @@
 from __future__ import annotations
 
+import datetime
 from collections.abc import Mapping
-from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
+from typing import Any, TypeVar, cast
+from uuid import UUID
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-
-from ..types import UNSET, Unset
-
-from ..types import UNSET, Unset
 from dateutil.parser import isoparse
-from typing import cast
-from uuid import UUID
-import datetime
 
-
-
-
-
+from ..types import UNSET, Unset
 
 T = TypeVar("T", bound="CustomFieldDefinitionPublic")
 
 
-
 @_attrs_define
 class CustomFieldDefinitionPublic:
-    """ 
-        Attributes:
-            name (str): Custom field name shown in the UI.
-            id (UUID):
-            created_at (datetime.datetime):
-            field_type (str | Unset): Field type: text, number, date, boolean, or select. Default: 'text'.
-            description (None | str | Unset): Help text displayed alongside the field in the UI.
-            options (None | str | Unset): Comma-separated options for field_type="select".
-            icon (None | str | Unset): Icon slug for the UI (e.g. "heart", "book").
-     """
+    """
+    Attributes:
+        name (str): Custom field name shown in the UI.
+        id (UUID):
+        created_at (datetime.datetime):
+        field_type (str | Unset): Field type: text, number, date, boolean, or select. Default: 'text'.
+        description (None | str | Unset): Help text displayed alongside the field in the UI.
+        options (None | str | Unset): Comma-separated options for field_type="select".
+        icon (None | str | Unset): Icon slug for the UI (e.g. "heart", "book").
+    """
 
     name: str
     id: UUID
     created_at: datetime.datetime
-    field_type: str | Unset = 'text'
+    field_type: str | Unset = "text"
     description: None | str | Unset = UNSET
     options: None | str | Unset = UNSET
     icon: None | str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
-
-
-
 
     def to_dict(self) -> dict[str, Any]:
         name = self.name
@@ -76,14 +63,15 @@ class CustomFieldDefinitionPublic:
         else:
             icon = self.icon
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-            "name": name,
-            "id": id,
-            "created_at": created_at,
-        })
+        field_dict.update(
+            {
+                "name": name,
+                "id": id,
+                "created_at": created_at,
+            }
+        )
         if field_type is not UNSET:
             field_dict["field_type"] = field_type
         if description is not UNSET:
@@ -95,8 +83,6 @@ class CustomFieldDefinitionPublic:
 
         return field_dict
 
-
-
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
@@ -104,13 +90,7 @@ class CustomFieldDefinitionPublic:
 
         id = UUID(d.pop("id"))
 
-
-
-
         created_at = isoparse(d.pop("created_at"))
-
-
-
 
         field_type = d.pop("field_type", UNSET)
 
@@ -123,7 +103,6 @@ class CustomFieldDefinitionPublic:
 
         description = _parse_description(d.pop("description", UNSET))
 
-
         def _parse_options(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -132,7 +111,6 @@ class CustomFieldDefinitionPublic:
             return cast(None | str | Unset, data)
 
         options = _parse_options(d.pop("options", UNSET))
-
 
         def _parse_icon(data: object) -> None | str | Unset:
             if data is None:
@@ -143,7 +121,6 @@ class CustomFieldDefinitionPublic:
 
         icon = _parse_icon(d.pop("icon", UNSET))
 
-
         custom_field_definition_public = cls(
             name=name,
             id=id,
@@ -153,7 +130,6 @@ class CustomFieldDefinitionPublic:
             options=options,
             icon=icon,
         )
-
 
         custom_field_definition_public.additional_properties = d
         return custom_field_definition_public

@@ -1,48 +1,35 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
+from typing import Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
-from ..types import UNSET, Unset
-from typing import cast
-
-
-
-
-
-
 T = TypeVar("T", bound="BodyLoginLoginAccessToken")
-
 
 
 @_attrs_define
 class BodyLoginLoginAccessToken:
-    """ 
-        Attributes:
-            username (str):
-            password (str):
-            grant_type (None | str | Unset):
-            scope (str | Unset):  Default: ''.
-            client_id (None | str | Unset):
-            client_secret (None | str | Unset):
-     """
+    """
+    Attributes:
+        username (str):
+        password (str):
+        grant_type (None | str | Unset):
+        scope (str | Unset):  Default: ''.
+        client_id (None | str | Unset):
+        client_secret (None | str | Unset):
+    """
 
     username: str
     password: str
     grant_type: None | str | Unset = UNSET
-    scope: str | Unset = ''
+    scope: str | Unset = ""
     client_id: None | str | Unset = UNSET
     client_secret: None | str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
-
-
-
 
     def to_dict(self) -> dict[str, Any]:
         username = self.username
@@ -69,13 +56,14 @@ class BodyLoginLoginAccessToken:
         else:
             client_secret = self.client_secret
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-            "username": username,
-            "password": password,
-        })
+        field_dict.update(
+            {
+                "username": username,
+                "password": password,
+            }
+        )
         if grant_type is not UNSET:
             field_dict["grant_type"] = grant_type
         if scope is not UNSET:
@@ -86,8 +74,6 @@ class BodyLoginLoginAccessToken:
             field_dict["client_secret"] = client_secret
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
@@ -105,7 +91,6 @@ class BodyLoginLoginAccessToken:
 
         grant_type = _parse_grant_type(d.pop("grant_type", UNSET))
 
-
         scope = d.pop("scope", UNSET)
 
         def _parse_client_id(data: object) -> None | str | Unset:
@@ -117,7 +102,6 @@ class BodyLoginLoginAccessToken:
 
         client_id = _parse_client_id(d.pop("client_id", UNSET))
 
-
         def _parse_client_secret(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -127,7 +111,6 @@ class BodyLoginLoginAccessToken:
 
         client_secret = _parse_client_secret(d.pop("client_secret", UNSET))
 
-
         body_login_login_access_token = cls(
             username=username,
             password=password,
@@ -136,7 +119,6 @@ class BodyLoginLoginAccessToken:
             client_id=client_id,
             client_secret=client_secret,
         )
-
 
         body_login_login_access_token.additional_properties = d
         return body_login_login_access_token

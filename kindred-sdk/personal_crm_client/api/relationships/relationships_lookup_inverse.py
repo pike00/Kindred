@@ -1,35 +1,26 @@
 from http import HTTPStatus
-from typing import Any, cast
-from urllib.parse import quote
+from typing import Any
 
 import httpx
 
-from ...client import AuthenticatedClient, Client
-from ...types import Response, UNSET
 from ... import errors
-
+from ...client import AuthenticatedClient, Client
 from ...models.http_validation_error import HTTPValidationError
-from ...models.relationships_lookup_inverse_response_relationships_lookup_inverse import RelationshipsLookupInverseResponseRelationshipsLookupInverse
-from typing import cast
-
+from ...models.relationships_lookup_inverse_response_relationships_lookup_inverse import (
+    RelationshipsLookupInverseResponseRelationshipsLookupInverse,
+)
+from ...types import UNSET, Response
 
 
 def _get_kwargs(
     *,
     type_: str,
-
 ) -> dict[str, Any]:
-    
-
-    
-
     params: dict[str, Any] = {}
 
     params["type"] = type_
 
-
     params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
-
 
     _kwargs: dict[str, Any] = {
         "method": "get",
@@ -37,23 +28,19 @@ def _get_kwargs(
         "params": params,
     }
 
-
     return _kwargs
 
 
-
-def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> HTTPValidationError | RelationshipsLookupInverseResponseRelationshipsLookupInverse | None:
+def _parse_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> HTTPValidationError | RelationshipsLookupInverseResponseRelationshipsLookupInverse | None:
     if response.status_code == 200:
         response_200 = RelationshipsLookupInverseResponseRelationshipsLookupInverse.from_dict(response.json())
-
-
 
         return response_200
 
     if response.status_code == 422:
         response_422 = HTTPValidationError.from_dict(response.json())
-
-
 
         return response_422
 
@@ -63,7 +50,9 @@ def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Res
         return None
 
 
-def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[HTTPValidationError | RelationshipsLookupInverseResponseRelationshipsLookupInverse]:
+def _build_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> Response[HTTPValidationError | RelationshipsLookupInverseResponseRelationshipsLookupInverse]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -76,9 +65,8 @@ def sync_detailed(
     *,
     client: AuthenticatedClient,
     type_: str,
-
 ) -> Response[HTTPValidationError | RelationshipsLookupInverseResponseRelationshipsLookupInverse]:
-    r""" Lookup Inverse
+    r"""Lookup Inverse
 
      Return the inferred inverse for a relationship type, or null.
 
@@ -96,12 +84,10 @@ def sync_detailed(
 
     Returns:
         Response[HTTPValidationError | RelationshipsLookupInverseResponseRelationshipsLookupInverse]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         type_=type_,
-
     )
 
     response = client.get_httpx_client().request(
@@ -110,13 +96,13 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
+
 def sync(
     *,
     client: AuthenticatedClient,
     type_: str,
-
 ) -> HTTPValidationError | RelationshipsLookupInverseResponseRelationshipsLookupInverse | None:
-    r""" Lookup Inverse
+    r"""Lookup Inverse
 
      Return the inferred inverse for a relationship type, or null.
 
@@ -134,22 +120,20 @@ def sync(
 
     Returns:
         HTTPValidationError | RelationshipsLookupInverseResponseRelationshipsLookupInverse
-     """
-
+    """
 
     return sync_detailed(
         client=client,
-type_=type_,
-
+        type_=type_,
     ).parsed
+
 
 async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
     type_: str,
-
 ) -> Response[HTTPValidationError | RelationshipsLookupInverseResponseRelationshipsLookupInverse]:
-    r""" Lookup Inverse
+    r"""Lookup Inverse
 
      Return the inferred inverse for a relationship type, or null.
 
@@ -167,27 +151,23 @@ async def asyncio_detailed(
 
     Returns:
         Response[HTTPValidationError | RelationshipsLookupInverseResponseRelationshipsLookupInverse]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         type_=type_,
-
     )
 
-    response = await client.get_async_httpx_client().request(
-        **kwargs
-    )
+    response = await client.get_async_httpx_client().request(**kwargs)
 
     return _build_response(client=client, response=response)
+
 
 async def asyncio(
     *,
     client: AuthenticatedClient,
     type_: str,
-
 ) -> HTTPValidationError | RelationshipsLookupInverseResponseRelationshipsLookupInverse | None:
-    r""" Lookup Inverse
+    r"""Lookup Inverse
 
      Return the inferred inverse for a relationship type, or null.
 
@@ -205,11 +185,11 @@ async def asyncio(
 
     Returns:
         HTTPValidationError | RelationshipsLookupInverseResponseRelationshipsLookupInverse
-     """
+    """
 
-
-    return (await asyncio_detailed(
-        client=client,
-type_=type_,
-
-    )).parsed
+    return (
+        await asyncio_detailed(
+            client=client,
+            type_=type_,
+        )
+    ).parsed

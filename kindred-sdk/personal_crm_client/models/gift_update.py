@@ -1,41 +1,32 @@
 from __future__ import annotations
 
+import datetime
 from collections.abc import Mapping
-from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
+from typing import Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-
-from ..types import UNSET, Unset
+from dateutil.parser import isoparse
 
 from ..models.gift_status import GiftStatus
 from ..types import UNSET, Unset
-from dateutil.parser import isoparse
-from typing import cast
-import datetime
-
-
-
-
-
 
 T = TypeVar("T", bound="GiftUpdate")
 
 
-
 @_attrs_define
 class GiftUpdate:
-    """ 
-        Attributes:
-            name (None | str | Unset):
-            description (None | str | Unset):
-            status (GiftStatus | None | Unset):
-            occasion (None | str | Unset):
-            gift_date (datetime.date | None | Unset):
-            value_amount (float | None | Unset):
-            value_currency (None | str | Unset):
-            url (None | str | Unset):
-     """
+    """
+    Attributes:
+        name (None | str | Unset):
+        description (None | str | Unset):
+        status (GiftStatus | None | Unset):
+        occasion (None | str | Unset):
+        gift_date (datetime.date | None | Unset):
+        value_amount (float | None | Unset):
+        value_currency (None | str | Unset):
+        url (None | str | Unset):
+    """
 
     name: None | str | Unset = UNSET
     description: None | str | Unset = UNSET
@@ -46,10 +37,6 @@ class GiftUpdate:
     value_currency: None | str | Unset = UNSET
     url: None | str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
-
-
-
 
     def to_dict(self) -> dict[str, Any]:
         name: None | str | Unset
@@ -104,11 +91,9 @@ class GiftUpdate:
         else:
             url = self.url
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if name is not UNSET:
             field_dict["name"] = name
         if description is not UNSET:
@@ -128,11 +113,10 @@ class GiftUpdate:
 
         return field_dict
 
-
-
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
+
         def _parse_name(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -142,7 +126,6 @@ class GiftUpdate:
 
         name = _parse_name(d.pop("name", UNSET))
 
-
         def _parse_description(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -151,7 +134,6 @@ class GiftUpdate:
             return cast(None | str | Unset, data)
 
         description = _parse_description(d.pop("description", UNSET))
-
 
         def _parse_status(data: object) -> GiftStatus | None | Unset:
             if data is None:
@@ -163,15 +145,12 @@ class GiftUpdate:
                     raise TypeError()
                 status_type_0 = GiftStatus(data)
 
-
-
                 return status_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             return cast(GiftStatus | None | Unset, data)
 
         status = _parse_status(d.pop("status", UNSET))
-
 
         def _parse_occasion(data: object) -> None | str | Unset:
             if data is None:
@@ -181,7 +160,6 @@ class GiftUpdate:
             return cast(None | str | Unset, data)
 
         occasion = _parse_occasion(d.pop("occasion", UNSET))
-
 
         def _parse_gift_date(data: object) -> datetime.date | None | Unset:
             if data is None:
@@ -193,15 +171,12 @@ class GiftUpdate:
                     raise TypeError()
                 gift_date_type_0 = isoparse(data).date()
 
-
-
                 return gift_date_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             return cast(datetime.date | None | Unset, data)
 
         gift_date = _parse_gift_date(d.pop("gift_date", UNSET))
-
 
         def _parse_value_amount(data: object) -> float | None | Unset:
             if data is None:
@@ -212,7 +187,6 @@ class GiftUpdate:
 
         value_amount = _parse_value_amount(d.pop("value_amount", UNSET))
 
-
         def _parse_value_currency(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -222,7 +196,6 @@ class GiftUpdate:
 
         value_currency = _parse_value_currency(d.pop("value_currency", UNSET))
 
-
         def _parse_url(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -231,7 +204,6 @@ class GiftUpdate:
             return cast(None | str | Unset, data)
 
         url = _parse_url(d.pop("url", UNSET))
-
 
         gift_update = cls(
             name=name,
@@ -243,7 +215,6 @@ class GiftUpdate:
             value_currency=value_currency,
             url=url,
         )
-
 
         gift_update.additional_properties = d
         return gift_update

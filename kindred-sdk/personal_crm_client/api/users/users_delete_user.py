@@ -1,52 +1,40 @@
 from http import HTTPStatus
-from typing import Any, cast
+from typing import Any
 from urllib.parse import quote
+from uuid import UUID
 
 import httpx
 
-from ...client import AuthenticatedClient, Client
-from ...types import Response, UNSET
 from ... import errors
-
+from ...client import AuthenticatedClient, Client
 from ...models.http_validation_error import HTTPValidationError
 from ...models.message import Message
-from typing import cast
-from uuid import UUID
-
+from ...types import Response
 
 
 def _get_kwargs(
     user_id: UUID,
-
 ) -> dict[str, Any]:
-    
-
-    
-
-    
-
     _kwargs: dict[str, Any] = {
         "method": "delete",
-        "url": "/api/v1/users/{user_id}".format(user_id=quote(str(user_id), safe=""),),
+        "url": "/api/v1/users/{user_id}".format(
+            user_id=quote(str(user_id), safe=""),
+        ),
     }
-
 
     return _kwargs
 
 
-
-def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> HTTPValidationError | Message | None:
+def _parse_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> HTTPValidationError | Message | None:
     if response.status_code == 200:
         response_200 = Message.from_dict(response.json())
-
-
 
         return response_200
 
     if response.status_code == 422:
         response_422 = HTTPValidationError.from_dict(response.json())
-
-
 
         return response_422
 
@@ -56,7 +44,9 @@ def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Res
         return None
 
 
-def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[HTTPValidationError | Message]:
+def _build_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> Response[HTTPValidationError | Message]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -69,9 +59,8 @@ def sync_detailed(
     user_id: UUID,
     *,
     client: AuthenticatedClient,
-
 ) -> Response[HTTPValidationError | Message]:
-    """ Delete User
+    """Delete User
 
      Delete a user.
 
@@ -84,12 +73,10 @@ def sync_detailed(
 
     Returns:
         Response[HTTPValidationError | Message]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         user_id=user_id,
-
     )
 
     response = client.get_httpx_client().request(
@@ -98,13 +85,13 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
+
 def sync(
     user_id: UUID,
     *,
     client: AuthenticatedClient,
-
 ) -> HTTPValidationError | Message | None:
-    """ Delete User
+    """Delete User
 
      Delete a user.
 
@@ -117,22 +104,20 @@ def sync(
 
     Returns:
         HTTPValidationError | Message
-     """
-
+    """
 
     return sync_detailed(
         user_id=user_id,
-client=client,
-
+        client=client,
     ).parsed
+
 
 async def asyncio_detailed(
     user_id: UUID,
     *,
     client: AuthenticatedClient,
-
 ) -> Response[HTTPValidationError | Message]:
-    """ Delete User
+    """Delete User
 
      Delete a user.
 
@@ -145,27 +130,23 @@ async def asyncio_detailed(
 
     Returns:
         Response[HTTPValidationError | Message]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         user_id=user_id,
-
     )
 
-    response = await client.get_async_httpx_client().request(
-        **kwargs
-    )
+    response = await client.get_async_httpx_client().request(**kwargs)
 
     return _build_response(client=client, response=response)
+
 
 async def asyncio(
     user_id: UUID,
     *,
     client: AuthenticatedClient,
-
 ) -> HTTPValidationError | Message | None:
-    """ Delete User
+    """Delete User
 
      Delete a user.
 
@@ -178,11 +159,11 @@ async def asyncio(
 
     Returns:
         HTTPValidationError | Message
-     """
+    """
 
-
-    return (await asyncio_detailed(
-        user_id=user_id,
-client=client,
-
-    )).parsed
+    return (
+        await asyncio_detailed(
+            user_id=user_id,
+            client=client,
+        )
+    ).parsed

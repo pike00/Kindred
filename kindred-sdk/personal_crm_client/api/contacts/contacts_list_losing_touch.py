@@ -1,36 +1,24 @@
 from http import HTTPStatus
-from typing import Any, cast
-from urllib.parse import quote
+from typing import Any
 
 import httpx
 
-from ...client import AuthenticatedClient, Client
-from ...types import Response, UNSET
 from ... import errors
-
+from ...client import AuthenticatedClient, Client
 from ...models.contacts_public import ContactsPublic
 from ...models.http_validation_error import HTTPValidationError
-from ...types import UNSET, Unset
-from typing import cast
-
+from ...types import UNSET, Response, Unset
 
 
 def _get_kwargs(
     *,
     limit: int | Unset = 20,
-
 ) -> dict[str, Any]:
-    
-
-    
-
     params: dict[str, Any] = {}
 
     params["limit"] = limit
 
-
     params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
-
 
     _kwargs: dict[str, Any] = {
         "method": "get",
@@ -38,23 +26,19 @@ def _get_kwargs(
         "params": params,
     }
 
-
     return _kwargs
 
 
-
-def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> ContactsPublic | HTTPValidationError | None:
+def _parse_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> ContactsPublic | HTTPValidationError | None:
     if response.status_code == 200:
         response_200 = ContactsPublic.from_dict(response.json())
-
-
 
         return response_200
 
     if response.status_code == 422:
         response_422 = HTTPValidationError.from_dict(response.json())
-
-
 
         return response_422
 
@@ -64,7 +48,9 @@ def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Res
         return None
 
 
-def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[ContactsPublic | HTTPValidationError]:
+def _build_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> Response[ContactsPublic | HTTPValidationError]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -77,9 +63,8 @@ def sync_detailed(
     *,
     client: AuthenticatedClient,
     limit: int | Unset = 20,
-
 ) -> Response[ContactsPublic | HTTPValidationError]:
-    """ List Losing Touch
+    """List Losing Touch
 
      Return contacts whose cadence has been exceeded.
 
@@ -96,12 +81,10 @@ def sync_detailed(
 
     Returns:
         Response[ContactsPublic | HTTPValidationError]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         limit=limit,
-
     )
 
     response = client.get_httpx_client().request(
@@ -110,13 +93,13 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
+
 def sync(
     *,
     client: AuthenticatedClient,
     limit: int | Unset = 20,
-
 ) -> ContactsPublic | HTTPValidationError | None:
-    """ List Losing Touch
+    """List Losing Touch
 
      Return contacts whose cadence has been exceeded.
 
@@ -133,22 +116,20 @@ def sync(
 
     Returns:
         ContactsPublic | HTTPValidationError
-     """
-
+    """
 
     return sync_detailed(
         client=client,
-limit=limit,
-
+        limit=limit,
     ).parsed
+
 
 async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
     limit: int | Unset = 20,
-
 ) -> Response[ContactsPublic | HTTPValidationError]:
-    """ List Losing Touch
+    """List Losing Touch
 
      Return contacts whose cadence has been exceeded.
 
@@ -165,27 +146,23 @@ async def asyncio_detailed(
 
     Returns:
         Response[ContactsPublic | HTTPValidationError]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         limit=limit,
-
     )
 
-    response = await client.get_async_httpx_client().request(
-        **kwargs
-    )
+    response = await client.get_async_httpx_client().request(**kwargs)
 
     return _build_response(client=client, response=response)
+
 
 async def asyncio(
     *,
     client: AuthenticatedClient,
     limit: int | Unset = 20,
-
 ) -> ContactsPublic | HTTPValidationError | None:
-    """ List Losing Touch
+    """List Losing Touch
 
      Return contacts whose cadence has been exceeded.
 
@@ -202,11 +179,11 @@ async def asyncio(
 
     Returns:
         ContactsPublic | HTTPValidationError
-     """
+    """
 
-
-    return (await asyncio_detailed(
-        client=client,
-limit=limit,
-
-    )).parsed
+    return (
+        await asyncio_detailed(
+            client=client,
+            limit=limit,
+        )
+    ).parsed

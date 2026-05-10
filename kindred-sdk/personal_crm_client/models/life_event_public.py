@@ -1,42 +1,33 @@
 from __future__ import annotations
 
+import datetime
 from collections.abc import Mapping
-from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
+from typing import Any, TypeVar, cast
+from uuid import UUID
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-
-from ..types import UNSET, Unset
-
-from ..types import UNSET, Unset
 from dateutil.parser import isoparse
-from typing import cast
-from uuid import UUID
-import datetime
 
-
-
-
-
+from ..types import UNSET, Unset
 
 T = TypeVar("T", bound="LifeEventPublic")
 
 
-
 @_attrs_define
 class LifeEventPublic:
-    """ 
-        Attributes:
-            event_type (str): Kind of milestone: job_change, move, wedding, baby, graduation, birthday, anniversary, etc.
-            title (str): Event title.
-            occurred_at (datetime.date): Date the event happened.
-            id (UUID):
-            contact_id (UUID):
-            created_at (datetime.datetime):
-            description (None | str | Unset): Extra details about the event.
-            create_annual_reminder (bool | Unset): If true, auto-create a yearly recurring reminder on this date. Default:
-                False.
-     """
+    """
+    Attributes:
+        event_type (str): Kind of milestone: job_change, move, wedding, baby, graduation, birthday, anniversary, etc.
+        title (str): Event title.
+        occurred_at (datetime.date): Date the event happened.
+        id (UUID):
+        contact_id (UUID):
+        created_at (datetime.datetime):
+        description (None | str | Unset): Extra details about the event.
+        create_annual_reminder (bool | Unset): If true, auto-create a yearly recurring reminder on this date. Default:
+            False.
+    """
 
     event_type: str
     title: str
@@ -47,10 +38,6 @@ class LifeEventPublic:
     description: None | str | Unset = UNSET
     create_annual_reminder: bool | Unset = False
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
-
-
-
 
     def to_dict(self) -> dict[str, Any]:
         event_type = self.event_type
@@ -73,25 +60,24 @@ class LifeEventPublic:
 
         create_annual_reminder = self.create_annual_reminder
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-            "event_type": event_type,
-            "title": title,
-            "occurred_at": occurred_at,
-            "id": id,
-            "contact_id": contact_id,
-            "created_at": created_at,
-        })
+        field_dict.update(
+            {
+                "event_type": event_type,
+                "title": title,
+                "occurred_at": occurred_at,
+                "id": id,
+                "contact_id": contact_id,
+                "created_at": created_at,
+            }
+        )
         if description is not UNSET:
             field_dict["description"] = description
         if create_annual_reminder is not UNSET:
             field_dict["create_annual_reminder"] = create_annual_reminder
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
@@ -102,23 +88,11 @@ class LifeEventPublic:
 
         occurred_at = isoparse(d.pop("occurred_at")).date()
 
-
-
-
         id = UUID(d.pop("id"))
-
-
-
 
         contact_id = UUID(d.pop("contact_id"))
 
-
-
-
         created_at = isoparse(d.pop("created_at"))
-
-
-
 
         def _parse_description(data: object) -> None | str | Unset:
             if data is None:
@@ -128,7 +102,6 @@ class LifeEventPublic:
             return cast(None | str | Unset, data)
 
         description = _parse_description(d.pop("description", UNSET))
-
 
         create_annual_reminder = d.pop("create_annual_reminder", UNSET)
 
@@ -142,7 +115,6 @@ class LifeEventPublic:
             description=description,
             create_annual_reminder=create_annual_reminder,
         )
-
 
         life_event_public.additional_properties = d
         return life_event_public

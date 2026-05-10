@@ -1,31 +1,21 @@
 from http import HTTPStatus
-from typing import Any, cast
-from urllib.parse import quote
+from typing import Any
 
 import httpx
 
-from ...client import AuthenticatedClient, Client
-from ...types import Response, UNSET
 from ... import errors
-
+from ...client import AuthenticatedClient, Client
 from ...models.body_login_login_access_token import BodyLoginLoginAccessToken
 from ...models.http_validation_error import HTTPValidationError
 from ...models.token import Token
-from typing import cast
-
+from ...types import Response
 
 
 def _get_kwargs(
     *,
     body: BodyLoginLoginAccessToken,
-
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
-
-
-    
-
-    
 
     _kwargs: dict[str, Any] = {
         "method": "post",
@@ -40,19 +30,16 @@ def _get_kwargs(
     return _kwargs
 
 
-
-def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> HTTPValidationError | Token | None:
+def _parse_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> HTTPValidationError | Token | None:
     if response.status_code == 200:
         response_200 = Token.from_dict(response.json())
-
-
 
         return response_200
 
     if response.status_code == 422:
         response_422 = HTTPValidationError.from_dict(response.json())
-
-
 
         return response_422
 
@@ -62,7 +49,9 @@ def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Res
         return None
 
 
-def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[HTTPValidationError | Token]:
+def _build_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> Response[HTTPValidationError | Token]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -75,9 +64,8 @@ def sync_detailed(
     *,
     client: AuthenticatedClient | Client,
     body: BodyLoginLoginAccessToken,
-
 ) -> Response[HTTPValidationError | Token]:
-    """ Login Access Token
+    """Login Access Token
 
      OAuth2 compatible token login, get an access token for future requests
 
@@ -90,12 +78,10 @@ def sync_detailed(
 
     Returns:
         Response[HTTPValidationError | Token]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         body=body,
-
     )
 
     response = client.get_httpx_client().request(
@@ -104,13 +90,13 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
+
 def sync(
     *,
     client: AuthenticatedClient | Client,
     body: BodyLoginLoginAccessToken,
-
 ) -> HTTPValidationError | Token | None:
-    """ Login Access Token
+    """Login Access Token
 
      OAuth2 compatible token login, get an access token for future requests
 
@@ -123,22 +109,20 @@ def sync(
 
     Returns:
         HTTPValidationError | Token
-     """
-
+    """
 
     return sync_detailed(
         client=client,
-body=body,
-
+        body=body,
     ).parsed
+
 
 async def asyncio_detailed(
     *,
     client: AuthenticatedClient | Client,
     body: BodyLoginLoginAccessToken,
-
 ) -> Response[HTTPValidationError | Token]:
-    """ Login Access Token
+    """Login Access Token
 
      OAuth2 compatible token login, get an access token for future requests
 
@@ -151,27 +135,23 @@ async def asyncio_detailed(
 
     Returns:
         Response[HTTPValidationError | Token]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         body=body,
-
     )
 
-    response = await client.get_async_httpx_client().request(
-        **kwargs
-    )
+    response = await client.get_async_httpx_client().request(**kwargs)
 
     return _build_response(client=client, response=response)
+
 
 async def asyncio(
     *,
     client: AuthenticatedClient | Client,
     body: BodyLoginLoginAccessToken,
-
 ) -> HTTPValidationError | Token | None:
-    """ Login Access Token
+    """Login Access Token
 
      OAuth2 compatible token login, get an access token for future requests
 
@@ -184,11 +164,11 @@ async def asyncio(
 
     Returns:
         HTTPValidationError | Token
-     """
+    """
 
-
-    return (await asyncio_detailed(
-        client=client,
-body=body,
-
-    )).parsed
+    return (
+        await asyncio_detailed(
+            client=client,
+            body=body,
+        )
+    ).parsed

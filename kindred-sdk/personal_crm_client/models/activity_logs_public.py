@@ -1,78 +1,60 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-from ..types import UNSET, Unset
-
-from typing import cast
-
 if TYPE_CHECKING:
-  from ..models.activity_log_public import ActivityLogPublic
-
-
-
+    from ..models.activity_log_public import ActivityLogPublic
 
 
 T = TypeVar("T", bound="ActivityLogsPublic")
 
 
-
 @_attrs_define
 class ActivityLogsPublic:
-    """ 
-        Attributes:
-            data (list[ActivityLogPublic]):
-            count (int):
-     """
+    """
+    Attributes:
+        data (list[ActivityLogPublic]):
+        count (int):
+    """
 
     data: list[ActivityLogPublic]
     count: int
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
-
-
-
-
     def to_dict(self) -> dict[str, Any]:
-        from ..models.activity_log_public import ActivityLogPublic
         data = []
         for data_item_data in self.data:
             data_item = data_item_data.to_dict()
             data.append(data_item)
 
-
-
         count = self.count
-
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-            "data": data,
-            "count": count,
-        })
+        field_dict.update(
+            {
+                "data": data,
+                "count": count,
+            }
+        )
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         from ..models.activity_log_public import ActivityLogPublic
+
         d = dict(src_dict)
         data = []
         _data = d.pop("data")
-        for data_item_data in (_data):
+        for data_item_data in _data:
             data_item = ActivityLogPublic.from_dict(data_item_data)
 
-
-
             data.append(data_item)
-
 
         count = d.pop("count")
 
@@ -80,7 +62,6 @@ class ActivityLogsPublic:
             data=data,
             count=count,
         )
-
 
         activity_logs_public.additional_properties = d
         return activity_logs_public

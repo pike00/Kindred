@@ -1,52 +1,43 @@
 from __future__ import annotations
 
+import datetime
 from collections.abc import Mapping
-from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
+from typing import Any, TypeVar, cast
+from uuid import UUID
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-
-from ..types import UNSET, Unset
-
-from ..types import UNSET, Unset
 from dateutil.parser import isoparse
-from typing import cast
-from uuid import UUID
-import datetime
 
-
-
-
-
+from ..types import UNSET, Unset
 
 T = TypeVar("T", bound="ContactUpdate")
 
 
-
 @_attrs_define
 class ContactUpdate:
-    """ 
-        Attributes:
-            first_name (None | str | Unset):
-            last_name (None | str | Unset):
-            middle_name (None | str | Unset):
-            prefix (None | str | Unset):
-            suffix (None | str | Unset):
-            nickname (None | str | Unset):
-            company (None | str | Unset):
-            department (None | str | Unset):
-            title (None | str | Unset):
-            birthday (datetime.date | None | Unset):
-            how_we_met (None | str | Unset):
-            is_favorite (bool | None | Unset):
-            is_archived (bool | None | Unset):
-            is_deceased (bool | None | Unset):
-            deceased_at (datetime.date | None | Unset):
-            contact_frequency_days (int | None | Unset):
-            stage (None | str | Unset):
-            tag_ids (list[UUID] | None | Unset):
-            group_ids (list[UUID] | None | Unset):
-     """
+    """
+    Attributes:
+        first_name (None | str | Unset):
+        last_name (None | str | Unset):
+        middle_name (None | str | Unset):
+        prefix (None | str | Unset):
+        suffix (None | str | Unset):
+        nickname (None | str | Unset):
+        company (None | str | Unset):
+        department (None | str | Unset):
+        title (None | str | Unset):
+        birthday (datetime.date | None | Unset):
+        how_we_met (None | str | Unset):
+        is_favorite (bool | None | Unset):
+        is_archived (bool | None | Unset):
+        is_deceased (bool | None | Unset):
+        deceased_at (datetime.date | None | Unset):
+        contact_frequency_days (int | None | Unset):
+        stage (None | str | Unset):
+        tag_ids (list[UUID] | None | Unset):
+        group_ids (list[UUID] | None | Unset):
+    """
 
     first_name: None | str | Unset = UNSET
     last_name: None | str | Unset = UNSET
@@ -68,10 +59,6 @@ class ContactUpdate:
     tag_ids: list[UUID] | None | Unset = UNSET
     group_ids: list[UUID] | None | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
-
-
-
 
     def to_dict(self) -> dict[str, Any]:
         first_name: None | str | Unset
@@ -189,7 +176,6 @@ class ContactUpdate:
                 tag_ids_type_0_item = str(tag_ids_type_0_item_data)
                 tag_ids.append(tag_ids_type_0_item)
 
-
         else:
             tag_ids = self.tag_ids
 
@@ -202,15 +188,12 @@ class ContactUpdate:
                 group_ids_type_0_item = str(group_ids_type_0_item_data)
                 group_ids.append(group_ids_type_0_item)
 
-
         else:
             group_ids = self.group_ids
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if first_name is not UNSET:
             field_dict["first_name"] = first_name
         if last_name is not UNSET:
@@ -252,11 +235,10 @@ class ContactUpdate:
 
         return field_dict
 
-
-
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
+
         def _parse_first_name(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -265,7 +247,6 @@ class ContactUpdate:
             return cast(None | str | Unset, data)
 
         first_name = _parse_first_name(d.pop("first_name", UNSET))
-
 
         def _parse_last_name(data: object) -> None | str | Unset:
             if data is None:
@@ -276,7 +257,6 @@ class ContactUpdate:
 
         last_name = _parse_last_name(d.pop("last_name", UNSET))
 
-
         def _parse_middle_name(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -285,7 +265,6 @@ class ContactUpdate:
             return cast(None | str | Unset, data)
 
         middle_name = _parse_middle_name(d.pop("middle_name", UNSET))
-
 
         def _parse_prefix(data: object) -> None | str | Unset:
             if data is None:
@@ -296,7 +275,6 @@ class ContactUpdate:
 
         prefix = _parse_prefix(d.pop("prefix", UNSET))
 
-
         def _parse_suffix(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -305,7 +283,6 @@ class ContactUpdate:
             return cast(None | str | Unset, data)
 
         suffix = _parse_suffix(d.pop("suffix", UNSET))
-
 
         def _parse_nickname(data: object) -> None | str | Unset:
             if data is None:
@@ -316,7 +293,6 @@ class ContactUpdate:
 
         nickname = _parse_nickname(d.pop("nickname", UNSET))
 
-
         def _parse_company(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -325,7 +301,6 @@ class ContactUpdate:
             return cast(None | str | Unset, data)
 
         company = _parse_company(d.pop("company", UNSET))
-
 
         def _parse_department(data: object) -> None | str | Unset:
             if data is None:
@@ -336,7 +311,6 @@ class ContactUpdate:
 
         department = _parse_department(d.pop("department", UNSET))
 
-
         def _parse_title(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -345,7 +319,6 @@ class ContactUpdate:
             return cast(None | str | Unset, data)
 
         title = _parse_title(d.pop("title", UNSET))
-
 
         def _parse_birthday(data: object) -> datetime.date | None | Unset:
             if data is None:
@@ -357,15 +330,12 @@ class ContactUpdate:
                     raise TypeError()
                 birthday_type_0 = isoparse(data).date()
 
-
-
                 return birthday_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             return cast(datetime.date | None | Unset, data)
 
         birthday = _parse_birthday(d.pop("birthday", UNSET))
-
 
         def _parse_how_we_met(data: object) -> None | str | Unset:
             if data is None:
@@ -376,7 +346,6 @@ class ContactUpdate:
 
         how_we_met = _parse_how_we_met(d.pop("how_we_met", UNSET))
 
-
         def _parse_is_favorite(data: object) -> bool | None | Unset:
             if data is None:
                 return data
@@ -385,7 +354,6 @@ class ContactUpdate:
             return cast(bool | None | Unset, data)
 
         is_favorite = _parse_is_favorite(d.pop("is_favorite", UNSET))
-
 
         def _parse_is_archived(data: object) -> bool | None | Unset:
             if data is None:
@@ -396,7 +364,6 @@ class ContactUpdate:
 
         is_archived = _parse_is_archived(d.pop("is_archived", UNSET))
 
-
         def _parse_is_deceased(data: object) -> bool | None | Unset:
             if data is None:
                 return data
@@ -405,7 +372,6 @@ class ContactUpdate:
             return cast(bool | None | Unset, data)
 
         is_deceased = _parse_is_deceased(d.pop("is_deceased", UNSET))
-
 
         def _parse_deceased_at(data: object) -> datetime.date | None | Unset:
             if data is None:
@@ -417,15 +383,12 @@ class ContactUpdate:
                     raise TypeError()
                 deceased_at_type_0 = isoparse(data).date()
 
-
-
                 return deceased_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             return cast(datetime.date | None | Unset, data)
 
         deceased_at = _parse_deceased_at(d.pop("deceased_at", UNSET))
-
 
         def _parse_contact_frequency_days(data: object) -> int | None | Unset:
             if data is None:
@@ -436,7 +399,6 @@ class ContactUpdate:
 
         contact_frequency_days = _parse_contact_frequency_days(d.pop("contact_frequency_days", UNSET))
 
-
         def _parse_stage(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -445,7 +407,6 @@ class ContactUpdate:
             return cast(None | str | Unset, data)
 
         stage = _parse_stage(d.pop("stage", UNSET))
-
 
         def _parse_tag_ids(data: object) -> list[UUID] | None | Unset:
             if data is None:
@@ -457,10 +418,8 @@ class ContactUpdate:
                     raise TypeError()
                 tag_ids_type_0 = []
                 _tag_ids_type_0 = data
-                for tag_ids_type_0_item_data in (_tag_ids_type_0):
+                for tag_ids_type_0_item_data in _tag_ids_type_0:
                     tag_ids_type_0_item = UUID(tag_ids_type_0_item_data)
-
-
 
                     tag_ids_type_0.append(tag_ids_type_0_item)
 
@@ -470,7 +429,6 @@ class ContactUpdate:
             return cast(list[UUID] | None | Unset, data)
 
         tag_ids = _parse_tag_ids(d.pop("tag_ids", UNSET))
-
 
         def _parse_group_ids(data: object) -> list[UUID] | None | Unset:
             if data is None:
@@ -482,10 +440,8 @@ class ContactUpdate:
                     raise TypeError()
                 group_ids_type_0 = []
                 _group_ids_type_0 = data
-                for group_ids_type_0_item_data in (_group_ids_type_0):
+                for group_ids_type_0_item_data in _group_ids_type_0:
                     group_ids_type_0_item = UUID(group_ids_type_0_item_data)
-
-
 
                     group_ids_type_0.append(group_ids_type_0_item)
 
@@ -495,7 +451,6 @@ class ContactUpdate:
             return cast(list[UUID] | None | Unset, data)
 
         group_ids = _parse_group_ids(d.pop("group_ids", UNSET))
-
 
         contact_update = cls(
             first_name=first_name,
@@ -518,7 +473,6 @@ class ContactUpdate:
             tag_ids=tag_ids,
             group_ids=group_ids,
         )
-
 
         contact_update.additional_properties = d
         return contact_update

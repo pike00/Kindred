@@ -1,38 +1,29 @@
 from __future__ import annotations
 
+import datetime
 from collections.abc import Mapping
-from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
+from typing import Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-
-from ..types import UNSET, Unset
+from dateutil.parser import isoparse
 
 from ..models.reminder_frequency import ReminderFrequency
 from ..types import UNSET, Unset
-from dateutil.parser import isoparse
-from typing import cast
-import datetime
-
-
-
-
-
 
 T = TypeVar("T", bound="ReminderUpdate")
 
 
-
 @_attrs_define
 class ReminderUpdate:
-    """ 
-        Attributes:
-            title (None | str | Unset):
-            description (None | str | Unset):
-            remind_at (datetime.datetime | None | Unset):
-            frequency (None | ReminderFrequency | Unset):
-            is_active (bool | None | Unset):
-     """
+    """
+    Attributes:
+        title (None | str | Unset):
+        description (None | str | Unset):
+        remind_at (datetime.datetime | None | Unset):
+        frequency (None | ReminderFrequency | Unset):
+        is_active (bool | None | Unset):
+    """
 
     title: None | str | Unset = UNSET
     description: None | str | Unset = UNSET
@@ -40,10 +31,6 @@ class ReminderUpdate:
     frequency: None | ReminderFrequency | Unset = UNSET
     is_active: bool | None | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
-
-
-
 
     def to_dict(self) -> dict[str, Any]:
         title: None | str | Unset
@@ -80,11 +67,9 @@ class ReminderUpdate:
         else:
             is_active = self.is_active
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if title is not UNSET:
             field_dict["title"] = title
         if description is not UNSET:
@@ -98,11 +83,10 @@ class ReminderUpdate:
 
         return field_dict
 
-
-
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
+
         def _parse_title(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -112,7 +96,6 @@ class ReminderUpdate:
 
         title = _parse_title(d.pop("title", UNSET))
 
-
         def _parse_description(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -121,7 +104,6 @@ class ReminderUpdate:
             return cast(None | str | Unset, data)
 
         description = _parse_description(d.pop("description", UNSET))
-
 
         def _parse_remind_at(data: object) -> datetime.datetime | None | Unset:
             if data is None:
@@ -133,15 +115,12 @@ class ReminderUpdate:
                     raise TypeError()
                 remind_at_type_0 = isoparse(data)
 
-
-
                 return remind_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             return cast(datetime.datetime | None | Unset, data)
 
         remind_at = _parse_remind_at(d.pop("remind_at", UNSET))
-
 
         def _parse_frequency(data: object) -> None | ReminderFrequency | Unset:
             if data is None:
@@ -153,15 +132,12 @@ class ReminderUpdate:
                     raise TypeError()
                 frequency_type_0 = ReminderFrequency(data)
 
-
-
                 return frequency_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             return cast(None | ReminderFrequency | Unset, data)
 
         frequency = _parse_frequency(d.pop("frequency", UNSET))
-
 
         def _parse_is_active(data: object) -> bool | None | Unset:
             if data is None:
@@ -172,7 +148,6 @@ class ReminderUpdate:
 
         is_active = _parse_is_active(d.pop("is_active", UNSET))
 
-
         reminder_update = cls(
             title=title,
             description=description,
@@ -180,7 +155,6 @@ class ReminderUpdate:
             frequency=frequency,
             is_active=is_active,
         )
-
 
         reminder_update.additional_properties = d
         return reminder_update

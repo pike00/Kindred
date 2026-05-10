@@ -1,63 +1,107 @@
-"""{resource_name} resource for Kindred SDK."""
+"""Notes resource for Kindred SDK."""
 
-from personal_crm_client import AuthenticatedClient, Client
-from personal_crm_client.models import {model}Create, {model}Update, {models}, {model}Public
-from personal_crm_client.models import HTTPValidationError
 from uuid import UUID
 
+from personal_crm_client import AuthenticatedClient, Client
+from personal_crm_client.models import (
+    HTTPValidationError,
+    NoteCreate,
+    NotePublic,
+    NotesPublic,
+    NoteUpdate,
+)
 
-class {class_name}:
-    """Resource for managing {module}."""
 
-    def __init__(self, client: AuthenticatedClient | Client):
+class NotesResource:
+    """Resource for managing notes."""
+
+    def __init__(self, client: AuthenticatedClient | Client) -> None:
         self._client = client
 
-    def list(self, *, skip: int = 0, limit: int = 100) -> {models} | HTTPValidationError | None:
-        """List {module}."""
-        from personal_crm_client.api.{module} import {list_func}
-        return {list_func}.sync(client=self._client, skip=skip, limit=limit)
+    def list(
+        self,
+        *,
+        skip: int = 0,
+        limit: int = 100,
+        contact_id: UUID | None = None,
+    ) -> NotesPublic | HTTPValidationError | None:
+        """List notes."""
+        from personal_crm_client.api.notes.notes_list_notes import sync
 
-    async def list_async(self, *, skip: int = 0, limit: int = 100) -> {models} | HTTPValidationError | None:
+        return sync(
+            client=self._client,
+            skip=skip,
+            limit=limit,
+            contact_id=contact_id,
+        )
+
+    async def list_async(
+        self,
+        *,
+        skip: int = 0,
+        limit: int = 100,
+        contact_id: UUID | None = None,
+    ) -> NotesPublic | HTTPValidationError | None:
         """Async version of list()."""
-        from personal_crm_client.api.{module} import {list_func}
-        return await {list_func}.asyncio(client=self._client, skip=skip, limit=limit)
+        from personal_crm_client.api.notes.notes_list_notes import asyncio
 
-    def get(self, {item_id}: UUID) -> {model}Public | HTTPValidationError | None:
-        """Get a single {singular} by ID."""
-        from personal_crm_client.api.{module} import {get_func}
-        return {get_func}.sync(client=self._client, {item_id}={item_id})
+        return await asyncio(
+            client=self._client,
+            skip=skip,
+            limit=limit,
+            contact_id=contact_id,
+        )
 
-    async def get_async(self, {item_id}: UUID) -> {model}Public | HTTPValidationError | None:
+    def get(self, note_id: UUID) -> NotePublic | HTTPValidationError | None:
+        """Get a single note by ID."""
+        notes = self.list()
+        if notes and hasattr(notes, "data"):
+            for note in notes.data:
+                if note.id == note_id:
+                    return note
+        return None
+
+    async def get_async(self, note_id: UUID) -> NotePublic | HTTPValidationError | None:
         """Async version of get()."""
-        from personal_crm_client.api.{module} import {get_func}
-        return await {get_func}.asyncio(client=self._client, {item_id}={item_id})
+        notes = await self.list_async()
+        if notes and hasattr(notes, "data"):
+            for note in notes.data:
+                if note.id == note_id:
+                    return note
+        return None
 
-    def create(self, item: {model}Create) -> {model}Public | HTTPValidationError | None:
-        """Create a new {singular}."""
-        from personal_crm_client.api.{module} import {create_func}
-        return {create_func}.sync(client=self._client, json_body=item)
+    def create(self, item: NoteCreate) -> NotePublic | HTTPValidationError | None:
+        """Create a new note."""
+        from personal_crm_client.api.notes.notes_create_note_route import sync
 
-    async def create_async(self, item: {model}Create) -> {model}Public | HTTPValidationError | None:
+        return sync(client=self._client, body=item)
+
+    async def create_async(self, item: NoteCreate) -> NotePublic | HTTPValidationError | None:
         """Async version of create()."""
-        from personal_crm_client.api.{module} import {create_func}
-        return await {create_func}.asyncio(client=self._client, json_body=item)
+        from personal_crm_client.api.notes.notes_create_note_route import asyncio
 
-    def update(self, {item_id}: UUID, item: {model}Update) -> {model}Public | HTTPValidationError | None:
-        """Update an existing {singular}."""
-        from personal_crm_client.api.{module} import {update_func}
-        return {update_func}.sync(client=self._client, {item_id}={item_id}, json_body=item)
+        return await asyncio(client=self._client, body=item)
 
-    async def update_async(self, {item_id}: UUID, item: {model}Update) -> {model}Public | HTTPValidationError | None:
+    def update(self, note_id: UUID, item: NoteUpdate) -> NotePublic | HTTPValidationError | None:
+        """Update an existing note."""
+        from personal_crm_client.api.notes.notes_update_note_route import sync
+
+        return sync(client=self._client, note_id=note_id, body=item)
+
+    async def update_async(self, note_id: UUID, item: NoteUpdate) -> NotePublic | HTTPValidationError | None:
         """Async version of update()."""
-        from personal_crm_client.api.{module} import {update_func}
-        return await {update_func}.asyncio(client=self._client, {item_id}={item_id}, json_body=item)
+        from personal_crm_client.api.notes.notes_update_note_route import asyncio
 
-    def delete(self, {item_id}: UUID) -> {model}Public | HTTPValidationError | None:
-        """Delete a {singular}."""
-        from personal_crm_client.api.{module} import {delete_func}
-        return {delete_func}.sync(client=self._client, {item_id}={item_id})
+        return await asyncio(client=self._client, note_id=note_id, body=item)
 
-    async def delete_async(self, {item_id}: UUID) -> {model}Public | HTTPValidationError | None:
+    def delete(self, note_id: UUID) -> NotePublic | HTTPValidationError | None:
+        """Delete a note."""
+        from personal_crm_client.api.notes.notes_delete_note import sync
+
+        return sync(client=self._client, note_id=note_id)
+
+    async def delete_async(self, note_id: UUID) -> NotePublic | HTTPValidationError | None:
         """Async version of delete()."""
-        from personal_crm_client.api.{module} import {delete_func}
-        return await {delete_func}.asyncio(client=self._client, {item_id}={item_id})
+        from personal_crm_client.api.notes.notes_delete_note import asyncio
+
+        return await asyncio(client=self._client, note_id=note_id)

@@ -1,58 +1,47 @@
 from http import HTTPStatus
-from typing import Any, cast
+from typing import Any
 from urllib.parse import quote
+from uuid import UUID
 
 import httpx
 
-from ...client import AuthenticatedClient, Client
-from ...types import Response, UNSET
 from ... import errors
-
+from ...client import AuthenticatedClient, Client
 from ...models.http_validation_error import HTTPValidationError
-from ...types import UNSET, Unset
-from typing import cast
-from uuid import UUID
-
+from ...types import UNSET, Response, Unset
 
 
 def _get_kwargs(
     reminder_id: UUID,
     *,
     minutes: int | Unset = 30,
-
 ) -> dict[str, Any]:
-    
-
-    
-
     params: dict[str, Any] = {}
 
     params["minutes"] = minutes
 
-
     params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
-
 
     _kwargs: dict[str, Any] = {
         "method": "post",
-        "url": "/api/v1/reminders/{reminder_id}/snooze".format(reminder_id=quote(str(reminder_id), safe=""),),
+        "url": "/api/v1/reminders/{reminder_id}/snooze".format(
+            reminder_id=quote(str(reminder_id), safe=""),
+        ),
         "params": params,
     }
-
 
     return _kwargs
 
 
-
-def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Any | HTTPValidationError | None:
+def _parse_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> Any | HTTPValidationError | None:
     if response.status_code == 200:
         response_200 = response.json()
         return response_200
 
     if response.status_code == 422:
         response_422 = HTTPValidationError.from_dict(response.json())
-
-
 
         return response_422
 
@@ -62,7 +51,9 @@ def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Res
         return None
 
 
-def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[Any | HTTPValidationError]:
+def _build_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> Response[Any | HTTPValidationError]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -76,9 +67,8 @@ def sync_detailed(
     *,
     client: AuthenticatedClient,
     minutes: int | Unset = 30,
-
 ) -> Response[Any | HTTPValidationError]:
-    """ Snooze Reminder
+    """Snooze Reminder
 
      Snooze a reminder.
 
@@ -92,13 +82,11 @@ def sync_detailed(
 
     Returns:
         Response[Any | HTTPValidationError]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         reminder_id=reminder_id,
-minutes=minutes,
-
+        minutes=minutes,
     )
 
     response = client.get_httpx_client().request(
@@ -107,14 +95,14 @@ minutes=minutes,
 
     return _build_response(client=client, response=response)
 
+
 def sync(
     reminder_id: UUID,
     *,
     client: AuthenticatedClient,
     minutes: int | Unset = 30,
-
 ) -> Any | HTTPValidationError | None:
-    """ Snooze Reminder
+    """Snooze Reminder
 
      Snooze a reminder.
 
@@ -128,24 +116,22 @@ def sync(
 
     Returns:
         Any | HTTPValidationError
-     """
-
+    """
 
     return sync_detailed(
         reminder_id=reminder_id,
-client=client,
-minutes=minutes,
-
+        client=client,
+        minutes=minutes,
     ).parsed
+
 
 async def asyncio_detailed(
     reminder_id: UUID,
     *,
     client: AuthenticatedClient,
     minutes: int | Unset = 30,
-
 ) -> Response[Any | HTTPValidationError]:
-    """ Snooze Reminder
+    """Snooze Reminder
 
      Snooze a reminder.
 
@@ -159,29 +145,25 @@ async def asyncio_detailed(
 
     Returns:
         Response[Any | HTTPValidationError]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         reminder_id=reminder_id,
-minutes=minutes,
-
+        minutes=minutes,
     )
 
-    response = await client.get_async_httpx_client().request(
-        **kwargs
-    )
+    response = await client.get_async_httpx_client().request(**kwargs)
 
     return _build_response(client=client, response=response)
+
 
 async def asyncio(
     reminder_id: UUID,
     *,
     client: AuthenticatedClient,
     minutes: int | Unset = 30,
-
 ) -> Any | HTTPValidationError | None:
-    """ Snooze Reminder
+    """Snooze Reminder
 
      Snooze a reminder.
 
@@ -195,12 +177,12 @@ async def asyncio(
 
     Returns:
         Any | HTTPValidationError
-     """
+    """
 
-
-    return (await asyncio_detailed(
-        reminder_id=reminder_id,
-client=client,
-minutes=minutes,
-
-    )).parsed
+    return (
+        await asyncio_detailed(
+            reminder_id=reminder_id,
+            client=client,
+            minutes=minutes,
+        )
+    ).parsed

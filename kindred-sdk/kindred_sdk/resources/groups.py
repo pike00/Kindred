@@ -1,63 +1,103 @@
-"""{resource_name} resource for Kindred SDK."""
+"""Groups resource for Kindred SDK."""
 
-from personal_crm_client import AuthenticatedClient, Client
-from personal_crm_client.models import {model}Create, {model}Update, {models}, {model}Public
-from personal_crm_client.models import HTTPValidationError
 from uuid import UUID
 
+from personal_crm_client import AuthenticatedClient, Client
+from personal_crm_client.models import (
+    GroupCreate,
+    GroupPublic,
+    GroupsPublic,
+    GroupUpdate,
+    HTTPValidationError,
+)
 
-class {class_name}:
-    """Resource for managing {module}."""
 
-    def __init__(self, client: AuthenticatedClient | Client):
+class GroupsResource:
+    """Resource for managing groups."""
+
+    def __init__(self, client: AuthenticatedClient | Client) -> None:
         self._client = client
 
-    def list(self, *, skip: int = 0, limit: int = 100) -> {models} | HTTPValidationError | None:
-        """List {module}."""
-        from personal_crm_client.api.{module} import {list_func}
-        return {list_func}.sync(client=self._client, skip=skip, limit=limit)
+    def list(
+        self,
+        *,
+        skip: int = 0,
+        limit: int = 100,
+    ) -> GroupsPublic | HTTPValidationError | None:
+        """List groups."""
+        from personal_crm_client.api.groups.groups_list_groups import sync
 
-    async def list_async(self, *, skip: int = 0, limit: int = 100) -> {models} | HTTPValidationError | None:
+        return sync(
+            client=self._client,
+            skip=skip,
+            limit=limit,
+        )
+
+    async def list_async(
+        self,
+        *,
+        skip: int = 0,
+        limit: int = 100,
+    ) -> GroupsPublic | HTTPValidationError | None:
         """Async version of list()."""
-        from personal_crm_client.api.{module} import {list_func}
-        return await {list_func}.asyncio(client=self._client, skip=skip, limit=limit)
+        from personal_crm_client.api.groups.groups_list_groups import asyncio
 
-    def get(self, {item_id}: UUID) -> {model}Public | HTTPValidationError | None:
-        """Get a single {singular} by ID."""
-        from personal_crm_client.api.{module} import {get_func}
-        return {get_func}.sync(client=self._client, {item_id}={item_id})
+        return await asyncio(
+            client=self._client,
+            skip=skip,
+            limit=limit,
+        )
 
-    async def get_async(self, {item_id}: UUID) -> {model}Public | HTTPValidationError | None:
+    def get(self, group_id: UUID) -> GroupPublic | HTTPValidationError | None:
+        """Get a single group by ID."""
+        groups = self.list()
+        if groups and hasattr(groups, "data"):
+            for group in groups.data:
+                if group.id == group_id:
+                    return group
+        return None
+
+    async def get_async(self, group_id: UUID) -> GroupPublic | HTTPValidationError | None:
         """Async version of get()."""
-        from personal_crm_client.api.{module} import {get_func}
-        return await {get_func}.asyncio(client=self._client, {item_id}={item_id})
+        groups = await self.list_async()
+        if groups and hasattr(groups, "data"):
+            for group in groups.data:
+                if group.id == group_id:
+                    return group
+        return None
 
-    def create(self, item: {model}Create) -> {model}Public | HTTPValidationError | None:
-        """Create a new {singular}."""
-        from personal_crm_client.api.{module} import {create_func}
-        return {create_func}.sync(client=self._client, json_body=item)
+    def create(self, item: GroupCreate) -> GroupPublic | HTTPValidationError | None:
+        """Create a new group."""
+        from personal_crm_client.api.groups.groups_create_group_route import sync
 
-    async def create_async(self, item: {model}Create) -> {model}Public | HTTPValidationError | None:
+        return sync(client=self._client, body=item)
+
+    async def create_async(self, item: GroupCreate) -> GroupPublic | HTTPValidationError | None:
         """Async version of create()."""
-        from personal_crm_client.api.{module} import {create_func}
-        return await {create_func}.asyncio(client=self._client, json_body=item)
+        from personal_crm_client.api.groups.groups_create_group_route import asyncio
 
-    def update(self, {item_id}: UUID, item: {model}Update) -> {model}Public | HTTPValidationError | None:
-        """Update an existing {singular}."""
-        from personal_crm_client.api.{module} import {update_func}
-        return {update_func}.sync(client=self._client, {item_id}={item_id}, json_body=item)
+        return await asyncio(client=self._client, body=item)
 
-    async def update_async(self, {item_id}: UUID, item: {model}Update) -> {model}Public | HTTPValidationError | None:
+    def update(self, group_id: UUID, item: GroupUpdate) -> GroupPublic | HTTPValidationError | None:
+        """Update an existing group."""
+        from personal_crm_client.api.groups.groups_update_group import sync
+
+        return sync(client=self._client, group_id=group_id, body=item)
+
+    async def update_async(self, group_id: UUID, item: GroupUpdate) -> GroupPublic | HTTPValidationError | None:
         """Async version of update()."""
-        from personal_crm_client.api.{module} import {update_func}
-        return await {update_func}.asyncio(client=self._client, {item_id}={item_id}, json_body=item)
+        from personal_crm_client.api.groups.groups_update_group import asyncio
 
-    def delete(self, {item_id}: UUID) -> {model}Public | HTTPValidationError | None:
-        """Delete a {singular}."""
-        from personal_crm_client.api.{module} import {delete_func}
-        return {delete_func}.sync(client=self._client, {item_id}={item_id})
+        return await asyncio(client=self._client, group_id=group_id, body=item)
 
-    async def delete_async(self, {item_id}: UUID) -> {model}Public | HTTPValidationError | None:
+    def delete(self, group_id: UUID) -> GroupPublic | HTTPValidationError | None:
+        """Delete a group."""
+        from personal_crm_client.api.groups.groups_delete_group import sync
+
+        return sync(client=self._client, group_id=group_id)
+
+    async def delete_async(self, group_id: UUID) -> GroupPublic | HTTPValidationError | None:
         """Async version of delete()."""
-        from personal_crm_client.api.{module} import {delete_func}
-        return await {delete_func}.asyncio(client=self._client, {item_id}={item_id})
+        from personal_crm_client.api.groups.groups_delete_group import asyncio
+
+        return await asyncio(client=self._client, group_id=group_id)

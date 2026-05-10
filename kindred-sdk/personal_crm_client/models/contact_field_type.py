@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class ContactFieldType(str, Enum):
     EMAIL = "email"
     PHONE = "phone"

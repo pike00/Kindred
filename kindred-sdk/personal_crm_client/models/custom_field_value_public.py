@@ -1,36 +1,27 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
+from typing import Any, TypeVar, cast
+from uuid import UUID
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
-from ..types import UNSET, Unset
-from typing import cast
-from uuid import UUID
-
-
-
-
-
-
 T = TypeVar("T", bound="CustomFieldValuePublic")
-
 
 
 @_attrs_define
 class CustomFieldValuePublic:
-    """ 
-        Attributes:
-            value (str): Value as a string; coerced from the declared field_type.
-            id (UUID):
-            contact_id (UUID):
-            field_definition_id (UUID):
-            field_name (None | str | Unset):
-     """
+    """
+    Attributes:
+        value (str): Value as a string; coerced from the declared field_type.
+        id (UUID):
+        contact_id (UUID):
+        field_definition_id (UUID):
+        field_name (None | str | Unset):
+    """
 
     value: str
     id: UUID
@@ -38,10 +29,6 @@ class CustomFieldValuePublic:
     field_definition_id: UUID
     field_name: None | str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
-
-
-
 
     def to_dict(self) -> dict[str, Any]:
         value = self.value
@@ -58,21 +45,20 @@ class CustomFieldValuePublic:
         else:
             field_name = self.field_name
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-            "value": value,
-            "id": id,
-            "contact_id": contact_id,
-            "field_definition_id": field_definition_id,
-        })
+        field_dict.update(
+            {
+                "value": value,
+                "id": id,
+                "contact_id": contact_id,
+                "field_definition_id": field_definition_id,
+            }
+        )
         if field_name is not UNSET:
             field_dict["field_name"] = field_name
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
@@ -81,18 +67,9 @@ class CustomFieldValuePublic:
 
         id = UUID(d.pop("id"))
 
-
-
-
         contact_id = UUID(d.pop("contact_id"))
 
-
-
-
         field_definition_id = UUID(d.pop("field_definition_id"))
-
-
-
 
         def _parse_field_name(data: object) -> None | str | Unset:
             if data is None:
@@ -103,7 +80,6 @@ class CustomFieldValuePublic:
 
         field_name = _parse_field_name(d.pop("field_name", UNSET))
 
-
         custom_field_value_public = cls(
             value=value,
             id=id,
@@ -111,7 +87,6 @@ class CustomFieldValuePublic:
             field_definition_id=field_definition_id,
             field_name=field_name,
         )
-
 
         custom_field_value_public.additional_properties = d
         return custom_field_value_public

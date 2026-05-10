@@ -1,43 +1,31 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
-from ..types import UNSET, Unset
-
-
-
-
-
-
 T = TypeVar("T", bound="PrivateUserCreate")
-
 
 
 @_attrs_define
 class PrivateUserCreate:
-    """ 
-        Attributes:
-            email (str):
-            password (str):
-            full_name (str):
-            is_verified (bool | Unset):  Default: False.
-     """
+    """
+    Attributes:
+        email (str):
+        password (str):
+        full_name (str):
+        is_verified (bool | Unset):  Default: False.
+    """
 
     email: str
     password: str
     full_name: str
     is_verified: bool | Unset = False
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
-
-
-
 
     def to_dict(self) -> dict[str, Any]:
         email = self.email
@@ -48,20 +36,19 @@ class PrivateUserCreate:
 
         is_verified = self.is_verified
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-            "email": email,
-            "password": password,
-            "full_name": full_name,
-        })
+        field_dict.update(
+            {
+                "email": email,
+                "password": password,
+                "full_name": full_name,
+            }
+        )
         if is_verified is not UNSET:
             field_dict["is_verified"] = is_verified
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
@@ -80,7 +67,6 @@ class PrivateUserCreate:
             full_name=full_name,
             is_verified=is_verified,
         )
-
 
         private_user_create.additional_properties = d
         return private_user_create

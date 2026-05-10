@@ -1,78 +1,60 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-from ..types import UNSET, Unset
-
-from typing import cast
-
 if TYPE_CHECKING:
-  from ..models.journal_entry_public import JournalEntryPublic
-
-
-
+    from ..models.journal_entry_public import JournalEntryPublic
 
 
 T = TypeVar("T", bound="JournalEntriesPublic")
 
 
-
 @_attrs_define
 class JournalEntriesPublic:
-    """ 
-        Attributes:
-            data (list[JournalEntryPublic]):
-            count (int):
-     """
+    """
+    Attributes:
+        data (list[JournalEntryPublic]):
+        count (int):
+    """
 
     data: list[JournalEntryPublic]
     count: int
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
-
-
-
-
     def to_dict(self) -> dict[str, Any]:
-        from ..models.journal_entry_public import JournalEntryPublic
         data = []
         for data_item_data in self.data:
             data_item = data_item_data.to_dict()
             data.append(data_item)
 
-
-
         count = self.count
-
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-            "data": data,
-            "count": count,
-        })
+        field_dict.update(
+            {
+                "data": data,
+                "count": count,
+            }
+        )
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         from ..models.journal_entry_public import JournalEntryPublic
+
         d = dict(src_dict)
         data = []
         _data = d.pop("data")
-        for data_item_data in (_data):
+        for data_item_data in _data:
             data_item = JournalEntryPublic.from_dict(data_item_data)
 
-
-
             data.append(data_item)
-
 
         count = d.pop("count")
 
@@ -80,7 +62,6 @@ class JournalEntriesPublic:
             data=data,
             count=count,
         )
-
 
         journal_entries_public.additional_properties = d
         return journal_entries_public

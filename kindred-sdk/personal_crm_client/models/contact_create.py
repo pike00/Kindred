@@ -1,52 +1,43 @@
 from __future__ import annotations
 
+import datetime
 from collections.abc import Mapping
-from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
+from typing import Any, TypeVar, cast
+from uuid import UUID
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-
-from ..types import UNSET, Unset
-
-from ..types import UNSET, Unset
 from dateutil.parser import isoparse
-from typing import cast
-from uuid import UUID
-import datetime
 
-
-
-
-
+from ..types import UNSET, Unset
 
 T = TypeVar("T", bound="ContactCreate")
 
 
-
 @_attrs_define
 class ContactCreate:
-    """ 
-        Attributes:
-            first_name (str): Given name; required.
-            last_name (None | str | Unset): Family name.
-            middle_name (None | str | Unset): Middle name or initial.
-            prefix (None | str | Unset): Honorific like Dr., Mr., Ms.
-            suffix (None | str | Unset): Suffix like Jr., PhD.
-            nickname (None | str | Unset): Preferred or informal name.
-            company (None | str | Unset): Organization name.
-            department (None | str | Unset): Department within the company.
-            title (None | str | Unset): Job title.
-            birthday (datetime.date | None | Unset): Date of birth; used for milestone and birthday reminders.
-            how_we_met (None | str | Unset): Short story of how the introduction happened.
-            is_favorite (bool | Unset): Pinned to the top of contact lists. Default: False.
-            is_archived (bool | Unset): Soft-deleted; excluded from default lists. Default: False.
-            is_deceased (bool | Unset): Marks the contact as deceased. Default: False.
-            deceased_at (datetime.date | None | Unset): Date the contact passed away.
-            contact_frequency_days (int | None | Unset): Target days between interactions; drives losing-touch cadence.
-            stage (None | str | Unset): Kanban stage like Active, Dormant, Lost.
-            tag_ids (list[UUID] | None | Unset):
-            group_ids (list[UUID] | None | Unset):
-     """
+    """
+    Attributes:
+        first_name (str): Given name; required.
+        last_name (None | str | Unset): Family name.
+        middle_name (None | str | Unset): Middle name or initial.
+        prefix (None | str | Unset): Honorific like Dr., Mr., Ms.
+        suffix (None | str | Unset): Suffix like Jr., PhD.
+        nickname (None | str | Unset): Preferred or informal name.
+        company (None | str | Unset): Organization name.
+        department (None | str | Unset): Department within the company.
+        title (None | str | Unset): Job title.
+        birthday (datetime.date | None | Unset): Date of birth; used for milestone and birthday reminders.
+        how_we_met (None | str | Unset): Short story of how the introduction happened.
+        is_favorite (bool | Unset): Pinned to the top of contact lists. Default: False.
+        is_archived (bool | Unset): Soft-deleted; excluded from default lists. Default: False.
+        is_deceased (bool | Unset): Marks the contact as deceased. Default: False.
+        deceased_at (datetime.date | None | Unset): Date the contact passed away.
+        contact_frequency_days (int | None | Unset): Target days between interactions; drives losing-touch cadence.
+        stage (None | str | Unset): Kanban stage like Active, Dormant, Lost.
+        tag_ids (list[UUID] | None | Unset):
+        group_ids (list[UUID] | None | Unset):
+    """
 
     first_name: str
     last_name: None | str | Unset = UNSET
@@ -68,10 +59,6 @@ class ContactCreate:
     tag_ids: list[UUID] | None | Unset = UNSET
     group_ids: list[UUID] | None | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
-
-
-
 
     def to_dict(self) -> dict[str, Any]:
         first_name = self.first_name
@@ -173,7 +160,6 @@ class ContactCreate:
                 tag_ids_type_0_item = str(tag_ids_type_0_item_data)
                 tag_ids.append(tag_ids_type_0_item)
 
-
         else:
             tag_ids = self.tag_ids
 
@@ -186,16 +172,16 @@ class ContactCreate:
                 group_ids_type_0_item = str(group_ids_type_0_item_data)
                 group_ids.append(group_ids_type_0_item)
 
-
         else:
             group_ids = self.group_ids
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-            "first_name": first_name,
-        })
+        field_dict.update(
+            {
+                "first_name": first_name,
+            }
+        )
         if last_name is not UNSET:
             field_dict["last_name"] = last_name
         if middle_name is not UNSET:
@@ -235,8 +221,6 @@ class ContactCreate:
 
         return field_dict
 
-
-
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
@@ -251,7 +235,6 @@ class ContactCreate:
 
         last_name = _parse_last_name(d.pop("last_name", UNSET))
 
-
         def _parse_middle_name(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -260,7 +243,6 @@ class ContactCreate:
             return cast(None | str | Unset, data)
 
         middle_name = _parse_middle_name(d.pop("middle_name", UNSET))
-
 
         def _parse_prefix(data: object) -> None | str | Unset:
             if data is None:
@@ -271,7 +253,6 @@ class ContactCreate:
 
         prefix = _parse_prefix(d.pop("prefix", UNSET))
 
-
         def _parse_suffix(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -280,7 +261,6 @@ class ContactCreate:
             return cast(None | str | Unset, data)
 
         suffix = _parse_suffix(d.pop("suffix", UNSET))
-
 
         def _parse_nickname(data: object) -> None | str | Unset:
             if data is None:
@@ -291,7 +271,6 @@ class ContactCreate:
 
         nickname = _parse_nickname(d.pop("nickname", UNSET))
 
-
         def _parse_company(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -300,7 +279,6 @@ class ContactCreate:
             return cast(None | str | Unset, data)
 
         company = _parse_company(d.pop("company", UNSET))
-
 
         def _parse_department(data: object) -> None | str | Unset:
             if data is None:
@@ -311,7 +289,6 @@ class ContactCreate:
 
         department = _parse_department(d.pop("department", UNSET))
 
-
         def _parse_title(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -320,7 +297,6 @@ class ContactCreate:
             return cast(None | str | Unset, data)
 
         title = _parse_title(d.pop("title", UNSET))
-
 
         def _parse_birthday(data: object) -> datetime.date | None | Unset:
             if data is None:
@@ -332,15 +308,12 @@ class ContactCreate:
                     raise TypeError()
                 birthday_type_0 = isoparse(data).date()
 
-
-
                 return birthday_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             return cast(datetime.date | None | Unset, data)
 
         birthday = _parse_birthday(d.pop("birthday", UNSET))
-
 
         def _parse_how_we_met(data: object) -> None | str | Unset:
             if data is None:
@@ -350,7 +323,6 @@ class ContactCreate:
             return cast(None | str | Unset, data)
 
         how_we_met = _parse_how_we_met(d.pop("how_we_met", UNSET))
-
 
         is_favorite = d.pop("is_favorite", UNSET)
 
@@ -368,15 +340,12 @@ class ContactCreate:
                     raise TypeError()
                 deceased_at_type_0 = isoparse(data).date()
 
-
-
                 return deceased_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             return cast(datetime.date | None | Unset, data)
 
         deceased_at = _parse_deceased_at(d.pop("deceased_at", UNSET))
-
 
         def _parse_contact_frequency_days(data: object) -> int | None | Unset:
             if data is None:
@@ -387,7 +356,6 @@ class ContactCreate:
 
         contact_frequency_days = _parse_contact_frequency_days(d.pop("contact_frequency_days", UNSET))
 
-
         def _parse_stage(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -396,7 +364,6 @@ class ContactCreate:
             return cast(None | str | Unset, data)
 
         stage = _parse_stage(d.pop("stage", UNSET))
-
 
         def _parse_tag_ids(data: object) -> list[UUID] | None | Unset:
             if data is None:
@@ -408,10 +375,8 @@ class ContactCreate:
                     raise TypeError()
                 tag_ids_type_0 = []
                 _tag_ids_type_0 = data
-                for tag_ids_type_0_item_data in (_tag_ids_type_0):
+                for tag_ids_type_0_item_data in _tag_ids_type_0:
                     tag_ids_type_0_item = UUID(tag_ids_type_0_item_data)
-
-
 
                     tag_ids_type_0.append(tag_ids_type_0_item)
 
@@ -421,7 +386,6 @@ class ContactCreate:
             return cast(list[UUID] | None | Unset, data)
 
         tag_ids = _parse_tag_ids(d.pop("tag_ids", UNSET))
-
 
         def _parse_group_ids(data: object) -> list[UUID] | None | Unset:
             if data is None:
@@ -433,10 +397,8 @@ class ContactCreate:
                     raise TypeError()
                 group_ids_type_0 = []
                 _group_ids_type_0 = data
-                for group_ids_type_0_item_data in (_group_ids_type_0):
+                for group_ids_type_0_item_data in _group_ids_type_0:
                     group_ids_type_0_item = UUID(group_ids_type_0_item_data)
-
-
 
                     group_ids_type_0.append(group_ids_type_0_item)
 
@@ -446,7 +408,6 @@ class ContactCreate:
             return cast(list[UUID] | None | Unset, data)
 
         group_ids = _parse_group_ids(d.pop("group_ids", UNSET))
-
 
         contact_create = cls(
             first_name=first_name,
@@ -469,7 +430,6 @@ class ContactCreate:
             tag_ids=tag_ids,
             group_ids=group_ids,
         )
-
 
         contact_create.additional_properties = d
         return contact_create

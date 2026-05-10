@@ -1,39 +1,30 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
+from typing import Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
-from ..types import UNSET, Unset
-from typing import cast
-
-
-
-
-
-
 T = TypeVar("T", bound="AddressUpdate")
-
 
 
 @_attrs_define
 class AddressUpdate:
-    """ 
-        Attributes:
-            label (None | str | Unset):
-            street (None | str | Unset):
-            extended (None | str | Unset):
-            city (None | str | Unset):
-            region (None | str | Unset):
-            postal_code (None | str | Unset):
-            country (None | str | Unset):
-            latitude (float | None | Unset):
-            longitude (float | None | Unset):
-     """
+    """
+    Attributes:
+        label (None | str | Unset):
+        street (None | str | Unset):
+        extended (None | str | Unset):
+        city (None | str | Unset):
+        region (None | str | Unset):
+        postal_code (None | str | Unset):
+        country (None | str | Unset):
+        latitude (float | None | Unset):
+        longitude (float | None | Unset):
+    """
 
     label: None | str | Unset = UNSET
     street: None | str | Unset = UNSET
@@ -45,10 +36,6 @@ class AddressUpdate:
     latitude: float | None | Unset = UNSET
     longitude: float | None | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
-
-
-
 
     def to_dict(self) -> dict[str, Any]:
         label: None | str | Unset
@@ -105,11 +92,9 @@ class AddressUpdate:
         else:
             longitude = self.longitude
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if label is not UNSET:
             field_dict["label"] = label
         if street is not UNSET:
@@ -131,11 +116,10 @@ class AddressUpdate:
 
         return field_dict
 
-
-
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
+
         def _parse_label(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -144,7 +128,6 @@ class AddressUpdate:
             return cast(None | str | Unset, data)
 
         label = _parse_label(d.pop("label", UNSET))
-
 
         def _parse_street(data: object) -> None | str | Unset:
             if data is None:
@@ -155,7 +138,6 @@ class AddressUpdate:
 
         street = _parse_street(d.pop("street", UNSET))
 
-
         def _parse_extended(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -164,7 +146,6 @@ class AddressUpdate:
             return cast(None | str | Unset, data)
 
         extended = _parse_extended(d.pop("extended", UNSET))
-
 
         def _parse_city(data: object) -> None | str | Unset:
             if data is None:
@@ -175,7 +156,6 @@ class AddressUpdate:
 
         city = _parse_city(d.pop("city", UNSET))
 
-
         def _parse_region(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -184,7 +164,6 @@ class AddressUpdate:
             return cast(None | str | Unset, data)
 
         region = _parse_region(d.pop("region", UNSET))
-
 
         def _parse_postal_code(data: object) -> None | str | Unset:
             if data is None:
@@ -195,7 +174,6 @@ class AddressUpdate:
 
         postal_code = _parse_postal_code(d.pop("postal_code", UNSET))
 
-
         def _parse_country(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -204,7 +182,6 @@ class AddressUpdate:
             return cast(None | str | Unset, data)
 
         country = _parse_country(d.pop("country", UNSET))
-
 
         def _parse_latitude(data: object) -> float | None | Unset:
             if data is None:
@@ -215,7 +192,6 @@ class AddressUpdate:
 
         latitude = _parse_latitude(d.pop("latitude", UNSET))
 
-
         def _parse_longitude(data: object) -> float | None | Unset:
             if data is None:
                 return data
@@ -224,7 +200,6 @@ class AddressUpdate:
             return cast(float | None | Unset, data)
 
         longitude = _parse_longitude(d.pop("longitude", UNSET))
-
 
         address_update = cls(
             label=label,
@@ -237,7 +212,6 @@ class AddressUpdate:
             latitude=latitude,
             longitude=longitude,
         )
-
 
         address_update.additional_properties = d
         return address_update

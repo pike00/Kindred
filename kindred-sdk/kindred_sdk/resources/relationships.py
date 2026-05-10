@@ -1,16 +1,15 @@
 """Relationships resource for Kindred SDK."""
 
-from personal_crm_client import AuthenticatedClient, Client
-from personal_crm_client.models import (
-    RelationshipCreate,
-    RelationshipUpdate,
-    RelationshipPublic,
-    RelationshipsPublic,
-    HTTPValidationError,
-)
 from uuid import UUID
 
-from typing import Optional
+from personal_crm_client import AuthenticatedClient, Client
+from personal_crm_client.models import (
+    HTTPValidationError,
+    RelationshipCreate,
+    RelationshipPublic,
+    RelationshipsPublic,
+    RelationshipUpdate,
+)
 
 
 class RelationshipsResource:
@@ -24,7 +23,7 @@ class RelationshipsResource:
         *,
         skip: int = 0,
         limit: int = 100,
-        contact_id: Optional[UUID] = None,
+        contact_id: UUID | None = None,
     ) -> RelationshipsPublic | HTTPValidationError | None:
         """List relationships."""
         from personal_crm_client.api.relationships.relationships_list_relationships import sync
@@ -41,7 +40,7 @@ class RelationshipsResource:
         *,
         skip: int = 0,
         limit: int = 100,
-        contact_id: Optional[UUID] = None,
+        contact_id: UUID | None = None,
     ) -> RelationshipsPublic | HTTPValidationError | None:
         """Async version of list()."""
         from personal_crm_client.api.relationships.relationships_list_relationships import asyncio
@@ -55,10 +54,9 @@ class RelationshipsResource:
 
     def get(self, relationship_id: UUID) -> RelationshipPublic | HTTPValidationError | None:
         """Get a single relationship by ID."""
-        from personal_crm_client.api.relationships.relationships_list_relationships import sync
 
         relationships = self.list()
-        if relationships and hasattr(relationships, 'data'):
+        if relationships and hasattr(relationships, "data"):
             for rel in relationships.data:
                 if rel.id == relationship_id:
                     return rel
@@ -98,25 +96,19 @@ class RelationshipsResource:
 
         return sync(client=self._client, relationship_id=relationship_id)
 
-    async def delete_async(
-        self, relationship_id: UUID
-    ) -> RelationshipPublic | HTTPValidationError | None:
+    async def delete_async(self, relationship_id: UUID) -> RelationshipPublic | HTTPValidationError | None:
         """Async version of delete()."""
         from personal_crm_client.api.relationships.relationships_delete_relationship import asyncio
 
         return await asyncio(client=self._client, relationship_id=relationship_id)
 
-    def lookup_inverse(
-        self, relationship_type: str
-    ) -> object | HTTPValidationError | None:
+    def lookup_inverse(self, relationship_type: str) -> object | HTTPValidationError | None:
         """Look up the inverse of a relationship type."""
         from personal_crm_client.api.relationships.relationships_lookup_inverse import sync
 
         return sync(client=self._client, relationship_type=relationship_type)
 
-    async def lookup_inverse_async(
-        self, relationship_type: str
-    ) -> object | HTTPValidationError | None:
+    async def lookup_inverse_async(self, relationship_type: str) -> object | HTTPValidationError | None:
         """Async version of lookup_inverse()."""
         from personal_crm_client.api.relationships.relationships_lookup_inverse import asyncio
 

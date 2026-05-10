@@ -1,16 +1,15 @@
 """Interactions resource for Kindred SDK."""
 
-from personal_crm_client import AuthenticatedClient, Client
-from personal_crm_client.models import (
-    InteractionCreate,
-    InteractionUpdate,
-    InteractionPublic,
-    InteractionsPublic,
-    HTTPValidationError,
-)
 from uuid import UUID
 
-from typing import Optional
+from personal_crm_client import AuthenticatedClient, Client
+from personal_crm_client.models import (
+    HTTPValidationError,
+    InteractionCreate,
+    InteractionPublic,
+    InteractionsPublic,
+    InteractionUpdate,
+)
 
 
 class InteractionsResource:
@@ -24,8 +23,8 @@ class InteractionsResource:
         *,
         skip: int = 0,
         limit: int = 100,
-        contact_id: Optional[UUID] = None,
-        search: Optional[str] = None,
+        contact_id: UUID | None = None,
+        search: str | None = None,
     ) -> InteractionsPublic | HTTPValidationError | None:
         """List interactions."""
         from personal_crm_client.api.interactions.interactions_list_interactions import sync
@@ -43,8 +42,8 @@ class InteractionsResource:
         *,
         skip: int = 0,
         limit: int = 100,
-        contact_id: Optional[UUID] = None,
-        search: Optional[str] = None,
+        contact_id: UUID | None = None,
+        search: str | None = None,
     ) -> InteractionsPublic | HTTPValidationError | None:
         """Async version of list()."""
         from personal_crm_client.api.interactions.interactions_list_interactions import asyncio
@@ -63,33 +62,25 @@ class InteractionsResource:
 
         return sync(client=self._client, interaction_id=interaction_id)
 
-    async def get_async(
-        self, interaction_id: UUID
-    ) -> InteractionPublic | HTTPValidationError | None:
+    async def get_async(self, interaction_id: UUID) -> InteractionPublic | HTTPValidationError | None:
         """Async version of get()."""
         from personal_crm_client.api.interactions.interactions_get_interaction import asyncio
 
         return await asyncio(client=self._client, interaction_id=interaction_id)
 
-    def create(
-        self, item: InteractionCreate
-    ) -> InteractionPublic | HTTPValidationError | None:
+    def create(self, item: InteractionCreate) -> InteractionPublic | HTTPValidationError | None:
         """Create a new interaction."""
         from personal_crm_client.api.interactions.interactions_create_interaction import sync
 
         return sync(client=self._client, body=item)
 
-    async def create_async(
-        self, item: InteractionCreate
-    ) -> InteractionPublic | HTTPValidationError | None:
+    async def create_async(self, item: InteractionCreate) -> InteractionPublic | HTTPValidationError | None:
         """Async version of create()."""
         from personal_crm_client.api.interactions.interactions_create_interaction import asyncio
 
         return await asyncio(client=self._client, body=item)
 
-    def update(
-        self, interaction_id: UUID, item: InteractionUpdate
-    ) -> InteractionPublic | HTTPValidationError | None:
+    def update(self, interaction_id: UUID, item: InteractionUpdate) -> InteractionPublic | HTTPValidationError | None:
         """Update an existing interaction."""
         from personal_crm_client.api.interactions.interactions_update_interaction import sync
 
@@ -109,9 +100,7 @@ class InteractionsResource:
 
         return sync(client=self._client, interaction_id=interaction_id)
 
-    async def delete_async(
-        self, interaction_id: UUID
-    ) -> InteractionPublic | HTTPValidationError | None:
+    async def delete_async(self, interaction_id: UUID) -> InteractionPublic | HTTPValidationError | None:
         """Async version of delete()."""
         from personal_crm_client.api.interactions.interactions_delete_interaction import asyncio
 

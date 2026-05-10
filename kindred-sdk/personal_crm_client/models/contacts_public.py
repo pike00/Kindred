@@ -1,78 +1,60 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-from ..types import UNSET, Unset
-
-from typing import cast
-
 if TYPE_CHECKING:
-  from ..models.contact_public import ContactPublic
-
-
-
+    from ..models.contact_public import ContactPublic
 
 
 T = TypeVar("T", bound="ContactsPublic")
 
 
-
 @_attrs_define
 class ContactsPublic:
-    """ 
-        Attributes:
-            data (list[ContactPublic]):
-            count (int):
-     """
+    """
+    Attributes:
+        data (list[ContactPublic]):
+        count (int):
+    """
 
     data: list[ContactPublic]
     count: int
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
-
-
-
-
     def to_dict(self) -> dict[str, Any]:
-        from ..models.contact_public import ContactPublic
         data = []
         for data_item_data in self.data:
             data_item = data_item_data.to_dict()
             data.append(data_item)
 
-
-
         count = self.count
-
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-            "data": data,
-            "count": count,
-        })
+        field_dict.update(
+            {
+                "data": data,
+                "count": count,
+            }
+        )
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         from ..models.contact_public import ContactPublic
+
         d = dict(src_dict)
         data = []
         _data = d.pop("data")
-        for data_item_data in (_data):
+        for data_item_data in _data:
             data_item = ContactPublic.from_dict(data_item_data)
 
-
-
             data.append(data_item)
-
 
         count = d.pop("count")
 
@@ -80,7 +62,6 @@ class ContactsPublic:
             data=data,
             count=count,
         )
-
 
         contacts_public.additional_properties = d
         return contacts_public

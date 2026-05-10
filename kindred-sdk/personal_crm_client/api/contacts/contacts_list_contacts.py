@@ -1,19 +1,14 @@
 from http import HTTPStatus
-from typing import Any, cast
-from urllib.parse import quote
+from typing import Any
+from uuid import UUID
 
 import httpx
 
-from ...client import AuthenticatedClient, Client
-from ...types import Response, UNSET
 from ... import errors
-
+from ...client import AuthenticatedClient, Client
 from ...models.contacts_public import ContactsPublic
 from ...models.http_validation_error import HTTPValidationError
-from ...types import UNSET, Unset
-from typing import cast
-from uuid import UUID
-
+from ...types import UNSET, Response, Unset
 
 
 def _get_kwargs(
@@ -29,12 +24,7 @@ def _get_kwargs(
     include_deleted: bool | Unset = False,
     only_deleted: bool | Unset = False,
     ids: list[UUID] | None | Unset = UNSET,
-
 ) -> dict[str, Any]:
-    
-
-    
-
     params: dict[str, Any] = {}
 
     params["skip"] = skip
@@ -100,14 +90,11 @@ def _get_kwargs(
             ids_type_0_item = str(ids_type_0_item_data)
             json_ids.append(ids_type_0_item)
 
-
     else:
         json_ids = ids
     params["ids"] = json_ids
 
-
     params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
-
 
     _kwargs: dict[str, Any] = {
         "method": "get",
@@ -115,23 +102,19 @@ def _get_kwargs(
         "params": params,
     }
 
-
     return _kwargs
 
 
-
-def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> ContactsPublic | HTTPValidationError | None:
+def _parse_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> ContactsPublic | HTTPValidationError | None:
     if response.status_code == 200:
         response_200 = ContactsPublic.from_dict(response.json())
-
-
 
         return response_200
 
     if response.status_code == 422:
         response_422 = HTTPValidationError.from_dict(response.json())
-
-
 
         return response_422
 
@@ -141,7 +124,9 @@ def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Res
         return None
 
 
-def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[ContactsPublic | HTTPValidationError]:
+def _build_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> Response[ContactsPublic | HTTPValidationError]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -164,9 +149,8 @@ def sync_detailed(
     include_deleted: bool | Unset = False,
     only_deleted: bool | Unset = False,
     ids: list[UUID] | None | Unset = UNSET,
-
 ) -> Response[ContactsPublic | HTTPValidationError]:
-    """ List Contacts
+    """List Contacts
 
      List contacts with filtering.
 
@@ -197,22 +181,20 @@ def sync_detailed(
 
     Returns:
         Response[ContactsPublic | HTTPValidationError]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         skip=skip,
-limit=limit,
-search=search,
-tag_id=tag_id,
-group_id=group_id,
-is_favorite=is_favorite,
-is_archived=is_archived,
-stage=stage,
-include_deleted=include_deleted,
-only_deleted=only_deleted,
-ids=ids,
-
+        limit=limit,
+        search=search,
+        tag_id=tag_id,
+        group_id=group_id,
+        is_favorite=is_favorite,
+        is_archived=is_archived,
+        stage=stage,
+        include_deleted=include_deleted,
+        only_deleted=only_deleted,
+        ids=ids,
     )
 
     response = client.get_httpx_client().request(
@@ -220,6 +202,7 @@ ids=ids,
     )
 
     return _build_response(client=client, response=response)
+
 
 def sync(
     *,
@@ -235,9 +218,8 @@ def sync(
     include_deleted: bool | Unset = False,
     only_deleted: bool | Unset = False,
     ids: list[UUID] | None | Unset = UNSET,
-
 ) -> ContactsPublic | HTTPValidationError | None:
-    """ List Contacts
+    """List Contacts
 
      List contacts with filtering.
 
@@ -268,24 +250,23 @@ def sync(
 
     Returns:
         ContactsPublic | HTTPValidationError
-     """
-
+    """
 
     return sync_detailed(
         client=client,
-skip=skip,
-limit=limit,
-search=search,
-tag_id=tag_id,
-group_id=group_id,
-is_favorite=is_favorite,
-is_archived=is_archived,
-stage=stage,
-include_deleted=include_deleted,
-only_deleted=only_deleted,
-ids=ids,
-
+        skip=skip,
+        limit=limit,
+        search=search,
+        tag_id=tag_id,
+        group_id=group_id,
+        is_favorite=is_favorite,
+        is_archived=is_archived,
+        stage=stage,
+        include_deleted=include_deleted,
+        only_deleted=only_deleted,
+        ids=ids,
     ).parsed
+
 
 async def asyncio_detailed(
     *,
@@ -301,9 +282,8 @@ async def asyncio_detailed(
     include_deleted: bool | Unset = False,
     only_deleted: bool | Unset = False,
     ids: list[UUID] | None | Unset = UNSET,
-
 ) -> Response[ContactsPublic | HTTPValidationError]:
-    """ List Contacts
+    """List Contacts
 
      List contacts with filtering.
 
@@ -334,29 +314,26 @@ async def asyncio_detailed(
 
     Returns:
         Response[ContactsPublic | HTTPValidationError]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         skip=skip,
-limit=limit,
-search=search,
-tag_id=tag_id,
-group_id=group_id,
-is_favorite=is_favorite,
-is_archived=is_archived,
-stage=stage,
-include_deleted=include_deleted,
-only_deleted=only_deleted,
-ids=ids,
-
+        limit=limit,
+        search=search,
+        tag_id=tag_id,
+        group_id=group_id,
+        is_favorite=is_favorite,
+        is_archived=is_archived,
+        stage=stage,
+        include_deleted=include_deleted,
+        only_deleted=only_deleted,
+        ids=ids,
     )
 
-    response = await client.get_async_httpx_client().request(
-        **kwargs
-    )
+    response = await client.get_async_httpx_client().request(**kwargs)
 
     return _build_response(client=client, response=response)
+
 
 async def asyncio(
     *,
@@ -372,9 +349,8 @@ async def asyncio(
     include_deleted: bool | Unset = False,
     only_deleted: bool | Unset = False,
     ids: list[UUID] | None | Unset = UNSET,
-
 ) -> ContactsPublic | HTTPValidationError | None:
-    """ List Contacts
+    """List Contacts
 
      List contacts with filtering.
 
@@ -405,21 +381,21 @@ async def asyncio(
 
     Returns:
         ContactsPublic | HTTPValidationError
-     """
+    """
 
-
-    return (await asyncio_detailed(
-        client=client,
-skip=skip,
-limit=limit,
-search=search,
-tag_id=tag_id,
-group_id=group_id,
-is_favorite=is_favorite,
-is_archived=is_archived,
-stage=stage,
-include_deleted=include_deleted,
-only_deleted=only_deleted,
-ids=ids,
-
-    )).parsed
+    return (
+        await asyncio_detailed(
+            client=client,
+            skip=skip,
+            limit=limit,
+            search=search,
+            tag_id=tag_id,
+            group_id=group_id,
+            is_favorite=is_favorite,
+            is_archived=is_archived,
+            stage=stage,
+            include_deleted=include_deleted,
+            only_deleted=only_deleted,
+            ids=ids,
+        )
+    ).parsed

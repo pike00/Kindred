@@ -1,44 +1,35 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
+from typing import Any, TypeVar, cast
+from uuid import UUID
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
-from ..types import UNSET, Unset
-from typing import cast
-from uuid import UUID
-
-
-
-
-
-
 T = TypeVar("T", bound="AddressCreate")
-
 
 
 @_attrs_define
 class AddressCreate:
-    """ 
-        Attributes:
-            contact_id (UUID):
-            label (str | Unset): Label like "home", "work", "other". Default: 'home'.
-            street (None | str | Unset): Street line 1.
-            extended (None | str | Unset): Apartment, suite, floor, etc.
-            city (None | str | Unset): City.
-            region (None | str | Unset): State, province, or region.
-            postal_code (None | str | Unset): ZIP or postal code.
-            country (None | str | Unset): Country.
-            latitude (float | None | Unset): Geocoded latitude; used for map visualization.
-            longitude (float | None | Unset): Geocoded longitude; used for map visualization.
-     """
+    """
+    Attributes:
+        contact_id (UUID):
+        label (str | Unset): Label like "home", "work", "other". Default: 'home'.
+        street (None | str | Unset): Street line 1.
+        extended (None | str | Unset): Apartment, suite, floor, etc.
+        city (None | str | Unset): City.
+        region (None | str | Unset): State, province, or region.
+        postal_code (None | str | Unset): ZIP or postal code.
+        country (None | str | Unset): Country.
+        latitude (float | None | Unset): Geocoded latitude; used for map visualization.
+        longitude (float | None | Unset): Geocoded longitude; used for map visualization.
+    """
 
     contact_id: UUID
-    label: str | Unset = 'home'
+    label: str | Unset = "home"
     street: None | str | Unset = UNSET
     extended: None | str | Unset = UNSET
     city: None | str | Unset = UNSET
@@ -48,10 +39,6 @@ class AddressCreate:
     latitude: float | None | Unset = UNSET
     longitude: float | None | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
-
-
-
 
     def to_dict(self) -> dict[str, Any]:
         contact_id = str(self.contact_id)
@@ -106,12 +93,13 @@ class AddressCreate:
         else:
             longitude = self.longitude
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-            "contact_id": contact_id,
-        })
+        field_dict.update(
+            {
+                "contact_id": contact_id,
+            }
+        )
         if label is not UNSET:
             field_dict["label"] = label
         if street is not UNSET:
@@ -133,15 +121,10 @@ class AddressCreate:
 
         return field_dict
 
-
-
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
         contact_id = UUID(d.pop("contact_id"))
-
-
-
 
         label = d.pop("label", UNSET)
 
@@ -154,7 +137,6 @@ class AddressCreate:
 
         street = _parse_street(d.pop("street", UNSET))
 
-
         def _parse_extended(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -163,7 +145,6 @@ class AddressCreate:
             return cast(None | str | Unset, data)
 
         extended = _parse_extended(d.pop("extended", UNSET))
-
 
         def _parse_city(data: object) -> None | str | Unset:
             if data is None:
@@ -174,7 +155,6 @@ class AddressCreate:
 
         city = _parse_city(d.pop("city", UNSET))
 
-
         def _parse_region(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -183,7 +163,6 @@ class AddressCreate:
             return cast(None | str | Unset, data)
 
         region = _parse_region(d.pop("region", UNSET))
-
 
         def _parse_postal_code(data: object) -> None | str | Unset:
             if data is None:
@@ -194,7 +173,6 @@ class AddressCreate:
 
         postal_code = _parse_postal_code(d.pop("postal_code", UNSET))
 
-
         def _parse_country(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -203,7 +181,6 @@ class AddressCreate:
             return cast(None | str | Unset, data)
 
         country = _parse_country(d.pop("country", UNSET))
-
 
         def _parse_latitude(data: object) -> float | None | Unset:
             if data is None:
@@ -214,7 +191,6 @@ class AddressCreate:
 
         latitude = _parse_latitude(d.pop("latitude", UNSET))
 
-
         def _parse_longitude(data: object) -> float | None | Unset:
             if data is None:
                 return data
@@ -223,7 +199,6 @@ class AddressCreate:
             return cast(float | None | Unset, data)
 
         longitude = _parse_longitude(d.pop("longitude", UNSET))
-
 
         address_create = cls(
             contact_id=contact_id,
@@ -237,7 +212,6 @@ class AddressCreate:
             latitude=latitude,
             longitude=longitude,
         )
-
 
         address_create.additional_properties = d
         return address_create

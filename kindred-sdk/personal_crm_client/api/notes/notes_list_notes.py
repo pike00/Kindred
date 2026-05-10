@@ -1,19 +1,15 @@
 from http import HTTPStatus
-from typing import Any, cast
+from typing import Any
 from urllib.parse import quote
+from uuid import UUID
 
 import httpx
 
-from ...client import AuthenticatedClient, Client
-from ...types import Response, UNSET
 from ... import errors
-
+from ...client import AuthenticatedClient, Client
 from ...models.http_validation_error import HTTPValidationError
 from ...models.notes_public import NotesPublic
-from ...types import UNSET, Unset
-from typing import cast
-from uuid import UUID
-
+from ...types import UNSET, Response, Unset
 
 
 def _get_kwargs(
@@ -21,45 +17,36 @@ def _get_kwargs(
     *,
     skip: int | Unset = 0,
     limit: int | Unset = 100,
-
 ) -> dict[str, Any]:
-    
-
-    
-
     params: dict[str, Any] = {}
 
     params["skip"] = skip
 
     params["limit"] = limit
 
-
     params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
-
 
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": "/api/v1/notes/contact/{contact_id}".format(contact_id=quote(str(contact_id), safe=""),),
+        "url": "/api/v1/notes/contact/{contact_id}".format(
+            contact_id=quote(str(contact_id), safe=""),
+        ),
         "params": params,
     }
-
 
     return _kwargs
 
 
-
-def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> HTTPValidationError | NotesPublic | None:
+def _parse_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> HTTPValidationError | NotesPublic | None:
     if response.status_code == 200:
         response_200 = NotesPublic.from_dict(response.json())
-
-
 
         return response_200
 
     if response.status_code == 422:
         response_422 = HTTPValidationError.from_dict(response.json())
-
-
 
         return response_422
 
@@ -69,7 +56,9 @@ def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Res
         return None
 
 
-def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[HTTPValidationError | NotesPublic]:
+def _build_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> Response[HTTPValidationError | NotesPublic]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -84,9 +73,8 @@ def sync_detailed(
     client: AuthenticatedClient,
     skip: int | Unset = 0,
     limit: int | Unset = 100,
-
 ) -> Response[HTTPValidationError | NotesPublic]:
-    """ List Notes
+    """List Notes
 
      List notes for a contact.
 
@@ -101,14 +89,12 @@ def sync_detailed(
 
     Returns:
         Response[HTTPValidationError | NotesPublic]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         contact_id=contact_id,
-skip=skip,
-limit=limit,
-
+        skip=skip,
+        limit=limit,
     )
 
     response = client.get_httpx_client().request(
@@ -117,15 +103,15 @@ limit=limit,
 
     return _build_response(client=client, response=response)
 
+
 def sync(
     contact_id: UUID,
     *,
     client: AuthenticatedClient,
     skip: int | Unset = 0,
     limit: int | Unset = 100,
-
 ) -> HTTPValidationError | NotesPublic | None:
-    """ List Notes
+    """List Notes
 
      List notes for a contact.
 
@@ -140,16 +126,15 @@ def sync(
 
     Returns:
         HTTPValidationError | NotesPublic
-     """
-
+    """
 
     return sync_detailed(
         contact_id=contact_id,
-client=client,
-skip=skip,
-limit=limit,
-
+        client=client,
+        skip=skip,
+        limit=limit,
     ).parsed
+
 
 async def asyncio_detailed(
     contact_id: UUID,
@@ -157,9 +142,8 @@ async def asyncio_detailed(
     client: AuthenticatedClient,
     skip: int | Unset = 0,
     limit: int | Unset = 100,
-
 ) -> Response[HTTPValidationError | NotesPublic]:
-    """ List Notes
+    """List Notes
 
      List notes for a contact.
 
@@ -174,21 +158,18 @@ async def asyncio_detailed(
 
     Returns:
         Response[HTTPValidationError | NotesPublic]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         contact_id=contact_id,
-skip=skip,
-limit=limit,
-
+        skip=skip,
+        limit=limit,
     )
 
-    response = await client.get_async_httpx_client().request(
-        **kwargs
-    )
+    response = await client.get_async_httpx_client().request(**kwargs)
 
     return _build_response(client=client, response=response)
+
 
 async def asyncio(
     contact_id: UUID,
@@ -196,9 +177,8 @@ async def asyncio(
     client: AuthenticatedClient,
     skip: int | Unset = 0,
     limit: int | Unset = 100,
-
 ) -> HTTPValidationError | NotesPublic | None:
-    """ List Notes
+    """List Notes
 
      List notes for a contact.
 
@@ -213,13 +193,13 @@ async def asyncio(
 
     Returns:
         HTTPValidationError | NotesPublic
-     """
+    """
 
-
-    return (await asyncio_detailed(
-        contact_id=contact_id,
-client=client,
-skip=skip,
-limit=limit,
-
-    )).parsed
+    return (
+        await asyncio_detailed(
+            contact_id=contact_id,
+            client=client,
+            skip=skip,
+            limit=limit,
+        )
+    ).parsed

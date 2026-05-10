@@ -1,4 +1,4 @@
-""" Contains all the data models used in inputs/outputs """
+"""Contains all the data models used in inputs/outputs"""
 
 from .activity_log_public import ActivityLogPublic
 from .activity_log_public_changes_json_type_0 import ActivityLogPublicChangesJsonType0
@@ -74,7 +74,9 @@ from .private_user_create import PrivateUserCreate
 from .relationship_create import RelationshipCreate
 from .relationship_public import RelationshipPublic
 from .relationship_update import RelationshipUpdate
-from .relationships_lookup_inverse_response_relationships_lookup_inverse import RelationshipsLookupInverseResponseRelationshipsLookupInverse
+from .relationships_lookup_inverse_response_relationships_lookup_inverse import (
+    RelationshipsLookupInverseResponseRelationshipsLookupInverse,
+)
 from .reminder_create import ReminderCreate
 from .reminder_frequency import ReminderFrequency
 from .reminder_public import ReminderPublic
@@ -84,7 +86,9 @@ from .share_in import ShareIn
 from .tag_create import TagCreate
 from .tag_public import TagPublic
 from .tag_share_public import TagSharePublic
-from .tag_shares_delete_tag_share_response_tag_shares_delete_tag_share import TagSharesDeleteTagShareResponseTagSharesDeleteTagShare
+from .tag_shares_delete_tag_share_response_tag_shares_delete_tag_share import (
+    TagSharesDeleteTagShareResponseTagSharesDeleteTagShare,
+)
 from .tag_shares_public import TagSharesPublic
 from .tag_update import TagUpdate
 from .tags_public import TagsPublic

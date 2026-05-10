@@ -1,41 +1,33 @@
 from http import HTTPStatus
-from typing import Any, cast
+from typing import Any
 from urllib.parse import quote
+from uuid import UUID
 
 import httpx
 
-from ...client import AuthenticatedClient, Client
-from ...types import Response, UNSET
 from ... import errors
-
+from ...client import AuthenticatedClient, Client
 from ...models.http_validation_error import HTTPValidationError
 from ...models.pet_public import PetPublic
 from ...models.pet_update import PetUpdate
-from typing import cast
-from uuid import UUID
-
+from ...types import Response
 
 
 def _get_kwargs(
     pet_id: UUID,
     *,
     body: PetUpdate,
-
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
-
-    
-
-    
-
     _kwargs: dict[str, Any] = {
         "method": "patch",
-        "url": "/api/v1/pets/{pet_id}".format(pet_id=quote(str(pet_id), safe=""),),
+        "url": "/api/v1/pets/{pet_id}".format(
+            pet_id=quote(str(pet_id), safe=""),
+        ),
     }
 
     _kwargs["json"] = body.to_dict()
-
 
     headers["Content-Type"] = "application/json"
 
@@ -43,19 +35,16 @@ def _get_kwargs(
     return _kwargs
 
 
-
-def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> HTTPValidationError | PetPublic | None:
+def _parse_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> HTTPValidationError | PetPublic | None:
     if response.status_code == 200:
         response_200 = PetPublic.from_dict(response.json())
-
-
 
         return response_200
 
     if response.status_code == 422:
         response_422 = HTTPValidationError.from_dict(response.json())
-
-
 
         return response_422
 
@@ -65,7 +54,9 @@ def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Res
         return None
 
 
-def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[HTTPValidationError | PetPublic]:
+def _build_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> Response[HTTPValidationError | PetPublic]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -79,9 +70,8 @@ def sync_detailed(
     *,
     client: AuthenticatedClient,
     body: PetUpdate,
-
 ) -> Response[HTTPValidationError | PetPublic]:
-    """ Update Pet
+    """Update Pet
 
      Update a pet.
 
@@ -95,13 +85,11 @@ def sync_detailed(
 
     Returns:
         Response[HTTPValidationError | PetPublic]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         pet_id=pet_id,
-body=body,
-
+        body=body,
     )
 
     response = client.get_httpx_client().request(
@@ -110,14 +98,14 @@ body=body,
 
     return _build_response(client=client, response=response)
 
+
 def sync(
     pet_id: UUID,
     *,
     client: AuthenticatedClient,
     body: PetUpdate,
-
 ) -> HTTPValidationError | PetPublic | None:
-    """ Update Pet
+    """Update Pet
 
      Update a pet.
 
@@ -131,24 +119,22 @@ def sync(
 
     Returns:
         HTTPValidationError | PetPublic
-     """
-
+    """
 
     return sync_detailed(
         pet_id=pet_id,
-client=client,
-body=body,
-
+        client=client,
+        body=body,
     ).parsed
+
 
 async def asyncio_detailed(
     pet_id: UUID,
     *,
     client: AuthenticatedClient,
     body: PetUpdate,
-
 ) -> Response[HTTPValidationError | PetPublic]:
-    """ Update Pet
+    """Update Pet
 
      Update a pet.
 
@@ -162,29 +148,25 @@ async def asyncio_detailed(
 
     Returns:
         Response[HTTPValidationError | PetPublic]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         pet_id=pet_id,
-body=body,
-
+        body=body,
     )
 
-    response = await client.get_async_httpx_client().request(
-        **kwargs
-    )
+    response = await client.get_async_httpx_client().request(**kwargs)
 
     return _build_response(client=client, response=response)
+
 
 async def asyncio(
     pet_id: UUID,
     *,
     client: AuthenticatedClient,
     body: PetUpdate,
-
 ) -> HTTPValidationError | PetPublic | None:
-    """ Update Pet
+    """Update Pet
 
      Update a pet.
 
@@ -198,12 +180,12 @@ async def asyncio(
 
     Returns:
         HTTPValidationError | PetPublic
-     """
+    """
 
-
-    return (await asyncio_detailed(
-        pet_id=pet_id,
-client=client,
-body=body,
-
-    )).parsed
+    return (
+        await asyncio_detailed(
+            pet_id=pet_id,
+            client=client,
+            body=body,
+        )
+    ).parsed

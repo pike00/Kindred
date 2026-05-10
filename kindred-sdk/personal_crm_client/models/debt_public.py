@@ -1,58 +1,45 @@
 from __future__ import annotations
 
+import datetime
 from collections.abc import Mapping
-from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
+from typing import Any, TypeVar, cast
+from uuid import UUID
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-
-from ..types import UNSET, Unset
+from dateutil.parser import isoparse
 
 from ..models.debt_direction import DebtDirection
 from ..types import UNSET, Unset
-from dateutil.parser import isoparse
-from typing import cast
-from uuid import UUID
-import datetime
-
-
-
-
-
 
 T = TypeVar("T", bound="DebtPublic")
 
 
-
 @_attrs_define
 class DebtPublic:
-    """ 
-        Attributes:
-            direction (DebtDirection):
-            amount (float): Amount owed; must be greater than zero.
-            id (UUID):
-            contact_id (UUID):
-            created_at (datetime.datetime):
-            currency (str | Unset): ISO 4217 currency code. Default: 'USD'.
-            reason (None | str | Unset): What the debt is for.
-            is_settled (bool | Unset): Marked paid off. Default: False.
-            settled_at (datetime.date | None | Unset): Date the debt was settled.
-     """
+    """
+    Attributes:
+        direction (DebtDirection):
+        amount (float): Amount owed; must be greater than zero.
+        id (UUID):
+        contact_id (UUID):
+        created_at (datetime.datetime):
+        currency (str | Unset): ISO 4217 currency code. Default: 'USD'.
+        reason (None | str | Unset): What the debt is for.
+        is_settled (bool | Unset): Marked paid off. Default: False.
+        settled_at (datetime.date | None | Unset): Date the debt was settled.
+    """
 
     direction: DebtDirection
     amount: float
     id: UUID
     contact_id: UUID
     created_at: datetime.datetime
-    currency: str | Unset = 'USD'
+    currency: str | Unset = "USD"
     reason: None | str | Unset = UNSET
     is_settled: bool | Unset = False
     settled_at: datetime.date | None | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
-
-
-
 
     def to_dict(self) -> dict[str, Any]:
         direction = self.direction.value
@@ -83,16 +70,17 @@ class DebtPublic:
         else:
             settled_at = self.settled_at
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-            "direction": direction,
-            "amount": amount,
-            "id": id,
-            "contact_id": contact_id,
-            "created_at": created_at,
-        })
+        field_dict.update(
+            {
+                "direction": direction,
+                "amount": amount,
+                "id": id,
+                "contact_id": contact_id,
+                "created_at": created_at,
+            }
+        )
         if currency is not UNSET:
             field_dict["currency"] = currency
         if reason is not UNSET:
@@ -104,32 +92,18 @@ class DebtPublic:
 
         return field_dict
 
-
-
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
         direction = DebtDirection(d.pop("direction"))
 
-
-
-
         amount = d.pop("amount")
 
         id = UUID(d.pop("id"))
 
-
-
-
         contact_id = UUID(d.pop("contact_id"))
 
-
-
-
         created_at = isoparse(d.pop("created_at"))
-
-
-
 
         currency = d.pop("currency", UNSET)
 
@@ -141,7 +115,6 @@ class DebtPublic:
             return cast(None | str | Unset, data)
 
         reason = _parse_reason(d.pop("reason", UNSET))
-
 
         is_settled = d.pop("is_settled", UNSET)
 
@@ -155,15 +128,12 @@ class DebtPublic:
                     raise TypeError()
                 settled_at_type_0 = isoparse(data).date()
 
-
-
                 return settled_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             return cast(datetime.date | None | Unset, data)
 
         settled_at = _parse_settled_at(d.pop("settled_at", UNSET))
-
 
         debt_public = cls(
             direction=direction,
@@ -176,7 +146,6 @@ class DebtPublic:
             is_settled=is_settled,
             settled_at=settled_at,
         )
-
 
         debt_public.additional_properties = d
         return debt_public

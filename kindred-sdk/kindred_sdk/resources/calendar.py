@@ -13,9 +13,7 @@ class CalendarResource:
     def __init__(self, client: AuthenticatedClient | Client) -> None:
         self._client = client
 
-    def get_month(
-        self, *, year: int, month: int
-    ) -> CalendarMonthResponse | HTTPValidationError | None:
+    def get_month(self, *, year: int, month: int) -> CalendarMonthResponse | HTTPValidationError | None:
         """Get calendar data for a specific month."""
         from personal_crm_client.api.calendar.calendar_get_calendar_month import sync
 
@@ -25,9 +23,7 @@ class CalendarResource:
             month=month,
         )
 
-    async def get_month_async(
-        self, *, year: int, month: int
-    ) -> CalendarMonthResponse | HTTPValidationError | None:
+    async def get_month_async(self, *, year: int, month: int) -> CalendarMonthResponse | HTTPValidationError | None:
         """Async version of get_month()."""
         from personal_crm_client.api.calendar.calendar_get_calendar_month import asyncio
 

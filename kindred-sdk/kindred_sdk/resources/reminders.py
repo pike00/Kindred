@@ -1,63 +1,131 @@
-"""{resource_name} resource for Kindred SDK."""
+"""Reminders resource for Kindred SDK."""
 
-from personal_crm_client import AuthenticatedClient, Client
-from personal_crm_client.models import {model}Create, {model}Update, {models}, {model}Public
-from personal_crm_client.models import HTTPValidationError
 from uuid import UUID
 
+from personal_crm_client import AuthenticatedClient, Client
+from personal_crm_client.models import (
+    HTTPValidationError,
+    ReminderCreate,
+    ReminderPublic,
+    RemindersPublic,
+    ReminderUpdate,
+)
 
-class {class_name}:
-    """Resource for managing {module}."""
 
-    def __init__(self, client: AuthenticatedClient | Client):
+class RemindersResource:
+    """Resource for managing reminders."""
+
+    def __init__(self, client: AuthenticatedClient | Client) -> None:
         self._client = client
 
-    def list(self, *, skip: int = 0, limit: int = 100) -> {models} | HTTPValidationError | None:
-        """List {module}."""
-        from personal_crm_client.api.{module} import {list_func}
-        return {list_func}.sync(client=self._client, skip=skip, limit=limit)
+    def list(
+        self,
+        *,
+        skip: int = 0,
+        limit: int = 100,
+        contact_id: UUID | None = None,
+    ) -> RemindersPublic | HTTPValidationError | None:
+        """List reminders."""
+        from personal_crm_client.api.reminders.reminders_list_reminders import sync
 
-    async def list_async(self, *, skip: int = 0, limit: int = 100) -> {models} | HTTPValidationError | None:
+        return sync(
+            client=self._client,
+            skip=skip,
+            limit=limit,
+            contact_id=contact_id,
+        )
+
+    async def list_async(
+        self,
+        *,
+        skip: int = 0,
+        limit: int = 100,
+        contact_id: UUID | None = None,
+    ) -> RemindersPublic | HTTPValidationError | None:
         """Async version of list()."""
-        from personal_crm_client.api.{module} import {list_func}
-        return await {list_func}.asyncio(client=self._client, skip=skip, limit=limit)
+        from personal_crm_client.api.reminders.reminders_list_reminders import asyncio
 
-    def get(self, {item_id}: UUID) -> {model}Public | HTTPValidationError | None:
-        """Get a single {singular} by ID."""
-        from personal_crm_client.api.{module} import {get_func}
-        return {get_func}.sync(client=self._client, {item_id}={item_id})
+        return await asyncio(
+            client=self._client,
+            skip=skip,
+            limit=limit,
+            contact_id=contact_id,
+        )
 
-    async def get_async(self, {item_id}: UUID) -> {model}Public | HTTPValidationError | None:
+    def get(self, reminder_id: UUID) -> ReminderPublic | HTTPValidationError | None:
+        """Get a single reminder by ID."""
+        reminders = self.list()
+        if reminders and hasattr(reminders, "data"):
+            for reminder in reminders.data:
+                if reminder.id == reminder_id:
+                    return reminder
+        return None
+
+    async def get_async(self, reminder_id: UUID) -> ReminderPublic | HTTPValidationError | None:
         """Async version of get()."""
-        from personal_crm_client.api.{module} import {get_func}
-        return await {get_func}.asyncio(client=self._client, {item_id}={item_id})
+        reminders = await self.list_async()
+        if reminders and hasattr(reminders, "data"):
+            for reminder in reminders.data:
+                if reminder.id == reminder_id:
+                    return reminder
+        return None
 
-    def create(self, item: {model}Create) -> {model}Public | HTTPValidationError | None:
-        """Create a new {singular}."""
-        from personal_crm_client.api.{module} import {create_func}
-        return {create_func}.sync(client=self._client, json_body=item)
+    def create(self, item: ReminderCreate) -> ReminderPublic | HTTPValidationError | None:
+        """Create a new reminder."""
+        from personal_crm_client.api.reminders.reminders_create_reminder_route import sync
 
-    async def create_async(self, item: {model}Create) -> {model}Public | HTTPValidationError | None:
+        return sync(client=self._client, body=item)
+
+    async def create_async(self, item: ReminderCreate) -> ReminderPublic | HTTPValidationError | None:
         """Async version of create()."""
-        from personal_crm_client.api.{module} import {create_func}
-        return await {create_func}.asyncio(client=self._client, json_body=item)
+        from personal_crm_client.api.reminders.reminders_create_reminder_route import asyncio
 
-    def update(self, {item_id}: UUID, item: {model}Update) -> {model}Public | HTTPValidationError | None:
-        """Update an existing {singular}."""
-        from personal_crm_client.api.{module} import {update_func}
-        return {update_func}.sync(client=self._client, {item_id}={item_id}, json_body=item)
+        return await asyncio(client=self._client, body=item)
 
-    async def update_async(self, {item_id}: UUID, item: {model}Update) -> {model}Public | HTTPValidationError | None:
+    def update(self, reminder_id: UUID, item: ReminderUpdate) -> ReminderPublic | HTTPValidationError | None:
+        """Update an existing reminder."""
+        from personal_crm_client.api.reminders.reminders_update_reminder import sync
+
+        return sync(client=self._client, reminder_id=reminder_id, body=item)
+
+    async def update_async(
+        self, reminder_id: UUID, item: ReminderUpdate
+    ) -> ReminderPublic | HTTPValidationError | None:
         """Async version of update()."""
-        from personal_crm_client.api.{module} import {update_func}
-        return await {update_func}.asyncio(client=self._client, {item_id}={item_id}, json_body=item)
+        from personal_crm_client.api.reminders.reminders_update_reminder import asyncio
 
-    def delete(self, {item_id}: UUID) -> {model}Public | HTTPValidationError | None:
-        """Delete a {singular}."""
-        from personal_crm_client.api.{module} import {delete_func}
-        return {delete_func}.sync(client=self._client, {item_id}={item_id})
+        return await asyncio(client=self._client, reminder_id=reminder_id, body=item)
 
-    async def delete_async(self, {item_id}: UUID) -> {model}Public | HTTPValidationError | None:
+    def delete(self, reminder_id: UUID) -> ReminderPublic | HTTPValidationError | None:
+        """Delete a reminder."""
+        from personal_crm_client.api.reminders.reminders_delete_reminder import sync
+
+        return sync(client=self._client, reminder_id=reminder_id)
+
+    async def delete_async(self, reminder_id: UUID) -> ReminderPublic | HTTPValidationError | None:
         """Async version of delete()."""
-        from personal_crm_client.api.{module} import {delete_func}
-        return await {delete_func}.asyncio(client=self._client, {item_id}={item_id})
+        from personal_crm_client.api.reminders.reminders_delete_reminder import asyncio
+
+        return await asyncio(client=self._client, reminder_id=reminder_id)
+
+    def snooze(self, reminder_id: UUID, *, snooze_until: str) -> ReminderPublic | HTTPValidationError | None:
+        """Snooze a reminder until a specified time."""
+        from personal_crm_client.api.reminders.reminders_snooze_reminder import sync
+
+        return sync(
+            client=self._client,
+            reminder_id=reminder_id,
+            snooze_until=snooze_until,
+        )
+
+    async def snooze_async(
+        self, reminder_id: UUID, *, snooze_until: str
+    ) -> ReminderPublic | HTTPValidationError | None:
+        """Async version of snooze()."""
+        from personal_crm_client.api.reminders.reminders_snooze_reminder import asyncio
+
+        return await asyncio(
+            client=self._client,
+            reminder_id=reminder_id,
+            snooze_until=snooze_until,
+        )

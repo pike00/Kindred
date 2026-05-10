@@ -1,19 +1,14 @@
 from http import HTTPStatus
-from typing import Any, cast
-from urllib.parse import quote
+from typing import Any
+from uuid import UUID
 
 import httpx
 
-from ...client import AuthenticatedClient, Client
-from ...types import Response, UNSET
 from ... import errors
-
+from ...client import AuthenticatedClient, Client
 from ...models.activity_logs_public import ActivityLogsPublic
 from ...models.http_validation_error import HTTPValidationError
-from ...types import UNSET, Unset
-from typing import cast
-from uuid import UUID
-
+from ...types import UNSET, Response, Unset
 
 
 def _get_kwargs(
@@ -23,12 +18,7 @@ def _get_kwargs(
     tag_id: None | Unset | UUID = UNSET,
     limit: int | Unset = 50,
     offset: int | Unset = 0,
-
 ) -> dict[str, Any]:
-    
-
-    
-
     params: dict[str, Any] = {}
 
     json_entity_type: None | str | Unset
@@ -60,9 +50,7 @@ def _get_kwargs(
 
     params["offset"] = offset
 
-
     params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
-
 
     _kwargs: dict[str, Any] = {
         "method": "get",
@@ -70,23 +58,19 @@ def _get_kwargs(
         "params": params,
     }
 
-
     return _kwargs
 
 
-
-def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> ActivityLogsPublic | HTTPValidationError | None:
+def _parse_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> ActivityLogsPublic | HTTPValidationError | None:
     if response.status_code == 200:
         response_200 = ActivityLogsPublic.from_dict(response.json())
-
-
 
         return response_200
 
     if response.status_code == 422:
         response_422 = HTTPValidationError.from_dict(response.json())
-
-
 
         return response_422
 
@@ -96,7 +80,9 @@ def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Res
         return None
 
 
-def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[ActivityLogsPublic | HTTPValidationError]:
+def _build_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> Response[ActivityLogsPublic | HTTPValidationError]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -113,9 +99,8 @@ def sync_detailed(
     tag_id: None | Unset | UUID = UNSET,
     limit: int | Unset = 50,
     offset: int | Unset = 0,
-
 ) -> Response[ActivityLogsPublic | HTTPValidationError]:
-    """ List Activity Logs
+    """List Activity Logs
 
      Return activity log entries for entities visible to the current user.
 
@@ -135,16 +120,14 @@ def sync_detailed(
 
     Returns:
         Response[ActivityLogsPublic | HTTPValidationError]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         entity_type=entity_type,
-entity_id=entity_id,
-tag_id=tag_id,
-limit=limit,
-offset=offset,
-
+        entity_id=entity_id,
+        tag_id=tag_id,
+        limit=limit,
+        offset=offset,
     )
 
     response = client.get_httpx_client().request(
@@ -152,6 +135,7 @@ offset=offset,
     )
 
     return _build_response(client=client, response=response)
+
 
 def sync(
     *,
@@ -161,9 +145,8 @@ def sync(
     tag_id: None | Unset | UUID = UNSET,
     limit: int | Unset = 50,
     offset: int | Unset = 0,
-
 ) -> ActivityLogsPublic | HTTPValidationError | None:
-    """ List Activity Logs
+    """List Activity Logs
 
      Return activity log entries for entities visible to the current user.
 
@@ -183,18 +166,17 @@ def sync(
 
     Returns:
         ActivityLogsPublic | HTTPValidationError
-     """
-
+    """
 
     return sync_detailed(
         client=client,
-entity_type=entity_type,
-entity_id=entity_id,
-tag_id=tag_id,
-limit=limit,
-offset=offset,
-
+        entity_type=entity_type,
+        entity_id=entity_id,
+        tag_id=tag_id,
+        limit=limit,
+        offset=offset,
     ).parsed
+
 
 async def asyncio_detailed(
     *,
@@ -204,9 +186,8 @@ async def asyncio_detailed(
     tag_id: None | Unset | UUID = UNSET,
     limit: int | Unset = 50,
     offset: int | Unset = 0,
-
 ) -> Response[ActivityLogsPublic | HTTPValidationError]:
-    """ List Activity Logs
+    """List Activity Logs
 
      Return activity log entries for entities visible to the current user.
 
@@ -226,23 +207,20 @@ async def asyncio_detailed(
 
     Returns:
         Response[ActivityLogsPublic | HTTPValidationError]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         entity_type=entity_type,
-entity_id=entity_id,
-tag_id=tag_id,
-limit=limit,
-offset=offset,
-
+        entity_id=entity_id,
+        tag_id=tag_id,
+        limit=limit,
+        offset=offset,
     )
 
-    response = await client.get_async_httpx_client().request(
-        **kwargs
-    )
+    response = await client.get_async_httpx_client().request(**kwargs)
 
     return _build_response(client=client, response=response)
+
 
 async def asyncio(
     *,
@@ -252,9 +230,8 @@ async def asyncio(
     tag_id: None | Unset | UUID = UNSET,
     limit: int | Unset = 50,
     offset: int | Unset = 0,
-
 ) -> ActivityLogsPublic | HTTPValidationError | None:
-    """ List Activity Logs
+    """List Activity Logs
 
      Return activity log entries for entities visible to the current user.
 
@@ -274,15 +251,15 @@ async def asyncio(
 
     Returns:
         ActivityLogsPublic | HTTPValidationError
-     """
+    """
 
-
-    return (await asyncio_detailed(
-        client=client,
-entity_type=entity_type,
-entity_id=entity_id,
-tag_id=tag_id,
-limit=limit,
-offset=offset,
-
-    )).parsed
+    return (
+        await asyncio_detailed(
+            client=client,
+            entity_type=entity_type,
+            entity_id=entity_id,
+            tag_id=tag_id,
+            limit=limit,
+            offset=offset,
+        )
+    ).parsed

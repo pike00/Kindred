@@ -1,40 +1,31 @@
 from __future__ import annotations
 
+import datetime
 from collections.abc import Mapping
-from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
+from typing import Any, TypeVar, cast
+from uuid import UUID
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-
-from ..types import UNSET, Unset
-
-from ..types import UNSET, Unset
 from dateutil.parser import isoparse
-from typing import cast
-from uuid import UUID
-import datetime
 
-
-
-
-
+from ..types import UNSET, Unset
 
 T = TypeVar("T", bound="LifeEventCreate")
 
 
-
 @_attrs_define
 class LifeEventCreate:
-    """ 
-        Attributes:
-            event_type (str): Kind of milestone: job_change, move, wedding, baby, graduation, birthday, anniversary, etc.
-            title (str): Event title.
-            occurred_at (datetime.date): Date the event happened.
-            contact_id (UUID):
-            description (None | str | Unset): Extra details about the event.
-            create_annual_reminder (bool | Unset): If true, auto-create a yearly recurring reminder on this date. Default:
-                False.
-     """
+    """
+    Attributes:
+        event_type (str): Kind of milestone: job_change, move, wedding, baby, graduation, birthday, anniversary, etc.
+        title (str): Event title.
+        occurred_at (datetime.date): Date the event happened.
+        contact_id (UUID):
+        description (None | str | Unset): Extra details about the event.
+        create_annual_reminder (bool | Unset): If true, auto-create a yearly recurring reminder on this date. Default:
+            False.
+    """
 
     event_type: str
     title: str
@@ -43,10 +34,6 @@ class LifeEventCreate:
     description: None | str | Unset = UNSET
     create_annual_reminder: bool | Unset = False
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
-
-
-
 
     def to_dict(self) -> dict[str, Any]:
         event_type = self.event_type
@@ -65,23 +52,22 @@ class LifeEventCreate:
 
         create_annual_reminder = self.create_annual_reminder
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-            "event_type": event_type,
-            "title": title,
-            "occurred_at": occurred_at,
-            "contact_id": contact_id,
-        })
+        field_dict.update(
+            {
+                "event_type": event_type,
+                "title": title,
+                "occurred_at": occurred_at,
+                "contact_id": contact_id,
+            }
+        )
         if description is not UNSET:
             field_dict["description"] = description
         if create_annual_reminder is not UNSET:
             field_dict["create_annual_reminder"] = create_annual_reminder
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
@@ -92,13 +78,7 @@ class LifeEventCreate:
 
         occurred_at = isoparse(d.pop("occurred_at")).date()
 
-
-
-
         contact_id = UUID(d.pop("contact_id"))
-
-
-
 
         def _parse_description(data: object) -> None | str | Unset:
             if data is None:
@@ -108,7 +88,6 @@ class LifeEventCreate:
             return cast(None | str | Unset, data)
 
         description = _parse_description(d.pop("description", UNSET))
-
 
         create_annual_reminder = d.pop("create_annual_reminder", UNSET)
 
@@ -120,7 +99,6 @@ class LifeEventCreate:
             description=description,
             create_annual_reminder=create_annual_reminder,
         )
-
 
         life_event_create.additional_properties = d
         return life_event_create

@@ -1,37 +1,29 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
+from typing import Any, TypeVar
+from uuid import UUID
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-from ..types import UNSET, Unset
-
 from ..models.contact_field_type import ContactFieldType
 from ..types import UNSET, Unset
-from uuid import UUID
-
-
-
-
-
 
 T = TypeVar("T", bound="ContactFieldCreate")
 
 
-
 @_attrs_define
 class ContactFieldCreate:
-    """ 
-        Attributes:
-            field_type (ContactFieldType):
-            label (str): Label like "home", "work", "cell", "twitter".
-            value (str): The actual email address, phone number, etc.
-            contact_id (UUID):
-            is_primary (bool | Unset): Marks the primary entry for this field_type on the contact. Default: False.
-            sort_order (int | Unset): Display order within the same field_type. Default: 0.
-     """
+    """
+    Attributes:
+        field_type (ContactFieldType):
+        label (str): Label like "home", "work", "cell", "twitter".
+        value (str): The actual email address, phone number, etc.
+        contact_id (UUID):
+        is_primary (bool | Unset): Marks the primary entry for this field_type on the contact. Default: False.
+        sort_order (int | Unset): Display order within the same field_type. Default: 0.
+    """
 
     field_type: ContactFieldType
     label: str
@@ -40,10 +32,6 @@ class ContactFieldCreate:
     is_primary: bool | Unset = False
     sort_order: int | Unset = 0
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
-
-
-
 
     def to_dict(self) -> dict[str, Any]:
         field_type = self.field_type.value
@@ -58,15 +46,16 @@ class ContactFieldCreate:
 
         sort_order = self.sort_order
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-            "field_type": field_type,
-            "label": label,
-            "value": value,
-            "contact_id": contact_id,
-        })
+        field_dict.update(
+            {
+                "field_type": field_type,
+                "label": label,
+                "value": value,
+                "contact_id": contact_id,
+            }
+        )
         if is_primary is not UNSET:
             field_dict["is_primary"] = is_primary
         if sort_order is not UNSET:
@@ -74,24 +63,16 @@ class ContactFieldCreate:
 
         return field_dict
 
-
-
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
         field_type = ContactFieldType(d.pop("field_type"))
-
-
-
 
         label = d.pop("label")
 
         value = d.pop("value")
 
         contact_id = UUID(d.pop("contact_id"))
-
-
-
 
         is_primary = d.pop("is_primary", UNSET)
 
@@ -105,7 +86,6 @@ class ContactFieldCreate:
             is_primary=is_primary,
             sort_order=sort_order,
         )
-
 
         contact_field_create.additional_properties = d
         return contact_field_create

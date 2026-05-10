@@ -1,16 +1,15 @@
 """Journal resource for Kindred SDK."""
 
-from personal_crm_client import AuthenticatedClient, Client
-from personal_crm_client.models import (
-    JournalEntryCreate,
-    JournalEntryUpdate,
-    JournalEntryPublic,
-    JournalEntriesPublic,
-    HTTPValidationError,
-)
 from uuid import UUID
 
-from typing import Optional
+from personal_crm_client import AuthenticatedClient, Client
+from personal_crm_client.models import (
+    HTTPValidationError,
+    JournalEntriesPublic,
+    JournalEntryCreate,
+    JournalEntryPublic,
+    JournalEntryUpdate,
+)
 
 
 class JournalResource:
@@ -51,10 +50,9 @@ class JournalResource:
 
     def get(self, entry_id: UUID) -> JournalEntryPublic | HTTPValidationError | None:
         """Get a single journal entry by ID."""
-        from personal_crm_client.api.journal.journal_list_journal_entries import sync
 
         entries = self.list()
-        if entries and hasattr(entries, 'data'):
+        if entries and hasattr(entries, "data"):
             for entry in entries.data:
                 if entry.id == entry_id:
                     return entry
@@ -72,9 +70,7 @@ class JournalResource:
 
         return await asyncio(client=self._client, body=item)
 
-    def update(
-        self, entry_id: UUID, item: JournalEntryUpdate
-    ) -> JournalEntryPublic | HTTPValidationError | None:
+    def update(self, entry_id: UUID, item: JournalEntryUpdate) -> JournalEntryPublic | HTTPValidationError | None:
         """Update an existing journal entry."""
         from personal_crm_client.api.journal.journal_update_journal_entry import sync
 
@@ -94,9 +90,7 @@ class JournalResource:
 
         return sync(client=self._client, entry_id=entry_id)
 
-    async def delete_async(
-        self, entry_id: UUID
-    ) -> JournalEntryPublic | HTTPValidationError | None:
+    async def delete_async(self, entry_id: UUID) -> JournalEntryPublic | HTTPValidationError | None:
         """Async version of delete()."""
         from personal_crm_client.api.journal.journal_delete_journal_entry import asyncio
 

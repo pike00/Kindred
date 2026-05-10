@@ -1,41 +1,33 @@
 from http import HTTPStatus
-from typing import Any, cast
+from typing import Any
 from urllib.parse import quote
+from uuid import UUID
 
 import httpx
 
-from ...client import AuthenticatedClient, Client
-from ...types import Response, UNSET
 from ... import errors
-
+from ...client import AuthenticatedClient, Client
 from ...models.http_validation_error import HTTPValidationError
 from ...models.interaction_public import InteractionPublic
 from ...models.interaction_update import InteractionUpdate
-from typing import cast
-from uuid import UUID
-
+from ...types import Response
 
 
 def _get_kwargs(
     interaction_id: UUID,
     *,
     body: InteractionUpdate,
-
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
-
-    
-
-    
-
     _kwargs: dict[str, Any] = {
         "method": "patch",
-        "url": "/api/v1/interactions/{interaction_id}".format(interaction_id=quote(str(interaction_id), safe=""),),
+        "url": "/api/v1/interactions/{interaction_id}".format(
+            interaction_id=quote(str(interaction_id), safe=""),
+        ),
     }
 
     _kwargs["json"] = body.to_dict()
-
 
     headers["Content-Type"] = "application/json"
 
@@ -43,19 +35,16 @@ def _get_kwargs(
     return _kwargs
 
 
-
-def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> HTTPValidationError | InteractionPublic | None:
+def _parse_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> HTTPValidationError | InteractionPublic | None:
     if response.status_code == 200:
         response_200 = InteractionPublic.from_dict(response.json())
-
-
 
         return response_200
 
     if response.status_code == 422:
         response_422 = HTTPValidationError.from_dict(response.json())
-
-
 
         return response_422
 
@@ -65,7 +54,9 @@ def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Res
         return None
 
 
-def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[HTTPValidationError | InteractionPublic]:
+def _build_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> Response[HTTPValidationError | InteractionPublic]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -79,9 +70,8 @@ def sync_detailed(
     *,
     client: AuthenticatedClient,
     body: InteractionUpdate,
-
 ) -> Response[HTTPValidationError | InteractionPublic]:
-    """ Update Interaction
+    """Update Interaction
 
      Update an interaction; ``attendee_ids`` replaces the attendee set.
 
@@ -95,13 +85,11 @@ def sync_detailed(
 
     Returns:
         Response[HTTPValidationError | InteractionPublic]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         interaction_id=interaction_id,
-body=body,
-
+        body=body,
     )
 
     response = client.get_httpx_client().request(
@@ -110,14 +98,14 @@ body=body,
 
     return _build_response(client=client, response=response)
 
+
 def sync(
     interaction_id: UUID,
     *,
     client: AuthenticatedClient,
     body: InteractionUpdate,
-
 ) -> HTTPValidationError | InteractionPublic | None:
-    """ Update Interaction
+    """Update Interaction
 
      Update an interaction; ``attendee_ids`` replaces the attendee set.
 
@@ -131,24 +119,22 @@ def sync(
 
     Returns:
         HTTPValidationError | InteractionPublic
-     """
-
+    """
 
     return sync_detailed(
         interaction_id=interaction_id,
-client=client,
-body=body,
-
+        client=client,
+        body=body,
     ).parsed
+
 
 async def asyncio_detailed(
     interaction_id: UUID,
     *,
     client: AuthenticatedClient,
     body: InteractionUpdate,
-
 ) -> Response[HTTPValidationError | InteractionPublic]:
-    """ Update Interaction
+    """Update Interaction
 
      Update an interaction; ``attendee_ids`` replaces the attendee set.
 
@@ -162,29 +148,25 @@ async def asyncio_detailed(
 
     Returns:
         Response[HTTPValidationError | InteractionPublic]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         interaction_id=interaction_id,
-body=body,
-
+        body=body,
     )
 
-    response = await client.get_async_httpx_client().request(
-        **kwargs
-    )
+    response = await client.get_async_httpx_client().request(**kwargs)
 
     return _build_response(client=client, response=response)
+
 
 async def asyncio(
     interaction_id: UUID,
     *,
     client: AuthenticatedClient,
     body: InteractionUpdate,
-
 ) -> HTTPValidationError | InteractionPublic | None:
-    """ Update Interaction
+    """Update Interaction
 
      Update an interaction; ``attendee_ids`` replaces the attendee set.
 
@@ -198,12 +180,12 @@ async def asyncio(
 
     Returns:
         HTTPValidationError | InteractionPublic
-     """
+    """
 
-
-    return (await asyncio_detailed(
-        interaction_id=interaction_id,
-client=client,
-body=body,
-
-    )).parsed
+    return (
+        await asyncio_detailed(
+            interaction_id=interaction_id,
+            client=client,
+            body=body,
+        )
+    ).parsed

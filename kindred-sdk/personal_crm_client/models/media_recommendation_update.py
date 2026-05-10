@@ -1,38 +1,29 @@
 from __future__ import annotations
 
+import datetime
 from collections.abc import Mapping
-from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
+from typing import Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-
-from ..types import UNSET, Unset
+from dateutil.parser import isoparse
 
 from ..models.media_category import MediaCategory
 from ..types import UNSET, Unset
-from dateutil.parser import isoparse
-from typing import cast
-import datetime
-
-
-
-
-
 
 T = TypeVar("T", bound="MediaRecommendationUpdate")
 
 
-
 @_attrs_define
 class MediaRecommendationUpdate:
-    """ 
-        Attributes:
-            category (MediaCategory | None | Unset):
-            title (None | str | Unset):
-            creator (None | str | Unset):
-            note (None | str | Unset):
-            recommended_at (datetime.date | None | Unset):
-     """
+    """
+    Attributes:
+        category (MediaCategory | None | Unset):
+        title (None | str | Unset):
+        creator (None | str | Unset):
+        note (None | str | Unset):
+        recommended_at (datetime.date | None | Unset):
+    """
 
     category: MediaCategory | None | Unset = UNSET
     title: None | str | Unset = UNSET
@@ -40,10 +31,6 @@ class MediaRecommendationUpdate:
     note: None | str | Unset = UNSET
     recommended_at: datetime.date | None | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
-
-
-
 
     def to_dict(self) -> dict[str, Any]:
         category: None | str | Unset
@@ -80,11 +67,9 @@ class MediaRecommendationUpdate:
         else:
             recommended_at = self.recommended_at
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if category is not UNSET:
             field_dict["category"] = category
         if title is not UNSET:
@@ -98,11 +83,10 @@ class MediaRecommendationUpdate:
 
         return field_dict
 
-
-
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
+
         def _parse_category(data: object) -> MediaCategory | None | Unset:
             if data is None:
                 return data
@@ -113,15 +97,12 @@ class MediaRecommendationUpdate:
                     raise TypeError()
                 category_type_0 = MediaCategory(data)
 
-
-
                 return category_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             return cast(MediaCategory | None | Unset, data)
 
         category = _parse_category(d.pop("category", UNSET))
-
 
         def _parse_title(data: object) -> None | str | Unset:
             if data is None:
@@ -132,7 +113,6 @@ class MediaRecommendationUpdate:
 
         title = _parse_title(d.pop("title", UNSET))
 
-
         def _parse_creator(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -142,7 +122,6 @@ class MediaRecommendationUpdate:
 
         creator = _parse_creator(d.pop("creator", UNSET))
 
-
         def _parse_note(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -151,7 +130,6 @@ class MediaRecommendationUpdate:
             return cast(None | str | Unset, data)
 
         note = _parse_note(d.pop("note", UNSET))
-
 
         def _parse_recommended_at(data: object) -> datetime.date | None | Unset:
             if data is None:
@@ -163,15 +141,12 @@ class MediaRecommendationUpdate:
                     raise TypeError()
                 recommended_at_type_0 = isoparse(data).date()
 
-
-
                 return recommended_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             return cast(datetime.date | None | Unset, data)
 
         recommended_at = _parse_recommended_at(d.pop("recommended_at", UNSET))
-
 
         media_recommendation_update = cls(
             category=category,
@@ -180,7 +155,6 @@ class MediaRecommendationUpdate:
             note=note,
             recommended_at=recommended_at,
         )
-
 
         media_recommendation_update.additional_properties = d
         return media_recommendation_update

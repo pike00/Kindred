@@ -1,44 +1,31 @@
 from __future__ import annotations
 
+import datetime
 from collections.abc import Mapping
-from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
+from typing import Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-
-from ..types import UNSET, Unset
-
-from ..types import UNSET, Unset
 from dateutil.parser import isoparse
-from typing import cast
-import datetime
 
-
-
-
-
+from ..types import UNSET, Unset
 
 T = TypeVar("T", bound="JournalEntryUpdate")
 
 
-
 @_attrs_define
 class JournalEntryUpdate:
-    """ 
-        Attributes:
-            body (None | str | Unset):
-            mood (None | str | Unset):
-            entry_date (datetime.date | None | Unset):
-     """
+    """
+    Attributes:
+        body (None | str | Unset):
+        mood (None | str | Unset):
+        entry_date (datetime.date | None | Unset):
+    """
 
     body: None | str | Unset = UNSET
     mood: None | str | Unset = UNSET
     entry_date: datetime.date | None | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
-
-
-
 
     def to_dict(self) -> dict[str, Any]:
         body: None | str | Unset
@@ -61,11 +48,9 @@ class JournalEntryUpdate:
         else:
             entry_date = self.entry_date
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if body is not UNSET:
             field_dict["body"] = body
         if mood is not UNSET:
@@ -75,11 +60,10 @@ class JournalEntryUpdate:
 
         return field_dict
 
-
-
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
+
         def _parse_body(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -89,7 +73,6 @@ class JournalEntryUpdate:
 
         body = _parse_body(d.pop("body", UNSET))
 
-
         def _parse_mood(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -98,7 +81,6 @@ class JournalEntryUpdate:
             return cast(None | str | Unset, data)
 
         mood = _parse_mood(d.pop("mood", UNSET))
-
 
         def _parse_entry_date(data: object) -> datetime.date | None | Unset:
             if data is None:
@@ -110,8 +92,6 @@ class JournalEntryUpdate:
                     raise TypeError()
                 entry_date_type_0 = isoparse(data).date()
 
-
-
                 return entry_date_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
@@ -119,13 +99,11 @@ class JournalEntryUpdate:
 
         entry_date = _parse_entry_date(d.pop("entry_date", UNSET))
 
-
         journal_entry_update = cls(
             body=body,
             mood=mood,
             entry_date=entry_date,
         )
-
 
         journal_entry_update.additional_properties = d
         return journal_entry_update

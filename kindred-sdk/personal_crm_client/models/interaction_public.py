@@ -1,44 +1,37 @@
 from __future__ import annotations
 
+import datetime
 from collections.abc import Mapping
-from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
+from typing import TYPE_CHECKING, Any, TypeVar, cast
+from uuid import UUID
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-
-from ..types import UNSET, Unset
+from dateutil.parser import isoparse
 
 from ..models.interaction_channel import InteractionChannel
 from ..types import UNSET, Unset
-from dateutil.parser import isoparse
-from typing import cast
-from uuid import UUID
-import datetime
 
 if TYPE_CHECKING:
-  from ..models.interaction_attendee_summary import InteractionAttendeeSummary
-
-
-
+    from ..models.interaction_attendee_summary import InteractionAttendeeSummary
 
 
 T = TypeVar("T", bound="InteractionPublic")
 
 
-
 @_attrs_define
 class InteractionPublic:
-    """ 
-        Attributes:
-            channel (InteractionChannel):
-            occurred_at (datetime.datetime): When the interaction actually took place.
-            id (UUID):
-            created_at (datetime.datetime):
-            notes (None | str | Unset): Conversation summary, action items, etc.
-            mood (None | str | Unset): Emoji or keyword capturing the tone.
-            duration_minutes (int | None | Unset): Length of the interaction in minutes.
-            attendees (list[InteractionAttendeeSummary] | Unset):
-     """
+    """
+    Attributes:
+        channel (InteractionChannel):
+        occurred_at (datetime.datetime): When the interaction actually took place.
+        id (UUID):
+        created_at (datetime.datetime):
+        notes (None | str | Unset): Conversation summary, action items, etc.
+        mood (None | str | Unset): Emoji or keyword capturing the tone.
+        duration_minutes (int | None | Unset): Length of the interaction in minutes.
+        attendees (list[InteractionAttendeeSummary] | Unset):
+    """
 
     channel: InteractionChannel
     occurred_at: datetime.datetime
@@ -50,12 +43,7 @@ class InteractionPublic:
     attendees: list[InteractionAttendeeSummary] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
-
-
-
-
     def to_dict(self) -> dict[str, Any]:
-        from ..models.interaction_attendee_summary import InteractionAttendeeSummary
         channel = self.channel.value
 
         occurred_at = self.occurred_at.isoformat()
@@ -89,17 +77,16 @@ class InteractionPublic:
                 attendees_item = attendees_item_data.to_dict()
                 attendees.append(attendees_item)
 
-
-
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-            "channel": channel,
-            "occurred_at": occurred_at,
-            "id": id,
-            "created_at": created_at,
-        })
+        field_dict.update(
+            {
+                "channel": channel,
+                "occurred_at": occurred_at,
+                "id": id,
+                "created_at": created_at,
+            }
+        )
         if notes is not UNSET:
             field_dict["notes"] = notes
         if mood is not UNSET:
@@ -111,31 +98,18 @@ class InteractionPublic:
 
         return field_dict
 
-
-
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         from ..models.interaction_attendee_summary import InteractionAttendeeSummary
+
         d = dict(src_dict)
         channel = InteractionChannel(d.pop("channel"))
 
-
-
-
         occurred_at = isoparse(d.pop("occurred_at"))
-
-
-
 
         id = UUID(d.pop("id"))
 
-
-
-
         created_at = isoparse(d.pop("created_at"))
-
-
-
 
         def _parse_notes(data: object) -> None | str | Unset:
             if data is None:
@@ -146,7 +120,6 @@ class InteractionPublic:
 
         notes = _parse_notes(d.pop("notes", UNSET))
 
-
         def _parse_mood(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -155,7 +128,6 @@ class InteractionPublic:
             return cast(None | str | Unset, data)
 
         mood = _parse_mood(d.pop("mood", UNSET))
-
 
         def _parse_duration_minutes(data: object) -> int | None | Unset:
             if data is None:
@@ -166,7 +138,6 @@ class InteractionPublic:
 
         duration_minutes = _parse_duration_minutes(d.pop("duration_minutes", UNSET))
 
-
         _attendees = d.pop("attendees", UNSET)
         attendees: list[InteractionAttendeeSummary] | Unset = UNSET
         if _attendees is not UNSET:
@@ -174,10 +145,7 @@ class InteractionPublic:
             for attendees_item_data in _attendees:
                 attendees_item = InteractionAttendeeSummary.from_dict(attendees_item_data)
 
-
-
                 attendees.append(attendees_item)
-
 
         interaction_public = cls(
             channel=channel,
@@ -189,7 +157,6 @@ class InteractionPublic:
             duration_minutes=duration_minutes,
             attendees=attendees,
         )
-
 
         interaction_public.additional_properties = d
         return interaction_public

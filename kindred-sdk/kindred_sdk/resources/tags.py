@@ -1,16 +1,15 @@
 """Tags resource for Kindred SDK."""
 
-from personal_crm_client import AuthenticatedClient, Client
-from personal_crm_client.models import (
-    TagCreate,
-    TagUpdate,
-    TagPublic,
-    TagsPublic,
-    HTTPValidationError,
-)
 from uuid import UUID
 
-from typing import Optional
+from personal_crm_client import AuthenticatedClient, Client
+from personal_crm_client.models import (
+    HTTPValidationError,
+    TagCreate,
+    TagPublic,
+    TagsPublic,
+    TagUpdate,
+)
 
 
 class TagsResource:
@@ -19,17 +18,13 @@ class TagsResource:
     def __init__(self, client: AuthenticatedClient | Client) -> None:
         self._client = client
 
-    def list(
-        self, *, skip: int = 0, limit: int = 100
-    ) -> TagsPublic | HTTPValidationError | None:
+    def list(self, *, skip: int = 0, limit: int = 100) -> TagsPublic | HTTPValidationError | None:
         """List tags."""
         from personal_crm_client.api.tags.tags_list_tags import sync
 
         return sync(client=self._client, skip=skip, limit=limit)
 
-    async def list_async(
-        self, *, skip: int = 0, limit: int = 100
-    ) -> TagsPublic | HTTPValidationError | None:
+    async def list_async(self, *, skip: int = 0, limit: int = 100) -> TagsPublic | HTTPValidationError | None:
         """Async version of list()."""
         from personal_crm_client.api.tags.tags_list_tags import asyncio
 
@@ -37,11 +32,10 @@ class TagsResource:
 
     def get(self, tag_id: UUID) -> TagPublic | HTTPValidationError | None:
         """Get a single tag by ID."""
-        from personal_crm_client.api.tags.tags_list_tags import sync
 
         # Note: The generated client may not have a separate get function
         tags = self.list()
-        if tags and hasattr(tags, 'data'):
+        if tags and hasattr(tags, "data"):
             for tag in tags.data:
                 if tag.id == tag_id:
                     return tag
@@ -59,17 +53,13 @@ class TagsResource:
 
         return await asyncio(client=self._client, body=item)
 
-    def update(
-        self, tag_id: UUID, item: TagUpdate
-    ) -> TagPublic | HTTPValidationError | None:
+    def update(self, tag_id: UUID, item: TagUpdate) -> TagPublic | HTTPValidationError | None:
         """Update an existing tag."""
         from personal_crm_client.api.tags.tags_update_tag import sync
 
         return sync(client=self._client, tag_id=tag_id, body=item)
 
-    async def update_async(
-        self, tag_id: UUID, item: TagUpdate
-    ) -> TagPublic | HTTPValidationError | None:
+    async def update_async(self, tag_id: UUID, item: TagUpdate) -> TagPublic | HTTPValidationError | None:
         """Async version of update()."""
         from personal_crm_client.api.tags.tags_update_tag import asyncio
 

@@ -1,44 +1,31 @@
 from __future__ import annotations
 
+import datetime
 from collections.abc import Mapping
-from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
+from typing import Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-
-from ..types import UNSET, Unset
-
-from ..types import UNSET, Unset
 from dateutil.parser import isoparse
-from typing import cast
-import datetime
 
-
-
-
-
+from ..types import UNSET, Unset
 
 T = TypeVar("T", bound="JournalEntryCreate")
 
 
-
 @_attrs_define
 class JournalEntryCreate:
-    """ 
-        Attributes:
-            body (str): Entry body, 1-50000 chars.
-            entry_date (datetime.date): Date the entry is about (may differ from created_at).
-            mood (None | str | Unset): Emoji or keyword capturing the mood.
-     """
+    """
+    Attributes:
+        body (str): Entry body, 1-50000 chars.
+        entry_date (datetime.date): Date the entry is about (may differ from created_at).
+        mood (None | str | Unset): Emoji or keyword capturing the mood.
+    """
 
     body: str
     entry_date: datetime.date
     mood: None | str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
-
-
-
 
     def to_dict(self) -> dict[str, Any]:
         body = self.body
@@ -51,19 +38,18 @@ class JournalEntryCreate:
         else:
             mood = self.mood
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-            "body": body,
-            "entry_date": entry_date,
-        })
+        field_dict.update(
+            {
+                "body": body,
+                "entry_date": entry_date,
+            }
+        )
         if mood is not UNSET:
             field_dict["mood"] = mood
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
@@ -71,9 +57,6 @@ class JournalEntryCreate:
         body = d.pop("body")
 
         entry_date = isoparse(d.pop("entry_date")).date()
-
-
-
 
         def _parse_mood(data: object) -> None | str | Unset:
             if data is None:
@@ -84,13 +67,11 @@ class JournalEntryCreate:
 
         mood = _parse_mood(d.pop("mood", UNSET))
 
-
         journal_entry_create = cls(
             body=body,
             entry_date=entry_date,
             mood=mood,
         )
-
 
         journal_entry_create.additional_properties = d
         return journal_entry_create

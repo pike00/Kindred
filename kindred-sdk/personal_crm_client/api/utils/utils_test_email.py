@@ -1,35 +1,24 @@
 from http import HTTPStatus
-from typing import Any, cast
-from urllib.parse import quote
+from typing import Any
 
 import httpx
 
-from ...client import AuthenticatedClient, Client
-from ...types import Response, UNSET
 from ... import errors
-
+from ...client import AuthenticatedClient, Client
 from ...models.http_validation_error import HTTPValidationError
 from ...models.message import Message
-from typing import cast
-
+from ...types import UNSET, Response
 
 
 def _get_kwargs(
     *,
     email_to: str,
-
 ) -> dict[str, Any]:
-    
-
-    
-
     params: dict[str, Any] = {}
 
     params["email_to"] = email_to
 
-
     params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
-
 
     _kwargs: dict[str, Any] = {
         "method": "post",
@@ -37,23 +26,19 @@ def _get_kwargs(
         "params": params,
     }
 
-
     return _kwargs
 
 
-
-def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> HTTPValidationError | Message | None:
+def _parse_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> HTTPValidationError | Message | None:
     if response.status_code == 201:
         response_201 = Message.from_dict(response.json())
-
-
 
         return response_201
 
     if response.status_code == 422:
         response_422 = HTTPValidationError.from_dict(response.json())
-
-
 
         return response_422
 
@@ -63,7 +48,9 @@ def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Res
         return None
 
 
-def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[HTTPValidationError | Message]:
+def _build_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> Response[HTTPValidationError | Message]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -76,9 +63,8 @@ def sync_detailed(
     *,
     client: AuthenticatedClient,
     email_to: str,
-
 ) -> Response[HTTPValidationError | Message]:
-    """ Test Email
+    """Test Email
 
      Test emails.
 
@@ -91,12 +77,10 @@ def sync_detailed(
 
     Returns:
         Response[HTTPValidationError | Message]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         email_to=email_to,
-
     )
 
     response = client.get_httpx_client().request(
@@ -105,13 +89,13 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
+
 def sync(
     *,
     client: AuthenticatedClient,
     email_to: str,
-
 ) -> HTTPValidationError | Message | None:
-    """ Test Email
+    """Test Email
 
      Test emails.
 
@@ -124,22 +108,20 @@ def sync(
 
     Returns:
         HTTPValidationError | Message
-     """
-
+    """
 
     return sync_detailed(
         client=client,
-email_to=email_to,
-
+        email_to=email_to,
     ).parsed
+
 
 async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
     email_to: str,
-
 ) -> Response[HTTPValidationError | Message]:
-    """ Test Email
+    """Test Email
 
      Test emails.
 
@@ -152,27 +134,23 @@ async def asyncio_detailed(
 
     Returns:
         Response[HTTPValidationError | Message]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         email_to=email_to,
-
     )
 
-    response = await client.get_async_httpx_client().request(
-        **kwargs
-    )
+    response = await client.get_async_httpx_client().request(**kwargs)
 
     return _build_response(client=client, response=response)
+
 
 async def asyncio(
     *,
     client: AuthenticatedClient,
     email_to: str,
-
 ) -> HTTPValidationError | Message | None:
-    """ Test Email
+    """Test Email
 
      Test emails.
 
@@ -185,11 +163,11 @@ async def asyncio(
 
     Returns:
         HTTPValidationError | Message
-     """
+    """
 
-
-    return (await asyncio_detailed(
-        client=client,
-email_to=email_to,
-
-    )).parsed
+    return (
+        await asyncio_detailed(
+            client=client,
+            email_to=email_to,
+        )
+    ).parsed

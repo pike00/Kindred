@@ -1,39 +1,27 @@
 from http import HTTPStatus
-from typing import Any, cast
-from urllib.parse import quote
+from typing import Any
 
 import httpx
 
-from ...client import AuthenticatedClient, Client
-from ...types import Response, UNSET
 from ... import errors
-
+from ...client import AuthenticatedClient, Client
 from ...models.groups_public import GroupsPublic
 from ...models.http_validation_error import HTTPValidationError
-from ...types import UNSET, Unset
-from typing import cast
-
+from ...types import UNSET, Response, Unset
 
 
 def _get_kwargs(
     *,
     skip: int | Unset = 0,
     limit: int | Unset = 100,
-
 ) -> dict[str, Any]:
-    
-
-    
-
     params: dict[str, Any] = {}
 
     params["skip"] = skip
 
     params["limit"] = limit
 
-
     params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
-
 
     _kwargs: dict[str, Any] = {
         "method": "get",
@@ -41,23 +29,19 @@ def _get_kwargs(
         "params": params,
     }
 
-
     return _kwargs
 
 
-
-def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> GroupsPublic | HTTPValidationError | None:
+def _parse_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> GroupsPublic | HTTPValidationError | None:
     if response.status_code == 200:
         response_200 = GroupsPublic.from_dict(response.json())
-
-
 
         return response_200
 
     if response.status_code == 422:
         response_422 = HTTPValidationError.from_dict(response.json())
-
-
 
         return response_422
 
@@ -67,7 +51,9 @@ def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Res
         return None
 
 
-def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[GroupsPublic | HTTPValidationError]:
+def _build_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> Response[GroupsPublic | HTTPValidationError]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -81,9 +67,8 @@ def sync_detailed(
     client: AuthenticatedClient,
     skip: int | Unset = 0,
     limit: int | Unset = 100,
-
 ) -> Response[GroupsPublic | HTTPValidationError]:
-    """ List Groups
+    """List Groups
 
      List all groups for the current user.
 
@@ -97,13 +82,11 @@ def sync_detailed(
 
     Returns:
         Response[GroupsPublic | HTTPValidationError]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         skip=skip,
-limit=limit,
-
+        limit=limit,
     )
 
     response = client.get_httpx_client().request(
@@ -112,14 +95,14 @@ limit=limit,
 
     return _build_response(client=client, response=response)
 
+
 def sync(
     *,
     client: AuthenticatedClient,
     skip: int | Unset = 0,
     limit: int | Unset = 100,
-
 ) -> GroupsPublic | HTTPValidationError | None:
-    """ List Groups
+    """List Groups
 
      List all groups for the current user.
 
@@ -133,24 +116,22 @@ def sync(
 
     Returns:
         GroupsPublic | HTTPValidationError
-     """
-
+    """
 
     return sync_detailed(
         client=client,
-skip=skip,
-limit=limit,
-
+        skip=skip,
+        limit=limit,
     ).parsed
+
 
 async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
     skip: int | Unset = 0,
     limit: int | Unset = 100,
-
 ) -> Response[GroupsPublic | HTTPValidationError]:
-    """ List Groups
+    """List Groups
 
      List all groups for the current user.
 
@@ -164,29 +145,25 @@ async def asyncio_detailed(
 
     Returns:
         Response[GroupsPublic | HTTPValidationError]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         skip=skip,
-limit=limit,
-
+        limit=limit,
     )
 
-    response = await client.get_async_httpx_client().request(
-        **kwargs
-    )
+    response = await client.get_async_httpx_client().request(**kwargs)
 
     return _build_response(client=client, response=response)
+
 
 async def asyncio(
     *,
     client: AuthenticatedClient,
     skip: int | Unset = 0,
     limit: int | Unset = 100,
-
 ) -> GroupsPublic | HTTPValidationError | None:
-    """ List Groups
+    """List Groups
 
      List all groups for the current user.
 
@@ -200,12 +177,12 @@ async def asyncio(
 
     Returns:
         GroupsPublic | HTTPValidationError
-     """
+    """
 
-
-    return (await asyncio_detailed(
-        client=client,
-skip=skip,
-limit=limit,
-
-    )).parsed
+    return (
+        await asyncio_detailed(
+            client=client,
+            skip=skip,
+            limit=limit,
+        )
+    ).parsed

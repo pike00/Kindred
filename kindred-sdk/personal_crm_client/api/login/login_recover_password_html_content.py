@@ -1,47 +1,37 @@
 from http import HTTPStatus
-from typing import Any, cast
+from typing import Any
 from urllib.parse import quote
 
 import httpx
 
-from ...client import AuthenticatedClient, Client
-from ...types import Response, UNSET
 from ... import errors
-
+from ...client import AuthenticatedClient, Client
 from ...models.http_validation_error import HTTPValidationError
-from typing import cast
-
+from ...types import Response
 
 
 def _get_kwargs(
     email: str,
-
 ) -> dict[str, Any]:
-    
-
-    
-
-    
-
     _kwargs: dict[str, Any] = {
         "method": "post",
-        "url": "/api/v1/password-recovery-html-content/{email}".format(email=quote(str(email), safe=""),),
+        "url": "/api/v1/password-recovery-html-content/{email}".format(
+            email=quote(str(email), safe=""),
+        ),
     }
-
 
     return _kwargs
 
 
-
-def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> HTTPValidationError | str | None:
+def _parse_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> HTTPValidationError | str | None:
     if response.status_code == 200:
         response_200 = response.text
         return response_200
 
     if response.status_code == 422:
         response_422 = HTTPValidationError.from_dict(response.json())
-
-
 
         return response_422
 
@@ -51,7 +41,9 @@ def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Res
         return None
 
 
-def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[HTTPValidationError | str]:
+def _build_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> Response[HTTPValidationError | str]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -64,9 +56,8 @@ def sync_detailed(
     email: str,
     *,
     client: AuthenticatedClient,
-
 ) -> Response[HTTPValidationError | str]:
-    """ Recover Password Html Content
+    """Recover Password Html Content
 
      HTML Content for Password Recovery
 
@@ -79,12 +70,10 @@ def sync_detailed(
 
     Returns:
         Response[HTTPValidationError | str]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         email=email,
-
     )
 
     response = client.get_httpx_client().request(
@@ -93,13 +82,13 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
+
 def sync(
     email: str,
     *,
     client: AuthenticatedClient,
-
 ) -> HTTPValidationError | str | None:
-    """ Recover Password Html Content
+    """Recover Password Html Content
 
      HTML Content for Password Recovery
 
@@ -112,22 +101,20 @@ def sync(
 
     Returns:
         HTTPValidationError | str
-     """
-
+    """
 
     return sync_detailed(
         email=email,
-client=client,
-
+        client=client,
     ).parsed
+
 
 async def asyncio_detailed(
     email: str,
     *,
     client: AuthenticatedClient,
-
 ) -> Response[HTTPValidationError | str]:
-    """ Recover Password Html Content
+    """Recover Password Html Content
 
      HTML Content for Password Recovery
 
@@ -140,27 +127,23 @@ async def asyncio_detailed(
 
     Returns:
         Response[HTTPValidationError | str]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         email=email,
-
     )
 
-    response = await client.get_async_httpx_client().request(
-        **kwargs
-    )
+    response = await client.get_async_httpx_client().request(**kwargs)
 
     return _build_response(client=client, response=response)
+
 
 async def asyncio(
     email: str,
     *,
     client: AuthenticatedClient,
-
 ) -> HTTPValidationError | str | None:
-    """ Recover Password Html Content
+    """Recover Password Html Content
 
      HTML Content for Password Recovery
 
@@ -173,11 +156,11 @@ async def asyncio(
 
     Returns:
         HTTPValidationError | str
-     """
+    """
 
-
-    return (await asyncio_detailed(
-        email=email,
-client=client,
-
-    )).parsed
+    return (
+        await asyncio_detailed(
+            email=email,
+            client=client,
+        )
+    ).parsed

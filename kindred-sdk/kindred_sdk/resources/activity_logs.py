@@ -2,12 +2,9 @@
 
 from personal_crm_client import AuthenticatedClient, Client
 from personal_crm_client.models import (
-    ActivityLogPublic,
     ActivityLogsPublic,
     HTTPValidationError,
 )
-
-from typing import Optional
 
 
 class ActivityLogsResource:
@@ -21,7 +18,7 @@ class ActivityLogsResource:
         *,
         skip: int = 0,
         limit: int = 100,
-        contact_id: Optional[str] = None,
+        contact_id: str | None = None,
     ) -> ActivityLogsPublic | HTTPValidationError | None:
         """List activity logs."""
         from personal_crm_client.api.activity_logs.activity_logs_list_activity_logs import sync
@@ -38,7 +35,7 @@ class ActivityLogsResource:
         *,
         skip: int = 0,
         limit: int = 100,
-        contact_id: Optional[str] = None,
+        contact_id: str | None = None,
     ) -> ActivityLogsPublic | HTTPValidationError | None:
         """Async version of list()."""
         from personal_crm_client.api.activity_logs.activity_logs_list_activity_logs import asyncio

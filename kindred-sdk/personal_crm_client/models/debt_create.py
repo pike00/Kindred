@@ -1,54 +1,41 @@
 from __future__ import annotations
 
+import datetime
 from collections.abc import Mapping
-from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
+from typing import Any, TypeVar, cast
+from uuid import UUID
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-
-from ..types import UNSET, Unset
+from dateutil.parser import isoparse
 
 from ..models.debt_direction import DebtDirection
 from ..types import UNSET, Unset
-from dateutil.parser import isoparse
-from typing import cast
-from uuid import UUID
-import datetime
-
-
-
-
-
 
 T = TypeVar("T", bound="DebtCreate")
 
 
-
 @_attrs_define
 class DebtCreate:
-    """ 
-        Attributes:
-            direction (DebtDirection):
-            amount (float): Amount owed; must be greater than zero.
-            contact_id (UUID):
-            currency (str | Unset): ISO 4217 currency code. Default: 'USD'.
-            reason (None | str | Unset): What the debt is for.
-            is_settled (bool | Unset): Marked paid off. Default: False.
-            settled_at (datetime.date | None | Unset): Date the debt was settled.
-     """
+    """
+    Attributes:
+        direction (DebtDirection):
+        amount (float): Amount owed; must be greater than zero.
+        contact_id (UUID):
+        currency (str | Unset): ISO 4217 currency code. Default: 'USD'.
+        reason (None | str | Unset): What the debt is for.
+        is_settled (bool | Unset): Marked paid off. Default: False.
+        settled_at (datetime.date | None | Unset): Date the debt was settled.
+    """
 
     direction: DebtDirection
     amount: float
     contact_id: UUID
-    currency: str | Unset = 'USD'
+    currency: str | Unset = "USD"
     reason: None | str | Unset = UNSET
     is_settled: bool | Unset = False
     settled_at: datetime.date | None | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
-
-
-
 
     def to_dict(self) -> dict[str, Any]:
         direction = self.direction.value
@@ -75,14 +62,15 @@ class DebtCreate:
         else:
             settled_at = self.settled_at
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-            "direction": direction,
-            "amount": amount,
-            "contact_id": contact_id,
-        })
+        field_dict.update(
+            {
+                "direction": direction,
+                "amount": amount,
+                "contact_id": contact_id,
+            }
+        )
         if currency is not UNSET:
             field_dict["currency"] = currency
         if reason is not UNSET:
@@ -94,22 +82,14 @@ class DebtCreate:
 
         return field_dict
 
-
-
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
         direction = DebtDirection(d.pop("direction"))
 
-
-
-
         amount = d.pop("amount")
 
         contact_id = UUID(d.pop("contact_id"))
-
-
-
 
         currency = d.pop("currency", UNSET)
 
@@ -121,7 +101,6 @@ class DebtCreate:
             return cast(None | str | Unset, data)
 
         reason = _parse_reason(d.pop("reason", UNSET))
-
 
         is_settled = d.pop("is_settled", UNSET)
 
@@ -135,15 +114,12 @@ class DebtCreate:
                     raise TypeError()
                 settled_at_type_0 = isoparse(data).date()
 
-
-
                 return settled_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             return cast(datetime.date | None | Unset, data)
 
         settled_at = _parse_settled_at(d.pop("settled_at", UNSET))
-
 
         debt_create = cls(
             direction=direction,
@@ -154,7 +130,6 @@ class DebtCreate:
             is_settled=is_settled,
             settled_at=settled_at,
         )
-
 
         debt_create.additional_properties = d
         return debt_create

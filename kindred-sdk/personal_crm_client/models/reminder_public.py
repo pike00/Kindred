@@ -1,44 +1,35 @@
 from __future__ import annotations
 
+import datetime
 from collections.abc import Mapping
-from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
+from typing import Any, TypeVar, cast
+from uuid import UUID
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-
-from ..types import UNSET, Unset
+from dateutil.parser import isoparse
 
 from ..models.reminder_frequency import ReminderFrequency
 from ..types import UNSET, Unset
-from dateutil.parser import isoparse
-from typing import cast
-from uuid import UUID
-import datetime
-
-
-
-
-
 
 T = TypeVar("T", bound="ReminderPublic")
 
 
-
 @_attrs_define
 class ReminderPublic:
-    """ 
-        Attributes:
-            title (str): Reminder title.
-            remind_at (datetime.datetime): When to fire the reminder.
-            id (UUID):
-            contact_id (None | UUID):
-            last_sent_at (datetime.datetime | None):
-            snoozed_until (datetime.datetime | None):
-            created_at (datetime.datetime):
-            description (None | str | Unset): Extra details shown with the reminder.
-            frequency (ReminderFrequency | Unset):
-            is_active (bool | Unset): Enable or disable without deleting. Default: True.
-     """
+    """
+    Attributes:
+        title (str): Reminder title.
+        remind_at (datetime.datetime): When to fire the reminder.
+        id (UUID):
+        contact_id (None | UUID):
+        last_sent_at (datetime.datetime | None):
+        snoozed_until (datetime.datetime | None):
+        created_at (datetime.datetime):
+        description (None | str | Unset): Extra details shown with the reminder.
+        frequency (ReminderFrequency | Unset):
+        is_active (bool | Unset): Enable or disable without deleting. Default: True.
+    """
 
     title: str
     remind_at: datetime.datetime
@@ -51,10 +42,6 @@ class ReminderPublic:
     frequency: ReminderFrequency | Unset = UNSET
     is_active: bool | Unset = True
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
-
-
-
 
     def to_dict(self) -> dict[str, Any]:
         title = self.title
@@ -93,21 +80,21 @@ class ReminderPublic:
         if not isinstance(self.frequency, Unset):
             frequency = self.frequency.value
 
-
         is_active = self.is_active
-
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-            "title": title,
-            "remind_at": remind_at,
-            "id": id,
-            "contact_id": contact_id,
-            "last_sent_at": last_sent_at,
-            "snoozed_until": snoozed_until,
-            "created_at": created_at,
-        })
+        field_dict.update(
+            {
+                "title": title,
+                "remind_at": remind_at,
+                "id": id,
+                "contact_id": contact_id,
+                "last_sent_at": last_sent_at,
+                "snoozed_until": snoozed_until,
+                "created_at": created_at,
+            }
+        )
         if description is not UNSET:
             field_dict["description"] = description
         if frequency is not UNSET:
@@ -117,8 +104,6 @@ class ReminderPublic:
 
         return field_dict
 
-
-
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
@@ -126,13 +111,7 @@ class ReminderPublic:
 
         remind_at = isoparse(d.pop("remind_at"))
 
-
-
-
         id = UUID(d.pop("id"))
-
-
-
 
         def _parse_contact_id(data: object) -> None | UUID:
             if data is None:
@@ -142,15 +121,12 @@ class ReminderPublic:
                     raise TypeError()
                 contact_id_type_0 = UUID(data)
 
-
-
                 return contact_id_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             return cast(None | UUID, data)
 
         contact_id = _parse_contact_id(d.pop("contact_id"))
-
 
         def _parse_last_sent_at(data: object) -> datetime.datetime | None:
             if data is None:
@@ -160,15 +136,12 @@ class ReminderPublic:
                     raise TypeError()
                 last_sent_at_type_0 = isoparse(data)
 
-
-
                 return last_sent_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             return cast(datetime.datetime | None, data)
 
         last_sent_at = _parse_last_sent_at(d.pop("last_sent_at"))
-
 
         def _parse_snoozed_until(data: object) -> datetime.datetime | None:
             if data is None:
@@ -178,8 +151,6 @@ class ReminderPublic:
                     raise TypeError()
                 snoozed_until_type_0 = isoparse(data)
 
-
-
                 return snoozed_until_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
@@ -187,11 +158,7 @@ class ReminderPublic:
 
         snoozed_until = _parse_snoozed_until(d.pop("snoozed_until"))
 
-
         created_at = isoparse(d.pop("created_at"))
-
-
-
 
         def _parse_description(data: object) -> None | str | Unset:
             if data is None:
@@ -202,16 +169,12 @@ class ReminderPublic:
 
         description = _parse_description(d.pop("description", UNSET))
 
-
         _frequency = d.pop("frequency", UNSET)
         frequency: ReminderFrequency | Unset
-        if isinstance(_frequency,  Unset):
+        if isinstance(_frequency, Unset):
             frequency = UNSET
         else:
             frequency = ReminderFrequency(_frequency)
-
-
-
 
         is_active = d.pop("is_active", UNSET)
 
@@ -227,7 +190,6 @@ class ReminderPublic:
             frequency=frequency,
             is_active=is_active,
         )
-
 
         reminder_public.additional_properties = d
         return reminder_public

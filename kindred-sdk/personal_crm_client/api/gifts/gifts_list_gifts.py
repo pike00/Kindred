@@ -1,52 +1,40 @@
 from http import HTTPStatus
-from typing import Any, cast
+from typing import Any
 from urllib.parse import quote
+from uuid import UUID
 
 import httpx
 
-from ...client import AuthenticatedClient, Client
-from ...types import Response, UNSET
 from ... import errors
-
+from ...client import AuthenticatedClient, Client
 from ...models.gifts_public import GiftsPublic
 from ...models.http_validation_error import HTTPValidationError
-from typing import cast
-from uuid import UUID
-
+from ...types import Response
 
 
 def _get_kwargs(
     contact_id: UUID,
-
 ) -> dict[str, Any]:
-    
-
-    
-
-    
-
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": "/api/v1/gifts/contact/{contact_id}".format(contact_id=quote(str(contact_id), safe=""),),
+        "url": "/api/v1/gifts/contact/{contact_id}".format(
+            contact_id=quote(str(contact_id), safe=""),
+        ),
     }
-
 
     return _kwargs
 
 
-
-def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> GiftsPublic | HTTPValidationError | None:
+def _parse_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> GiftsPublic | HTTPValidationError | None:
     if response.status_code == 200:
         response_200 = GiftsPublic.from_dict(response.json())
-
-
 
         return response_200
 
     if response.status_code == 422:
         response_422 = HTTPValidationError.from_dict(response.json())
-
-
 
         return response_422
 
@@ -56,7 +44,9 @@ def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Res
         return None
 
 
-def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[GiftsPublic | HTTPValidationError]:
+def _build_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> Response[GiftsPublic | HTTPValidationError]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -69,9 +59,8 @@ def sync_detailed(
     contact_id: UUID,
     *,
     client: AuthenticatedClient,
-
 ) -> Response[GiftsPublic | HTTPValidationError]:
-    """ List Gifts
+    """List Gifts
 
      List gifts for a contact.
 
@@ -84,12 +73,10 @@ def sync_detailed(
 
     Returns:
         Response[GiftsPublic | HTTPValidationError]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         contact_id=contact_id,
-
     )
 
     response = client.get_httpx_client().request(
@@ -98,13 +85,13 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
+
 def sync(
     contact_id: UUID,
     *,
     client: AuthenticatedClient,
-
 ) -> GiftsPublic | HTTPValidationError | None:
-    """ List Gifts
+    """List Gifts
 
      List gifts for a contact.
 
@@ -117,22 +104,20 @@ def sync(
 
     Returns:
         GiftsPublic | HTTPValidationError
-     """
-
+    """
 
     return sync_detailed(
         contact_id=contact_id,
-client=client,
-
+        client=client,
     ).parsed
+
 
 async def asyncio_detailed(
     contact_id: UUID,
     *,
     client: AuthenticatedClient,
-
 ) -> Response[GiftsPublic | HTTPValidationError]:
-    """ List Gifts
+    """List Gifts
 
      List gifts for a contact.
 
@@ -145,27 +130,23 @@ async def asyncio_detailed(
 
     Returns:
         Response[GiftsPublic | HTTPValidationError]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         contact_id=contact_id,
-
     )
 
-    response = await client.get_async_httpx_client().request(
-        **kwargs
-    )
+    response = await client.get_async_httpx_client().request(**kwargs)
 
     return _build_response(client=client, response=response)
+
 
 async def asyncio(
     contact_id: UUID,
     *,
     client: AuthenticatedClient,
-
 ) -> GiftsPublic | HTTPValidationError | None:
-    """ List Gifts
+    """List Gifts
 
      List gifts for a contact.
 
@@ -178,11 +159,11 @@ async def asyncio(
 
     Returns:
         GiftsPublic | HTTPValidationError
-     """
+    """
 
-
-    return (await asyncio_detailed(
-        contact_id=contact_id,
-client=client,
-
-    )).parsed
+    return (
+        await asyncio_detailed(
+            contact_id=contact_id,
+            client=client,
+        )
+    ).parsed

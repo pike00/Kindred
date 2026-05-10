@@ -1,16 +1,15 @@
 """Life events resource for Kindred SDK."""
 
-from personal_crm_client import AuthenticatedClient, Client
-from personal_crm_client.models import (
-    LifeEventCreate,
-    LifeEventUpdate,
-    LifeEventPublic,
-    LifeEventsPublic,
-    HTTPValidationError,
-)
 from uuid import UUID
 
-from typing import Optional
+from personal_crm_client import AuthenticatedClient, Client
+from personal_crm_client.models import (
+    HTTPValidationError,
+    LifeEventCreate,
+    LifeEventPublic,
+    LifeEventsPublic,
+    LifeEventUpdate,
+)
 
 
 class LifeEventsResource:
@@ -24,7 +23,7 @@ class LifeEventsResource:
         *,
         skip: int = 0,
         limit: int = 100,
-        contact_id: Optional[UUID] = None,
+        contact_id: UUID | None = None,
     ) -> LifeEventsPublic | HTTPValidationError | None:
         """List life events."""
         from personal_crm_client.api.life_events.life_events_list_life_events import sync
@@ -41,7 +40,7 @@ class LifeEventsResource:
         *,
         skip: int = 0,
         limit: int = 100,
-        contact_id: Optional[UUID] = None,
+        contact_id: UUID | None = None,
     ) -> LifeEventsPublic | HTTPValidationError | None:
         """Async version of list()."""
         from personal_crm_client.api.life_events.life_events_list_life_events import asyncio
@@ -55,10 +54,9 @@ class LifeEventsResource:
 
     def get(self, life_event_id: UUID) -> LifeEventPublic | HTTPValidationError | None:
         """Get a single life event by ID."""
-        from personal_crm_client.api.life_events.life_events_list_life_events import sync
 
         events = self.list()
-        if events and hasattr(events, 'data'):
+        if events and hasattr(events, "data"):
             for event in events.data:
                 if event.id == life_event_id:
                     return event
@@ -76,9 +74,7 @@ class LifeEventsResource:
 
         return await asyncio(client=self._client, body=item)
 
-    def update(
-        self, life_event_id: UUID, item: LifeEventUpdate
-    ) -> LifeEventPublic | HTTPValidationError | None:
+    def update(self, life_event_id: UUID, item: LifeEventUpdate) -> LifeEventPublic | HTTPValidationError | None:
         """Update an existing life event."""
         from personal_crm_client.api.life_events.life_events_update_life_event import sync
 
@@ -98,9 +94,7 @@ class LifeEventsResource:
 
         return sync(client=self._client, life_event_id=life_event_id)
 
-    async def delete_async(
-        self, life_event_id: UUID
-    ) -> LifeEventPublic | HTTPValidationError | None:
+    async def delete_async(self, life_event_id: UUID) -> LifeEventPublic | HTTPValidationError | None:
         """Async version of delete()."""
         from personal_crm_client.api.life_events.life_events_delete_life_event import asyncio
 

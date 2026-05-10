@@ -1,18 +1,13 @@
 from http import HTTPStatus
-from typing import Any, cast
-from urllib.parse import quote
+from typing import Any
 
 import httpx
 
-from ...client import AuthenticatedClient, Client
-from ...types import Response, UNSET
 from ... import errors
-
+from ...client import AuthenticatedClient, Client
 from ...models.http_validation_error import HTTPValidationError
 from ...models.reminders_public import RemindersPublic
-from ...types import UNSET, Unset
-from typing import cast
-
+from ...types import UNSET, Response, Unset
 
 
 def _get_kwargs(
@@ -20,12 +15,7 @@ def _get_kwargs(
     skip: int | Unset = 0,
     limit: int | Unset = 100,
     is_active: bool | None | Unset = UNSET,
-
 ) -> dict[str, Any]:
-    
-
-    
-
     params: dict[str, Any] = {}
 
     params["skip"] = skip
@@ -39,9 +29,7 @@ def _get_kwargs(
         json_is_active = is_active
     params["is_active"] = json_is_active
 
-
     params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
-
 
     _kwargs: dict[str, Any] = {
         "method": "get",
@@ -49,23 +37,19 @@ def _get_kwargs(
         "params": params,
     }
 
-
     return _kwargs
 
 
-
-def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> HTTPValidationError | RemindersPublic | None:
+def _parse_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> HTTPValidationError | RemindersPublic | None:
     if response.status_code == 200:
         response_200 = RemindersPublic.from_dict(response.json())
-
-
 
         return response_200
 
     if response.status_code == 422:
         response_422 = HTTPValidationError.from_dict(response.json())
-
-
 
         return response_422
 
@@ -75,7 +59,9 @@ def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Res
         return None
 
 
-def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[HTTPValidationError | RemindersPublic]:
+def _build_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> Response[HTTPValidationError | RemindersPublic]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -90,9 +76,8 @@ def sync_detailed(
     skip: int | Unset = 0,
     limit: int | Unset = 100,
     is_active: bool | None | Unset = UNSET,
-
 ) -> Response[HTTPValidationError | RemindersPublic]:
-    """ List Reminders
+    """List Reminders
 
      List reminders for the current user (owned + tied to visible contacts).
 
@@ -107,14 +92,12 @@ def sync_detailed(
 
     Returns:
         Response[HTTPValidationError | RemindersPublic]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         skip=skip,
-limit=limit,
-is_active=is_active,
-
+        limit=limit,
+        is_active=is_active,
     )
 
     response = client.get_httpx_client().request(
@@ -123,15 +106,15 @@ is_active=is_active,
 
     return _build_response(client=client, response=response)
 
+
 def sync(
     *,
     client: AuthenticatedClient,
     skip: int | Unset = 0,
     limit: int | Unset = 100,
     is_active: bool | None | Unset = UNSET,
-
 ) -> HTTPValidationError | RemindersPublic | None:
-    """ List Reminders
+    """List Reminders
 
      List reminders for the current user (owned + tied to visible contacts).
 
@@ -146,16 +129,15 @@ def sync(
 
     Returns:
         HTTPValidationError | RemindersPublic
-     """
-
+    """
 
     return sync_detailed(
         client=client,
-skip=skip,
-limit=limit,
-is_active=is_active,
-
+        skip=skip,
+        limit=limit,
+        is_active=is_active,
     ).parsed
+
 
 async def asyncio_detailed(
     *,
@@ -163,9 +145,8 @@ async def asyncio_detailed(
     skip: int | Unset = 0,
     limit: int | Unset = 100,
     is_active: bool | None | Unset = UNSET,
-
 ) -> Response[HTTPValidationError | RemindersPublic]:
-    """ List Reminders
+    """List Reminders
 
      List reminders for the current user (owned + tied to visible contacts).
 
@@ -180,21 +161,18 @@ async def asyncio_detailed(
 
     Returns:
         Response[HTTPValidationError | RemindersPublic]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         skip=skip,
-limit=limit,
-is_active=is_active,
-
+        limit=limit,
+        is_active=is_active,
     )
 
-    response = await client.get_async_httpx_client().request(
-        **kwargs
-    )
+    response = await client.get_async_httpx_client().request(**kwargs)
 
     return _build_response(client=client, response=response)
+
 
 async def asyncio(
     *,
@@ -202,9 +180,8 @@ async def asyncio(
     skip: int | Unset = 0,
     limit: int | Unset = 100,
     is_active: bool | None | Unset = UNSET,
-
 ) -> HTTPValidationError | RemindersPublic | None:
-    """ List Reminders
+    """List Reminders
 
      List reminders for the current user (owned + tied to visible contacts).
 
@@ -219,13 +196,13 @@ async def asyncio(
 
     Returns:
         HTTPValidationError | RemindersPublic
-     """
+    """
 
-
-    return (await asyncio_detailed(
-        client=client,
-skip=skip,
-limit=limit,
-is_active=is_active,
-
-    )).parsed
+    return (
+        await asyncio_detailed(
+            client=client,
+            skip=skip,
+            limit=limit,
+            is_active=is_active,
+        )
+    ).parsed

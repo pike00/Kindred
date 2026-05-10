@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class InteractionChannel(str, Enum):
     CALL = "call"
     EMAIL = "email"
