@@ -44,6 +44,42 @@ These routes are registered and tested at the API level, but have no frontend pa
 
 The Copier template's `items` module has been **removed from the API router** (the model + Alembic table remain for now — drop with a dedicated migration if/when desired).
 
+## Screenshots
+
+> Captured against the seeded fake-data fixture (`just seed-fixed`), 1440×900.
+
+Dashboard — stats, "losing touch" queue, and recent interactions:
+
+![Dashboard](docs/screenshots/dashboard.png)
+
+Contacts list — last-contact decay indicator, tags, and company/role:
+
+![Contacts](docs/screenshots/contacts.png)
+
+Contact detail — timeline of interactions, notes, gifts, and life events with a relationships sidebar:
+
+![Contact detail](docs/screenshots/contact-detail.png)
+
+Interactions feed grouped by date with channel badges:
+
+![Interactions](docs/screenshots/interactions.png)
+
+Reminders:
+
+![Reminders](docs/screenshots/reminders.png)
+
+Calendar — birthdays and life-event anniversaries surfaced per day:
+
+![Calendar](docs/screenshots/calendar.png)
+
+Journal — freeform daily entries with optional mood:
+
+![Journal](docs/screenshots/journal.png)
+
+Tags:
+
+![Tags](docs/screenshots/tags.png)
+
 ## Layout
 
 ```

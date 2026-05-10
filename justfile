@@ -7,6 +7,31 @@ compose := "compose.dev.yml"
 
 _dc := "docker compose -f " + compose
 
+# Run the PR sweep orchestrator (Task 8+9). Loads .env, then runs the full pipeline.
+# Set DRY_RUN=1 to print the plan without pushing anything.
+# Set ONLY_PR=<n> to process a single PR for smoke-testing.
+sweep *args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ ! -f .env ]; then
+        echo "ERROR: .env not found — run: sops -d .env.sops > .env" >&2
+        exit 1
+    fi
+    set -a; source .env; set +a
+    exec uv run --script --quiet scripts/run-pr-sweep.py run {{args}}
+
+# Review all already-ready PRs with deepseek-v4-pro-cloud (review) + kimi-k2.6-cloud (fixes).
+# Idempotent — skips PRs already reviewed. Run after `just sweep` completes.
+sweep-review:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ ! -f .env ]; then
+        echo "ERROR: .env not found — run: sops -d .env.sops > .env" >&2
+        exit 1
+    fi
+    set -a; source .env; set +a
+    exec uv run --script --quiet scripts/run-pr-sweep.py review
+
 # Seed fake data for the FIRST_SUPERUSER. Safe to run repeatedly; adds more on top.
 seed count="500" email="":
     {{_dc}} exec -T backend python app/seed_fake_data.py --count {{count}} {{ if email == "" { "" } else { "--email " + email } }}
@@ -18,6 +43,14 @@ seed-reset count="500" email="":
 # Deterministic seed — same data every run (good for screenshots/demos).
 seed-fixed count="500" rng="42" email="":
     {{_dc}} exec -T backend python app/seed_fake_data.py --count {{count}} --reset --seed {{rng}} {{ if email == "" { "" } else { "--email " + email } }}
+
+# Regenerate the frontend OpenAPI client AND restart the frontend container
+# so Vite drops its cached SDK from node_modules/.vite/deps. Without the
+# restart, the dev server keeps serving the stale client even though the
+# source files on disk are current.
+regen-client:
+    bash scripts/generate-client.sh
+    {{_dc}} restart frontend
 
 # Regenerate docs/db/ from the live Postgres schema using tbls, then render
 # each .md to a standalone .html via pandoc. Open docs/db/index.html in a
@@ -203,6 +236,13 @@ pytest *args:
     set -euo pipefail
     eval "$(just env | sed 's/^/export /')"
     docker compose -f compose.worktree.yml exec -T backend pytest {{args}}
+
+# Run frontend TypeScript typecheck inside the worktree's frontend container.
+typecheck:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    eval "$(just env | sed 's/^/export /')"
+    docker compose -f compose.worktree.yml exec -T frontend bun run typecheck
 
 # Open a bash shell inside the worktree's backend container.
 shell:
