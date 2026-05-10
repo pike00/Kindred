@@ -136,6 +136,35 @@ EDITOR=vim sops .env.sops
 
 After rotating `FIRST_SUPERUSER_PASSWORD`, the change only takes effect on fresh deployments. Existing homelab databases retain the old superuser password until you manually update it (or delete and recreate the user via `initial_data.py`).
 
+## Deployment tiers
+
+Three isolated environments. Each has its own credentials, database, and Docker volumes — nothing is shared across tiers.
+
+| Tier | Where | Domain | Stack | Database | Backups |
+|---|---|---|---|---|---|
+| **Prod** | `~/Documents/Homelab/apps/kindred/` on ares | `kindred.khanpikehome.com` (tailnet-only) | Plain `docker compose`, single combined image `ghcr.io/pike00/kindred:vX.Y.Z` | `kindred-db` Postgres container, volume `kindred_db_data`, database `kindred` | Daily pg-dump at 03:17 + Kopia to S3+B2, 30-day retention |
+| **Dev** | `~/projects/personal-crm/` | `kindred.dev.khanpikehome.com` (tailnet-only) | `compose.dev.yml` overlay (bind-mounted source, live reload) | Project-local `dev-db` volume, database `crm` | None (ephemeral) |
+| **PR previews** | Deferred indefinitely | — | — | — | — |
+
+### Hard isolation enforced by
+
+- Distinct Postgres credentials per tier — secrets live only in their own `.env.sops`
+- Distinct Docker volumes (`kindred_db_data` for prod, project-local `dev-db` for dev) — no `external: true` cross-references between tiers
+- Distinct Docker networks — `pikenet-internal-kindred` for prod, default bridge for dev
+- Distinct database names — prod is `kindred`, dev is `crm`
+- Traefik label pinning — prod compose has the domain hard-coded, dev compose has its own hard-coded dev hostname; neither uses a `${DOMAIN}` variable that could claim the other's hostname
+
+### Releasing to prod
+
+Images are built and pushed to GHCR by the GHA pipeline when a `v*` tag is pushed. Deployment is manual:
+
+```bash
+# on ares, from ~/Documents/Homelab/
+just bump apps/kindred <tag>   # e.g. v0.2.0
+```
+
+The `bump` recipe does a pg-dump before pulling the new image. Never bump without it.
+
 ## Origin
 
 This project was scaffolded from the [FastAPI full-stack template](https://github.com/fastapi/full-stack-fastapi-template) via Copier. The `backend/README.md` and `frontend/README.md` files are still mostly upstream template content — treat them as reference, not project-specific docs.
