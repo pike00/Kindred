@@ -304,3 +304,86 @@ worktree-rm slug:
     (cd "$wt_path" && just down-clean) || true
     git -C "$main_repo" worktree remove "$wt_path" --force
     echo "✓ removed worktree '{{slug}}' (branch left intact — delete with 'git branch -D {{slug}}')"
+
+# ---------------------------------------------------------------------------
+# Release / publish / deploy.
+#
+# release  = git tag + push + build Dockerfile.prod + push to GHCR (one-shot)
+# publish  = build + push to GHCR (assumes git tag exists)
+# bump     = deploy on ares (delegates to homelab apps/kindred/justfile which
+#            does pg-dump-before-bump, health-check, and supports rollback)
+#
+# Image tags published: :<tag> and :sha-<short>. No :latest — homelab compose
+# uses ${IMAGE_TAG:?set IMAGE_TAG via .env}, so every deploy is intentional.
+# Same shape as .github/workflows/release.yml; use these recipes when the
+# self-hosted GHA runner is unavailable or you want host-side control.
+# ---------------------------------------------------------------------------
+
+# One-shot release: create + push git tag, build Dockerfile.prod, push to GHCR.
+# Requires clean working tree and HEAD already pushed to origin. After this,
+# `just bump <tag>` deploys it.
+[group('Deploy')]
+release tag:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if ! [[ "{{tag}}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$ ]]; then
+        echo "ERROR: tag must match v<MAJOR>.<MINOR>.<PATCH>[-prerelease], got: {{tag}}" >&2
+        exit 1
+    fi
+    if git rev-parse --verify "refs/tags/{{tag}}" >/dev/null 2>&1; then
+        echo "ERROR: git tag {{tag}} already exists. Pick a new version or delete it first." >&2
+        exit 1
+    fi
+    if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+        echo "ERROR: working tree has uncommitted changes — image would not match tagged commit." >&2
+        echo "       Commit or stash first:" >&2
+        git status --short --untracked-files=no >&2
+        exit 1
+    fi
+    UPSTREAM=$(git rev-parse '@{u}' 2>/dev/null || echo '')
+    if [ -z "$UPSTREAM" ] || [ "$(git rev-parse HEAD)" != "$UPSTREAM" ]; then
+        echo "ERROR: HEAD is not pushed to origin — tag would point at a commit nobody else can see." >&2
+        echo "       Push first:  git push" >&2
+        exit 1
+    fi
+    echo "▶ Tagging {{tag}} at $(git log -1 --format='%h %s')..."
+    git tag "{{tag}}"
+    git push origin "{{tag}}"
+    just publish "{{tag}}"
+
+# Build Dockerfile.prod and push to GHCR as :<tag> and :sha-<short>.
+# Host-side replacement for release.yml. Requires the git tag to exist
+# locally — tag and push first, then call this.
+# Requires GHCR auth in ~/.docker/config.json (gh token with write:packages).
+[group('Deploy')]
+publish tag:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if ! [[ "{{tag}}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$ ]]; then
+        echo "ERROR: tag must match v<MAJOR>.<MINOR>.<PATCH>[-prerelease], got: {{tag}}" >&2
+        exit 1
+    fi
+    if ! git rev-parse --verify "refs/tags/{{tag}}" >/dev/null 2>&1; then
+        echo "ERROR: git tag {{tag}} doesn't exist locally." >&2
+        echo "       Tag and push first:  git tag {{tag}} && git push origin {{tag}}" >&2
+        exit 1
+    fi
+    SHA=$(git rev-parse "{{tag}}")
+    SHORT=${SHA:0:7}
+    IMAGE=ghcr.io/pike00/kindred
+    echo "▶ Building $IMAGE for tag {{tag}} (commit $SHORT)..."
+    docker build -f Dockerfile.prod \
+        -t "$IMAGE:{{tag}}" \
+        -t "$IMAGE:sha-$SHORT" \
+        .
+    echo "▶ Pushing :{{tag}}, :sha-$SHORT..."
+    docker push "$IMAGE:{{tag}}"
+    docker push "$IMAGE:sha-$SHORT"
+    echo "✓ Published $IMAGE:{{tag}}"
+    echo "  Deploy:  just bump {{tag}}"
+
+# Deploy: delegates to the homelab apps/kindred/justfile, which handles
+# the mandatory pg-dump-before-bump + post-deploy healthcheck. Run on ares.
+[group('Deploy')]
+bump tag:
+    cd /home/will/Documents/Homelab/apps/kindred && just bump {{tag}}

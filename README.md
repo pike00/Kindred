@@ -156,14 +156,43 @@ Three isolated environments. Each has its own credentials, database, and Docker 
 
 ### Releasing to prod
 
-Images are built and pushed to GHCR by the GHA pipeline when a `v*` tag is pushed. Deployment is manual:
+Three recipes cover the build → publish → deploy flow. Pick the entry point
+that matches how much state you already have committed.
 
 ```bash
-# on ares, from ~/Documents/Homelab/
-just bump apps/kindred <tag>   # e.g. v0.2.0
+# One-shot from a clean tree: tag + push + build + push to GHCR
+just release v0.2.0       # tags HEAD, builds Dockerfile.prod, pushes :v0.2.0 + :sha-XXX
+just bump v0.2.0          # deploy (delegates to homelab apps/kindred/justfile)
+
+# If you already tagged manually
+git tag v0.2.0 && git push origin v0.2.0
+just publish v0.2.0       # build + push to GHCR (skips the git step)
+just bump v0.2.0
+
+# Deploy-only — image was published elsewhere (e.g. GHA release.yml)
+just bump v0.2.0
 ```
 
-The `bump` recipe does a pg-dump before pulling the new image. Never bump without it.
+`just release` enforces tag format `vX.Y.Z[-prerelease]`, that the tag
+doesn't already exist, that the working tree is clean, and that HEAD is
+pushed to origin. Any failure halts before `git tag` runs.
+
+Tags published per release: `:vX.Y.Z` and `:sha-<short>`. **No `:latest`** —
+the homelab compose uses `${IMAGE_TAG:?...}`, so every deploy is intentional.
+
+`just bump` delegates to the homelab-side `apps/kindred/justfile`, which
+runs a mandatory pg-dump before pulling the new image and health-checks
+the container afterward. Never bypass it.
+
+When the self-hosted GHA runner is online, the `release.yml` workflow
+produces the same image automatically on tag push — `just publish` is the
+host-side equivalent for when you want manual control or the runner is
+unavailable.
+
+Prerequisites:
+- `~/.docker/config.json` has GHCR auth (`gh auth refresh -s write:packages,read:packages -h github.com`)
+- `Dockerfile.prod` in the repo root
+- For `bump`: run on ares with `/home/will/Documents/Homelab/apps/kindred/` present
 
 ## Origin
 
