@@ -1,35 +1,103 @@
 # personal-crm (Kindred) — Project Instructions
 
-## Terraform
-
-Terraform is not in this repo. Infrastructure for this project is managed in `~/Documents/Homelab/`:
-
-- **DNS / Cloudflare** — `infra/gateway/cloudflare/` handles `*.example.com` wildcard cert and DNS records. Run via `just tf-plan` / `just tf-apply` from that directory.
-- **NextDNS (worktree split-horizon)** — `infra/gateway/nextdns/` was scaffolded for `<slug>.kindred.example.com` tailnet DNS rewrites. Unapplied; gated on NextDNS API key in Bitwarden (`NextDNS API`). Run via the same `just tf-*` pattern once the key is populated.
-
-When infrastructure changes are needed (new DNS records, cert SANs, NextDNS rewrites), switch to the Homelab repo and use `just tf-*` recipes — never run `terraform` directly.
+Origin: `pike00/Kindred` (public repo). Scaffolded from `fastapi/full-stack-fastapi-template`.
 
 ## Stack
 
-- **Backend** — FastAPI + SQLAlchemy + Alembic, in `backend/`. Run via `just dev` or `just up`.
-- **Frontend** — React (Vite + Bun), in `frontend/`. Dev server starts alongside the API stack.
-- **DB** — Postgres (Docker). Migrations: `just migrate` / `just makemigrations`.
-- **Worktrees** — `just worktree <slug>` boots an isolated stack per branch at `.worktrees/<slug>/`.
+- Backend: FastAPI + SQLModel + Alembic, Python 3.13, `uv`. Source under `backend/app/`.
+- Frontend: React 19 + Vite + Bun + TanStack Router/Query + Tailwind + shadcn/ui. Source under `frontend/src/`.
+- Postgres 18, Redis 7 + arq worker, Meilisearch v1, Radicale CardDAV bridge mounted into FastAPI.
+- E2E: Puppeteer specs under `e2e/`, driven by Bun.
+- Prod image: single combined `Dockerfile.prod` — FastAPI serves built SPA from `/app/static/` when `STATIC_DIR` is set.
 
-## Dev workflow
+## Dev workflow (worktree-first)
+
+The default `justfile` targets `compose.dev.yml` and the entrypoints (`just up`, `just down`, `just logs`, `just pytest`, `just shell`) assume the worktree stack pattern (`compose.worktree.yml`). `just up` from the main repo dir gives you the `personal-crm` project on the default port offset; `just worktree <slug>` creates `.worktrees/<slug>/` on a new branch and brings up an isolated stack with its own DB/Redis/Meili volumes and offset host ports.
 
 ```bash
-just up           # start full stack (DB + API + frontend)
-just dev          # hot-reload API only
-just pytest       # run backend tests
-just migrate      # apply pending Alembic migrations
-just makemigrations <msg>  # generate new migration
-just regen-client # regenerate frontend SDK + restart frontend container
-just seed         # seed fake data for FIRST_SUPERUSER (use seed-reset / seed-fixed for variants)
+just up                          # bring up worktree stack (DB + API + worker + frontend + redis + meili)
+just down                        # stop containers, keep volumes
+just down-clean                  # stop + drop volumes (fresh DB next up)
+just logs [service]              # tail; scope to one service if given
+just ps                          # status
+just env                         # print resolved project name, hostname, ports
+just pytest [-- args]            # pytest inside backend container
+just typecheck                   # tsc --noEmit inside frontend container
+just shell                       # bash into backend container
+just worktree <slug>             # create-or-resume worktree at .worktrees/<slug>/ + up
+just worktree-rm <slug>          # tear down + remove worktree
+just regen-client                # regenerate frontend SDK + restart frontend (see below)
+just seed [count] [email]        # seed fake data; seed-reset wipes first; seed-fixed is deterministic
 ```
 
-Secrets live in `.env.sops`; decrypt with `sops -d .env.sops > .env` or rely on the `just` recipes which handle this automatically.
+Secrets live in `.env.sops`; `just up` symlinks `.env` from the main repo into worktrees if missing. Decrypt with `sops -d .env.sops > .env` when starting fresh.
 
-## Regenerating the frontend SDK
+### Regenerating the frontend SDK
 
-After changing any backend route/schema, run **`just regen-client`** — never `bash scripts/generate-client.sh` alone. The script refreshes `frontend/openapi.json` and `frontend/src/client/*.gen.ts` on disk, but Vite caches the compiled SDK in `node_modules/.vite/deps` inside the frontend container, so the dev server keeps serving the stale client until the container restarts. `just regen-client` does both. Symptom of forgetting: API returns the new shape, the UI still uses the old types/functions.
+Always `just regen-client` after changing any backend route/schema — never `bash scripts/generate-client.sh` alone. The script refreshes `frontend/openapi.json` and `frontend/src/client/*.gen.ts` on disk, but Vite caches the compiled SDK in `node_modules/.vite/deps`. Without restarting the frontend container the dev server keeps serving the stale client. Symptom: API returns the new shape, UI still uses old types.
+
+## Three deployment tiers
+
+| Tier | Where | Domain | Compose | DB |
+|---|---|---|---|---|
+| Prod | `~/Documents/Homelab/apps/kindred/` on ares | `kindred.<DOMAIN>` | plain `docker compose` against pinned `ghcr.io/pike00/kindred:vX.Y.Z` | `kindred_db_data` volume, db `kindred` |
+| Dev (against homelab Traefik) | this repo | `kindred.dev.<DOMAIN>` | `compose.dev.yml` | project-local `crm-db` volume, db `crm` |
+| Per-worktree | `.worktrees/<slug>/` | `<slug>.kindred.<DOMAIN>` | `compose.worktree.yml` | project-local per-worktree volume |
+
+Tier isolation is hard: distinct credentials, volumes, networks, db names, and hard-coded Traefik labels (no `${DOMAIN}` interpolation on the prod hostname rule). Don't introduce shared `external: true` volumes across tiers.
+
+### E2E loopback override
+
+`compose.dev.yml` publishes `127.0.0.1:8001 -> backend:8000` and `127.0.0.1:5173 -> frontend:5173` so Puppeteer can hit the stack without going through Traefik. `compose.dev.override.yml` adds the matching CORS + Vite env so the SPA talks to the loopback API:
+
+```bash
+docker compose -f compose.dev.yml -f compose.dev.override.yml up -d --force-recreate backend frontend
+```
+
+`BACKEND_CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173` and `VITE_API_URL=http://localhost:8001` only apply under the override. Without the override, `VITE_API_URL` points at the public dev hostname and CORS rejects loopback.
+
+### Dev validator bypass
+
+`compose.dev.yml` sets `ENVIRONMENT=local` on the backend so the strict secret-validator accepts the `changethis` placeholders in `.env`. Prod sets `ENVIRONMENT=production` and the validator refuses to boot with placeholders. Don't copy prod's settings into the dev override.
+
+## Release / publish / deploy
+
+Three recipes, defined in `justfile` (see also `release.just`):
+
+```bash
+just release v0.2.0     # tag + push + build Dockerfile.prod + push :v0.2.0 + :sha-<short> to GHCR
+just publish v0.2.0     # build + push only (tag must already exist)
+just bump v0.2.0        # delegates to ~/Documents/Homelab/apps/kindred/justfile (pg-dump, pull, healthcheck)
+```
+
+`release` enforces tag format `vX.Y.Z[-prerelease]`, blocks pre-existing tags, requires a clean working tree, and requires HEAD pushed to origin. No `:latest` tag is published — homelab compose uses `${IMAGE_TAG:?}` so every deploy is explicit.
+
+CI mirror: `.github/workflows/release.yml` runs on tag push via the **self-hosted GHA runner on ares** and produces the same image. `just publish` is the host-side equivalent for when the runner is unavailable.
+
+## Pre-push gates
+
+`prek install` (alias for pre-commit) wires both hook stages. Pre-commit runs biome + ruff + ruff-format + SDK regen. Pre-push runs two extra gates:
+
+- `db-docs-check` — `tbls diff` against the live dev DB. Fails the push if `docs/db/` is stale. Fix: `just db-docs && git add docs/db && git commit --amend`. Requires the `db` service to be running.
+- `e2e-tests` — `scripts/run-e2e-prepush.sh` brings the dev stack up (with the loopback override) if it isn't reachable on `127.0.0.1:8001`/`5173`, then runs the puppeteer specs in `e2e/`. Bypass: `SKIP=e2e-tests git push` or `PERSONAL_CRM_SKIP_E2E=1 git push`. Skips with a warning (not silently green) if Docker is unavailable.
+
+## SPA fallback static file serving
+
+`backend/app/main.py` mounts `/assets` from `STATIC_DIR` and adds a catch-all `spa_fallback` route. The fallback serves real files at the static root (e.g. `site.webmanifest`, `robots.txt`, `favicon.ico`) **before** falling back to `index.html`. Path-traversal is blocked via the `_static_dir + os.sep` prefix check. If you add a new top-level static asset, no code change is needed — drop it under `frontend/public/` and the build pipeline picks it up.
+
+## Terraform (out of repo)
+
+Terraform for this project lives in `~/Documents/Homelab/`:
+
+- DNS / Cloudflare / cert SANs: `infra/gateway/cloudflare/`
+- Tailnet DNS rewrites for worktree split-horizon (`<slug>.kindred.<DOMAIN>`): `infra/gateway/nextdns/` (unapplied; gated on NextDNS API key)
+
+Run via `just tf-plan` / `just tf-apply` from those directories. Never run `terraform` directly.
+
+## Gotchas
+
+- `just up` brings up the *worktree* stack via `compose.worktree.yml`. To run the plain dev stack against homelab Traefik, use `docker compose -f compose.dev.yml up -d` directly.
+- Backend ID is `kindred-internal-crm` for the internal network and `kindred-private` for ingress — both `external: true`. Created by the homelab `apps/kindred/` stack; don't redefine them here.
+- mypy is intentionally disabled in pre-commit (~90 pre-existing strict-mode errors). Run locally with `uv run --project backend mypy app`.
+- The Copier template's `items` module is removed from the router but the model and Alembic table remain; drop with a dedicated migration if/when desired.
+- Backend-only routes (no UI yet): `addresses`, `pets`, `relationships`, `contact_fields`, `custom_fields`, `life_events`, `import_export`, `webhooks`.
