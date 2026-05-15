@@ -1,0 +1,10 @@
+[release-kit]
+project_name = "kindred"
+project_description = "Self-hosted personal CRM — contacts, interactions, reminders, gifts, debts, journal entries — with CardDAV sync, full-text search, and a React frontend."
+litellm_model = "deepseek-v4-pro-cloud"
+reasoning_effort = "low"
+changelog_path = "CHANGELOG.md"
+branch = "main"
+# Image brand is "kindred" but the repo is "personal-crm". GH release notes
+# audience is the operator who runs the container, not an end user, so the
+# install command is omitted.
