@@ -7,7 +7,7 @@ compose := "compose.dev.yml"
 
 _dc := "docker compose -f " + compose
 
-# `release` and changelog recipes come from release.just. `publish` and `bump`
+# `release` and changelog recipes come from release.just. `build` and `deploy`
 # are inline below (repo-specific image name / homelab app).
 # Note: image is "kindred" (running container brand); the repo is "personal-crm".
 import 'release.just'
