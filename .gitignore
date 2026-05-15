@@ -33,3 +33,11 @@ dbml-error.log
 # scripts/run-dirac-projects.sh state, logs, and prompts
 .dirac-runner/
 .pr-sweep-runner/
+
+# SDK
+sdk/.venv/
+sdk/.pytest_cache/
+sdk/__pycache__/
+sdk/**/__pycache__/
+sdk/**/*.pyc
+sdk/**/*.pyo
