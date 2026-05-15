@@ -310,16 +310,16 @@ worktree-rm slug:
     git -C "$main_repo" worktree remove "$wt_path" --force
     echo "✓ removed worktree '{{slug}}' (branch left intact — delete with 'git branch -D {{slug}}')"
 
-# ─── Release / publish / deploy ──────────────────────────────────────────
+# ─── Release / build / deploy ────────────────────────────────────────────
 #
 # `release` comes from release.just (release-kit cut: preflight, git-cliff
-# CHANGELOG, LLM notes, tag, push, GH release). `publish` and `bump` are
+# CHANGELOG, LLM notes, tag, push, GH release). `build` and `deploy` are
 # inline because they reference repo-specific paths.
 
 # Build Dockerfile.prod and push to GHCR as :<tag> and :sha-<short>.
 # Image name is "kindred" (the container brand), repo is "personal-crm".
 [group('Deploy')]
-publish tag:
+build tag:
     #!/usr/bin/env bash
     set -euo pipefail
     if ! [[ "{{tag}}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$ ]]; then
@@ -344,21 +344,21 @@ publish tag:
         --cache-to   type=local,dest=/tmp/buildx-cache-kindred,mode=max \
         --push \
         .
-    echo "✓ Published $IMAGE:{{tag}} and :sha-$SHORT"
-    echo "  Deploy:  just bump {{tag}}"
+    echo "✓ Built $IMAGE:{{tag}} and :sha-$SHORT"
+    echo "  Deploy:  just deploy {{tag}}"
 
 # Deploy: delegates to the homelab apps/kindred/justfile, which handles
 # the mandatory pg-dump-before-bump + post-deploy healthcheck. Run on ares.
 [group('Deploy')]
-bump tag:
+deploy tag:
     just -f ~/Documents/Homelab/apps/kindred/justfile bump {{tag}}
 
-# End-to-end: cut a release AND build/push AND deploy.
+# End-to-end: cut a release AND build AND deploy.
 [group('Deploy')]
-release-and-ship level:
+ship level:
     #!/usr/bin/env bash
     set -euo pipefail
     just release {{level}}
     tag=$(git describe --tags --abbrev=0)
-    just publish "$tag"
-    just bump "$tag"
+    just build "$tag"
+    just deploy "$tag"
