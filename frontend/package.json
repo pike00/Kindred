@@ -63,7 +63,7 @@
     "@radix-ui/react-popover": "^1.1.15",
     "@radix-ui/react-switch": "^1.2.6",
     "@tanstack/router-devtools": "^1.166.7",
-    "@tanstack/router-plugin": "^1.167.9",
+    "@tanstack/router-plugin": "^1.168.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
