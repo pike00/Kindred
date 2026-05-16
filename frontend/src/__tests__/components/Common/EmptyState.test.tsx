@@ -1,7 +1,6 @@
-import { describe, it, expect } from "vitest"
 import { render, screen } from "@testing-library/react"
-import React from "react"
 import { Heart } from "lucide-react"
+import { describe, expect, it } from "vitest"
 import { EmptyState } from "@/components/Common/EmptyState"
 
 describe("EmptyState", () => {
@@ -22,9 +21,11 @@ describe("EmptyState", () => {
         icon={Heart}
         title="No items"
         description="Add your first item to get started"
-      />
+      />,
     )
-    expect(screen.getByText("Add your first item to get started")).toBeInTheDocument()
+    expect(
+      screen.getByText("Add your first item to get started"),
+    ).toBeInTheDocument()
   })
 
   it("does not render description when not provided", () => {
@@ -35,9 +36,7 @@ describe("EmptyState", () => {
 
   it("renders action when provided", () => {
     const action = <button>Create Item</button>
-    render(
-      <EmptyState icon={Heart} title="No items" action={action} />
-    )
+    render(<EmptyState icon={Heart} title="No items" action={action} />)
     expect(screen.getByText("Create Item")).toBeInTheDocument()
   })
 
@@ -54,7 +53,7 @@ describe("EmptyState", () => {
         title="No items"
         description="You have no items yet"
         action={action}
-      />
+      />,
     )
     expect(screen.getByText("No items")).toBeInTheDocument()
     expect(screen.getByText("You have no items yet")).toBeInTheDocument()
@@ -72,13 +71,13 @@ describe("EmptyState", () => {
       "border",
       "border-dashed",
       "bg-card",
-      "text-center"
+      "text-center",
     )
   })
 
   it("applies custom className", () => {
     const { container } = render(
-      <EmptyState icon={Heart} title="No items" className="custom-class" />
+      <EmptyState icon={Heart} title="No items" className="custom-class" />,
     )
     const wrapper = container.querySelector("div")
     expect(wrapper).toHaveClass("custom-class")
@@ -86,7 +85,7 @@ describe("EmptyState", () => {
 
   it("merges custom className with base classes", () => {
     const { container } = render(
-      <EmptyState icon={Heart} title="No items" className="my-custom" />
+      <EmptyState icon={Heart} title="No items" className="my-custom" />,
     )
     const wrapper = container.querySelector("div")
     expect(wrapper).toHaveClass("my-custom", "rounded-xl", "bg-card")
@@ -101,7 +100,7 @@ describe("EmptyState", () => {
       "justify-center",
       "rounded-lg",
       "bg-muted",
-      "text-muted-foreground"
+      "text-muted-foreground",
     )
   })
 
@@ -117,20 +116,20 @@ describe("EmptyState", () => {
         icon={Heart}
         title="No items"
         description="Test description"
-      />
+      />,
     )
     const descriptionElement = screen.getByText("Test description")
     expect(descriptionElement).toHaveClass(
       "text-xs",
       "text-muted-foreground",
-      "max-w-sm"
+      "max-w-sm",
     )
   })
 
   it("renders action in correctly positioned container", () => {
     const action = <button>Create</button>
     const { container } = render(
-      <EmptyState icon={Heart} title="No items" action={action} />
+      <EmptyState icon={Heart} title="No items" action={action} />,
     )
     const actionContainer = container.querySelector("div > div:last-child")
     expect(actionContainer).toHaveClass("mt-4")
@@ -142,7 +141,7 @@ describe("EmptyState", () => {
         icon={Heart}
         title="No items"
         description="Test description"
-      />
+      />,
     )
     const descriptionElement = screen.getByText("Test description")
     const parent = descriptionElement.parentElement
@@ -156,9 +155,7 @@ describe("EmptyState", () => {
         <button>Option 2</button>
       </div>
     )
-    render(
-      <EmptyState icon={Heart} title="No items" action={action} />
-    )
+    render(<EmptyState icon={Heart} title="No items" action={action} />)
     expect(screen.getByText("Option 1")).toBeInTheDocument()
     expect(screen.getByText("Option 2")).toBeInTheDocument()
   })
@@ -178,7 +175,7 @@ describe("EmptyState", () => {
         icon={Heart}
         title="No items"
         description={longDescription}
-      />
+      />,
     )
     const descriptionElement = screen.getByText(longDescription)
     expect(descriptionElement).toHaveClass("max-w-sm")

@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, vi } from "vitest"
 import { screen } from "@testing-library/react"
-import { renderWithProviders } from "@/test/helpers"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import DeleteAccount from "@/components/UserSettings/DeleteAccount"
+import { renderWithProviders } from "@/test/helpers"
 
 vi.mock("sonner", () => ({
   toast: {
@@ -52,14 +52,18 @@ describe("DeleteAccount", () => {
     renderWithProviders(<DeleteAccount />)
 
     expect(
-      screen.getByText("Permanently delete your account and all associated data.")
+      screen.getByText(
+        "Permanently delete your account and all associated data.",
+      ),
     ).toBeInTheDocument()
   })
 
   it("renders delete confirmation button", () => {
     renderWithProviders(<DeleteAccount />)
 
-    expect(screen.getByRole("button", { name: "Delete Account" })).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: "Delete Account" }),
+    ).toBeInTheDocument()
   })
 
   it("applies destructive border styling to container", () => {
@@ -79,14 +83,18 @@ describe("DeleteAccount", () => {
   it("renders muted foreground text for description", () => {
     renderWithProviders(<DeleteAccount />)
 
-    const description = screen.getByText("Permanently delete your account and all associated data.")
+    const description = screen.getByText(
+      "Permanently delete your account and all associated data.",
+    )
     expect(description).toHaveClass("text-muted-foreground")
   })
 
   it("renders small description text", () => {
     renderWithProviders(<DeleteAccount />)
 
-    const description = screen.getByText("Permanently delete your account and all associated data.")
+    const description = screen.getByText(
+      "Permanently delete your account and all associated data.",
+    )
     expect(description).toHaveClass("text-sm")
   })
 })

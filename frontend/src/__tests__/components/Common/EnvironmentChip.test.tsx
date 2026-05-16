@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import { renderWithProviders } from "@/test/helpers"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { EnvironmentChip } from "@/components/Common/EnvironmentChip"
+import { renderWithProviders } from "@/test/helpers"
 
 // Mock the client module
 vi.mock("@/client", () => ({
@@ -24,8 +24,8 @@ describe("EnvironmentChip", () => {
           () =>
             new Promise(() => {
               // Never resolves to simulate loading
-            })
-        )
+            }),
+        ),
       )
 
       const { container } = renderWithProviders(<EnvironmentChip />)
@@ -39,8 +39,8 @@ describe("EnvironmentChip", () => {
           Promise.resolve({
             ok: true,
             json: () => Promise.resolve({ environment: "production" }),
-          } as Response)
-        )
+          } as Response),
+        ),
       )
 
       const { container } = renderWithProviders(<EnvironmentChip />)
@@ -58,8 +58,8 @@ describe("EnvironmentChip", () => {
           Promise.resolve({
             ok: true,
             json: () => Promise.resolve({ environment: "staging" }),
-          } as Response)
-        )
+          } as Response),
+        ),
       )
 
       const { getByText } = renderWithProviders(<EnvironmentChip />)
@@ -77,8 +77,8 @@ describe("EnvironmentChip", () => {
           Promise.resolve({
             ok: true,
             json: () => Promise.resolve({ environment: "development" }),
-          } as Response)
-        )
+          } as Response),
+        ),
       )
 
       const { getByText } = renderWithProviders(<EnvironmentChip />)
@@ -95,8 +95,8 @@ describe("EnvironmentChip", () => {
           Promise.resolve({
             ok: true,
             json: () => Promise.resolve({ environment: "local" }),
-          } as Response)
-        )
+          } as Response),
+        ),
       )
 
       const { getByText } = renderWithProviders(<EnvironmentChip />)
@@ -115,8 +115,8 @@ describe("EnvironmentChip", () => {
           Promise.resolve({
             ok: true,
             json: () => Promise.resolve({ environment: "staging" }),
-          } as Response)
-        )
+          } as Response),
+        ),
       )
 
       const { getByText } = renderWithProviders(<EnvironmentChip />)
@@ -146,7 +146,7 @@ describe("EnvironmentChip", () => {
         Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ environment: "staging" }),
-        } as Response)
+        } as Response),
       )
       vi.stubGlobal("fetch", fetchMock)
 
@@ -156,7 +156,7 @@ describe("EnvironmentChip", () => {
 
       expect(fetchMock).toHaveBeenCalledWith(
         "http://localhost:3000/api/v1/utils/environment/",
-        { credentials: "include" }
+        { credentials: "include" },
       )
     })
 
@@ -165,7 +165,7 @@ describe("EnvironmentChip", () => {
         Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ environment: "staging" }),
-        } as Response)
+        } as Response),
       )
       vi.stubGlobal("fetch", fetchMock)
 
@@ -184,8 +184,8 @@ describe("EnvironmentChip", () => {
           Promise.resolve({
             ok: false,
             status: 500,
-          } as Response)
-        )
+          } as Response),
+        ),
       )
 
       const { container } = renderWithProviders(<EnvironmentChip />)
@@ -201,7 +201,7 @@ describe("EnvironmentChip", () => {
         Promise.resolve({
           ok: false,
           status: 500,
-        } as Response)
+        } as Response),
       )
       vi.stubGlobal("fetch", fetchMock)
 
@@ -218,7 +218,7 @@ describe("EnvironmentChip", () => {
         Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ environment: "staging" }),
-        } as Response)
+        } as Response),
       )
       vi.stubGlobal("fetch", fetchMock)
 
@@ -241,7 +241,7 @@ describe("EnvironmentChip", () => {
         Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ environment: "staging" }),
-        } as Response)
+        } as Response),
       )
       vi.stubGlobal("fetch", fetchMock)
 
@@ -262,8 +262,8 @@ describe("EnvironmentChip", () => {
           Promise.resolve({
             ok: true,
             json: () => Promise.resolve({ environment: "unknown-env" }),
-          } as Response)
-        )
+          } as Response),
+        ),
       )
 
       const { getByText } = renderWithProviders(<EnvironmentChip />)
@@ -280,8 +280,8 @@ describe("EnvironmentChip", () => {
           Promise.resolve({
             ok: true,
             json: () => Promise.resolve({ someOtherField: "value" }),
-          } as Response)
-        )
+          } as Response),
+        ),
       )
 
       const { container } = renderWithProviders(<EnvironmentChip />)
@@ -299,8 +299,8 @@ describe("EnvironmentChip", () => {
           Promise.resolve({
             ok: true,
             json: () => Promise.resolve({ environment: "" }),
-          } as Response)
-        )
+          } as Response),
+        ),
       )
 
       const { container } = renderWithProviders(<EnvironmentChip />)
@@ -318,8 +318,8 @@ describe("EnvironmentChip", () => {
           Promise.resolve({
             ok: true,
             json: () => Promise.resolve({ environment: "Production" }),
-          } as Response)
-        )
+          } as Response),
+        ),
       )
 
       const { getByText } = renderWithProviders(<EnvironmentChip />)
@@ -337,7 +337,7 @@ describe("EnvironmentChip", () => {
         Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ environment: "staging" }),
-        } as Response)
+        } as Response),
       )
       vi.stubGlobal("fetch", fetchMock)
 

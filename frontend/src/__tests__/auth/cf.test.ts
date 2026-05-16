@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import * as cfModule from "../../auth/cf"
 
 describe("Cloudflare Access auth", () => {
@@ -57,10 +57,7 @@ describe("Cloudflare Access auth", () => {
         href: "",
         origin: "https://app.example.com",
       })
-      localStorageRemoveItemSpy = vi.spyOn(
-        Storage.prototype,
-        "removeItem",
-      )
+      localStorageRemoveItemSpy = vi.spyOn(Storage.prototype, "removeItem")
     })
 
     afterEach(() => {
@@ -72,7 +69,7 @@ describe("Cloudflare Access auth", () => {
       vi.stubEnv("VITE_AUTH_MODE", "oidc")
       vi.stubEnv("VITE_CF_LOGOUT_URL", "https://cf.example.com/logout")
 
-      const hrefSpy = vi.fn()
+      const _hrefSpy = vi.fn()
       Object.defineProperty(window, "location", {
         value: {
           href: "",

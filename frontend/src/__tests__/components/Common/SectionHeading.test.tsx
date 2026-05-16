@@ -1,7 +1,6 @@
-import { describe, it, expect } from "vitest"
 import { render, screen } from "@testing-library/react"
-import React from "react"
 import { Heart } from "lucide-react"
+import { describe, expect, it } from "vitest"
 import { SectionHeading } from "@/components/Common/SectionHeading"
 
 describe("SectionHeading", () => {
@@ -11,7 +10,9 @@ describe("SectionHeading", () => {
   })
 
   it("renders the icon", () => {
-    const { container } = render(<SectionHeading icon={Heart} title="Contacts" />)
+    const { container } = render(
+      <SectionHeading icon={Heart} title="Contacts" />,
+    )
     const icon = container.querySelector("svg")
     expect(icon).toBeInTheDocument()
   })
@@ -23,12 +24,12 @@ describe("SectionHeading", () => {
 
   it("does not render count when not provided", () => {
     const { container } = render(
-      <SectionHeading icon={Heart} title="Contacts" />
+      <SectionHeading icon={Heart} title="Contacts" />,
     )
     const spans = container.querySelectorAll("span")
     // Should be 0 spans since icon doesn't create span elements and no count
     expect(
-      Array.from(spans).filter((s) => s.textContent === "42")
+      Array.from(spans).filter((s) => s.textContent === "42"),
     ).toHaveLength(0)
   })
 
@@ -47,13 +48,7 @@ describe("SectionHeading", () => {
 
   it("renders action when provided", () => {
     const action = <button>Add Contact</button>
-    render(
-      <SectionHeading
-        icon={Heart}
-        title="Contacts"
-        action={action}
-      />
-    )
+    render(<SectionHeading icon={Heart} title="Contacts" action={action} />)
     expect(screen.getByText("Add Contact")).toBeInTheDocument()
   })
 
@@ -63,13 +58,7 @@ describe("SectionHeading", () => {
   })
 
   it("does not render action when action is null", () => {
-    render(
-      <SectionHeading
-        icon={Heart}
-        title="Contacts"
-        action={null}
-      />
-    )
+    render(<SectionHeading icon={Heart} title="Contacts" action={null} />)
     expect(screen.queryByText("Add Contact")).not.toBeInTheDocument()
   })
 
@@ -81,7 +70,7 @@ describe("SectionHeading", () => {
         title="Contacts"
         count={15}
         action={action}
-      />
+      />,
     )
     expect(screen.getByText("Contacts")).toBeInTheDocument()
     expect(screen.getByText("15")).toBeInTheDocument()
@@ -90,7 +79,7 @@ describe("SectionHeading", () => {
 
   it("applies base container classes", () => {
     const { container } = render(
-      <SectionHeading icon={Heart} title="Contacts" />
+      <SectionHeading icon={Heart} title="Contacts" />,
     )
     const wrapper = container.querySelector("div")
     expect(wrapper).toHaveClass("flex", "items-center", "gap-2")
@@ -98,7 +87,7 @@ describe("SectionHeading", () => {
 
   it("applies custom className", () => {
     const { container } = render(
-      <SectionHeading icon={Heart} title="Contacts" className="custom-class" />
+      <SectionHeading icon={Heart} title="Contacts" className="custom-class" />,
     )
     const wrapper = container.querySelector("div")
     expect(wrapper).toHaveClass("custom-class")
@@ -106,11 +95,7 @@ describe("SectionHeading", () => {
 
   it("merges custom className with base classes", () => {
     const { container } = render(
-      <SectionHeading
-        icon={Heart}
-        title="Contacts"
-        className="custom-class"
-      />
+      <SectionHeading icon={Heart} title="Contacts" className="custom-class" />,
     )
     const wrapper = container.querySelector("div")
     expect(wrapper).toHaveClass("custom-class", "flex", "items-center", "gap-2")
@@ -118,7 +103,7 @@ describe("SectionHeading", () => {
 
   it("applies icon styling classes", () => {
     const { container } = render(
-      <SectionHeading icon={Heart} title="Contacts" />
+      <SectionHeading icon={Heart} title="Contacts" />,
     )
     const icon = container.querySelector("svg")
     expect(icon).toHaveClass("size-4", "text-primary")
@@ -139,11 +124,7 @@ describe("SectionHeading", () => {
   it("positions action on the right with ml-auto", () => {
     const action = <button>Add</button>
     const { container } = render(
-      <SectionHeading
-        icon={Heart}
-        title="Contacts"
-        action={action}
-      />
+      <SectionHeading icon={Heart} title="Contacts" action={action} />,
     )
     const actionContainer = container.querySelector("div > div:last-child")
     expect(actionContainer).toHaveClass("ml-auto")
@@ -162,13 +143,7 @@ describe("SectionHeading", () => {
         <button>Option 2</button>
       </div>
     )
-    render(
-      <SectionHeading
-        icon={Heart}
-        title="Contacts"
-        action={action}
-      />
-    )
+    render(<SectionHeading icon={Heart} title="Contacts" action={action} />)
     expect(screen.getByText("Option 1")).toBeInTheDocument()
     expect(screen.getByText("Option 2")).toBeInTheDocument()
   })
@@ -179,32 +154,20 @@ describe("SectionHeading", () => {
   })
 
   it("handles undefined action prop", () => {
-    render(
-      <SectionHeading
-        icon={Heart}
-        title="Contacts"
-        action={undefined}
-      />
-    )
+    render(<SectionHeading icon={Heart} title="Contacts" action={undefined} />)
     const title = screen.getByText("Contacts")
     expect(title).toBeInTheDocument()
   })
 
   it("handles undefined count prop", () => {
-    render(
-      <SectionHeading
-        icon={Heart}
-        title="Contacts"
-        count={undefined}
-      />
-    )
+    render(<SectionHeading icon={Heart} title="Contacts" count={undefined} />)
     const title = screen.getByText("Contacts")
     expect(title).toBeInTheDocument()
   })
 
   it("title has correct tag", () => {
     const { container } = render(
-      <SectionHeading icon={Heart} title="Contacts" />
+      <SectionHeading icon={Heart} title="Contacts" />,
     )
     const heading = container.querySelector("h2")
     expect(heading).toBeInTheDocument()
@@ -213,7 +176,7 @@ describe("SectionHeading", () => {
 
   it("gap between icon and title", () => {
     const { container } = render(
-      <SectionHeading icon={Heart} title="Contacts" />
+      <SectionHeading icon={Heart} title="Contacts" />,
     )
     const wrapper = container.querySelector("div")
     expect(wrapper).toHaveClass("gap-2")
@@ -221,7 +184,7 @@ describe("SectionHeading", () => {
 
   it("container uses flex layout", () => {
     const { container } = render(
-      <SectionHeading icon={Heart} title="Contacts" />
+      <SectionHeading icon={Heart} title="Contacts" />,
     )
     const wrapper = container.querySelector("div")
     expect(wrapper).toHaveClass("flex")
@@ -229,16 +192,14 @@ describe("SectionHeading", () => {
 
   it("items are vertically centered", () => {
     const { container } = render(
-      <SectionHeading icon={Heart} title="Contacts" />
+      <SectionHeading icon={Heart} title="Contacts" />,
     )
     const wrapper = container.querySelector("div")
     expect(wrapper).toHaveClass("items-center")
   })
 
   it("renders with empty title string", () => {
-    const { container } = render(
-      <SectionHeading icon={Heart} title="" />
-    )
+    const { container } = render(<SectionHeading icon={Heart} title="" />)
     const heading = container.querySelector("h2")
     expect(heading).toBeInTheDocument()
     expect(heading?.textContent).toBe("")
@@ -246,12 +207,12 @@ describe("SectionHeading", () => {
 
   it("does not conditionally render count when count is undefined", () => {
     const { container } = render(
-      <SectionHeading icon={Heart} title="Contacts" count={undefined} />
+      <SectionHeading icon={Heart} title="Contacts" count={undefined} />,
     )
     const spans = container.querySelectorAll("span")
     // Only the icon should be rendered, no count span
-    const countSpans = Array.from(spans).filter(
-      (s) => s.className.includes("text-muted-foreground")
+    const countSpans = Array.from(spans).filter((s) =>
+      s.className.includes("text-muted-foreground"),
     )
     expect(countSpans).toHaveLength(0)
   })
@@ -259,11 +220,7 @@ describe("SectionHeading", () => {
   it("renders action in a separate div wrapper", () => {
     const action = <button>Add</button>
     const { container } = render(
-      <SectionHeading
-        icon={Heart}
-        title="Contacts"
-        action={action}
-      />
+      <SectionHeading icon={Heart} title="Contacts" action={action} />,
     )
     const actionDiv = container.querySelector("div > div:last-child")
     expect(actionDiv).toBeInTheDocument()

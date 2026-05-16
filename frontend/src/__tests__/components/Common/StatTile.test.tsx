@@ -1,13 +1,11 @@
-import { describe, it, expect, vi } from "vitest"
 import { render, screen } from "@testing-library/react"
-import React from "react"
 import { Heart } from "lucide-react"
+import type React from "react"
+import { describe, expect, it, vi } from "vitest"
 import { StatTile } from "@/components/Common/StatTile"
 
 vi.mock("@tanstack/react-router", async (importOriginal) => {
-  const actual = await importOriginal<
-    typeof import("@tanstack/react-router")
-  >()
+  const actual = await importOriginal<typeof import("@tanstack/react-router")>()
   return {
     ...actual,
     Link: ({
@@ -29,29 +27,20 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
 
 describe("StatTile", () => {
   it("renders label and value", () => {
-    render(
-      <StatTile icon={Heart} label="Contacts" value={42} tone="blue" />
-    )
+    render(<StatTile icon={Heart} label="Contacts" value={42} tone="blue" />)
     expect(screen.getByText("Contacts")).toBeInTheDocument()
     expect(screen.getByText("42")).toBeInTheDocument()
   })
 
   it("renders string value", () => {
-    render(
-      <StatTile
-        icon={Heart}
-        label="Status"
-        value="Active"
-        tone="green"
-      />
-    )
+    render(<StatTile icon={Heart} label="Status" value="Active" tone="green" />)
     expect(screen.getByText("Status")).toBeInTheDocument()
     expect(screen.getByText("Active")).toBeInTheDocument()
   })
 
   it("renders icon", () => {
     const { container } = render(
-      <StatTile icon={Heart} label="Contacts" value={42} tone="blue" />
+      <StatTile icon={Heart} label="Contacts" value={42} tone="blue" />,
     )
     const icon = container.querySelector("svg")
     expect(icon).toBeInTheDocument()
@@ -59,7 +48,7 @@ describe("StatTile", () => {
 
   it("renders as div when no 'to' prop", () => {
     const { container } = render(
-      <StatTile icon={Heart} label="Contacts" value={42} tone="blue" />
+      <StatTile icon={Heart} label="Contacts" value={42} tone="blue" />,
     )
     const wrapper = container.querySelector("div.rounded-xl")
     expect(wrapper?.tagName).toBe("DIV")
@@ -73,7 +62,7 @@ describe("StatTile", () => {
         value={42}
         tone="blue"
         to="/contacts"
-      />
+      />,
     )
     const link = container.querySelector("a")
     expect(link).toBeInTheDocument()
@@ -82,7 +71,7 @@ describe("StatTile", () => {
 
   it("applies blue tone classes", () => {
     const { container } = render(
-      <StatTile icon={Heart} label="Contacts" value={42} tone="blue" />
+      <StatTile icon={Heart} label="Contacts" value={42} tone="blue" />,
     )
     const iconContainer = container.querySelector("div > div > div:last-child")
     expect(iconContainer).toHaveClass("bg-accent-blue", "text-accent-blue-fg")
@@ -90,18 +79,15 @@ describe("StatTile", () => {
 
   it("applies amber tone classes", () => {
     const { container } = render(
-      <StatTile icon={Heart} label="Contacts" value={42} tone="amber" />
+      <StatTile icon={Heart} label="Contacts" value={42} tone="amber" />,
     )
     const iconContainer = container.querySelector("div > div > div:last-child")
-    expect(iconContainer).toHaveClass(
-      "bg-accent-amber",
-      "text-accent-amber-fg"
-    )
+    expect(iconContainer).toHaveClass("bg-accent-amber", "text-accent-amber-fg")
   })
 
   it("applies green tone classes", () => {
     const { container } = render(
-      <StatTile icon={Heart} label="Contacts" value={42} tone="green" />
+      <StatTile icon={Heart} label="Contacts" value={42} tone="green" />,
     )
     const iconContainer = container.querySelector("div > div > div:last-child")
     expect(iconContainer).toHaveClass("bg-accent-green", "text-accent-green-fg")
@@ -109,18 +95,18 @@ describe("StatTile", () => {
 
   it("applies purple tone classes", () => {
     const { container } = render(
-      <StatTile icon={Heart} label="Contacts" value={42} tone="purple" />
+      <StatTile icon={Heart} label="Contacts" value={42} tone="purple" />,
     )
     const iconContainer = container.querySelector("div > div > div:last-child")
     expect(iconContainer).toHaveClass(
       "bg-accent-purple",
-      "text-accent-purple-fg"
+      "text-accent-purple-fg",
     )
   })
 
   it("applies rose tone classes", () => {
     const { container } = render(
-      <StatTile icon={Heart} label="Contacts" value={42} tone="rose" />
+      <StatTile icon={Heart} label="Contacts" value={42} tone="rose" />,
     )
     const iconContainer = container.querySelector("div > div > div:last-child")
     expect(iconContainer).toHaveClass("bg-accent-rose", "text-accent-rose-fg")
@@ -128,7 +114,7 @@ describe("StatTile", () => {
 
   it("applies teal tone classes", () => {
     const { container } = render(
-      <StatTile icon={Heart} label="Contacts" value={42} tone="teal" />
+      <StatTile icon={Heart} label="Contacts" value={42} tone="teal" />,
     )
     const iconContainer = container.querySelector("div > div > div:last-child")
     expect(iconContainer).toHaveClass("bg-accent-teal", "text-accent-teal-fg")
@@ -136,7 +122,7 @@ describe("StatTile", () => {
 
   it("applies base container classes without link", () => {
     const { container } = render(
-      <StatTile icon={Heart} label="Contacts" value={42} tone="blue" />
+      <StatTile icon={Heart} label="Contacts" value={42} tone="blue" />,
     )
     const wrapper = container.querySelector("div.rounded-xl")
     expect(wrapper).toHaveClass(
@@ -145,7 +131,7 @@ describe("StatTile", () => {
       "bg-card",
       "p-4",
       "shadow-xs",
-      "transition-colors"
+      "transition-colors",
     )
   })
 
@@ -157,7 +143,7 @@ describe("StatTile", () => {
         value={42}
         tone="blue"
         to="/contacts"
-      />
+      />,
     )
     const link = container.querySelector("a.rounded-xl")
     expect(link).toHaveClass("hover:bg-accent/50")
@@ -165,7 +151,7 @@ describe("StatTile", () => {
 
   it("does not apply hover classes when no link", () => {
     const { container } = render(
-      <StatTile icon={Heart} label="Contacts" value={42} tone="blue" />
+      <StatTile icon={Heart} label="Contacts" value={42} tone="blue" />,
     )
     const wrapper = container.querySelector("div.rounded-xl")
     expect(wrapper).not.toHaveClass("hover:bg-accent/50")
@@ -179,7 +165,7 @@ describe("StatTile", () => {
         value={42}
         tone="blue"
         className="custom-class"
-      />
+      />,
     )
     const wrapper = container.querySelector("div.rounded-xl")
     expect(wrapper).toHaveClass("custom-class")
@@ -193,31 +179,32 @@ describe("StatTile", () => {
         value={42}
         tone="blue"
         className="custom-class"
-      />
+      />,
     )
     const wrapper = container.querySelector("div.rounded-xl")
     expect(wrapper).toHaveClass("custom-class", "rounded-xl", "bg-card")
   })
 
   it("renders label with correct styling", () => {
-    render(
-      <StatTile icon={Heart} label="Contacts" value={42} tone="blue" />
-    )
+    render(<StatTile icon={Heart} label="Contacts" value={42} tone="blue" />)
     const label = screen.getByText("Contacts")
     expect(label).toHaveClass("text-sm", "text-muted-foreground")
   })
 
   it("renders value with correct styling", () => {
-    render(
-      <StatTile icon={Heart} label="Contacts" value={42} tone="blue" />
-    )
+    render(<StatTile icon={Heart} label="Contacts" value={42} tone="blue" />)
     const value = screen.getByText("42")
-    expect(value).toHaveClass("text-2xl", "font-semibold", "tracking-tight", "tabular-nums")
+    expect(value).toHaveClass(
+      "text-2xl",
+      "font-semibold",
+      "tracking-tight",
+      "tabular-nums",
+    )
   })
 
   it("icon container has correct size", () => {
     const { container } = render(
-      <StatTile icon={Heart} label="Contacts" value={42} tone="blue" />
+      <StatTile icon={Heart} label="Contacts" value={42} tone="blue" />,
     )
     const iconContainer = container.querySelector("div > div > div:last-child")
     expect(iconContainer).toHaveClass("size-10")
@@ -225,7 +212,7 @@ describe("StatTile", () => {
 
   it("icon SVG has correct size", () => {
     const { container } = render(
-      <StatTile icon={Heart} label="Contacts" value={42} tone="blue" />
+      <StatTile icon={Heart} label="Contacts" value={42} tone="blue" />,
     )
     const icon = container.querySelector("svg")
     expect(icon).toHaveClass("size-5")
@@ -233,7 +220,7 @@ describe("StatTile", () => {
 
   it("icon container is centered", () => {
     const { container } = render(
-      <StatTile icon={Heart} label="Contacts" value={42} tone="blue" />
+      <StatTile icon={Heart} label="Contacts" value={42} tone="blue" />,
     )
     const iconContainer = container.querySelector("div > div > div:last-child")
     expect(iconContainer).toHaveClass("flex", "items-center", "justify-center")
@@ -241,10 +228,15 @@ describe("StatTile", () => {
 
   it("layout container uses flex and gap", () => {
     const { container } = render(
-      <StatTile icon={Heart} label="Contacts" value={42} tone="blue" />
+      <StatTile icon={Heart} label="Contacts" value={42} tone="blue" />,
     )
     const layoutContainer = container.querySelector("div > div")
-    expect(layoutContainer).toHaveClass("flex", "items-center", "justify-between", "gap-3")
+    expect(layoutContainer).toHaveClass(
+      "flex",
+      "items-center",
+      "justify-between",
+      "gap-3",
+    )
   })
 
   it("text container prevents overflow", () => {
@@ -254,7 +246,7 @@ describe("StatTile", () => {
         label="Very long label text"
         value="Very long value"
         tone="blue"
-      />
+      />,
     )
     const textContainer = screen.getByText("Very long label text").parentElement
     expect(textContainer).toHaveClass("min-w-0")
@@ -262,7 +254,7 @@ describe("StatTile", () => {
 
   it("value spacing uses margin", () => {
     const { container } = render(
-      <StatTile icon={Heart} label="Contacts" value={42} tone="blue" />
+      <StatTile icon={Heart} label="Contacts" value={42} tone="blue" />,
     )
     const value = screen.getByText("42")
     expect(value.parentElement).toHaveClass("mt-1")
@@ -276,7 +268,7 @@ describe("StatTile", () => {
         value={42}
         tone="blue"
         to="/custom/path"
-      />
+      />,
     )
     const link = container.querySelector("a")
     expect(link).toHaveAttribute("href", "/custom/path")
@@ -288,26 +280,12 @@ describe("StatTile", () => {
   })
 
   it("renders large numbers correctly", () => {
-    render(
-      <StatTile
-        icon={Heart}
-        label="Large"
-        value={999999}
-        tone="blue"
-      />
-    )
+    render(<StatTile icon={Heart} label="Large" value={999999} tone="blue" />)
     expect(screen.getByText("999999")).toBeInTheDocument()
   })
 
   it("renders percentage string values", () => {
-    render(
-      <StatTile
-        icon={Heart}
-        label="Rate"
-        value="95%"
-        tone="green"
-      />
-    )
+    render(<StatTile icon={Heart} label="Rate" value="95%" tone="green" />)
     expect(screen.getByText("95%")).toBeInTheDocument()
   })
 })

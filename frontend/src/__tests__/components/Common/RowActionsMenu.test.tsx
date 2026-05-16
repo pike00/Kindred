@@ -1,8 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from "vitest"
-import { render, screen, fireEvent } from "@testing-library/react"
-import userEvent from "@testing-library/user-event"
-import { RowActionsMenu, type RowActionItem } from "@/components/Common/RowActionsMenu"
-import { Trash2, Edit } from "lucide-react"
+import { fireEvent, render, screen } from "@testing-library/react"
+import { Edit, Trash2 } from "lucide-react"
+import { describe, expect, it, vi } from "vitest"
+import {
+  type RowActionItem,
+  RowActionsMenu,
+} from "@/components/Common/RowActionsMenu"
 
 // Mock icons
 vi.mock("@/lib/icons", () => ({
@@ -61,9 +63,7 @@ describe("RowActionsMenu", () => {
 
   describe("menu interaction", () => {
     it("opens dropdown when trigger is clicked", () => {
-      const items: RowActionItem[] = [
-        { label: "Edit", onSelect: vi.fn() },
-      ]
+      const items: RowActionItem[] = [{ label: "Edit", onSelect: vi.fn() }]
 
       render(<RowActionsMenu items={items} />)
 
@@ -75,15 +75,13 @@ describe("RowActionsMenu", () => {
     })
 
     it("stops click propagation on trigger button", () => {
-      const items: RowActionItem[] = [
-        { label: "Edit", onSelect: vi.fn() },
-      ]
+      const items: RowActionItem[] = [{ label: "Edit", onSelect: vi.fn() }]
       const parentClick = vi.fn()
 
       const { container } = render(
         <div onClick={parentClick}>
           <RowActionsMenu items={items} />
-        </div>
+        </div>,
       )
 
       const trigger = screen.getByRole("button", { name: "Open actions menu" })
@@ -234,12 +232,10 @@ describe("RowActionsMenu", () => {
 
   describe("styling and className", () => {
     it("applies custom trigger className", () => {
-      const items: RowActionItem[] = [
-        { label: "Edit", onSelect: vi.fn() },
-      ]
+      const items: RowActionItem[] = [{ label: "Edit", onSelect: vi.fn() }]
 
       const { container } = render(
-        <RowActionsMenu items={items} triggerClassName="custom-class" />
+        <RowActionsMenu items={items} triggerClassName="custom-class" />,
       )
 
       const trigger = container.querySelector("button")
@@ -247,9 +243,7 @@ describe("RowActionsMenu", () => {
     })
 
     it("includes default trigger classes", () => {
-      const items: RowActionItem[] = [
-        { label: "Edit", onSelect: vi.fn() },
-      ]
+      const items: RowActionItem[] = [{ label: "Edit", onSelect: vi.fn() }]
 
       const { container } = render(<RowActionsMenu items={items} />)
 
@@ -261,9 +255,7 @@ describe("RowActionsMenu", () => {
 
   describe("accessibility", () => {
     it("has accessible trigger button", () => {
-      const items: RowActionItem[] = [
-        { label: "Edit", onSelect: vi.fn() },
-      ]
+      const items: RowActionItem[] = [{ label: "Edit", onSelect: vi.fn() }]
 
       render(<RowActionsMenu items={items} />)
 
@@ -290,9 +282,7 @@ describe("RowActionsMenu", () => {
 
   describe("edge cases", () => {
     it("handles rapid clicks on trigger", () => {
-      const items: RowActionItem[] = [
-        { label: "Edit", onSelect: vi.fn() },
-      ]
+      const items: RowActionItem[] = [{ label: "Edit", onSelect: vi.fn() }]
 
       render(<RowActionsMenu items={items} />)
 
@@ -309,8 +299,9 @@ describe("RowActionsMenu", () => {
     it("handles items with long labels", () => {
       const items: RowActionItem[] = [
         {
-          label: "This is a very long action label that should wrap or be handled gracefully",
-          onSelect: vi.fn()
+          label:
+            "This is a very long action label that should wrap or be handled gracefully",
+          onSelect: vi.fn(),
         },
       ]
 
@@ -319,7 +310,9 @@ describe("RowActionsMenu", () => {
       const trigger = screen.getByRole("button", { name: "Open actions menu" })
       fireEvent.click(trigger)
 
-      expect(screen.getByText(/This is a very long action label/)).toBeInTheDocument()
+      expect(
+        screen.getByText(/This is a very long action label/),
+      ).toBeInTheDocument()
     })
 
     it("handles updating items", () => {
@@ -327,7 +320,7 @@ describe("RowActionsMenu", () => {
       const onSelect2 = vi.fn()
 
       const { rerender } = render(
-        <RowActionsMenu items={[{ label: "Edit", onSelect: onSelect1 }]} />
+        <RowActionsMenu items={[{ label: "Edit", onSelect: onSelect1 }]} />,
       )
 
       const trigger = screen.getByRole("button", { name: "Open actions menu" })
@@ -335,7 +328,7 @@ describe("RowActionsMenu", () => {
       expect(screen.getByText("Edit")).toBeInTheDocument()
 
       rerender(
-        <RowActionsMenu items={[{ label: "Delete", onSelect: onSelect2 }]} />
+        <RowActionsMenu items={[{ label: "Delete", onSelect: onSelect2 }]} />,
       )
 
       fireEvent.click(trigger)

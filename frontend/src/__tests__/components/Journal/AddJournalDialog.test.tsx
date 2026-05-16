@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from "vitest"
 import { screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import { AddJournalDialog } from "@/components/Journal/AddJournalDialog"
 import { renderWithProviders } from "@/test/helpers"
 
@@ -64,7 +64,9 @@ describe("AddJournalDialog", () => {
 
   it("renders trigger button", () => {
     renderWithProviders(<AddJournalDialog />)
-    expect(screen.getByRole("button", { name: /new entry/i })).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: /new entry/i }),
+    ).toBeInTheDocument()
   })
 
   it("opens dialog when trigger clicked", async () => {
@@ -87,7 +89,9 @@ describe("AddJournalDialog", () => {
     expect(screen.getByLabelText(/date \*/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/entry \*/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/mood/i)).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: /save entry/i })).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: /save entry/i }),
+    ).toBeInTheDocument()
   })
 
   it("displays validation errors on empty submit", async () => {
@@ -151,7 +155,7 @@ describe("AddJournalDialog", () => {
             mood: "Happy",
             entry_date: expect.any(String),
           }),
-        })
+        }),
       )
     })
   })
@@ -159,8 +163,7 @@ describe("AddJournalDialog", () => {
   it("shows loading state while submitting", async () => {
     const user = userEvent.setup()
     mockCreateJournalEntry.mockImplementation(
-      () =>
-        new Promise((resolve) => setTimeout(() => resolve({}), 100))
+      () => new Promise((resolve) => setTimeout(() => resolve({}), 100)),
     )
 
     renderWithProviders(<AddJournalDialog />)
@@ -232,7 +235,9 @@ describe("AddJournalDialog", () => {
     await user.click(screen.getByRole("button", { name: /new entry/i }))
 
     const dateInput = screen.getByLabelText(/date \*/i) as HTMLInputElement
-    const entryTextarea = screen.getByTestId("mention-textarea") as HTMLTextAreaElement
+    const entryTextarea = screen.getByTestId(
+      "mention-textarea",
+    ) as HTMLTextAreaElement
     const submitButton = screen.getByRole("button", { name: /save entry/i })
 
     const testDate = "2024-01-15"
@@ -251,7 +256,9 @@ describe("AddJournalDialog", () => {
     await user.click(screen.getByRole("button", { name: /new entry/i }))
 
     const newDateInput = screen.getByLabelText(/date \*/i) as HTMLInputElement
-    const newEntryTextarea = screen.getByTestId("mention-textarea") as HTMLTextAreaElement
+    const newEntryTextarea = screen.getByTestId(
+      "mention-textarea",
+    ) as HTMLTextAreaElement
 
     expect(newEntryTextarea.value).toBe("")
     expect(newDateInput.value).toBe(new Date().toISOString().split("T")[0])
@@ -260,8 +267,7 @@ describe("AddJournalDialog", () => {
   it("disables submit button while loading", async () => {
     const user = userEvent.setup()
     mockCreateJournalEntry.mockImplementation(
-      () =>
-        new Promise((resolve) => setTimeout(() => resolve({}), 200))
+      () => new Promise((resolve) => setTimeout(() => resolve({}), 200)),
     )
 
     renderWithProviders(<AddJournalDialog />)

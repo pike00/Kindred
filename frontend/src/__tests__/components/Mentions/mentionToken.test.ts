@@ -1,10 +1,9 @@
-import { describe, it, expect } from "vitest"
+import { describe, expect, it } from "vitest"
 import {
-  parseMentions,
-  formatMentionToken,
   findActiveTrigger,
+  formatMentionToken,
   MENTION_TOKEN_REGEX,
-  type ParsedMention,
+  parseMentions,
 } from "../../../components/Mentions/mentionToken"
 
 describe("MENTION_TOKEN_REGEX", () => {

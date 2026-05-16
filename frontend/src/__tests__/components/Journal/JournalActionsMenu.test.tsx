@@ -1,9 +1,8 @@
-import { describe, it, expect, beforeEach, vi } from "vitest"
 import { screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import { JournalActionsMenu } from "@/components/Journal/JournalActionsMenu"
-import { makeJournalEntry } from "@/test/helpers"
-import { renderWithProviders } from "@/test/helpers"
+import { makeJournalEntry, renderWithProviders } from "@/test/helpers"
 
 // Mock toast
 vi.mock("sonner", () => ({
@@ -113,7 +112,9 @@ describe("JournalActionsMenu", () => {
   it("invalidates journal query cache on successful delete", async () => {
     const user = userEvent.setup()
     const entry = makeJournalEntry({ id: "entry-1" })
-    const { queryClient } = renderWithProviders(<JournalActionsMenu entry={entry} />)
+    const { queryClient } = renderWithProviders(
+      <JournalActionsMenu entry={entry} />,
+    )
 
     vi.spyOn(queryClient, "invalidateQueries")
 
@@ -124,7 +125,7 @@ describe("JournalActionsMenu", () => {
       expect(queryClient.invalidateQueries).toHaveBeenCalledWith(
         expect.objectContaining({
           queryKey: ["journal"],
-        })
+        }),
       )
     })
   })
@@ -172,8 +173,7 @@ describe("JournalActionsMenu", () => {
   it("does not show loading state in this component", async () => {
     const user = userEvent.setup()
     mockDeleteJournalEntry.mockImplementation(
-      () =>
-        new Promise((resolve) => setTimeout(() => resolve({}), 100))
+      () => new Promise((resolve) => setTimeout(() => resolve({}), 100)),
     )
 
     const entry = makeJournalEntry({ id: "entry-1" })
@@ -217,7 +217,9 @@ describe("JournalActionsMenu", () => {
     ]
 
     entries.forEach((entry) => {
-      const { unmount } = renderWithProviders(<JournalActionsMenu entry={entry} />)
+      const { unmount } = renderWithProviders(
+        <JournalActionsMenu entry={entry} />,
+      )
       expect(screen.getByTestId("row-actions-menu")).toBeInTheDocument()
       unmount()
     })

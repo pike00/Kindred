@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach, vi } from "vitest"
 import { screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import { AddContactDialog } from "@/components/Contacts/AddContactDialog"
-import { renderWithProviders, createQueryClient } from "@/test/helpers"
+import { createQueryClient, renderWithProviders } from "@/test/helpers"
 
 // Mock router
 vi.mock("@tanstack/react-router", async (importOriginal) => {
@@ -50,7 +50,9 @@ describe("AddContactDialog", () => {
 
   it("renders trigger button", () => {
     renderWithProviders(<AddContactDialog />)
-    expect(screen.getByRole("button", { name: /add contact/i })).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: /add contact/i }),
+    ).toBeInTheDocument()
   })
 
   it("opens dialog when trigger button is clicked", async () => {
@@ -62,7 +64,7 @@ describe("AddContactDialog", () => {
 
     expect(screen.getByText("Add New Contact")).toBeInTheDocument()
     expect(
-      screen.getByText("Create a new contact to start tracking interactions.")
+      screen.getByText("Create a new contact to start tracking interactions."),
     ).toBeInTheDocument()
   })
 
@@ -173,7 +175,7 @@ describe("AddContactDialog", () => {
 
     await waitFor(() => {
       expect(mockShowSuccessToast).toHaveBeenCalledWith(
-        "Contact created successfully"
+        "Contact created successfully",
       )
     })
   })
@@ -239,7 +241,9 @@ describe("AddContactDialog", () => {
     const triggerButton = screen.getByRole("button", { name: /add contact/i })
     await user.click(triggerButton)
 
-    const firstNameInput = screen.getByPlaceholderText("John") as HTMLInputElement
+    const firstNameInput = screen.getByPlaceholderText(
+      "John",
+    ) as HTMLInputElement
     await user.type(firstNameInput, "Bob")
 
     const submitButton = screen.getByRole("button", { name: /create contact/i })
@@ -307,7 +311,9 @@ describe("AddContactDialog", () => {
     await user.click(submitButton)
 
     await waitFor(() => {
-      expect(mockShowErrorToast).toHaveBeenCalledWith("Failed to create contact")
+      expect(mockShowErrorToast).toHaveBeenCalledWith(
+        "Failed to create contact",
+      )
     })
   })
 
@@ -315,7 +321,7 @@ describe("AddContactDialog", () => {
     const { ContactsService } = await import("@/client")
     const mockCreateContact = vi.mocked(ContactsService.createContact)
     mockCreateContact.mockImplementation(
-      () => new Promise((r) => setTimeout(r, 1000))
+      () => new Promise((r) => setTimeout(r, 1000)),
     )
 
     const user = userEvent.setup()
@@ -341,7 +347,7 @@ describe("AddContactDialog", () => {
     const { ContactsService } = await import("@/client")
     const mockCreateContact = vi.mocked(ContactsService.createContact)
     mockCreateContact.mockImplementation(
-      () => new Promise((r) => setTimeout(r, 1000))
+      () => new Promise((r) => setTimeout(r, 1000)),
     )
 
     const user = userEvent.setup()

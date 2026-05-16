@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest"
-import { renderHook, act } from "@testing-library/react"
+import { act, renderHook } from "@testing-library/react"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { useIsMobile } from "../../hooks/useMobile"
 
 describe("useIsMobile", () => {
@@ -358,7 +358,7 @@ describe("useIsMobile", () => {
   it("removes same listener that was added", () => {
     renderHook(() => useIsMobile())
 
-    const addedCallback = addEventListenerSpy.mock.calls[0][1]
+    const _addedCallback = addEventListenerSpy.mock.calls[0][1]
 
     renderHook(() => useIsMobile()).unmount()
 

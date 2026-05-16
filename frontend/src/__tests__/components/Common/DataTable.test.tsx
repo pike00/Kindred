@@ -1,15 +1,22 @@
-import { describe, it, expect, vi } from "vitest"
-import { render, screen, fireEvent } from "@testing-library/react"
-import userEvent from "@testing-library/user-event"
 import { createColumnHelper } from "@tanstack/react-table"
+import { fireEvent, render, screen } from "@testing-library/react"
+import { describe, expect, it, vi } from "vitest"
 import { DataTable } from "@/components/Common/DataTable"
 
 // Mock icons
 vi.mock("@/lib/icons", () => ({
-  ChevronLeft: ({ className }: { className?: string }) => <div className={className} data-testid="chevron-left" />,
-  ChevronRight: ({ className }: { className?: string }) => <div className={className} data-testid="chevron-right" />,
-  ChevronsLeft: ({ className }: { className?: string }) => <div className={className} data-testid="chevrons-left" />,
-  ChevronsRight: ({ className }: { className?: string }) => <div className={className} data-testid="chevrons-right" />,
+  ChevronLeft: ({ className }: { className?: string }) => (
+    <div className={className} data-testid="chevron-left" />
+  ),
+  ChevronRight: ({ className }: { className?: string }) => (
+    <div className={className} data-testid="chevron-right" />
+  ),
+  ChevronsLeft: ({ className }: { className?: string }) => (
+    <div className={className} data-testid="chevrons-left" />
+  ),
+  ChevronsRight: ({ className }: { className?: string }) => (
+    <div className={className} data-testid="chevrons-right" />
+  ),
 }))
 
 interface TestData {
@@ -68,14 +75,20 @@ describe("DataTable", () => {
     it("applies cursor-pointer class to rows when onRowClick provided", () => {
       const onRowClick = vi.fn()
       const { container } = render(
-        <DataTable columns={mockColumns} data={mockData} onRowClick={onRowClick} />
+        <DataTable
+          columns={mockColumns}
+          data={mockData}
+          onRowClick={onRowClick}
+        />,
       )
       const rows = container.querySelectorAll("tbody tr")
       expect(rows[0]).toHaveClass("cursor-pointer")
     })
 
     it("does not apply cursor-pointer class to rows when onRowClick not provided", () => {
-      const { container } = render(<DataTable columns={mockColumns} data={mockData} />)
+      const { container } = render(
+        <DataTable columns={mockColumns} data={mockData} />,
+      )
       const rows = container.querySelectorAll("tbody tr")
       expect(rows[0]).not.toHaveClass("cursor-pointer")
     })
@@ -85,7 +98,11 @@ describe("DataTable", () => {
     it("calls onRowClick with row data when row is clicked", async () => {
       const onRowClick = vi.fn()
       render(
-        <DataTable columns={mockColumns} data={mockData} onRowClick={onRowClick} />
+        <DataTable
+          columns={mockColumns}
+          data={mockData}
+          onRowClick={onRowClick}
+        />,
       )
 
       const aliceRow = screen.getByText("Alice").closest("tr")
@@ -98,7 +115,9 @@ describe("DataTable", () => {
     })
 
     it("does not call onRowClick when onRowClick not provided", async () => {
-      const { container } = render(<DataTable columns={mockColumns} data={mockData} />)
+      const { container } = render(
+        <DataTable columns={mockColumns} data={mockData} />,
+      )
       const firstDataRow = container.querySelector("tbody tr")
       if (firstDataRow) {
         fireEvent.click(firstDataRow)
@@ -135,7 +154,9 @@ describe("DataTable", () => {
       }))
 
       render(<DataTable columns={mockColumns} data={largeData} />)
-      expect(screen.getByText(/Showing 1 to 10 of 15 entries/)).toBeInTheDocument()
+      expect(
+        screen.getByText(/Showing 1 to 10 of 15 entries/),
+      ).toBeInTheDocument()
     })
 
     it("changes page size when page size select is changed", async () => {
@@ -152,7 +173,9 @@ describe("DataTable", () => {
       const option25 = screen.getByRole("option", { name: "25" })
       fireEvent.click(option25)
 
-      expect(screen.getByText(/Showing 1 to 25 of 30 entries/)).toBeInTheDocument()
+      expect(
+        screen.getByText(/Showing 1 to 25 of 30 entries/),
+      ).toBeInTheDocument()
     })
 
     it("disables first/previous buttons on first page", () => {
@@ -165,10 +188,10 @@ describe("DataTable", () => {
       render(<DataTable columns={mockColumns} data={largeData} />)
       const buttons = screen.getAllByRole("button")
       const firstPageBtn = buttons.find(
-        (btn) => btn.getAttribute("aria-label") === "Go to first page"
+        (btn) => btn.getAttribute("aria-label") === "Go to first page",
       )
       const prevPageBtn = buttons.find(
-        (btn) => btn.getAttribute("aria-label") === "Go to previous page"
+        (btn) => btn.getAttribute("aria-label") === "Go to previous page",
       )
 
       expect(firstPageBtn).toBeDisabled()
@@ -185,10 +208,10 @@ describe("DataTable", () => {
       render(<DataTable columns={mockColumns} data={largeData} />)
       const buttons = screen.getAllByRole("button")
       const nextPageBtn = buttons.find(
-        (btn) => btn.getAttribute("aria-label") === "Go to next page"
+        (btn) => btn.getAttribute("aria-label") === "Go to next page",
       )
       const lastPageBtn = buttons.find(
-        (btn) => btn.getAttribute("aria-label") === "Go to last page"
+        (btn) => btn.getAttribute("aria-label") === "Go to last page",
       )
 
       expect(nextPageBtn).not.toBeDisabled()
@@ -208,7 +231,7 @@ describe("DataTable", () => {
 
       const buttons = screen.getAllByRole("button")
       const nextPageBtn = buttons.find(
-        (btn) => btn.getAttribute("aria-label") === "Go to next page"
+        (btn) => btn.getAttribute("aria-label") === "Go to next page",
       )
       if (nextPageBtn) {
         fireEvent.click(nextPageBtn)
@@ -229,7 +252,7 @@ describe("DataTable", () => {
 
       const buttons = screen.getAllByRole("button")
       const nextPageBtn = buttons.find(
-        (btn) => btn.getAttribute("aria-label") === "Go to next page"
+        (btn) => btn.getAttribute("aria-label") === "Go to next page",
       )
       if (nextPageBtn) {
         fireEvent.click(nextPageBtn)
@@ -238,7 +261,7 @@ describe("DataTable", () => {
       expect(screen.queryByText("User 1")).not.toBeInTheDocument()
 
       const firstPageBtn = buttons.find(
-        (btn) => btn.getAttribute("aria-label") === "Go to first page"
+        (btn) => btn.getAttribute("aria-label") === "Go to first page",
       )
       if (firstPageBtn) {
         fireEvent.click(firstPageBtn)
@@ -259,20 +282,24 @@ describe("DataTable", () => {
 
       const buttons = screen.getAllByRole("button")
       const nextPageBtn = buttons.find(
-        (btn) => btn.getAttribute("aria-label") === "Go to next page"
+        (btn) => btn.getAttribute("aria-label") === "Go to next page",
       )
       if (nextPageBtn) {
         fireEvent.click(nextPageBtn)
       }
 
       expect(screen.getByText(/Page 2 of 3/)).toBeInTheDocument()
-      expect(screen.getByText(/Showing 11 to 20 of 25 entries/)).toBeInTheDocument()
+      expect(
+        screen.getByText(/Showing 11 to 20 of 25 entries/),
+      ).toBeInTheDocument()
     })
   })
 
   describe("accessibility", () => {
     it("renders table with proper semantic structure", () => {
-      const { container } = render(<DataTable columns={mockColumns} data={mockData} />)
+      const { container } = render(
+        <DataTable columns={mockColumns} data={mockData} />,
+      )
       expect(container.querySelector("table")).toBeInTheDocument()
       expect(container.querySelector("thead")).toBeInTheDocument()
       expect(container.querySelector("tbody")).toBeInTheDocument()
@@ -301,7 +328,9 @@ describe("DataTable", () => {
     })
 
     it("handles data update", () => {
-      const { rerender } = render(<DataTable columns={mockColumns} data={mockData} />)
+      const { rerender } = render(
+        <DataTable columns={mockColumns} data={mockData} />,
+      )
       expect(screen.getByText("Alice")).toBeInTheDocument()
 
       const newData = [
@@ -323,9 +352,7 @@ describe("DataTable", () => {
         }),
       ]
 
-      render(
-        <DataTable columns={customColumns} data={[mockData[0]]} />
-      )
+      render(<DataTable columns={customColumns} data={[mockData[0]]} />)
       const boldText = screen.getByText("Alice")
       expect(boldText.tagName).toBe("STRONG")
     })

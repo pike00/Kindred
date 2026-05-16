@@ -1,6 +1,5 @@
-import { describe, it, expect } from "vitest"
 import { render } from "@testing-library/react"
-import React from "react"
+import { describe, expect, it } from "vitest"
 import { KindredMark } from "@/components/Common/KindredMark"
 
 describe("KindredMark", () => {
@@ -25,7 +24,12 @@ describe("KindredMark", () => {
   it("applies base styling classes", () => {
     const { container } = render(<KindredMark />)
     const span = container.querySelector("span")
-    expect(span).toHaveClass("inline-block", "h-full", "w-auto", "aspect-square")
+    expect(span).toHaveClass(
+      "inline-block",
+      "h-full",
+      "w-auto",
+      "aspect-square",
+    )
   })
 
   it("applies custom className", () => {
@@ -43,7 +47,9 @@ describe("KindredMark", () => {
   it("sets WebkitMaskImage style property", () => {
     const { container } = render(<KindredMark />)
     const span = container.querySelector("span") as HTMLSpanElement
-    expect(span.style.WebkitMaskImage).toBe("url(/assets/icons/kindred-mark.svg)")
+    expect(span.style.WebkitMaskImage).toBe(
+      "url(/assets/icons/kindred-mark.svg)",
+    )
   })
 
   it("sets maskImage style property", () => {
@@ -96,7 +102,7 @@ describe("KindredMark", () => {
 
   it("accepts and applies custom HTML attributes", () => {
     const { container } = render(
-      <KindredMark data-testid="kindred-icon" title="Kindred Logo" />
+      <KindredMark data-testid="kindred-icon" title="Kindred Logo" />,
     )
     const span = container.querySelector("span")
     expect(span).toHaveAttribute("data-testid", "kindred-icon")
@@ -111,7 +117,7 @@ describe("KindredMark", () => {
 
   it("accepts multiple custom classes", () => {
     const { container } = render(
-      <KindredMark className="text-white text-2xl opacity-80" />
+      <KindredMark className="text-white text-2xl opacity-80" />,
     )
     const span = container.querySelector("span")
     expect(span).toHaveClass("text-white", "text-2xl", "opacity-80")
@@ -138,9 +144,7 @@ describe("KindredMark", () => {
   })
 
   it("color is inherited from currentColor", () => {
-    const { container } = render(
-      <KindredMark className="text-blue-500" />
-    )
+    const { container } = render(<KindredMark className="text-blue-500" />)
     const span = container.querySelector("span") as HTMLSpanElement
     expect(span.style.backgroundColor).toBe("currentcolor")
   })
@@ -180,7 +184,7 @@ describe("KindredMark", () => {
       <div className="flex items-center gap-2">
         <KindredMark className="size-6" />
         <span>Kindred</span>
-      </div>
+      </div>,
     )
     const mark = container.querySelector("span[role='img']")
     expect(mark).toBeInTheDocument()
@@ -189,7 +193,7 @@ describe("KindredMark", () => {
 
   it("respects className prop along with HTML attributes", () => {
     const { container } = render(
-      <KindredMark className="text-lg" data-id="mark" />
+      <KindredMark className="text-lg" data-id="mark" />,
     )
     const span = container.querySelector("span")
     expect(span).toHaveClass("text-lg")
@@ -201,7 +205,9 @@ describe("KindredMark", () => {
     const span = container.querySelector("span") as HTMLSpanElement
 
     // Webkit versions
-    expect(span.style.WebkitMaskImage).toBe("url(/assets/icons/kindred-mark.svg)")
+    expect(span.style.WebkitMaskImage).toBe(
+      "url(/assets/icons/kindred-mark.svg)",
+    )
     expect(span.style.WebkitMaskRepeat).toBe("no-repeat")
     expect(span.style.WebkitMaskPosition).toBe("center")
     expect(span.style.WebkitMaskSize).toBe("contain")

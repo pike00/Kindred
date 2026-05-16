@@ -1,12 +1,10 @@
-import { describe, it, expect, vi } from "vitest"
 import { render, screen } from "@testing-library/react"
-import React from "react"
+import type React from "react"
+import { describe, expect, it, vi } from "vitest"
 import ErrorComponent from "@/components/Common/ErrorComponent"
 
 vi.mock("@tanstack/react-router", async (importOriginal) => {
-  const actual = await importOriginal<
-    typeof import("@tanstack/react-router")
-  >()
+  const actual = await importOriginal<typeof import("@tanstack/react-router")>()
   return {
     ...actual,
     Link: ({
@@ -52,7 +50,7 @@ describe("ErrorComponent", () => {
   it("renders error message", () => {
     render(<ErrorComponent />)
     expect(
-      screen.getByText("Something went wrong. Please try again.")
+      screen.getByText("Something went wrong. Please try again."),
     ).toBeInTheDocument()
   })
 
@@ -76,7 +74,7 @@ describe("ErrorComponent", () => {
       "items-center",
       "justify-center",
       "flex-col",
-      "p-4"
+      "p-4",
     )
   })
 
@@ -131,14 +129,16 @@ describe("ErrorComponent", () => {
 
   it("content has z-index for layering", () => {
     const { container } = render(<ErrorComponent />)
-    const mainContent = container.querySelector('[data-testid="error-component"]')
+    const mainContent = container.querySelector(
+      '[data-testid="error-component"]',
+    )
     expect(mainContent).toHaveClass("z-10")
   })
 
   it("text wrapper has margin left", () => {
     const { container } = render(<ErrorComponent />)
     const textWrapper = container.querySelector(
-      "div[data-testid='error-component'] > div > div"
+      "div[data-testid='error-component'] > div > div",
     )
     expect(textWrapper).toHaveClass("ml-4")
   })
@@ -146,7 +146,7 @@ describe("ErrorComponent", () => {
   it("text wrapper is centered", () => {
     const { container } = render(<ErrorComponent />)
     const textWrapper = container.querySelector(
-      "div[data-testid='error-component'] > div > div"
+      "div[data-testid='error-component'] > div > div",
     )
     expect(textWrapper).toHaveClass("items-center", "justify-center")
   })
@@ -154,7 +154,7 @@ describe("ErrorComponent", () => {
   it("error section uses flex column", () => {
     const { container } = render(<ErrorComponent />)
     const textWrapper = container.querySelector(
-      "div[data-testid='error-component'] > div > div"
+      "div[data-testid='error-component'] > div > div",
     )
     expect(textWrapper).toHaveClass("flex-col")
   })
@@ -217,7 +217,7 @@ describe("ErrorComponent", () => {
   it("error and oops text are displayed in sequence", () => {
     const { container } = render(<ErrorComponent />)
     const errorSpan = screen.getByText("Error")
-    const oopsSpan = screen.getByText("Oops!")
+    const _oopsSpan = screen.getByText("Oops!")
     const parent = errorSpan.parentElement?.parentElement
 
     expect(parent).toBeInTheDocument()
@@ -235,7 +235,7 @@ describe("ErrorComponent", () => {
     expect(screen.getByText("Error")).toBeInTheDocument()
     expect(screen.getByText("Oops!")).toBeInTheDocument()
     expect(
-      screen.getByText("Something went wrong. Please try again.")
+      screen.getByText("Something went wrong. Please try again."),
     ).toBeInTheDocument()
     expect(screen.getByText("Go Home")).toBeInTheDocument()
     expect(container.querySelector("a")).toBeInTheDocument()

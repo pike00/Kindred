@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import { screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { renderWithProviders, makeUser } from "@/test/helpers"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import AddUser from "@/components/Admin/AddUser"
+import { makeUser, renderWithProviders } from "@/test/helpers"
 
 // Mock icons
 vi.mock("@/lib/icons", () => ({
@@ -26,8 +26,8 @@ vi.mock("@/client", () => ({
   },
 }))
 
-import { UsersService } from "@/client"
 import { toast } from "sonner"
+import { UsersService } from "@/client"
 
 describe("AddUser", () => {
   beforeEach(() => {
@@ -49,7 +49,9 @@ describe("AddUser", () => {
 
     it("renders button with my-4 class", () => {
       const { container } = renderWithProviders(<AddUser />)
-      const button = container.querySelector("button:has([data-testid='plus-icon'])")
+      const button = container.querySelector(
+        "button:has([data-testid='plus-icon'])",
+      )
       expect(button?.className).toContain("my-4")
     })
   })
@@ -77,7 +79,9 @@ describe("AddUser", () => {
       await user.click(cancelButton)
 
       await waitFor(() => {
-        expect(screen.queryByText(/Fill in the form below/i)).not.toBeInTheDocument()
+        expect(
+          screen.queryByText(/Fill in the form below/i),
+        ).not.toBeInTheDocument()
       })
     })
 
@@ -160,7 +164,9 @@ describe("AddUser", () => {
       await user.tab()
 
       await waitFor(() => {
-        expect(screen.getByText(/Password must be at least 8 characters/i)).toBeInTheDocument()
+        expect(
+          screen.getByText(/Password must be at least 8 characters/i),
+        ).toBeInTheDocument()
       })
     })
 
@@ -179,7 +185,9 @@ describe("AddUser", () => {
       await user.click(saveButton)
 
       await waitFor(() => {
-        expect(screen.getByText(/Please confirm your password/i)).toBeInTheDocument()
+        expect(
+          screen.getByText(/Please confirm your password/i),
+        ).toBeInTheDocument()
       })
     })
 
@@ -201,7 +209,9 @@ describe("AddUser", () => {
       await user.click(saveButton)
 
       await waitFor(() => {
-        expect(screen.getByText(/The passwords don't match/i)).toBeInTheDocument()
+        expect(
+          screen.getByText(/The passwords don't match/i),
+        ).toBeInTheDocument()
       })
     })
 
@@ -270,7 +280,9 @@ describe("AddUser", () => {
 
     it("submits with is_superuser checkbox checked", async () => {
       const user = userEvent.setup()
-      vi.mocked(UsersService.createUser).mockResolvedValue(makeUser({ is_superuser: true }))
+      vi.mocked(UsersService.createUser).mockResolvedValue(
+        makeUser({ is_superuser: true }),
+      )
 
       renderWithProviders(<AddUser />)
 
@@ -296,14 +308,16 @@ describe("AddUser", () => {
             requestBody: expect.objectContaining({
               is_superuser: true,
             }),
-          })
+          }),
         )
       })
     })
 
     it("submits with is_active checkbox checked", async () => {
       const user = userEvent.setup()
-      vi.mocked(UsersService.createUser).mockResolvedValue(makeUser({ is_active: true }))
+      vi.mocked(UsersService.createUser).mockResolvedValue(
+        makeUser({ is_active: true }),
+      )
 
       renderWithProviders(<AddUser />)
 
@@ -329,7 +343,7 @@ describe("AddUser", () => {
             requestBody: expect.objectContaining({
               is_active: true,
             }),
-          })
+          }),
         )
       })
     })
@@ -338,9 +352,10 @@ describe("AddUser", () => {
       const user = userEvent.setup()
       let resolveCreateUser: any
       vi.mocked(UsersService.createUser).mockImplementation(
-        () => new Promise((resolve) => {
-          resolveCreateUser = resolve
-        })
+        () =>
+          new Promise((resolve) => {
+            resolveCreateUser = resolve
+          }),
       )
 
       renderWithProviders(<AddUser />)
@@ -373,9 +388,10 @@ describe("AddUser", () => {
       const user = userEvent.setup()
       let resolveCreateUser: any
       vi.mocked(UsersService.createUser).mockImplementation(
-        () => new Promise((resolve) => {
-          resolveCreateUser = resolve
-        })
+        () =>
+          new Promise((resolve) => {
+            resolveCreateUser = resolve
+          }),
       )
 
       renderWithProviders(<AddUser />)
@@ -431,7 +447,7 @@ describe("AddUser", () => {
           "Success!",
           expect.objectContaining({
             description: "User created successfully",
-          })
+          }),
         )
       })
     })
@@ -457,7 +473,9 @@ describe("AddUser", () => {
       await user.click(saveButton)
 
       await waitFor(() => {
-        expect(screen.queryByText(/Fill in the form below/i)).not.toBeInTheDocument()
+        expect(
+          screen.queryByText(/Fill in the form below/i),
+        ).not.toBeInTheDocument()
       })
     })
 
@@ -471,9 +489,15 @@ describe("AddUser", () => {
       await user.click(trigger)
 
       const emailInput = screen.getByLabelText(/Email/i) as HTMLInputElement
-      const passwordInput = screen.getByLabelText(/Set Password/i) as HTMLInputElement
-      const confirmInput = screen.getByLabelText(/Confirm Password/i) as HTMLInputElement
-      const superuserCheckbox = screen.getByLabelText(/Is superuser/i) as HTMLInputElement
+      const passwordInput = screen.getByLabelText(
+        /Set Password/i,
+      ) as HTMLInputElement
+      const confirmInput = screen.getByLabelText(
+        /Confirm Password/i,
+      ) as HTMLInputElement
+      const superuserCheckbox = screen.getByLabelText(
+        /Is superuser/i,
+      ) as HTMLInputElement
 
       await user.type(emailInput, "user@example.com")
       await user.type(passwordInput, "SecurePass123")
@@ -522,7 +546,9 @@ describe("AddUser", () => {
     it("shows error toast on API failure", async () => {
       const user = userEvent.setup()
       const errorMessage = "Network error"
-      vi.mocked(UsersService.createUser).mockRejectedValue(new Error(errorMessage))
+      vi.mocked(UsersService.createUser).mockRejectedValue(
+        new Error(errorMessage),
+      )
 
       renderWithProviders(<AddUser />)
 
@@ -547,7 +573,9 @@ describe("AddUser", () => {
 
     it("keeps dialog open on error", async () => {
       const user = userEvent.setup()
-      vi.mocked(UsersService.createUser).mockRejectedValue(new Error("API Error"))
+      vi.mocked(UsersService.createUser).mockRejectedValue(
+        new Error("API Error"),
+      )
 
       renderWithProviders(<AddUser />)
 
@@ -573,7 +601,9 @@ describe("AddUser", () => {
 
     it("does not reset form on error", async () => {
       const user = userEvent.setup()
-      vi.mocked(UsersService.createUser).mockRejectedValue(new Error("API Error"))
+      vi.mocked(UsersService.createUser).mockRejectedValue(
+        new Error("API Error"),
+      )
 
       renderWithProviders(<AddUser />)
 
@@ -581,12 +611,16 @@ describe("AddUser", () => {
       await user.click(trigger)
 
       const emailInput = screen.getByLabelText(/Email/i) as HTMLInputElement
-      const passwordInput = screen.getByLabelText(/Set Password/i) as HTMLInputElement
+      const passwordInput = screen.getByLabelText(
+        /Set Password/i,
+      ) as HTMLInputElement
 
       await user.type(emailInput, "user@example.com")
       await user.type(passwordInput, "SecurePass123")
 
-      const confirmInput = screen.getByLabelText(/Confirm Password/i) as HTMLInputElement
+      const confirmInput = screen.getByLabelText(
+        /Confirm Password/i,
+      ) as HTMLInputElement
       await user.type(confirmInput, "SecurePass123")
 
       const saveButton = screen.getByRole("button", { name: /Save/i })
@@ -610,8 +644,14 @@ describe("AddUser", () => {
       await user.click(trigger)
 
       expect(screen.getByLabelText(/Email/i)).toHaveAttribute("type", "email")
-      expect(screen.getByLabelText(/Set Password/i)).toHaveAttribute("type", "password")
-      expect(screen.getByLabelText(/Confirm Password/i)).toHaveAttribute("type", "password")
+      expect(screen.getByLabelText(/Set Password/i)).toHaveAttribute(
+        "type",
+        "password",
+      )
+      expect(screen.getByLabelText(/Confirm Password/i)).toHaveAttribute(
+        "type",
+        "password",
+      )
     })
 
     it("shows required field indicators", async () => {

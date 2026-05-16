@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from "vitest"
 import { render, screen } from "@testing-library/react"
+import { describe, expect, it, vi } from "vitest"
 import { Logo } from "@/components/Common/Logo"
 
 // Mock React Router
@@ -7,8 +7,19 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-router")>()
   return {
     ...actual,
-    Link: ({ children, to, ...props }: { children: React.ReactNode; to: string; [key: string]: unknown }) =>
-      <a href={String(to)} {...props}>{children}</a>,
+    Link: ({
+      children,
+      to,
+      ...props
+    }: {
+      children: React.ReactNode
+      to: string
+      [key: string]: unknown
+    }) => (
+      <a href={String(to)} {...props}>
+        {children}
+      </a>
+    ),
   }
 })
 
@@ -84,7 +95,9 @@ describe("Logo", () => {
     })
 
     it("applies custom className to full logo", () => {
-      const { container } = render(<Logo variant="full" className="custom-class" />)
+      const { container } = render(
+        <Logo variant="full" className="custom-class" />,
+      )
       const span = container.querySelector("span")
       expect(span).toHaveClass("custom-class")
     })
@@ -124,7 +137,9 @@ describe("Logo", () => {
     })
 
     it("applies custom className to icon", () => {
-      const { container } = render(<Logo variant="icon" className="custom-size" />)
+      const { container } = render(
+        <Logo variant="icon" className="custom-size" />,
+      )
       const mark = screen.getByTestId("kindred-mark")
       expect(mark).toHaveClass("custom-size")
     })
@@ -168,7 +183,9 @@ describe("Logo", () => {
     })
 
     it("applies custom className to responsive variant", () => {
-      const { container } = render(<Logo variant="responsive" className="responsive-custom" />)
+      const { container } = render(
+        <Logo variant="responsive" className="responsive-custom" />,
+      )
       expect(container.textContent).toBeTruthy()
     })
   })
@@ -246,7 +263,9 @@ describe("Logo", () => {
     it("responsive variant marks full mark as aria-hidden", () => {
       const { container } = render(<Logo variant="responsive" />)
       const marks = screen.getAllByTestId("kindred-mark")
-      expect(marks.some((m) => m.getAttribute("aria-hidden") === "true")).toBe(true)
+      expect(marks.some((m) => m.getAttribute("aria-hidden") === "true")).toBe(
+        true,
+      )
     })
 
     it("links navigate to home", () => {
@@ -271,7 +290,7 @@ describe("Logo", () => {
           <Logo />
           <Logo variant="icon" />
           <Logo variant="responsive" />
-        </>
+        </>,
       )
       const links = screen.getAllByRole("link")
       expect(links.length).toBeGreaterThanOrEqual(3)

@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest"
-import { handleError, getInitials } from "../../utils"
 import { AxiosError } from "axios"
+import { describe, expect, it } from "vitest"
+import { getInitials, handleError } from "../../utils"
 
 describe("extractErrorMessage and handleError", () => {
   it("handles AxiosError by returning error message", () => {

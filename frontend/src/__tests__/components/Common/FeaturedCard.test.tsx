@@ -1,6 +1,5 @@
-import { describe, it, expect } from "vitest"
 import { render } from "@testing-library/react"
-import React from "react"
+import { describe, expect, it } from "vitest"
 import { FeaturedCard } from "@/components/Common/FeaturedCard"
 
 describe("FeaturedCard", () => {
@@ -8,7 +7,7 @@ describe("FeaturedCard", () => {
     const { container } = render(
       <FeaturedCard>
         <div>Test Content</div>
-      </FeaturedCard>
+      </FeaturedCard>,
     )
     expect(container.textContent).toContain("Test Content")
   })
@@ -18,7 +17,7 @@ describe("FeaturedCard", () => {
       <FeaturedCard>
         <div>Content 1</div>
         <div>Content 2</div>
-      </FeaturedCard>
+      </FeaturedCard>,
     )
     expect(container.textContent).toContain("Content 1")
     expect(container.textContent).toContain("Content 2")
@@ -28,7 +27,7 @@ describe("FeaturedCard", () => {
     const { container } = render(
       <FeaturedCard>
         <div>Content</div>
-      </FeaturedCard>
+      </FeaturedCard>,
     )
     const card = container.querySelector("div")
     expect(card).toHaveClass("border-accent-amber")
@@ -38,7 +37,7 @@ describe("FeaturedCard", () => {
     const { container } = render(
       <FeaturedCard tone="amber">
         <div>Content</div>
-      </FeaturedCard>
+      </FeaturedCard>,
     )
     const card = container.querySelector("div")
     expect(card).toHaveClass("border-accent-amber")
@@ -48,7 +47,7 @@ describe("FeaturedCard", () => {
     const { container } = render(
       <FeaturedCard tone="blue">
         <div>Content</div>
-      </FeaturedCard>
+      </FeaturedCard>,
     )
     const card = container.querySelector("div")
     expect(card).toHaveClass("border-accent-blue")
@@ -58,7 +57,7 @@ describe("FeaturedCard", () => {
     const { container } = render(
       <FeaturedCard tone="green">
         <div>Content</div>
-      </FeaturedCard>
+      </FeaturedCard>,
     )
     const card = container.querySelector("div")
     expect(card).toHaveClass("border-accent-green")
@@ -68,7 +67,7 @@ describe("FeaturedCard", () => {
     const { container } = render(
       <FeaturedCard tone="rose">
         <div>Content</div>
-      </FeaturedCard>
+      </FeaturedCard>,
     )
     const card = container.querySelector("div")
     expect(card).toHaveClass("border-accent-rose")
@@ -78,11 +77,11 @@ describe("FeaturedCard", () => {
     const { container } = render(
       <FeaturedCard tone="amber">
         <div>Content</div>
-      </FeaturedCard>
+      </FeaturedCard>,
     )
     const gradient = container.querySelector("div > div:first-child")
     expect(gradient).toHaveClass(
-      "bg-[radial-gradient(circle_at_top_right,var(--accent-amber),transparent_65%)]"
+      "bg-[radial-gradient(circle_at_top_right,var(--accent-amber),transparent_65%)]",
     )
   })
 
@@ -90,11 +89,11 @@ describe("FeaturedCard", () => {
     const { container } = render(
       <FeaturedCard tone="blue">
         <div>Content</div>
-      </FeaturedCard>
+      </FeaturedCard>,
     )
     const gradient = container.querySelector("div > div:first-child")
     expect(gradient).toHaveClass(
-      "bg-[radial-gradient(circle_at_top_right,var(--accent-blue),transparent_65%)]"
+      "bg-[radial-gradient(circle_at_top_right,var(--accent-blue),transparent_65%)]",
     )
   })
 
@@ -102,11 +101,11 @@ describe("FeaturedCard", () => {
     const { container } = render(
       <FeaturedCard tone="green">
         <div>Content</div>
-      </FeaturedCard>
+      </FeaturedCard>,
     )
     const gradient = container.querySelector("div > div:first-child")
     expect(gradient).toHaveClass(
-      "bg-[radial-gradient(circle_at_top_right,var(--accent-green),transparent_65%)]"
+      "bg-[radial-gradient(circle_at_top_right,var(--accent-green),transparent_65%)]",
     )
   })
 
@@ -114,11 +113,11 @@ describe("FeaturedCard", () => {
     const { container } = render(
       <FeaturedCard tone="rose">
         <div>Content</div>
-      </FeaturedCard>
+      </FeaturedCard>,
     )
     const gradient = container.querySelector("div > div:first-child")
     expect(gradient).toHaveClass(
-      "bg-[radial-gradient(circle_at_top_right,var(--accent-rose),transparent_65%)]"
+      "bg-[radial-gradient(circle_at_top_right,var(--accent-rose),transparent_65%)]",
     )
   })
 
@@ -126,7 +125,7 @@ describe("FeaturedCard", () => {
     const { container } = render(
       <FeaturedCard>
         <div>Content</div>
-      </FeaturedCard>
+      </FeaturedCard>,
     )
     const card = container.querySelector("div")
     expect(card).toHaveClass(
@@ -137,7 +136,7 @@ describe("FeaturedCard", () => {
       "border",
       "p-6",
       "shadow-xs",
-      "transition-shadow"
+      "transition-shadow",
     )
   })
 
@@ -145,7 +144,7 @@ describe("FeaturedCard", () => {
     const { container } = render(
       <FeaturedCard>
         <div>Content</div>
-      </FeaturedCard>
+      </FeaturedCard>,
     )
     const card = container.querySelector("div")
     expect(card).toHaveClass("hover:shadow-sm")
@@ -155,7 +154,7 @@ describe("FeaturedCard", () => {
     const { container } = render(
       <FeaturedCard className="custom-class">
         <div>Content</div>
-      </FeaturedCard>
+      </FeaturedCard>,
     )
     const card = container.querySelector("div")
     expect(card).toHaveClass("custom-class")
@@ -165,7 +164,7 @@ describe("FeaturedCard", () => {
     const { container } = render(
       <FeaturedCard className="custom-class">
         <div>Content</div>
-      </FeaturedCard>
+      </FeaturedCard>,
     )
     const card = container.querySelector("div")
     expect(card).toHaveClass("custom-class", "rounded-[18px]", "bg-card")
@@ -175,7 +174,7 @@ describe("FeaturedCard", () => {
     const { container } = render(
       <FeaturedCard>
         <div>Content</div>
-      </FeaturedCard>
+      </FeaturedCard>,
     )
     const gradient = container.querySelector("div > div:first-child")
     expect(gradient).toHaveAttribute("aria-hidden", "true")
@@ -185,7 +184,7 @@ describe("FeaturedCard", () => {
     const { container } = render(
       <FeaturedCard>
         <div>Content</div>
-      </FeaturedCard>
+      </FeaturedCard>,
     )
     const gradient = container.querySelector("div > div:first-child")
     expect(gradient).toHaveClass("pointer-events-none")
@@ -195,7 +194,7 @@ describe("FeaturedCard", () => {
     const { container } = render(
       <FeaturedCard>
         <div>Content</div>
-      </FeaturedCard>
+      </FeaturedCard>,
     )
     const gradient = container.querySelector("div > div:first-child")
     expect(gradient).toHaveClass("absolute", "inset-0")
@@ -205,7 +204,7 @@ describe("FeaturedCard", () => {
     const { container } = render(
       <FeaturedCard>
         <div>Content</div>
-      </FeaturedCard>
+      </FeaturedCard>,
     )
     const gradient = container.querySelector("div > div:first-child")
     expect(gradient).toHaveClass("opacity-70")
@@ -215,7 +214,7 @@ describe("FeaturedCard", () => {
     const { container } = render(
       <FeaturedCard>
         <div>Content</div>
-      </FeaturedCard>
+      </FeaturedCard>,
     )
     const childrenWrapper = container.querySelector("div > div:last-child")
     expect(childrenWrapper).toHaveClass("relative")
@@ -225,7 +224,7 @@ describe("FeaturedCard", () => {
     const { container } = render(
       <FeaturedCard>
         <div data-testid="child-content">Content</div>
-      </FeaturedCard>
+      </FeaturedCard>,
     )
     const childWrapper = container.querySelector("div > div:last-child")
     expect(childWrapper).toBeInTheDocument()
@@ -238,7 +237,7 @@ describe("FeaturedCard", () => {
         <h1>Title</h1>
         <p>Description</p>
         <button>Action</button>
-      </FeaturedCard>
+      </FeaturedCard>,
     )
     expect(container.textContent).toContain("Title")
     expect(container.textContent).toContain("Description")
@@ -247,7 +246,7 @@ describe("FeaturedCard", () => {
 
   it("renders text children directly", () => {
     const { container } = render(
-      <FeaturedCard>Plain text content</FeaturedCard>
+      <FeaturedCard>Plain text content</FeaturedCard>,
     )
     expect(container.textContent).toContain("Plain text content")
   })
@@ -256,7 +255,7 @@ describe("FeaturedCard", () => {
     const { container } = render(
       <FeaturedCard>
         <div>Content</div>
-      </FeaturedCard>
+      </FeaturedCard>,
     )
     const card = container.querySelector("div.relative")
     expect(card).toHaveClass("overflow-hidden")
@@ -266,7 +265,7 @@ describe("FeaturedCard", () => {
     const { container } = render(
       <FeaturedCard>
         <div>Content</div>
-      </FeaturedCard>
+      </FeaturedCard>,
     )
     const card = container.querySelector("div")
     expect(card).toHaveClass("border-accent-amber")
@@ -276,7 +275,7 @@ describe("FeaturedCard", () => {
     const { container } = render(
       <FeaturedCard tone="blue">
         <div>Content</div>
-      </FeaturedCard>
+      </FeaturedCard>,
     )
     const card = container.querySelector("div")
     expect(card).not.toHaveClass("border-accent-amber")
@@ -294,7 +293,7 @@ describe("FeaturedCard", () => {
       const { container } = render(
         <FeaturedCard tone={tone}>
           <div>Content</div>
-        </FeaturedCard>
+        </FeaturedCard>,
       )
       const card = container.querySelector("div")
       expect(card).toHaveClass(`border-accent-${tone}`)
@@ -305,7 +304,7 @@ describe("FeaturedCard", () => {
     const { container } = render(
       <FeaturedCard>
         <div>Content</div>
-      </FeaturedCard>
+      </FeaturedCard>,
     )
     const card = container.querySelector("div")
     expect(card).toHaveClass("p-6")
@@ -315,7 +314,7 @@ describe("FeaturedCard", () => {
     const { container } = render(
       <FeaturedCard>
         <div>Content</div>
-      </FeaturedCard>
+      </FeaturedCard>,
     )
     const card = container.querySelector("div")
     expect(card).toHaveClass("rounded-[18px]")
@@ -325,7 +324,7 @@ describe("FeaturedCard", () => {
     const { container } = render(
       <FeaturedCard>
         <div>Content</div>
-      </FeaturedCard>
+      </FeaturedCard>,
     )
     const card = container.querySelector("div")
     expect(card).toHaveClass("shadow-xs")
@@ -335,7 +334,7 @@ describe("FeaturedCard", () => {
     const { container } = render(
       <FeaturedCard>
         <div>Content</div>
-      </FeaturedCard>
+      </FeaturedCard>,
     )
     const card = container.querySelector("div")
     expect(card).toHaveClass("transition-shadow")

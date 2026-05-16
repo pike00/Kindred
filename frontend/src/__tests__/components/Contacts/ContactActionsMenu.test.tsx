@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach, vi } from "vitest"
 import { screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import { ContactActionsMenu } from "@/components/Contacts/ContactActionsMenu"
-import { renderWithProviders, makeContact } from "@/test/helpers"
+import { makeContact, renderWithProviders } from "@/test/helpers"
 
 // Mock router
 const mockNavigate = vi.fn()
@@ -153,7 +153,9 @@ describe("ContactActionsMenu", () => {
     const contact = makeContact()
     const user = userEvent.setup()
 
-    const { queryClient } = renderWithProviders(<ContactActionsMenu contact={contact} />)
+    const { queryClient } = renderWithProviders(
+      <ContactActionsMenu contact={contact} />,
+    )
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries")
 
     const deleteButton = screen.getByText("Delete")
@@ -178,7 +180,9 @@ describe("ContactActionsMenu", () => {
     await user.click(deleteButton)
 
     await waitFor(() => {
-      expect(mockShowErrorToast).toHaveBeenCalledWith("Failed to delete contact")
+      expect(mockShowErrorToast).toHaveBeenCalledWith(
+        "Failed to delete contact",
+      )
     })
   })
 
@@ -212,7 +216,7 @@ describe("ContactActionsMenu", () => {
     for (const contact of contacts) {
       vi.clearAllMocks()
       const { unmount } = renderWithProviders(
-        <ContactActionsMenu contact={contact} />
+        <ContactActionsMenu contact={contact} />,
       )
 
       const viewButton = screen.getByText("View")

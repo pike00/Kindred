@@ -1,13 +1,12 @@
-import { describe, it, expect, vi, beforeEach } from "vitest"
 import { screen } from "@testing-library/react"
-import { renderWithProviders, makeUser } from "@/test/helpers"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import AppSidebar from "@/components/Sidebar/AppSidebar"
+import { makeUser, renderWithProviders } from "@/test/helpers"
 
 // Mock sidebar UI components
 vi.mock("@/components/ui/sidebar", async (importOriginal) => {
-  const actual = await importOriginal<
-    typeof import("@/components/ui/sidebar")
-  >()
+  const actual =
+    await importOriginal<typeof import("@/components/ui/sidebar")>()
   return {
     ...actual,
     useSidebar: () => ({
@@ -17,9 +16,7 @@ vi.mock("@/components/ui/sidebar", async (importOriginal) => {
       setOpen: vi.fn(),
       toggleSidebar: vi.fn(),
     }),
-    Sidebar: ({ children }: any) => (
-      <div data-testid="sidebar">{children}</div>
-    ),
+    Sidebar: ({ children }: any) => <div data-testid="sidebar">{children}</div>,
     SidebarContent: ({ children }: any) => (
       <div data-testid="sidebar-content">{children}</div>
     ),
@@ -69,9 +66,7 @@ vi.mock("@/components/Common/Appearance", () => ({
 
 // Mock User component (we'll test it separately)
 vi.mock("@/components/Sidebar/User", () => ({
-  User: ({ user }: any) => (
-    <div data-testid="sidebar-user">{user?.email}</div>
-  ),
+  User: ({ user }: any) => <div data-testid="sidebar-user">{user?.email}</div>,
 }))
 
 // Mock Main component (we'll test it separately)
@@ -183,9 +178,9 @@ describe("AppSidebar", () => {
     const mainComponent = screen.getByTestId("sidebar-main")
     expect(mainComponent).toBeInTheDocument()
     // Should have 7 base items
-    expect(mainComponent.querySelectorAll("[data-testid^='nav-item-']")).toHaveLength(
-      7,
-    )
+    expect(
+      mainComponent.querySelectorAll("[data-testid^='nav-item-']"),
+    ).toHaveLength(7)
   })
 
   it("renders Main component with admin item included for superuser", () => {
@@ -201,9 +196,9 @@ describe("AppSidebar", () => {
 
     const mainComponent = screen.getByTestId("sidebar-main")
     // Should have 8 items (7 base + admin)
-    expect(mainComponent.querySelectorAll("[data-testid^='nav-item-']")).toHaveLength(
-      8,
-    )
+    expect(
+      mainComponent.querySelectorAll("[data-testid^='nav-item-']"),
+    ).toHaveLength(8)
     expect(screen.getByTestId("nav-item-Admin")).toBeInTheDocument()
   })
 

@@ -1,0 +1,239 @@
+import { render, screen } from "@testing-library/react"
+import { beforeEach, describe, expect, it, vi } from "vitest"
+import { Footer } from "@/components/Common/Footer"
+
+// Mock EnvironmentChip
+vi.mock("@/components/Common/EnvironmentChip", () => ({
+  EnvironmentChip: () => (
+    <div data-testid="environment-chip">Environment Chip</div>
+  ),
+}))
+
+describe("Footer", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  describe("rendering", () => {
+    it("renders footer element", () => {
+      const { container } = render(<Footer />)
+      const footer = container.querySelector("footer")
+      expect(footer).toBeInTheDocument()
+    })
+
+    it("renders Kindred brand name", () => {
+      render(<Footer />)
+      expect(screen.getByText(/Kindred/)).toBeInTheDocument()
+    })
+
+    it("renders current year", () => {
+      const currentYear = new Date().getFullYear()
+      render(<Footer />)
+      expect(screen.getByText(String(currentYear))).toBeInTheDocument()
+    })
+
+    it("renders year after the dot separator", () => {
+      const currentYear = new Date().getFullYear()
+      render(<Footer />)
+      expect(screen.getByText(`Kindred · ${currentYear}`)).toBeInTheDocument()
+    })
+
+    it("renders EnvironmentChip component", () => {
+      render(<Footer />)
+      expect(screen.getByTestId("environment-chip")).toBeInTheDocument()
+    })
+  })
+
+  describe("content", () => {
+    it("displays the correct copyright text format", () => {
+      const currentYear = new Date().getFullYear()
+      render(<Footer />)
+      const footerText = screen.getByText(`Kindred · ${currentYear}`)
+      expect(footerText).toBeInTheDocument()
+    })
+
+    it("updates year when year changes", () => {
+      const currentYear = new Date().getFullYear()
+      render(<Footer />)
+      expect(screen.getByText(`Kindred · ${currentYear}`)).toBeInTheDocument()
+    })
+
+    it("uses getFullYear() for year calculation", () => {
+      const expectedYear = new Date().getFullYear()
+      render(<Footer />)
+      const yearText = screen.getByText(String(expectedYear))
+      expect(yearText).toBeInTheDocument()
+    })
+  })
+
+  describe("styling", () => {
+    it("applies footer semantic HTML element", () => {
+      const { container } = render(<Footer />)
+      const footer = container.querySelector("footer")
+      expect(footer?.tagName).toBe("FOOTER")
+    })
+
+    it("applies border-t class", () => {
+      const { container } = render(<Footer />)
+      const footer = container.querySelector("footer")
+      expect(footer).toHaveClass("border-t")
+    })
+
+    it("applies padding classes", () => {
+      const { container } = render(<Footer />)
+      const footer = container.querySelector("footer")
+      expect(footer).toHaveClass("py-4")
+      expect(footer).toHaveClass("px-6")
+    })
+
+    it("applies text styling classes", () => {
+      const { container } = render(<Footer />)
+      const footer = container.querySelector("footer")
+      expect(footer).toHaveClass("text-sm")
+      expect(footer).toHaveClass("text-muted-foreground")
+    })
+
+    it("applies flex layout to content container", () => {
+      const { container } = render(<Footer />)
+      const contentDiv = container.querySelector("footer > div")
+      expect(contentDiv).toHaveClass("flex")
+      expect(contentDiv).toHaveClass("items-center")
+      expect(contentDiv).toHaveClass("justify-center")
+    })
+
+    it("applies gap between flex items", () => {
+      const { container } = render(<Footer />)
+      const contentDiv = container.querySelector("footer > div")
+      expect(contentDiv).toHaveClass("gap-3")
+    })
+  })
+
+  describe("layout", () => {
+    it("centers footer content", () => {
+      const { container } = render(<Footer />)
+      const contentDiv = container.querySelector("footer > div")
+      expect(contentDiv).toHaveClass("justify-center")
+    })
+
+    it("vertically aligns footer items", () => {
+      const { container } = render(<Footer />)
+      const contentDiv = container.querySelector("footer > div")
+      expect(contentDiv).toHaveClass("items-center")
+    })
+
+    it("creates flex layout for side-by-side content", () => {
+      const { container } = render(<Footer />)
+      const contentDiv = container.querySelector("footer > div")
+      expect(contentDiv).toHaveClass("flex")
+    })
+
+    it("maintains spacing between text and chip", () => {
+      const { container } = render(<Footer />)
+      const contentDiv = container.querySelector("footer > div")
+      expect(contentDiv).toHaveClass("gap-3")
+    })
+  })
+
+  describe("component integration", () => {
+    it("renders both text and EnvironmentChip together", () => {
+      render(<Footer />)
+      const currentYear = new Date().getFullYear()
+      expect(screen.getByText(`Kindred · ${currentYear}`)).toBeInTheDocument()
+      expect(screen.getByTestId("environment-chip")).toBeInTheDocument()
+    })
+
+    it("positions EnvironmentChip after text content", () => {
+      const { container } = render(<Footer />)
+      const children = container.querySelector("footer > div")?.children
+      expect(children?.length).toBe(2)
+      expect(children?.[0]).toContainElement(screen.getByText(/Kindred/))
+      expect(children?.[1]).toContainElement(
+        screen.getByTestId("environment-chip"),
+      )
+    })
+  })
+
+  describe("accessibility", () => {
+    it("uses semantic footer element", () => {
+      const { container } = render(<Footer />)
+      expect(container.querySelector("footer")).toBeInTheDocument()
+    })
+
+    it("maintains readable text contrast with muted-foreground class", () => {
+      const { container } = render(<Footer />)
+      const footer = container.querySelector("footer")
+      expect(footer).toHaveClass("text-muted-foreground")
+    })
+
+    it("uses readable text size", () => {
+      const { container } = render(<Footer />)
+      const footer = container.querySelector("footer")
+      expect(footer).toHaveClass("text-sm")
+    })
+  })
+
+  describe("responsive behavior", () => {
+    it("applies consistent padding for all viewport sizes", () => {
+      const { container } = render(<Footer />)
+      const footer = container.querySelector("footer")
+      expect(footer).toHaveClass("py-4")
+      expect(footer).toHaveClass("px-6")
+    })
+
+    it("maintains centered layout across viewports", () => {
+      const { container } = render(<Footer />)
+      const contentDiv = container.querySelector("footer > div")
+      expect(contentDiv).toHaveClass("justify-center")
+    })
+  })
+
+  describe("edge cases", () => {
+    it("handles mounting and unmounting", () => {
+      const { unmount } = render(<Footer />)
+      const currentYear = new Date().getFullYear()
+      expect(screen.getByText(`Kindred · ${currentYear}`)).toBeInTheDocument()
+
+      unmount()
+
+      expect(
+        screen.queryByText(`Kindred · ${currentYear}`),
+      ).not.toBeInTheDocument()
+    })
+
+    it("renders multiple footers on same page", () => {
+      render(
+        <>
+          <Footer />
+          <Footer />
+        </>,
+      )
+      const currentYear = new Date().getFullYear()
+      const yearTexts = screen.getAllByText(`Kindred · ${currentYear}`)
+      expect(yearTexts).toHaveLength(2)
+    })
+
+    it("handles re-render without issues", () => {
+      const { rerender } = render(<Footer />)
+      const currentYear = new Date().getFullYear()
+      expect(screen.getByText(`Kindred · ${currentYear}`)).toBeInTheDocument()
+
+      rerender(<Footer />)
+      expect(screen.getByText(`Kindred · ${currentYear}`)).toBeInTheDocument()
+    })
+  })
+
+  describe("year accuracy", () => {
+    it("always uses current date for year", () => {
+      const now = new Date()
+      const year = now.getFullYear()
+      render(<Footer />)
+      expect(screen.getByText(String(year))).toBeInTheDocument()
+    })
+
+    it("calls getFullYear() on new Date instance", () => {
+      render(<Footer />)
+      const yearText = new Date().getFullYear()
+      expect(screen.getByText(String(yearText))).toBeInTheDocument()
+    })
+  })
+})

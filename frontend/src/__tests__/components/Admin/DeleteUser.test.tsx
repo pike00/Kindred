@@ -1,13 +1,13 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import { screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { renderWithProviders, makeUser } from "@/test/helpers"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import DeleteUser from "@/components/Admin/DeleteUser"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { renderWithProviders } from "@/test/helpers"
 
 // Mock icons
 vi.mock("@/lib/icons", () => ({
@@ -31,8 +31,8 @@ vi.mock("@/client", () => ({
   },
 }))
 
-import { UsersService } from "@/client"
 import { toast } from "sonner"
+import { UsersService } from "@/client"
 
 const DeleteUserWrapper = (props: React.ComponentProps<typeof DeleteUser>) => (
   <DropdownMenu>
@@ -59,7 +59,7 @@ describe("DeleteUser", () => {
     it("renders delete user menu item", async () => {
       const user = userEvent.setup()
       renderWithProviders(
-        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />
+        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />,
       )
 
       const trigger = screen.getByText("Open Menu")
@@ -73,13 +73,15 @@ describe("DeleteUser", () => {
     it("renders as dropdown menu item with destructive variant", async () => {
       const user = userEvent.setup()
       renderWithProviders(
-        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />
+        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />,
       )
 
       const trigger = screen.getByText("Open Menu")
       await user.click(trigger)
 
-      const deleteItem = screen.getByText("Delete User").closest("[role='menuitem']")
+      const deleteItem = screen
+        .getByText("Delete User")
+        .closest("[role='menuitem']")
       expect(deleteItem?.className).toContain("destructive")
     })
   })
@@ -88,7 +90,7 @@ describe("DeleteUser", () => {
     it("opens confirmation dialog when menu item is clicked", async () => {
       const user = userEvent.setup()
       renderWithProviders(
-        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />
+        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />,
       )
 
       const trigger = screen.getByText("Open Menu")
@@ -99,7 +101,7 @@ describe("DeleteUser", () => {
 
       expect(screen.getByText("Delete User")).toBeInTheDocument()
       expect(
-        screen.getByText(/All items associated with this user will also be/i)
+        screen.getByText(/All items associated with this user will also be/i),
       ).toBeInTheDocument()
       expect(screen.getByText(/permanently deleted/i)).toBeInTheDocument()
     })
@@ -107,7 +109,7 @@ describe("DeleteUser", () => {
     it("shows confirmation message with permanent deletion warning", async () => {
       const user = userEvent.setup()
       renderWithProviders(
-        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />
+        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />,
       )
 
       const trigger = screen.getByText("Open Menu")
@@ -116,16 +118,20 @@ describe("DeleteUser", () => {
       const deleteItem = screen.getByText("Delete User")
       await user.click(deleteItem)
 
-      const description = screen.getByText(/All items associated with this user/i)
+      const description = screen.getByText(
+        /All items associated with this user/i,
+      )
       expect(description).toBeInTheDocument()
       expect(description).toHaveTextContent("permanently deleted")
-      expect(description).toHaveTextContent("You will not be able to undo this action")
+      expect(description).toHaveTextContent(
+        "You will not be able to undo this action",
+      )
     })
 
     it("closes dialog when Cancel is clicked", async () => {
       const user = userEvent.setup()
       renderWithProviders(
-        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />
+        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />,
       )
 
       const menuTrigger = screen.getByText("Open Menu")
@@ -135,7 +141,7 @@ describe("DeleteUser", () => {
       await user.click(deleteItem)
 
       expect(
-        screen.getByText(/All items associated with this user/i)
+        screen.getByText(/All items associated with this user/i),
       ).toBeInTheDocument()
 
       const cancelButton = screen.getByRole("button", { name: /Cancel/i })
@@ -143,7 +149,7 @@ describe("DeleteUser", () => {
 
       await waitFor(() => {
         expect(
-          screen.queryByText(/All items associated with this user/i)
+          screen.queryByText(/All items associated with this user/i),
         ).not.toBeInTheDocument()
       })
     })
@@ -155,7 +161,7 @@ describe("DeleteUser", () => {
       vi.mocked(UsersService.deleteUser).mockResolvedValue(undefined)
 
       renderWithProviders(
-        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />
+        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />,
       )
 
       const menuTrigger = screen.getByText("Open Menu")
@@ -179,7 +185,7 @@ describe("DeleteUser", () => {
       vi.mocked(UsersService.deleteUser).mockResolvedValue(undefined)
 
       renderWithProviders(
-        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />
+        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />,
       )
 
       const menuTrigger = screen.getByText("Open Menu")
@@ -203,11 +209,11 @@ describe("DeleteUser", () => {
         () =>
           new Promise((resolve) => {
             resolveDelete = resolve
-          })
+          }),
       )
 
       renderWithProviders(
-        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />
+        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />,
       )
 
       const menuTrigger = screen.getByText("Open Menu")
@@ -235,11 +241,11 @@ describe("DeleteUser", () => {
         () =>
           new Promise((resolve) => {
             resolveDelete = resolve
-          })
+          }),
       )
 
       renderWithProviders(
-        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />
+        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />,
       )
 
       const menuTrigger = screen.getByText("Open Menu")
@@ -268,7 +274,7 @@ describe("DeleteUser", () => {
       vi.mocked(UsersService.deleteUser).mockResolvedValue(undefined)
 
       renderWithProviders(
-        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />
+        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />,
       )
 
       const menuTrigger = screen.getByText("Open Menu")
@@ -285,7 +291,7 @@ describe("DeleteUser", () => {
           "Success!",
           expect.objectContaining({
             description: "The user was deleted successfully",
-          })
+          }),
         )
       })
     })
@@ -295,7 +301,7 @@ describe("DeleteUser", () => {
       vi.mocked(UsersService.deleteUser).mockResolvedValue(undefined)
 
       renderWithProviders(
-        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />
+        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />,
       )
 
       const menuTrigger = screen.getByText("Open Menu")
@@ -317,7 +323,7 @@ describe("DeleteUser", () => {
       vi.mocked(UsersService.deleteUser).mockResolvedValue(undefined)
 
       renderWithProviders(
-        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />
+        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />,
       )
 
       const menuTrigger = screen.getByText("Open Menu")
@@ -327,7 +333,7 @@ describe("DeleteUser", () => {
       await user.click(deleteItem)
 
       expect(
-        screen.getByText(/All items associated with this user/i)
+        screen.getByText(/All items associated with this user/i),
       ).toBeInTheDocument()
 
       const deleteButton = screen.getByRole("button", { name: /Delete/i })
@@ -335,7 +341,7 @@ describe("DeleteUser", () => {
 
       await waitFor(() => {
         expect(
-          screen.queryByText(/All items associated with this user/i)
+          screen.queryByText(/All items associated with this user/i),
         ).not.toBeInTheDocument()
       })
     })
@@ -345,7 +351,7 @@ describe("DeleteUser", () => {
       vi.mocked(UsersService.deleteUser).mockResolvedValue(undefined)
 
       renderWithProviders(
-        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />
+        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />,
       )
 
       const menuTrigger = screen.getByText("Open Menu")
@@ -367,11 +373,11 @@ describe("DeleteUser", () => {
     it("shows error toast on API failure", async () => {
       const user = userEvent.setup()
       vi.mocked(UsersService.deleteUser).mockRejectedValue(
-        new Error("Network error")
+        new Error("Network error"),
       )
 
       renderWithProviders(
-        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />
+        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />,
       )
 
       const menuTrigger = screen.getByText("Open Menu")
@@ -391,11 +397,11 @@ describe("DeleteUser", () => {
     it("does not call onSuccess on error", async () => {
       const user = userEvent.setup()
       vi.mocked(UsersService.deleteUser).mockRejectedValue(
-        new Error("API Error")
+        new Error("API Error"),
       )
 
       renderWithProviders(
-        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />
+        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />,
       )
 
       const menuTrigger = screen.getByText("Open Menu")
@@ -415,11 +421,11 @@ describe("DeleteUser", () => {
     it("keeps dialog open on error", async () => {
       const user = userEvent.setup()
       vi.mocked(UsersService.deleteUser).mockRejectedValue(
-        new Error("API Error")
+        new Error("API Error"),
       )
 
       renderWithProviders(
-        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />
+        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />,
       )
 
       const menuTrigger = screen.getByText("Open Menu")
@@ -433,7 +439,7 @@ describe("DeleteUser", () => {
 
       await waitFor(() => {
         expect(
-          screen.getByText(/All items associated with this user/i)
+          screen.getByText(/All items associated with this user/i),
         ).toBeInTheDocument()
       })
     })
@@ -445,7 +451,7 @@ describe("DeleteUser", () => {
         .mockResolvedValueOnce(undefined)
 
       renderWithProviders(
-        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />
+        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />,
       )
 
       const menuTrigger = screen.getByText("Open Menu")
@@ -475,7 +481,7 @@ describe("DeleteUser", () => {
     it("has accessible delete button", async () => {
       const user = userEvent.setup()
       renderWithProviders(
-        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />
+        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />,
       )
 
       const menuTrigger = screen.getByText("Open Menu")
@@ -491,7 +497,7 @@ describe("DeleteUser", () => {
     it("displays warning message clearly", async () => {
       const user = userEvent.setup()
       renderWithProviders(
-        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />
+        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />,
       )
 
       const menuTrigger = screen.getByText("Open Menu")
@@ -501,7 +507,9 @@ describe("DeleteUser", () => {
       await user.click(deleteItem)
 
       expect(screen.getByText(/permanently deleted/i)).toBeInTheDocument()
-      expect(screen.getByText(/You will not be able to undo/i)).toBeInTheDocument()
+      expect(
+        screen.getByText(/You will not be able to undo/i),
+      ).toBeInTheDocument()
     })
   })
 
@@ -513,7 +521,7 @@ describe("DeleteUser", () => {
       vi.mocked(UsersService.deleteUser).mockResolvedValue(undefined)
 
       const { rerender } = renderWithProviders(
-        <DeleteUserWrapper id={userId1} onSuccess={mockOnSuccess} />
+        <DeleteUserWrapper id={userId1} onSuccess={mockOnSuccess} />,
       )
 
       const menuTrigger = screen.getByText("Open Menu")
@@ -533,9 +541,7 @@ describe("DeleteUser", () => {
 
       vi.clearAllMocks()
 
-      rerender(
-        <DeleteUserWrapper id={userId2} onSuccess={mockOnSuccess} />
-      )
+      rerender(<DeleteUserWrapper id={userId2} onSuccess={mockOnSuccess} />)
 
       const menuTrigger2 = screen.getByText("Open Menu")
       await user.click(menuTrigger2)
@@ -556,7 +562,7 @@ describe("DeleteUser", () => {
     it("prevents opening dialog via dropdown click from propagating", async () => {
       const user = userEvent.setup()
       renderWithProviders(
-        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />
+        <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />,
       )
 
       const menuTrigger = screen.getByText("Open Menu")
@@ -567,7 +573,7 @@ describe("DeleteUser", () => {
       await user.click(deleteItem)
 
       expect(
-        screen.getByText(/All items associated with this user/i)
+        screen.getByText(/All items associated with this user/i),
       ).toBeInTheDocument()
     })
   })

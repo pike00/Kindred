@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest"
-import { renderHook, act } from "@testing-library/react"
+import { act, renderHook } from "@testing-library/react"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { useCopyToClipboard } from "../../hooks/useCopyToClipboard"
 
 describe("useCopyToClipboard", () => {
@@ -162,8 +162,7 @@ describe("useCopyToClipboard", () => {
     const { result } = renderHook(() => useCopyToClipboard())
     const [_copiedText, copy] = result.current
 
-    const longText =
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
+    const longText = "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
     clipboardSpy.writeText.mockResolvedValue(undefined)
 
     let success = false

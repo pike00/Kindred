@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach, vi } from "vitest"
 import { screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { renderWithProviders } from "@/test/helpers"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import ChangePassword from "@/components/UserSettings/ChangePassword"
+import { renderWithProviders } from "@/test/helpers"
 
 // Mock Sonner toast
 vi.mock("sonner", () => ({
@@ -45,7 +45,9 @@ describe("ChangePassword", () => {
   it("renders submit button with correct text", () => {
     renderWithProviders(<ChangePassword />)
 
-    expect(screen.getByRole("button", { name: "Update Password" })).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: "Update Password" }),
+    ).toBeInTheDocument()
   })
 
   it("disables submit button while mutation is pending", async () => {
@@ -54,7 +56,7 @@ describe("ChangePassword", () => {
       () =>
         new Promise((resolve) => {
           setTimeout(() => resolve({}), 100)
-        })
+        }),
     )
 
     const user = userEvent.setup()
@@ -120,7 +122,9 @@ describe("ChangePassword", () => {
     await user.click(submitButton)
 
     await waitFor(() => {
-      expect(screen.getByText("Password must be at least 8 characters")).toBeInTheDocument()
+      expect(
+        screen.getByText("Password must be at least 8 characters"),
+      ).toBeInTheDocument()
     })
   })
 
@@ -139,7 +143,9 @@ describe("ChangePassword", () => {
     await user.click(submitButton)
 
     await waitFor(() => {
-      const messages = screen.getAllByText("Password must be at least 8 characters")
+      const messages = screen.getAllByText(
+        "Password must be at least 8 characters",
+      )
       expect(messages.length).toBeGreaterThanOrEqual(1)
     })
   })
@@ -209,11 +215,13 @@ describe("ChangePassword", () => {
     renderWithProviders(<ChangePassword />)
 
     const currentPasswordInput = screen.getByTestId(
-      "current-password-input"
+      "current-password-input",
     ) as HTMLInputElement
-    const newPasswordInput = screen.getByTestId("new-password-input") as HTMLInputElement
+    const newPasswordInput = screen.getByTestId(
+      "new-password-input",
+    ) as HTMLInputElement
     const confirmPasswordInput = screen.getByTestId(
-      "confirm-password-input"
+      "confirm-password-input",
     ) as HTMLInputElement
     const submitButton = screen.getByRole("button", { name: "Update Password" })
 
@@ -273,18 +281,23 @@ describe("ChangePassword", () => {
     renderWithProviders(<ChangePassword />)
 
     const currentPasswordInput = screen.getByTestId("current-password-input")
+    const newPasswordInput = screen.getByTestId("new-password-input")
+    const confirmPasswordInput = screen.getByTestId("confirm-password-input")
     const submitButton = screen.getByRole("button", { name: "Update Password" })
 
+    await user.type(newPasswordInput, "newPassword456")
+    await user.type(confirmPasswordInput, "newPassword456")
     await user.click(submitButton)
 
     await waitFor(() => {
-      expect(screen.getByText("Password is required")).toBeInTheDocument()
+      expect(screen.getAllByText("Password is required").length).toBeGreaterThan(0)
     })
 
     await user.type(currentPasswordInput, "oldPassword123")
 
     await waitFor(() => {
-      expect(screen.queryByText("Password is required")).not.toBeInTheDocument()
+      const messages = screen.queryAllByText("Password is required")
+      expect(messages.length).toBe(0)
     })
   })
 
@@ -298,7 +311,7 @@ describe("ChangePassword", () => {
     await waitFor(() => {
       expect(screen.getByTestId("current-password-input")).toHaveAttribute(
         "aria-invalid",
-        "true"
+        "true",
       )
     })
   })

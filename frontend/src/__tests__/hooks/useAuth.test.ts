@@ -1,7 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest"
 import { renderHook, waitFor } from "@testing-library/react"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import useAuth, { isLoggedIn } from "@/hooks/useAuth"
-import { renderWithProviders, createQueryClient, makeUser } from "@/test/helpers"
+import {
+  createQueryClient,
+  makeUser,
+  renderWithProviders,
+} from "@/test/helpers"
 
 // Mock router
 const mockNavigate = vi.fn()
@@ -127,10 +131,14 @@ describe("useAuth hook", () => {
 
       const queryClient = createQueryClient()
       const { result } = renderHook(() => useAuth(), {
-        wrapper: ({ children }) => renderWithProviders(children, { queryClient }).container,
+        wrapper: ({ children }) =>
+          renderWithProviders(children, { queryClient }).container,
       })
 
-      result.current.loginMutation.mutate({ username: "test", password: "pass" } as any)
+      result.current.loginMutation.mutate({
+        username: "test",
+        password: "pass",
+      } as any)
 
       await waitFor(() => {
         expect(LoginService.loginAccessToken).toHaveBeenCalledWith({
@@ -146,10 +154,14 @@ describe("useAuth hook", () => {
 
       const queryClient = createQueryClient()
       const { result } = renderHook(() => useAuth(), {
-        wrapper: ({ children }) => renderWithProviders(children, { queryClient }).container,
+        wrapper: ({ children }) =>
+          renderWithProviders(children, { queryClient }).container,
       })
 
-      result.current.loginMutation.mutate({ username: "test", password: "pass" } as any)
+      result.current.loginMutation.mutate({
+        username: "test",
+        password: "pass",
+      } as any)
 
       await waitFor(() => {
         expect(localStorage.getItem("access_token")).toBe("new-token-123")
@@ -164,10 +176,14 @@ describe("useAuth hook", () => {
 
       const queryClient = createQueryClient()
       const { result } = renderHook(() => useAuth(), {
-        wrapper: ({ children }) => renderWithProviders(children, { queryClient }).container,
+        wrapper: ({ children }) =>
+          renderWithProviders(children, { queryClient }).container,
       })
 
-      result.current.loginMutation.mutate({ username: "test", password: "pass" } as any)
+      result.current.loginMutation.mutate({
+        username: "test",
+        password: "pass",
+      } as any)
 
       await waitFor(() => {
         expect(mockNavigate).toHaveBeenCalledWith({ to: "/" })
@@ -181,10 +197,14 @@ describe("useAuth hook", () => {
 
       const queryClient = createQueryClient()
       const { result } = renderHook(() => useAuth(), {
-        wrapper: ({ children }) => renderWithProviders(children, { queryClient }).container,
+        wrapper: ({ children }) =>
+          renderWithProviders(children, { queryClient }).container,
       })
 
-      result.current.loginMutation.mutate({ username: "test", password: "pass" } as any)
+      result.current.loginMutation.mutate({
+        username: "test",
+        password: "pass",
+      } as any)
 
       await waitFor(() => {
         expect(result.current.loginMutation.isError).toBe(true)
@@ -197,12 +217,13 @@ describe("useAuth hook", () => {
     it("calls registerUser with correct params", async () => {
       const { UsersService } = await import("@/client")
       vi.mocked(UsersService.registerUser).mockResolvedValue(
-        makeUser({ email: "new@example.com" })
+        makeUser({ email: "new@example.com" }),
       )
 
       const queryClient = createQueryClient()
       const { result } = renderHook(() => useAuth(), {
-        wrapper: ({ children }) => renderWithProviders(children, { queryClient }).container,
+        wrapper: ({ children }) =>
+          renderWithProviders(children, { queryClient }).container,
       })
 
       const userData = {
@@ -221,12 +242,13 @@ describe("useAuth hook", () => {
     it("navigates to login on successful signup", async () => {
       const { UsersService } = await import("@/client")
       vi.mocked(UsersService.registerUser).mockResolvedValue(
-        makeUser({ email: "new@example.com" })
+        makeUser({ email: "new@example.com" }),
       )
 
       const queryClient = createQueryClient()
       const { result } = renderHook(() => useAuth(), {
-        wrapper: ({ children }) => renderWithProviders(children, { queryClient }).container,
+        wrapper: ({ children }) =>
+          renderWithProviders(children, { queryClient }).container,
       })
 
       result.current.signUpMutation.mutate({
@@ -242,14 +264,15 @@ describe("useAuth hook", () => {
     it("invalidates users query on successful signup", async () => {
       const { UsersService } = await import("@/client")
       vi.mocked(UsersService.registerUser).mockResolvedValue(
-        makeUser({ email: "new@example.com" })
+        makeUser({ email: "new@example.com" }),
       )
 
       const queryClient = createQueryClient()
       const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries")
 
       const { result } = renderHook(() => useAuth(), {
-        wrapper: ({ children }) => renderWithProviders(children, { queryClient }).container,
+        wrapper: ({ children }) =>
+          renderWithProviders(children, { queryClient }).container,
       })
 
       result.current.signUpMutation.mutate({
@@ -269,7 +292,8 @@ describe("useAuth hook", () => {
 
       const queryClient = createQueryClient()
       const { result } = renderHook(() => useAuth(), {
-        wrapper: ({ children }) => renderWithProviders(children, { queryClient }).container,
+        wrapper: ({ children }) =>
+          renderWithProviders(children, { queryClient }).container,
       })
 
       result.current.signUpMutation.mutate({
@@ -289,7 +313,8 @@ describe("useAuth hook", () => {
 
       const queryClient = createQueryClient()
       const { result } = renderHook(() => useAuth(), {
-        wrapper: ({ children }) => renderWithProviders(children, { queryClient }).container,
+        wrapper: ({ children }) =>
+          renderWithProviders(children, { queryClient }).container,
       })
 
       result.current.logout()
@@ -302,7 +327,8 @@ describe("useAuth hook", () => {
 
       const queryClient = createQueryClient()
       const { result } = renderHook(() => useAuth(), {
-        wrapper: ({ children }) => renderWithProviders(children, { queryClient }).container,
+        wrapper: ({ children }) =>
+          renderWithProviders(children, { queryClient }).container,
       })
 
       result.current.logout()
@@ -321,7 +347,8 @@ describe("useAuth hook", () => {
 
       const queryClient = createQueryClient()
       const { result } = renderHook(() => useAuth(), {
-        wrapper: ({ children }) => renderWithProviders(children, { queryClient }).container,
+        wrapper: ({ children }) =>
+          renderWithProviders(children, { queryClient }).container,
       })
 
       result.current.logout()

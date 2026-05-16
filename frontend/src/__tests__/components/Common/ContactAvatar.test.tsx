@@ -1,6 +1,5 @@
-import { describe, it, expect } from "vitest"
 import { render, screen } from "@testing-library/react"
-import React from "react"
+import { describe, expect, it } from "vitest"
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
 
 describe("ContactAvatar", () => {
@@ -52,7 +51,7 @@ describe("ContactAvatar", () => {
 
   it("applies sm size class", () => {
     const { container } = render(
-      <ContactAvatar contact={mockContact} size="sm" />
+      <ContactAvatar contact={mockContact} size="sm" />,
     )
     const avatar = container.querySelector("div")
     expect(avatar).toHaveClass("size-8", "text-xs")
@@ -66,7 +65,7 @@ describe("ContactAvatar", () => {
 
   it("applies lg size class", () => {
     const { container } = render(
-      <ContactAvatar contact={mockContact} size="lg" />
+      <ContactAvatar contact={mockContact} size="lg" />,
     )
     const avatar = container.querySelector("div")
     expect(avatar).toHaveClass("size-14", "text-lg")
@@ -86,21 +85,23 @@ describe("ContactAvatar", () => {
     const contact2 = { id: "bbbbb", first_name: "B", last_name: "B" }
 
     const { container: container1 } = render(
-      <ContactAvatar contact={contact1} />
+      <ContactAvatar contact={contact1} />,
     )
     const { container: container2 } = render(
-      <ContactAvatar contact={contact2} />
+      <ContactAvatar contact={contact2} />,
     )
 
     const avatar1 = container1.querySelector("div") as HTMLDivElement
     const avatar2 = container2.querySelector("div") as HTMLDivElement
 
-    expect(avatar1.style.backgroundImage).not.toBe(avatar2.style.backgroundImage)
+    expect(avatar1.style.backgroundImage).not.toBe(
+      avatar2.style.backgroundImage,
+    )
   })
 
   it("applies custom className", () => {
     const { container } = render(
-      <ContactAvatar contact={mockContact} className="custom-class" />
+      <ContactAvatar contact={mockContact} className="custom-class" />,
     )
     const avatar = container.querySelector("div")
     expect(avatar).toHaveClass("custom-class")
@@ -108,7 +109,7 @@ describe("ContactAvatar", () => {
 
   it("merges custom className with base classes", () => {
     const { container } = render(
-      <ContactAvatar contact={mockContact} className="custom-class" />
+      <ContactAvatar contact={mockContact} className="custom-class" />,
     )
     const avatar = container.querySelector("div")
     expect(avatar).toHaveClass("custom-class", "rounded-full", "font-semibold")
@@ -129,7 +130,7 @@ describe("ContactAvatar", () => {
       "justify-center",
       "rounded-full",
       "text-white",
-      "font-semibold"
+      "font-semibold",
     )
   })
 
@@ -155,10 +156,10 @@ describe("ContactAvatar", () => {
     const contact = { id: "test-id", first_name: "Test", last_name: "User" }
 
     const { container: container1 } = render(
-      <ContactAvatar contact={contact} />
+      <ContactAvatar contact={contact} />,
     )
     const { container: container2 } = render(
-      <ContactAvatar contact={contact} />
+      <ContactAvatar contact={contact} />,
     )
 
     const avatar1 = container1.querySelector("div") as HTMLDivElement

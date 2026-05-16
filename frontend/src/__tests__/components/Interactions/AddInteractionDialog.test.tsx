@@ -1,9 +1,8 @@
-import { describe, it, expect, beforeEach, vi } from "vitest"
-import { screen, waitFor, within } from "@testing-library/react"
+import { screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import { AddInteractionDialog } from "@/components/Interactions/AddInteractionDialog"
-import { makeContact } from "@/test/helpers"
-import { renderWithProviders } from "@/test/helpers"
+import { makeContact, renderWithProviders } from "@/test/helpers"
 
 // Mock toast
 vi.mock("sonner", () => ({
@@ -76,7 +75,9 @@ describe("AddInteractionDialog", () => {
 
   it("renders trigger button", () => {
     renderWithProviders(<AddInteractionDialog />)
-    expect(screen.getByRole("button", { name: /log interaction/i })).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: /log interaction/i }),
+    ).toBeInTheDocument()
   })
 
   it("opens dialog when trigger clicked", async () => {
@@ -122,14 +123,21 @@ describe("AddInteractionDialog", () => {
 
     await user.click(screen.getByRole("button", { name: /log interaction/i }))
 
-    const submitButton = screen.getByRole("button", { name: /log interaction/i, hidden: true })
+    const _submitButton = screen.getByRole("button", {
+      name: /log interaction/i,
+      hidden: true,
+    })
     const allButtons = screen.getAllByRole("button")
-    const logButton = allButtons.find((btn) => btn.textContent === "Log Interaction" && btn.closest("form"))
+    const logButton = allButtons.find(
+      (btn) => btn.textContent === "Log Interaction" && btn.closest("form"),
+    )
 
     if (logButton) {
       await user.click(logButton)
       await waitFor(() => {
-        expect(screen.getByText(/pick at least one attendee/i)).toBeInTheDocument()
+        expect(
+          screen.getByText(/pick at least one attendee/i),
+        ).toBeInTheDocument()
       })
     }
   })
@@ -141,7 +149,9 @@ describe("AddInteractionDialog", () => {
     await user.click(screen.getByRole("button", { name: /log interaction/i }))
 
     // Add an attendee
-    const addAttendeeButton = screen.getByRole("button", { name: /add attendee/i })
+    const addAttendeeButton = screen.getByRole("button", {
+      name: /add attendee/i,
+    })
     await user.click(addAttendeeButton)
 
     // Mock the popover opening and select a contact
@@ -152,9 +162,11 @@ describe("AddInteractionDialog", () => {
       }
     })
 
-    const submitButton = screen.getAllByRole("button").find(
-      (btn) => btn.textContent === "Log Interaction" && btn.closest("form")
-    )
+    const submitButton = screen
+      .getAllByRole("button")
+      .find(
+        (btn) => btn.textContent === "Log Interaction" && btn.closest("form"),
+      )
 
     if (submitButton) {
       await user.click(submitButton)
@@ -208,7 +220,8 @@ describe("AddInteractionDialog", () => {
     // Click submit
     const submitButtons = screen.getAllByRole("button")
     const logButton = submitButtons.find(
-      (btn) => btn.textContent?.includes("Log Interaction") && btn.closest("form")
+      (btn) =>
+        btn.textContent?.includes("Log Interaction") && btn.closest("form"),
     )
 
     if (logButton) {
@@ -221,7 +234,7 @@ describe("AddInteractionDialog", () => {
               attendee_ids: ["c1"],
               channel: "call",
             }),
-          })
+          }),
         )
       })
     }
@@ -251,7 +264,8 @@ describe("AddInteractionDialog", () => {
     // Submit
     const submitButtons = screen.getAllByRole("button")
     const logButton = submitButtons.find(
-      (btn) => btn.textContent?.includes("Log Interaction") && btn.closest("form")
+      (btn) =>
+        btn.textContent?.includes("Log Interaction") && btn.closest("form"),
     )
 
     if (logButton) {
@@ -265,7 +279,7 @@ describe("AddInteractionDialog", () => {
               mood: "Energized",
               notes: "Great catch-up call",
             }),
-          })
+          }),
         )
       })
     }
@@ -284,7 +298,8 @@ describe("AddInteractionDialog", () => {
 
     const submitButtons = screen.getAllByRole("button")
     const logButton = submitButtons.find(
-      (btn) => btn.textContent?.includes("Log Interaction") && btn.closest("form")
+      (btn) =>
+        btn.textContent?.includes("Log Interaction") && btn.closest("form"),
     )
 
     if (logButton) {
@@ -299,8 +314,7 @@ describe("AddInteractionDialog", () => {
   it("shows loading state while submitting", async () => {
     const user = userEvent.setup()
     mockCreateInteraction.mockImplementation(
-      () =>
-        new Promise((resolve) => setTimeout(() => resolve({}), 100))
+      () => new Promise((resolve) => setTimeout(() => resolve({}), 100)),
     )
 
     const contact = makeContact({ id: "c1" })
@@ -313,7 +327,8 @@ describe("AddInteractionDialog", () => {
 
     const submitButtons = screen.getAllByRole("button")
     const logButton = submitButtons.find(
-      (btn) => btn.textContent?.includes("Log Interaction") && btn.closest("form")
+      (btn) =>
+        btn.textContent?.includes("Log Interaction") && btn.closest("form"),
     )
 
     if (logButton) {
@@ -336,7 +351,8 @@ describe("AddInteractionDialog", () => {
 
     const submitButtons = screen.getAllByRole("button")
     const logButton = submitButtons.find(
-      (btn) => btn.textContent?.includes("Log Interaction") && btn.closest("form")
+      (btn) =>
+        btn.textContent?.includes("Log Interaction") && btn.closest("form"),
     )
 
     if (logButton) {
@@ -351,8 +367,7 @@ describe("AddInteractionDialog", () => {
   it("disables submit button while loading", async () => {
     const user = userEvent.setup()
     mockCreateInteraction.mockImplementation(
-      () =>
-        new Promise((resolve) => setTimeout(() => resolve({}), 200))
+      () => new Promise((resolve) => setTimeout(() => resolve({}), 200)),
     )
 
     const contact = makeContact({ id: "c1" })
@@ -365,7 +380,7 @@ describe("AddInteractionDialog", () => {
 
     const submitButtons = screen.getAllByRole("button")
     const logButton = submitButtons.find(
-      (btn) => btn.textContent === "Log Interaction" && btn.closest("form")
+      (btn) => btn.textContent === "Log Interaction" && btn.closest("form"),
     ) as HTMLButtonElement
 
     expect(logButton).not.toBeDisabled()
@@ -395,7 +410,9 @@ describe("AddInteractionDialog", () => {
 
     await user.click(screen.getByRole("button", { name: /log interaction/i }))
 
-    const addAttendeeButton = screen.getByRole("button", { name: /add attendee/i })
+    const addAttendeeButton = screen.getByRole("button", {
+      name: /add attendee/i,
+    })
     await user.click(addAttendeeButton)
 
     // Should show empty state
@@ -420,7 +437,8 @@ describe("AddInteractionDialog", () => {
 
     const submitButtons = screen.getAllByRole("button")
     const logButton = submitButtons.find(
-      (btn) => btn.textContent?.includes("Log Interaction") && btn.closest("form")
+      (btn) =>
+        btn.textContent?.includes("Log Interaction") && btn.closest("form"),
     )
 
     if (logButton) {
@@ -432,7 +450,7 @@ describe("AddInteractionDialog", () => {
             requestBody: expect.objectContaining({
               duration_minutes: 60,
             }),
-          })
+          }),
         )
       })
     }
@@ -441,7 +459,9 @@ describe("AddInteractionDialog", () => {
   it("invalidates correct query keys after successful submission", async () => {
     const user = userEvent.setup()
     const contact = makeContact({ id: "c1" })
-    const { queryClient } = renderWithProviders(<AddInteractionDialog seedContact={contact} />)
+    const { queryClient } = renderWithProviders(
+      <AddInteractionDialog seedContact={contact} />,
+    )
 
     vi.spyOn(queryClient, "invalidateQueries")
 
@@ -452,7 +472,8 @@ describe("AddInteractionDialog", () => {
 
     const submitButtons = screen.getAllByRole("button")
     const logButton = submitButtons.find(
-      (btn) => btn.textContent?.includes("Log Interaction") && btn.closest("form")
+      (btn) =>
+        btn.textContent?.includes("Log Interaction") && btn.closest("form"),
     )
 
     if (logButton) {
@@ -462,7 +483,7 @@ describe("AddInteractionDialog", () => {
         expect(queryClient.invalidateQueries).toHaveBeenCalledWith(
           expect.objectContaining({
             queryKey: ["interactions"],
-          })
+          }),
         )
       })
     }
