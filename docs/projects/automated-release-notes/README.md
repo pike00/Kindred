@@ -1,10 +1,10 @@
 ---
 title: Automated Release Notes in GitHub
-status: active
+status: completed
 repos: [personal-crm]
 started: 2026-04-28
-last_updated: 2026-04-28
-next_step: consider backfilling notes for existing tags (script supports --since-tag)
+last_updated: 2026-05-15
+next_step: Released as v0.1.7. Backfilling notes for older tags remains a follow-up; script supports --since-tag.
 ---
 
 # Automated Release Notes in GitHub
@@ -20,6 +20,10 @@ Automate generation and publishing of release notes for personal-crm on GitHub. 
 - [ ] Decide whether to backfill notes for existing tags
 
 ## Session Log
+
+### 2026-05-15
+- Squash-merged `dirac/automated-release-notes` into main as commit `5cd6273`; tagged and released **v0.1.7**. Clean merge — no backend or model conflicts; only the squash brought along the unrelated `EditUser.test.tsx` `waitFor` hardening that the branch had picked up.
+- Landed `scripts/generate-release-notes.py` (260 LOC) plus expanded `docs/projects/automated-release-notes/README.md` (this file).
 
 ### 2026-04-28
 - Project scaffolded for tracking — no implementation work yet
@@ -39,6 +43,9 @@ Automate generation and publishing of release notes for personal-crm on GitHub. 
 - Commit: `fix(release): use Python script for release notes generation`
 
 ## Notes
+
+### 2026-05-15
+- **Accomplished:** v0.1.7 shipped. The script now lives on main and is callable from any release workflow.
 
 ### Usage
 ```bash
