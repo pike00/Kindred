@@ -6,6 +6,7 @@ import {
   useCommandPalette,
 } from "@/components/CommandPalette/CommandPaletteContext"
 import { Footer } from "@/components/Common/Footer"
+import { QuickLogFAB } from "@/components/Common/QuickLogFAB"
 import { ReminderBell } from "@/components/Reminders/ReminderBell"
 import AppSidebar from "@/components/Sidebar/AppSidebar"
 import { Button } from "@/components/ui/button"
@@ -68,6 +69,7 @@ function Layout() {
           <Footer />
         </SidebarInset>
       </SidebarProvider>
+      <QuickLogFAB />
       <CommandPalette />
     </CommandPaletteProvider>
   )

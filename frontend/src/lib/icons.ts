@@ -42,8 +42,11 @@ export {
   Mail,
   // Card section icons
   MapPin,
-  // Interaction channels
   MessageSquare,
+  // Interaction channels
+
+  // FAB / Quick actions
+  MessageSquarePlus,
   MessageSquareText,
   MessagesSquare,
   Monitor,
