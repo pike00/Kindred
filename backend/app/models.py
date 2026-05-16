@@ -1209,7 +1209,6 @@ class Reminder(ReminderBase, table=True):
         ),
     )
 
-
 class ReminderPublic(ReminderBase):
     id: uuid.UUID
     contact_id: uuid.UUID | None
@@ -1253,6 +1252,45 @@ class ReminderSnoozeRequest(SQLModel):
         ge=1,
         le=60 * 24 * 30,
         description="Minutes from now to snooze for. Mutually exclusive with snoozed_until.",
+    )
+
+
+# ─── ReminderSnooze ──────────────────────────────────────────────────────
+
+
+class ReminderSnooze(SQLModel, table=True):
+    """Append-only log of snooze actions on reminders."""
+
+    __tablename__ = "reminder_snooze"  # type: ignore[assignment]
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
+    reminder_id: uuid.UUID = Field(
+        foreign_key="reminder.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description="Reminder being snoozed.",
+    )
+    snoozed_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        description="When the user clicked snooze.",
+    )
+    snoozed_until: datetime = Field(
+        nullable=False,
+        description="New snooze deadline.",
+    )
+    reason: str | None = Field(
+        default=None,
+        description="Optional user-entered reason for snoozing.",
+    )
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        description="Row creation time (may equal snoozed_at).",
     )
 
 

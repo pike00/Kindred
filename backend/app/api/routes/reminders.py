@@ -17,6 +17,7 @@ from app.models import (
     ReminderDuePublic,
     ReminderPublic,
     RemindersDuePublic,
+    ReminderSnooze,
     ReminderSnoozeRequest,
     RemindersPublic,
     ReminderUpdate,
@@ -157,12 +158,13 @@ def snooze_reminder(
     reminder_id: uuid.UUID,
     body: ReminderSnoozeRequest | None = None,
     minutes: int | None = None,
+    reason: str | None = None,
 ) -> Any:
     """Snooze a reminder.
 
     Accepts either a JSON body with ``snoozed_until`` (absolute UTC datetime) or
     ``minutes`` (relative duration), or a legacy ``?minutes=`` query parameter.
-    Defaults to 30 minutes when nothing is provided.
+    Defaults to 30 minutes when nothing is provided. Writes a snooze history row.
     """
     reminder = session.get(Reminder, reminder_id)
     if reminder is None or not _reminder_accessible(current_user, reminder, session):
@@ -180,8 +182,19 @@ def snooze_reminder(
             effective_minutes = 30
         target = datetime.now(timezone.utc) + timedelta(minutes=effective_minutes)
 
+    # Write snooze history log row
+    now = datetime.now(timezone.utc)
+    snooze_log = ReminderSnooze(
+        reminder_id=reminder.id,
+        snoozed_at=now,
+        snoozed_until=target,
+        reason=reason,
+    )
+    session.add(snooze_log)
+
     reminder.snoozed_until = target
     session.add(reminder)
+
     session.commit()
     session.refresh(reminder)
     return ReminderPublic.model_validate(reminder)
@@ -213,6 +226,90 @@ def dismiss_reminder(
     session.commit()
     session.refresh(reminder)
     return ReminderPublic.model_validate(reminder)
+
+
+@router.get("/{reminder_id}/snooze-history")
+def get_snooze_history(
+    session: SessionDep,
+    current_user: CurrentUser,
+    reminder_id: uuid.UUID,
+) -> Any:
+    """Get snooze history for a reminder."""
+    reminder = session.get(Reminder, reminder_id)
+    if reminder is None or not _reminder_accessible(current_user, reminder, session):
+        raise HTTPException(status_code=404, detail="Reminder not found")
+
+    stmt = (
+        select(ReminderSnooze)
+        .where(ReminderSnooze.reminder_id == reminder_id)
+        .order_by(ReminderSnooze.snoozed_at.desc())
+    )
+    history = session.exec(stmt).all()
+    return [{"snoozed_at": h.snoozed_at, "snoozed_until": h.snoozed_until, "reason": h.reason} for h in history]
+
+
+@router.get("/snooze-stats")
+def get_snooze_stats(
+    session: SessionDep,
+    current_user: CurrentUser,
+    days: int = 30,
+) -> Any:
+    """Get snooze count per reminder in the last N days."""
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    stmt = (
+        select(
+            ReminderSnooze.reminder_id,
+            func.count(ReminderSnooze.id).label("snooze_count"),
+        )
+        .join(Reminder, ReminderSnooze.reminder_id == Reminder.id)
+        .where(
+            ReminderSnooze.snoozed_at >= cutoff,
+            or_(
+                Reminder.owner_id == current_user.id,
+                Reminder.contact_id.in_(visible_contact_ids(current_user)),
+            ),
+        )
+        .group_by(ReminderSnooze.reminder_id)
+    )
+    results = session.exec(stmt).all()
+    return [{"reminder_id": str(r[0]), "snooze_count": r[1]} for r in results]
+
+
+@router.get("/chronic-snoozers")
+def get_chronic_snoozers(
+    session: SessionDep,
+    current_user: CurrentUser,
+    days: int = 7,
+    threshold: int = 3,
+) -> Any:
+    """Get contacts with reminders snoozed more than threshold times in N days."""
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    stmt = (
+        select(
+            Reminder.contact_id,
+            Reminder.id.label("reminder_id"),
+            func.count(ReminderSnooze.id).label("snooze_count"),
+        )
+        .join(ReminderSnooze, ReminderSnooze.reminder_id == Reminder.id)
+        .where(
+            ReminderSnooze.snoozed_at >= cutoff,
+            or_(
+                Reminder.owner_id == current_user.id,
+                Reminder.contact_id.in_(visible_contact_ids(current_user)),
+            ),
+        )
+        .group_by(Reminder.contact_id, Reminder.id)
+        .having(func.count(ReminderSnooze.id) > threshold)
+    )
+    results = session.exec(stmt).all()
+    return [
+        {
+            "contact_id": str(r[0]) if r[0] else None,
+            "reminder_id": str(r[1]),
+            "snooze_count": r[2],
+        }
+        for r in results
+    ]
 
 
 @router.delete("/{reminder_id}")

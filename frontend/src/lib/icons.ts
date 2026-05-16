@@ -9,6 +9,7 @@ export {
   Archive,
   AtSign,
   Bell,
+  BellOff,
   // Contact meta
   Cake,
   CalendarHeart,
@@ -71,8 +72,8 @@ export {
   Sun,
   Tag,
   Trash2,
-  Upload,
   TriangleAlert,
+  Upload,
   UserRoundSearch,
   Users,
   UsersRound,

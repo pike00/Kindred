@@ -2220,6 +2220,7 @@ export type RemindersDeleteReminderResponse = (unknown);
 
 export type RemindersSnoozeReminderData = {
     minutes?: (number | null);
+    reason?: (string | null);
     reminderId: string;
     requestBody?: (ReminderSnoozeRequest | null);
 };
@@ -2231,6 +2232,25 @@ export type RemindersDismissReminderData = {
 };
 
 export type RemindersDismissReminderResponse = (ReminderPublic);
+
+export type RemindersGetSnoozeHistoryData = {
+    reminderId: string;
+};
+
+export type RemindersGetSnoozeHistoryResponse = (unknown);
+
+export type RemindersGetSnoozeStatsData = {
+    days?: number;
+};
+
+export type RemindersGetSnoozeStatsResponse = (unknown);
+
+export type RemindersGetChronicSnoozersData = {
+    days?: number;
+    threshold?: number;
+};
+
+export type RemindersGetChronicSnoozersResponse = (unknown);
 
 export type SetupSetupPageData = {
     token: string;

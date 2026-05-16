@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useEffect, useState } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { z } from "zod"
 import type { ContactPublic, ContactUpdate } from "@/client"
 import { ContactsService } from "@/client"
@@ -25,7 +25,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import useCustomToast from "@/hooks/useCustomToast"
-import { Pencil } from "@/lib/icons"
+import { BellOff, Pencil } from "@/lib/icons"
 
 const contactUpdateSchema = z.object({
   first_name: z.string().min(1, "First name is required"),
@@ -35,6 +35,8 @@ const contactUpdateSchema = z.object({
   contact_frequency_days: z.number().optional(),
   is_favorite: z.boolean().optional(),
   is_archived: z.boolean().optional(),
+  do_not_contact: z.boolean().optional(),
+  do_not_contact_reason: z.string().max(500).optional(),
 })
 
 type ContactUpdateFormData = z.infer<typeof contactUpdateSchema>
@@ -58,7 +60,14 @@ export const EditContactDialog = ({ contact }: EditContactDialogProps) => {
       contact_frequency_days: contact.contact_frequency_days || 0,
       is_favorite: contact.is_favorite,
       is_archived: contact.is_archived,
+      do_not_contact: contact.do_not_contact,
+      do_not_contact_reason: contact.do_not_contact_reason || "",
     },
+  })
+
+  const doNotContact = useWatch({
+    control: form.control,
+    name: "do_not_contact",
   })
 
   useEffect(() => {
@@ -71,6 +80,8 @@ export const EditContactDialog = ({ contact }: EditContactDialogProps) => {
         contact_frequency_days: contact.contact_frequency_days || 0,
         is_favorite: contact.is_favorite,
         is_archived: contact.is_archived,
+        do_not_contact: contact.do_not_contact,
+        do_not_contact_reason: contact.do_not_contact_reason || "",
       })
     }
   }, [open, contact, form])
@@ -101,6 +112,10 @@ export const EditContactDialog = ({ contact }: EditContactDialogProps) => {
       contact_frequency_days: data.contact_frequency_days || null,
       is_favorite: data.is_favorite,
       is_archived: data.is_archived,
+      do_not_contact: data.do_not_contact,
+      do_not_contact_reason: data.do_not_contact
+        ? data.do_not_contact_reason || null
+        : null,
     }
     updateContactMutation.mutate(updateData)
   }
@@ -209,6 +224,36 @@ export const EditContactDialog = ({ contact }: EditContactDialogProps) => {
                 />
                 <span>Archived</span>
               </label>
+            </div>
+            <div className="space-y-2 rounded-md border p-3">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  {...form.register("do_not_contact")}
+                  className="rounded border-input"
+                />
+                <BellOff className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">No contact reminders needed</span>
+              </label>
+              <p className="text-xs text-muted-foreground pl-6">
+                Hides this contact from "losing touch" lists. Use for people
+                you're always in contact with (e.g. spouse, housemates).
+              </p>
+              {doNotContact && (
+                <FormField
+                  control={form.control}
+                  name="do_not_contact_reason"
+                  render={({ field }) => (
+                    <FormItem className="pl-6">
+                      <FormLabel>Reason (optional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g. Live together" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
             </div>
             <Button
               type="submit"

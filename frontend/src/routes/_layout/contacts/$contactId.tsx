@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/tooltip"
 import {
   Archive,
+  BellOff,
   Cake,
   Clock,
   Film,
@@ -150,6 +151,14 @@ function ContactDetailPage() {
               {contact.is_archived && (
                 <Badge variant="outline">
                   <Archive className="size-3" /> Archived
+                </Badge>
+              )}
+              {contact.do_not_contact && (
+                <Badge
+                  variant="outline"
+                  title={contact.do_not_contact_reason || undefined}
+                >
+                  <BellOff className="size-3" /> No reminders
                 </Badge>
               )}
             </div>

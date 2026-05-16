@@ -73,7 +73,7 @@ describe("StatTile", () => {
     const { container } = render(
       <StatTile icon={Heart} label="Contacts" value={42} tone="blue" />,
     )
-    const iconContainer = container.querySelector("div > div > div:last-child")
+    const iconContainer = container.querySelector("div > div > div > div:last-child")
     expect(iconContainer).toHaveClass("bg-accent-blue", "text-accent-blue-fg")
   })
 
@@ -81,7 +81,7 @@ describe("StatTile", () => {
     const { container } = render(
       <StatTile icon={Heart} label="Contacts" value={42} tone="amber" />,
     )
-    const iconContainer = container.querySelector("div > div > div:last-child")
+    const iconContainer = container.querySelector("div > div > div > div:last-child")
     expect(iconContainer).toHaveClass("bg-accent-amber", "text-accent-amber-fg")
   })
 
@@ -89,7 +89,7 @@ describe("StatTile", () => {
     const { container } = render(
       <StatTile icon={Heart} label="Contacts" value={42} tone="green" />,
     )
-    const iconContainer = container.querySelector("div > div > div:last-child")
+    const iconContainer = container.querySelector("div > div > div > div:last-child")
     expect(iconContainer).toHaveClass("bg-accent-green", "text-accent-green-fg")
   })
 
@@ -97,7 +97,7 @@ describe("StatTile", () => {
     const { container } = render(
       <StatTile icon={Heart} label="Contacts" value={42} tone="purple" />,
     )
-    const iconContainer = container.querySelector("div > div > div:last-child")
+    const iconContainer = container.querySelector("div > div > div > div:last-child")
     expect(iconContainer).toHaveClass(
       "bg-accent-purple",
       "text-accent-purple-fg",
@@ -108,7 +108,7 @@ describe("StatTile", () => {
     const { container } = render(
       <StatTile icon={Heart} label="Contacts" value={42} tone="rose" />,
     )
-    const iconContainer = container.querySelector("div > div > div:last-child")
+    const iconContainer = container.querySelector("div > div > div > div:last-child")
     expect(iconContainer).toHaveClass("bg-accent-rose", "text-accent-rose-fg")
   })
 
@@ -116,7 +116,7 @@ describe("StatTile", () => {
     const { container } = render(
       <StatTile icon={Heart} label="Contacts" value={42} tone="teal" />,
     )
-    const iconContainer = container.querySelector("div > div > div:last-child")
+    const iconContainer = container.querySelector("div > div > div > div:last-child")
     expect(iconContainer).toHaveClass("bg-accent-teal", "text-accent-teal-fg")
   })
 
@@ -206,7 +206,7 @@ describe("StatTile", () => {
     const { container } = render(
       <StatTile icon={Heart} label="Contacts" value={42} tone="blue" />,
     )
-    const iconContainer = container.querySelector("div > div > div:last-child")
+    const iconContainer = container.querySelector("div > div > div > div:last-child")
     expect(iconContainer).toHaveClass("size-10")
   })
 
@@ -222,7 +222,7 @@ describe("StatTile", () => {
     const { container } = render(
       <StatTile icon={Heart} label="Contacts" value={42} tone="blue" />,
     )
-    const iconContainer = container.querySelector("div > div > div:last-child")
+    const iconContainer = container.querySelector("div > div > div > div:last-child")
     expect(iconContainer).toHaveClass("flex", "items-center", "justify-center")
   })
 
@@ -230,7 +230,7 @@ describe("StatTile", () => {
     const { container } = render(
       <StatTile icon={Heart} label="Contacts" value={42} tone="blue" />,
     )
-    const layoutContainer = container.querySelector("div > div")
+    const layoutContainer = container.querySelector("div > div > div")
     expect(layoutContainer).toHaveClass(
       "flex",
       "items-center",
@@ -257,7 +257,7 @@ describe("StatTile", () => {
       <StatTile icon={Heart} label="Contacts" value={42} tone="blue" />,
     )
     const value = screen.getByText("42")
-    expect(value.parentElement).toHaveClass("mt-1")
+    expect(value).toHaveClass("mt-1")
   })
 
   it("passes through to prop to Link", () => {

@@ -79,7 +79,7 @@ describe("FeaturedCard", () => {
         <div>Content</div>
       </FeaturedCard>,
     )
-    const gradient = container.querySelector("div > div:first-child")
+    const gradient = container.querySelector("div > div > div:first-child")
     expect(gradient).toHaveClass(
       "bg-[radial-gradient(circle_at_top_right,var(--accent-amber),transparent_65%)]",
     )
@@ -91,7 +91,7 @@ describe("FeaturedCard", () => {
         <div>Content</div>
       </FeaturedCard>,
     )
-    const gradient = container.querySelector("div > div:first-child")
+    const gradient = container.querySelector("div > div > div:first-child")
     expect(gradient).toHaveClass(
       "bg-[radial-gradient(circle_at_top_right,var(--accent-blue),transparent_65%)]",
     )
@@ -103,7 +103,7 @@ describe("FeaturedCard", () => {
         <div>Content</div>
       </FeaturedCard>,
     )
-    const gradient = container.querySelector("div > div:first-child")
+    const gradient = container.querySelector("div > div > div:first-child")
     expect(gradient).toHaveClass(
       "bg-[radial-gradient(circle_at_top_right,var(--accent-green),transparent_65%)]",
     )
@@ -115,7 +115,7 @@ describe("FeaturedCard", () => {
         <div>Content</div>
       </FeaturedCard>,
     )
-    const gradient = container.querySelector("div > div:first-child")
+    const gradient = container.querySelector("div > div > div:first-child")
     expect(gradient).toHaveClass(
       "bg-[radial-gradient(circle_at_top_right,var(--accent-rose),transparent_65%)]",
     )
@@ -176,7 +176,7 @@ describe("FeaturedCard", () => {
         <div>Content</div>
       </FeaturedCard>,
     )
-    const gradient = container.querySelector("div > div:first-child")
+    const gradient = container.querySelector("div > div > div:first-child")
     expect(gradient).toHaveAttribute("aria-hidden", "true")
   })
 
@@ -186,7 +186,7 @@ describe("FeaturedCard", () => {
         <div>Content</div>
       </FeaturedCard>,
     )
-    const gradient = container.querySelector("div > div:first-child")
+    const gradient = container.querySelector("div > div > div:first-child")
     expect(gradient).toHaveClass("pointer-events-none")
   })
 
@@ -196,7 +196,7 @@ describe("FeaturedCard", () => {
         <div>Content</div>
       </FeaturedCard>,
     )
-    const gradient = container.querySelector("div > div:first-child")
+    const gradient = container.querySelector("div > div > div:first-child")
     expect(gradient).toHaveClass("absolute", "inset-0")
   })
 
@@ -206,7 +206,7 @@ describe("FeaturedCard", () => {
         <div>Content</div>
       </FeaturedCard>,
     )
-    const gradient = container.querySelector("div > div:first-child")
+    const gradient = container.querySelector("div > div > div:first-child")
     expect(gradient).toHaveClass("opacity-70")
   })
 
@@ -216,7 +216,7 @@ describe("FeaturedCard", () => {
         <div>Content</div>
       </FeaturedCard>,
     )
-    const childrenWrapper = container.querySelector("div > div:last-child")
+    const childrenWrapper = container.querySelector("div > div > div:last-child")
     expect(childrenWrapper).toHaveClass("relative")
   })
 

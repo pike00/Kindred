@@ -46,12 +46,14 @@ Object.defineProperty(window, "matchMedia", {
   })),
 })
 
-// Stub ResizeObserver
-global.ResizeObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-}))
+// Stub ResizeObserver (must be a class, not arrow fn, because Radix calls `new ResizeObserver`)
+class MockResizeObserver {
+  constructor(_callback: ResizeObserverCallback) {}
+  observe(_target: Element, _options?: ResizeObserverOptions) {}
+  unobserve(_target: Element) {}
+  disconnect() {}
+}
+global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver
 
 // Stub IntersectionObserver
 global.IntersectionObserver = vi.fn().mockImplementation(() => ({

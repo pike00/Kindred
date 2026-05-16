@@ -1,5 +1,6 @@
 import re
 import uuid
+from datetime import datetime
 from typing import Any
 
 from sqlalchemy import union
@@ -432,6 +433,90 @@ def contact_visible(
         Contact.id.in_(visible_contact_ids(user, include_deleted=include_deleted)),
     )
     return session.exec(stmt).first() is not None
+
+
+
+# ─── ReminderSnooze helpers ──────────────────────────────────────────────
+
+
+def get_effective_snoozed_until(*, session: Session, reminder_id: uuid.UUID) -> datetime | None:
+    """Derive effective snoozed_until from latest reminder_snooze row."""
+    from app.models import ReminderSnooze
+
+    stmt = (
+        select(ReminderSnooze)
+        .where(ReminderSnooze.reminder_id == reminder_id)
+        .order_by(ReminderSnooze.snoozed_at.desc())
+        .limit(1)
+    )
+    latest = session.exec(stmt).first()
+    return latest.snoozed_until if latest else None
+
+
+def get_snooze_count(*, session: Session, reminder_id: uuid.UUID, days: int = 30) -> int:
+    """Count snooze events for a reminder in the last N days."""
+    from datetime import timedelta
+
+    from app.models import ReminderSnooze
+
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    stmt = (
+        select(func.count())
+        .select_from(ReminderSnooze)
+        .where(
+            ReminderSnooze.reminder_id == reminder_id,
+            ReminderSnooze.snoozed_at >= cutoff,
+        )
+    )
+    return session.exec(stmt).one()
+
+
+def get_chronic_snooze_contacts(
+    *, session: Session, owner_id: uuid.UUID, days: int = 7, threshold: int = 3
+) -> list[dict]:
+    """Find contacts with >threshold snoozed reminders in the past N days.
+
+    Returns list of dicts with contact_id, contact_name, snooze_count.
+    """
+    from datetime import timedelta
+
+    from app.models import Contact, Reminder, ReminderSnooze
+
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    # Subquery: count snoozes per reminder in the time window
+    snooze_subq = (
+        select(
+            ReminderSnooze.reminder_id,
+            func.count().label("snooze_count"),
+        )
+        .where(ReminderSnooze.snoozed_at >= cutoff)
+        .group_by(ReminderSnooze.reminder_id)
+        .subquery()
+    )
+    # Join to reminders and contacts, filter by owner and threshold
+    stmt = (
+        select(
+            Contact.id.label("contact_id"),
+            Contact.first_name,
+            Contact.last_name,
+            func.sum(snooze_subq.c.snooze_count).label("total_snoozes"),
+        )
+        .join(Reminder, Reminder.contact_id == Contact.id)
+        .join(snooze_subq, snooze_subq.c.reminder_id == Reminder.id)
+        .where(Reminder.owner_id == owner_id)
+        .group_by(Contact.id, Contact.first_name, Contact.last_name)
+        .having(func.sum(snooze_subq.c.snooze_count) > threshold)
+        .order_by(func.sum(snooze_subq.c.snooze_count).desc())
+    )
+    results = session.exec(stmt).all()
+    return [
+        {
+            "contact_id": r.contact_id,
+            "contact_name": f"{r.first_name} {r.last_name or ''}".strip(),
+            "snooze_count": r.total_snoozes,
+        }
+        for r in results
+    ]
 
 
 def get_or_create_user_from_claims(

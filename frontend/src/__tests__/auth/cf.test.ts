@@ -57,7 +57,7 @@ describe("Cloudflare Access auth", () => {
         href: "",
         origin: "https://app.example.com",
       })
-      localStorageRemoveItemSpy = vi.spyOn(Storage.prototype, "removeItem")
+      localStorageRemoveItemSpy = vi.spyOn(localStorage, "removeItem")
     })
 
     afterEach(() => {

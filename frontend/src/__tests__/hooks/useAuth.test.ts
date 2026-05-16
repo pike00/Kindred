@@ -1,5 +1,6 @@
 import { renderHook, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import useAuth, { isLoggedIn } from "@/hooks/useAuth"
 import {
   createQueryClient,
@@ -81,8 +82,13 @@ describe("useAuth hook", () => {
 
   describe("useAuth", () => {
     it("renders without errors", () => {
+      const queryClient = createQueryClient()
       const { result } = renderHook(() => useAuth(), {
-        wrapper: ({ children }) => renderWithProviders(children).container,
+        wrapper: ({ children }: { children: React.ReactNode }) => (
+          <QueryClientProvider client={queryClient}>
+            {children}
+          </QueryClientProvider>
+        ),
       })
       expect(result.current).toBeDefined()
       expect(result.current.loginMutation).toBeDefined()
@@ -94,11 +100,13 @@ describe("useAuth hook", () => {
       const { UsersService } = await import("@/client")
       localStorage.setItem("access_token", "test-token")
 
+      const queryClient = createQueryClient()
       const { result } = renderHook(() => useAuth(), {
-        wrapper: ({ children }) => {
-          const queryClient = createQueryClient()
-          return renderWithProviders(children, { queryClient }).container
-        },
+        wrapper: ({ children }: { children: React.ReactNode }) => (
+          <QueryClientProvider client={queryClient}>
+            {children}
+          </QueryClientProvider>
+        ),
       })
 
       await waitFor(() => {
@@ -111,11 +119,13 @@ describe("useAuth hook", () => {
       const { UsersService } = await import("@/client")
       localStorage.clear()
 
+      const queryClient = createQueryClient()
       renderHook(() => useAuth(), {
-        wrapper: ({ children }) => {
-          const queryClient = createQueryClient()
-          return renderWithProviders(children, { queryClient }).container
-        },
+        wrapper: ({ children }: { children: React.ReactNode }) => (
+          <QueryClientProvider client={queryClient}>
+            {children}
+          </QueryClientProvider>
+        ),
       })
 
       await new Promise((r) => setTimeout(r, 100))
@@ -131,8 +141,11 @@ describe("useAuth hook", () => {
 
       const queryClient = createQueryClient()
       const { result } = renderHook(() => useAuth(), {
-        wrapper: ({ children }) =>
-          renderWithProviders(children, { queryClient }).container,
+        wrapper: ({ children }: { children: React.ReactNode }) => (
+          <QueryClientProvider client={queryClient}>
+            {children}
+          </QueryClientProvider>
+        ),
       })
 
       result.current.loginMutation.mutate({
@@ -154,8 +167,11 @@ describe("useAuth hook", () => {
 
       const queryClient = createQueryClient()
       const { result } = renderHook(() => useAuth(), {
-        wrapper: ({ children }) =>
-          renderWithProviders(children, { queryClient }).container,
+        wrapper: ({ children }: { children: React.ReactNode }) => (
+          <QueryClientProvider client={queryClient}>
+            {children}
+          </QueryClientProvider>
+        ),
       })
 
       result.current.loginMutation.mutate({
@@ -176,8 +192,11 @@ describe("useAuth hook", () => {
 
       const queryClient = createQueryClient()
       const { result } = renderHook(() => useAuth(), {
-        wrapper: ({ children }) =>
-          renderWithProviders(children, { queryClient }).container,
+        wrapper: ({ children }: { children: React.ReactNode }) => (
+          <QueryClientProvider client={queryClient}>
+            {children}
+          </QueryClientProvider>
+        ),
       })
 
       result.current.loginMutation.mutate({
@@ -197,8 +216,11 @@ describe("useAuth hook", () => {
 
       const queryClient = createQueryClient()
       const { result } = renderHook(() => useAuth(), {
-        wrapper: ({ children }) =>
-          renderWithProviders(children, { queryClient }).container,
+        wrapper: ({ children }: { children: React.ReactNode }) => (
+          <QueryClientProvider client={queryClient}>
+            {children}
+          </QueryClientProvider>
+        ),
       })
 
       result.current.loginMutation.mutate({
@@ -222,8 +244,11 @@ describe("useAuth hook", () => {
 
       const queryClient = createQueryClient()
       const { result } = renderHook(() => useAuth(), {
-        wrapper: ({ children }) =>
-          renderWithProviders(children, { queryClient }).container,
+        wrapper: ({ children }: { children: React.ReactNode }) => (
+          <QueryClientProvider client={queryClient}>
+            {children}
+          </QueryClientProvider>
+        ),
       })
 
       const userData = {
@@ -247,8 +272,11 @@ describe("useAuth hook", () => {
 
       const queryClient = createQueryClient()
       const { result } = renderHook(() => useAuth(), {
-        wrapper: ({ children }) =>
-          renderWithProviders(children, { queryClient }).container,
+        wrapper: ({ children }: { children: React.ReactNode }) => (
+          <QueryClientProvider client={queryClient}>
+            {children}
+          </QueryClientProvider>
+        ),
       })
 
       result.current.signUpMutation.mutate({
@@ -271,8 +299,11 @@ describe("useAuth hook", () => {
       const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries")
 
       const { result } = renderHook(() => useAuth(), {
-        wrapper: ({ children }) =>
-          renderWithProviders(children, { queryClient }).container,
+        wrapper: ({ children }: { children: React.ReactNode }) => (
+          <QueryClientProvider client={queryClient}>
+            {children}
+          </QueryClientProvider>
+        ),
       })
 
       result.current.signUpMutation.mutate({
@@ -292,8 +323,11 @@ describe("useAuth hook", () => {
 
       const queryClient = createQueryClient()
       const { result } = renderHook(() => useAuth(), {
-        wrapper: ({ children }) =>
-          renderWithProviders(children, { queryClient }).container,
+        wrapper: ({ children }: { children: React.ReactNode }) => (
+          <QueryClientProvider client={queryClient}>
+            {children}
+          </QueryClientProvider>
+        ),
       })
 
       result.current.signUpMutation.mutate({
@@ -313,8 +347,11 @@ describe("useAuth hook", () => {
 
       const queryClient = createQueryClient()
       const { result } = renderHook(() => useAuth(), {
-        wrapper: ({ children }) =>
-          renderWithProviders(children, { queryClient }).container,
+        wrapper: ({ children }: { children: React.ReactNode }) => (
+          <QueryClientProvider client={queryClient}>
+            {children}
+          </QueryClientProvider>
+        ),
       })
 
       result.current.logout()
@@ -327,8 +364,11 @@ describe("useAuth hook", () => {
 
       const queryClient = createQueryClient()
       const { result } = renderHook(() => useAuth(), {
-        wrapper: ({ children }) =>
-          renderWithProviders(children, { queryClient }).container,
+        wrapper: ({ children }: { children: React.ReactNode }) => (
+          <QueryClientProvider client={queryClient}>
+            {children}
+          </QueryClientProvider>
+        ),
       })
 
       result.current.logout()
@@ -347,8 +387,11 @@ describe("useAuth hook", () => {
 
       const queryClient = createQueryClient()
       const { result } = renderHook(() => useAuth(), {
-        wrapper: ({ children }) =>
-          renderWithProviders(children, { queryClient }).container,
+        wrapper: ({ children }: { children: React.ReactNode }) => (
+          <QueryClientProvider client={queryClient}>
+            {children}
+          </QueryClientProvider>
+        ),
       })
 
       result.current.logout()

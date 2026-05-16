@@ -48,14 +48,14 @@ describe("KindredMark", () => {
     const { container } = render(<KindredMark />)
     const span = container.querySelector("span") as HTMLSpanElement
     expect(span.style.WebkitMaskImage).toBe(
-      "url(/assets/icons/kindred-mark.svg)",
+      'url("/assets/icons/kindred-mark.svg")',
     )
   })
 
   it("sets maskImage style property", () => {
     const { container } = render(<KindredMark />)
     const span = container.querySelector("span") as HTMLSpanElement
-    expect(span.style.maskImage).toBe("url(/assets/icons/kindred-mark.svg)")
+    expect(span.style.maskImage).toBe('url("/assets/icons/kindred-mark.svg")')
   })
 
   it("sets WebkitMaskRepeat style property", () => {
@@ -126,7 +126,7 @@ describe("KindredMark", () => {
   it("preserves mask image URL exactly", () => {
     const { container } = render(<KindredMark />)
     const span = container.querySelector("span") as HTMLSpanElement
-    expect(span.style.maskImage).toBe("url(/assets/icons/kindred-mark.svg)")
+    expect(span.style.maskImage).toBe('url("/assets/icons/kindred-mark.svg")')
   })
 
   it("mask is centered with contain sizing", () => {
@@ -206,14 +206,14 @@ describe("KindredMark", () => {
 
     // Webkit versions
     expect(span.style.WebkitMaskImage).toBe(
-      "url(/assets/icons/kindred-mark.svg)",
+      'url("/assets/icons/kindred-mark.svg")',
     )
     expect(span.style.WebkitMaskRepeat).toBe("no-repeat")
     expect(span.style.WebkitMaskPosition).toBe("center")
     expect(span.style.WebkitMaskSize).toBe("contain")
 
     // Standard versions
-    expect(span.style.maskImage).toBe("url(/assets/icons/kindred-mark.svg)")
+    expect(span.style.maskImage).toBe('url("/assets/icons/kindred-mark.svg")')
     expect(span.style.maskRepeat).toBe("no-repeat")
     expect(span.style.maskPosition).toBe("center")
     expect(span.style.maskSize).toBe("contain")

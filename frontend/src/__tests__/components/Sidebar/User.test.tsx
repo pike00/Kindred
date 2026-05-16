@@ -292,9 +292,8 @@ describe("User", () => {
     expect(dropdownContent).toHaveAttribute("data-side", "right")
   })
 
-  it("renders dropdown content on bottom side for mobile", async () => {
-    const useSidebarModule = await import("@/components/ui/sidebar")
-    vi.mocked(useSidebarModule.useSidebar).mockReturnValue({
+  it("renders dropdown content on bottom side for mobile", () => {
+    mockUseSidebar.mockReturnValue({
       isMobile: true,
       setOpenMobile: vi.fn(),
       open: true,
@@ -335,7 +334,7 @@ describe("User", () => {
       <User user={makeUser({ full_name: "Jean-Pierre O'Brien" })} />,
     )
 
-    expect(screen.getByText("Jean-Pierre O'Brien")).toBeInTheDocument()
+    expect(screen.getAllByText("Jean-Pierre O'Brien")[0]).toBeInTheDocument()
   })
 
   it("truncates long names with ellipsis", () => {
@@ -343,7 +342,7 @@ describe("User", () => {
       <User user={makeUser({ full_name: "Alexander Montgomery III" })} />,
     )
 
-    const name = screen.getByText("Alexander Montgomery III")
+    const name = screen.getAllByText("Alexander Montgomery III")[0]
     // Component uses truncate class, check element has it or that text is visible
     expect(name).toBeInTheDocument()
   })
@@ -351,7 +350,7 @@ describe("User", () => {
   it("handles null full_name gracefully", () => {
     renderWithProviders(<User user={makeUser({ full_name: null })} />)
 
-    const avatar = screen.getByTestId("avatar-fallback")
+    const avatar = screen.getAllByTestId("avatar-fallback")[0]
     expect(avatar).toHaveTextContent("U")
   })
 

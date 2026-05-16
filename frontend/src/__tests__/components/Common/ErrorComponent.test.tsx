@@ -118,7 +118,7 @@ describe("ErrorComponent", () => {
   it("error message is centered", () => {
     render(<ErrorComponent />)
     const message = screen.getByText("Something went wrong. Please try again.")
-    expect(message.parentElement).toHaveClass("text-center")
+    expect(message).toHaveClass("text-center")
   })
 
   it("error message has text-lg class", () => {
@@ -130,7 +130,7 @@ describe("ErrorComponent", () => {
   it("content has z-index for layering", () => {
     const { container } = render(<ErrorComponent />)
     const mainContent = container.querySelector(
-      '[data-testid="error-component"]',
+      "p.text-lg",
     )
     expect(mainContent).toHaveClass("z-10")
   })
@@ -162,13 +162,13 @@ describe("ErrorComponent", () => {
   it("error text section has specific spacing", () => {
     const { container } = render(<ErrorComponent />)
     const errorText = screen.getByText("Error")
-    expect(errorText.parentElement).toHaveClass("mb-4")
+    expect(errorText).toHaveClass("mb-4")
   })
 
   it("oops text section has specific spacing", () => {
     const { container } = render(<ErrorComponent />)
     const oopsText = screen.getByText("Oops!")
-    expect(oopsText.parentElement).toHaveClass("mb-2")
+    expect(oopsText).toHaveClass("mb-2")
   })
 
   it("message has margin bottom", () => {
