@@ -9,7 +9,7 @@ from arq.connections import RedisSettings
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import selectinload
-from sqlmodel import SQLModel, col, func, select
+from sqlmodel import SQLModel, col, func, select, Field
 
 from app.api.deps import CurrentUser, SessionDep
 from app.core.config import settings as app_settings
@@ -25,7 +25,9 @@ from app.models import (
     NoteMention,
     OverdueContactPublic,
     OverdueContactsPublic,
+    Relationship,
     User,
+    ContactSource,
 )
 
 
@@ -720,3 +722,284 @@ def list_contact_mentions(
         )
         for note_mention, note, source in rows
     ]
+
+
+# ─── iMessage Sync Models ─────────────────────────────────────────────────
+
+
+class IMessageProfilePayload(SQLModel):
+    """iMessage profile data from social.json."""
+
+    imessage_id: str = Field(
+        description="E.164 phone or email for stable iMessage identity."
+    )
+    relationship_type: str | None = Field(
+        default=None,
+        description="iMessage relationship type (close_friend, family, etc.).",
+    )
+    key_events: list[str] | None = Field(
+        default=None, description="Key events from iMessage."
+    )
+    topics: list[str] | None = Field(
+        default=None, description="Topics discussed in messages."
+    )
+    facts_about_other: str | None = Field(
+        default=None, description="Facts about the contact from message analysis."
+    )
+    pattern_notes: str | None = Field(
+        default=None, description="Pattern notes from iMessage analysis."
+    )
+    last_ts: int | None = Field(
+        default=None,
+        description="Last message timestamp (Unix epoch).",
+    )
+    message_count: int | None = Field(
+        default=None,
+        description="Total message count.",
+    )
+    profile_hash: str | None = Field(
+        default=None,
+        max_length=64,
+        description="Hash of profile data for idempotent updates.",
+    )
+
+
+class IMessageSyncRequest(SQLModel):
+    """Request body for iMessage sync."""
+
+    profiles: list[IMessageProfilePayload] = Field(
+        description="List of iMessage profiles to sync."
+    )
+    sync_co_mentions: bool = Field(
+        default=False,
+        description="Whether to also sync co-mention edges as relationships.",
+    )
+    co_mentions: list[dict] | None = Field(
+        default=None,
+        description="Co-mention edges from social.json.",
+    )
+
+
+class IMessageSyncResult(SQLModel):
+    """Result of iMessage sync operation."""
+
+    created_count: int = 0
+    updated_count: int = 0
+    skipped_count: int = 0
+    failed_ids: list[str] = []
+
+
+class IMessageProfileResponse(SQLModel):
+    """Response model for iMessage profile endpoint."""
+
+    imessage_id: str | None = None
+    imessage_synced_at: datetime | None = None
+    imessage_profile: dict | None = None
+    profile_hash: str | None = None
+
+
+# ─── iMessage Sync Endpoints ─────────────────────────────────────────────
+
+
+@router.post("/imessage-sync", response_model=IMessageSyncResult)
+def sync_imessage_contacts(
+    session: SessionDep,
+    current_user: CurrentUser,
+    body: IMessageSyncRequest,
+) -> Any:
+    """Sync iMessage profiles to kindred contacts.
+
+    Performs idempotent upsert: matches by imessage_id (E.164 phone or email).
+    Updates if profile_hash changed, skips if unchanged.
+    """
+    import hashlib
+    import json
+
+    created = 0
+    updated = 0
+    skipped = 0
+    failed_ids: list[str] = []
+
+    for profile in body.profiles:
+        try:
+            # Check if contact exists by imessage_id
+            existing = session.exec(
+                select(Contact).where(
+                    Contact.owner_id == current_user.id,
+                    Contact.imessage_id == profile.imessage_id,
+                )
+            ).first()
+
+            # Prepare profile data
+            profile_data = {
+                "relationship_type": profile.relationship_type,
+                "key_events": profile.key_events,
+                "topics": profile.topics,
+                "facts_about_other": profile.facts_about_other,
+                "pattern_notes": profile.pattern_notes,
+                "last_ts": profile.last_ts,
+                "message_count": profile.message_count,
+            }
+
+            # Calculate hash for idempotency
+            new_hash = None
+            if profile.profile_hash:
+                new_hash = profile.profile_hash
+            else:
+                # Calculate hash from profile data
+                profile_json = json.dumps(profile_data, sort_keys=True, default=str)
+                new_hash = hashlib.sha256(profile_json.encode()).hexdigest()
+
+            if existing:
+                # Check if unchanged (idempotent update)
+                if existing.imessage_profile_hash == new_hash:
+                    skipped += 1
+                    continue
+
+                # Update existing contact with iMessage data
+                existing.imessage_id = profile.imessage_id
+                existing.imessage_synced_at = datetime.now(timezone.utc)
+                existing.imessage_profile_hash = new_hash
+                existing.imessage_profile = profile_data
+
+                # Update last_contacted_at if we have a more recent timestamp
+                if profile.last_ts:
+                    from datetime import datetime as dt
+
+                    msg_dt = dt.fromtimestamp(profile.last_ts, tz=timezone.utc)
+                    if (
+                        not existing.last_contacted_at
+                        or msg_dt > existing.last_contacted_at
+                    ):
+                        existing.last_contacted_at = msg_dt
+
+                session.add(existing)
+                updated += 1
+            else:
+                # Create new contact from iMessage profile
+                # Try to extract name from imessage_id or use a default
+                first_name = "Imported"
+                # Check if imessage_id looks like an email
+                if "@" in profile.imessage_id:
+                    first_name = profile.imessage_id.split("@")[0]
+                else:
+                    # Assume it's a phone number
+                    first_name = "Contact"
+
+                new_contact = Contact(
+                    first_name=first_name,
+                    source=ContactSource.WEBHOOK,
+                    source_external_id=profile.imessage_id,
+                    imessage_id=profile.imessage_id,
+                    imessage_synced_at=datetime.now(timezone.utc),
+                    imessage_profile_hash=new_hash,
+                    imessage_profile=profile_data,
+                    owner_id=current_user.id,
+                )
+
+                # Set last_contacted_at if available
+                if profile.last_ts:
+                    from datetime import datetime as dt
+
+                    new_contact.last_contacted_at = dt.fromtimestamp(
+                        profile.last_ts, tz=timezone.utc
+                    )
+
+                session.add(new_contact)
+                created += 1
+
+        except Exception as exc:
+            failed_ids.append(profile.imessage_id)
+            logger.warning(
+                f"Failed to sync iMessage profile {profile.imessage_id}: {exc}"
+            )
+
+    session.commit()
+
+    # Handle co-mention edges if requested
+    if body.sync_co_mentions and body.co_mentions:
+        _sync_co_mention_edges(session, current_user, body.co_mentions)
+        session.commit()
+
+    return IMessageSyncResult(
+        created_count=created,
+        updated_count=updated,
+        skipped_count=skipped,
+        failed_ids=failed_ids,
+    )
+
+
+def _sync_co_mention_edges(
+    session: SessionDep,
+    current_user: User,
+    co_mentions: list[dict],
+) -> None:
+    """Sync co-mention edges as relationships between contacts."""
+    for edge in co_mentions:
+        try:
+            source_id = edge.get("source")
+            target_id = edge.get("target")
+            if not source_id or not target_id:
+                continue
+
+            # Find contacts by imessage_id
+            source_contact = session.exec(
+                select(Contact).where(
+                    Contact.owner_id == current_user.id,
+                    Contact.imessage_id == source_id,
+                )
+            ).first()
+
+            target_contact = session.exec(
+                select(Contact).where(
+                    Contact.owner_id == current_user.id,
+                    Contact.imessage_id == target_id,
+                )
+            ).first()
+
+            if not source_contact or not target_contact:
+                continue
+
+            # Check if relationship already exists
+            existing = session.exec(
+                select(Relationship).where(
+                    Relationship.contact_id == source_contact.id,
+                    Relationship.related_contact_id == target_contact.id,
+                    Relationship.relationship_type == "co-mentioned",
+                )
+            ).first()
+
+            if not existing:
+                # Create co-mention relationship
+                weight = edge.get("weight", 0)
+                rel = Relationship(
+                    contact_id=source_contact.id,
+                    related_contact_id=target_contact.id,
+                    relationship_type="co-mentioned",
+                    notes=f"Co-mentioned in iMessage (weight: {weight})",
+                )
+                session.add(rel)
+
+        except Exception as exc:
+            logger.warning(f"Failed to sync co-mention edge {edge}: {exc}")
+
+
+@router.get("/{contact_id}/imessage-profile", response_model=IMessageProfileResponse)
+def get_imessage_profile(
+    session: SessionDep,
+    current_user: CurrentUser,
+    contact_id: uuid.UUID,
+) -> Any:
+    """Get the raw iMessage profile for a contact."""
+    contact = session.get(Contact, contact_id)
+    if not contact or contact.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="Contact not found")
+    if contact.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
+    return IMessageProfileResponse(
+        imessage_id=contact.imessage_id,
+        imessage_synced_at=contact.imessage_synced_at,
+        imessage_profile=contact.imessage_profile,
+        profile_hash=contact.imessage_profile_hash,
+    )

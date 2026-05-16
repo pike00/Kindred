@@ -1655,6 +1655,41 @@ export const ContactPublicSchema = {
             type: 'array',
             title: 'Tags',
             default: []
+        },
+        imessage_id: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Imessage Id'
+        },
+        imessage_synced_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Imessage Synced At'
+        },
+        imessage_profile: {
+            anyOf: [
+                {
+                    additionalProperties: true,
+                    type: 'object'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Imessage Profile'
         }
     },
     type: 'object',
@@ -2800,6 +2835,247 @@ export const HTTPValidationErrorSchema = {
     },
     type: 'object',
     title: 'HTTPValidationError'
+} as const;
+
+export const IMessageProfilePayloadSchema = {
+    properties: {
+        imessage_id: {
+            type: 'string',
+            title: 'Imessage Id',
+            description: 'E.164 phone or email for stable iMessage identity.'
+        },
+        relationship_type: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Relationship Type',
+            description: 'iMessage relationship type (close_friend, family, etc.).'
+        },
+        key_events: {
+            anyOf: [
+                {
+                    items: {
+                        type: 'string'
+                    },
+                    type: 'array'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Key Events',
+            description: 'Key events from iMessage.'
+        },
+        topics: {
+            anyOf: [
+                {
+                    items: {
+                        type: 'string'
+                    },
+                    type: 'array'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Topics',
+            description: 'Topics discussed in messages.'
+        },
+        facts_about_other: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Facts About Other',
+            description: 'Facts about the contact from message analysis.'
+        },
+        pattern_notes: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Pattern Notes',
+            description: 'Pattern notes from iMessage analysis.'
+        },
+        last_ts: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Last Ts',
+            description: 'Last message timestamp (Unix epoch).'
+        },
+        message_count: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Message Count',
+            description: 'Total message count.'
+        },
+        profile_hash: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 64
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Profile Hash',
+            description: 'Hash of profile data for idempotent updates.'
+        }
+    },
+    type: 'object',
+    required: ['imessage_id'],
+    title: 'IMessageProfilePayload',
+    description: 'iMessage profile data from social.json.'
+} as const;
+
+export const IMessageProfileResponseSchema = {
+    properties: {
+        imessage_id: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Imessage Id'
+        },
+        imessage_synced_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Imessage Synced At'
+        },
+        imessage_profile: {
+            anyOf: [
+                {
+                    additionalProperties: true,
+                    type: 'object'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Imessage Profile'
+        },
+        profile_hash: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Profile Hash'
+        }
+    },
+    type: 'object',
+    title: 'IMessageProfileResponse',
+    description: 'Response model for iMessage profile endpoint.'
+} as const;
+
+export const IMessageSyncRequestSchema = {
+    properties: {
+        profiles: {
+            items: {
+                '$ref': '#/components/schemas/IMessageProfilePayload'
+            },
+            type: 'array',
+            title: 'Profiles',
+            description: 'List of iMessage profiles to sync.'
+        },
+        sync_co_mentions: {
+            type: 'boolean',
+            title: 'Sync Co Mentions',
+            description: 'Whether to also sync co-mention edges as relationships.',
+            default: false
+        },
+        co_mentions: {
+            anyOf: [
+                {
+                    items: {
+                        additionalProperties: true,
+                        type: 'object'
+                    },
+                    type: 'array'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Co Mentions',
+            description: 'Co-mention edges from social.json.'
+        }
+    },
+    type: 'object',
+    required: ['profiles'],
+    title: 'IMessageSyncRequest',
+    description: 'Request body for iMessage sync.'
+} as const;
+
+export const IMessageSyncResultSchema = {
+    properties: {
+        created_count: {
+            type: 'integer',
+            title: 'Created Count',
+            default: 0
+        },
+        updated_count: {
+            type: 'integer',
+            title: 'Updated Count',
+            default: 0
+        },
+        skipped_count: {
+            type: 'integer',
+            title: 'Skipped Count',
+            default: 0
+        },
+        failed_ids: {
+            items: {
+                type: 'string'
+            },
+            type: 'array',
+            title: 'Failed Ids',
+            default: []
+        }
+    },
+    type: 'object',
+    title: 'IMessageSyncResult',
+    description: 'Result of iMessage sync operation.'
 } as const;
 
 export const InteractionAttendeeSummarySchema = {
@@ -4095,6 +4371,41 @@ export const OverdueContactPublicSchema = {
             type: 'array',
             title: 'Tags',
             default: []
+        },
+        imessage_id: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Imessage Id'
+        },
+        imessage_synced_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Imessage Synced At'
+        },
+        imessage_profile: {
+            anyOf: [
+                {
+                    additionalProperties: true,
+                    type: 'object'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Imessage Profile'
         },
         days_overdue: {
             anyOf: [

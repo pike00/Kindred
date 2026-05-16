@@ -448,6 +448,11 @@ export type ContactPublic = {
     updated_at: string;
     deleted_at?: (string | null);
     tags?: Array<TagPublic>;
+    imessage_id?: (string | null);
+    imessage_synced_at?: (string | null);
+    imessage_profile?: ({
+    [key: string]: unknown;
+} | null);
 };
 
 export type ContactSource = 'MANUAL' | 'VCARD_IMPORT' | 'CARDDAV' | 'GOOGLE' | 'WEBHOOK';
@@ -734,6 +739,90 @@ export type GiftUpdate = {
 
 export type HTTPValidationError = {
     detail?: Array<ValidationError>;
+};
+
+/**
+ * iMessage profile data from social.json.
+ */
+export type IMessageProfilePayload = {
+    /**
+     * E.164 phone or email for stable iMessage identity.
+     */
+    imessage_id: string;
+    /**
+     * iMessage relationship type (close_friend, family, etc.).
+     */
+    relationship_type?: (string | null);
+    /**
+     * Key events from iMessage.
+     */
+    key_events?: (Array<(string)> | null);
+    /**
+     * Topics discussed in messages.
+     */
+    topics?: (Array<(string)> | null);
+    /**
+     * Facts about the contact from message analysis.
+     */
+    facts_about_other?: (string | null);
+    /**
+     * Pattern notes from iMessage analysis.
+     */
+    pattern_notes?: (string | null);
+    /**
+     * Last message timestamp (Unix epoch).
+     */
+    last_ts?: (number | null);
+    /**
+     * Total message count.
+     */
+    message_count?: (number | null);
+    /**
+     * Hash of profile data for idempotent updates.
+     */
+    profile_hash?: (string | null);
+};
+
+/**
+ * Response model for iMessage profile endpoint.
+ */
+export type IMessageProfileResponse = {
+    imessage_id?: (string | null);
+    imessage_synced_at?: (string | null);
+    imessage_profile?: ({
+    [key: string]: unknown;
+} | null);
+    profile_hash?: (string | null);
+};
+
+/**
+ * Request body for iMessage sync.
+ */
+export type IMessageSyncRequest = {
+    /**
+     * List of iMessage profiles to sync.
+     */
+    profiles: Array<IMessageProfilePayload>;
+    /**
+     * Whether to also sync co-mention edges as relationships.
+     */
+    sync_co_mentions?: boolean;
+    /**
+     * Co-mention edges from social.json.
+     */
+    co_mentions?: (Array<{
+    [key: string]: unknown;
+}> | null);
+};
+
+/**
+ * Result of iMessage sync operation.
+ */
+export type IMessageSyncResult = {
+    created_count?: number;
+    updated_count?: number;
+    skipped_count?: number;
+    failed_ids?: Array<(string)>;
 };
 
 export type InteractionAttendeeSummary = {
@@ -1111,6 +1200,11 @@ export type OverdueContactPublic = {
     updated_at: string;
     deleted_at?: (string | null);
     tags?: Array<TagPublic>;
+    imessage_id?: (string | null);
+    imessage_synced_at?: (string | null);
+    imessage_profile?: ({
+    [key: string]: unknown;
+} | null);
     days_overdue?: (number | null);
 };
 
@@ -1684,6 +1778,18 @@ export type ContactsListContactMentionsData = {
 };
 
 export type ContactsListContactMentionsResponse = (Array<_MentionPublic>);
+
+export type ContactsSyncImessageContactsData = {
+    requestBody: IMessageSyncRequest;
+};
+
+export type ContactsSyncImessageContactsResponse = (IMessageSyncResult);
+
+export type ContactsGetImessageProfileData = {
+    contactId: string;
+};
+
+export type ContactsGetImessageProfileResponse = (IMessageProfileResponse);
 
 export type CustomFieldsListFieldDefinitionsResponse = (unknown);
 
