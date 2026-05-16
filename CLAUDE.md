@@ -100,4 +100,6 @@ Run via `just tf-plan` / `just tf-apply` from those directories. Never run `terr
 - Backend ID is `kindred-internal-crm` for the internal network and `kindred-private` for ingress — both `external: true`. Created by the homelab `apps/kindred/` stack; don't redefine them here.
 - mypy is intentionally disabled in pre-commit (~90 pre-existing strict-mode errors). Run locally with `uv run --project backend mypy app`.
 - The Copier template's `items` module is removed from the router but the model and Alembic table remain; drop with a dedicated migration if/when desired.
-- Backend-only routes (no UI yet): `addresses`, `pets`, `relationships`, `contact_fields`, `custom_fields`, `life_events`, `import_export`, `webhooks`.
+- Routes with incomplete or missing UI: `activity-logs` (no view), `import-export` (import UI done, export not wired), `calendar` (month view exists, no create/edit events). The previous list here (`addresses`, `pets`, `relationships`, etc.) is stale — all of those now have contact-card UIs.
+- `UserSettings/ApiKeys.tsx` bypasses the SDK and uses raw `apiRequest` calls directly — diverges from the generated-client pattern used elsewhere.
+- Several entity cards are create-only in the UI; edit/delete SDK methods exist but are uncalled for `interactions`, `journal`, `debts`, `gifts`, `media_recommendations`, `reminders`, and `tags`. See `docs/improvements.md` for tracking.
