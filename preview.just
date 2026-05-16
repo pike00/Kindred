@@ -1,1 +1,1 @@
-/home/will/projects/_templates/preview.just
+/home/will/projects/preview-kit/preview.just
