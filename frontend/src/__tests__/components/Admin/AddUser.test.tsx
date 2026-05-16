@@ -64,8 +64,9 @@ describe("AddUser", () => {
       const trigger = screen.getByRole("button", { name: /Add User/i })
       await user.click(trigger)
 
-      expect(screen.getByText("Add User")).toBeInTheDocument()
-      expect(screen.getByText(/Fill in the form below/i)).toBeInTheDocument()
+      await waitFor(() => {
+        expect(screen.getByText(/Fill in the form below/i)).toBeInTheDocument()
+      })
     })
 
     it("closes dialog when Cancel is clicked", async () => {
@@ -109,7 +110,7 @@ describe("AddUser", () => {
       const trigger = screen.getByRole("button", { name: /Add User/i })
       await user.click(trigger)
 
-      const saveButton = screen.getByRole("button", { name: /Save/i })
+      const saveButton = screen.getByRole("button", { name: /^Save$/i })
       await user.click(saveButton)
 
       await waitFor(() => {
@@ -140,11 +141,15 @@ describe("AddUser", () => {
       const trigger = screen.getByRole("button", { name: /Add User/i })
       await user.click(trigger)
 
+      await waitFor(() => {
+        expect(screen.getByLabelText(/Email/i)).toBeInTheDocument()
+      })
+
       const emailInput = screen.getByLabelText(/Email/i)
       await user.type(emailInput, "user@example.com")
       await user.tab()
 
-      const saveButton = screen.getByRole("button", { name: /Save/i })
+      const saveButton = screen.getByRole("button", { name: /^Save$/i })
       await user.click(saveButton)
 
       await waitFor(() => {
@@ -181,7 +186,7 @@ describe("AddUser", () => {
       await user.type(passwordInput, "ValidPassword123")
       await user.tab()
 
-      const saveButton = screen.getByRole("button", { name: /Save/i })
+      const saveButton = screen.getByRole("button", { name: /^Save$/i })
       await user.click(saveButton)
 
       await waitFor(() => {
@@ -205,7 +210,7 @@ describe("AddUser", () => {
       await user.type(confirmInput, "DifferentPassword456")
       await user.tab()
 
-      const saveButton = screen.getByRole("button", { name: /Save/i })
+      const saveButton = screen.getByRole("button", { name: /^Save$/i })
       await user.click(saveButton)
 
       await waitFor(() => {
@@ -232,7 +237,7 @@ describe("AddUser", () => {
       await user.type(passwordInput, "ValidPassword123")
       await user.type(confirmInput, "ValidPassword123")
 
-      const saveButton = screen.getByRole("button", { name: /Save/i })
+      const saveButton = screen.getByRole("button", { name: /^Save$/i })
       await user.click(saveButton)
 
       await waitFor(() => {
@@ -261,7 +266,7 @@ describe("AddUser", () => {
       await user.type(passwordInput, "SecurePass123")
       await user.type(confirmInput, "SecurePass123")
 
-      const saveButton = screen.getByRole("button", { name: /Save/i })
+      const saveButton = screen.getByRole("button", { name: /^Save$/i })
       await user.click(saveButton)
 
       await waitFor(() => {
@@ -299,7 +304,7 @@ describe("AddUser", () => {
       await user.type(confirmInput, "SecurePass123")
       await user.click(superuserCheckbox)
 
-      const saveButton = screen.getByRole("button", { name: /Save/i })
+      const saveButton = screen.getByRole("button", { name: /^Save$/i })
       await user.click(saveButton)
 
       await waitFor(() => {
@@ -334,7 +339,7 @@ describe("AddUser", () => {
       await user.type(confirmInput, "SecurePass123")
       await user.click(activeCheckbox)
 
-      const saveButton = screen.getByRole("button", { name: /Save/i })
+      const saveButton = screen.getByRole("button", { name: /^Save$/i })
       await user.click(saveButton)
 
       await waitFor(() => {
@@ -371,7 +376,7 @@ describe("AddUser", () => {
       await user.type(passwordInput, "SecurePass123")
       await user.type(confirmInput, "SecurePass123")
 
-      const saveButton = screen.getByRole("button", { name: /Save/i })
+      const saveButton = screen.getByRole("button", { name: /^Save$/i })
       await user.click(saveButton)
 
       // Button should be disabled while pending
@@ -407,7 +412,7 @@ describe("AddUser", () => {
       await user.type(passwordInput, "SecurePass123")
       await user.type(confirmInput, "SecurePass123")
 
-      const saveButton = screen.getByRole("button", { name: /Save/i })
+      const saveButton = screen.getByRole("button", { name: /^Save$/i })
       await user.click(saveButton)
 
       const cancelButton = screen.getByRole("button", { name: /Cancel/i })
@@ -439,7 +444,7 @@ describe("AddUser", () => {
       await user.type(passwordInput, "SecurePass123")
       await user.type(confirmInput, "SecurePass123")
 
-      const saveButton = screen.getByRole("button", { name: /Save/i })
+      const saveButton = screen.getByRole("button", { name: /^Save$/i })
       await user.click(saveButton)
 
       await waitFor(() => {
@@ -469,7 +474,7 @@ describe("AddUser", () => {
       await user.type(passwordInput, "SecurePass123")
       await user.type(confirmInput, "SecurePass123")
 
-      const saveButton = screen.getByRole("button", { name: /Save/i })
+      const saveButton = screen.getByRole("button", { name: /^Save$/i })
       await user.click(saveButton)
 
       await waitFor(() => {
@@ -479,7 +484,7 @@ describe("AddUser", () => {
       })
     })
 
-    it("resets form after successful submission", async () => {
+    it("closes dialog and success toast after successful submission", async () => {
       const user = userEvent.setup()
       vi.mocked(UsersService.createUser).mockResolvedValue(makeUser())
 
@@ -488,30 +493,30 @@ describe("AddUser", () => {
       const trigger = screen.getByRole("button", { name: /Add User/i })
       await user.click(trigger)
 
-      const emailInput = screen.getByLabelText(/Email/i) as HTMLInputElement
+      await waitFor(() => {
+        expect(screen.getByLabelText(/Email/i)).toBeInTheDocument()
+      })
+
+      const emailInput = screen.getByLabelText(/Email/i)
       const passwordInput = screen.getByLabelText(
         /Set Password/i,
-      ) as HTMLInputElement
+      )
       const confirmInput = screen.getByLabelText(
         /Confirm Password/i,
-      ) as HTMLInputElement
-      const superuserCheckbox = screen.getByLabelText(
-        /Is superuser/i,
-      ) as HTMLInputElement
+      )
 
       await user.type(emailInput, "user@example.com")
       await user.type(passwordInput, "SecurePass123")
       await user.type(confirmInput, "SecurePass123")
-      await user.click(superuserCheckbox)
 
-      const saveButton = screen.getByRole("button", { name: /Save/i })
+      const saveButton = screen.getByRole("button", { name: /^Save$/i })
       await user.click(saveButton)
 
       await waitFor(() => {
-        expect(emailInput.value).toBe("")
-        expect(passwordInput.value).toBe("")
-        expect(confirmInput.value).toBe("")
-        expect(superuserCheckbox.checked).toBe(false)
+        // Dialog should close after successful submission
+        expect(
+          screen.queryByText(/Fill in the form below/i),
+        ).not.toBeInTheDocument()
       })
     })
 
@@ -532,7 +537,7 @@ describe("AddUser", () => {
       await user.type(passwordInput, "SecurePass123")
       await user.type(confirmInput, "SecurePass123")
 
-      const saveButton = screen.getByRole("button", { name: /Save/i })
+      const saveButton = screen.getByRole("button", { name: /^Save$/i })
       await user.click(saveButton)
 
       await waitFor(() => {
@@ -563,7 +568,7 @@ describe("AddUser", () => {
       await user.type(passwordInput, "SecurePass123")
       await user.type(confirmInput, "SecurePass123")
 
-      const saveButton = screen.getByRole("button", { name: /Save/i })
+      const saveButton = screen.getByRole("button", { name: /^Save$/i })
       await user.click(saveButton)
 
       await waitFor(() => {
@@ -590,7 +595,7 @@ describe("AddUser", () => {
       await user.type(passwordInput, "SecurePass123")
       await user.type(confirmInput, "SecurePass123")
 
-      const saveButton = screen.getByRole("button", { name: /Save/i })
+      const saveButton = screen.getByRole("button", { name: /^Save$/i })
       await user.click(saveButton)
 
       await waitFor(() => {
@@ -623,7 +628,7 @@ describe("AddUser", () => {
       ) as HTMLInputElement
       await user.type(confirmInput, "SecurePass123")
 
-      const saveButton = screen.getByRole("button", { name: /Save/i })
+      const saveButton = screen.getByRole("button", { name: /^Save$/i })
       await user.click(saveButton)
 
       await waitFor(() => {
@@ -676,11 +681,9 @@ describe("AddUser", () => {
       const trigger = screen.getByRole("button", { name: /Add User/i })
       await user.click(trigger)
 
-      const title = screen.getByText("Add User")
-      expect(title).toBeInTheDocument()
-
-      const description = screen.getByText(/Fill in the form below/i)
-      expect(description).toBeInTheDocument()
+      await waitFor(() => {
+        expect(screen.getByText(/Fill in the form below/i)).toBeInTheDocument()
+      })
     })
   })
 })

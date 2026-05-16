@@ -14,6 +14,7 @@ from sqlmodel import SQLModel, col, func, select, Field
 from app.api.deps import CurrentUser, SessionDep
 from app.core.config import settings as app_settings
 from app.crud import visible_contact_ids
+from app.household import get_household_members
 from app.models import (
     Contact,
     ContactCreate,
@@ -1003,3 +1004,22 @@ def get_imessage_profile(
         imessage_profile=contact.imessage_profile,
         profile_hash=contact.imessage_profile_hash,
     )
+
+
+@router.get("/{contact_id}/household")
+def get_contact_household(
+    session: SessionDep,
+    current_user: CurrentUser,
+    contact_id: uuid.UUID,
+) -> Any:
+    """Get household members for a contact.
+
+    Derives household/family members via BFS walk of relationships
+    (spouse, child, parent, sibling, etc.). Returns names and ages.
+    """
+    members = get_household_members(
+        session=session,
+        contact_id=str(contact_id),
+        current_user=current_user,
+    )
+    return {"data": members}

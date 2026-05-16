@@ -1828,6 +1828,12 @@ export type ContactsGetImessageProfileData = {
 
 export type ContactsGetImessageProfileResponse = (IMessageProfileResponse);
 
+export type ContactsGetContactHouseholdData = {
+    contactId: string;
+};
+
+export type ContactsGetContactHouseholdResponse = (unknown);
+
 export type CustomFieldsListFieldDefinitionsResponse = (unknown);
 
 export type CustomFieldsCreateFieldDefinitionData = {
