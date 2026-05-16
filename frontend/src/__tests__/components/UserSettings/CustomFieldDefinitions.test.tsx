@@ -973,4 +973,50 @@ describe("CustomFieldDefinitions", () => {
       expect(mockUpdateFieldDefinition).toHaveBeenCalled()
     })
   })
+
+  it("uses fallback message on non-Error delete rejection", async () => {
+    const { CustomFieldsService } = await import("@/client")
+    vi.mocked(CustomFieldsService.listFieldDefinitions).mockResolvedValueOnce({
+      data: [
+        {
+          id: "def-fb",
+          name: "FallbackDef",
+          field_type: "text",
+          description: null,
+          icon: "coffee",
+        },
+      ],
+    })
+    vi.mocked(
+      CustomFieldsService.deleteFieldDefinition,
+    ).mockRejectedValueOnce("plain-string-error")
+
+    const user = userEvent.setup()
+    const mockConfirm = vi.fn().mockReturnValue(true)
+    const originalConfirm = window.confirm
+    window.confirm = mockConfirm as any
+
+    renderWithProviders(<CustomFieldDefinitions />)
+
+    await waitFor(() => {
+      expect(screen.getByText("FallbackDef")).toBeInTheDocument()
+    })
+
+    const buttons = screen.getAllByRole("button")
+    const menuButton = buttons[buttons.length - 1]
+    await user.click(menuButton)
+
+    const deleteMenuItem = await screen.findByRole("menuitem", {
+      name: /Delete/,
+    })
+    await user.click(deleteMenuItem)
+
+    await waitFor(() => {
+      expect(mockShowErrorToast).toHaveBeenCalledWith(
+        "Failed to delete definition",
+      )
+    })
+
+    window.confirm = originalConfirm
+  })
 })

@@ -832,7 +832,7 @@ describe("CommandPalette", () => {
     fireEvent.keyDown(window, { key: "k", metaKey: true })
 
     await waitFor(() => {
-      const item = screen.getByTestId("command-item-contact:c1 Alice Marie Johnson")
+      const item = screen.getByTestId("command-item-contact:c1 Alice Johnson Marie")
       // Verify the haystack includes middle_name by checking the data-testid includes all parts
       expect(item).toBeInTheDocument()
     })
@@ -860,6 +860,7 @@ describe("CommandPalette", () => {
 
     await waitFor(() => {
       const item = screen.getByTestId("command-item-contact:c2 Robert Brown Bob")
+      // contactHaystack builds: first_name, last_name, middle_name, nickname, company, title, ...tags
       expect(item).toBeInTheDocument()
     })
   })
@@ -886,6 +887,7 @@ describe("CommandPalette", () => {
 
     await waitFor(() => {
       const item = screen.getByTestId("command-item-contact:c3 Charlie Davis Engineer")
+      // contactHaystack includes: first_name, last_name, middle_name, nickname, company, title, ...tags
       expect(item).toBeInTheDocument()
     })
   })
@@ -915,6 +917,7 @@ describe("CommandPalette", () => {
 
     await waitFor(() => {
       const item = screen.getByTestId("command-item-contact:c4 Eve Miller Friend Colleague")
+      // contactHaystack spreads tag names into the haystack
       expect(item).toBeInTheDocument()
     })
   })
@@ -985,6 +988,33 @@ describe("CommandPalette", () => {
       expect(screen.getByText("Bob Jones")).toBeInTheDocument()
       expect(screen.getByText("TechCorp")).toBeInTheDocument()
       expect(screen.getByText("FinanceInc")).toBeInTheDocument()
+    })
+  })
+
+  it("includes tag names in haystack when contact has tags", async () => {
+    const contact = makeContact({
+      id: "c-tag",
+      first_name: "Taylor",
+      last_name: "Tagged",
+    })
+    ;(contact as any).tags = [{ id: "t1", name: "VIP" }, { id: "t2", name: "Friend" }]
+
+    vi.mocked(ContactsService.ContactsService.listContacts).mockResolvedValue({
+      data: [contact],
+    } as any)
+
+    renderWithProviders(
+      <CommandPaletteProvider>
+        <CommandPalette />
+      </CommandPaletteProvider>,
+    )
+
+    fireEvent.keyDown(window, { key: "k", metaKey: true })
+
+    await waitFor(() => {
+      const items = screen.getAllByTestId(/^command-item-contact:c-tag/)
+      expect(items.length).toBeGreaterThan(0)
+      expect(items[0].getAttribute("data-testid") || "").toMatch(/VIP/)
     })
   })
 })

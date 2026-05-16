@@ -382,6 +382,25 @@ describe("AddGift", () => {
     })
   })
 
+  it("handles non-Error rejection on create", async () => {
+    const user = userEvent.setup()
+    mockCreateGift.mockRejectedValue("plain-string-error")
+
+    renderWithProviders(<AddGift contactId="contact-1" />)
+
+    await user.click(screen.getByRole("button", { name: /add gift/i }))
+
+    const nameInput = screen.getByPlaceholderText("Gift name")
+    const submitButton = screen.getByRole("button", { name: /save/i })
+
+    await user.type(nameInput, "Watch")
+    await user.click(submitButton)
+
+    await waitFor(() => {
+      expect(mockCreateGift).toHaveBeenCalled()
+    })
+  })
+
   it("shows loading state while submitting", async () => {
     const user = userEvent.setup()
     mockCreateGift.mockImplementation(

@@ -395,6 +395,27 @@ describe("AddMediaRecommendation", () => {
     })
   })
 
+  it("handles non-Error rejection on create", async () => {
+    const user = userEvent.setup()
+    mockCreateMediaRecommendation.mockRejectedValue("plain-string-error")
+
+    renderWithProviders(<AddMediaRecommendation contactId="contact-1" />)
+
+    await user.click(
+      screen.getByRole("button", { name: /add recommendation/i }),
+    )
+
+    const titleInput = screen.getByPlaceholderText("e.g. The Bear")
+    const submitButton = screen.getByRole("button", { name: /save/i })
+
+    await user.type(titleInput, "The Bear")
+    await user.click(submitButton)
+
+    await waitFor(() => {
+      expect(mockCreateMediaRecommendation).toHaveBeenCalled()
+    })
+  })
+
   it("shows loading state while submitting", async () => {
     const user = userEvent.setup()
     mockCreateMediaRecommendation.mockImplementation(

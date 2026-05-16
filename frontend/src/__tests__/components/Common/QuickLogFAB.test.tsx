@@ -31,6 +31,7 @@ vi.mock("@/hooks/useCustomToast", () => ({
 
 // Mock popover and command UI to render inline
 vi.mock("@/components/ui/popover", () => {
+  const React = require("react")
   return {
     Popover: ({ open, onOpenChange, children }: any) => {
       return (
@@ -40,6 +41,10 @@ vi.mock("@/components/ui/popover", () => {
       )
     },
     PopoverTrigger: ({ asChild, children, onClick }: any) => {
+      // If asChild, just render the child (button) directly
+      if (asChild && React.isValidElement(children)) {
+        return children
+      }
       return (
         <div data-testid="popover-trigger" onClick={onClick}>
           {children}
@@ -66,7 +71,7 @@ vi.mock("@/components/ui/command", () => ({
   CommandEmpty: ({ children }: any) => <div data-testid="command-empty">{children}</div>,
   CommandGroup: ({ children }: any) => <div data-testid="command-group">{children}</div>,
   CommandItem: ({ value, onSelect, children }: any) => (
-    <button data-testid={`command-item-${value}`} onClick={() => onSelect?.()}>
+    <button type="button" data-testid={`command-item-${value}`} onClick={() => onSelect?.()}>
       {children}
     </button>
   ),
@@ -183,7 +188,7 @@ describe("QuickLogFAB", () => {
   })
 
   it("selects a contact and enables submit button", async () => {
-    const contact = makeContact({ id: "contact-123", first_name: "Alice" })
+    const contact = makeContact({ id: "contact-123", first_name: "Alice", last_name: null })
     vi.mocked(ContactsService.ContactsService.listContacts).mockResolvedValue({
       data: [contact],
     } as any)
@@ -195,7 +200,12 @@ describe("QuickLogFAB", () => {
       expect(vi.mocked(ContactsService.ContactsService.listContacts)).toHaveBeenCalled()
     })
 
-    // Click the contact in the command list
+
+    // Click the contact picker button to open it
+    const contactPickerButton = await screen.findByTestId("contact-picker-button")
+    await userEvent.click(contactPickerButton)
+
+    // Click the contact in the command list (value is the contact label "Alice")
     const contactButton = await screen.findByTestId("command-item-Alice")
     await userEvent.click(contactButton)
 
@@ -207,7 +217,7 @@ describe("QuickLogFAB", () => {
     })
 
     // Contact picker button should show the contact name
-    expect(screen.getByText("Alice")).toBeInTheDocument()
+    expect(screen.getByTestId("contact-picker-button")).toHaveTextContent("Alice")
   })
 
   it("displays contact name with company when company is present", async () => {
@@ -228,13 +238,18 @@ describe("QuickLogFAB", () => {
       expect(vi.mocked(ContactsService.ContactsService.listContacts)).toHaveBeenCalled()
     })
 
-    // Click the contact
+
+    // Click the contact picker button to open it
+    const contactPickerButton = await screen.findByTestId("contact-picker-button")
+    await userEvent.click(contactPickerButton)
+
+    // Click the contact (value is the contact label "Alice Smith")
     const contactButton = await screen.findByTestId("command-item-Alice Smith")
     await userEvent.click(contactButton)
 
-    // Contact button should show the contact name (and company is shown in command item)
-    expect(screen.getByText("Alice Smith")).toBeInTheDocument()
-    expect(screen.getByText("Acme Corp")).toBeInTheDocument()
+    // Contact picker button should show the contact name; company appears in the command item
+    expect(screen.getByTestId("contact-picker-button")).toHaveTextContent("Alice Smith")
+    expect(screen.getAllByText("Acme Corp")[0]).toBeInTheDocument()
   })
 
   it("submits interaction with correct data when form is filled", async () => {
@@ -260,7 +275,12 @@ describe("QuickLogFAB", () => {
       expect(vi.mocked(ContactsService.ContactsService.listContacts)).toHaveBeenCalled()
     })
 
-    // Select contact
+
+    // Click the contact picker button to open it
+    const contactPickerButton = await screen.findByTestId("contact-picker-button")
+    await userEvent.click(contactPickerButton)
+
+    // Select contact (value is the contact label "Alice Smith")
     const contactButton = await screen.findByTestId("command-item-Alice Smith")
     await userEvent.click(contactButton)
 
@@ -294,6 +314,7 @@ describe("QuickLogFAB", () => {
     const contact = makeContact({
       id: "contact-123",
       first_name: "Alice",
+      last_name: null,
     })
     vi.mocked(ContactsService.ContactsService.listContacts).mockResolvedValue({
       data: [contact],
@@ -312,7 +333,12 @@ describe("QuickLogFAB", () => {
       expect(vi.mocked(ContactsService.ContactsService.listContacts)).toHaveBeenCalled()
     })
 
-    // Select contact and submit
+
+    // Click the contact picker button to open it
+    const contactPickerButton = await screen.findByTestId("contact-picker-button")
+    await userEvent.click(contactPickerButton)
+
+    // Select contact and submit (value is the contact label "Alice")
     const contactButton = await screen.findByTestId("command-item-Alice")
     await userEvent.click(contactButton)
 
@@ -330,6 +356,7 @@ describe("QuickLogFAB", () => {
     const contact = makeContact({
       id: "contact-123",
       first_name: "Alice",
+      last_name: null,
     })
     vi.mocked(ContactsService.ContactsService.listContacts).mockResolvedValue({
       data: [contact],
@@ -347,7 +374,12 @@ describe("QuickLogFAB", () => {
       expect(vi.mocked(ContactsService.ContactsService.listContacts)).toHaveBeenCalled()
     })
 
-    // Select contact and submit
+
+    // Click the contact picker button to open it
+    const contactPickerButton = await screen.findByTestId("contact-picker-button")
+    await userEvent.click(contactPickerButton)
+
+    // Select contact and submit (value is the contact label "Alice")
     const contactButton = await screen.findByTestId("command-item-Alice")
     await userEvent.click(contactButton)
 
@@ -361,10 +393,54 @@ describe("QuickLogFAB", () => {
     })
   })
 
+  it("uses fallback message when submission rejects with non-Error value", async () => {
+    const contact = makeContact({
+      id: "contact-123",
+      first_name: "Alice",
+      last_name: null,
+    })
+    vi.mocked(ContactsService.ContactsService.listContacts).mockResolvedValue({
+      data: [contact],
+    } as any)
+
+    vi.mocked(
+      ContactsService.InteractionsService.createInteractionRoute
+    ).mockRejectedValue("plain-string-error")
+
+    renderWithProviders(<QuickLogFAB />)
+
+    await waitFor(() => {
+      expect(
+        vi.mocked(ContactsService.ContactsService.listContacts),
+      ).toHaveBeenCalled()
+    })
+
+    const contactPickerButton = await screen.findByTestId(
+      "contact-picker-button",
+    )
+    await userEvent.click(contactPickerButton)
+
+    const contactButton = await screen.findByTestId("command-item-Alice")
+    await userEvent.click(contactButton)
+
+    const buttons = screen.getAllByRole("button")
+    const submitButton = buttons.find((b) =>
+      b.textContent?.includes("Log Interaction"),
+    )
+    await userEvent.click(submitButton!)
+
+    await waitFor(() => {
+      expect(mockShowErrorToast).toHaveBeenCalledWith(
+        "Failed to log interaction",
+      )
+    })
+  })
+
   it("resets form when popover closes (handleOpenChange)", async () => {
     const contact = makeContact({
       id: "contact-123",
       first_name: "Alice",
+      last_name: null,
     })
     vi.mocked(ContactsService.ContactsService.listContacts).mockResolvedValue({
       data: [contact],
@@ -377,23 +453,21 @@ describe("QuickLogFAB", () => {
       expect(vi.mocked(ContactsService.ContactsService.listContacts)).toHaveBeenCalled()
     })
 
-    // Select contact
+
+    // Click the contact picker button to open it
+    const contactPickerButton = await screen.findByTestId("contact-picker-button")
+    await userEvent.click(contactPickerButton)
+
+    // Select contact (value is the contact label "Alice")
     const contactButton = await screen.findByTestId("command-item-Alice")
     await userEvent.click(contactButton)
 
-    // Verify contact is selected
-    expect(screen.getByText("Alice")).toBeInTheDocument()
+    // Verify contact is selected (picker button now shows the name)
+    expect(screen.getByTestId("contact-picker-button")).toHaveTextContent("Alice")
 
     // Click close button (the X button in the popover header)
-    const closeButtons = container.querySelectorAll("button")
-    const headerCloseBtn = Array.from(closeButtons).find((btn) => {
-      const parent = btn.parentElement
-      return parent?.textContent?.includes("Quick Log") && btn.textContent?.includes("×")
-    })
-
-    if (headerCloseBtn) {
-      await userEvent.click(headerCloseBtn)
-    }
+    const headerCloseBtn = screen.getByRole("button", { name: /close/i })
+    await userEvent.click(headerCloseBtn)
 
     // After close, contact picker should reset to "Select contact..."
     // (The form state is reset by handleOpenChange)
@@ -408,9 +482,9 @@ describe("QuickLogFAB", () => {
 
   it("filters contacts by search query in command input", async () => {
     const contacts = [
-      makeContact({ id: "c1", first_name: "Alice" }),
-      makeContact({ id: "c2", first_name: "Bob" }),
-      makeContact({ id: "c3", first_name: "Charlie" }),
+      makeContact({ id: "c1", first_name: "Alice", last_name: null }),
+      makeContact({ id: "c2", first_name: "Bob", last_name: null }),
+      makeContact({ id: "c3", first_name: "Charlie", last_name: null }),
     ]
     vi.mocked(ContactsService.ContactsService.listContacts).mockResolvedValue({
       data: contacts,
@@ -423,11 +497,16 @@ describe("QuickLogFAB", () => {
       expect(vi.mocked(ContactsService.ContactsService.listContacts)).toHaveBeenCalled()
     })
 
+
+    // Click the contact picker button to open it
+    const contactPickerButton = await screen.findByTestId("contact-picker-button")
+    await userEvent.click(contactPickerButton)
+
     // Type in the command input to filter
     const commandInput = await screen.findByTestId("command-input")
     await userEvent.type(commandInput, "Ali")
 
-    // Only Alice should be in the filtered list
+    // Only Alice should be in the filtered list (value is the contact label "Alice")
     const aliceButton = await screen.findByTestId("command-item-Alice")
     expect(aliceButton).toBeInTheDocument()
 
@@ -437,9 +516,9 @@ describe("QuickLogFAB", () => {
 
   it("sorts contacts alphabetically in the list", async () => {
     const contacts = [
-      makeContact({ id: "c1", first_name: "Charlie" }),
-      makeContact({ id: "c2", first_name: "Alice" }),
-      makeContact({ id: "c3", first_name: "Bob" }),
+      makeContact({ id: "c1", first_name: "Charlie", last_name: null }),
+      makeContact({ id: "c2", first_name: "Alice", last_name: null }),
+      makeContact({ id: "c3", first_name: "Bob", last_name: null }),
     ]
     vi.mocked(ContactsService.ContactsService.listContacts).mockResolvedValue({
       data: contacts,
@@ -452,7 +531,12 @@ describe("QuickLogFAB", () => {
       expect(vi.mocked(ContactsService.ContactsService.listContacts)).toHaveBeenCalled()
     })
 
-    // Contacts should be sorted: Alice, Bob, Charlie
+
+    // Click the contact picker button to open it
+    const contactPickerButton = await screen.findByTestId("contact-picker-button")
+    await userEvent.click(contactPickerButton)
+
+    // Contacts should be sorted: Alice, Bob, Charlie (by contact label)
     const aliceButton = await screen.findByTestId("command-item-Alice")
     const bobButton = await screen.findByTestId("command-item-Bob")
     const charlieButton = await screen.findByTestId("command-item-Charlie")
@@ -473,6 +557,7 @@ describe("QuickLogFAB", () => {
     const contact = makeContact({
       id: "contact-123",
       first_name: "Alice",
+      last_name: null,
     })
     vi.mocked(ContactsService.ContactsService.listContacts).mockResolvedValue({
       data: [contact],
@@ -496,7 +581,12 @@ describe("QuickLogFAB", () => {
       expect(vi.mocked(ContactsService.ContactsService.listContacts)).toHaveBeenCalled()
     })
 
-    // Select contact
+
+    // Click the contact picker button to open it
+    const contactPickerButton = await screen.findByTestId("contact-picker-button")
+    await userEvent.click(contactPickerButton)
+
+    // Select contact (value is the contact label "Alice")
     const contactButton = await screen.findByTestId("command-item-Alice")
     await userEvent.click(contactButton)
 
@@ -517,6 +607,7 @@ describe("QuickLogFAB", () => {
     const contact = makeContact({
       id: "contact-123",
       first_name: "Alice",
+      last_name: null,
     })
     vi.mocked(ContactsService.ContactsService.listContacts).mockResolvedValue({
       data: [contact],
@@ -538,7 +629,12 @@ describe("QuickLogFAB", () => {
       expect(vi.mocked(ContactsService.ContactsService.listContacts)).toHaveBeenCalled()
     })
 
-    // Select contact and submit
+
+    // Click the contact picker button to open it
+    const contactPickerButton = await screen.findByTestId("contact-picker-button")
+    await userEvent.click(contactPickerButton)
+
+    // Select contact and submit (value is the contact label "Alice")
     const contactButton = await screen.findByTestId("command-item-Alice")
     await userEvent.click(contactButton)
 
@@ -580,12 +676,17 @@ describe("QuickLogFAB", () => {
       expect(vi.mocked(ContactsService.ContactsService.listContacts)).toHaveBeenCalled()
     })
 
-    // Click the contact
+
+    // Click the contact picker button to open it
+    const contactPickerButton = await screen.findByTestId("contact-picker-button")
+    await userEvent.click(contactPickerButton)
+
+    // Click the contact (value is the contact label "Alice Smith")
     const contactButton = await screen.findByTestId("command-item-Alice Smith")
     await userEvent.click(contactButton)
 
-    // Button should show just the name
-    expect(screen.getByText("Alice Smith")).toBeInTheDocument()
+    // Picker button should show just the name (no company)
+    expect(screen.getByTestId("contact-picker-button")).toHaveTextContent("Alice Smith")
   })
 
   it("displays only first name when last name is null", async () => {
@@ -605,17 +706,22 @@ describe("QuickLogFAB", () => {
       expect(vi.mocked(ContactsService.ContactsService.listContacts)).toHaveBeenCalled()
     })
 
-    // Click the contact
+
+    // Click the contact picker button to open it
+    const contactPickerButton = await screen.findByTestId("contact-picker-button")
+    await userEvent.click(contactPickerButton)
+
+    // Click the contact (value is the contact label "Alice")
     const contactButton = await screen.findByTestId("command-item-Alice")
     await userEvent.click(contactButton)
 
-    // Button should show just the first name
-    expect(screen.getByText("Alice")).toBeInTheDocument()
+    // Picker button should show just the first name
+    expect(screen.getByTestId("contact-picker-button")).toHaveTextContent("Alice")
   })
 
   it("limits rankContacts results to 6 when query is empty", async () => {
     const contacts = Array.from({ length: 12 }, (_, i) =>
-      makeContact({ id: `c${i}`, first_name: `Contact${i}` })
+      makeContact({ id: `c${i}`, first_name: `Contact${i}`, last_name: null })
     )
     vi.mocked(ContactsService.ContactsService.listContacts).mockResolvedValue({
       data: contacts,
@@ -637,6 +743,7 @@ describe("QuickLogFAB", () => {
     const contact = makeContact({
       id: "contact-123",
       first_name: "Alice",
+      last_name: null,
     })
     vi.mocked(ContactsService.ContactsService.listContacts).mockResolvedValue({
       data: [contact],
@@ -655,7 +762,12 @@ describe("QuickLogFAB", () => {
       expect(vi.mocked(ContactsService.ContactsService.listContacts)).toHaveBeenCalled()
     })
 
-    // Select contact and fill note
+
+    // Click the contact picker button to open it
+    const contactPickerButton = await screen.findByTestId("contact-picker-button")
+    await userEvent.click(contactPickerButton)
+
+    // Select contact and fill note (value is the contact label "Alice")
     const contactButton = await screen.findByTestId("command-item-Alice")
     await userEvent.click(contactButton)
 

@@ -655,5 +655,101 @@ describe("PetsCard", () => {
     confirmSpy.mockRestore()
   })
 
+  it("handles non-Error rejection on pet creation", async () => {
+    mockPetsService.listPets.mockResolvedValue({ data: [] })
+    mockPetsService.createPetRoute.mockRejectedValue("plain-string-error")
+
+    const user = userEvent.setup()
+    renderWithProviders(<PetsCard contactId={contactId} />)
+
+    const addButton = screen.getByRole("button", { name: /add/i })
+    await user.click(addButton)
+
+    await waitFor(() => {
+      expect(screen.getByText("Add pet")).toBeInTheDocument()
+    })
+
+    const nameInput = screen.getByPlaceholderText("Biscuit")
+    await user.type(nameInput, "Rex")
+
+    const saveButton = screen.getAllByRole("button", { name: /save/i })[0]
+    await user.click(saveButton)
+
+    await waitFor(() => {
+      expect(mockPetsService.createPetRoute).toHaveBeenCalled()
+    })
+  })
+
+  it("handles non-Error rejection on pet delete", async () => {
+    const mockPets = [
+      {
+        id: "pet-2",
+        contact_id: contactId,
+        name: "FallbackPet",
+        species: "Cat",
+        breed: null,
+        notes: null,
+      },
+    ]
+
+    mockPetsService.listPets.mockResolvedValue({ data: mockPets })
+    mockPetsService.deletePet.mockRejectedValue("plain-string-error")
+
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true)
+
+    const user = userEvent.setup()
+    renderWithProviders(<PetsCard contactId={contactId} />)
+
+    await waitFor(() => {
+      expect(screen.getByText("FallbackPet")).toBeInTheDocument()
+    })
+
+    const deleteButton = screen.getByTestId("action-delete")
+    await user.click(deleteButton)
+
+    await waitFor(() => {
+      expect(mockPetsService.deletePet).toHaveBeenCalled()
+    })
+
+    confirmSpy.mockRestore()
+  })
+
+  it("handles non-Error rejection on pet update", async () => {
+    const mockPets = [
+      {
+        id: "pet-3",
+        contact_id: contactId,
+        name: "UpdatePet",
+        species: "Cat",
+        breed: null,
+        notes: null,
+      },
+    ]
+
+    mockPetsService.listPets.mockResolvedValue({ data: mockPets })
+    mockPetsService.updatePet.mockRejectedValue("plain-string-error")
+
+    const user = userEvent.setup()
+    renderWithProviders(<PetsCard contactId={contactId} />)
+
+    await waitFor(() => {
+      expect(screen.getByText("UpdatePet")).toBeInTheDocument()
+    })
+
+    const editButton = screen.getByTestId("action-edit")
+    await user.click(editButton)
+
+    await waitFor(() => {
+      expect(screen.getByText("Edit pet")).toBeInTheDocument()
+    })
+
+    const saveButtons = screen.getAllByRole("button", { name: /save/i })
+    await user.click(saveButtons[saveButtons.length - 1])
+
+    await waitFor(() => {
+      expect(mockPetsService.updatePet).toHaveBeenCalled()
+    })
+  })
+
 
 })

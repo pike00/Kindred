@@ -630,4 +630,226 @@ describe("LifeEventsCard", () => {
     })
   })
 
+  it("submits edit form and calls updateLifeEvent", async () => {
+    const mockEvent = {
+      id: "event-edit",
+      contact_id: contactId,
+      event_type: "anniversary",
+      title: "Wedding Day",
+      occurred_at: "2019-08-10T00:00:00Z",
+      description: null,
+      create_annual_reminder: false,
+    }
+    mockLifeEventsService.listLifeEvents.mockResolvedValue({ data: [mockEvent] })
+    mockLifeEventsService.updateLifeEvent.mockResolvedValue({ ...mockEvent })
+
+    const user = userEvent.setup()
+    renderWithProviders(<LifeEventsCard contactId={contactId} />)
+
+    await waitFor(() => {
+      expect(screen.getByText("Wedding Day")).toBeInTheDocument()
+    })
+
+    const editButton = screen.getByTestId("action-edit")
+    await user.click(editButton)
+
+    await waitFor(() => {
+      expect(screen.getByText("Edit life event")).toBeInTheDocument()
+    })
+
+    // Get the edit dialog's save button (second save button — first belongs to add dialog)
+    const saveButtons = screen.getAllByRole("button", { name: /save/i })
+    await user.click(saveButtons[saveButtons.length - 1])
+
+    await waitFor(() => {
+      expect(mockLifeEventsService.updateLifeEvent).toHaveBeenCalledWith(
+        expect.objectContaining({ eventId: "event-edit" }),
+      )
+    })
+  })
+
+  it("submits edit form with non-empty description (covers description truthy branch)", async () => {
+    const mockEvent = {
+      id: "event-desc",
+      contact_id: contactId,
+      event_type: "new_job",
+      title: "Started New Role",
+      occurred_at: "2022-03-01T00:00:00Z",
+      description: "Senior engineer position",
+      create_annual_reminder: false,
+    }
+    mockLifeEventsService.listLifeEvents.mockResolvedValue({ data: [mockEvent] })
+    mockLifeEventsService.updateLifeEvent.mockResolvedValue({ ...mockEvent })
+
+    const user = userEvent.setup()
+    renderWithProviders(<LifeEventsCard contactId={contactId} />)
+
+    await waitFor(() => {
+      expect(screen.getByText("Started New Role")).toBeInTheDocument()
+    })
+
+    const editButton = screen.getByTestId("action-edit")
+    await user.click(editButton)
+
+    await waitFor(() => {
+      expect(screen.getByText("Edit life event")).toBeInTheDocument()
+    })
+
+    const saveButtons = screen.getAllByRole("button", { name: /save/i })
+    await user.click(saveButtons[saveButtons.length - 1])
+
+    await waitFor(() => {
+      expect(mockLifeEventsService.updateLifeEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          eventId: "event-desc",
+          requestBody: expect.objectContaining({ description: "Senior engineer position" }),
+        }),
+      )
+    })
+  })
+
+  it("shows error on edit form submission failure", async () => {
+    const mockEvent = {
+      id: "event-fail",
+      contact_id: contactId,
+      event_type: "anniversary",
+      title: "Anniv",
+      occurred_at: "2018-05-01T00:00:00Z",
+      description: null,
+      create_annual_reminder: false,
+    }
+    mockLifeEventsService.listLifeEvents.mockResolvedValue({ data: [mockEvent] })
+    mockLifeEventsService.updateLifeEvent.mockRejectedValue(new Error("Update failed"))
+
+    const user = userEvent.setup()
+    renderWithProviders(<LifeEventsCard contactId={contactId} />)
+
+    await waitFor(() => {
+      expect(screen.getByText("Anniv")).toBeInTheDocument()
+    })
+
+    const editButton = screen.getByTestId("action-edit")
+    await user.click(editButton)
+
+    await waitFor(() => {
+      expect(screen.getByText("Edit life event")).toBeInTheDocument()
+    })
+
+    const saveButtons = screen.getAllByRole("button", { name: /save/i })
+    await user.click(saveButtons[saveButtons.length - 1])
+
+    await waitFor(() => {
+      expect(mockLifeEventsService.updateLifeEvent).toHaveBeenCalled()
+    })
+  })
+
+  it("handles delete mutation error gracefully", async () => {
+    const mockEvent = {
+      id: "event-del-err",
+      contact_id: contactId,
+      event_type: "moved",
+      title: "Moved to Berlin",
+      occurred_at: "2021-07-01T00:00:00Z",
+      description: null,
+      create_annual_reminder: false,
+    }
+    mockLifeEventsService.listLifeEvents.mockResolvedValue({ data: [mockEvent] })
+    mockLifeEventsService.deleteLifeEvent.mockRejectedValue(new Error("Delete failed"))
+
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true)
+
+    const user = userEvent.setup()
+    renderWithProviders(<LifeEventsCard contactId={contactId} />)
+
+    await waitFor(() => {
+      expect(screen.getByText("Moved to Berlin")).toBeInTheDocument()
+    })
+
+    const deleteButton = screen.getByTestId("action-delete")
+    await user.click(deleteButton)
+
+    await waitFor(() => {
+      expect(mockLifeEventsService.deleteLifeEvent).toHaveBeenCalledWith({
+        eventId: "event-del-err",
+      })
+    })
+
+    confirmSpy.mockRestore()
+  })
+
+  it("handles non-Error rejection on life event update", async () => {
+    const mockEvent = {
+      id: "event-up-fb",
+      contact_id: contactId,
+      event_type: "career",
+      title: "Old Job",
+      occurred_at: "2020-01-01T00:00:00Z",
+      description: null,
+      create_annual_reminder: false,
+    }
+    mockLifeEventsService.listLifeEvents.mockResolvedValue({
+      data: [mockEvent],
+    })
+    mockLifeEventsService.updateLifeEvent.mockRejectedValue(
+      "plain-string-error",
+    )
+
+    const user = userEvent.setup()
+    renderWithProviders(<LifeEventsCard contactId={contactId} />)
+
+    await waitFor(() => {
+      expect(screen.getByText("Old Job")).toBeInTheDocument()
+    })
+
+    const editButton = screen.getByTestId("action-edit")
+    await user.click(editButton)
+
+    await waitFor(() => {
+      expect(screen.getByText("Edit life event")).toBeInTheDocument()
+    })
+
+    const saveButtons = screen.getAllByRole("button", { name: /save/i })
+    await user.click(saveButtons[saveButtons.length - 1])
+
+    await waitFor(() => {
+      expect(mockLifeEventsService.updateLifeEvent).toHaveBeenCalled()
+    })
+  })
+
+  it("handles non-Error rejection on life event delete", async () => {
+    const mockEvent = {
+      id: "event-del-fb",
+      contact_id: contactId,
+      event_type: "moved",
+      title: "Delete Fallback Event",
+      occurred_at: "2021-07-01T00:00:00Z",
+      description: null,
+      create_annual_reminder: false,
+    }
+    mockLifeEventsService.listLifeEvents.mockResolvedValue({
+      data: [mockEvent],
+    })
+    mockLifeEventsService.deleteLifeEvent.mockRejectedValue(
+      "plain-string-error",
+    )
+
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true)
+
+    const user = userEvent.setup()
+    renderWithProviders(<LifeEventsCard contactId={contactId} />)
+
+    await waitFor(() => {
+      expect(screen.getByText("Delete Fallback Event")).toBeInTheDocument()
+    })
+
+    const deleteButton = screen.getByTestId("action-delete")
+    await user.click(deleteButton)
+
+    await waitFor(() => {
+      expect(mockLifeEventsService.deleteLifeEvent).toHaveBeenCalled()
+    })
+
+    confirmSpy.mockRestore()
+  })
+
 })

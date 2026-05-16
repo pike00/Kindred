@@ -1286,4 +1286,45 @@ describe("ApiKeys", () => {
       expect(screen.queryByText(/Expires/)).not.toBeInTheDocument()
     })
   })
+
+  it("uses fallback message on non-Error fetch rejection during API key create", async () => {
+    const { UsersService } = await import("@/client")
+    vi.mocked(UsersService.readUsers).mockResolvedValueOnce({
+      data: [],
+      count: 0,
+    })
+
+    vi.mocked(global.fetch as any)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: [], count: 0 }),
+      })
+      .mockRejectedValueOnce("plain-string-error")
+
+    const { toast } = await import("sonner")
+    const mockErrorToast = vi.mocked(toast.error)
+
+    const user = userEvent.setup()
+    renderWithProviders(<ApiKeys />)
+
+    const createButton = await screen.findByRole("button", {
+      name: /Create key/,
+    })
+    await user.click(createButton)
+
+    const nameInput = await screen.findByPlaceholderText("janet bot")
+    await user.type(nameInput, "FallbackTest")
+
+    const submitButton = screen.getByRole("button", { name: /^Create$/ })
+    await user.click(submitButton)
+
+    await waitFor(() => {
+      expect(mockErrorToast).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          description: "Failed to create API key",
+        }),
+      )
+    })
+  })
 })

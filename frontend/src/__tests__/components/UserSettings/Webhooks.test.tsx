@@ -1475,4 +1475,94 @@ describe("Webhooks", () => {
       screen.queryByText(/Inbound URL \(POST JSON payloads here\)/),
     ).not.toBeInTheDocument()
   })
+
+  it("uses fallback message on non-Error webhook creation rejection", async () => {
+    const { WebhooksService } = await import("@/client")
+    vi.mocked(WebhooksService.listWebhooks).mockResolvedValueOnce({
+      data: [],
+      count: 0,
+    })
+
+    vi.mocked(WebhooksService.createWebhook).mockRejectedValueOnce(
+      "plain-string-error",
+    )
+
+    const { toast } = await import("sonner")
+    const mockErrorToast = vi.mocked(toast.error)
+
+    const user = userEvent.setup()
+    renderWithProviders(<Webhooks />)
+
+    const addButtons = await screen.findAllByRole("button", {
+      name: /Add webhook/,
+    })
+    await user.click(addButtons[0])
+
+    const nameInput = await screen.findByPlaceholderText("n8n call logger")
+    await user.type(nameInput, "Test Webhook")
+
+    const outboundButton = screen.getByRole("button", { name: "Outbound" })
+    await user.click(outboundButton)
+
+    const urlInput = await screen.findByPlaceholderText(
+      "https://example.com/webhook",
+    )
+    await user.type(urlInput, "https://example.com/webhook")
+
+    const saveButton = await screen.findByRole("button", { name: /^Save$/ })
+    await user.click(saveButton)
+
+    await waitFor(() => {
+      expect(mockErrorToast).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          description: "Failed to create webhook",
+        }),
+      )
+    })
+  })
+
+  it("uses fallback message on non-Error webhook delete rejection", async () => {
+    const { WebhooksService } = await import("@/client")
+    const mockWebhooks = [
+      {
+        id: "webhook-fb",
+        name: "Fallback Webhook",
+        url: "https://example.com/fb",
+        direction: "outbound",
+        event_types: "contact.created",
+        is_active: true,
+        created_at: "2024-01-01T00:00:00Z",
+      },
+    ]
+
+    vi.mocked(WebhooksService.listWebhooks).mockResolvedValueOnce({
+      data: mockWebhooks,
+      count: 1,
+    })
+
+    vi.mocked(WebhooksService.deleteWebhook).mockRejectedValueOnce(
+      "plain-string-error",
+    )
+
+    const { toast } = await import("sonner")
+    const mockErrorToast = vi.mocked(toast.error)
+
+    vi.spyOn(window, "confirm").mockReturnValueOnce(true)
+
+    const user = userEvent.setup()
+    renderWithProviders(<Webhooks />)
+
+    const deleteButton = await screen.findByText("Delete")
+    await user.click(deleteButton)
+
+    await waitFor(() => {
+      expect(mockErrorToast).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          description: "Failed to delete webhook",
+        }),
+      )
+    })
+  })
 })

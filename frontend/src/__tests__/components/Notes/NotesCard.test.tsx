@@ -300,6 +300,24 @@ describe("NotesCard", () => {
     })
   })
 
+  it("uses fallback message when note creation rejects with non-Error value", async () => {
+    const user = userEvent.setup()
+    mockListNotes.mockResolvedValueOnce({ data: [] })
+    mockCreateNote.mockRejectedValueOnce("plain-string")
+
+    renderWithProviders(<NotesCard contactId="c1" />)
+
+    const textarea = screen.getByTestId("mention-textarea")
+    await user.type(textarea, "Test note")
+
+    const submitBtn = screen.getByRole("button", { name: /Save note/i })
+    await user.click(submitBtn)
+
+    await waitFor(() => {
+      expect(mockShowErrorToast).toHaveBeenCalledWith("Failed to save note")
+    })
+  })
+
   it("disables submit button when textarea is empty", async () => {
     renderWithProviders(<NotesCard contactId="c1" />)
 
@@ -686,6 +704,64 @@ describe("NotesCard", () => {
 
     await waitFor(() => {
       expect(mockShowSuccessToast).toHaveBeenCalledWith("Note deleted")
+    })
+  })
+
+  it("delete action uses fallback message on non-Error rejection", async () => {
+    const user = userEvent.setup()
+    vi.spyOn(window, "confirm").mockReturnValueOnce(true)
+
+    mockListNotes.mockResolvedValueOnce({
+      data: [mockNoteData.data[0]],
+    })
+    mockDeleteNote.mockRejectedValueOnce("plain-string-error")
+
+    renderWithProviders(<NotesCard contactId="c1" />)
+
+    await waitFor(() => {
+      expect(screen.getByText("First note about Alice")).toBeInTheDocument()
+    })
+
+    const deleteBtn = screen.getByTestId("action-Delete")
+    await user.click(deleteBtn)
+
+    await waitFor(() => {
+      expect(mockShowErrorToast).toHaveBeenCalledWith("Failed to delete note")
+    })
+  })
+
+  it("edit dialog uses fallback message on non-Error rejection", async () => {
+    const user = userEvent.setup()
+
+    mockListNotes.mockResolvedValueOnce({
+      data: [mockNoteData.data[0]],
+    })
+    mockUpdateNote.mockRejectedValueOnce("plain-string-error")
+
+    renderWithProviders(<NotesCard contactId="c1" />)
+
+    await waitFor(() => {
+      expect(screen.getByText("First note about Alice")).toBeInTheDocument()
+    })
+
+    const editBtn = screen.getByTestId("action-Edit")
+    await user.click(editBtn)
+
+    await waitFor(() => {
+      expect(screen.getByTestId("dialog")).toBeInTheDocument()
+    })
+
+    const dialogTextareas = screen.getAllByTestId("mention-textarea")
+    const dialogTextarea = dialogTextareas[dialogTextareas.length - 1]
+    await user.clear(dialogTextarea)
+    await user.type(dialogTextarea, "Updated note")
+
+    const saveBtns = screen.getAllByRole("button", { name: /Save/i })
+    const saveBtn = saveBtns[saveBtns.length - 1]
+    await user.click(saveBtn)
+
+    await waitFor(() => {
+      expect(mockShowErrorToast).toHaveBeenCalledWith("Failed to update note")
     })
   })
 

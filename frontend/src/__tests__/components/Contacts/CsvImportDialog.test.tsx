@@ -555,4 +555,209 @@ describe("CsvImportDialog", () => {
       expect(mockImport).toHaveBeenCalled()
     })
   })
+
+  it("shows updated count when result.updated > 0", async () => {
+    const { ImportExportService } = await import("@/client")
+    const mockPreview = vi.mocked(ImportExportService.previewCsvImport)
+    const mockImport = vi.mocked(ImportExportService.importCsv)
+
+    mockPreview.mockResolvedValue({
+      total_rows: 3,
+      encoding: "UTF-8",
+      headers: ["first_name"],
+      detected_mapping: { first_name: "first_name" },
+      sample_rows: [{ first_name: "Alice" }],
+    })
+
+    mockImport.mockResolvedValue({
+      imported: 2,
+      skipped: 0,
+      updated: 1,
+      tag_names_created: [],
+      errors: [],
+    })
+
+    const user = userEvent.setup()
+    renderWithProviders(<CsvImportDialog />)
+
+    const triggerButton = screen.getByRole("button", { name: /import csv/i })
+    await user.click(triggerButton)
+
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement
+    await user.upload(fileInput, new File(["test"], "test.csv", { type: "text/csv" }))
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /import 3 contacts/i })).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole("button", { name: /import 3 contacts/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText("Import Complete")).toBeInTheDocument()
+      expect(screen.getByText("1")).toBeInTheDocument()
+    })
+  })
+
+  it("shows errors list in complete step when errors present", async () => {
+    const { ImportExportService } = await import("@/client")
+    const mockPreview = vi.mocked(ImportExportService.previewCsvImport)
+    const mockImport = vi.mocked(ImportExportService.importCsv)
+
+    mockPreview.mockResolvedValue({
+      total_rows: 5,
+      encoding: "UTF-8",
+      headers: ["first_name"],
+      detected_mapping: { first_name: "first_name" },
+      sample_rows: [{ first_name: "Bob" }],
+    })
+
+    mockImport.mockResolvedValue({
+      imported: 3,
+      skipped: 0,
+      updated: 0,
+      tag_names_created: [],
+      errors: ["Row 2: missing email", "Row 4: invalid phone"],
+    })
+
+    const user = userEvent.setup()
+    renderWithProviders(<CsvImportDialog />)
+
+    const triggerButton = screen.getByRole("button", { name: /import csv/i })
+    await user.click(triggerButton)
+
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement
+    await user.upload(fileInput, new File(["test"], "test.csv", { type: "text/csv" }))
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /import 5 contacts/i })).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole("button", { name: /import 5 contacts/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText("Import Complete")).toBeInTheDocument()
+      expect(screen.getByText(/Row 2: missing email/)).toBeInTheDocument()
+    })
+  })
+
+  it("truncates errors list beyond 5 in complete step", async () => {
+    const { ImportExportService } = await import("@/client")
+    const mockPreview = vi.mocked(ImportExportService.previewCsvImport)
+    const mockImport = vi.mocked(ImportExportService.importCsv)
+
+    mockPreview.mockResolvedValue({
+      total_rows: 10,
+      encoding: "UTF-8",
+      headers: ["first_name"],
+      detected_mapping: { first_name: "first_name" },
+      sample_rows: [{ first_name: "Carol" }],
+    })
+
+    mockImport.mockResolvedValue({
+      imported: 3,
+      skipped: 0,
+      updated: 0,
+      tag_names_created: [],
+      errors: ["e1", "e2", "e3", "e4", "e5", "e6", "e7"],
+    })
+
+    const user = userEvent.setup()
+    renderWithProviders(<CsvImportDialog />)
+
+    const triggerButton = screen.getByRole("button", { name: /import csv/i })
+    await user.click(triggerButton)
+
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement
+    await user.upload(fileInput, new File(["test"], "test.csv", { type: "text/csv" }))
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /import 10 contacts/i })).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole("button", { name: /import 10 contacts/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText("Import Complete")).toBeInTheDocument()
+      expect(screen.getByText(/\.\.\.and 2 more/)).toBeInTheDocument()
+    })
+  })
+
+  it("clicking Import Another File resets back to upload step", async () => {
+    const { ImportExportService } = await import("@/client")
+    const mockPreview = vi.mocked(ImportExportService.previewCsvImport)
+    const mockImport = vi.mocked(ImportExportService.importCsv)
+
+    mockPreview.mockResolvedValue({
+      total_rows: 1,
+      encoding: "UTF-8",
+      headers: ["first_name"],
+      detected_mapping: { first_name: "first_name" },
+      sample_rows: [{ first_name: "Dave" }],
+    })
+
+    mockImport.mockResolvedValue({
+      imported: 1,
+      skipped: 0,
+      updated: 0,
+      tag_names_created: [],
+      errors: [],
+    })
+
+    const user = userEvent.setup()
+    renderWithProviders(<CsvImportDialog />)
+
+    const triggerButton = screen.getByRole("button", { name: /import csv/i })
+    await user.click(triggerButton)
+
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement
+    await user.upload(fileInput, new File(["test"], "test.csv", { type: "text/csv" }))
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /import 1 contact/i })).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole("button", { name: /import 1 contact/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText("Import Complete")).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole("button", { name: /import another file/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText(/upload a csv file to import contacts/i)).toBeInTheDocument()
+    })
+  })
+
+  it("clicking Back in preview step resets to upload step", async () => {
+    const { ImportExportService } = await import("@/client")
+    const mockPreview = vi.mocked(ImportExportService.previewCsvImport)
+
+    mockPreview.mockResolvedValue({
+      total_rows: 5,
+      encoding: "UTF-8",
+      headers: ["first_name"],
+      detected_mapping: { first_name: "first_name" },
+      sample_rows: [{ first_name: "Eve" }],
+    })
+
+    const user = userEvent.setup()
+    renderWithProviders(<CsvImportDialog />)
+
+    const triggerButton = screen.getByRole("button", { name: /import csv/i })
+    await user.click(triggerButton)
+
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement
+    await user.upload(fileInput, new File(["test"], "test.csv", { type: "text/csv" }))
+
+    await waitFor(() => {
+      expect(screen.getByText("File analyzed successfully")).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole("button", { name: /^back$/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText(/upload a csv file to import contacts/i)).toBeInTheDocument()
+    })
+  })
 })

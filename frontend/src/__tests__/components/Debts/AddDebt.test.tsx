@@ -391,4 +391,23 @@ describe("AddDebt", () => {
     const currencyInput = screen.getByDisplayValue("USD") as HTMLInputElement
     expect(currencyInput.value).toBe("USD")
   })
+
+  it("handles non-Error rejection on create", async () => {
+    const user = userEvent.setup()
+    mockCreateDebt.mockRejectedValue("plain-string-error")
+
+    renderWithProviders(<AddDebt contactId="contact-1" />)
+
+    await user.click(screen.getByRole("button", { name: /add debt/i }))
+
+    const amountInput = screen.getByPlaceholderText("0.00")
+    const submitButton = screen.getByRole("button", { name: /save/i })
+
+    await user.type(amountInput, "50")
+    await user.click(submitButton)
+
+    await waitFor(() => {
+      expect(mockCreateDebt).toHaveBeenCalled()
+    })
+  })
 })

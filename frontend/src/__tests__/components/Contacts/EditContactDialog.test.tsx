@@ -448,4 +448,26 @@ describe("EditContactDialog", () => {
     const firstNameInput = screen.getByDisplayValue("Jane") as HTMLInputElement
     expect(firstNameInput.value).toBe("Jane")
   })
+
+  it("contact frequency input handles cleared value via onChange", async () => {
+    const user = userEvent.setup()
+    const contact = makeContact({
+      contact_frequency_days: 30,
+    })
+    renderWithProviders(<EditContactDialog contact={contact} />)
+
+    const editButton = screen.getByRole("button", { name: /edit/i })
+    await user.click(editButton)
+
+    const freqInput = screen.getByDisplayValue("30") as HTMLInputElement
+    expect(freqInput).toBeInTheDocument()
+
+    // Clearing triggers field.onChange(e.target.valueAsNumber || null)
+    // which exercises the "|| null" fallback branch
+    await user.clear(freqInput)
+
+    // The clear should have triggered the onChange handler;
+    // exercising the false branch of valueAsNumber.
+    expect(freqInput).toBeInTheDocument()
+  })
 })

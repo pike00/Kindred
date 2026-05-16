@@ -410,8 +410,8 @@ describe("AddressesCard", () => {
       expect(screen.getByText("Home")).toBeInTheDocument()
     })
 
-    // Click the Edit button for the address
-    const editButton = screen.getByTestId("action-edit")
+    // Click the Edit button for the address (RowActionsMenu renders as button with data-testid="action-edit")
+    const editButton = await screen.findByTestId("action-edit")
     await user.click(editButton)
 
     // Verify the edit dialog title appears
@@ -446,7 +446,7 @@ describe("AddressesCard", () => {
       expect(screen.getByText("Work")).toBeInTheDocument()
     })
 
-    const editButton = screen.getByTestId("action-edit")
+    const editButton = await screen.findByTestId("action-edit")
     await user.click(editButton)
 
     await waitFor(() => {
@@ -484,7 +484,7 @@ describe("AddressesCard", () => {
       expect(screen.getByText("123 Main St")).toBeInTheDocument()
     })
 
-    const editButton = screen.getByTestId("action-edit")
+    const editButton = await screen.findByTestId("action-edit")
     await user.click(editButton)
 
     await waitFor(() => {
@@ -536,7 +536,7 @@ describe("AddressesCard", () => {
       expect(screen.getByText("Home")).toBeInTheDocument()
     })
 
-    const editButton = screen.getByTestId("action-edit")
+    const editButton = await screen.findByTestId("action-edit")
     await user.click(editButton)
 
     await waitFor(() => {
@@ -585,7 +585,7 @@ describe("AddressesCard", () => {
       expect(screen.getByText("Home")).toBeInTheDocument()
     })
 
-    const editButton = screen.getByTestId("action-edit")
+    const editButton = await screen.findByTestId("action-edit")
     await user.click(editButton)
 
     await waitFor(() => {
@@ -654,7 +654,7 @@ describe("AddressesCard", () => {
       expect(screen.getByText("Home")).toBeInTheDocument()
     })
 
-    const editButton = screen.getByTestId("action-edit")
+    const editButton = await screen.findByTestId("action-edit")
     await user.click(editButton)
 
     await waitFor(() => {
@@ -700,7 +700,7 @@ describe("AddressesCard", () => {
       expect(screen.getByText("Home")).toBeInTheDocument()
     })
 
-    const editButton = screen.getByTestId("action-edit")
+    const editButton = await screen.findByTestId("action-edit")
     await user.click(editButton)
 
     await waitFor(() => {
@@ -799,6 +799,207 @@ describe("AddressesCard", () => {
     // Country should not be visible (it's "United States" which is default)
     const countryElements = screen.queryAllByText("United States")
     expect(countryElements.length).toBe(0)
+  })
+
+  it("deletes address when delete is confirmed", async () => {
+    mockAddressService.listAddresses.mockResolvedValue({
+      data: [
+        {
+          id: "addr-del",
+          contact_id: contactId,
+          label: "Old Home",
+          street: "99 Delete St",
+          extended: null,
+          city: "Portland",
+          region: "OR",
+          postal_code: "97201",
+          country: null,
+        },
+      ],
+    })
+    mockAddressService.deleteAddress.mockResolvedValue(undefined)
+
+    vi.spyOn(window, "confirm").mockReturnValue(true)
+
+    renderWithProviders(<AddressesCard contactId={contactId} />)
+
+    await waitFor(() => {
+      expect(screen.getByText("Old Home")).toBeInTheDocument()
+    })
+
+    const deleteButton = screen.getByTestId("action-delete")
+    await userEvent.setup().click(deleteButton)
+
+    await waitFor(() => {
+      expect(mockAddressService.deleteAddress).toHaveBeenCalledWith({
+        addressId: "addr-del",
+      })
+    })
+  })
+
+  it("does not delete address when confirm is canceled", async () => {
+    mockAddressService.listAddresses.mockResolvedValue({
+      data: [
+        {
+          id: "addr-keep",
+          contact_id: contactId,
+          label: "Keep Home",
+          street: "1 Keep St",
+          extended: null,
+          city: "Seattle",
+          region: "WA",
+          postal_code: "98101",
+          country: null,
+        },
+      ],
+    })
+
+    vi.spyOn(window, "confirm").mockReturnValue(false)
+
+    renderWithProviders(<AddressesCard contactId={contactId} />)
+
+    await waitFor(() => {
+      expect(screen.getByText("Keep Home")).toBeInTheDocument()
+    })
+
+    const deleteButton = screen.getByTestId("action-delete")
+    await userEvent.setup().click(deleteButton)
+
+    expect(mockAddressService.deleteAddress).not.toHaveBeenCalled()
+  })
+
+  it("handles delete address error gracefully", async () => {
+    mockAddressService.listAddresses.mockResolvedValue({
+      data: [
+        {
+          id: "addr-err",
+          contact_id: contactId,
+          label: "Error Home",
+          street: "2 Err St",
+          extended: null,
+          city: "Denver",
+          region: "CO",
+          postal_code: "80201",
+          country: null,
+        },
+      ],
+    })
+    mockAddressService.deleteAddress.mockRejectedValue(new Error("Network error"))
+
+    vi.spyOn(window, "confirm").mockReturnValue(true)
+
+    renderWithProviders(<AddressesCard contactId={contactId} />)
+
+    await waitFor(() => {
+      expect(screen.getByText("Error Home")).toBeInTheDocument()
+    })
+
+    const deleteButton = screen.getByTestId("action-delete")
+    await userEvent.setup().click(deleteButton)
+
+    await waitFor(() => {
+      expect(mockAddressService.deleteAddress).toHaveBeenCalledWith({
+        addressId: "addr-err",
+      })
+    })
+  })
+
+  it("handles non-Error rejection on address creation", async () => {
+    mockAddressService.listAddresses.mockResolvedValue({ data: [] })
+    mockAddressService.createAddressRoute.mockRejectedValue("plain-string")
+
+    const user = userEvent.setup()
+    renderWithProviders(<AddressesCard contactId={contactId} />)
+
+    const addButton = screen.getByRole("button", { name: /add/i })
+    await user.click(addButton)
+
+    await waitFor(() => {
+      expect(screen.getByText("Add address")).toBeInTheDocument()
+    })
+
+    const streetInput = screen.getByPlaceholderText("123 Main St")
+    await user.type(streetInput, "123 Main St")
+
+    const saveButton = screen.getAllByRole("button", { name: /save/i })[0]
+    await user.click(saveButton)
+
+    await waitFor(() => {
+      expect(mockAddressService.createAddressRoute).toHaveBeenCalled()
+    })
+  })
+
+  it("handles non-Error rejection on address update", async () => {
+    mockAddressService.listAddresses.mockResolvedValue({
+      data: [
+        {
+          id: "addr-up",
+          contact_id: contactId,
+          label: "UpdHome",
+          street: "1 Main",
+          extended: null,
+          city: "NYC",
+          region: "NY",
+          postal_code: "10001",
+          country: "USA",
+        },
+      ],
+    })
+    mockAddressService.updateAddress.mockRejectedValue("plain-string")
+
+    const user = userEvent.setup()
+    renderWithProviders(<AddressesCard contactId={contactId} />)
+
+    await waitFor(() =>
+      expect(screen.getByText("UpdHome")).toBeInTheDocument(),
+    )
+
+    const editButton = await screen.findByTestId("action-edit")
+    await user.click(editButton)
+
+    await waitFor(() =>
+      expect(screen.getByText("Edit address")).toBeInTheDocument(),
+    )
+
+    const saveButtons = screen.getAllByRole("button", { name: /save/i })
+    await user.click(saveButtons[saveButtons.length - 1])
+
+    await waitFor(() => {
+      expect(mockAddressService.updateAddress).toHaveBeenCalled()
+    })
+  })
+
+  it("handles non-Error rejection on address delete", async () => {
+    mockAddressService.listAddresses.mockResolvedValue({
+      data: [
+        {
+          id: "addr-del2",
+          contact_id: contactId,
+          label: "DelHome",
+          street: "1 Main",
+          extended: null,
+          city: "NYC",
+          region: "NY",
+          postal_code: "10001",
+          country: "USA",
+        },
+      ],
+    })
+    mockAddressService.deleteAddress.mockRejectedValue("plain-string")
+    vi.spyOn(window, "confirm").mockReturnValue(true)
+
+    renderWithProviders(<AddressesCard contactId={contactId} />)
+
+    await waitFor(() =>
+      expect(screen.getByText("DelHome")).toBeInTheDocument(),
+    )
+
+    const deleteButton = screen.getByTestId("action-delete")
+    await userEvent.setup().click(deleteButton)
+
+    await waitFor(() => {
+      expect(mockAddressService.deleteAddress).toHaveBeenCalled()
+    })
   })
 
 })

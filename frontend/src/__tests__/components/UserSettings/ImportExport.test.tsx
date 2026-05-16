@@ -405,7 +405,10 @@ describe("ImportExport", () => {
 
     await waitFor(() => {
       expect(mockErrorToast).toHaveBeenCalledWith(
-        expect.stringContaining("Export failed")
+        expect.anything(),
+        expect.objectContaining({
+          description: expect.stringMatching(/Export failed \(\d+\)$/),
+        })
       )
     })
   })
@@ -430,9 +433,71 @@ describe("ImportExport", () => {
 
     await waitFor(() => {
       expect(mockErrorToast).toHaveBeenCalledWith(
-        expect.stringContaining("Export failed")
+        expect.anything(),
+        expect.objectContaining({
+          description: expect.stringMatching(/Export failed \(\d+\)$/),
+        })
       )
     })
+  })
+
+  it("uses token from function when OpenAPI.TOKEN is a function", async () => {
+    const { OpenAPI } = await import("@/client")
+    const tokenFn = vi.fn().mockResolvedValue("function-token")
+    ;(OpenAPI as any).TOKEN = tokenFn
+
+    const mockBlob = new Blob(["vcard data"], { type: "text/vcard" })
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      blob: vi.fn().mockResolvedValueOnce(mockBlob),
+    })
+
+    const user = userEvent.setup()
+    renderWithProviders(<ImportExport />)
+
+    const vcardButton = screen.getByRole("button", { name: /Download vCard/ })
+    await user.click(vcardButton)
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/api/v1/import-export/export/vcard"),
+        expect.objectContaining({
+          headers: expect.objectContaining({ Authorization: "Bearer function-token" }),
+        }),
+      )
+    })
+
+    // Restore string token for other tests
+    ;(OpenAPI as any).TOKEN = "test-token"
+  })
+
+  it("sends empty Authorization when OpenAPI.TOKEN is empty string", async () => {
+    const { OpenAPI } = await import("@/client")
+    ;(OpenAPI as any).TOKEN = ""
+
+    const mockBlob = new Blob(["vcard data"], { type: "text/vcard" })
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      blob: vi.fn().mockResolvedValueOnce(mockBlob),
+    })
+
+    const user = userEvent.setup()
+    renderWithProviders(<ImportExport />)
+
+    const vcardButton = screen.getByRole("button", { name: /Download vCard/ })
+    await user.click(vcardButton)
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/api/v1/import-export/export/vcard"),
+        expect.objectContaining({
+          headers: expect.not.objectContaining({ Authorization: expect.anything() }),
+        }),
+      )
+    })
+
+    // Restore
+    ;(OpenAPI as any).TOKEN = "test-token"
   })
 
   it("displays error list when import result contains errors", async () => {
@@ -506,6 +571,83 @@ describe("ImportExport", () => {
       expect(resultDiv?.textContent).toMatch(/5 contacts/)
       // Ensure error details section is not present
       expect(screen.queryByText(/issues/)).not.toBeInTheDocument()
+    })
+  })
+
+  it("uses fallback message when import rejects with non-Error value", async () => {
+    const { ImportExportService } = await import("@/client")
+    vi.mocked(ImportExportService.importVcard).mockRejectedValueOnce(
+      "string-error",
+    )
+
+    const { toast } = await import("sonner")
+    const mockErrorToast = vi.mocked(toast.error)
+
+    const user = userEvent.setup()
+    const { container } = renderWithProviders(<ImportExport />)
+
+    const input = container.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement
+    const file = new File(["contact data"], "contacts.vcf", {
+      type: "text/vcard",
+    })
+    await user.upload(input, file)
+
+    const importButton = screen.getByRole("button", { name: "Import" })
+    await user.click(importButton)
+
+    await waitFor(() => {
+      expect(mockErrorToast).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          description: "Import failed",
+        }),
+      )
+    })
+  })
+
+  it("uses fallback message when vCard export rejects with non-Error value", async () => {
+    global.fetch = vi.fn().mockRejectedValueOnce("plain-string-error")
+
+    const { toast } = await import("sonner")
+    const mockErrorToast = vi.mocked(toast.error)
+
+    const user = userEvent.setup()
+    renderWithProviders(<ImportExport />)
+
+    const vcardButton = screen.getByRole("button", { name: /Download vCard/ })
+    await user.click(vcardButton)
+
+    await waitFor(() => {
+      expect(mockErrorToast).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          description: "Export failed",
+        }),
+      )
+    })
+  })
+
+  it("uses fallback message when JSON export rejects with non-Error value", async () => {
+    global.fetch = vi.fn().mockRejectedValueOnce("plain-string-error")
+
+    const { toast } = await import("sonner")
+    const mockErrorToast = vi.mocked(toast.error)
+
+    const user = userEvent.setup()
+    renderWithProviders(<ImportExport />)
+
+    const jsonButton = screen.getByRole("button", { name: /Download JSON/ })
+    await user.click(jsonButton)
+
+    await waitFor(() => {
+      expect(mockErrorToast).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          description: "Export failed",
+        }),
+      )
     })
   })
 })

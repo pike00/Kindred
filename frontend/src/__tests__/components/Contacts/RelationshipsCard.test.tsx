@@ -673,6 +673,44 @@ describe("RelationshipsCard", () => {
         expect(mockShowErrorToast).toHaveBeenCalledWith("Network error")
       })
     })
+
+    it("uses fallback message on non-Error creation rejection", async () => {
+      const contacts = [makeContact({ id: "contact-2", first_name: "Bob" })]
+
+      mockListContacts.mockResolvedValue({ data: contacts })
+      mockListRelationships.mockResolvedValue({ data: [] })
+      mockLookupInverse.mockResolvedValue({ inverse: "spouse" })
+      mockCreateRelationship.mockRejectedValue("plain-string-error")
+
+      renderWithProviders(
+        <RelationshipsCard contactId={contactId} contactName={contactName} />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByTestId("contact-item-Bob Jones")).toBeInTheDocument()
+      })
+
+      const contactButton = screen.getByTestId("contact-item-Bob Jones")
+      await userEvent.click(contactButton)
+
+      const typeInput = screen.getByPlaceholderText(
+        "spouse, brother, colleague...",
+      )
+      await userEvent.type(typeInput, "spouse")
+
+      const saveButton = screen.getByRole("button", { name: "Save" })
+      await waitFor(() => {
+        expect(saveButton).not.toBeDisabled()
+      })
+
+      await userEvent.click(saveButton)
+
+      await waitFor(() => {
+        expect(mockShowErrorToast).toHaveBeenCalledWith(
+          "Failed to add relationship",
+        )
+      })
+    })
   })
 
   describe("AddRelationshipInline cancel behavior", () => {
@@ -1047,6 +1085,47 @@ describe("RelationshipsCard", () => {
         expect(mockShowErrorToast).toHaveBeenCalledWith("Update failed")
       })
     })
+
+    it("uses fallback message on non-Error update rejection", async () => {
+      const relationships = [
+        makeRelationship({
+          id: "rel-1",
+          relationship_type: "spouse",
+        }),
+      ]
+
+      mockListContacts.mockResolvedValue({ data: [] })
+      mockListRelationships.mockResolvedValue({ data: relationships })
+      mockGetContact.mockResolvedValue(makeContact())
+      mockUpdateRelationship.mockRejectedValue("plain-string-error")
+
+      renderWithProviders(
+        <RelationshipsCard contactId={contactId} contactName={contactName} />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByTestId("action-edit")).toBeInTheDocument()
+      })
+
+      const editButton = screen.getByTestId("action-edit")
+      await userEvent.click(editButton)
+
+      await waitFor(() => {
+        expect(screen.getByText("Edit relationship")).toBeInTheDocument()
+      })
+
+      const saveButton = within(
+        document.querySelector("[role='dialog']") || document,
+      ).getByRole("button", { name: "Save" })
+
+      await userEvent.click(saveButton)
+
+      await waitFor(() => {
+        expect(mockShowErrorToast).toHaveBeenCalledWith(
+          "Failed to update relationship",
+        )
+      })
+    })
   })
 
   describe("RelationshipRow delete action", () => {
@@ -1161,6 +1240,34 @@ describe("RelationshipsCard", () => {
 
       await waitFor(() => {
         expect(mockShowErrorToast).toHaveBeenCalledWith("Delete failed")
+      })
+    })
+
+    it("uses fallback message on non-Error delete rejection", async () => {
+      const relationships = [makeRelationship()]
+
+      mockListContacts.mockResolvedValue({ data: [] })
+      mockListRelationships.mockResolvedValue({ data: relationships })
+      mockGetContact.mockResolvedValue(makeContact())
+      mockDeleteRelationship.mockRejectedValue("plain-string-error")
+
+      vi.spyOn(window, "confirm").mockReturnValue(true)
+
+      renderWithProviders(
+        <RelationshipsCard contactId={contactId} contactName={contactName} />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByTestId("action-delete")).toBeInTheDocument()
+      })
+
+      const deleteButton = screen.getByTestId("action-delete")
+      await userEvent.click(deleteButton)
+
+      await waitFor(() => {
+        expect(mockShowErrorToast).toHaveBeenCalledWith(
+          "Failed to delete relationship",
+        )
       })
     })
   })
