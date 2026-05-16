@@ -1,0 +1,193 @@
+from http import HTTPStatus
+from typing import Any
+from urllib.parse import quote
+from uuid import UUID
+
+import httpx
+
+from ... import errors
+from ...client import AuthenticatedClient, Client
+from ...models.gift_public import GiftPublic
+from ...models.gift_status import GiftStatus
+from ...models.http_validation_error import HTTPValidationError
+from ...types import UNSET, Response
+
+
+def _get_kwargs(
+    gift_id: UUID,
+    *,
+    new_status: GiftStatus,
+) -> dict[str, Any]:
+
+    params: dict[str, Any] = {}
+
+    json_new_status = new_status.value
+    params["new_status"] = json_new_status
+
+    params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
+
+    _kwargs: dict[str, Any] = {
+        "method": "post",
+        "url": "/api/v1/gifts/{gift_id}/change-status".format(
+            gift_id=quote(str(gift_id), safe=""),
+        ),
+        "params": params,
+    }
+
+    return _kwargs
+
+
+def _parse_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> GiftPublic | HTTPValidationError | None:
+    if response.status_code == 200:
+        response_200 = GiftPublic.from_dict(response.json())
+
+        return response_200
+
+    if response.status_code == 422:
+        response_422 = HTTPValidationError.from_dict(response.json())
+
+        return response_422
+
+    if client.raise_on_unexpected_status:
+        raise errors.UnexpectedStatus(response.status_code, response.content)
+    else:
+        return None
+
+
+def _build_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> Response[GiftPublic | HTTPValidationError]:
+    return Response(
+        status_code=HTTPStatus(response.status_code),
+        content=response.content,
+        headers=response.headers,
+        parsed=_parse_response(client=client, response=response),
+    )
+
+
+def sync_detailed(
+    gift_id: UUID,
+    *,
+    client: AuthenticatedClient,
+    new_status: GiftStatus,
+) -> Response[GiftPublic | HTTPValidationError]:
+    """Change Gift Status
+
+     Change gift status (for drag-and-drop).
+
+    Args:
+        gift_id (UUID):
+        new_status (GiftStatus):
+
+    Raises:
+        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+    Returns:
+        Response[GiftPublic | HTTPValidationError]
+    """
+
+    kwargs = _get_kwargs(
+        gift_id=gift_id,
+        new_status=new_status,
+    )
+
+    response = client.get_httpx_client().request(
+        **kwargs,
+    )
+
+    return _build_response(client=client, response=response)
+
+
+def sync(
+    gift_id: UUID,
+    *,
+    client: AuthenticatedClient,
+    new_status: GiftStatus,
+) -> GiftPublic | HTTPValidationError | None:
+    """Change Gift Status
+
+     Change gift status (for drag-and-drop).
+
+    Args:
+        gift_id (UUID):
+        new_status (GiftStatus):
+
+    Raises:
+        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+    Returns:
+        GiftPublic | HTTPValidationError
+    """
+
+    return sync_detailed(
+        gift_id=gift_id,
+        client=client,
+        new_status=new_status,
+    ).parsed
+
+
+async def asyncio_detailed(
+    gift_id: UUID,
+    *,
+    client: AuthenticatedClient,
+    new_status: GiftStatus,
+) -> Response[GiftPublic | HTTPValidationError]:
+    """Change Gift Status
+
+     Change gift status (for drag-and-drop).
+
+    Args:
+        gift_id (UUID):
+        new_status (GiftStatus):
+
+    Raises:
+        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+    Returns:
+        Response[GiftPublic | HTTPValidationError]
+    """
+
+    kwargs = _get_kwargs(
+        gift_id=gift_id,
+        new_status=new_status,
+    )
+
+    response = await client.get_async_httpx_client().request(**kwargs)
+
+    return _build_response(client=client, response=response)
+
+
+async def asyncio(
+    gift_id: UUID,
+    *,
+    client: AuthenticatedClient,
+    new_status: GiftStatus,
+) -> GiftPublic | HTTPValidationError | None:
+    """Change Gift Status
+
+     Change gift status (for drag-and-drop).
+
+    Args:
+        gift_id (UUID):
+        new_status (GiftStatus):
+
+    Raises:
+        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+    Returns:
+        GiftPublic | HTTPValidationError
+    """
+
+    return (
+        await asyncio_detailed(
+            gift_id=gift_id,
+            client=client,
+            new_status=new_status,
+        )
+    ).parsed

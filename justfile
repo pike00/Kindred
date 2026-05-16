@@ -202,3 +202,32 @@ ship level:
     tag=$(git describe --tags --abbrev=0)
     just build "$tag"
     just deploy "$tag"
+
+# ─── Python SDK (sdk/) ───────────────────────────────────────────────────
+
+# Regenerate sdk/src/kindred/_generated/ from frontend/openapi.json.
+# Run after any backend schema change; commit the result.
+[group('SDK')]
+sdk-regen:
+    cd sdk && ./scripts/regen.sh
+
+# Run the SDK's pytest suite.
+[group('SDK')]
+sdk-test *args:
+    cd sdk && uv sync --quiet && uv run pytest {{args}}
+
+# Build a wheel + sdist into sdk/dist/.
+[group('SDK')]
+sdk-build:
+    cd sdk && uv build
+
+# Install the SDK as a global uv tool from this checkout (editable).
+# After: `kindred --help` from anywhere.
+[group('SDK')]
+sdk-install-local:
+    uv tool install --force --editable ./sdk
+
+# Print the CLI help — sanity-check the install.
+[group('SDK')]
+sdk-help:
+    cd sdk && uv run kindred --help
