@@ -29,8 +29,8 @@ describe("CustomFieldDefinitions", () => {
     vi.clearAllMocks()
   })
 
-  it("renders section heading", () => {
-    const { CustomFieldsService } = require("@/client")
+  it("renders section heading", async () => {
+    const { CustomFieldsService } = await import("@/client")
     vi.mocked(CustomFieldsService.listFieldDefinitions).mockResolvedValueOnce({
       data: [],
     })
@@ -40,8 +40,8 @@ describe("CustomFieldDefinitions", () => {
     expect(screen.getByText("Custom field definitions")).toBeInTheDocument()
   })
 
-  it("renders description text", () => {
-    const { CustomFieldsService } = require("@/client")
+  it("renders description text", async () => {
+    const { CustomFieldsService } = await import("@/client")
     vi.mocked(CustomFieldsService.listFieldDefinitions).mockResolvedValueOnce({
       data: [],
     })
@@ -54,8 +54,8 @@ describe("CustomFieldDefinitions", () => {
     ).toBeInTheDocument()
   })
 
-  it("renders add field button", () => {
-    const { CustomFieldsService } = require("@/client")
+  it("renders add field button", async () => {
+    const { CustomFieldsService } = await import("@/client")
     vi.mocked(CustomFieldsService.listFieldDefinitions).mockResolvedValueOnce({
       data: [],
     })
@@ -65,8 +65,8 @@ describe("CustomFieldDefinitions", () => {
     expect(screen.getByRole("button", { name: /Add field/ })).toBeInTheDocument()
   })
 
-  it("shows loading skeleton while loading", () => {
-    const { CustomFieldsService } = require("@/client")
+  it("shows loading skeleton while loading", async () => {
+    const { CustomFieldsService } = await import("@/client")
     vi.mocked(CustomFieldsService.listFieldDefinitions).mockImplementation(
       () => new Promise((resolve) => {
         setTimeout(() => resolve({ data: [] }), 1000)
@@ -80,7 +80,7 @@ describe("CustomFieldDefinitions", () => {
   })
 
   it("displays empty state when no definitions exist", async () => {
-    const { CustomFieldsService } = require("@/client")
+    const { CustomFieldsService } = await import("@/client")
     vi.mocked(CustomFieldsService.listFieldDefinitions).mockResolvedValueOnce({
       data: [],
     })
@@ -95,7 +95,7 @@ describe("CustomFieldDefinitions", () => {
   })
 
   it("displays list of definitions", async () => {
-    const { CustomFieldsService } = require("@/client")
+    const { CustomFieldsService } = await import("@/client")
     vi.mocked(CustomFieldsService.listFieldDefinitions).mockResolvedValueOnce({
       data: [
         {
@@ -124,7 +124,7 @@ describe("CustomFieldDefinitions", () => {
   })
 
   it("displays definition field type and icon", async () => {
-    const { CustomFieldsService } = require("@/client")
+    const { CustomFieldsService } = await import("@/client")
     vi.mocked(CustomFieldsService.listFieldDefinitions).mockResolvedValueOnce({
       data: [
         {
@@ -145,7 +145,7 @@ describe("CustomFieldDefinitions", () => {
   })
 
   it("displays definition description when present", async () => {
-    const { CustomFieldsService } = require("@/client")
+    const { CustomFieldsService } = await import("@/client")
     vi.mocked(CustomFieldsService.listFieldDefinitions).mockResolvedValueOnce({
       data: [
         {
@@ -166,7 +166,7 @@ describe("CustomFieldDefinitions", () => {
   })
 
   it("opens add dialog when Add field button is clicked", async () => {
-    const { CustomFieldsService } = require("@/client")
+    const { CustomFieldsService } = await import("@/client")
     vi.mocked(CustomFieldsService.listFieldDefinitions).mockResolvedValueOnce({
       data: [],
     })
@@ -183,7 +183,7 @@ describe("CustomFieldDefinitions", () => {
   })
 
   it("renders form fields in add dialog", async () => {
-    const { CustomFieldsService } = require("@/client")
+    const { CustomFieldsService } = await import("@/client")
     vi.mocked(CustomFieldsService.listFieldDefinitions).mockResolvedValueOnce({
       data: [],
     })
@@ -202,7 +202,7 @@ describe("CustomFieldDefinitions", () => {
   })
 
   it("validates that name is required in add form", async () => {
-    const { CustomFieldsService } = require("@/client")
+    const { CustomFieldsService } = await import("@/client")
     vi.mocked(CustomFieldsService.listFieldDefinitions).mockResolvedValueOnce({
       data: [],
     })
@@ -226,7 +226,7 @@ describe("CustomFieldDefinitions", () => {
   })
 
   it("successfully creates new definition", async () => {
-    const { CustomFieldsService } = require("@/client")
+    const { CustomFieldsService } = await import("@/client")
     vi.mocked(CustomFieldsService.listFieldDefinitions)
       .mockResolvedValueOnce({ data: [] })
       .mockResolvedValueOnce({
@@ -288,7 +288,7 @@ describe("CustomFieldDefinitions", () => {
   })
 
   it("closes dialog after successful creation", async () => {
-    const { CustomFieldsService } = require("@/client")
+    const { CustomFieldsService } = await import("@/client")
     vi.mocked(CustomFieldsService.listFieldDefinitions)
       .mockResolvedValueOnce({ data: [] })
       .mockResolvedValueOnce({
@@ -333,7 +333,7 @@ describe("CustomFieldDefinitions", () => {
   })
 
   it("displays definition action menu", async () => {
-    const { CustomFieldsService } = require("@/client")
+    const { CustomFieldsService } = await import("@/client")
     vi.mocked(CustomFieldsService.listFieldDefinitions).mockResolvedValueOnce({
       data: [
         {
@@ -360,7 +360,7 @@ describe("CustomFieldDefinitions", () => {
   })
 
   it("opens edit dialog when Edit is clicked", async () => {
-    const { CustomFieldsService } = require("@/client")
+    const { CustomFieldsService } = await import("@/client")
     vi.mocked(CustomFieldsService.listFieldDefinitions).mockResolvedValueOnce({
       data: [
         {
@@ -394,7 +394,7 @@ describe("CustomFieldDefinitions", () => {
   })
 
   it("populates edit form with current values", async () => {
-    const { CustomFieldsService } = require("@/client")
+    const { CustomFieldsService } = await import("@/client")
     vi.mocked(CustomFieldsService.listFieldDefinitions).mockResolvedValueOnce({
       data: [
         {
@@ -429,7 +429,7 @@ describe("CustomFieldDefinitions", () => {
   })
 
   it("successfully updates definition", async () => {
-    const { CustomFieldsService } = require("@/client")
+    const { CustomFieldsService } = await import("@/client")
     vi.mocked(CustomFieldsService.listFieldDefinitions)
       .mockResolvedValueOnce({
         data: [
@@ -492,7 +492,7 @@ describe("CustomFieldDefinitions", () => {
   })
 
   it("prompts for confirmation before deleting", async () => {
-    const { CustomFieldsService } = require("@/client")
+    const { CustomFieldsService } = await import("@/client")
     vi.mocked(CustomFieldsService.listFieldDefinitions).mockResolvedValueOnce({
       data: [
         {
@@ -532,7 +532,7 @@ describe("CustomFieldDefinitions", () => {
   })
 
   it("deletes definition after confirmation", async () => {
-    const { CustomFieldsService } = require("@/client")
+    const { CustomFieldsService } = await import("@/client")
     vi.mocked(CustomFieldsService.listFieldDefinitions)
       .mockResolvedValueOnce({
         data: [
@@ -589,7 +589,7 @@ describe("CustomFieldDefinitions", () => {
   })
 
   it("cancels delete if user denies confirmation", async () => {
-    const { CustomFieldsService } = require("@/client")
+    const { CustomFieldsService } = await import("@/client")
     vi.mocked(CustomFieldsService.listFieldDefinitions).mockResolvedValueOnce({
       data: [
         {
@@ -628,7 +628,7 @@ describe("CustomFieldDefinitions", () => {
   })
 
   it("shows error toast on delete failure", async () => {
-    const { CustomFieldsService } = require("@/client")
+    const { CustomFieldsService } = await import("@/client")
     vi.mocked(CustomFieldsService.listFieldDefinitions).mockResolvedValueOnce({
       data: [
         {

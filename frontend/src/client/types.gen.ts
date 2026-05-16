@@ -2296,6 +2296,12 @@ export type UtilsHealthCheckResponse = (boolean);
 
 export type UtilsEnvironmentResponse = (EnvironmentInfo);
 
+export type WebhooksTwilioWebhookData = {
+    apiKey: string;
+};
+
+export type WebhooksTwilioWebhookResponse = (unknown);
+
 export type WebhooksListWebhooksResponse = (unknown);
 
 export type WebhooksCreateWebhookData = {

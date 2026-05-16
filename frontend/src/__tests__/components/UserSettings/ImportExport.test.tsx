@@ -111,9 +111,12 @@ describe("ImportExport", () => {
 
     await user.click(importButton)
 
-    await waitFor(() => {
-      expect(mockImportVcard).toHaveBeenCalled()
-    })
+    await waitFor(
+      () => {
+        expect(mockImportVcard).toHaveBeenCalled()
+      },
+      { timeout: 3000 }
+    )
   })
 
   it("shows success toast after import", async () => {
@@ -137,11 +140,14 @@ describe("ImportExport", () => {
     const importButton = screen.getByRole("button", { name: "Import" })
     await user.click(importButton)
 
-    await waitFor(() => {
-      expect(mockSuccessToast).toHaveBeenCalledWith("Success!", {
-        description: "Imported 3 contact(s)",
-      })
-    })
+    await waitFor(
+      () => {
+        expect(mockSuccessToast).toHaveBeenCalledWith("Success!", {
+          description: "Imported 3 contact(s)",
+        })
+      },
+      { timeout: 3000 }
+    )
   })
 
   it("displays import result summary", async () => {

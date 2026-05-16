@@ -20,6 +20,8 @@ vi.mock("@/client", () => ({
   },
 }))
 
+const mockLogout = vi.fn()
+
 vi.mock("@/hooks/useAuth", () => ({
   default: vi.fn(() => ({
     user: {
@@ -29,7 +31,7 @@ vi.mock("@/hooks/useAuth", () => ({
       is_superuser: false,
       is_active: true,
     },
-    logout: vi.fn(),
+    logout: mockLogout,
     loginMutation: { mutate: vi.fn(), isPending: false },
     signUpMutation: { mutate: vi.fn(), isPending: false },
   })),
@@ -41,10 +43,11 @@ describe("DeleteAccount", () => {
   })
 
   it("renders delete account section with destructive styling", () => {
-    renderWithProviders(<DeleteAccount />)
+    const { container } = renderWithProviders(<DeleteAccount />)
 
-    const heading = screen.getByText("Delete Account")
+    const heading = container.querySelector("h3")
     expect(heading).toBeInTheDocument()
+    expect(heading?.textContent).toBe("Delete Account")
     expect(heading).toHaveClass("text-destructive")
   })
 
@@ -69,7 +72,7 @@ describe("DeleteAccount", () => {
   it("applies destructive border styling to container", () => {
     const { container } = renderWithProviders(<DeleteAccount />)
 
-    const section = container.querySelector(".border-destructive")
+    const section = container.querySelector("div.border-destructive")
     expect(section).toBeInTheDocument()
   })
 
