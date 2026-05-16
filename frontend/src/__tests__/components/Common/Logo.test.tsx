@@ -165,9 +165,9 @@ describe("Logo", () => {
     })
 
     it("renders icon mark for collapsed state", () => {
-      const { container } = render(<Logo variant="responsive" />)
-      const iconMark = container.querySelector("[class*='hidden']")
-      expect(iconMark).toHaveClass("group-data-[collapsible=icon]:block")
+      render(<Logo variant="responsive" />)
+      const marks = screen.getAllByTestId("kindred-mark")
+      expect(marks[1]).toHaveClass("group-data-[collapsible=icon]:block")
     })
 
     it("renders responsive variant as link when asLink is true", () => {
@@ -236,8 +236,8 @@ describe("Logo", () => {
 
     it("applies custom className to responsive variant", () => {
       render(<Logo variant="responsive" className="custom-responsive" />)
-      const mark = screen.getByTestId("kindred-mark")
-      expect(mark).toHaveClass("custom-responsive")
+      const marks = screen.getAllByTestId("kindred-mark")
+      expect(marks[0]).toHaveClass("custom-responsive")
     })
   })
 

@@ -29,7 +29,9 @@ describe("EnvironmentChip", () => {
       )
 
       const { container } = renderWithProviders(<EnvironmentChip />)
-      expect(container.firstChild).toBeEmptyDOMElement()
+      expect(
+        container.querySelector("span[class*='rounded-full']"),
+      ).not.toBeInTheDocument()
     })
 
     it("renders nothing when environment is production", async () => {
@@ -48,7 +50,9 @@ describe("EnvironmentChip", () => {
       // Wait for query to settle
       await new Promise((resolve) => setTimeout(resolve, 100))
 
-      expect(container.firstChild).toBeEmptyDOMElement()
+      expect(
+        container.querySelector("span[class*='rounded-full']"),
+      ).not.toBeInTheDocument()
     })
 
     it("renders chip when environment is staging", async () => {
@@ -193,7 +197,9 @@ describe("EnvironmentChip", () => {
       await new Promise((resolve) => setTimeout(resolve, 100))
 
       // Should render nothing when fetch fails
-      expect(container.firstChild).toBeEmptyDOMElement()
+      expect(
+        container.querySelector("span[class*='rounded-full']"),
+      ).not.toBeInTheDocument()
     })
 
     it("does not retry on failure", async () => {
@@ -289,7 +295,9 @@ describe("EnvironmentChip", () => {
       await new Promise((resolve) => setTimeout(resolve, 100))
 
       // Should render nothing when environment field is missing
-      expect(container.firstChild).toBeEmptyDOMElement()
+      expect(
+        container.querySelector("span[class*='rounded-full']"),
+      ).not.toBeInTheDocument()
     })
 
     it("handles empty environment string", async () => {
@@ -308,7 +316,7 @@ describe("EnvironmentChip", () => {
       await new Promise((resolve) => setTimeout(resolve, 100))
 
       // Empty environment should still render
-      expect(container.firstChild).not.toBeEmptyDOMElement()
+      expect(container.querySelector("span[class*='rounded-full']")).toBeInTheDocument()
     })
 
     it("handles case-sensitive environment comparison", async () => {

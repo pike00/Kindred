@@ -532,7 +532,7 @@ describe("ThemeProvider", () => {
     })
 
     it("handles unmount and remount", async () => {
-      const { unmount, rerender } = render(
+      const { unmount } = render(
         <ThemeProvider defaultTheme="light">
           <TestComponent />
         </ThemeProvider>,
@@ -542,7 +542,8 @@ describe("ThemeProvider", () => {
 
       unmount()
 
-      rerender(
+      // Render a new component tree after unmount
+      render(
         <ThemeProvider defaultTheme="dark">
           <TestComponent />
         </ThemeProvider>,

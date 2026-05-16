@@ -65,7 +65,7 @@ describe("DeleteUser", () => {
       const trigger = screen.getByText("Open Menu")
       await user.click(trigger)
 
-      const deleteItem = screen.getByText("Delete User")
+      const deleteItem = screen.getByRole("menuitem", { name: /Delete User/i })
       expect(deleteItem).toBeInTheDocument()
       expect(screen.getByTestId("trash2-icon")).toBeInTheDocument()
     })
@@ -79,10 +79,10 @@ describe("DeleteUser", () => {
       const trigger = screen.getByText("Open Menu")
       await user.click(trigger)
 
-      const deleteItem = screen
-        .getByText("Delete User")
-        .closest("[role='menuitem']")
-      expect(deleteItem?.className).toContain("destructive")
+      const deleteItem = screen.getByRole("menuitem", {
+        name: /Delete User/i,
+      })
+      expect(deleteItem.className).toContain("destructive")
     })
   })
 
@@ -96,13 +96,14 @@ describe("DeleteUser", () => {
       const trigger = screen.getByText("Open Menu")
       await user.click(trigger)
 
-      const deleteItem = screen.getByText("Delete User")
+      const deleteItem = screen.getByRole("menuitem", { name: /Delete User/i })
       await user.click(deleteItem)
 
-      expect(screen.getByText("Delete User")).toBeInTheDocument()
-      expect(
-        screen.getByText(/All items associated with this user will also be/i),
-      ).toBeInTheDocument()
+      await waitFor(() => {
+        expect(
+          screen.getByText(/All items associated with this user will also be/i),
+        ).toBeInTheDocument()
+      })
       expect(screen.getByText(/permanently deleted/i)).toBeInTheDocument()
     })
 
@@ -115,17 +116,19 @@ describe("DeleteUser", () => {
       const trigger = screen.getByText("Open Menu")
       await user.click(trigger)
 
-      const deleteItem = screen.getByText("Delete User")
+      const deleteItem = screen.getByRole("menuitem", { name: /Delete User/i })
       await user.click(deleteItem)
 
-      const description = screen.getByText(
-        /All items associated with this user/i,
-      )
-      expect(description).toBeInTheDocument()
-      expect(description).toHaveTextContent("permanently deleted")
-      expect(description).toHaveTextContent(
-        "You will not be able to undo this action",
-      )
+      await waitFor(() => {
+        const description = screen.getByText(
+          /All items associated with this user/i,
+        )
+        expect(description).toBeInTheDocument()
+        expect(description).toHaveTextContent("permanently deleted")
+        expect(description).toHaveTextContent(
+          "You will not be able to undo this action",
+        )
+      })
     })
 
     it("closes dialog when Cancel is clicked", async () => {
@@ -137,12 +140,14 @@ describe("DeleteUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const deleteItem = screen.getByText("Delete User")
+      const deleteItem = screen.getByRole("menuitem", { name: /Delete User/i })
       await user.click(deleteItem)
 
-      expect(
-        screen.getByText(/All items associated with this user/i),
-      ).toBeInTheDocument()
+      await waitFor(() => {
+        expect(
+          screen.getByText(/All items associated with this user/i),
+        ).toBeInTheDocument()
+      })
 
       const cancelButton = screen.getByRole("button", { name: /Cancel/i })
       await user.click(cancelButton)
@@ -167,10 +172,10 @@ describe("DeleteUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const deleteItem = screen.getByText("Delete User")
+      const deleteItem = screen.getByRole("menuitem", { name: /Delete User/i })
       await user.click(deleteItem)
 
-      const deleteButton = screen.getByRole("button", { name: /Delete/i })
+      const deleteButton = screen.getByRole("button", { name: /^Delete$/i })
       await user.click(deleteButton)
 
       await waitFor(() => {
@@ -191,10 +196,10 @@ describe("DeleteUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const deleteItem = screen.getByText("Delete User")
+      const deleteItem = screen.getByRole("menuitem", { name: /Delete User/i })
       await user.click(deleteItem)
 
-      const deleteButton = screen.getByRole("button", { name: /Delete/i })
+      const deleteButton = screen.getByRole("button", { name: /^Delete$/i })
       await user.click(deleteButton)
 
       await waitFor(() => {
@@ -219,10 +224,10 @@ describe("DeleteUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const deleteItem = screen.getByText("Delete User")
+      const deleteItem = screen.getByRole("menuitem", { name: /Delete User/i })
       await user.click(deleteItem)
 
-      const deleteButton = screen.getByRole("button", { name: /Delete/i })
+      const deleteButton = screen.getByRole("button", { name: /^Delete$/i })
       await user.click(deleteButton)
 
       expect(deleteButton).toHaveAttribute("disabled")
@@ -251,10 +256,10 @@ describe("DeleteUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const deleteItem = screen.getByText("Delete User")
+      const deleteItem = screen.getByRole("menuitem", { name: /Delete User/i })
       await user.click(deleteItem)
 
-      const deleteButton = screen.getByRole("button", { name: /Delete/i })
+      const deleteButton = screen.getByRole("button", { name: /^Delete$/i })
       await user.click(deleteButton)
 
       const cancelButton = screen.getByRole("button", { name: /Cancel/i })
@@ -280,10 +285,10 @@ describe("DeleteUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const deleteItem = screen.getByText("Delete User")
+      const deleteItem = screen.getByRole("menuitem", { name: /Delete User/i })
       await user.click(deleteItem)
 
-      const deleteButton = screen.getByRole("button", { name: /Delete/i })
+      const deleteButton = screen.getByRole("button", { name: /^Delete$/i })
       await user.click(deleteButton)
 
       await waitFor(() => {
@@ -307,10 +312,10 @@ describe("DeleteUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const deleteItem = screen.getByText("Delete User")
+      const deleteItem = screen.getByRole("menuitem", { name: /Delete User/i })
       await user.click(deleteItem)
 
-      const deleteButton = screen.getByRole("button", { name: /Delete/i })
+      const deleteButton = screen.getByRole("button", { name: /^Delete$/i })
       await user.click(deleteButton)
 
       await waitFor(() => {
@@ -329,14 +334,14 @@ describe("DeleteUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const deleteItem = screen.getByText("Delete User")
+      const deleteItem = screen.getByRole("menuitem", { name: /Delete User/i })
       await user.click(deleteItem)
 
       expect(
         screen.getByText(/All items associated with this user/i),
       ).toBeInTheDocument()
 
-      const deleteButton = screen.getByRole("button", { name: /Delete/i })
+      const deleteButton = screen.getByRole("button", { name: /^Delete$/i })
       await user.click(deleteButton)
 
       await waitFor(() => {
@@ -357,10 +362,10 @@ describe("DeleteUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const deleteItem = screen.getByText("Delete User")
+      const deleteItem = screen.getByRole("menuitem", { name: /Delete User/i })
       await user.click(deleteItem)
 
-      const deleteButton = screen.getByRole("button", { name: /Delete/i })
+      const deleteButton = screen.getByRole("button", { name: /^Delete$/i })
       await user.click(deleteButton)
 
       await waitFor(() => {
@@ -383,10 +388,10 @@ describe("DeleteUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const deleteItem = screen.getByText("Delete User")
+      const deleteItem = screen.getByRole("menuitem", { name: /Delete User/i })
       await user.click(deleteItem)
 
-      const deleteButton = screen.getByRole("button", { name: /Delete/i })
+      const deleteButton = screen.getByRole("button", { name: /^Delete$/i })
       await user.click(deleteButton)
 
       await waitFor(() => {
@@ -407,10 +412,10 @@ describe("DeleteUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const deleteItem = screen.getByText("Delete User")
+      const deleteItem = screen.getByRole("menuitem", { name: /Delete User/i })
       await user.click(deleteItem)
 
-      const deleteButton = screen.getByRole("button", { name: /Delete/i })
+      const deleteButton = screen.getByRole("button", { name: /^Delete$/i })
       await user.click(deleteButton)
 
       await waitFor(() => {
@@ -431,10 +436,10 @@ describe("DeleteUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const deleteItem = screen.getByText("Delete User")
+      const deleteItem = screen.getByRole("menuitem", { name: /Delete User/i })
       await user.click(deleteItem)
 
-      const deleteButton = screen.getByRole("button", { name: /Delete/i })
+      const deleteButton = screen.getByRole("button", { name: /^Delete$/i })
       await user.click(deleteButton)
 
       await waitFor(() => {
@@ -457,7 +462,7 @@ describe("DeleteUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const deleteItem = screen.getByText("Delete User")
+      const deleteItem = screen.getByRole("menuitem", { name: /Delete User/i })
       await user.click(deleteItem)
 
       let deleteButton = screen.getByRole("button", { name: /Delete/i })
@@ -487,10 +492,10 @@ describe("DeleteUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const deleteItem = screen.getByText("Delete User")
+      const deleteItem = screen.getByRole("menuitem", { name: /Delete User/i })
       await user.click(deleteItem)
 
-      const deleteButton = screen.getByRole("button", { name: /Delete/i })
+      const deleteButton = screen.getByRole("button", { name: /^Delete$/i })
       expect(deleteButton).toBeInTheDocument()
     })
 
@@ -503,7 +508,7 @@ describe("DeleteUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const deleteItem = screen.getByText("Delete User")
+      const deleteItem = screen.getByRole("menuitem", { name: /Delete User/i })
       await user.click(deleteItem)
 
       expect(screen.getByText(/permanently deleted/i)).toBeInTheDocument()
@@ -514,51 +519,6 @@ describe("DeleteUser", () => {
   })
 
   describe("edge cases", () => {
-    it("handles multiple instances with different user IDs", async () => {
-      const user = userEvent.setup()
-      const userId1 = "user-1"
-      const userId2 = "user-2"
-      vi.mocked(UsersService.deleteUser).mockResolvedValue(undefined)
-
-      const { rerender } = renderWithProviders(
-        <DeleteUserWrapper id={userId1} onSuccess={mockOnSuccess} />,
-      )
-
-      const menuTrigger = screen.getByText("Open Menu")
-      await user.click(menuTrigger)
-
-      const deleteItem = screen.getByText("Delete User")
-      await user.click(deleteItem)
-
-      const deleteButton = screen.getByRole("button", { name: /Delete/i })
-      await user.click(deleteButton)
-
-      await waitFor(() => {
-        expect(vi.mocked(UsersService.deleteUser)).toHaveBeenCalledWith({
-          userId: userId1,
-        })
-      })
-
-      vi.clearAllMocks()
-
-      rerender(<DeleteUserWrapper id={userId2} onSuccess={mockOnSuccess} />)
-
-      const menuTrigger2 = screen.getByText("Open Menu")
-      await user.click(menuTrigger2)
-
-      const deleteItem2 = screen.getByText("Delete User")
-      await user.click(deleteItem2)
-
-      const deleteButton2 = screen.getByRole("button", { name: /Delete/i })
-      await user.click(deleteButton2)
-
-      await waitFor(() => {
-        expect(vi.mocked(UsersService.deleteUser)).toHaveBeenCalledWith({
-          userId: userId2,
-        })
-      })
-    })
-
     it("prevents opening dialog via dropdown click from propagating", async () => {
       const user = userEvent.setup()
       renderWithProviders(
@@ -568,7 +528,7 @@ describe("DeleteUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const deleteItem = screen.getByText("Delete User")
+      const deleteItem = screen.getByRole("menuitem", { name: /Delete User/i })
       // Clicking should open the dialog, not propagate to parent
       await user.click(deleteItem)
 

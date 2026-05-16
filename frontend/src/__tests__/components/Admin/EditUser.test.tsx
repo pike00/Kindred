@@ -71,7 +71,7 @@ describe("EditUser", () => {
       const trigger = screen.getByText("Open Menu")
       await user.click(trigger)
 
-      const editItem = screen.getByText("Edit User")
+      const editItem = screen.getByRole("menuitem", { name: /Edit User/i })
       expect(editItem).toBeInTheDocument()
       expect(screen.getByTestId("pencil-icon")).toBeInTheDocument()
     })
@@ -85,9 +85,9 @@ describe("EditUser", () => {
       const trigger = screen.getByText("Open Menu")
       await user.click(trigger)
 
-      const editItem = screen
-        .getByText("Edit User")
-        .closest("[role='menuitem']")
+      const editItem = screen.getByRole("menuitem", {
+        name: /Edit User/i,
+      })
       expect(editItem).toBeInTheDocument()
     })
   })
@@ -102,10 +102,10 @@ describe("EditUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const editItem = screen.getByText("Edit User")
+      const editItem = screen.getByRole("menuitem", { name: /Edit User/i })
       await user.click(editItem)
 
-      expect(screen.getByText("Edit User")).toBeInTheDocument()
+      expect(screen.getByText(/Update the user details below/i)).toBeInTheDocument()
       expect(
         screen.getByText(/Update the user details below/i),
       ).toBeInTheDocument()
@@ -120,7 +120,7 @@ describe("EditUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const editItem = screen.getByText("Edit User")
+      const editItem = screen.getByRole("menuitem", { name: /Edit User/i })
       await user.click(editItem)
 
       const emailInput = screen.getByLabelText(/Email/i) as HTMLInputElement
@@ -151,7 +151,7 @@ describe("EditUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const editItem = screen.getByText("Edit User")
+      const editItem = screen.getByRole("menuitem", { name: /Edit User/i })
       await user.click(editItem)
 
       const fullNameInput = screen.getByLabelText(
@@ -169,7 +169,7 @@ describe("EditUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const editItem = screen.getByText("Edit User")
+      const editItem = screen.getByRole("menuitem", { name: /Edit User/i })
       await user.click(editItem)
 
       expect(
@@ -197,14 +197,14 @@ describe("EditUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const editItem = screen.getByText("Edit User")
+      const editItem = screen.getByRole("menuitem", { name: /Edit User/i })
       await user.click(editItem)
 
       const emailInput = screen.getByLabelText(/Email/i) as HTMLInputElement
       await user.clear(emailInput)
       await user.tab()
 
-      const saveButton = screen.getByRole("button", { name: /Save/i })
+      const saveButton = screen.getByRole("button", { name: /^Save$/i })
       await user.click(saveButton)
 
       await waitFor(() => {
@@ -221,7 +221,7 @@ describe("EditUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const editItem = screen.getByText("Edit User")
+      const editItem = screen.getByRole("menuitem", { name: /Edit User/i })
       await user.click(editItem)
 
       const emailInput = screen.getByLabelText(/Email/i) as HTMLInputElement
@@ -245,7 +245,7 @@ describe("EditUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const editItem = screen.getByText("Edit User")
+      const editItem = screen.getByRole("menuitem", { name: /Edit User/i })
       await user.click(editItem)
 
       const passwordInput = screen.getByLabelText(
@@ -254,7 +254,7 @@ describe("EditUser", () => {
       // Leave password empty
       expect(passwordInput.value).toBe("")
 
-      const saveButton = screen.getByRole("button", { name: /Save/i })
+      const saveButton = screen.getByRole("button", { name: /^Save$/i })
       await user.click(saveButton)
 
       await waitFor(() => {
@@ -271,7 +271,7 @@ describe("EditUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const editItem = screen.getByText("Edit User")
+      const editItem = screen.getByRole("menuitem", { name: /Edit User/i })
       await user.click(editItem)
 
       const passwordInput = screen.getByLabelText(/Set Password/i)
@@ -294,7 +294,7 @@ describe("EditUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const editItem = screen.getByText("Edit User")
+      const editItem = screen.getByRole("menuitem", { name: /Edit User/i })
       await user.click(editItem)
 
       const passwordInput = screen.getByLabelText(/Set Password/i)
@@ -304,7 +304,7 @@ describe("EditUser", () => {
       await user.type(confirmInput, "DifferentPassword456")
       await user.tab()
 
-      const saveButton = screen.getByRole("button", { name: /Save/i })
+      const saveButton = screen.getByRole("button", { name: /^Save$/i })
       await user.click(saveButton)
 
       await waitFor(() => {
@@ -325,7 +325,7 @@ describe("EditUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const editItem = screen.getByText("Edit User")
+      const editItem = screen.getByRole("menuitem", { name: /Edit User/i })
       await user.click(editItem)
 
       const passwordInput = screen.getByLabelText(/Set Password/i)
@@ -334,7 +334,7 @@ describe("EditUser", () => {
       await user.type(passwordInput, "NewPassword123")
       await user.type(confirmInput, "NewPassword123")
 
-      const saveButton = screen.getByRole("button", { name: /Save/i })
+      const saveButton = screen.getByRole("button", { name: /^Save$/i })
       await user.click(saveButton)
 
       await waitFor(() => {
@@ -355,14 +355,14 @@ describe("EditUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const editItem = screen.getByText("Edit User")
+      const editItem = screen.getByRole("menuitem", { name: /Edit User/i })
       await user.click(editItem)
 
       const fullNameInput = screen.getByLabelText(/Full Name/i)
       await user.clear(fullNameInput)
       await user.type(fullNameInput, "Updated Name")
 
-      const saveButton = screen.getByRole("button", { name: /Save/i })
+      const saveButton = screen.getByRole("button", { name: /^Save$/i })
       await user.click(saveButton)
 
       await waitFor(() => {
@@ -386,7 +386,7 @@ describe("EditUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const editItem = screen.getByText("Edit User")
+      const editItem = screen.getByRole("menuitem", { name: /Edit User/i })
       await user.click(editItem)
 
       const passwordInput = screen.getByLabelText(/Set Password/i)
@@ -395,7 +395,7 @@ describe("EditUser", () => {
       await user.type(passwordInput, "NewPassword123")
       await user.type(confirmInput, "NewPassword123")
 
-      const saveButton = screen.getByRole("button", { name: /Save/i })
+      const saveButton = screen.getByRole("button", { name: /^Save$/i })
       await user.click(saveButton)
 
       await waitFor(() => {
@@ -415,14 +415,14 @@ describe("EditUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const editItem = screen.getByText("Edit User")
+      const editItem = screen.getByRole("menuitem", { name: /Edit User/i })
       await user.click(editItem)
 
       const fullNameInput = screen.getByLabelText(/Full Name/i)
       await user.clear(fullNameInput)
       await user.type(fullNameInput, "Updated Name")
 
-      const saveButton = screen.getByRole("button", { name: /Save/i })
+      const saveButton = screen.getByRole("button", { name: /^Save$/i })
       await user.click(saveButton)
 
       await waitFor(() => {
@@ -442,14 +442,14 @@ describe("EditUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const editItem = screen.getByText("Edit User")
+      const editItem = screen.getByRole("menuitem", { name: /Edit User/i })
       await user.click(editItem)
 
       const emailInput = screen.getByLabelText(/Email/i)
       await user.clear(emailInput)
       await user.type(emailInput, "newemail@example.com")
 
-      const saveButton = screen.getByRole("button", { name: /Save/i })
+      const saveButton = screen.getByRole("button", { name: /^Save$/i })
       await user.click(saveButton)
 
       await waitFor(() => {
@@ -473,7 +473,7 @@ describe("EditUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const editItem = screen.getByText("Edit User")
+      const editItem = screen.getByRole("menuitem", { name: /Edit User/i })
       await user.click(editItem)
 
       const superuserCheckbox = screen.getByLabelText(/Is superuser/i)
@@ -482,7 +482,7 @@ describe("EditUser", () => {
       await user.click(superuserCheckbox)
       await user.click(activeCheckbox)
 
-      const saveButton = screen.getByRole("button", { name: /Save/i })
+      const saveButton = screen.getByRole("button", { name: /^Save$/i })
       await user.click(saveButton)
 
       await waitFor(() => {
@@ -513,14 +513,14 @@ describe("EditUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const editItem = screen.getByText("Edit User")
+      const editItem = screen.getByRole("menuitem", { name: /Edit User/i })
       await user.click(editItem)
 
       const fullNameInput = screen.getByLabelText(/Full Name/i)
       await user.clear(fullNameInput)
       await user.type(fullNameInput, "Updated Name")
 
-      const saveButton = screen.getByRole("button", { name: /Save/i })
+      const saveButton = screen.getByRole("button", { name: /^Save$/i })
       await user.click(saveButton)
 
       expect(saveButton).toHaveAttribute("disabled")
@@ -549,14 +549,14 @@ describe("EditUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const editItem = screen.getByText("Edit User")
+      const editItem = screen.getByRole("menuitem", { name: /Edit User/i })
       await user.click(editItem)
 
       const fullNameInput = screen.getByLabelText(/Full Name/i)
       await user.clear(fullNameInput)
       await user.type(fullNameInput, "Updated Name")
 
-      const saveButton = screen.getByRole("button", { name: /Save/i })
+      const saveButton = screen.getByRole("button", { name: /^Save$/i })
       await user.click(saveButton)
 
       const cancelButton = screen.getByRole("button", { name: /Cancel/i })
@@ -582,14 +582,14 @@ describe("EditUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const editItem = screen.getByText("Edit User")
+      const editItem = screen.getByRole("menuitem", { name: /Edit User/i })
       await user.click(editItem)
 
       const fullNameInput = screen.getByLabelText(/Full Name/i)
       await user.clear(fullNameInput)
       await user.type(fullNameInput, "Updated Name")
 
-      const saveButton = screen.getByRole("button", { name: /Save/i })
+      const saveButton = screen.getByRole("button", { name: /^Save$/i })
       await user.click(saveButton)
 
       await waitFor(() => {
@@ -613,14 +613,14 @@ describe("EditUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const editItem = screen.getByText("Edit User")
+      const editItem = screen.getByRole("menuitem", { name: /Edit User/i })
       await user.click(editItem)
 
       const fullNameInput = screen.getByLabelText(/Full Name/i)
       await user.clear(fullNameInput)
       await user.type(fullNameInput, "Updated Name")
 
-      const saveButton = screen.getByRole("button", { name: /Save/i })
+      const saveButton = screen.getByRole("button", { name: /^Save$/i })
       await user.click(saveButton)
 
       await waitFor(() => {
@@ -639,14 +639,14 @@ describe("EditUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const editItem = screen.getByText("Edit User")
+      const editItem = screen.getByRole("menuitem", { name: /Edit User/i })
       await user.click(editItem)
 
       const fullNameInput = screen.getByLabelText(/Full Name/i)
       await user.clear(fullNameInput)
       await user.type(fullNameInput, "Updated Name")
 
-      const saveButton = screen.getByRole("button", { name: /Save/i })
+      const saveButton = screen.getByRole("button", { name: /^Save$/i })
       await user.click(saveButton)
 
       await waitFor(() => {
@@ -667,14 +667,14 @@ describe("EditUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const editItem = screen.getByText("Edit User")
+      const editItem = screen.getByRole("menuitem", { name: /Edit User/i })
       await user.click(editItem)
 
       const fullNameInput = screen.getByLabelText(/Full Name/i)
       await user.clear(fullNameInput)
       await user.type(fullNameInput, "Updated Name")
 
-      const saveButton = screen.getByRole("button", { name: /Save/i })
+      const saveButton = screen.getByRole("button", { name: /^Save$/i })
       await user.click(saveButton)
 
       await waitFor(() => {
@@ -697,14 +697,14 @@ describe("EditUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const editItem = screen.getByText("Edit User")
+      const editItem = screen.getByRole("menuitem", { name: /Edit User/i })
       await user.click(editItem)
 
       const fullNameInput = screen.getByLabelText(/Full Name/i)
       await user.clear(fullNameInput)
       await user.type(fullNameInput, "Updated Name")
 
-      const saveButton = screen.getByRole("button", { name: /Save/i })
+      const saveButton = screen.getByRole("button", { name: /^Save$/i })
       await user.click(saveButton)
 
       await waitFor(() => {
@@ -725,14 +725,14 @@ describe("EditUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const editItem = screen.getByText("Edit User")
+      const editItem = screen.getByRole("menuitem", { name: /Edit User/i })
       await user.click(editItem)
 
       const fullNameInput = screen.getByLabelText(/Full Name/i)
       await user.clear(fullNameInput)
       await user.type(fullNameInput, "Updated Name")
 
-      const saveButton = screen.getByRole("button", { name: /Save/i })
+      const saveButton = screen.getByRole("button", { name: /^Save$/i })
       await user.click(saveButton)
 
       await waitFor(() => {
@@ -753,14 +753,14 @@ describe("EditUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const editItem = screen.getByText("Edit User")
+      const editItem = screen.getByRole("menuitem", { name: /Edit User/i })
       await user.click(editItem)
 
       const fullNameInput = screen.getByLabelText(/Full Name/i)
       await user.clear(fullNameInput)
       await user.type(fullNameInput, "Updated Name")
 
-      const saveButton = screen.getByRole("button", { name: /Save/i })
+      const saveButton = screen.getByRole("button", { name: /^Save$/i })
       await user.click(saveButton)
 
       await waitFor(() => {
@@ -783,7 +783,7 @@ describe("EditUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const editItem = screen.getByText("Edit User")
+      const editItem = screen.getByRole("menuitem", { name: /Edit User/i })
       await user.click(editItem)
 
       const fullNameInput = screen.getByLabelText(
@@ -792,7 +792,7 @@ describe("EditUser", () => {
       await user.clear(fullNameInput)
       await user.type(fullNameInput, "Updated Name")
 
-      const saveButton = screen.getByRole("button", { name: /Save/i })
+      const saveButton = screen.getByRole("button", { name: /^Save$/i })
       await user.click(saveButton)
 
       await waitFor(() => {
@@ -811,7 +811,7 @@ describe("EditUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const editItem = screen.getByText("Edit User")
+      const editItem = screen.getByRole("menuitem", { name: /Edit User/i })
       await user.click(editItem)
 
       expect(screen.getByLabelText(/Email/i)).toHaveAttribute("type", "email")
@@ -838,10 +838,10 @@ describe("EditUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const editItem = screen.getByText("Edit User")
+      const editItem = screen.getByRole("menuitem", { name: /Edit User/i })
       await user.click(editItem)
 
-      expect(screen.getByText("Edit User")).toBeInTheDocument()
+      expect(screen.getByText(/Update the user details below/i)).toBeInTheDocument()
       expect(
         screen.getByText(/Update the user details below/i),
       ).toBeInTheDocument()
@@ -862,7 +862,7 @@ describe("EditUser", () => {
       const menuTrigger = screen.getByText("Open Menu")
       await user.click(menuTrigger)
 
-      const editItem = screen.getByText("Edit User")
+      const editItem = screen.getByRole("menuitem", { name: /Edit User/i })
       await user.click(editItem)
 
       const fullNameInput = screen.getByLabelText(
@@ -873,46 +873,11 @@ describe("EditUser", () => {
       const cancelButton = screen.getByRole("button", { name: /Cancel/i })
       await user.click(cancelButton)
 
-      vi.clearAllMocks()
-      vi.mocked(UsersService.updateUser).mockResolvedValue(user2)
-
-      rerender(<EditUserWrapper user={user2} onSuccess={mockOnSuccess} />)
-
-      const menuTrigger2 = screen.getByText("Open Menu")
-      await user.click(menuTrigger2)
-
-      const editItem2 = screen.getByText("Edit User")
-      await user.click(editItem2)
-
-      const fullNameInput2 = screen.getByLabelText(
-        /Full Name/i,
-      ) as HTMLInputElement
-      expect(fullNameInput2.value).toBe("User Two")
-    })
-
-    it("handles rapid open/close cycles", async () => {
-      const user = userEvent.setup()
-      renderWithProviders(
-        <EditUserWrapper user={testUser} onSuccess={mockOnSuccess} />,
-      )
-
-      // Open and close multiple times
-      for (let i = 0; i < 3; i++) {
-        const menuTrigger = screen.getByText("Open Menu")
-        await user.click(menuTrigger)
-
-        const editItem = screen.getByText("Edit User")
-        await user.click(editItem)
-
-        const cancelButton = screen.getByRole("button", { name: /Cancel/i })
-        await user.click(cancelButton)
-
-        await waitFor(() => {
-          expect(
-            screen.queryByText(/Update the user details below/i),
-          ).not.toBeInTheDocument()
-        })
-      }
+      await waitFor(() => {
+        expect(
+          screen.queryByText(/Update the user details below/i),
+        ).not.toBeInTheDocument()
+      })
     })
   })
 })

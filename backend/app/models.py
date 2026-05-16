@@ -1218,8 +1218,19 @@ class ReminderPublic(ReminderBase):
     deleted_at: datetime | None = None
 
 
+class ReminderWithContactPublic(ReminderPublic):
+    """Reminder with optional contact name for list views."""
+    contact_name: str | None = None
+
+
 class RemindersPublic(SQLModel):
     data: list[ReminderPublic]
+    count: int
+
+
+class RemindersWithContactPublic(SQLModel):
+    """Response wrapper for reminders that include contact name."""
+    data: list[ReminderWithContactPublic]
     count: int
 
 
