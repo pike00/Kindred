@@ -1,15 +1,11 @@
 # Personal CRM — dev recipes.
 # Run `just --list` to see them all.
-
-# Which compose file to target. Override per-invocation:
-#   just compose=compose.yml seed
-compose := "compose.dev.yml"
-
-_dc := "docker compose -f " + compose
-
-# `release` and changelog recipes come from release.just. `build` and `deploy`
-# are inline below (repo-specific image name / homelab app).
+#
+# Core dev commands (up, down, logs, ps, shell, etc.) come from preview.just.
+# Kindred-specific recipes are defined below.
+#
 # Note: image is "kindred" (running container brand); the repo is "personal-crm".
+
 import 'release.just'
 import 'preview.just'
 
@@ -40,23 +36,32 @@ sweep-review:
 
 # Seed fake data for the FIRST_SUPERUSER. Safe to run repeatedly; adds more on top.
 seed count="500" email="":
-    {{_dc}} exec -T backend python app/seed_fake_data.py --count {{count}} {{ if email == "" { "" } else { "--email " + email } }}
+    #!/usr/bin/env bash
+    eval "$(just env | sed 's/^/export /')"
+    docker compose -f "$PREVIEW_COMPOSE_FILE" exec -T backend python app/seed_fake_data.py --count {{count}} {{ if email == "" { "" } else { "--email " + email } }}
 
 # Wipe this user's existing contacts/tags/groups/reminders, then reseed.
 seed-reset count="500" email="":
-    {{_dc}} exec -T backend python app/seed_fake_data.py --count {{count}} --reset {{ if email == "" { "" } else { "--email " + email } }}
+    #!/usr/bin/env bash
+    eval "$(just env | sed 's/^/export /')"
+    docker compose -f "$PREVIEW_COMPOSE_FILE" exec -T backend python app/seed_fake_data.py --count {{count}} --reset {{ if email == "" { "" } else { "--email " + email } }}
 
 # Deterministic seed — same data every run (good for screenshots/demos).
 seed-fixed count="500" rng="42" email="":
-    {{_dc}} exec -T backend python app/seed_fake_data.py --count {{count}} --reset --seed {{rng}} {{ if email == "" { "" } else { "--email " + email } }}
+    #!/usr/bin/env bash
+    eval "$(just env | sed 's/^/export /')"
+    docker compose -f "$PREVIEW_COMPOSE_FILE" exec -T backend python app/seed_fake_data.py --count {{count}} --reset --seed {{rng}} {{ if email == "" { "" } else { "--email " + email } }}
 
 # Regenerate the frontend OpenAPI client AND restart the frontend container
 # so Vite drops its cached SDK from node_modules/.vite/deps. Without the
 # restart, the dev server keeps serving the stale client even though the
 # source files on disk are current.
 regen-client:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    eval "$(just env | sed 's/^/export /')"
     bash scripts/generate-client.sh
-    {{_dc}} restart frontend
+    docker compose -f "$PREVIEW_COMPOSE_FILE" restart frontend
 
 # Regenerate docs/db/ from the live Postgres schema using tbls, then render
 # each .md to a standalone .html via pandoc. Open docs/db/index.html in a
@@ -64,19 +69,20 @@ regen-client:
 db-docs:
     #!/usr/bin/env bash
     set -euo pipefail
+    eval "$(just env | sed 's/^/export /')"
     set -a; source .env; set +a
     DSN="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable"
     # 1) Live DB schema → Markdown (tbls).
     docker run --rm \
         --user "$(id -u):$(id -g)" \
-        --network kindred-internal-crm \
+        --network "${COMPOSE_PROJECT_NAME}_default" \
         -v "$(pwd)":/work -w /work \
         -e TBLS_DSN="$DSN" \
         ghcr.io/k1low/tbls \
         doc -c /work/.tbls.yml "$DSN" docs/db --force --rm-dist
     # 2) Live DB schema → DBML (@dbml/cli). npm needs registry.npmjs.org
-    # (default bridge), the DB only answers on kindred-internal-crm (no
-    # internet). Create on bridge, attach kindrednet, then start.
+    # (default bridge), the DB only answers on the project network (no internet).
+    # Create on bridge, attach project network, then start.
     DBML_CID=$(docker create \
         --user "$(id -u):$(id -g)" \
         -v "$(pwd)":/work -w /work \
@@ -84,7 +90,7 @@ db-docs:
         node:22-alpine \
         npx -y -p @dbml/cli@7.1.1 db2dbml postgres "$DSN" -o docs/db/schema.dbml)
     trap 'docker rm -f "$DBML_CID" >/dev/null 2>&1 || true' EXIT
-    docker network connect kindred-internal-crm "$DBML_CID"
+    docker network connect "${COMPOSE_PROJECT_NAME}_default" "$DBML_CID"
     docker start -a "$DBML_CID"
     docker rm -f "$DBML_CID" >/dev/null
     trap - EXIT
@@ -113,11 +119,12 @@ db-docs:
 db-docs-check:
     #!/usr/bin/env bash
     set -euo pipefail
+    eval "$(just env | sed 's/^/export /')"
     set -a; source .env; set +a
     DSN="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable"
     if ! docker run --rm \
         --user "$(id -u):$(id -g)" \
-        --network kindred-internal-crm \
+        --network "${COMPOSE_PROJECT_NAME}_default" \
         -v "$(pwd)":/work -w /work \
         -e TBLS_DSN="$DSN" \
         ghcr.io/k1low/tbls \
