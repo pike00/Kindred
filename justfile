@@ -150,6 +150,23 @@ typecheck:
     eval "$(just env | sed 's/^/export /')"
     docker compose -f "$PREVIEW_COMPOSE_FILE" exec -T frontend bun run typecheck
 
+# Run frontend Vitest suite. Forwards extra args to vitest.
+frontend-test *args:
+    cd frontend && bun run test -- {{args}}
+
+# Run frontend Vitest with v8 coverage. Writes report to frontend/coverage/.
+frontend-coverage *args:
+    cd frontend && bun run test -- --coverage {{args}}
+
+# Run every test suite: backend pytest, frontend Vitest, SDK pytest.
+# Fails fast on the first failing suite.
+test-all:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    just pytest
+    just frontend-test
+    just sdk-test
+
 # ─── Release / build / deploy ────────────────────────────────────────────
 #
 # `release` comes from release.just (release-kit cut: preflight, git-cliff
