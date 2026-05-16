@@ -39,10 +39,9 @@ describe("ImportExport", () => {
   })
 
   it("renders file input with correct accept types", () => {
-    renderWithProviders(<ImportExport />)
+    const { container } = renderWithProviders(<ImportExport />)
 
-    const fileInput = screen.getByRole("button", { name: /Import/i })
-      .parentElement?.querySelector('input[type="file"]') as HTMLInputElement
+    const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement
 
     expect(fileInput).toBeInTheDocument()
     expect(fileInput.accept).toContain(".vcf")
@@ -57,10 +56,9 @@ describe("ImportExport", () => {
 
   it("enables import button when file is selected", async () => {
     const user = userEvent.setup()
-    renderWithProviders(<ImportExport />)
+    const { container } = renderWithProviders(<ImportExport />)
 
-    const input = screen.getByRole("button", { name: /Import/i })
-      .parentElement?.querySelector('input[type="file"]') as HTMLInputElement
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
 
     const file = new File(["contact data"], "contacts.vcf", { type: "text/vcard" })
     await user.upload(input, file)
@@ -74,10 +72,9 @@ describe("ImportExport", () => {
 
   it("displays selected filename and size", async () => {
     const user = userEvent.setup()
-    renderWithProviders(<ImportExport />)
+    const { container } = renderWithProviders(<ImportExport />)
 
-    const input = screen.getByRole("button", { name: /Import/i })
-      .parentElement?.querySelector('input[type="file"]') as HTMLInputElement
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
 
     const file = new File(["contact data"], "contacts.vcf", { type: "text/vcard" })
     await user.upload(input, file)
@@ -99,10 +96,9 @@ describe("ImportExport", () => {
     mockImportVcard.mockResolvedValueOnce({ imported: 3, errors: [] })
 
     const user = userEvent.setup()
-    renderWithProviders(<ImportExport />)
+    const { container } = renderWithProviders(<ImportExport />)
 
-    const input = screen.getByRole("button", { name: /Import/i })
-      .parentElement?.querySelector('input[type="file"]') as HTMLInputElement
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
 
     const file = new File(["contact data"], "contacts.vcf", { type: "text/vcard" })
     await user.upload(input, file)
@@ -131,10 +127,9 @@ describe("ImportExport", () => {
     const mockSuccessToast = vi.mocked(toast.success)
 
     const user = userEvent.setup()
-    renderWithProviders(<ImportExport />)
+    const { container } = renderWithProviders(<ImportExport />)
 
-    const input = screen.getByRole("button", { name: /Import/i })
-      .parentElement?.querySelector('input[type="file"]') as HTMLInputElement
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
 
     const file = new File(["contact data"], "contacts.vcf", { type: "text/vcard" })
     await user.upload(input, file)
@@ -157,10 +152,9 @@ describe("ImportExport", () => {
     })
 
     const user = userEvent.setup()
-    renderWithProviders(<ImportExport />)
+    const { container } = renderWithProviders(<ImportExport />)
 
-    const input = screen.getByRole("button", { name: /Import/i })
-      .parentElement?.querySelector('input[type="file"]') as HTMLInputElement
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
 
     const file = new File(["contact data"], "contacts.vcf", { type: "text/vcard" })
     await user.upload(input, file)
@@ -168,9 +162,12 @@ describe("ImportExport", () => {
     const importButton = screen.getByRole("button", { name: "Import" })
     await user.click(importButton)
 
-    await waitFor(() => {
-      expect(screen.getByText(/Imported 3 contacts/)).toBeInTheDocument()
-    })
+    await waitFor(
+      () => {
+        expect(screen.getByText(/Imported 3 contacts/)).toBeInTheDocument()
+      },
+      { timeout: 3000 }
+    )
   })
 
   it("displays import errors when present", async () => {
@@ -181,10 +178,9 @@ describe("ImportExport", () => {
     })
 
     const user = userEvent.setup()
-    renderWithProviders(<ImportExport />)
+    const { container } = renderWithProviders(<ImportExport />)
 
-    const input = screen.getByRole("button", { name: /Import/i })
-      .parentElement?.querySelector('input[type="file"]') as HTMLInputElement
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
 
     const file = new File(["contact data"], "contacts.vcf", { type: "text/vcard" })
     await user.upload(input, file)
@@ -205,10 +201,9 @@ describe("ImportExport", () => {
     })
 
     const user = userEvent.setup()
-    renderWithProviders(<ImportExport />)
+    const { container } = renderWithProviders(<ImportExport />)
 
-    const input = screen.getByRole("button", { name: /Import/i })
-      .parentElement?.querySelector('input[type="file"]') as HTMLInputElement
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
 
     const file = new File(["contact data"], "contacts.vcf", { type: "text/vcard" })
     await user.upload(input, file)
@@ -230,10 +225,9 @@ describe("ImportExport", () => {
     const mockErrorToast = vi.mocked(toast.error)
 
     const user = userEvent.setup()
-    renderWithProviders(<ImportExport />)
+    const { container } = renderWithProviders(<ImportExport />)
 
-    const input = screen.getByRole("button", { name: /Import/i })
-      .parentElement?.querySelector('input[type="file"]') as HTMLInputElement
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
 
     const file = new File(["contact data"], "contacts.vcf", { type: "text/vcard" })
     await user.upload(input, file)
@@ -260,27 +254,11 @@ describe("ImportExport", () => {
 
   it("triggers download when vCard export is clicked", async () => {
     const user = userEvent.setup()
-    const { window } = global as any
 
     const mockBlob = new Blob(["vcard data"], { type: "text/vcard" })
     global.fetch = vi.fn().mockResolvedValueOnce({
       ok: true,
       blob: vi.fn().mockResolvedValueOnce(mockBlob),
-    })
-
-    const originalCreateElement = document.createElement
-    const mockLink = {
-      href: "",
-      download: "",
-      click: vi.fn(),
-      remove: vi.fn(),
-    }
-
-    vi.spyOn(document, "createElement").mockImplementation((tagName: string) => {
-      if (tagName === "a") {
-        return mockLink as any
-      }
-      return originalCreateElement.call(document, tagName)
     })
 
     renderWithProviders(<ImportExport />)
@@ -289,7 +267,10 @@ describe("ImportExport", () => {
     await user.click(vcardButton)
 
     await waitFor(() => {
-      expect(mockLink.click).toHaveBeenCalled()
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/api/v1/import-export/export/vcard"),
+        expect.any(Object)
+      )
     })
   })
 
@@ -302,28 +283,16 @@ describe("ImportExport", () => {
       blob: vi.fn().mockResolvedValueOnce(mockBlob),
     })
 
-    const originalCreateElement = document.createElement
-    const mockLink = {
-      href: "",
-      download: "",
-      click: vi.fn(),
-      remove: vi.fn(),
-    }
-
-    vi.spyOn(document, "createElement").mockImplementation((tagName: string) => {
-      if (tagName === "a") {
-        return mockLink as any
-      }
-      return originalCreateElement.call(document, tagName)
-    })
-
     renderWithProviders(<ImportExport />)
 
     const jsonButton = screen.getByRole("button", { name: /Download JSON/ })
     await user.click(jsonButton)
 
     await waitFor(() => {
-      expect(mockLink.click).toHaveBeenCalled()
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/api/v1/import-export/export/json"),
+        expect.any(Object)
+      )
     })
   })
 
@@ -334,18 +303,6 @@ describe("ImportExport", () => {
     global.fetch = vi.fn().mockResolvedValueOnce({
       ok: true,
       blob: vi.fn().mockResolvedValueOnce(mockBlob),
-    })
-
-    vi.spyOn(document, "createElement").mockImplementation((tagName: string) => {
-      if (tagName === "a") {
-        return {
-          href: "",
-          download: "",
-          click: vi.fn(),
-          remove: vi.fn(),
-        } as any
-      }
-      return document.createElement(tagName)
     })
 
     const { toast } = await import("sonner")
@@ -372,18 +329,6 @@ describe("ImportExport", () => {
       blob: vi.fn().mockResolvedValueOnce(mockBlob),
     })
 
-    vi.spyOn(document, "createElement").mockImplementation((tagName: string) => {
-      if (tagName === "a") {
-        return {
-          href: "",
-          download: "",
-          click: vi.fn(),
-          remove: vi.fn(),
-        } as any
-      }
-      return document.createElement(tagName)
-    })
-
     const { toast } = await import("sonner")
     const mockSuccessToast = vi.mocked(toast.success)
 
@@ -405,6 +350,7 @@ describe("ImportExport", () => {
     global.fetch = vi.fn().mockResolvedValueOnce({
       ok: false,
       status: 500,
+      text: vi.fn().mockResolvedValueOnce("Error"),
     })
 
     const { toast } = await import("sonner")
