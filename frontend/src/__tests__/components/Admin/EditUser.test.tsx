@@ -123,6 +123,11 @@ describe("EditUser", () => {
       const editItem = screen.getByRole("menuitem", { name: /Edit User/i })
       await user.click(editItem)
 
+      await waitFor(() => {
+        expect(screen.getByLabelText(/Email/i)).toBeInTheDocument()
+        expect(screen.getByLabelText(/Is superuser/i)).toBeInTheDocument()
+      })
+
       const emailInput = screen.getByLabelText(/Email/i) as HTMLInputElement
       const fullNameInput = screen.getByLabelText(
         /Full Name/i,
