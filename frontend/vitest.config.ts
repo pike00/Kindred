@@ -18,6 +18,10 @@ export default defineConfig({
         "src/vite-env.d.ts",
         "src/**/*.d.ts",
         "src/test/**",
+        // shadcn/ui generated components — vendor code, not business logic
+        "src/components/ui/**",
+        // TanStack Router route definitions — wiring/config, not testable logic
+        "src/routes/**",
       ],
       thresholds: {
         global: {

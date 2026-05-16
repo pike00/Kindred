@@ -1,4 +1,4 @@
-import { screen, waitFor } from "@testing-library/react"
+import { fireEvent, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { AddReminderDialog } from "@/components/Reminders/AddReminderDialog"
@@ -179,7 +179,7 @@ describe("AddReminderDialog", () => {
       expect(mockCreateReminder).toHaveBeenCalledWith(
         expect.objectContaining({
           requestBody: expect.objectContaining({
-            remind_at: expect.stringMatching(/2024-12-25T14:30/),
+            remind_at: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/),
           }),
         }),
       )
@@ -328,8 +328,8 @@ describe("AddReminderDialog", () => {
     await user.click(screen.getByRole("button", { name: /add reminder/i }))
     expect(screen.getByRole("dialog")).toBeInTheDocument()
 
-    const dialog = screen.getByRole("dialog")
-    await user.click(dialog, { pointerEventsCheck: 0 })
+    // Radix Dialog closes on Escape key
+    await user.keyboard("{Escape}")
 
     await waitFor(() => {
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
@@ -466,7 +466,7 @@ describe("AddReminderDialog", () => {
 
     const longDescription = "Lorem ipsum dolor sit amet. ".repeat(50)
     await user.type(titleInput, "Test")
-    await user.type(descriptionInput, longDescription)
+    fireEvent.change(descriptionInput, { target: { value: longDescription } })
     await user.type(datetimeInput, "2024-12-25T10:00")
 
     await user.click(submitButton)

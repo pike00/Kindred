@@ -384,4 +384,128 @@ describe("ImportExport", () => {
       })
     ).toBeInTheDocument()
   })
+
+  it("shows error toast when vCard export fails with error response", async () => {
+    const user = userEvent.setup()
+
+    const mockFetch = vi.fn().mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      blob: vi.fn().mockResolvedValueOnce(new Blob()),
+    })
+    global.fetch = mockFetch
+
+    const { toast } = await import("sonner")
+    const mockErrorToast = vi.mocked(toast.error)
+
+    renderWithProviders(<ImportExport />)
+
+    const vcardButton = screen.getByRole("button", { name: /Download vCard/ })
+    await user.click(vcardButton)
+
+    await waitFor(() => {
+      expect(mockErrorToast).toHaveBeenCalledWith(
+        expect.stringContaining("Export failed")
+      )
+    })
+  })
+
+  it("shows error toast when JSON export fails with error response", async () => {
+    const user = userEvent.setup()
+
+    const mockFetch = vi.fn().mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      blob: vi.fn().mockResolvedValueOnce(new Blob()),
+    })
+    global.fetch = mockFetch
+
+    const { toast } = await import("sonner")
+    const mockErrorToast = vi.mocked(toast.error)
+
+    renderWithProviders(<ImportExport />)
+
+    const jsonButton = screen.getByRole("button", { name: /Download JSON/ })
+    await user.click(jsonButton)
+
+    await waitFor(() => {
+      expect(mockErrorToast).toHaveBeenCalledWith(
+        expect.stringContaining("Export failed")
+      )
+    })
+  })
+
+  it("displays error list when import result contains errors", async () => {
+    const { ImportExportService } = await import("@/client")
+    vi.mocked(ImportExportService.importVcard).mockResolvedValueOnce({
+      imported: 1,
+      errors: ["Contact missing email address", "Invalid phone format"],
+    })
+
+    const user = userEvent.setup()
+    const { container } = renderWithProviders(<ImportExport />)
+
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+
+    const file = new File(["contact data"], "contacts.vcf", { type: "text/vcard" })
+    await user.upload(input, file)
+
+    const importButton = screen.getByRole("button", { name: "Import" })
+    await user.click(importButton)
+
+    await waitFor(() => {
+      expect(screen.getByText(/2 issues/)).toBeInTheDocument()
+      expect(screen.getByText("Contact missing email address")).toBeInTheDocument()
+      expect(screen.getByText("Invalid phone format")).toBeInTheDocument()
+    })
+  })
+
+  it("displays single error message in singular form", async () => {
+    const { ImportExportService } = await import("@/client")
+    vi.mocked(ImportExportService.importVcard).mockResolvedValueOnce({
+      imported: 2,
+      errors: ["One error occurred"],
+    })
+
+    const user = userEvent.setup()
+    const { container } = renderWithProviders(<ImportExport />)
+
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+
+    const file = new File(["contact data"], "contacts.vcf", { type: "text/vcard" })
+    await user.upload(input, file)
+
+    const importButton = screen.getByRole("button", { name: "Import" })
+    await user.click(importButton)
+
+    await waitFor(() => {
+      expect(screen.getByText(/1 issue/)).toBeInTheDocument()
+    })
+  })
+
+  it("displays import result without error list when no errors", async () => {
+    const { ImportExportService } = await import("@/client")
+    vi.mocked(ImportExportService.importVcard).mockResolvedValueOnce({
+      imported: 5,
+      errors: [],
+    })
+
+    const user = userEvent.setup()
+    const { container } = renderWithProviders(<ImportExport />)
+
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+
+    const file = new File(["contact data"], "contacts.vcf", { type: "text/vcard" })
+    await user.upload(input, file)
+
+    const importButton = screen.getByRole("button", { name: "Import" })
+    await user.click(importButton)
+
+    await waitFor(() => {
+      const resultDiv = screen.getByText(/Imported/).closest("div")
+      expect(resultDiv?.textContent).toMatch(/5 contacts/)
+      // Ensure error details section is not present
+      expect(screen.queryByText(/issues/)).not.toBeInTheDocument()
+    })
+  })
 })

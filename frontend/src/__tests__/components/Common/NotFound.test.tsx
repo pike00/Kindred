@@ -141,7 +141,7 @@ describe("NotFound", () => {
     const message = screen.getByText(
       "The page you are looking for was not found.",
     )
-    expect(message.parentElement).toHaveClass("text-center")
+    expect(message).toHaveClass("text-center")
   })
 
   it("message has margin bottom", () => {
@@ -155,7 +155,9 @@ describe("NotFound", () => {
   it("content has z-index for layering", () => {
     const { container } = render(<NotFound />)
     const heading = screen.getByText("404")
-    expect(heading).toHaveClass("z-10")
+    // The z-10 is on the parent div that wraps 404 and Oops!
+    const mainContentDiv = container.querySelector("div[class*='z-10']")
+    expect(mainContentDiv).toHaveClass("z-10")
   })
 
   it("text wrapper has z-index for layering", () => {

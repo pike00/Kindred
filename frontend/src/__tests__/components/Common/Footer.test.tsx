@@ -28,8 +28,9 @@ describe("Footer", () => {
 
     it("renders current year", () => {
       const currentYear = new Date().getFullYear()
-      render(<Footer />)
-      expect(screen.getByText(String(currentYear))).toBeInTheDocument()
+      const { container } = render(<Footer />)
+      const span = container.querySelector("span")
+      expect(span?.textContent).toContain(String(currentYear))
     })
 
     it("renders year after the dot separator", () => {
@@ -60,9 +61,9 @@ describe("Footer", () => {
 
     it("uses getFullYear() for year calculation", () => {
       const expectedYear = new Date().getFullYear()
-      render(<Footer />)
-      const yearText = screen.getByText(String(expectedYear))
-      expect(yearText).toBeInTheDocument()
+      const { container } = render(<Footer />)
+      const span = container.querySelector("span")
+      expect(span?.textContent).toContain(String(expectedYear))
     })
   })
 
@@ -222,14 +223,16 @@ describe("Footer", () => {
     it("always uses current date for year", () => {
       const now = new Date()
       const year = now.getFullYear()
-      render(<Footer />)
-      expect(screen.getByText(String(year))).toBeInTheDocument()
+      const { container } = render(<Footer />)
+      const span = container.querySelector("span")
+      expect(span?.textContent).toContain(String(year))
     })
 
     it("calls getFullYear() on new Date instance", () => {
-      render(<Footer />)
+      const { container } = render(<Footer />)
       const yearText = new Date().getFullYear()
-      expect(screen.getByText(String(yearText))).toBeInTheDocument()
+      const span = container.querySelector("span")
+      expect(span?.textContent).toContain(String(yearText))
     })
   })
 })

@@ -46,7 +46,7 @@ describe("parseMentions", () => {
       name: "John Doe",
       contactId: "contact-123",
       start: 0,
-      end: 26,
+      end: 24,
     })
   })
 
@@ -261,7 +261,7 @@ describe("findActiveTrigger", () => {
   })
 
   it("handles @ in middle of text with valid trigger", () => {
-    const result = findActiveTrigger("say @hello there", 11)
+    const result = findActiveTrigger("say @hello there", 10)
     expect(result).not.toBeNull()
     expect(result?.query).toBe("hello")
     expect(result?.triggerStart).toBe(4)

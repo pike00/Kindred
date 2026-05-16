@@ -678,4 +678,299 @@ describe("CustomFieldDefinitions", () => {
 
     window.confirm = originalConfirm
   })
+
+  it("shows success toast after successful edit", async () => {
+    const { CustomFieldsService } = await import("@/client")
+    vi.mocked(CustomFieldsService.listFieldDefinitions)
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: "def-1",
+            name: "Coffee Preference",
+            field_type: "text",
+            description: "Original description",
+            icon: "coffee",
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: "def-1",
+            name: "Coffee Preference",
+            field_type: "text",
+            description: "Updated description",
+            icon: "coffee",
+          },
+        ],
+      })
+
+    const mockUpdateFieldDefinition = vi.mocked(CustomFieldsService.updateFieldDefinition)
+    mockUpdateFieldDefinition.mockResolvedValueOnce({
+      id: "def-1",
+      name: "Coffee Preference",
+      field_type: "text",
+      description: "Updated description",
+      icon: "coffee",
+    })
+
+    const user = userEvent.setup()
+    renderWithProviders(<CustomFieldDefinitions />)
+
+    await waitFor(() => {
+      expect(screen.getByText("Coffee Preference")).toBeInTheDocument()
+    })
+
+    const buttons = screen.getAllByRole("button")
+    const menuButton = buttons[buttons.length - 1]
+
+    await user.click(menuButton)
+
+    const editMenuItem = await screen.findByRole("menuitem", { name: /Edit/ })
+    await user.click(editMenuItem)
+
+    await waitFor(() => {
+      expect(screen.getByText("Edit definition")).toBeInTheDocument()
+    })
+
+    const saveButtons = screen.queryAllByRole("button", { name: "Save" })
+    await user.click(saveButtons[saveButtons.length - 1])
+
+    await waitFor(() => {
+      expect(mockShowSuccessToast).toHaveBeenCalledWith("Definition updated")
+    })
+  })
+
+  it("closes edit dialog after successful update", async () => {
+    const { CustomFieldsService } = await import("@/client")
+    vi.mocked(CustomFieldsService.listFieldDefinitions)
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: "def-1",
+            name: "Coffee Preference",
+            field_type: "text",
+            description: "Original",
+            icon: "coffee",
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: "def-1",
+            name: "Coffee Preference",
+            field_type: "text",
+            description: "Updated",
+            icon: "coffee",
+          },
+        ],
+      })
+
+    vi.mocked(CustomFieldsService.updateFieldDefinition).mockResolvedValueOnce({
+      id: "def-1",
+      name: "Coffee Preference",
+      field_type: "text",
+      description: "Updated",
+      icon: "coffee",
+    })
+
+    const user = userEvent.setup()
+    renderWithProviders(<CustomFieldDefinitions />)
+
+    await waitFor(() => {
+      expect(screen.getByText("Coffee Preference")).toBeInTheDocument()
+    })
+
+    const buttons = screen.getAllByRole("button")
+    const menuButton = buttons[buttons.length - 1]
+
+    await user.click(menuButton)
+
+    const editMenuItem = await screen.findByRole("menuitem", { name: /Edit/ })
+    await user.click(editMenuItem)
+
+    await waitFor(() => {
+      expect(screen.getByText("Edit definition")).toBeInTheDocument()
+    })
+
+    const saveButtons = screen.queryAllByRole("button", { name: "Save" })
+    await user.click(saveButtons[saveButtons.length - 1])
+
+    await waitFor(() => {
+      expect(screen.queryByText("Edit definition")).not.toBeInTheDocument()
+    })
+  })
+
+  it("shows error toast on edit failure", async () => {
+    const { CustomFieldsService } = await import("@/client")
+    vi.mocked(CustomFieldsService.listFieldDefinitions).mockResolvedValueOnce({
+      data: [
+        {
+          id: "def-1",
+          name: "Coffee Preference",
+          field_type: "text",
+          description: "Original",
+          icon: "coffee",
+        },
+      ],
+    })
+
+    const mockError = new Error("Update failed")
+    vi.mocked(CustomFieldsService.updateFieldDefinition).mockRejectedValueOnce(mockError)
+
+    const user = userEvent.setup()
+    renderWithProviders(<CustomFieldDefinitions />)
+
+    await waitFor(() => {
+      expect(screen.getByText("Coffee Preference")).toBeInTheDocument()
+    })
+
+    const buttons = screen.getAllByRole("button")
+    const menuButton = buttons[buttons.length - 1]
+
+    await user.click(menuButton)
+
+    const editMenuItem = await screen.findByRole("menuitem", { name: /Edit/ })
+    await user.click(editMenuItem)
+
+    await waitFor(() => {
+      expect(screen.getByText("Edit definition")).toBeInTheDocument()
+    })
+
+    const saveButtons = screen.queryAllByRole("button", { name: "Save" })
+    await user.click(saveButtons[saveButtons.length - 1])
+
+    await waitFor(() => {
+      expect(mockShowErrorToast).toHaveBeenCalledWith("Update failed")
+    })
+  })
+
+  it("invalidates query cache after successful edit", async () => {
+    const { CustomFieldsService } = await import("@/client")
+    const mockListFieldDefinitions = vi.mocked(CustomFieldsService.listFieldDefinitions)
+    mockListFieldDefinitions
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: "def-1",
+            name: "Coffee Preference",
+            field_type: "text",
+            description: "Original",
+            icon: "coffee",
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: "def-1",
+            name: "Updated Coffee",
+            field_type: "text",
+            description: "Original",
+            icon: "coffee",
+          },
+        ],
+      })
+
+    vi.mocked(CustomFieldsService.updateFieldDefinition).mockResolvedValueOnce({
+      id: "def-1",
+      name: "Updated Coffee",
+      field_type: "text",
+      description: "Original",
+      icon: "coffee",
+    })
+
+    const user = userEvent.setup()
+    renderWithProviders(<CustomFieldDefinitions />)
+
+    await waitFor(() => {
+      expect(screen.getByText("Coffee Preference")).toBeInTheDocument()
+    })
+
+    const buttons = screen.getAllByRole("button")
+    const menuButton = buttons[buttons.length - 1]
+
+    await user.click(menuButton)
+
+    const editMenuItem = await screen.findByRole("menuitem", { name: /Edit/ })
+    await user.click(editMenuItem)
+
+    await waitFor(() => {
+      expect(screen.getByText("Edit definition")).toBeInTheDocument()
+    })
+
+    const saveButtons = screen.queryAllByRole("button", { name: "Save" })
+    await user.click(saveButtons[saveButtons.length - 1])
+
+    // Wait for success toast to verify mutation completed
+    await waitFor(() => {
+      expect(mockShowSuccessToast).toHaveBeenCalledWith("Definition updated")
+    })
+
+    // Verify that listFieldDefinitions was called again (cache invalidation)
+    expect(mockListFieldDefinitions).toHaveBeenCalledTimes(2)
+  })
+
+  it("allows editing with minimal fields", async () => {
+    const { CustomFieldsService } = await import("@/client")
+    vi.mocked(CustomFieldsService.listFieldDefinitions)
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: "def-1",
+            name: "Simple Field",
+            field_type: null,
+            description: null,
+            icon: null,
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: "def-1",
+            name: "Simple Field",
+            field_type: null,
+            description: null,
+            icon: null,
+          },
+        ],
+      })
+
+    const mockUpdateFieldDefinition = vi.mocked(CustomFieldsService.updateFieldDefinition)
+    mockUpdateFieldDefinition.mockResolvedValueOnce({
+      id: "def-1",
+      name: "Simple Field",
+      field_type: null,
+      description: null,
+      icon: null,
+    })
+
+    const user = userEvent.setup()
+    renderWithProviders(<CustomFieldDefinitions />)
+
+    await waitFor(() => {
+      expect(screen.getByText("Simple Field")).toBeInTheDocument()
+    })
+
+    const buttons = screen.getAllByRole("button")
+    const menuButton = buttons[buttons.length - 1]
+
+    await user.click(menuButton)
+
+    const editMenuItem = await screen.findByRole("menuitem", { name: /Edit/ })
+    await user.click(editMenuItem)
+
+    await waitFor(() => {
+      expect(screen.getByText("Edit definition")).toBeInTheDocument()
+    })
+
+    const saveButtons = screen.queryAllByRole("button", { name: "Save" })
+    await user.click(saveButtons[saveButtons.length - 1])
+
+    await waitFor(() => {
+      expect(mockUpdateFieldDefinition).toHaveBeenCalled()
+    })
+  })
 })

@@ -87,7 +87,7 @@ describe("AddJournalDialog", () => {
     await user.click(screen.getByRole("button", { name: /new entry/i }))
 
     expect(screen.getByLabelText(/date \*/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/entry \*/i)).toBeInTheDocument()
+    expect(screen.getByTestId("mention-textarea")).toBeInTheDocument()
     expect(screen.getByLabelText(/mood/i)).toBeInTheDocument()
     expect(
       screen.getByRole("button", { name: /save entry/i }),
@@ -114,11 +114,10 @@ describe("AddJournalDialog", () => {
 
     await user.click(screen.getByRole("button", { name: /new entry/i }))
 
-    const dateInput = screen.getByLabelText(/date \*/i)
     const entryTextarea = screen.getByTestId("mention-textarea")
     const submitButton = screen.getByRole("button", { name: /save entry/i })
 
-    await user.type(dateInput, "2024-01-15")
+    // Date input has default value of today
     await user.clear(entryTextarea)
     await user.type(entryTextarea, "Today was a great day")
 
@@ -135,12 +134,11 @@ describe("AddJournalDialog", () => {
 
     await user.click(screen.getByRole("button", { name: /new entry/i }))
 
-    const dateInput = screen.getByLabelText(/date \*/i)
     const entryTextarea = screen.getByTestId("mention-textarea")
     const moodInput = screen.getByLabelText(/mood/i)
     const submitButton = screen.getByRole("button", { name: /save entry/i })
 
-    await user.type(dateInput, "2024-01-15")
+    // Date input has default value of today
     await user.clear(entryTextarea)
     await user.type(entryTextarea, "Today was a great day")
     await user.type(moodInput, "Happy")
@@ -170,11 +168,10 @@ describe("AddJournalDialog", () => {
 
     await user.click(screen.getByRole("button", { name: /new entry/i }))
 
-    const dateInput = screen.getByLabelText(/date \*/i)
     const entryTextarea = screen.getByTestId("mention-textarea")
     const submitButton = screen.getByRole("button", { name: /save entry/i })
 
-    await user.type(dateInput, "2024-01-15")
+    // Date input has default value
     await user.clear(entryTextarea)
     await user.type(entryTextarea, "Test entry")
 
@@ -191,11 +188,10 @@ describe("AddJournalDialog", () => {
 
     await user.click(screen.getByRole("button", { name: /new entry/i }))
 
-    const dateInput = screen.getByLabelText(/date \*/i)
     const entryTextarea = screen.getByTestId("mention-textarea")
     const submitButton = screen.getByRole("button", { name: /save entry/i })
 
-    await user.type(dateInput, "2024-01-15")
+    // Date input has default value
     await user.clear(entryTextarea)
     await user.type(entryTextarea, "Test entry")
 
@@ -212,11 +208,10 @@ describe("AddJournalDialog", () => {
 
     await user.click(screen.getByRole("button", { name: /new entry/i }))
 
-    const dateInput = screen.getByLabelText(/date \*/i)
     const entryTextarea = screen.getByTestId("mention-textarea")
     const submitButton = screen.getByRole("button", { name: /save entry/i })
 
-    await user.type(dateInput, "2024-01-15")
+    // Date input has default value
     await user.clear(entryTextarea)
     await user.type(entryTextarea, "Test entry")
 
@@ -240,9 +235,7 @@ describe("AddJournalDialog", () => {
     ) as HTMLTextAreaElement
     const submitButton = screen.getByRole("button", { name: /save entry/i })
 
-    const testDate = "2024-01-15"
-    await user.clear(dateInput)
-    await user.type(dateInput, testDate)
+    // Date already has a value, just fill entry
     await user.clear(entryTextarea)
     await user.type(entryTextarea, "Test entry")
 
@@ -278,7 +271,6 @@ describe("AddJournalDialog", () => {
     const entryTextarea = screen.getByTestId("mention-textarea")
     const submitButton = screen.getByRole("button", { name: /save entry/i })
 
-    await user.type(dateInput, "2024-01-15")
     await user.clear(entryTextarea)
     await user.type(entryTextarea, "Test entry")
 
@@ -295,8 +287,8 @@ describe("AddJournalDialog", () => {
     await user.click(screen.getByRole("button", { name: /new entry/i }))
     expect(screen.getByRole("dialog")).toBeInTheDocument()
 
-    const dialog = screen.getByRole("dialog")
-    await user.click(dialog, { pointerEventsCheck: 0 })
+    // Radix Dialog closes on Escape key
+    await user.keyboard("{Escape}")
 
     await waitFor(() => {
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument()

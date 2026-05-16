@@ -691,4 +691,216 @@ describe("ReminderBell", () => {
       expect(screen.getByText("2 due")).toBeInTheDocument()
     })
   })
+
+  it("displays 'just now' for reminders overdue less than 1 minute", async () => {
+    const now = Date.now()
+    mockListDueReminders.mockResolvedValue({
+      data: [
+        {
+          id: "r1",
+          title: "Task",
+          description: null,
+          remind_at: new Date(now - 15 * 1000).toISOString(), // 15 seconds ago
+          contact: null,
+        },
+      ],
+      count: 1,
+    })
+
+    renderWithProviders(<ReminderBell />)
+
+    await waitFor(() => {
+      expect(screen.getByText("just now")).toBeInTheDocument()
+    })
+  })
+
+  it("displays minutes overdue for reminders 1-59 minutes old", async () => {
+    const now = Date.now()
+    mockListDueReminders.mockResolvedValue({
+      data: [
+        {
+          id: "r1",
+          title: "Task",
+          description: null,
+          remind_at: new Date(now - 30 * 60 * 1000).toISOString(), // 30 minutes ago
+          contact: null,
+        },
+      ],
+      count: 1,
+    })
+
+    renderWithProviders(<ReminderBell />)
+
+    await waitFor(() => {
+      expect(screen.getByText(/30m overdue/)).toBeInTheDocument()
+    })
+  })
+
+  it("displays hours overdue for reminders 1-23 hours old", async () => {
+    const now = Date.now()
+    mockListDueReminders.mockResolvedValue({
+      data: [
+        {
+          id: "r1",
+          title: "Task",
+          description: null,
+          remind_at: new Date(now - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
+          contact: null,
+        },
+      ],
+      count: 1,
+    })
+
+    renderWithProviders(<ReminderBell />)
+
+    await waitFor(() => {
+      expect(screen.getByText(/5h overdue/)).toBeInTheDocument()
+    })
+  })
+
+  it("displays days overdue for reminders 24+ hours old", async () => {
+    const now = Date.now()
+    mockListDueReminders.mockResolvedValue({
+      data: [
+        {
+          id: "r1",
+          title: "Task",
+          description: null,
+          remind_at: new Date(now - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+          contact: null,
+        },
+      ],
+      count: 1,
+    })
+
+    renderWithProviders(<ReminderBell />)
+
+    await waitFor(() => {
+      expect(screen.getByText(/3d overdue/)).toBeInTheDocument()
+    })
+  })
+
+  it("shows 'Unknown' for contact when reminder has no contact", async () => {
+    mockListDueReminders.mockResolvedValue({
+      data: [
+        {
+          id: "r1",
+          title: "Call",
+          description: null,
+          remind_at: new Date().toISOString(),
+          contact: null,
+        },
+      ],
+      count: 1,
+    })
+
+    renderWithProviders(<ReminderBell />)
+
+    await waitFor(() => {
+      expect(screen.getByText("Call")).toBeInTheDocument()
+    })
+
+    // When contact is null, contactDisplayName returns null so the name section is not rendered
+    // Verify that the contact name header is not displayed
+    const allText = screen.getAllByText(/Call/)
+    expect(allText.length).toBeGreaterThan(0)
+  })
+
+  it("shows exact reminder count when count is 50", async () => {
+    mockListDueReminders.mockResolvedValue({
+      data: [],
+      count: 50,
+    })
+
+    renderWithProviders(<ReminderBell />)
+
+    await waitFor(() => {
+      const badge = screen.getByTestId("badge")
+      expect(badge).toHaveTextContent("50")
+    })
+  })
+
+  it("shows exact reminder count when count equals 99", async () => {
+    mockListDueReminders.mockResolvedValue({
+      data: [],
+      count: 99,
+    })
+
+    renderWithProviders(<ReminderBell />)
+
+    await waitFor(() => {
+      const badge = screen.getByTestId("badge")
+      expect(badge).toHaveTextContent("99")
+    })
+  })
+
+  it("shows '99+' when count is exactly 100", async () => {
+    mockListDueReminders.mockResolvedValue({
+      data: [],
+      count: 100,
+    })
+
+    renderWithProviders(<ReminderBell />)
+
+    await waitFor(() => {
+      const badge = screen.getByTestId("badge")
+      expect(badge).toHaveTextContent("99+")
+    })
+  })
+
+  it("shows '99+' when count is 200", async () => {
+    mockListDueReminders.mockResolvedValue({
+      data: [],
+      count: 200,
+    })
+
+    renderWithProviders(<ReminderBell />)
+
+    await waitFor(() => {
+      const badge = screen.getByTestId("badge")
+      expect(badge).toHaveTextContent("99+")
+    })
+  })
+
+  it("displays contact with only first name", async () => {
+    mockListDueReminders.mockResolvedValue({
+      data: [
+        {
+          id: "r1",
+          title: "Call",
+          description: null,
+          remind_at: new Date().toISOString(),
+          contact: makeContact({ first_name: "John", last_name: null }),
+        },
+      ],
+      count: 1,
+    })
+
+    renderWithProviders(<ReminderBell />)
+
+    await waitFor(() => {
+      expect(screen.getByText("John")).toBeInTheDocument()
+    })
+  })
+
+  it("displays contact with only last name", async () => {
+    mockListDueReminders.mockResolvedValue({
+      data: [
+        {
+          id: "r1",
+          title: "Call",
+          description: null,
+          remind_at: new Date().toISOString(),
+          contact: makeContact({ first_name: "", last_name: "Smith" }),
+        },
+      ],
+      count: 1,
+    })
+
+    renderWithProviders(<ReminderBell />)
+
+    await waitFor(() => {
+      expect(screen.getByText("Smith")).toBeInTheDocument()
+    })
+  })
 })

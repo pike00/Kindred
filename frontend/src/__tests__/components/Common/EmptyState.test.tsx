@@ -93,14 +93,17 @@ describe("EmptyState", () => {
 
   it("renders icon with correct styling", () => {
     const { container } = render(<EmptyState icon={Heart} title="No items" />)
-    const iconWrapper = container.querySelector("div > div")
+    // The main wrapper is the first div, and the icon wrapper is the first child div
+    const mainWrapper = container.querySelector("div")
+    const iconWrapper = mainWrapper?.querySelector("div")
     expect(iconWrapper).toHaveClass(
       "flex",
       "items-center",
       "justify-center",
       "rounded-lg",
       "bg-muted",
-      "text-muted-foreground",
+      "size-11",
+      "mb-3",
     )
   })
 
@@ -131,7 +134,9 @@ describe("EmptyState", () => {
     const { container } = render(
       <EmptyState icon={Heart} title="No items" action={action} />,
     )
-    const actionContainer = container.querySelector("div > div:last-child")
+    // The action is the last child within the main wrapper
+    const mainWrapper = container.querySelector("div")
+    const actionContainer = mainWrapper?.querySelector("div:last-child")
     expect(actionContainer).toHaveClass("mt-4")
   })
 
@@ -144,8 +149,7 @@ describe("EmptyState", () => {
       />,
     )
     const descriptionElement = screen.getByText("Test description")
-    const parent = descriptionElement.parentElement
-    expect(parent).toHaveClass("mt-1")
+    expect(descriptionElement).toHaveClass("mt-1")
   })
 
   it("renders complex action elements", () => {
@@ -183,7 +187,8 @@ describe("EmptyState", () => {
 
   it("icon div has correct size", () => {
     const { container } = render(<EmptyState icon={Heart} title="No items" />)
-    const iconWrapper = container.querySelector("div > div")
+    const mainWrapper = container.querySelector("div")
+    const iconWrapper = mainWrapper?.querySelector("div")
     expect(iconWrapper).toHaveClass("size-11")
   })
 

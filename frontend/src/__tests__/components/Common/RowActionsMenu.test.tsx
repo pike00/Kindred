@@ -13,6 +13,28 @@ vi.mock("@/lib/icons", () => ({
   ),
 }))
 
+// Mock dropdown-menu to render inline (avoids Radix portal/jsdom issues)
+vi.mock("@/components/ui/dropdown-menu", () => ({
+  DropdownMenu: ({ children }: any) => <div>{children}</div>,
+  DropdownMenuTrigger: ({ children, asChild }: any) => <div>{children}</div>,
+  DropdownMenuContent: ({ children }: any) => (
+    <div role="menu" data-testid="dropdown-content">
+      {children}
+    </div>
+  ),
+  DropdownMenuItem: ({ children, onSelect, disabled, className }: any) => (
+    <div
+      role="menuitem"
+      onClick={disabled ? undefined : onSelect}
+      aria-disabled={disabled ? "true" : undefined}
+      className={className}
+    >
+      {children}
+    </div>
+  ),
+  DropdownMenuSeparator: () => <hr />,
+}))
+
 describe("RowActionsMenu", () => {
   describe("rendering", () => {
     it("renders trigger button with MoreHorizontal icon", () => {
@@ -41,9 +63,6 @@ describe("RowActionsMenu", () => {
 
       render(<RowActionsMenu items={items} />)
 
-      const trigger = screen.getByRole("button", { name: "Open actions menu" })
-      fireEvent.click(trigger)
-
       expect(screen.getByText("Edit")).toBeInTheDocument()
       expect(screen.getByText("Delete")).toBeInTheDocument()
       expect(screen.getByText("Archive")).toBeInTheDocument()
@@ -52,10 +71,7 @@ describe("RowActionsMenu", () => {
     it("renders empty menu when no items provided", () => {
       render(<RowActionsMenu items={[]} />)
 
-      const trigger = screen.getByRole("button", { name: "Open actions menu" })
-      fireEvent.click(trigger)
-
-      // Menu content area should be empty
+      // Menu content area should be present but empty
       const menuContent = screen.getByRole("menu")
       expect(menuContent).toBeInTheDocument()
     })
@@ -67,10 +83,7 @@ describe("RowActionsMenu", () => {
 
       render(<RowActionsMenu items={items} />)
 
-      const trigger = screen.getByRole("button", { name: "Open actions menu" })
-      expect(screen.queryByText("Edit")).not.toBeInTheDocument()
-
-      fireEvent.click(trigger)
+      // With mocked dropdown, content is always rendered inline
       expect(screen.getByText("Edit")).toBeInTheDocument()
     })
 
@@ -101,9 +114,6 @@ describe("RowActionsMenu", () => {
 
       render(<RowActionsMenu items={items} />)
 
-      const trigger = screen.getByRole("button", { name: "Open actions menu" })
-      fireEvent.click(trigger)
-
       const editItem = screen.getByText("Edit")
       fireEvent.click(editItem)
 
@@ -126,9 +136,6 @@ describe("RowActionsMenu", () => {
 
       render(<RowActionsMenu items={items} />)
 
-      const trigger = screen.getByRole("button", { name: "Open actions menu" })
-      fireEvent.click(trigger)
-
       fireEvent.click(screen.getByText("Delete"))
       expect(callbacks.onDelete).toHaveBeenCalledTimes(1)
       expect(callbacks.onEdit).not.toHaveBeenCalled()
@@ -145,9 +152,6 @@ describe("RowActionsMenu", () => {
 
       render(<RowActionsMenu items={items} />)
 
-      const trigger = screen.getByRole("button", { name: "Open actions menu" })
-      fireEvent.click(trigger)
-
       // Icons are rendered (SVG elements from lucide-react)
       expect(screen.getByText("Edit")).toBeInTheDocument()
       expect(screen.getByText("Delete")).toBeInTheDocument()
@@ -161,9 +165,6 @@ describe("RowActionsMenu", () => {
 
       render(<RowActionsMenu items={items} />)
 
-      const trigger = screen.getByRole("button", { name: "Open actions menu" })
-      fireEvent.click(trigger)
-
       expect(screen.getByText("Action 1")).toBeInTheDocument()
       expect(screen.getByText("Action 2")).toBeInTheDocument()
     })
@@ -176,9 +177,6 @@ describe("RowActionsMenu", () => {
 
       render(<RowActionsMenu items={items} />)
 
-      const trigger = screen.getByRole("button", { name: "Open actions menu" })
-      fireEvent.click(trigger)
-
       const menuItem = screen.getByRole("menuitem", { name: /Disabled Action/ })
       expect(menuItem).toHaveAttribute("aria-disabled", "true")
     })
@@ -190,9 +188,6 @@ describe("RowActionsMenu", () => {
       ]
 
       render(<RowActionsMenu items={items} />)
-
-      const trigger = screen.getByRole("button", { name: "Open actions menu" })
-      fireEvent.click(trigger)
 
       const menuItem = screen.getByRole("menuitem", { name: /Disabled Action/ })
       fireEvent.click(menuItem)
@@ -207,9 +202,6 @@ describe("RowActionsMenu", () => {
 
       render(<RowActionsMenu items={items} />)
 
-      const trigger = screen.getByRole("button", { name: "Open actions menu" })
-      fireEvent.click(trigger)
-
       const deleteItem = screen.getByText("Delete").closest("[role='menuitem']")
       expect(deleteItem).toHaveClass("text-destructive")
       expect(deleteItem).toHaveClass("focus:text-destructive")
@@ -221,9 +213,6 @@ describe("RowActionsMenu", () => {
       ]
 
       render(<RowActionsMenu items={items} />)
-
-      const trigger = screen.getByRole("button", { name: "Open actions menu" })
-      fireEvent.click(trigger)
 
       const editItem = screen.getByText("Edit").closest("[role='menuitem']")
       expect(editItem).not.toHaveClass("text-destructive")
@@ -272,9 +261,6 @@ describe("RowActionsMenu", () => {
 
       render(<RowActionsMenu items={items} />)
 
-      const trigger = screen.getByRole("button", { name: "Open actions menu" })
-      fireEvent.click(trigger)
-
       const menuItems = screen.getAllByRole("menuitem")
       expect(menuItems).toHaveLength(2)
     })
@@ -307,9 +293,6 @@ describe("RowActionsMenu", () => {
 
       render(<RowActionsMenu items={items} />)
 
-      const trigger = screen.getByRole("button", { name: "Open actions menu" })
-      fireEvent.click(trigger)
-
       expect(
         screen.getByText(/This is a very long action label/),
       ).toBeInTheDocument()
@@ -323,15 +306,12 @@ describe("RowActionsMenu", () => {
         <RowActionsMenu items={[{ label: "Edit", onSelect: onSelect1 }]} />,
       )
 
-      const trigger = screen.getByRole("button", { name: "Open actions menu" })
-      fireEvent.click(trigger)
       expect(screen.getByText("Edit")).toBeInTheDocument()
 
       rerender(
         <RowActionsMenu items={[{ label: "Delete", onSelect: onSelect2 }]} />,
       )
 
-      fireEvent.click(trigger)
       expect(screen.queryByText("Edit")).not.toBeInTheDocument()
       expect(screen.getByText("Delete")).toBeInTheDocument()
     })

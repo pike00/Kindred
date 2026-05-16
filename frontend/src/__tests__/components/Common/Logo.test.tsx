@@ -179,7 +179,8 @@ describe("Logo", () => {
     it("renders responsive variant without link when asLink is false", () => {
       render(<Logo variant="responsive" asLink={false} />)
       expect(screen.queryByRole("link")).not.toBeInTheDocument()
-      expect(screen.getByTestId("kindred-mark")).toBeInTheDocument()
+      const marks = screen.getAllByTestId("kindred-mark")
+      expect(marks.length).toBeGreaterThanOrEqual(1)
     })
 
     it("applies custom className to responsive variant", () => {
@@ -235,9 +236,13 @@ describe("Logo", () => {
     })
 
     it("applies custom className to responsive variant", () => {
-      render(<Logo variant="responsive" className="custom-responsive" />)
-      const marks = screen.getAllByTestId("kindred-mark")
-      expect(marks[0]).toHaveClass("custom-responsive")
+      const { container } = render(<Logo variant="responsive" className="custom-responsive" />)
+      // Find the span wrapper for FullMark which should have the custom class
+      const spans = container.querySelectorAll("span")
+      const fullMarkSpan = Array.from(spans).find(s =>
+        s.className.includes("custom-responsive") && s.className.includes("inline-flex")
+      )
+      expect(fullMarkSpan).toHaveClass("custom-responsive")
     })
   })
 

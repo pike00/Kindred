@@ -20,7 +20,7 @@ export function EnvironmentChip() {
     retry: false,
   })
 
-  if (!data || data.environment === "production") return null
+  if (!data || !data.environment || data.environment === "production") return null
 
   return (
     <span className="rounded-full border border-red-400/60 bg-red-600 px-3 py-0.5 text-[10px] font-bold uppercase tracking-widest text-white shadow shadow-red-900/40">

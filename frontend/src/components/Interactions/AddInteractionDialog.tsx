@@ -161,6 +161,9 @@ export const AddInteractionDialog = ({
                         variant={
                           field.value === ch.value ? "default" : "outline"
                         }
+                        data-state={
+                          field.value === ch.value ? "active" : undefined
+                        }
                         onClick={() => field.onChange(ch.value)}
                       >
                         {ch.label}

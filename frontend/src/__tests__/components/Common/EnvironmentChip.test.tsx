@@ -315,8 +315,8 @@ describe("EnvironmentChip", () => {
 
       await new Promise((resolve) => setTimeout(resolve, 100))
 
-      // Empty environment should still render
-      expect(container.querySelector("span[class*='rounded-full']")).toBeInTheDocument()
+      // Empty environment string is falsy and should not render
+      expect(container.querySelector("span[class*='rounded-full']")).not.toBeInTheDocument()
     })
 
     it("handles case-sensitive environment comparison", async () => {

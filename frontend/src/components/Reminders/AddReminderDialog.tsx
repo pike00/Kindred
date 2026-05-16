@@ -27,7 +27,10 @@ import { Textarea } from "@/components/ui/textarea"
 import useCustomToast from "@/hooks/useCustomToast"
 
 const reminderCreateSchema = z.object({
-  title: z.string().min(1, "Title is required"),
+  title: z.string().min(1, "Title is required").refine(
+    (val) => val.trim().length > 0,
+    "Title is required"
+  ),
   description: z.string().optional(),
   remind_at: z.string().min(1, "Date and time is required"),
 })

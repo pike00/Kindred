@@ -399,6 +399,43 @@ describe("UserActionsMenu", () => {
         screen.getByRole("button", { name: /Open user actions menu/i }),
       ).toBeInTheDocument()
     })
+
+    it("returns null (renders nothing) when current user matches props user exactly", () => {
+      const sameUser = makeUser({ id: "user-123", email: "test@example.com" })
+
+      vi.mocked(useAuth).mockReturnValue({
+        user: sameUser,
+        logout: vi.fn(),
+        loginMutation: { mutate: vi.fn(), isPending: false },
+        signUpMutation: { mutate: vi.fn(), isPending: false },
+      } as any)
+
+      const { container } = renderWithProviders(
+        <UserActionsMenu user={sameUser} />,
+      )
+
+      // Component should render nothing (null) when user is current user
+      expect(container.firstChild).toBeNull()
+    })
+
+    it("renders menu when user id differs even with same email", () => {
+      const user1 = makeUser({ id: "id-123", email: "shared@example.com" })
+      const user2 = makeUser({ id: "id-456", email: "shared@example.com" })
+
+      vi.mocked(useAuth).mockReturnValue({
+        user: user1,
+        logout: vi.fn(),
+        loginMutation: { mutate: vi.fn(), isPending: false },
+        signUpMutation: { mutate: vi.fn(), isPending: false },
+      } as any)
+
+      renderWithProviders(<UserActionsMenu user={user2} />)
+
+      // Should render menu because ids differ
+      expect(
+        screen.getByRole("button", { name: /Open user actions menu/i }),
+      ).toBeInTheDocument()
+    })
   })
 
   describe("accessibility", () => {

@@ -126,7 +126,8 @@ describe("SectionHeading", () => {
     const { container } = render(
       <SectionHeading icon={Heart} title="Contacts" action={action} />,
     )
-    const actionContainer = container.querySelector("div > div:last-child")
+    // Find the div with ml-auto class that wraps the action
+    const actionContainer = container.querySelector("div[class*='ml-auto']")
     expect(actionContainer).toHaveClass("ml-auto")
   })
 

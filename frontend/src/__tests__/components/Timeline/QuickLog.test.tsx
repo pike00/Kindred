@@ -23,14 +23,6 @@ vi.mock("@/hooks/useCustomToast", () => ({
   }),
 }))
 
-// Mock form components
-vi.mock("@/components/ui/form", () => ({
-  Form: ({ children, ...props }: any) => <form {...props}>{children}</form>,
-  FormField: ({ render }: any) => render({ field: { onChange: vi.fn(), value: "" } }),
-  FormItem: ({ children }: any) => <div>{children}</div>,
-  FormControl: ({ children }: any) => <div>{children}</div>,
-}))
-
 // Mock button component
 vi.mock("@/components/ui/button", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/components/ui/button")>()
@@ -129,12 +121,14 @@ describe("QuickLog", () => {
     })
 
     const call = mockCreateInteractionRoute.mock.calls[0]
-    expect(call[0].requestBody).toMatchObject({
-      attendee_ids: ["test-contact-id"],
-      channel: "call",
-      notes: "Test interaction note",
-    })
-    expect(call[0].requestBody.occurred_at).toBeDefined()
+    expect(call[0].requestBody).toEqual(
+      expect.objectContaining({
+        attendee_ids: ["test-contact-id"],
+        channel: "call",
+        notes: "Test interaction note",
+        occurred_at: expect.any(String),
+      })
+    )
   })
 
   it("shows success toast after submitting", async () => {
@@ -305,9 +299,11 @@ describe("QuickLog", () => {
     await user.click(submitButton)
 
     await waitFor(() => {
-      const call = mockCreateInteractionRoute.mock.calls[0]
-      expect(call[0].requestBody.notes).toBe("Important discussion")
+      expect(mockCreateInteractionRoute).toHaveBeenCalled()
     })
+
+    const call = mockCreateInteractionRoute.mock.calls[0]
+    expect(call[0].requestBody.notes).toBe("Important discussion")
   })
 
   it("invalidates related queries after successful submission", async () => {
@@ -380,20 +376,22 @@ describe("QuickLog", () => {
     await user.click(submitButton)
 
     await waitFor(() => {
-      const call = mockCreateInteractionRoute.mock.calls[0]
-      const requestBody = call[0].requestBody
-
-      // Verify structure
-      expect(requestBody).toHaveProperty("attendee_ids")
-      expect(requestBody).toHaveProperty("channel")
-      expect(requestBody).toHaveProperty("notes")
-      expect(requestBody).toHaveProperty("occurred_at")
-
-      // Verify types
-      expect(Array.isArray(requestBody.attendee_ids)).toBe(true)
-      expect(typeof requestBody.channel).toBe("string")
-      expect(typeof requestBody.notes).toBe("string")
-      expect(typeof requestBody.occurred_at).toBe("string")
+      expect(mockCreateInteractionRoute).toHaveBeenCalled()
     })
+
+    const call = mockCreateInteractionRoute.mock.calls[0]
+    const requestBody = call[0].requestBody
+
+    // Verify structure
+    expect(requestBody).toHaveProperty("attendee_ids")
+    expect(requestBody).toHaveProperty("channel")
+    expect(requestBody).toHaveProperty("notes")
+    expect(requestBody).toHaveProperty("occurred_at")
+
+    // Verify types
+    expect(Array.isArray(requestBody.attendee_ids)).toBe(true)
+    expect(typeof requestBody.channel).toBe("string")
+    expect(typeof requestBody.notes).toBe("string")
+    expect(typeof requestBody.occurred_at).toBe("string")
   })
 })

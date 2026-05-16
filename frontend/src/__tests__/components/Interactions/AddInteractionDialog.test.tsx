@@ -1,8 +1,14 @@
+import React from "react"
 import { screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { AddInteractionDialog } from "@/components/Interactions/AddInteractionDialog"
 import { makeContact, renderWithProviders } from "@/test/helpers"
+
+// Valid UUIDs for test contacts (schema requires uuid format)
+const UUID_C1 = "a1b2c3d4-e5f6-4a7b-8c9d-000000000001"
+const UUID_C2 = "a1b2c3d4-e5f6-4a7b-8c9d-000000000002"
+const UUID_CHARLIE = "a1b2c3d4-e5f6-4a7b-8c9d-000000000099"
 
 // Mock toast
 vi.mock("sonner", () => ({
@@ -61,14 +67,73 @@ vi.mock("@/lib/icons", () => ({
   X: () => <span data-testid="x-icon" />,
 }))
 
+// Hoisted ref so vi.mock factory can access it
+const dialogCallbacks = vi.hoisted(() => ({
+  onOpenChange: null as ((v: boolean) => void) | null,
+}))
+
+// Mock Dialog to render inline without portals
+vi.mock("@/components/ui/dialog", () => ({
+  Dialog: ({ children, open, onOpenChange }: any) => {
+    dialogCallbacks.onOpenChange = onOpenChange ?? null
+    const arr = React.Children.toArray(children)
+    return (
+      <div>
+        {arr[0]}
+        {open && arr[1]}
+      </div>
+    )
+  },
+  DialogTrigger: ({ children }: any) => (
+    <div onClick={() => dialogCallbacks.onOpenChange?.(true)}>
+      {children}
+    </div>
+  ),
+  DialogContent: ({ children }: any) => (
+    <div role="dialog" data-testid="dialog-content">
+      {children}
+    </div>
+  ),
+  DialogHeader: ({ children }: any) => <div>{children}</div>,
+  DialogTitle: ({ children }: any) => <h2>{children}</h2>,
+  DialogDescription: ({ children }: any) => <p>{children}</p>,
+}))
+
+// Mock Popover to render inline without portals
+vi.mock("@/components/ui/popover", () => ({
+  Popover: ({ children }: any) => <div>{children}</div>,
+  PopoverTrigger: ({ children }: any) => <>{children}</>,
+  PopoverContent: ({ children }: any) => (
+    <div data-testid="popover-content">{children}</div>
+  ),
+}))
+
+// Mock Command components (CommandInput crashes in jsdom)
+vi.mock("@/components/ui/command", () => ({
+  Command: ({ children }: any) => <div data-testid="command">{children}</div>,
+  CommandInput: ({ placeholder }: any) => (
+    <input placeholder={placeholder} data-testid="command-input" />
+  ),
+  CommandList: ({ children }: any) => <div>{children}</div>,
+  CommandEmpty: ({ children }: any) => (
+    <div data-testid="command-empty">{children}</div>
+  ),
+  CommandGroup: ({ children }: any) => <div>{children}</div>,
+  CommandItem: ({ children, onSelect, value }: any) => (
+    <div role="option" onClick={onSelect} data-value={value}>
+      {children}
+    </div>
+  ),
+}))
+
 describe("AddInteractionDialog", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockCreateInteraction.mockResolvedValue({ id: "i1" })
     mockListContacts.mockResolvedValue({
       data: [
-        makeContact({ id: "c1", first_name: "Alice", last_name: "Smith" }),
-        makeContact({ id: "c2", first_name: "Bob", last_name: "Jones" }),
+        makeContact({ id: UUID_C1, first_name: "Alice", last_name: "Smith" }),
+        makeContact({ id: UUID_C2, first_name: "Bob", last_name: "Jones" }),
       ],
     })
   })
@@ -88,7 +153,7 @@ describe("AddInteractionDialog", () => {
     await user.click(trigger)
 
     expect(screen.getByRole("dialog")).toBeInTheDocument()
-    expect(screen.getByText("Log Interaction")).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "Log Interaction" })).toBeInTheDocument()
   })
 
   it("shows all form fields", async () => {
@@ -97,24 +162,24 @@ describe("AddInteractionDialog", () => {
 
     await user.click(screen.getByRole("button", { name: /log interaction/i }))
 
-    expect(screen.getByLabelText(/attendees \*/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/channel \*/i)).toBeInTheDocument()
+    expect(screen.getByText(/attendees \*/i)).toBeInTheDocument()
+    expect(screen.getByText(/channel \*/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/when \*/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/duration/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/mood/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/notes/i)).toBeInTheDocument()
+    expect(screen.getByTestId("mention-textarea")).toBeInTheDocument()
   })
 
   it("preseeds dialog with provided contact", async () => {
     const user = userEvent.setup()
-    const contact = makeContact({ id: "contact-1", first_name: "Charlie" })
+    const contact = makeContact({ id: UUID_CHARLIE, first_name: "Charlie" })
 
     renderWithProviders(<AddInteractionDialog seedContact={contact} />)
 
     await user.click(screen.getByRole("button", { name: /log interaction/i }))
 
     // The seeded contact should be in the attendees section
-    expect(screen.getByText("Charlie")).toBeInTheDocument()
+    expect(screen.getByText("Charlie Smith")).toBeInTheDocument()
   })
 
   it("displays validation error when no attendees selected", async () => {
@@ -123,10 +188,6 @@ describe("AddInteractionDialog", () => {
 
     await user.click(screen.getByRole("button", { name: /log interaction/i }))
 
-    const _submitButton = screen.getByRole("button", {
-      name: /log interaction/i,
-      hidden: true,
-    })
     const allButtons = screen.getAllByRole("button")
     const logButton = allButtons.find(
       (btn) => btn.textContent === "Log Interaction" && btn.closest("form"),
@@ -207,7 +268,7 @@ describe("AddInteractionDialog", () => {
 
   it("submits with required fields", async () => {
     const user = userEvent.setup()
-    const contact = makeContact({ id: "c1", first_name: "Alice" })
+    const contact = makeContact({ id: UUID_C1, first_name: "Alice" })
 
     renderWithProviders(<AddInteractionDialog seedContact={contact} />)
 
@@ -231,7 +292,7 @@ describe("AddInteractionDialog", () => {
         expect(mockCreateInteraction).toHaveBeenCalledWith(
           expect.objectContaining({
             requestBody: expect.objectContaining({
-              attendee_ids: ["c1"],
+              attendee_ids: [UUID_C1],
               channel: "call",
             }),
           }),
@@ -242,7 +303,7 @@ describe("AddInteractionDialog", () => {
 
   it("submits with all optional fields", async () => {
     const user = userEvent.setup()
-    const contact = makeContact({ id: "c1" })
+    const contact = makeContact({ id: UUID_C1 })
 
     renderWithProviders(<AddInteractionDialog seedContact={contact} />)
 
@@ -287,7 +348,7 @@ describe("AddInteractionDialog", () => {
 
   it("closes dialog on successful submission", async () => {
     const user = userEvent.setup()
-    const contact = makeContact({ id: "c1" })
+    const contact = makeContact({ id: UUID_C1 })
 
     renderWithProviders(<AddInteractionDialog seedContact={contact} />)
 
@@ -317,7 +378,7 @@ describe("AddInteractionDialog", () => {
       () => new Promise((resolve) => setTimeout(() => resolve({}), 100)),
     )
 
-    const contact = makeContact({ id: "c1" })
+    const contact = makeContact({ id: UUID_C1 })
     renderWithProviders(<AddInteractionDialog seedContact={contact} />)
 
     await user.click(screen.getByRole("button", { name: /log interaction/i }))
@@ -341,7 +402,7 @@ describe("AddInteractionDialog", () => {
     const user = userEvent.setup()
     mockCreateInteraction.mockRejectedValue(new Error("API Error"))
 
-    const contact = makeContact({ id: "c1" })
+    const contact = makeContact({ id: UUID_C1 })
     renderWithProviders(<AddInteractionDialog seedContact={contact} />)
 
     await user.click(screen.getByRole("button", { name: /log interaction/i }))
@@ -370,7 +431,7 @@ describe("AddInteractionDialog", () => {
       () => new Promise((resolve) => setTimeout(() => resolve({}), 200)),
     )
 
-    const contact = makeContact({ id: "c1" })
+    const contact = makeContact({ id: UUID_C1 })
     renderWithProviders(<AddInteractionDialog seedContact={contact} />)
 
     await user.click(screen.getByRole("button", { name: /log interaction/i }))
@@ -423,7 +484,7 @@ describe("AddInteractionDialog", () => {
 
   it("converts duration string to number on submit", async () => {
     const user = userEvent.setup()
-    const contact = makeContact({ id: "c1" })
+    const contact = makeContact({ id: UUID_C1 })
 
     renderWithProviders(<AddInteractionDialog seedContact={contact} />)
 
@@ -458,7 +519,7 @@ describe("AddInteractionDialog", () => {
 
   it("invalidates correct query keys after successful submission", async () => {
     const user = userEvent.setup()
-    const contact = makeContact({ id: "c1" })
+    const contact = makeContact({ id: UUID_C1 })
     const { queryClient } = renderWithProviders(
       <AddInteractionDialog seedContact={contact} />,
     )
