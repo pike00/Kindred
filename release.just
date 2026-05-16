@@ -1,1 +1,1 @@
-../_templates/release.just
+/home/will/projects/_templates/release.just
