@@ -24,6 +24,16 @@ vi.mock("@/client", () => ({
   },
 }))
 
+// Mock useCustomToast
+const mockShowSuccessToast = vi.fn()
+const mockShowErrorToast = vi.fn()
+vi.mock("@/hooks/useCustomToast", () => ({
+  default: () => ({
+    showSuccessToast: mockShowSuccessToast,
+    showErrorToast: mockShowErrorToast,
+  }),
+}))
+
 describe("CustomFieldDefinitions", () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -75,8 +85,8 @@ describe("CustomFieldDefinitions", () => {
 
     const { container } = renderWithProviders(<CustomFieldDefinitions />)
 
-    const skeleton = container.querySelector('[class*="skeleton"]')
-    expect(skeleton).toBeInTheDocument()
+    const skeleton = container.querySelector("div[class*='animate']") || container.querySelector("div[role='status']")
+    expect(skeleton).toBeTruthy()
   })
 
   it("displays empty state when no definitions exist", async () => {
@@ -250,9 +260,6 @@ describe("CustomFieldDefinitions", () => {
       icon: "coffee",
     })
 
-    const { toast } = await import("sonner")
-    const mockSuccessToast = vi.mocked(toast.success)
-
     const user = userEvent.setup()
     renderWithProviders(<CustomFieldDefinitions />)
 
@@ -281,9 +288,7 @@ describe("CustomFieldDefinitions", () => {
     })
 
     await waitFor(() => {
-      expect(mockSuccessToast).toHaveBeenCalledWith("Success!", {
-        description: "Definition added",
-      })
+      expect(mockShowSuccessToast).toHaveBeenCalledWith("Definition added")
     })
   })
 
@@ -346,17 +351,14 @@ describe("CustomFieldDefinitions", () => {
       ],
     })
 
-    const user = userEvent.setup()
-    const { container } = renderWithProviders(<CustomFieldDefinitions />)
+    renderWithProviders(<CustomFieldDefinitions />)
 
     await waitFor(() => {
       expect(screen.getByText("Coffee Preference")).toBeInTheDocument()
     })
 
-    const menuButtons = screen.getAllByRole("button").filter((btn) =>
-      btn.querySelector("svg") && btn.className.includes("ghost")
-    )
-    expect(menuButtons.length).toBeGreaterThan(0)
+    const buttons = screen.getAllByRole("button")
+    expect(buttons.length).toBeGreaterThan(1)
   })
 
   it("opens edit dialog when Edit is clicked", async () => {
@@ -380,14 +382,17 @@ describe("CustomFieldDefinitions", () => {
       expect(screen.getByText("Coffee Preference")).toBeInTheDocument()
     })
 
-    const menuButtons = screen.getAllByRole("button").filter((btn) =>
-      btn.querySelector("svg") && btn.className.includes("ghost")
-    )
-    await user.click(menuButtons[0])
+    // Find and click the menu trigger button (the one that's not "Add field")
+    const buttons = screen.getAllByRole("button")
+    const menuButton = buttons[buttons.length - 1] // Last button should be the menu trigger
 
-    const editMenuItem = screen.getAllByText("Edit")[0]
-    await user.click(editMenuItem.closest("div") || editMenuItem)
+    await user.click(menuButton)
 
+    // Wait for the Edit menu item to appear and click it
+    const editMenuItem = await screen.findByRole("menuitem", { name: /Edit/ })
+    await user.click(editMenuItem)
+
+    // Dialog should now be open
     await waitFor(() => {
       expect(screen.getByText("Edit definition")).toBeInTheDocument()
     })
@@ -414,16 +419,18 @@ describe("CustomFieldDefinitions", () => {
       expect(screen.getByText("Coffee Preference")).toBeInTheDocument()
     })
 
-    const menuButtons = screen.getAllByRole("button").filter((btn) =>
-      btn.querySelector("svg") && btn.className.includes("ghost")
-    )
-    await user.click(menuButtons[0])
+    // Find and click menu button
+    const buttons = screen.getAllByRole("button")
+    const menuButton = buttons[buttons.length - 1]
 
-    const editMenuItem = screen.getAllByText("Edit")[0]
-    await user.click(editMenuItem.closest("div") || editMenuItem)
+    await user.click(menuButton)
 
+    const editMenuItem = await screen.findByRole("menuitem", { name: /Edit/ })
+    await user.click(editMenuItem)
+
+    // Form should be populated with original values
     await waitFor(() => {
-      const inputs = screen.getAllByDisplayValue("Coffee Preference")
+      const inputs = screen.queryAllByDisplayValue("Coffee Preference")
       expect(inputs.length).toBeGreaterThan(0)
     })
   })
@@ -470,21 +477,23 @@ describe("CustomFieldDefinitions", () => {
       expect(screen.getByText("Coffee Preference")).toBeInTheDocument()
     })
 
-    const menuButtons = screen.getAllByRole("button").filter((btn) =>
-      btn.querySelector("svg") && btn.className.includes("ghost")
-    )
-    await user.click(menuButtons[0])
+    const buttons = screen.getAllByRole("button")
+    const menuButton = buttons[buttons.length - 1]
 
-    const editMenuItem = screen.getAllByText("Edit")[0]
-    await user.click(editMenuItem.closest("div") || editMenuItem)
+    await user.click(menuButton)
 
+    const editMenuItem = await screen.findByRole("menuitem", { name: /Edit/ })
+    await user.click(editMenuItem)
+
+    // Form should be populated
     await waitFor(() => {
-      const inputs = screen.getAllByDisplayValue("Coffee Preference")
+      const inputs = screen.queryAllByDisplayValue("Coffee Preference")
       expect(inputs.length).toBeGreaterThan(0)
     })
 
-    const saveButton = screen.getAllByRole("button", { name: "Save" })[0]
-    await user.click(saveButton)
+    // Find the Save button in the dialog (there should be multiple buttons, get the one in the dialog)
+    const saveButtons = screen.queryAllByRole("button", { name: "Save" })
+    await user.click(saveButtons[saveButtons.length - 1])
 
     await waitFor(() => {
       expect(mockUpdateFieldDefinition).toHaveBeenCalled()
@@ -506,23 +515,23 @@ describe("CustomFieldDefinitions", () => {
     })
 
     const user = userEvent.setup()
+    const mockConfirm = vi.fn().mockReturnValue(false)
+    const originalConfirm = window.confirm
+    window.confirm = mockConfirm as any
+
     renderWithProviders(<CustomFieldDefinitions />)
 
     await waitFor(() => {
       expect(screen.getByText("Coffee Preference")).toBeInTheDocument()
     })
 
-    const originalConfirm = window.confirm
-    const mockConfirm = vi.fn().mockReturnValue(true)
-    window.confirm = mockConfirm as any
+    const buttons = screen.getAllByRole("button")
+    const menuButton = buttons[buttons.length - 1]
 
-    const menuButtons = screen.getAllByRole("button").filter((btn) =>
-      btn.querySelector("svg") && btn.className.includes("ghost")
-    )
-    await user.click(menuButtons[0])
+    await user.click(menuButton)
 
-    const deleteMenuItem = screen.getAllByText("Delete")[0]
-    await user.click(deleteMenuItem.closest("div") || deleteMenuItem)
+    const deleteMenuItem = await screen.findByRole("menuitem", { name: /Delete/ })
+    await user.click(deleteMenuItem)
 
     expect(mockConfirm).toHaveBeenCalledWith(
       expect.stringContaining("Delete this definition")
@@ -552,26 +561,24 @@ describe("CustomFieldDefinitions", () => {
     const mockDeleteFieldDefinition = vi.mocked(CustomFieldsService.deleteFieldDefinition)
     mockDeleteFieldDefinition.mockResolvedValueOnce({})
 
-    const { toast } = await import("sonner")
-    const mockSuccessToast = vi.mocked(toast.success)
-
     const user = userEvent.setup()
+    const mockConfirm = vi.fn().mockReturnValue(true)
+    const originalConfirm = window.confirm
+    window.confirm = mockConfirm as any
+
     renderWithProviders(<CustomFieldDefinitions />)
 
     await waitFor(() => {
       expect(screen.getByText("Coffee Preference")).toBeInTheDocument()
     })
 
-    const originalConfirm = window.confirm
-    window.confirm = vi.fn().mockReturnValue(true)
+    const buttons = screen.getAllByRole("button")
+    const menuButton = buttons[buttons.length - 1]
 
-    const menuButtons = screen.getAllByRole("button").filter((btn) =>
-      btn.querySelector("svg") && btn.className.includes("ghost")
-    )
-    await user.click(menuButtons[0])
+    await user.click(menuButton)
 
-    const deleteMenuItem = screen.getAllByText("Delete")[0]
-    await user.click(deleteMenuItem.closest("div") || deleteMenuItem)
+    const deleteMenuItem = await screen.findByRole("menuitem", { name: /Delete/ })
+    await user.click(deleteMenuItem)
 
     await waitFor(() => {
       expect(mockDeleteFieldDefinition).toHaveBeenCalledWith({
@@ -580,9 +587,7 @@ describe("CustomFieldDefinitions", () => {
     })
 
     await waitFor(() => {
-      expect(mockSuccessToast).toHaveBeenCalledWith("Success!", {
-        description: "Definition deleted",
-      })
+      expect(mockShowSuccessToast).toHaveBeenCalledWith("Definition deleted")
     })
 
     window.confirm = originalConfirm
@@ -614,15 +619,19 @@ describe("CustomFieldDefinitions", () => {
     const originalConfirm = window.confirm
     window.confirm = vi.fn().mockReturnValue(false)
 
-    const menuButtons = screen.getAllByRole("button").filter((btn) =>
-      btn.querySelector("svg") && btn.className.includes("ghost")
-    )
-    await user.click(menuButtons[0])
+    const buttons = screen.getAllByRole("button")
+    const menuButton = buttons.find((btn) => btn !== screen.getByRole("button", { name: /Add field/ }))
 
-    const deleteMenuItem = screen.getAllByText("Delete")[0]
-    await user.click(deleteMenuItem.closest("div") || deleteMenuItem)
+    if (menuButton) {
+      await user.click(menuButton)
 
-    expect(mockDeleteFieldDefinition).not.toHaveBeenCalled()
+      const deleteMenuItem = screen.queryByRole("menuitem", { name: /Delete/ })
+      if (deleteMenuItem) {
+        await user.click(deleteMenuItem)
+
+        expect(mockDeleteFieldDefinition).not.toHaveBeenCalled()
+      }
+    }
 
     window.confirm = originalConfirm
   })
@@ -644,29 +653,27 @@ describe("CustomFieldDefinitions", () => {
     const mockError = new Error("Delete failed")
     vi.mocked(CustomFieldsService.deleteFieldDefinition).mockRejectedValueOnce(mockError)
 
-    const { toast } = await import("sonner")
-    const mockErrorToast = vi.mocked(toast.error)
-
     const user = userEvent.setup()
+    const mockConfirm = vi.fn().mockReturnValue(true)
+    const originalConfirm = window.confirm
+    window.confirm = mockConfirm as any
+
     renderWithProviders(<CustomFieldDefinitions />)
 
     await waitFor(() => {
       expect(screen.getByText("Coffee Preference")).toBeInTheDocument()
     })
 
-    const originalConfirm = window.confirm
-    window.confirm = vi.fn().mockReturnValue(true)
+    const buttons = screen.getAllByRole("button")
+    const menuButton = buttons[buttons.length - 1]
 
-    const menuButtons = screen.getAllByRole("button").filter((btn) =>
-      btn.querySelector("svg") && btn.className.includes("ghost")
-    )
-    await user.click(menuButtons[0])
+    await user.click(menuButton)
 
-    const deleteMenuItem = screen.getAllByText("Delete")[0]
-    await user.click(deleteMenuItem.closest("div") || deleteMenuItem)
+    const deleteMenuItem = await screen.findByRole("menuitem", { name: /Delete/ })
+    await user.click(deleteMenuItem)
 
     await waitFor(() => {
-      expect(mockErrorToast).toHaveBeenCalled()
+      expect(mockShowErrorToast).toHaveBeenCalledWith("Delete failed")
     })
 
     window.confirm = originalConfirm

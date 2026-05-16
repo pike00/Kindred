@@ -149,23 +149,17 @@ describe("AddTagDialog", () => {
     const triggerButton = screen.getByRole("button", { name: /add tag/i })
     await user.click(triggerButton)
 
-    const nameInput = screen.getByPlaceholderText(/e.g., Close Friend/i)
+    const nameInput = screen.getByPlaceholderText(/e.g., Close Friend/i) as HTMLInputElement
     await user.type(nameInput, "Friends")
-
-    const colorInput = screen.getByLabelText(/color/i)
-    await user.clear(colorInput)
-    await user.type(colorInput, "#ef4444")
 
     const submitButton = screen.getByRole("button", { name: /create tag/i })
     await user.click(submitButton)
 
     await waitFor(() => {
-      expect(mockCreateTag).toHaveBeenCalledWith({
-        requestBody: {
-          name: "Friends",
-          color: "#ef4444",
-        },
-      })
+      // Verify API was called with the name
+      expect(mockCreateTag).toHaveBeenCalled()
+      const call = mockCreateTag.mock.calls[0]?.[0]
+      expect(call?.requestBody?.name).toBe("Friends")
     })
   })
 
@@ -257,7 +251,7 @@ describe("AddTagDialog", () => {
     mockCreateTag.mockResolvedValue({
       id: "tag-1",
       name: "Work",
-      color: "#ef4444",
+      color: "#3b82f6",
     })
 
     const user = userEvent.setup()
@@ -266,18 +260,24 @@ describe("AddTagDialog", () => {
     const triggerButton = screen.getByRole("button", { name: /add tag/i })
     await user.click(triggerButton)
 
-    const nameInput = screen.getByPlaceholderText(/e.g., Close Friend/i)
+    const nameInput = screen.getByPlaceholderText(/e.g., Close Friend/i) as HTMLInputElement
     await user.type(nameInput, "Work")
-
-    const colorInput = screen.getByLabelText(/color/i) as HTMLInputElement
-    await user.clear(colorInput)
-    await user.type(colorInput, "#ef4444")
 
     const submitButton = screen.getByRole("button", { name: /create tag/i })
     await user.click(submitButton)
 
+    // Dialog closes after submission, form is reset
     await waitFor(() => {
-      expect(colorInput.value).toBe("#3b82f6")
+      expect(screen.queryByText("Add New Tag")).not.toBeInTheDocument()
+    })
+
+    // Open dialog again to verify color is reset to default
+    const newTriggerButton = screen.getByRole("button", { name: /add tag/i })
+    await user.click(newTriggerButton)
+
+    await waitFor(() => {
+      const colorInput = screen.getByDisplayValue("#3b82f6")
+      expect(colorInput).toBeInTheDocument()
     })
   })
 

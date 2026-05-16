@@ -96,7 +96,6 @@ describe("JournalActionsMenu", () => {
 
   it("shows success toast on successful delete", async () => {
     const user = userEvent.setup()
-    const { showSuccessToast } = require("@/hooks/useCustomToast").default()
     const entry = makeJournalEntry({ id: "entry-1" })
 
     renderWithProviders(<JournalActionsMenu entry={entry} />)

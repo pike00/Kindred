@@ -99,9 +99,7 @@ describe("CommandPaletteContext", () => {
 
       expect(() => {
         render(<TestComponentWithoutProvider />)
-      }).toThrow(
-        expect.stringContaining("useCommandPalette must be used inside <CommandPaletteProvider>")
-      )
+      }).toThrow("useCommandPalette must be used inside <CommandPaletteProvider>")
     })
   })
 
@@ -390,7 +388,7 @@ describe("CommandPaletteContext", () => {
     })
 
     it("handles unmount and remount", async () => {
-      const { unmount, rerender } = render(
+      const { unmount } = render(
         <CommandPaletteProvider>
           <TestConsumer />
         </CommandPaletteProvider>
@@ -403,7 +401,7 @@ describe("CommandPaletteContext", () => {
 
       unmount()
 
-      rerender(
+      render(
         <CommandPaletteProvider>
           <TestConsumer />
         </CommandPaletteProvider>

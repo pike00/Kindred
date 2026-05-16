@@ -18,7 +18,6 @@ import { AddressesCard } from "@/components/Contacts/AddressesCard"
 import { ContactFieldsCard } from "@/components/Contacts/ContactFieldsCard"
 import { CustomFieldsCard } from "@/components/Contacts/CustomFieldsCard"
 import { EditContactDialog } from "@/components/Contacts/EditContactDialog"
-import { HouseholdCard } from "@/components/Contacts/HouseholdCard"
 import { LifeEventsCard } from "@/components/Contacts/LifeEventsCard"
 import { PetsCard } from "@/components/Contacts/PetsCard"
 import { RelationshipsCard } from "@/components/Contacts/RelationshipsCard"
@@ -29,7 +28,6 @@ import { AddMediaRecommendation } from "@/components/MediaRecommendations/AddMed
 import { NotesCard } from "@/components/Notes/NotesCard"
 import { UnifiedTimeline } from "@/components/Timeline/UnifiedTimeline"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -40,10 +38,8 @@ import {
 } from "@/components/ui/tooltip"
 import {
   Archive,
-  BellOff,
   Cake,
   Clock,
-  Download,
   Film,
   Info,
   MessagesSquare,
@@ -156,28 +152,8 @@ function ContactDetailPage() {
                   <Archive className="size-3" /> Archived
                 </Badge>
               )}
-              {contact.do_not_contact && (
-                <Badge
-                  variant="outline"
-                  title={contact.do_not_contact_reason || undefined}
-                >
-                  <BellOff className="size-3" /> No reminders
-                </Badge>
-              )}
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  window.open(`/api/v1/contacts/${contactId}.pdf`, "_blank")
-                }}
-              >
-                <Download className="size-4 mr-2" />
-                Download PDF
-              </Button>
-              <EditContactDialog contact={contact} />
-            </div>
+            <EditContactDialog contact={contact} />
           </div>
           {contact.company && (
             <p className="text-lg text-muted-foreground">
@@ -223,10 +199,6 @@ function ContactDetailPage() {
           <PetsCard contactId={contactId} />
           <LifeEventsCard contactId={contactId} />
           <CustomFieldsCard contactId={contactId} />
-          <HouseholdCard
-            contactId={contactId}
-            contactName={contact.first_name ?? ""}
-          />
         </div>
 
         {/* Right column (1/3 width) */}
@@ -264,6 +236,31 @@ function ContactDetailPage() {
                         {tag.name}
                       </Badge>
                     </Link>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Groups */}
+          {contact.groups && contact.groups.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  Groups
+                  <InfoHint>
+                    Named collections of people with a shared context, like
+                    "Family", "D&D Group", or "Work Team". Groups have a
+                    description; tags don't.
+                  </InfoHint>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-1.5">
+                  {contact.groups.map((group) => (
+                    <Badge key={group.id} variant="outline">
+                      {group.name}
+                    </Badge>
                   ))}
                 </div>
               </CardContent>

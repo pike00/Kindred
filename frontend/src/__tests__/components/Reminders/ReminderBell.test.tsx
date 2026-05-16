@@ -122,9 +122,12 @@ describe("ReminderBell", () => {
   it("renders bell button", async () => {
     renderWithProviders(<ReminderBell />)
 
-    await waitFor(() => {
-      expect(screen.getByRole("button")).toBeInTheDocument()
-    })
+    // The bell button is the first button/trigger with the bell icon
+    const buttons = screen.getAllByRole("button")
+    expect(buttons.length).toBeGreaterThan(0)
+    // Verify popover trigger is present (the button)
+    const popoverTrigger = screen.getByTestId("popover-trigger")
+    expect(popoverTrigger).toBeInTheDocument()
   })
 
   it("renders bell icon", async () => {
