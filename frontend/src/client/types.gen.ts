@@ -618,6 +618,7 @@ export type DebtPublic = {
     id: string;
     contact_id: string;
     created_at: string;
+    deleted_at?: (string | null);
 };
 
 export type DebtsPublic = {
@@ -710,6 +711,7 @@ export type GiftPublic = {
     id: string;
     contact_id: string;
     created_at: string;
+    deleted_at?: (string | null);
 };
 
 export type GiftsPublic = {
@@ -794,6 +796,7 @@ export type InteractionPublic = {
     id: string;
     attendees?: Array<InteractionAttendeeSummary>;
     created_at: string;
+    deleted_at?: (string | null);
 };
 
 export type InteractionsPublic = {
@@ -905,6 +908,7 @@ export type LifeEventPublic = {
     id: string;
     contact_id: string;
     created_at: string;
+    deleted_at?: (string | null);
 };
 
 export type LifeEventsPublic = {
@@ -1012,6 +1016,7 @@ export type NotePublic = {
     contact_id: string;
     created_at: string;
     updated_at: string;
+    deleted_at?: (string | null);
 };
 
 export type NotesPublic = {
@@ -1260,6 +1265,7 @@ export type ReminderDuePublic = {
     last_sent_at: (string | null);
     snoozed_until: (string | null);
     created_at: string;
+    deleted_at?: (string | null);
     contact?: (ReminderContactSummary | null);
 };
 
@@ -1291,6 +1297,7 @@ export type ReminderPublic = {
     last_sent_at: (string | null);
     snoozed_until: (string | null);
     created_at: string;
+    deleted_at?: (string | null);
 };
 
 export type RemindersDuePublic = {

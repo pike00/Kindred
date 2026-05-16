@@ -1072,6 +1072,14 @@ class Interaction(InteractionBase, table=True):
         nullable=False,
         description="When the row was inserted (may be after occurred_at; UTC).",
     )
+    deleted_at: datetime | None = Field(
+        default=None,
+        index=True,
+        description=(
+            "Soft-delete marker. When non-null, the row is hidden from "
+            "default queries; restore by clearing this column."
+        ),
+    )
 
 
 class InteractionAttendeeSummary(SQLModel):
@@ -1085,6 +1093,7 @@ class InteractionPublic(InteractionBase):
     id: uuid.UUID
     attendees: list[InteractionAttendeeSummary] = []
     created_at: datetime
+    deleted_at: datetime | None = None
 
 
 class InteractionsPublic(SQLModel):
@@ -1164,6 +1173,14 @@ class Reminder(ReminderBase, table=True):
         nullable=False,
         description="When the reminder was created (UTC).",
     )
+    deleted_at: datetime | None = Field(
+        default=None,
+        index=True,
+        description=(
+            "Soft-delete marker. When non-null, the row is hidden from "
+            "default queries; restore by clearing this column."
+        ),
+    )
 
 
 class ReminderPublic(ReminderBase):
@@ -1172,6 +1189,7 @@ class ReminderPublic(ReminderBase):
     last_sent_at: datetime | None
     snoozed_until: datetime | None
     created_at: datetime
+    deleted_at: datetime | None = None
 
 
 class RemindersPublic(SQLModel):
@@ -1299,12 +1317,21 @@ class Gift(GiftBase, table=True):
         nullable=False,
         description="When the gift record was created (UTC).",
     )
+    deleted_at: datetime | None = Field(
+        default=None,
+        index=True,
+        description=(
+            "Soft-delete marker. When non-null, the row is hidden from "
+            "default queries; restore by clearing this column."
+        ),
+    )
 
 
 class GiftPublic(GiftBase):
     id: uuid.UUID
     contact_id: uuid.UUID
     created_at: datetime
+    deleted_at: datetime | None = None
 
 
 class GiftsPublic(SQLModel):
@@ -1381,12 +1408,21 @@ class Debt(DebtBase, table=True):
         nullable=False,
         description="When the debt was recorded (UTC).",
     )
+    deleted_at: datetime | None = Field(
+        default=None,
+        index=True,
+        description=(
+            "Soft-delete marker. When non-null, the row is hidden from "
+            "default queries; restore by clearing this column."
+        ),
+    )
 
 
 class DebtPublic(DebtBase):
     id: uuid.UUID
     contact_id: uuid.UUID
     created_at: datetime
+    deleted_at: datetime | None = None
 
 
 class DebtsPublic(SQLModel):
@@ -1459,12 +1495,21 @@ class LifeEvent(LifeEventBase, table=True):
         nullable=False,
         description="When the event was logged (UTC).",
     )
+    deleted_at: datetime | None = Field(
+        default=None,
+        index=True,
+        description=(
+            "Soft-delete marker. When non-null, the row is hidden from "
+            "default queries; restore by clearing this column."
+        ),
+    )
 
 
 class LifeEventPublic(LifeEventBase):
     id: uuid.UUID
     contact_id: uuid.UUID
     created_at: datetime
+    deleted_at: datetime | None = None
 
 
 class LifeEventsPublic(SQLModel):
@@ -1534,6 +1579,14 @@ class Note(NoteBase, table=True):
         nullable=False,
         description="When the note was created (UTC).",
     )
+    deleted_at: datetime | None = Field(
+        default=None,
+        index=True,
+        description=(
+            "Soft-delete marker. When non-null, the row is hidden from "
+            "default queries; restore by clearing this column."
+        ),
+    )
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
         sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
@@ -1547,6 +1600,7 @@ class NotePublic(NoteBase):
     contact_id: uuid.UUID
     created_at: datetime
     updated_at: datetime
+    deleted_at: datetime | None = None
 
 
 class NotesPublic(SQLModel):

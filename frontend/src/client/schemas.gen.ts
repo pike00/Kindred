@@ -2331,6 +2331,18 @@ export const DebtPublicSchema = {
             type: 'string',
             format: 'date-time',
             title: 'Created At'
+        },
+        deleted_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Deleted At'
         }
     },
     type: 'object',
@@ -2637,6 +2649,18 @@ export const GiftPublicSchema = {
             type: 'string',
             format: 'date-time',
             title: 'Created At'
+        },
+        deleted_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Deleted At'
         }
     },
     type: 'object',
@@ -2958,6 +2982,18 @@ export const InteractionPublicSchema = {
             type: 'string',
             format: 'date-time',
             title: 'Created At'
+        },
+        deleted_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Deleted At'
         }
     },
     type: 'object',
@@ -3311,6 +3347,18 @@ export const LifeEventPublicSchema = {
             type: 'string',
             format: 'date-time',
             title: 'Created At'
+        },
+        deleted_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Deleted At'
         }
     },
     type: 'object',
@@ -3706,6 +3754,18 @@ export const NotePublicSchema = {
             type: 'string',
             format: 'date-time',
             title: 'Updated At'
+        },
+        deleted_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Deleted At'
         }
     },
     type: 'object',
@@ -4573,6 +4633,18 @@ export const ReminderDuePublicSchema = {
             format: 'date-time',
             title: 'Created At'
         },
+        deleted_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Deleted At'
+        },
         contact: {
             anyOf: [
                 {
@@ -4680,6 +4752,18 @@ export const ReminderPublicSchema = {
             type: 'string',
             format: 'date-time',
             title: 'Created At'
+        },
+        deleted_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Deleted At'
         }
     },
     type: 'object',
