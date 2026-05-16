@@ -14,8 +14,8 @@ vi.mock("sonner", () => ({
 }))
 
 // Mock API
-const mockListInteractions = vi.fn()
-const mockDeleteInteraction = vi.fn()
+const mockListInteractions = vi.hoisted(() => vi.fn())
+const mockDeleteInteraction = vi.hoisted(() => vi.fn())
 vi.mock("@/client", () => ({
   InteractionsService: {
     listInteractions: mockListInteractions,

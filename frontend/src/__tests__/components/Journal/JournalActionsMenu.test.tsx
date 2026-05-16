@@ -13,7 +13,7 @@ vi.mock("sonner", () => ({
 }))
 
 // Mock API
-const mockDeleteJournalEntry = vi.fn()
+const mockDeleteJournalEntry = vi.hoisted(() => vi.fn())
 vi.mock("@/client", () => ({
   JournalService: {
     deleteJournalEntry: mockDeleteJournalEntry,

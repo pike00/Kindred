@@ -162,7 +162,18 @@ export type APIKeysPublic = {
     count: number;
 };
 
+export type Body_import_export_import_csv = {
+    file: (Blob | File);
+    column_mapping?: ({
+    [key: string]: (string | null);
+} | null);
+};
+
 export type Body_import_export_import_vcard = {
+    file: (Blob | File);
+};
+
+export type Body_import_export_preview_csv_import = {
     file: (Blob | File);
 };
 
@@ -483,6 +494,32 @@ export type ContactUpdate = {
     do_not_contact?: (boolean | null);
     do_not_contact_reason?: (string | null);
     tag_ids?: (Array<(string)> | null);
+};
+
+/**
+ * Response for CSV import.
+ */
+export type CSVImportResponse = {
+    imported: number;
+    skipped: number;
+    updated: number;
+    errors: Array<(string)>;
+    tag_names_created?: Array<(string)>;
+};
+
+/**
+ * Preview of CSV import: column mapping and sample rows.
+ */
+export type CSVPreviewResponse = {
+    headers: Array<(string)>;
+    detected_mapping: {
+        [key: string]: (string | null);
+    };
+    sample_rows: Array<{
+        [key: string]: (string);
+    }>;
+    total_rows: number;
+    encoding: string;
 };
 
 export type CustomFieldDefinitionCreate = {
@@ -1911,6 +1948,28 @@ export type ImportExportImportVcardResponse = (unknown);
 export type ImportExportExportVcardResponse = (unknown);
 
 export type ImportExportExportJsonResponse = (unknown);
+
+export type ImportExportPreviewCsvImportData = {
+    formData: Body_import_export_preview_csv_import;
+};
+
+export type ImportExportPreviewCsvImportResponse = (CSVPreviewResponse);
+
+export type ImportExportImportCsvData = {
+    createMissingTags?: boolean;
+    formData: Body_import_export_import_csv;
+    mergeDuplicates?: boolean;
+    skipDuplicates?: boolean;
+};
+
+export type ImportExportImportCsvResponse = (CSVImportResponse);
+
+export type ImportExportExportCsvData = {
+    includeFields?: boolean;
+    includeTags?: boolean;
+};
+
+export type ImportExportExportCsvResponse = (unknown);
 
 export type InteractionsListInteractionsData = {
     contactId?: (string | null);

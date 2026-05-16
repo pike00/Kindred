@@ -642,6 +642,40 @@ export const AddressUpdateSchema = {
     title: 'AddressUpdate'
 } as const;
 
+export const Body_import_export_import_csvSchema = {
+    properties: {
+        file: {
+            type: 'string',
+            format: 'binary',
+            title: 'File'
+        },
+        column_mapping: {
+            anyOf: [
+                {
+                    additionalProperties: {
+                        anyOf: [
+                            {
+                                type: 'string'
+                            },
+                            {
+                                type: 'null'
+                            }
+                        ]
+                    },
+                    type: 'object'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Column Mapping'
+        }
+    },
+    type: 'object',
+    required: ['file'],
+    title: 'Body_import-export-import_csv'
+} as const;
+
 export const Body_import_export_import_vcardSchema = {
     properties: {
         file: {
@@ -653,6 +687,19 @@ export const Body_import_export_import_vcardSchema = {
     type: 'object',
     required: ['file'],
     title: 'Body_import-export-import_vcard'
+} as const;
+
+export const Body_import_export_preview_csv_importSchema = {
+    properties: {
+        file: {
+            type: 'string',
+            format: 'binary',
+            title: 'File'
+        }
+    },
+    type: 'object',
+    required: ['file'],
+    title: 'Body_import-export-preview_csv_import'
 } as const;
 
 export const Body_login_login_access_tokenSchema = {
@@ -903,6 +950,90 @@ export const BulkContactResultSchema = {
     type: 'object',
     required: ['updated_count', 'skipped_count'],
     title: 'BulkContactResult'
+} as const;
+
+export const CSVImportResponseSchema = {
+    properties: {
+        imported: {
+            type: 'integer',
+            title: 'Imported'
+        },
+        skipped: {
+            type: 'integer',
+            title: 'Skipped'
+        },
+        updated: {
+            type: 'integer',
+            title: 'Updated'
+        },
+        errors: {
+            items: {
+                type: 'string'
+            },
+            type: 'array',
+            title: 'Errors'
+        },
+        tag_names_created: {
+            items: {
+                type: 'string'
+            },
+            type: 'array',
+            title: 'Tag Names Created',
+            default: []
+        }
+    },
+    type: 'object',
+    required: ['imported', 'skipped', 'updated', 'errors'],
+    title: 'CSVImportResponse',
+    description: 'Response for CSV import.'
+} as const;
+
+export const CSVPreviewResponseSchema = {
+    properties: {
+        headers: {
+            items: {
+                type: 'string'
+            },
+            type: 'array',
+            title: 'Headers'
+        },
+        detected_mapping: {
+            additionalProperties: {
+                anyOf: [
+                    {
+                        type: 'string'
+                    },
+                    {
+                        type: 'null'
+                    }
+                ]
+            },
+            type: 'object',
+            title: 'Detected Mapping'
+        },
+        sample_rows: {
+            items: {
+                additionalProperties: {
+                    type: 'string'
+                },
+                type: 'object'
+            },
+            type: 'array',
+            title: 'Sample Rows'
+        },
+        total_rows: {
+            type: 'integer',
+            title: 'Total Rows'
+        },
+        encoding: {
+            type: 'string',
+            title: 'Encoding'
+        }
+    },
+    type: 'object',
+    required: ['headers', 'detected_mapping', 'sample_rows', 'total_rows', 'encoding'],
+    title: 'CSVPreviewResponse',
+    description: 'Preview of CSV import: column mapping and sample rows.'
 } as const;
 
 export const CalendarEntrySchema = {

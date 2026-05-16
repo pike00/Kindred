@@ -5,7 +5,7 @@ import { renderWithProviders } from "@/test/helpers"
 import { QuickLog } from "@/components/Timeline/QuickLog"
 
 // Mock API client
-const mockCreateInteractionRoute = vi.fn()
+const mockCreateInteractionRoute = vi.hoisted(() => vi.fn())
 
 vi.mock("@/client", () => ({
   InteractionsService: {
@@ -14,8 +14,8 @@ vi.mock("@/client", () => ({
 }))
 
 // Mock toast hook
-const mockShowSuccessToast = vi.fn()
-const mockShowErrorToast = vi.fn()
+const mockShowSuccessToast = vi.hoisted(() => vi.fn())
+const mockShowErrorToast = vi.hoisted(() => vi.fn())
 vi.mock("@/hooks/useCustomToast", () => ({
   default: () => ({
     showSuccessToast: mockShowSuccessToast,

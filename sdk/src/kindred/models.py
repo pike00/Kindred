@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import date, datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, computed_field
 
 
 # ── Read models (mirrors *Public shapes from personal-crm) ───────────────────
@@ -39,6 +39,14 @@ class Contact(BaseModel):
     created_at: datetime
     updated_at: datetime
     groups: list[Group] = []
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def display_name(self) -> str:
+        parts = [self.first_name]
+        if self.last_name:
+            parts.append(self.last_name)
+        return " ".join(parts)
 
 
 class Relationship(BaseModel):

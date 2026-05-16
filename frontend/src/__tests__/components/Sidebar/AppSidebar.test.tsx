@@ -144,7 +144,7 @@ describe("AppSidebar", () => {
     expect(screen.queryByTestId("nav-item-Admin")).not.toBeInTheDocument()
   })
 
-  it("renders Admin item for superuser", () => {
+  it("renders Admin item for superuser", async () => {
     const useAuthModule = await import("@/hooks/useAuth")
     vi.mocked(useAuthModule.default).mockReturnValueOnce({
       user: makeUser({ is_superuser: true }),
@@ -183,7 +183,7 @@ describe("AppSidebar", () => {
     ).toHaveLength(7)
   })
 
-  it("renders Main component with admin item included for superuser", () => {
+  it("renders Main component with admin item included for superuser", async () => {
     const useAuthModule = await import("@/hooks/useAuth")
     vi.mocked(useAuthModule.default).mockReturnValueOnce({
       user: makeUser({ is_superuser: true }),

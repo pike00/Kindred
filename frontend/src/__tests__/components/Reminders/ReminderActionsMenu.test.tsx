@@ -14,8 +14,8 @@ vi.mock("sonner", () => ({
 }))
 
 // Mock API
-const mockDeleteReminder = vi.fn()
-const mockSnoozeReminder = vi.fn()
+const mockDeleteReminder = vi.hoisted(() => vi.fn())
+const mockSnoozeReminder = vi.hoisted(() => vi.fn())
 vi.mock("@/client", () => ({
   RemindersService: {
     deleteReminder: mockDeleteReminder,

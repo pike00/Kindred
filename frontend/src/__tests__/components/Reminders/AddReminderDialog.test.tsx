@@ -13,7 +13,7 @@ vi.mock("sonner", () => ({
 }))
 
 // Mock API
-const mockCreateReminder = vi.fn()
+const mockCreateReminder = vi.hoisted(() => vi.fn())
 vi.mock("@/client", () => ({
   RemindersService: {
     createReminderRoute: mockCreateReminder,

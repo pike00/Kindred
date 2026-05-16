@@ -6,19 +6,23 @@ import { Main } from "@/components/Sidebar/Main"
 import { renderWithProviders } from "@/test/helpers"
 
 // Mock sidebar UI components
-const mockSetOpenMobile = vi.fn()
+const { mockSetOpenMobile, mockUseSidebar } = vi.hoisted(() => ({
+  mockSetOpenMobile: vi.fn(),
+  mockUseSidebar: vi.fn(() => ({
+    isMobile: false,
+    setOpenMobile: vi.fn(),
+    open: true,
+    setOpen: vi.fn(),
+    toggleSidebar: vi.fn(),
+  })),
+}))
+
 vi.mock("@/components/ui/sidebar", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("@/components/ui/sidebar")>()
   return {
     ...actual,
-    useSidebar: () => ({
-      isMobile: false,
-      setOpenMobile: mockSetOpenMobile,
-      open: true,
-      setOpen: vi.fn(),
-      toggleSidebar: vi.fn(),
-    }),
+    useSidebar: mockUseSidebar,
     SidebarGroup: ({ children }: any) => (
       <div data-testid="sidebar-group">{children}</div>
     ),
@@ -47,6 +51,12 @@ vi.mock("@/components/ui/sidebar", async (importOriginal) => {
   }
 })
 
+const { mockUseRouterState } = vi.hoisted(() => ({
+  mockUseRouterState: vi.fn(() => ({
+    location: { pathname: "/" },
+  })),
+}))
+
 // Mock router
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children, to, onClick, ...props }: any) => (
@@ -54,9 +64,7 @@ vi.mock("@tanstack/react-router", () => ({
       {children}
     </a>
   ),
-  useRouterState: () => ({
-    location: { pathname: "/" },
-  }),
+  useRouterState: mockUseRouterState,
 }))
 
 // Mock icons
@@ -73,6 +81,14 @@ vi.mock("@/lib/icons", () => ({
 describe("Main", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockUseRouterState.mockReturnValue({ location: { pathname: "/" } })
+    mockUseSidebar.mockReturnValue({
+      isMobile: false,
+      setOpenMobile: mockSetOpenMobile,
+      open: true,
+      setOpen: vi.fn(),
+      toggleSidebar: vi.fn(),
+    })
   })
 
   const mockItems: Item[] = [
@@ -134,8 +150,7 @@ describe("Main", () => {
   })
 
   it("marks current path as active", () => {
-    const useRouterStateModule = await import("@tanstack/react-router")
-    vi.mocked(useRouterStateModule.useRouterState).mockReturnValue({
+    mockUseRouterState.mockReturnValue({
       location: { pathname: "/contacts" },
     } as any)
 
@@ -159,9 +174,8 @@ describe("Main", () => {
   })
 
   it("calls setOpenMobile(false) on mobile when clicking item", async () => {
-    const useSidebarModule = await import("@/components/ui/sidebar")
     const mockSetOpenMobileLocal = vi.fn()
-    vi.mocked(useSidebarModule.useSidebar).mockReturnValue({
+    mockUseSidebar.mockReturnValue({
       isMobile: true,
       setOpenMobile: mockSetOpenMobileLocal,
       open: true,
@@ -186,10 +200,8 @@ describe("Main", () => {
   })
 
   it("handles multiple active paths correctly", () => {
-    const useRouterStateModule = await import("@tanstack/react-router")
-
     // Test with /interactions path
-    vi.mocked(useRouterStateModule.useRouterState).mockReturnValue({
+    mockUseRouterState.mockReturnValue({
       location: { pathname: "/interactions" },
     } as any)
 
@@ -207,8 +219,7 @@ describe("Main", () => {
   })
 
   it("only marks exact path matches as active (not partial)", () => {
-    const useRouterStateModule = await import("@tanstack/react-router")
-    vi.mocked(useRouterStateModule.useRouterState).mockReturnValue({
+    mockUseRouterState.mockReturnValue({
       location: { pathname: "/contacts/detail" },
     } as any)
 

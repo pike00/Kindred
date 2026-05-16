@@ -72,7 +72,7 @@ describe("DeleteAccount", () => {
   it("applies destructive border styling to container", () => {
     const { container } = renderWithProviders(<DeleteAccount />)
 
-    const section = container.querySelector("div.border-destructive")
+    const section = container.querySelector("div[class*='border-destructive']")
     expect(section).toBeInTheDocument()
   })
 

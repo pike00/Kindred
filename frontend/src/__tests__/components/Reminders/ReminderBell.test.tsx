@@ -5,9 +5,9 @@ import { renderWithProviders, makeContact } from "@/test/helpers"
 import { ReminderBell } from "@/components/Reminders/ReminderBell"
 
 // Mock API client
-const mockListDueReminders = vi.fn()
-const mockSnoozeReminder = vi.fn()
-const mockDismissReminder = vi.fn()
+const mockListDueReminders = vi.hoisted(() => vi.fn())
+const mockSnoozeReminder = vi.hoisted(() => vi.fn())
+const mockDismissReminder = vi.hoisted(() => vi.fn())
 
 vi.mock("@/client", () => ({
   RemindersService: {
@@ -18,8 +18,8 @@ vi.mock("@/client", () => ({
 }))
 
 // Mock toast hook
-const mockShowSuccessToast = vi.fn()
-const mockShowErrorToast = vi.fn()
+const mockShowSuccessToast = vi.hoisted(() => vi.fn())
+const mockShowErrorToast = vi.hoisted(() => vi.fn())
 vi.mock("@/hooks/useCustomToast", () => ({
   default: () => ({
     showSuccessToast: mockShowSuccessToast,

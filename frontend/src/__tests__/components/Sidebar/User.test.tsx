@@ -5,19 +5,23 @@ import { User } from "@/components/Sidebar/User"
 import { makeUser, renderWithProviders } from "@/test/helpers"
 
 // Mock sidebar UI components
-const mockSetOpenMobile = vi.fn()
+const { mockSetOpenMobile, mockUseSidebar } = vi.hoisted(() => ({
+  mockSetOpenMobile: vi.fn(),
+  mockUseSidebar: vi.fn(() => ({
+    isMobile: false,
+    setOpenMobile: vi.fn(),
+    open: true,
+    setOpen: vi.fn(),
+    toggleSidebar: vi.fn(),
+  })),
+}))
+
 vi.mock("@/components/ui/sidebar", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("@/components/ui/sidebar")>()
   return {
     ...actual,
-    useSidebar: () => ({
-      isMobile: false,
-      setOpenMobile: mockSetOpenMobile,
-      open: true,
-      setOpen: vi.fn(),
-      toggleSidebar: vi.fn(),
-    }),
+    useSidebar: mockUseSidebar,
     SidebarMenu: ({ children }: any) => <ul>{children}</ul>,
     SidebarMenuItem: ({ children }: any) => <li>{children}</li>,
     SidebarMenuButton: ({
@@ -93,7 +97,10 @@ vi.mock("@tanstack/react-router", () => ({
 }))
 
 // Mock useAuth
-const mockLogout = vi.fn()
+const { mockLogout } = vi.hoisted(() => ({
+  mockLogout: vi.fn(),
+}))
+
 vi.mock("@/hooks/useAuth", () => ({
   default: vi.fn(() => ({
     user: makeUser(),
@@ -121,6 +128,13 @@ vi.mock("@/lib/icons", () => ({
 describe("User", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockUseSidebar.mockReturnValue({
+      isMobile: false,
+      setOpenMobile: mockSetOpenMobile,
+      open: true,
+      setOpen: vi.fn(),
+      toggleSidebar: vi.fn(),
+    })
   })
 
   it("returns null when user is null", () => {
@@ -145,33 +159,33 @@ describe("User", () => {
   it("displays user full name", () => {
     renderWithProviders(<User user={makeUser({ full_name: "John Doe" })} />)
 
-    expect(screen.getByText("John Doe")).toBeInTheDocument()
+    expect(screen.getAllByText("John Doe")[0]).toBeInTheDocument()
   })
 
   it("displays user email", () => {
     renderWithProviders(<User user={makeUser({ email: "john@example.com" })} />)
 
-    expect(screen.getByText("john@example.com")).toBeInTheDocument()
+    expect(screen.getAllByText("john@example.com")[0]).toBeInTheDocument()
   })
 
   it("renders avatar with user initials", () => {
     renderWithProviders(<User user={makeUser({ full_name: "John Doe" })} />)
 
-    const avatar = screen.getByTestId("avatar-fallback")
+    const avatar = screen.getAllByTestId("avatar-fallback")[0]
     expect(avatar).toHaveTextContent("JD")
   })
 
   it("renders avatar with single initial for single name", () => {
     renderWithProviders(<User user={makeUser({ full_name: "Alice" })} />)
 
-    const avatar = screen.getByTestId("avatar-fallback")
+    const avatar = screen.getAllByTestId("avatar-fallback")[0]
     expect(avatar).toHaveTextContent("A")
   })
 
   it("renders avatar with 'U' fallback for empty name", () => {
     renderWithProviders(<User user={makeUser({ full_name: "" })} />)
 
-    const avatar = screen.getByTestId("avatar-fallback")
+    const avatar = screen.getAllByTestId("avatar-fallback")[0]
     expect(avatar).toHaveTextContent("U")
   })
 
@@ -223,9 +237,8 @@ describe("User", () => {
   })
 
   it("closes mobile sidebar when Settings is clicked", async () => {
-    const useSidebarModule = await import("@/components/ui/sidebar")
     const mockSetOpenMobileLocal = vi.fn()
-    vi.mocked(useSidebarModule.useSidebar).mockReturnValue({
+    mockUseSidebar.mockReturnValue({
       isMobile: true,
       setOpenMobile: mockSetOpenMobileLocal,
       open: true,
@@ -243,9 +256,8 @@ describe("User", () => {
   })
 
   it("does not close mobile sidebar when Log Out is clicked", async () => {
-    const useSidebarModule = await import("@/components/ui/sidebar")
     const mockSetOpenMobileLocal = vi.fn()
-    vi.mocked(useSidebarModule.useSidebar).mockReturnValue({
+    mockUseSidebar.mockReturnValue({
       isMobile: true,
       setOpenMobile: mockSetOpenMobileLocal,
       open: true,

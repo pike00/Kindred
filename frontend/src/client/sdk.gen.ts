@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { ActivityLogsListActivityLogsData, ActivityLogsListActivityLogsResponse, AddressesListAddressesData, AddressesListAddressesResponse, AddressesCreateAddressRouteData, AddressesCreateAddressRouteResponse, AddressesUpdateAddressData, AddressesUpdateAddressResponse, AddressesDeleteAddressData, AddressesDeleteAddressResponse, ApiKeysListMyApiKeysResponse, ApiKeysCreateMyApiKeyData, ApiKeysCreateMyApiKeyResponse, ApiKeysRevokeMyApiKeyData, ApiKeysRevokeMyApiKeyResponse, CalendarGetCalendarMonthData, CalendarGetCalendarMonthResponse, CarddavWellKnownCarddavResponse, ContactFieldsListContactFieldsData, ContactFieldsListContactFieldsResponse, ContactFieldsCreateContactFieldRouteData, ContactFieldsCreateContactFieldRouteResponse, ContactFieldsUpdateContactFieldData, ContactFieldsUpdateContactFieldResponse, ContactFieldsDeleteContactFieldData, ContactFieldsDeleteContactFieldResponse, ContactsBulkUpdateContactsData, ContactsBulkUpdateContactsResponse, ContactsPreviewBulkContactsData, ContactsPreviewBulkContactsResponse, ContactsListContactsData, ContactsListContactsResponse, ContactsCreateContactData, ContactsCreateContactResponse, ContactsListLosingTouchData, ContactsListLosingTouchResponse, ContactsListOverdueContactsData, ContactsListOverdueContactsResponse, ContactsSkipContactData, ContactsSkipContactResponse, ContactsGetContactData, ContactsGetContactResponse, ContactsUpdateContactData, ContactsUpdateContactResponse, ContactsDeleteContactData, ContactsDeleteContactResponse, ContactsRestoreContactData, ContactsRestoreContactResponse, ContactsListContactMentionsData, ContactsListContactMentionsResponse, ContactsSyncImessageContactsData, ContactsSyncImessageContactsResponse, ContactsGetImessageProfileData, ContactsGetImessageProfileResponse, CustomFieldsListFieldDefinitionsResponse, CustomFieldsCreateFieldDefinitionData, CustomFieldsCreateFieldDefinitionResponse, CustomFieldsUpdateFieldDefinitionData, CustomFieldsUpdateFieldDefinitionResponse, CustomFieldsDeleteFieldDefinitionData, CustomFieldsDeleteFieldDefinitionResponse, CustomFieldsListFieldValuesData, CustomFieldsListFieldValuesResponse, CustomFieldsCreateFieldValueData, CustomFieldsCreateFieldValueResponse, CustomFieldsUpdateFieldValueData, CustomFieldsUpdateFieldValueResponse, CustomFieldsDeleteFieldValueData, CustomFieldsDeleteFieldValueResponse, DebtsListDebtsData, DebtsListDebtsResponse, DebtsCreateDebtRouteData, DebtsCreateDebtRouteResponse, DebtsUpdateDebtData, DebtsUpdateDebtResponse, DebtsDeleteDebtData, DebtsDeleteDebtResponse, GiftsListGiftsData, GiftsListGiftsResponse, GiftsCreateGiftRouteData, GiftsCreateGiftRouteResponse, GiftsUpdateGiftData, GiftsUpdateGiftResponse, GiftsDeleteGiftData, GiftsDeleteGiftResponse, GiftsGetKanbanBoardResponse, GiftsChangeGiftStatusData, GiftsChangeGiftStatusResponse, HealthHealthResponse, ImportExportImportVcardData, ImportExportImportVcardResponse, ImportExportExportVcardResponse, ImportExportExportJsonResponse, InteractionsListInteractionsData, InteractionsListInteractionsResponse, InteractionsCreateInteractionRouteData, InteractionsCreateInteractionRouteResponse, InteractionsUpdateInteractionData, InteractionsUpdateInteractionResponse, InteractionsDeleteInteractionData, InteractionsDeleteInteractionResponse, JournalListJournalEntriesData, JournalListJournalEntriesResponse, JournalCreateJournalEntryRouteData, JournalCreateJournalEntryRouteResponse, JournalUpdateJournalEntryData, JournalUpdateJournalEntryResponse, JournalDeleteJournalEntryData, JournalDeleteJournalEntryResponse, LifeEventsListLifeEventsData, LifeEventsListLifeEventsResponse, LifeEventsCreateLifeEventRouteData, LifeEventsCreateLifeEventRouteResponse, LifeEventsUpdateLifeEventData, LifeEventsUpdateLifeEventResponse, LifeEventsDeleteLifeEventData, LifeEventsDeleteLifeEventResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, MediaRecommendationsListMediaRecommendationsData, MediaRecommendationsListMediaRecommendationsResponse, MediaRecommendationsCreateMediaRecommendationRouteData, MediaRecommendationsCreateMediaRecommendationRouteResponse, MediaRecommendationsUpdateMediaRecommendationData, MediaRecommendationsUpdateMediaRecommendationResponse, MediaRecommendationsDeleteMediaRecommendationData, MediaRecommendationsDeleteMediaRecommendationResponse, NotesListNotesData, NotesListNotesResponse, NotesCreateNoteRouteData, NotesCreateNoteRouteResponse, NotesUpdateNoteRouteData, NotesUpdateNoteRouteResponse, NotesDeleteNoteData, NotesDeleteNoteResponse, PetsListPetsData, PetsListPetsResponse, PetsCreatePetRouteData, PetsCreatePetRouteResponse, PetsUpdatePetData, PetsUpdatePetResponse, PetsDeletePetData, PetsDeletePetResponse, RelationshipsLookupInverseData, RelationshipsLookupInverseResponse, RelationshipsListRelationshipsData, RelationshipsListRelationshipsResponse, RelationshipsCreateRelationshipRouteData, RelationshipsCreateRelationshipRouteResponse, RelationshipsUpdateRelationshipData, RelationshipsUpdateRelationshipResponse, RelationshipsDeleteRelationshipData, RelationshipsDeleteRelationshipResponse, RemindersListRemindersData, RemindersListRemindersResponse, RemindersCreateReminderRouteData, RemindersCreateReminderRouteResponse, RemindersListDueRemindersData, RemindersListDueRemindersResponse, RemindersUpdateReminderData, RemindersUpdateReminderResponse, RemindersDeleteReminderData, RemindersDeleteReminderResponse, RemindersSnoozeReminderData, RemindersSnoozeReminderResponse, RemindersDismissReminderData, RemindersDismissReminderResponse, SetupSetupPageData, SetupSetupPageResponse, SetupSetupSubmitData, SetupSetupSubmitResponse, TagsListTagsData, TagsListTagsResponse, TagsCreateTagRouteData, TagsCreateTagRouteResponse, TagsUpdateTagData, TagsUpdateTagResponse, TagsDeleteTagData, TagsDeleteTagResponse, TagSharesCreateTagShareData, TagSharesCreateTagShareResponse, TagSharesListTagSharesData, TagSharesListTagSharesResponse, TagSharesDeleteTagShareData, TagSharesDeleteTagShareResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse, UtilsEnvironmentResponse, WebhooksTwilioWebhookData, WebhooksTwilioWebhookResponse, WebhooksListWebhooksResponse, WebhooksCreateWebhookData, WebhooksCreateWebhookResponse, WebhooksUpdateWebhookData, WebhooksUpdateWebhookResponse, WebhooksDeleteWebhookData, WebhooksDeleteWebhookResponse, WebhooksInboundWebhookData, WebhooksInboundWebhookResponse } from './types.gen';
+import type { ActivityLogsListActivityLogsData, ActivityLogsListActivityLogsResponse, AddressesListAddressesData, AddressesListAddressesResponse, AddressesCreateAddressRouteData, AddressesCreateAddressRouteResponse, AddressesUpdateAddressData, AddressesUpdateAddressResponse, AddressesDeleteAddressData, AddressesDeleteAddressResponse, ApiKeysListMyApiKeysResponse, ApiKeysCreateMyApiKeyData, ApiKeysCreateMyApiKeyResponse, ApiKeysRevokeMyApiKeyData, ApiKeysRevokeMyApiKeyResponse, CalendarGetCalendarMonthData, CalendarGetCalendarMonthResponse, CarddavWellKnownCarddavResponse, ContactFieldsListContactFieldsData, ContactFieldsListContactFieldsResponse, ContactFieldsCreateContactFieldRouteData, ContactFieldsCreateContactFieldRouteResponse, ContactFieldsUpdateContactFieldData, ContactFieldsUpdateContactFieldResponse, ContactFieldsDeleteContactFieldData, ContactFieldsDeleteContactFieldResponse, ContactsBulkUpdateContactsData, ContactsBulkUpdateContactsResponse, ContactsPreviewBulkContactsData, ContactsPreviewBulkContactsResponse, ContactsListContactsData, ContactsListContactsResponse, ContactsCreateContactData, ContactsCreateContactResponse, ContactsListLosingTouchData, ContactsListLosingTouchResponse, ContactsListOverdueContactsData, ContactsListOverdueContactsResponse, ContactsSkipContactData, ContactsSkipContactResponse, ContactsGetContactData, ContactsGetContactResponse, ContactsUpdateContactData, ContactsUpdateContactResponse, ContactsDeleteContactData, ContactsDeleteContactResponse, ContactsRestoreContactData, ContactsRestoreContactResponse, ContactsListContactMentionsData, ContactsListContactMentionsResponse, ContactsSyncImessageContactsData, ContactsSyncImessageContactsResponse, ContactsGetImessageProfileData, ContactsGetImessageProfileResponse, CustomFieldsListFieldDefinitionsResponse, CustomFieldsCreateFieldDefinitionData, CustomFieldsCreateFieldDefinitionResponse, CustomFieldsUpdateFieldDefinitionData, CustomFieldsUpdateFieldDefinitionResponse, CustomFieldsDeleteFieldDefinitionData, CustomFieldsDeleteFieldDefinitionResponse, CustomFieldsListFieldValuesData, CustomFieldsListFieldValuesResponse, CustomFieldsCreateFieldValueData, CustomFieldsCreateFieldValueResponse, CustomFieldsUpdateFieldValueData, CustomFieldsUpdateFieldValueResponse, CustomFieldsDeleteFieldValueData, CustomFieldsDeleteFieldValueResponse, DebtsListDebtsData, DebtsListDebtsResponse, DebtsCreateDebtRouteData, DebtsCreateDebtRouteResponse, DebtsUpdateDebtData, DebtsUpdateDebtResponse, DebtsDeleteDebtData, DebtsDeleteDebtResponse, GiftsListGiftsData, GiftsListGiftsResponse, GiftsCreateGiftRouteData, GiftsCreateGiftRouteResponse, GiftsUpdateGiftData, GiftsUpdateGiftResponse, GiftsDeleteGiftData, GiftsDeleteGiftResponse, GiftsGetKanbanBoardResponse, GiftsChangeGiftStatusData, GiftsChangeGiftStatusResponse, HealthHealthResponse, ImportExportImportVcardData, ImportExportImportVcardResponse, ImportExportExportVcardResponse, ImportExportExportJsonResponse, ImportExportPreviewCsvImportData, ImportExportPreviewCsvImportResponse, ImportExportImportCsvData, ImportExportImportCsvResponse, ImportExportExportCsvData, ImportExportExportCsvResponse, InteractionsListInteractionsData, InteractionsListInteractionsResponse, InteractionsCreateInteractionRouteData, InteractionsCreateInteractionRouteResponse, InteractionsUpdateInteractionData, InteractionsUpdateInteractionResponse, InteractionsDeleteInteractionData, InteractionsDeleteInteractionResponse, JournalListJournalEntriesData, JournalListJournalEntriesResponse, JournalCreateJournalEntryRouteData, JournalCreateJournalEntryRouteResponse, JournalUpdateJournalEntryData, JournalUpdateJournalEntryResponse, JournalDeleteJournalEntryData, JournalDeleteJournalEntryResponse, LifeEventsListLifeEventsData, LifeEventsListLifeEventsResponse, LifeEventsCreateLifeEventRouteData, LifeEventsCreateLifeEventRouteResponse, LifeEventsUpdateLifeEventData, LifeEventsUpdateLifeEventResponse, LifeEventsDeleteLifeEventData, LifeEventsDeleteLifeEventResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, MediaRecommendationsListMediaRecommendationsData, MediaRecommendationsListMediaRecommendationsResponse, MediaRecommendationsCreateMediaRecommendationRouteData, MediaRecommendationsCreateMediaRecommendationRouteResponse, MediaRecommendationsUpdateMediaRecommendationData, MediaRecommendationsUpdateMediaRecommendationResponse, MediaRecommendationsDeleteMediaRecommendationData, MediaRecommendationsDeleteMediaRecommendationResponse, NotesListNotesData, NotesListNotesResponse, NotesCreateNoteRouteData, NotesCreateNoteRouteResponse, NotesUpdateNoteRouteData, NotesUpdateNoteRouteResponse, NotesDeleteNoteData, NotesDeleteNoteResponse, PetsListPetsData, PetsListPetsResponse, PetsCreatePetRouteData, PetsCreatePetRouteResponse, PetsUpdatePetData, PetsUpdatePetResponse, PetsDeletePetData, PetsDeletePetResponse, RelationshipsLookupInverseData, RelationshipsLookupInverseResponse, RelationshipsListRelationshipsData, RelationshipsListRelationshipsResponse, RelationshipsCreateRelationshipRouteData, RelationshipsCreateRelationshipRouteResponse, RelationshipsUpdateRelationshipData, RelationshipsUpdateRelationshipResponse, RelationshipsDeleteRelationshipData, RelationshipsDeleteRelationshipResponse, RemindersListRemindersData, RemindersListRemindersResponse, RemindersCreateReminderRouteData, RemindersCreateReminderRouteResponse, RemindersListDueRemindersData, RemindersListDueRemindersResponse, RemindersUpdateReminderData, RemindersUpdateReminderResponse, RemindersDeleteReminderData, RemindersDeleteReminderResponse, RemindersSnoozeReminderData, RemindersSnoozeReminderResponse, RemindersDismissReminderData, RemindersDismissReminderResponse, SetupSetupPageData, SetupSetupPageResponse, SetupSetupSubmitData, SetupSetupSubmitResponse, TagsListTagsData, TagsListTagsResponse, TagsCreateTagRouteData, TagsCreateTagRouteResponse, TagsUpdateTagData, TagsUpdateTagResponse, TagsDeleteTagData, TagsDeleteTagResponse, TagSharesCreateTagShareData, TagSharesCreateTagShareResponse, TagSharesListTagSharesData, TagSharesListTagSharesResponse, TagSharesDeleteTagShareData, TagSharesDeleteTagShareResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse, UtilsEnvironmentResponse, WebhooksTwilioWebhookData, WebhooksTwilioWebhookResponse, WebhooksListWebhooksResponse, WebhooksCreateWebhookData, WebhooksCreateWebhookResponse, WebhooksUpdateWebhookData, WebhooksUpdateWebhookResponse, WebhooksDeleteWebhookData, WebhooksDeleteWebhookResponse, WebhooksInboundWebhookData, WebhooksInboundWebhookResponse } from './types.gen';
 
 export class ActivityLogsService {
     /**
@@ -1104,6 +1104,87 @@ export class ImportExportService {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/import-export/export/json'
+        });
+    }
+    
+    /**
+     * Preview Csv Import
+     * Preview CSV import: detect columns and show sample rows.
+     *
+     * Returns the detected column mapping and first few rows for user confirmation.
+     * @param data The data for the request.
+     * @param data.formData
+     * @returns CSVPreviewResponse Successful Response
+     * @throws ApiError
+     */
+    public static previewCsvImport(data: ImportExportPreviewCsvImportData): CancelablePromise<ImportExportPreviewCsvImportResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/import-export/import/csv/preview',
+            formData: data.formData,
+            mediaType: 'multipart/form-data',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Import Csv
+     * Import contacts from a CSV file.
+     *
+     * - **column_mapping**: Optional override for auto-detected column mapping.
+     * - **skip_duplicates**: Skip contacts with matching email (default: True).
+     * - **merge_duplicates**: Update existing contacts with matching email (default: False).
+     * - **create_missing_tags**: Auto-create tags that don't exist (default: True).
+     * @param data The data for the request.
+     * @param data.formData
+     * @param data.skipDuplicates
+     * @param data.mergeDuplicates
+     * @param data.createMissingTags
+     * @returns CSVImportResponse Successful Response
+     * @throws ApiError
+     */
+    public static importCsv(data: ImportExportImportCsvData): CancelablePromise<ImportExportImportCsvResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/import-export/import/csv',
+            query: {
+                skip_duplicates: data.skipDuplicates,
+                merge_duplicates: data.mergeDuplicates,
+                create_missing_tags: data.createMissingTags
+            },
+            formData: data.formData,
+            mediaType: 'multipart/form-data',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Export Csv
+     * Export all contacts as a CSV file with UTF-8 BOM for Excel compatibility.
+     *
+     * - **include_tags**: Include tag names column (default: True).
+     * - **include_fields**: Include emails and phones columns (default: True).
+     * @param data The data for the request.
+     * @param data.includeTags
+     * @param data.includeFields
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static exportCsv(data: ImportExportExportCsvData = {}): CancelablePromise<ImportExportExportCsvResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/import-export/export/csv',
+            query: {
+                include_tags: data.includeTags,
+                include_fields: data.includeFields
+            },
+            errors: {
+                422: 'Validation Error'
+            }
         });
     }
 }

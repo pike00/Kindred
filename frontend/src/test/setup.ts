@@ -2,8 +2,33 @@ import "@testing-library/jest-dom"
 import { cleanup } from "@testing-library/react"
 import { afterEach, vi } from "vitest"
 
+// localStorage polyfill (not available in Node.js jsdom without --localstorage-file)
+const localStorageStore: Record<string, string> = {}
+const localStorageMock = {
+  getItem: (key: string) => localStorageStore[key] ?? null,
+  setItem: (key: string, value: string) => {
+    localStorageStore[key] = String(value)
+  },
+  removeItem: (key: string) => {
+    delete localStorageStore[key]
+  },
+  clear: () => {
+    Object.keys(localStorageStore).forEach((k) => delete localStorageStore[k])
+  },
+  get length() {
+    return Object.keys(localStorageStore).length
+  },
+  key: (n: number) => Object.keys(localStorageStore)[n] ?? null,
+}
+Object.defineProperty(globalThis, "localStorage", {
+  value: localStorageMock,
+  writable: true,
+  configurable: true,
+})
+
 afterEach(() => {
   cleanup()
+  localStorageMock.clear()
 })
 
 // Stub window.matchMedia (jsdom doesn't implement it)

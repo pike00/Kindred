@@ -13,6 +13,7 @@ export {
   Cake,
   CalendarHeart,
   Check,
+  CheckCircle2,
   ChevronDown,
   // Pagination
   ChevronLeft,
@@ -28,6 +29,7 @@ export {
   // Forms / inputs
   Eye,
   EyeOff,
+  FileSpreadsheet,
   Film,
   HeartHandshake,
   // Sidebar nav
@@ -69,6 +71,7 @@ export {
   Sun,
   Tag,
   Trash2,
+  Upload,
   TriangleAlert,
   UserRoundSearch,
   Users,

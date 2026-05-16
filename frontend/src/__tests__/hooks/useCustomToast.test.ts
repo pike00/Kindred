@@ -2,10 +2,13 @@ import { act, renderHook } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import useCustomToast from "../../hooks/useCustomToast"
 
+const mockToastSuccess = vi.hoisted(() => vi.fn())
+const mockToastError = vi.hoisted(() => vi.fn())
+
 vi.mock("sonner", () => ({
   toast: {
-    success: vi.fn(),
-    error: vi.fn(),
+    success: mockToastSuccess,
+    error: mockToastError,
   },
 }))
 
@@ -30,8 +33,7 @@ describe("useCustomToast", () => {
       showSuccessToast("Operation completed")
     })
 
-    const { toast } = require("sonner")
-    expect(toast.success).toHaveBeenCalledWith("Success!", {
+    expect(mockToastSuccess).toHaveBeenCalledWith("Success!", {
       description: "Operation completed",
     })
   })
@@ -44,8 +46,7 @@ describe("useCustomToast", () => {
       showErrorToast("An error occurred")
     })
 
-    const { toast } = require("sonner")
-    expect(toast.error).toHaveBeenCalledWith("Something went wrong!", {
+    expect(mockToastError).toHaveBeenCalledWith("Something went wrong!", {
       description: "An error occurred",
     })
   })
@@ -58,8 +59,7 @@ describe("useCustomToast", () => {
       showSuccessToast("")
     })
 
-    const { toast } = require("sonner")
-    expect(toast.success).toHaveBeenCalledWith("Success!", {
+    expect(mockToastSuccess).toHaveBeenCalledWith("Success!", {
       description: "",
     })
   })
@@ -72,8 +72,7 @@ describe("useCustomToast", () => {
       showErrorToast("")
     })
 
-    const { toast } = require("sonner")
-    expect(toast.error).toHaveBeenCalledWith("Something went wrong!", {
+    expect(mockToastError).toHaveBeenCalledWith("Something went wrong!", {
       description: "",
     })
   })
@@ -89,8 +88,7 @@ describe("useCustomToast", () => {
       showSuccessToast(longDescription)
     })
 
-    const { toast } = require("sonner")
-    expect(toast.success).toHaveBeenCalledWith("Success!", {
+    expect(mockToastSuccess).toHaveBeenCalledWith("Success!", {
       description: longDescription,
     })
   })
@@ -106,8 +104,7 @@ describe("useCustomToast", () => {
       showErrorToast(longDescription)
     })
 
-    const { toast } = require("sonner")
-    expect(toast.error).toHaveBeenCalledWith("Something went wrong!", {
+    expect(mockToastError).toHaveBeenCalledWith("Something went wrong!", {
       description: longDescription,
     })
   })
@@ -123,8 +120,7 @@ describe("useCustomToast", () => {
       showSuccessToast(descriptionWithSpecialChars)
     })
 
-    const { toast } = require("sonner")
-    expect(toast.success).toHaveBeenCalledWith("Success!", {
+    expect(mockToastSuccess).toHaveBeenCalledWith("Success!", {
       description: descriptionWithSpecialChars,
     })
   })
@@ -139,8 +135,7 @@ describe("useCustomToast", () => {
       showErrorToast(unicodeDescription)
     })
 
-    const { toast } = require("sonner")
-    expect(toast.error).toHaveBeenCalledWith("Something went wrong!", {
+    expect(mockToastError).toHaveBeenCalledWith("Something went wrong!", {
       description: unicodeDescription,
     })
   })
@@ -157,12 +152,11 @@ describe("useCustomToast", () => {
       showSuccessToast("Second message")
     })
 
-    const { toast } = require("sonner")
-    expect(toast.success).toHaveBeenCalledTimes(2)
-    expect(toast.success).toHaveBeenNthCalledWith(1, "Success!", {
+    expect(mockToastSuccess).toHaveBeenCalledTimes(2)
+    expect(mockToastSuccess).toHaveBeenNthCalledWith(1, "Success!", {
       description: "First message",
     })
-    expect(toast.success).toHaveBeenNthCalledWith(2, "Success!", {
+    expect(mockToastSuccess).toHaveBeenNthCalledWith(2, "Success!", {
       description: "Second message",
     })
   })
@@ -179,12 +173,11 @@ describe("useCustomToast", () => {
       showErrorToast("Error 2")
     })
 
-    const { toast } = require("sonner")
-    expect(toast.error).toHaveBeenCalledTimes(2)
-    expect(toast.error).toHaveBeenNthCalledWith(1, "Something went wrong!", {
+    expect(mockToastError).toHaveBeenCalledTimes(2)
+    expect(mockToastError).toHaveBeenNthCalledWith(1, "Something went wrong!", {
       description: "Error 1",
     })
-    expect(toast.error).toHaveBeenNthCalledWith(2, "Something went wrong!", {
+    expect(mockToastError).toHaveBeenNthCalledWith(2, "Something went wrong!", {
       description: "Error 2",
     })
   })
@@ -205,9 +198,8 @@ describe("useCustomToast", () => {
       showSuccessToast("Success 2")
     })
 
-    const { toast } = require("sonner")
-    expect(toast.success).toHaveBeenCalledTimes(2)
-    expect(toast.error).toHaveBeenCalledTimes(1)
+    expect(mockToastSuccess).toHaveBeenCalledTimes(2)
+    expect(mockToastError).toHaveBeenCalledTimes(1)
   })
 
   it("handles description with newlines", () => {
@@ -220,8 +212,7 @@ describe("useCustomToast", () => {
       showSuccessToast(descriptionWithNewlines)
     })
 
-    const { toast } = require("sonner")
-    expect(toast.success).toHaveBeenCalledWith("Success!", {
+    expect(mockToastSuccess).toHaveBeenCalledWith("Success!", {
       description: descriptionWithNewlines,
     })
   })
@@ -236,8 +227,7 @@ describe("useCustomToast", () => {
       showErrorToast(descriptionWithTabs)
     })
 
-    const { toast } = require("sonner")
-    expect(toast.error).toHaveBeenCalledWith("Something went wrong!", {
+    expect(mockToastError).toHaveBeenCalledWith("Something went wrong!", {
       description: descriptionWithTabs,
     })
   })
@@ -245,8 +235,6 @@ describe("useCustomToast", () => {
   it("each hook instance has independent state", () => {
     const { result: result1 } = renderHook(() => useCustomToast())
     const { result: result2 } = renderHook(() => useCustomToast())
-
-    const { toast } = require("sonner")
 
     act(() => {
       result1.current.showSuccessToast("Message 1")
@@ -256,21 +244,19 @@ describe("useCustomToast", () => {
       result2.current.showErrorToast("Message 2")
     })
 
-    expect(toast.success).toHaveBeenCalledTimes(1)
-    expect(toast.error).toHaveBeenCalledTimes(1)
+    expect(mockToastSuccess).toHaveBeenCalledTimes(1)
+    expect(mockToastError).toHaveBeenCalledTimes(1)
   })
 
   it("always shows Success! title for success toast", () => {
     const { result } = renderHook(() => useCustomToast())
     const { showSuccessToast } = result.current
 
-    const { toast } = require("sonner")
-
     act(() => {
       showSuccessToast("Custom description")
     })
 
-    const [title, _options] = toast.success.mock.calls[0]
+    const [title, _options] = mockToastSuccess.mock.calls[0]
     expect(title).toBe("Success!")
   })
 
@@ -278,13 +264,11 @@ describe("useCustomToast", () => {
     const { result } = renderHook(() => useCustomToast())
     const { showErrorToast } = result.current
 
-    const { toast } = require("sonner")
-
     act(() => {
       showErrorToast("Custom error description")
     })
 
-    const [title, _options] = toast.error.mock.calls[0]
+    const [title, _options] = mockToastError.mock.calls[0]
     expect(title).toBe("Something went wrong!")
   })
 
@@ -292,13 +276,11 @@ describe("useCustomToast", () => {
     const { result } = renderHook(() => useCustomToast())
     const { showSuccessToast } = result.current
 
-    const { toast } = require("sonner")
-
     act(() => {
       showSuccessToast("Test description")
     })
 
-    const [_title, options] = toast.success.mock.calls[0]
+    const [_title, options] = mockToastSuccess.mock.calls[0]
     expect(options).toHaveProperty("description")
     expect(options.description).toBe("Test description")
   })
@@ -307,13 +289,11 @@ describe("useCustomToast", () => {
     const { result } = renderHook(() => useCustomToast())
     const { showSuccessToast } = result.current
 
-    const { toast } = require("sonner")
-
     act(() => {
       showSuccessToast("   ")
     })
 
-    expect(toast.success).toHaveBeenCalledWith("Success!", {
+    expect(mockToastSuccess).toHaveBeenCalledWith("Success!", {
       description: "   ",
     })
   })

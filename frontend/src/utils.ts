@@ -7,8 +7,8 @@ function extractErrorMessage(err: ApiError): string {
   }
 
   const errDetail = (err.body as any)?.detail
-  if (Array.isArray(errDetail) && errDetail.length > 0) {
-    return errDetail[0].msg
+  if (Array.isArray(errDetail)) {
+    return errDetail.length > 0 ? errDetail[0].msg : "Something went wrong."
   }
   return errDetail || "Something went wrong."
 }

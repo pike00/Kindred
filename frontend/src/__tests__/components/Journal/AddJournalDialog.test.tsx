@@ -13,7 +13,7 @@ vi.mock("sonner", () => ({
 }))
 
 // Mock API
-const mockCreateJournalEntry = vi.fn()
+const mockCreateJournalEntry = vi.hoisted(() => vi.fn())
 vi.mock("@/client", () => ({
   JournalService: {
     createJournalEntryRoute: mockCreateJournalEntry,
