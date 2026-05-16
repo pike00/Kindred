@@ -11,6 +11,7 @@ _dc := "docker compose -f " + compose
 # are inline below (repo-specific image name / homelab app).
 # Note: image is "kindred" (running container brand); the repo is "personal-crm".
 import 'release.just'
+import 'preview.just'
 
 # Run the PR sweep orchestrator (Task 8+9). Loads .env, then runs the full pipeline.
 # Set DRY_RUN=1 to print the plan without pushing anything.
@@ -135,180 +136,12 @@ db-docs-check:
 install-hooks:
     uv run --project backend prek install
 
-# ---------------------------------------------------------------------------
-# Per-worktree dev stack (compose.worktree.yml).
-#
-# `just up` from any worktree boots an isolated stack: own COMPOSE_PROJECT_NAME,
-# own DB / Redis / Meili volumes, host ports offset deterministically from the
-# worktree's directory name. Run from the main repo dir and you get the
-# "personal-crm" project on the default offset.
-# ---------------------------------------------------------------------------
-
-# Print the env vars this worktree resolves to (project name, hostname, ports).
-# Useful for sanity checks and for `eval "$(just env)"` in subshells.
-env:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    slug="$(basename "$(git rev-parse --show-toplevel)")"
-    offset=$((16#$(printf %s "$slug" | sha1sum | head -c 4) % 1000))
-    # Resolve DOMAIN from .env (symlinked from main if needed) for WORKTREE_HOST.
-    main_repo="$(dirname "$(git rev-parse --git-common-dir | xargs -I{} readlink -f {})")"
-    domain="$(grep -E '^DOMAIN=' "$main_repo/.env" | cut -d= -f2- | tr -d '"')"
-    echo "SLUG=$slug"
-    echo "COMPOSE_PROJECT_NAME=crm-$slug"
-    echo "WORKTREE_HOST=$slug.kindred.$domain"
-    echo "BACKEND_PORT=$((8000 + offset))"
-    echo "FRONTEND_PORT=$((5173 + offset))"
-    echo "DB_PORT=$((15432 + offset))"
-    echo "REDIS_PORT=$((16379 + offset))"
-    echo "MEILI_PORT=$((17700 + offset))"
-
-# Bring the worktree stack up. Symlinks .env from the main repo if missing.
-up:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    toplevel="$(git rev-parse --show-toplevel)"
-    main_repo="$(dirname "$(git rev-parse --git-common-dir | xargs -I{} readlink -f {})")"
-    [ -f .env ] || ln -s "$main_repo/.env" .env
-    # Source .env to pick up POSTGRES_USER/DB for the banner.
-    set -a; . ./.env; set +a
-    eval "$(just env | sed 's/^/export /')"
-    slug="${COMPOSE_PROJECT_NAME#crm-}"
-    offset=$((BACKEND_PORT - 8000))
-    branch="$(git symbolic-ref --short HEAD 2>/dev/null || echo 'detached')"
-    head_line="$(git log -1 --format='%h %s' 2>/dev/null || echo 'unknown')"
-    dirty="$(git status --porcelain 2>/dev/null | wc -l | tr -d ' ')"
-    echo "▶ project:  $COMPOSE_PROJECT_NAME  (port offset $offset)"
-    echo "  branch:   $branch"
-    echo "  HEAD:     $head_line"
-    if [ "$dirty" -gt 0 ]; then
-        echo "  dirty:    $dirty file(s) uncommitted"
-    fi
-    echo "  worktree: $toplevel"
-    if [ -L .env ]; then
-        echo "  .env:     symlink → $(readlink .env)"
-    else
-        echo "  .env:     local file"
-    fi
-    echo
-    echo "  app:      https://$WORKTREE_HOST           ← open this"
-    echo "  api:      https://$WORKTREE_HOST/api/v1"
-    echo "  docs:     https://$WORKTREE_HOST/docs"
-    echo
-    echo "  direct host-port access (offline / CLI use):"
-    echo "    backend:  http://localhost:$BACKEND_PORT"
-    echo "    frontend: http://localhost:$FRONTEND_PORT"
-    echo "    db:       postgres://${POSTGRES_USER:-postgres}@localhost:$DB_PORT/${POSTGRES_DB:-crm}"
-    echo "    redis:    redis://localhost:$REDIS_PORT"
-    echo "    meili:    http://localhost:$MEILI_PORT"
-    echo
-    echo "▶ building images and starting containers..."
-    docker compose -f compose.worktree.yml up -d --build
-    echo
-    echo "✓ stack up. Tail logs with 'just logs' or 'just logs backend'."
-
-# Stop and remove containers but keep volumes (DB data survives).
-down:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    eval "$(just env | sed 's/^/export /')"
-    docker compose -f compose.worktree.yml down
-
-# Stop and remove containers AND volumes (fresh DB on next up).
-down-clean:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    eval "$(just env | sed 's/^/export /')"
-    docker compose -f compose.worktree.yml down -v
-
-# Tail logs across all services. Pass a service name to scope: just logs backend
-logs *args:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    eval "$(just env | sed 's/^/export /')"
-    docker compose -f compose.worktree.yml logs -f {{args}}
-
-# Show worktree stack status.
-ps:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    eval "$(just env | sed 's/^/export /')"
-    docker compose -f compose.worktree.yml ps
-
-# Run pytest inside the worktree's backend container. Pass extra args after --.
-pytest *args:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    eval "$(just env | sed 's/^/export /')"
-    docker compose -f compose.worktree.yml exec -T backend pytest {{args}}
-
 # Run frontend TypeScript typecheck inside the worktree's frontend container.
 typecheck:
     #!/usr/bin/env bash
     set -euo pipefail
     eval "$(just env | sed 's/^/export /')"
-    docker compose -f compose.worktree.yml exec -T frontend bun run typecheck
-
-# Open a bash shell inside the worktree's backend container.
-shell:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    eval "$(just env | sed 's/^/export /')"
-    docker compose -f compose.worktree.yml exec backend bash
-
-# Create-if-missing a worktree at .worktrees/<slug> on a new branch named
-# <slug> (or resume if it already exists), then bring its stack up. Run from
-# anywhere in the repo — main, another worktree, doesn't matter.
-worktree slug:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    main_repo="$(dirname "$(git rev-parse --git-common-dir | xargs -I{} readlink -f {})")"
-    wt_path="$main_repo/.worktrees/{{slug}}"
-    base_branch="$(git -C "$main_repo" symbolic-ref --short HEAD 2>/dev/null || echo 'main')"
-    if [ ! -d "$wt_path" ]; then
-        echo "▶ Creating new worktree"
-        echo "  path:   $wt_path"
-        echo "  base:   $base_branch ($(git -C "$main_repo" log -1 --format='%h %s'))"
-        echo "  branch: {{slug}}  (new)"
-        echo
-        git -C "$main_repo" worktree add "$wt_path" -b "{{slug}}"
-    else
-        echo "▶ Reusing existing worktree"
-        echo "  path:   $wt_path"
-        wt_branch="$(git -C "$wt_path" symbolic-ref --short HEAD 2>/dev/null || echo 'detached')"
-        wt_head="$(git -C "$wt_path" log -1 --format='%h %s' 2>/dev/null || echo 'unknown')"
-        ahead="$(git -C "$wt_path" rev-list --count "${base_branch}..HEAD" 2>/dev/null || echo '?')"
-        behind="$(git -C "$wt_path" rev-list --count "HEAD..${base_branch}" 2>/dev/null || echo '?')"
-        dirty="$(git -C "$wt_path" status --porcelain 2>/dev/null | wc -l | tr -d ' ')"
-        echo "  branch: $wt_branch  (ahead $ahead, behind $behind vs $base_branch)"
-        echo "  HEAD:   $wt_head"
-        if [ "$dirty" -gt 0 ]; then
-            echo "  dirty:  $dirty uncommitted file(s):"
-            git -C "$wt_path" status --short | sed 's/^/            /'
-        else
-            echo "  dirty:  clean"
-        fi
-        echo
-    fi
-    cd "$wt_path"
-    just up
-    eval "$(just env | sed 's/^/export /')"
-    echo
-    echo "▶ Starting on https://$WORKTREE_HOST"
-
-# Tear down a worktree's stack (with volumes) and remove the worktree itself.
-worktree-rm slug:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    main_repo="$(dirname "$(git rev-parse --git-common-dir | xargs -I{} readlink -f {})")"
-    wt_path="$main_repo/.worktrees/{{slug}}"
-    if [ ! -d "$wt_path" ]; then
-        echo "no worktree at $wt_path — nothing to do"
-        exit 0
-    fi
-    (cd "$wt_path" && just down-clean) || true
-    git -C "$main_repo" worktree remove "$wt_path" --force
-    echo "✓ removed worktree '{{slug}}' (branch left intact — delete with 'git branch -D {{slug}}')"
+    docker compose -f "$PREVIEW_COMPOSE_FILE" exec -T frontend bun run typecheck
 
 # ─── Release / build / deploy ────────────────────────────────────────────
 #
