@@ -174,3 +174,160 @@ def test_notes_create(httpx_mock: HTTPXMock, client):
     from kindred.models import NoteCreate
     n = client.notes.create(NoteCreate(contact_id=CONTACT_ID, body="Met at PyCon"))
     assert n.body == "Met at PyCon"
+
+
+# ── display_name property ──────────────────────────────────────────────────────
+
+
+def test_contact_display_name_full(httpx_mock: HTTPXMock, client):
+    httpx_mock.add_response(
+        url=f"{BASE}/api/v1/contacts/{CONTACT_ID}",
+        json=CONTACT_FIXTURE,
+    )
+    c = client.contacts.get(CONTACT_ID)
+    assert c.display_name == "Alice Smith"
+
+
+def test_contact_display_name_first_only():
+    from kindred.models import Contact
+    c = Contact.model_validate({**CONTACT_FIXTURE, "last_name": None})
+    assert c.display_name == "Alice"
+
+
+# ── contacts.list with search/stage params ─────────────────────────────────────
+
+
+def test_contacts_list_with_search(httpx_mock: HTTPXMock, client):
+    httpx_mock.add_response(
+        url=f"{BASE}/api/v1/contacts/?skip=0&limit=100&search=Alice",
+        json={"data": [CONTACT_FIXTURE], "count": 1},
+    )
+    contacts = client.contacts.list(search="Alice")
+    assert len(contacts) == 1
+
+
+def test_contacts_list_with_stage(httpx_mock: HTTPXMock, client):
+    httpx_mock.add_response(
+        url=f"{BASE}/api/v1/contacts/?skip=0&limit=100&stage=close",
+        json={"data": [CONTACT_FIXTURE], "count": 1},
+    )
+    contacts = client.contacts.list(stage="close")
+    assert len(contacts) == 1
+
+
+def test_contacts_search_delegates(httpx_mock: HTTPXMock, client):
+    httpx_mock.add_response(
+        url=f"{BASE}/api/v1/contacts/?skip=0&limit=100&search=Bob",
+        json={"data": [], "count": 0},
+    )
+    assert client.contacts.search("Bob") == []
+
+
+# ── losing_touch ───────────────────────────────────────────────────────────────
+
+
+def test_losing_touch_includes_overdue(httpx_mock: HTTPXMock, client):
+    from datetime import timedelta
+    old_ts = (datetime.now(timezone.utc) - timedelta(days=40)).isoformat()
+    contact = {
+        **CONTACT_FIXTURE,
+        "contact_frequency_days": 30,
+        "last_contacted_at": old_ts,
+    }
+    httpx_mock.add_response(
+        url=f"{BASE}/api/v1/contacts/?skip=0&limit=100",
+        json={"data": [contact], "count": 1},
+    )
+    result = client.contacts.losing_touch()
+    assert len(result) == 1
+
+
+def test_losing_touch_excludes_recent(httpx_mock: HTTPXMock, client):
+    from datetime import timedelta
+    recent_ts = (datetime.now(timezone.utc) - timedelta(days=5)).isoformat()
+    contact = {
+        **CONTACT_FIXTURE,
+        "contact_frequency_days": 30,
+        "last_contacted_at": recent_ts,
+    }
+    httpx_mock.add_response(
+        url=f"{BASE}/api/v1/contacts/?skip=0&limit=100",
+        json={"data": [contact], "count": 1},
+    )
+    assert client.contacts.losing_touch() == []
+
+
+def test_losing_touch_excludes_archived(httpx_mock: HTTPXMock, client):
+    from datetime import timedelta
+    old_ts = (datetime.now(timezone.utc) - timedelta(days=60)).isoformat()
+    contact = {
+        **CONTACT_FIXTURE,
+        "contact_frequency_days": 30,
+        "last_contacted_at": old_ts,
+        "is_archived": True,
+    }
+    httpx_mock.add_response(
+        url=f"{BASE}/api/v1/contacts/?skip=0&limit=100",
+        json={"data": [contact], "count": 1},
+    )
+    assert client.contacts.losing_touch() == []
+
+
+def test_losing_touch_includes_never_contacted(httpx_mock: HTTPXMock, client):
+    contact = {**CONTACT_FIXTURE, "contact_frequency_days": 30, "last_contacted_at": None}
+    httpx_mock.add_response(
+        url=f"{BASE}/api/v1/contacts/?skip=0&limit=100",
+        json={"data": [contact], "count": 1},
+    )
+    assert len(client.contacts.losing_touch()) == 1
+
+
+# ── retry on 5xx ───────────────────────────────────────────────────────────────
+
+
+def test_retry_on_server_error(httpx_mock: HTTPXMock):
+    with KindredClient(base_url=BASE, api_key=API_KEY, retry=1) as c:
+        httpx_mock.add_response(
+            url=f"{BASE}/api/v1/contacts/{CONTACT_ID}",
+            status_code=503,
+        )
+        httpx_mock.add_response(
+            url=f"{BASE}/api/v1/contacts/{CONTACT_ID}",
+            json=CONTACT_FIXTURE,
+        )
+        # Should succeed on the second attempt without raising
+        contact = c.contacts.get(CONTACT_ID)
+        assert contact.first_name == "Alice"
+
+
+# ── on_request / on_response hooks ─────────────────────────────────────────────
+
+
+def test_on_response_hook_called(httpx_mock: HTTPXMock):
+    calls = []
+    with KindredClient(
+        base_url=BASE,
+        api_key=API_KEY,
+        on_response=lambda r: calls.append(r.status_code),
+    ) as c:
+        httpx_mock.add_response(
+            url=f"{BASE}/api/v1/contacts/{CONTACT_ID}",
+            json=CONTACT_FIXTURE,
+        )
+        c.contacts.get(CONTACT_ID)
+    assert calls == [200]
+
+
+def test_on_request_hook_called(httpx_mock: HTTPXMock):
+    methods = []
+    with KindredClient(
+        base_url=BASE,
+        api_key=API_KEY,
+        on_request=lambda r: methods.append(r.method),
+    ) as c:
+        httpx_mock.add_response(
+            url=f"{BASE}/api/v1/contacts/{CONTACT_ID}",
+            json=CONTACT_FIXTURE,
+        )
+        c.contacts.get(CONTACT_ID)
+    assert methods == ["GET"]
