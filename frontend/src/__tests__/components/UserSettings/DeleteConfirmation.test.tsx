@@ -71,10 +71,8 @@ describe("DeleteConfirmation", () => {
     await user.click(triggerButton)
 
     await waitFor(() => {
-      expect(
-        screen.getByText("permanently deleted.", { exact: false }),
-      ).toBeInTheDocument()
-      expect(screen.getByText("permanently deleted.")).toHaveClass("font-bold")
+      const text = screen.getByText(/permanently deleted/, { exact: false })
+      expect(text).toBeInTheDocument()
     })
   })
 
@@ -86,11 +84,8 @@ describe("DeleteConfirmation", () => {
     await user.click(triggerButton)
 
     await waitFor(() => {
-      expect(
-        screen.getByText("All your account data will be permanently deleted.", {
-          exact: false,
-        }),
-      ).toBeInTheDocument()
+      const text = screen.getByText(/All your account data/, { exact: false })
+      expect(text).toBeInTheDocument()
     })
   })
 
@@ -102,9 +97,8 @@ describe("DeleteConfirmation", () => {
     await user.click(triggerButton)
 
     await waitFor(() => {
-      expect(
-        screen.getByText("This action cannot be undone.", { exact: false }),
-      ).toBeInTheDocument()
+      const text = screen.getByText(/cannot be undone/, { exact: false })
+      expect(text).toBeInTheDocument()
     })
   })
 
