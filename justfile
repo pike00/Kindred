@@ -200,6 +200,7 @@ build tag:
         --tag "$IMAGE:{{tag}}" \
         --tag "$IMAGE:sha-$SHORT" \
         --build-arg "APP_VERSION={{tag}}" \
+        --build-arg "GIT_HASH=$SHORT" \
         --file Dockerfile.prod \
         --cache-from type=local,src=/tmp/buildx-cache-kindred \
         --cache-to   type=local,dest=/tmp/buildx-cache-kindred,mode=max \
