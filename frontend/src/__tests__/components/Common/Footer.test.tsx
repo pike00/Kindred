@@ -43,6 +43,18 @@ describe("Footer", () => {
       render(<Footer />)
       expect(screen.getByTestId("environment-chip")).toBeInTheDocument()
     })
+
+    it("renders version + commit hash linking to GitHub", () => {
+      render(<Footer />)
+      const link = screen.getByRole("link", { name: /vtest · testhash/ })
+      expect(link).toBeInTheDocument()
+      expect(link).toHaveAttribute(
+        "href",
+        "https://github.com/pike00/Kindred/commit/testhash",
+      )
+      expect(link).toHaveAttribute("target", "_blank")
+      expect(link).toHaveAttribute("rel", "noopener noreferrer")
+    })
   })
 
   describe("content", () => {
@@ -146,9 +158,9 @@ describe("Footer", () => {
     it("positions EnvironmentChip after text content", () => {
       const { container } = render(<Footer />)
       const children = container.querySelector("footer > div")?.children
-      expect(children?.length).toBe(2)
+      expect(children?.length).toBe(3)
       expect(children?.[0]).toContainElement(screen.getByText(/Kindred/))
-      expect(children?.[1]).toContainElement(
+      expect(children?.[2]).toContainElement(
         screen.getByTestId("environment-chip"),
       )
     })

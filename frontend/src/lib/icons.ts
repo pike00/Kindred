@@ -27,6 +27,7 @@ export {
   CircleCheck,
   Clock,
   Coffee,
+  Download,
   // Forms / inputs
   Eye,
   EyeOff,
