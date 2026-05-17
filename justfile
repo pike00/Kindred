@@ -1,13 +1,17 @@
-# Personal CRM — dev recipes.
-# Run `just --list` to see them all.
-#
-# Core dev commands (up, down, logs, ps, shell, etc.) come from preview.just.
-# Kindred-specific recipes are defined below.
-#
-# Note: image is "kindred" (running container brand); the repo is "personal-crm".
+set shell := ["bash", "-uc"]
+
+# `release` / `version` / changelog recipes come from release.just (shared).
+# `dev` / `down` / `down-clean` / `logs` / `ps` / `shell` / `pytest` /
+# `worktree` / `worktree-rm` / `pr` come from preview.just. preview-kit
+# threads GIT_HASH + APP_VERSION as build args.
 
 import 'release.just'
 import 'preview.just'
+
+default:
+    @just --list
+
+# Image brand is "kindred" (running container); the repo is "personal-crm".
 
 # Run the PR sweep orchestrator (Task 8+9). Loads .env, then runs the full pipeline.
 # Set DRY_RUN=1 to print the plan without pushing anything.
