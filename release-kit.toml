@@ -10,5 +10,6 @@ branch = "main"
 # install command is omitted.
 
 # `just version` resolves prod from the homelab compose .env.
+# Same target as kindred/ — both repos build the kindred image.
 prod_source = "homelab"
 prod_homelab_env = "apps/kindred/.env"
