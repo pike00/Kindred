@@ -11,7 +11,12 @@ import 'preview.just'
 default:
     @just --list
 
+# ── Repo-specific settings ──────────────────────────────────────────────
 # Image brand is "kindred" (running container); the repo is "personal-crm".
+# Which compose file to target. Override per-invocation:
+#   just compose=compose.yml seed
+compose := "compose.dev.yml"
+_dc := "docker compose -f " + compose
 
 # Run the PR sweep orchestrator (Task 8+9). Loads .env, then runs the full pipeline.
 # Set DRY_RUN=1 to print the plan without pushing anything.
