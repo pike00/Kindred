@@ -12,12 +12,12 @@ Origin: `pike00/Kindred` (public repo). Scaffolded from `fastapi/full-stack-fast
 
 ## Dev workflow (worktree-first)
 
-The default `justfile` targets `compose.dev.yml` and the entrypoints (`just up`, `just down`, `just logs`, `just pytest`, `just shell`) assume the worktree stack pattern (`compose.worktree.yml`). `just up` from the main repo dir gives you the `personal-crm` project on the default port offset; `just worktree <slug>` creates `.worktrees/<slug>/` on a new branch and brings up an isolated stack with its own DB/Redis/Meili volumes and offset host ports.
+The default `justfile` targets `compose.dev.yml` and the entrypoints (`just dev`, `just down`, `just logs`, `just pytest`, `just shell`) assume the worktree stack pattern (`compose.worktree.yml`). `just dev` from the main repo dir gives you the `personal-crm` project on the default port offset; `just worktree <slug>` creates `.worktrees/<slug>/` on a new branch and brings up an isolated stack with its own DB/Redis/Meili volumes and offset host ports.
 
 ```bash
-just up                          # bring up worktree stack (DB + API + worker + frontend + redis + meili)
+just dev                         # bring up worktree stack (DB + API + worker + frontend + redis + meili)
 just down                        # stop containers, keep volumes
-just down-clean                  # stop + drop volumes (fresh DB next up)
+just down-clean                  # stop + drop volumes (fresh DB next `just dev`)
 just logs [service]              # tail; scope to one service if given
 just ps                          # status
 just env                         # print resolved project name, hostname, ports
@@ -30,7 +30,7 @@ just regen-client                # regenerate frontend SDK + restart frontend (s
 just seed [count] [email]        # seed fake data; seed-reset wipes first; seed-fixed is deterministic
 ```
 
-Secrets live in `.env.sops`; `just up` symlinks `.env` from the main repo into worktrees if missing. Decrypt with `sops -d .env.sops > .env` when starting fresh.
+Secrets live in `.env.sops`; `just dev` symlinks `.env` from the main repo into worktrees if missing. Decrypt with `sops -d .env.sops > .env` when starting fresh.
 
 ### Regenerating the frontend SDK
 
@@ -96,7 +96,7 @@ Run via `just tf-plan` / `just tf-apply` from those directories. Never run `terr
 
 ## Gotchas
 
-- `just up` brings up the *worktree* stack via `compose.worktree.yml`. To run the plain dev stack against homelab Traefik, use `docker compose -f compose.dev.yml up -d` directly.
+- `just dev` brings up the *worktree* stack via `compose.worktree.yml`. To run the plain dev stack against homelab Traefik, use `docker compose -f compose.dev.yml up -d` directly.
 - Backend ID is `kindred-internal-crm` for the internal network and `kindred-private` for ingress — both `external: true`. Created by the homelab `apps/kindred/` stack; don't redefine them here.
 - mypy is intentionally disabled in pre-commit (~90 pre-existing strict-mode errors). Run locally with `uv run --project backend mypy app`.
 - The Copier template's `items` module is removed from the router but the model and Alembic table remain; drop with a dedicated migration if/when desired.

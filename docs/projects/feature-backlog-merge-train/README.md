@@ -82,7 +82,7 @@ Land 46 unmerged feature branches into main, sequentially, with one squash commi
 - [ ] Full pytest pass (no `-k` filter, 262+ tests)
 - [ ] tsc typecheck pass
 - [ ] e2e via `scripts/run-e2e-prepush.sh`
-- [ ] Fresh DB end-to-end migration test (`just down-clean && just up`, then `alembic upgrade head`)
+- [ ] Fresh DB end-to-end migration test (`just down-clean && just dev`, then `alembic upgrade head`)
 - [ ] Smoke test UI (login, create contact, search, log interaction)
 
 ## Session Log
