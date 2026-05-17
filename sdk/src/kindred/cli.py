@@ -140,27 +140,20 @@ def contacts_get(contact_id: UUID, pretty: PrettyOpt = False) -> None:
 @contacts_app.command("losing-touch")
 def contacts_losing_touch(
     pretty: PrettyOpt = False,
-    limit: Annotated[int, typer.Option()] = 100,
-    skip: Annotated[int, typer.Option()] = 0,
+    limit: Annotated[int, typer.Option()] = 20,
 ) -> None:
     """Contacts whose cadence has elapsed since last_contacted_at."""
-    _emit(
-        _run(contacts_list_losing_touch, skip=skip, limit=limit),
-        pretty,
-    )
+    _emit(_run(contacts_list_losing_touch, limit=limit), pretty)
 
 
 @contacts_app.command("overdue")
 def contacts_overdue(
     pretty: PrettyOpt = False,
-    limit: Annotated[int, typer.Option()] = 100,
-    skip: Annotated[int, typer.Option()] = 0,
+    limit: Annotated[int, typer.Option()] = 50,
+    offset: Annotated[int, typer.Option()] = 0,
 ) -> None:
     """Contacts past their next-contact threshold."""
-    _emit(
-        _run(contacts_list_overdue_contacts, skip=skip, limit=limit),
-        pretty,
-    )
+    _emit(_run(contacts_list_overdue_contacts, limit=limit, offset=offset), pretty)
 
 
 @contacts_app.command("household")
