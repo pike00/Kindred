@@ -5,6 +5,37 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.9] - 2026-05-17
+
+### Added
+- Feat(frontend): show app version + commit hash in footer (7875d7c)
+
+### Changed
+- Refactor: remove hardcoded compose config, fully delegate to preview-kit (504c164)
+
+### Documentation
+- Docs: refresh UI-completeness gaps; ignore frontend/coverage/ (0340627)
+
+### Fixed
+- Fix: use absolute symlink for release.just to work in worktrees (8b71323)
+
+### Other
+- Sdk: fix CLI param names for losing-touch and overdue (e058e29)
+- Just: standardize header to canonical Tier 1 block (a02001a)
+- Docs+scripts: 'just up' -> 'just dev'; wire prod resolver (574eadf)
+- Claude: drop project settings — 100% redundant with global (d6882fe)
+- Justfile: add frontend-test, frontend-coverage, test-all recipes (0a20d1f)
+- Sdk: regenerate from OpenAPI; add CLI, regen script, justfile recipes (6bfce37)
+- Test(frontend): hit 90% branch coverage with non-Error rejection tests (4cfd680)
+- Projects: save frontend-test-coverage (97b5d80)
+- Projects: save frontend-test-coverage (81207d6)
+- Chore(deps): consolidate 11 Dependabot updates (6425ce6)
+- Test(frontend): Wave 2+3 coverage tests — branches 81.58%, functions 87.61% (1bcf337)
+- Projects: create frontend-test-coverage (7e7df12)
+- Test(frontend): fix failing AddUser and useAuth tests (9e37082)
+- Test(frontend): fix 8 failing test suites (5b5c393)
+- Projects: save merge-train progress (v0.1.5-v0.1.8) and scaffold umbrella (02d14fa)
+
 ## [Unreleased]
 
 ### Added
