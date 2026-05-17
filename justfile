@@ -191,7 +191,9 @@ build tag:
         echo "ERROR: git tag {{tag}} doesn't exist locally — run 'just release patch' first" >&2
         exit 1
     fi
-    SHA=$(git rev-parse "{{tag}}")
+    # Deref annotated tag to its underlying commit; bare `git rev-parse <tag>`
+    # returns the tag-object SHA for annotated tags, not the commit it points to.
+    SHA=$(git rev-parse "{{tag}}^{}")
     SHORT=${SHA:0:7}
     IMAGE=ghcr.io/pike00/kindred
     echo "▶ Building $IMAGE for tag {{tag}} (commit $SHORT)..."
