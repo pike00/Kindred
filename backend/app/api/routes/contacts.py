@@ -22,8 +22,11 @@ from app.models import (
     ContactsPublic,
     ContactTag,
     ContactUpdate,
+    HouseholdMember,
+    HouseholdResponse,
     Note,
     NoteMention,
+    Ok,
     OverdueContactPublic,
     OverdueContactsPublic,
     Relationship,
@@ -165,7 +168,7 @@ def bulk_update_contacts(
     session: SessionDep,
     current_user: CurrentUser,
     body: BulkContactRequest,
-) -> Any:
+) -> BulkContactResult:
     """Bulk-update contacts atomically."""
     limit = min(max(1, body.limit), 500)
     if body.select_all_filtered:
@@ -249,7 +252,7 @@ def preview_bulk_contacts(
     is_archived: bool | None = None,
     stage: str | None = None,
     limit: int = 500,
-) -> Any:
+) -> ContactsPublic:
     """Preview contacts that would be affected by a bulk operation."""
     limit = min(max(1, limit), 500)
     if select_all_filtered:
@@ -284,7 +287,7 @@ def list_contacts(
     include_deleted: bool = False,
     only_deleted: bool = False,
     ids: list[uuid.UUID] | None = Query(default=None),
-) -> Any:
+) -> ContactsPublic:
     """List contacts with filtering.
 
     Pass `ids=<uuid>&ids=<uuid>` to fetch a specific batch of contacts (useful for
@@ -367,7 +370,7 @@ def list_losing_touch(
     session: SessionDep,
     current_user: CurrentUser,
     limit: int = 20,
-) -> Any:
+) -> ContactsPublic:
     """Return contacts whose cadence has been exceeded.
 
     A contact is 'losing touch' if:
@@ -416,7 +419,7 @@ def list_overdue_contacts(
     current_user: CurrentUser,
     limit: int = 50,
     offset: int = 0,
-) -> Any:
+) -> OverdueContactsPublic:
     """Return contacts sorted by days_overdue descending.
 
     Days overdue = (now - last_contacted_at).days - contact_frequency_days.
@@ -476,7 +479,7 @@ def skip_contact(
     session: SessionDep,
     current_user: CurrentUser,
     contact_id: uuid.UUID,
-) -> Any:
+) -> ContactPublic:
     """Skip a contact for 7 days by creating a SKIP interaction.
 
     This advances the next due date without recording a user-facing interaction.
@@ -513,7 +516,7 @@ def get_contact(
     session: SessionDep,
     current_user: CurrentUser,
     contact_id: uuid.UUID,
-) -> Any:
+) -> ContactPublic:
     """Get a single contact by ID."""
     statement = (
         select(Contact)
@@ -539,7 +542,7 @@ def create_contact(
     current_user: CurrentUser,
     contact_in: ContactCreate,
     background_tasks: BackgroundTasks,
-) -> Any:
+) -> ContactPublic:
     """Create a new contact."""
     contact = Contact.model_validate(contact_in, update={"owner_id": current_user.id})
     session.add(contact)
@@ -575,7 +578,7 @@ def update_contact(
     contact_id: uuid.UUID,
     contact_in: ContactUpdate,
     background_tasks: BackgroundTasks,
-) -> Any:
+) -> ContactPublic:
     """Update a contact."""
     statement = (
         select(Contact)
@@ -625,13 +628,13 @@ def update_contact(
     return ContactPublic.model_validate(contact)
 
 
-@router.delete("/{contact_id}")
+@router.delete("/{contact_id}", response_model=Ok)
 def delete_contact(
     session: SessionDep,
     current_user: CurrentUser,
     contact_id: uuid.UUID,
     background_tasks: BackgroundTasks,
-) -> Any:
+) -> Ok:
     """Soft-delete a contact.
 
     Sets ``deleted_at`` instead of removing the row, so the contact and its
@@ -651,7 +654,7 @@ def delete_contact(
 
     # Hide from search results while soft-deleted; restore re-indexes.
     background_tasks.add_task(_enqueue_contact_removal, str(contact_id))
-    return {"ok": True}
+    return Ok()
 
 
 @router.post("/{contact_id}/restore", response_model=ContactPublic)
@@ -660,7 +663,7 @@ def restore_contact(
     current_user: CurrentUser,
     contact_id: uuid.UUID,
     background_tasks: BackgroundTasks,
-) -> Any:
+) -> ContactPublic:
     """Restore a soft-deleted contact (clear ``deleted_at``)."""
     contact = session.get(Contact, contact_id)
     if not contact:
@@ -699,7 +702,7 @@ def list_contact_mentions(
     session: SessionDep,
     current_user: CurrentUser,
     contact_id: uuid.UUID,
-) -> Any:
+) -> list[_MentionPublic]:
     """Return notes that @-mention this contact, grouped with the source contact."""
     contact = session.get(Contact, contact_id)
     if not contact or contact.owner_id != current_user.id:
@@ -807,7 +810,7 @@ def sync_imessage_contacts(
     session: SessionDep,
     current_user: CurrentUser,
     body: IMessageSyncRequest,
-) -> Any:
+) -> IMessageSyncResult:
     """Sync iMessage profiles to kindred contacts.
 
     Performs idempotent upsert: matches by imessage_id (E.164 phone or email).
@@ -990,7 +993,7 @@ def get_imessage_profile(
     session: SessionDep,
     current_user: CurrentUser,
     contact_id: uuid.UUID,
-) -> Any:
+) -> IMessageProfileResponse:
     """Get the raw iMessage profile for a contact."""
     contact = session.get(Contact, contact_id)
     if not contact or contact.deleted_at is not None:
@@ -1006,12 +1009,12 @@ def get_imessage_profile(
     )
 
 
-@router.get("/{contact_id}/household")
+@router.get("/{contact_id}/household", response_model=HouseholdResponse)
 def get_contact_household(
     session: SessionDep,
     current_user: CurrentUser,
     contact_id: uuid.UUID,
-) -> Any:
+) -> HouseholdResponse:
     """Get household members for a contact.
 
     Derives household/family members via BFS walk of relationships
@@ -1022,4 +1025,6 @@ def get_contact_household(
         contact_id=str(contact_id),
         current_user=current_user,
     )
-    return {"data": members}
+    return HouseholdResponse(
+        data=[HouseholdMember(**m) for m in members],
+    )

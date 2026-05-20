@@ -8,7 +8,14 @@ from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.crud import contact_visible, create_debt
-from app.models import Debt, DebtCreate, DebtPublic, DebtsPublic, DebtUpdate
+from app.models import (
+    Debt,
+    DebtCreate,
+    DebtPublic,
+    DebtsPublic,
+    DebtUpdate,
+    Ok,
+)
 
 router = APIRouter(prefix="/debts", tags=["debts"])
 
@@ -23,7 +30,7 @@ def list_debts(
     session: SessionDep,
     current_user: CurrentUser,
     contact_id: uuid.UUID,
-) -> Any:
+) -> DebtsPublic:
     """List debts for a contact."""
     _require_contact_visible(session, current_user, contact_id)
 
@@ -42,7 +49,7 @@ def create_debt_route(
     session: SessionDep,
     current_user: CurrentUser,
     debt_in: DebtCreate,
-) -> Any:
+) -> DebtPublic:
     """Create a new debt."""
     _require_contact_visible(session, current_user, debt_in.contact_id)
 
@@ -57,7 +64,7 @@ def update_debt(
     current_user: CurrentUser,
     debt_id: uuid.UUID,
     debt_in: DebtUpdate,
-) -> Any:
+) -> DebtPublic:
     """Update a debt."""
     debt = session.get(Debt, debt_id)
     if debt is None:
@@ -72,12 +79,12 @@ def update_debt(
     return DebtPublic.model_validate(debt)
 
 
-@router.delete("/{debt_id}")
+@router.delete("/{debt_id}", response_model=Ok)
 def delete_debt(
     session: SessionDep,
     current_user: CurrentUser,
     debt_id: uuid.UUID,
-) -> Any:
+) -> Ok:
     """Delete a debt."""
     debt = session.get(Debt, debt_id)
     if debt is None:
@@ -86,4 +93,4 @@ def delete_debt(
 
     session.delete(debt)
     session.commit()
-    return {"ok": True}
+    return Ok()

@@ -1,7 +1,6 @@
 """Note management routes."""
 
 import uuid
-from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from sqlmodel import func, or_, select
@@ -16,6 +15,7 @@ from app.models import (
     NotePublic,
     NotesPublic,
     NoteUpdate,
+    Ok,
 )
 
 router = APIRouter(prefix="/notes", tags=["notes"])
@@ -28,7 +28,7 @@ def list_notes(
     contact_id: uuid.UUID,
     skip: int = 0,
     limit: int = 100,
-) -> Any:
+) -> NotesPublic:
     """List notes for a contact."""
     contact = session.get(Contact, contact_id)
     if not contact:
@@ -71,7 +71,7 @@ def create_note_route(
     session: SessionDep,
     current_user: CurrentUser,
     note_in: NoteCreate,
-) -> Any:
+) -> NotePublic:
     """Create a new note."""
     contact = session.get(Contact, note_in.contact_id)
     if not contact:
@@ -90,7 +90,7 @@ def update_note_route(
     current_user: CurrentUser,
     note_id: uuid.UUID,
     note_in: NoteUpdate,
-) -> Any:
+) -> NotePublic:
     """Update a note."""
     note = session.get(Note, note_id)
     if not note:
@@ -102,12 +102,12 @@ def update_note_route(
     return NotePublic.model_validate(note)
 
 
-@router.delete("/{note_id}")
+@router.delete("/{note_id}", response_model=Ok)
 def delete_note(
     session: SessionDep,
     current_user: CurrentUser,
     note_id: uuid.UUID,
-) -> Any:
+) -> Ok:
     """Delete a note."""
     note = session.get(Note, note_id)
     if not note:
@@ -117,4 +117,4 @@ def delete_note(
 
     session.delete(note)
     session.commit()
-    return {"ok": True}
+    return Ok()

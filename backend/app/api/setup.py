@@ -94,7 +94,7 @@ def _gate_status(session: SessionDep) -> Any:
 
 
 @router.get("/setup", response_class=HTMLResponse)
-def setup_page(session: SessionDep, token: str = Query(...)) -> Any:
+def setup_page(session: SessionDep, token: str = Query(...)) -> HTMLResponse:
     state = _gate_status(session)
     if state.complete:
         raise HTTPException(
@@ -113,7 +113,7 @@ def setup_page(session: SessionDep, token: str = Query(...)) -> Any:
 
 
 @router.post("/setup", response_model=UserPublic, status_code=status.HTTP_201_CREATED)
-def setup_submit(session: SessionDep, body: SetupSubmit = Body(...)) -> Any:
+def setup_submit(session: SessionDep, body: SetupSubmit = Body(...)) -> UserPublic:
     state = _gate_status(session)
     if state.complete:
         raise HTTPException(
@@ -145,4 +145,4 @@ def setup_submit(session: SessionDep, body: SetupSubmit = Body(...)) -> Any:
         ),
     )
     mark_complete(session, state)
-    return user
+    return UserPublic.model_validate(user)

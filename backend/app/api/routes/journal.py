@@ -1,7 +1,6 @@
 """Journal entry management routes."""
 
 import uuid
-from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from sqlmodel import func, select
@@ -14,6 +13,7 @@ from app.models import (
     JournalEntryCreate,
     JournalEntryPublic,
     JournalEntryUpdate,
+    Ok,
 )
 
 router = APIRouter(prefix="/journal", tags=["journal"])
@@ -25,7 +25,7 @@ def list_journal_entries(
     current_user: CurrentUser,
     skip: int = 0,
     limit: int = 100,
-) -> Any:
+) -> JournalEntriesPublic:
     """List journal entries for the current user."""
     statement = (
         select(JournalEntry)
@@ -53,7 +53,7 @@ def create_journal_entry_route(
     session: SessionDep,
     current_user: CurrentUser,
     entry_in: JournalEntryCreate,
-) -> Any:
+) -> JournalEntryPublic:
     """Create a new journal entry."""
     entry = create_journal_entry(
         session=session, journal_in=entry_in, owner_id=current_user.id
@@ -68,7 +68,7 @@ def update_journal_entry(
     current_user: CurrentUser,
     entry_id: uuid.UUID,
     entry_in: JournalEntryUpdate,
-) -> Any:
+) -> JournalEntryPublic:
     """Update a journal entry."""
     entry = session.get(JournalEntry, entry_id)
     if not entry:
@@ -84,12 +84,12 @@ def update_journal_entry(
     return JournalEntryPublic.model_validate(entry)
 
 
-@router.delete("/{entry_id}")
+@router.delete("/{entry_id}", response_model=Ok)
 def delete_journal_entry(
     session: SessionDep,
     current_user: CurrentUser,
     entry_id: uuid.UUID,
-) -> Any:
+) -> Ok:
     """Delete a journal entry."""
     entry = session.get(JournalEntry, entry_id)
     if not entry:
@@ -99,4 +99,4 @@ def delete_journal_entry(
 
     session.delete(entry)
     session.commit()
-    return {"ok": True}
+    return Ok()

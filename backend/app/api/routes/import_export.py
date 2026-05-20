@@ -1,7 +1,6 @@
 """Import and export routes for vCard and CSV files."""
 
 import logging
-from typing import Any
 
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 from fastapi.responses import Response
@@ -31,13 +30,26 @@ from app.vcard import contact_to_vcard, vcard_to_contact_data
 router = APIRouter(prefix="/import-export", tags=["import-export"])
 
 
-@router.post("/import/vcard")
+class VCardImportResponse(SQLModel):
+    """Result of a vCard bulk import."""
+
+    imported: int
+    errors: list[str] = []
+
+
+class JsonExportResponse(SQLModel):
+    """JSON export of all contact rows (raw model_dump per contact)."""
+
+    contacts: list[dict]
+
+
+@router.post("/import/vcard", response_model=VCardImportResponse)
 async def import_vcard(
     *,
     session: SessionDep,
     current_user: CurrentUser,
     file: UploadFile = File(...),
-) -> Any:
+) -> VCardImportResponse:
     """Import contacts from a .vcf file (supports multiple vCards in one file)."""
     content = await file.read()
     text = content.decode("utf-8", errors="replace")
@@ -91,17 +103,14 @@ async def import_vcard(
         except Exception as e:
             errors.append(str(e))
 
-    return {
-        "imported": imported,
-        "errors": errors,
-    }
+    return VCardImportResponse(imported=imported, errors=errors)
 
 
 @router.get("/export/vcard")
 def export_vcard(
     session: SessionDep,
     current_user: CurrentUser,
-) -> Any:
+) -> Response:
     """Export all contacts as a single .vcf file."""
     contacts = session.exec(
         select(Contact).where(Contact.owner_id == current_user.id)
@@ -128,17 +137,17 @@ def export_vcard(
     )
 
 
-@router.get("/export/json")
+@router.get("/export/json", response_model=JsonExportResponse)
 def export_json(
     session: SessionDep,
     current_user: CurrentUser,
-) -> Any:
+) -> JsonExportResponse:
     """Export all data as JSON."""
     # This will be expanded as more models are added
     contacts = session.exec(
         select(Contact).where(Contact.owner_id == current_user.id)
     ).all()
-    return {"contacts": [c.model_dump() for c in contacts]}
+    return JsonExportResponse(contacts=[c.model_dump() for c in contacts])
 
 
 def _split_vcards(text: str) -> list[str]:
@@ -173,7 +182,7 @@ class CSVPreviewResponse(SQLModel):
 async def preview_csv_import(
     *,
     file: UploadFile = File(...),
-) -> Any:
+) -> CSVPreviewResponse:
     """Preview CSV import: detect columns and show sample rows.
 
     Returns the detected column mapping and first few rows for user confirmation.
@@ -228,7 +237,7 @@ async def import_csv(
     skip_duplicates: bool = Query(True),
     merge_duplicates: bool = Query(False),
     create_missing_tags: bool = Query(True),
-) -> Any:
+) -> CSVImportResponse:
     """Import contacts from a CSV file.
 
     - **column_mapping**: Optional override for auto-detected column mapping.
@@ -415,7 +424,7 @@ def export_csv(
     current_user: CurrentUser,
     include_tags: bool = Query(True),
     include_fields: bool = Query(True),
-) -> Any:
+) -> Response:
     """Export all contacts as a CSV file with UTF-8 BOM for Excel compatibility.
 
     - **include_tags**: Include tag names column (default: True).

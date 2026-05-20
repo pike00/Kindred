@@ -20,8 +20,13 @@ from app.models import (
     Interaction,
     InteractionAttendee,
     InteractionChannel,
+    Ok,
     WebhookEndpoint,
     WebhookEndpointBase,
+    WebhookEndpointCreated,
+    WebhookEndpointPublic,
+    WebhookEndpointsPublic,
+    WebhookEventResponse,
 )
 
 router = APIRouter(prefix="/webhooks", tags=["webhooks"])
@@ -169,13 +174,13 @@ def _check_rate_limit(
     return count < limit
 
 
-@router.post("/twilio/{api_key}")
+@router.post("/twilio/{api_key}", response_model=WebhookEventResponse)
 async def twilio_webhook(
     request: Request,
     session: SessionDep,
     redis: Redis = RedisDep,
     api_key: str = "",
-) -> Any:
+) -> WebhookEventResponse | Response:
     """Twilio SMS and Call webhook handler.
 
     Verifies X-Twilio-Signature, normalizes phone numbers to E.164,
@@ -227,7 +232,7 @@ async def twilio_webhook(
     # to_e164 is not used currently but kept for future use if needed
 
     if not from_e164:
-        return {"received": True, "error": "Could not parse From number"}
+        return WebhookEventResponse(received=True, error="Could not parse From number")
 
     # Rate limiting per sender number
     rate_key = f"rate_limit:twilio:{from_e164}"
@@ -267,13 +272,13 @@ async def twilio_webhook(
 
         session.commit()
 
-        return {
-            "received": True,
-            "matched": True,
-            "channel": "text",
-            "contact_id": str(contact.id),
-            "interaction_id": str(interaction.id),
-        }
+        return WebhookEventResponse(
+            received=True,
+            matched=True,
+            channel="text",
+            contact_id=str(contact.id),
+            interaction_id=str(interaction.id),
+        )
 
     # Handle Call
     if call_sid:
@@ -342,53 +347,53 @@ async def twilio_webhook(
 
         session.commit()
 
-        return {
-            "received": True,
-            "matched": True,
-            "channel": "call",
-            "call_status": call_status,
-            "contact_id": str(contact.id),
-            "interaction_id": str(interaction.id),
-        }
+        return WebhookEventResponse(
+            received=True,
+            matched=True,
+            channel="call",
+            call_status=call_status,
+            contact_id=str(contact.id),
+            interaction_id=str(interaction.id),
+        )
 
-    return {"received": True, "error": "Unknown Twilio event type"}
+    return WebhookEventResponse(received=True, error="Unknown Twilio event type")
 
 
-@router.get("/")
+@router.get("/", response_model=WebhookEndpointsPublic)
 def list_webhooks(
     session: SessionDep,
     current_user: CurrentUser,
-) -> Any:
+) -> WebhookEndpointsPublic:
     """List all webhook endpoints for the user."""
     statement = select(WebhookEndpoint).where(
         WebhookEndpoint.owner_id == current_user.id
     )
     webhooks = session.exec(statement).all()
 
-    return {
-        "data": [
-            {
-                "id": str(w.id),
-                "name": w.name,
-                "url": w.url,
-                "direction": w.direction,
-                "event_types": w.event_types,
-                "is_active": w.is_active,
-                "created_at": w.created_at.isoformat(),
-            }
+    return WebhookEndpointsPublic(
+        data=[
+            WebhookEndpointPublic(
+                id=str(w.id),
+                name=w.name,
+                url=w.url,
+                direction=w.direction,
+                event_types=w.event_types,
+                is_active=w.is_active,
+                created_at=w.created_at.isoformat(),
+            )
             for w in webhooks
         ],
-        "count": len(webhooks),
-    }
+        count=len(webhooks),
+    )
 
 
-@router.post("/")
+@router.post("/", response_model=WebhookEndpointCreated)
 def create_webhook(
     *,
     session: SessionDep,
     current_user: CurrentUser,
     webhook_in: WebhookEndpointBase,
-) -> Any:
+) -> WebhookEndpointCreated:
     """Create a new webhook endpoint."""
     import secrets
 
@@ -402,25 +407,26 @@ def create_webhook(
     session.commit()
     session.refresh(webhook)
 
-    return {
-        "id": str(webhook.id),
-        "name": webhook.name,
-        "url": webhook.url,
-        "direction": webhook.direction,
-        "api_key": api_key,
-        "is_active": webhook.is_active,
-        "created_at": webhook.created_at.isoformat(),
-    }
+    return WebhookEndpointCreated(
+        id=str(webhook.id),
+        name=webhook.name,
+        url=webhook.url,
+        direction=webhook.direction,
+        event_types=webhook.event_types,
+        api_key=api_key,
+        is_active=webhook.is_active,
+        created_at=webhook.created_at.isoformat(),
+    )
 
 
-@router.patch("/{webhook_id}")
+@router.patch("/{webhook_id}", response_model=WebhookEndpointPublic)
 def update_webhook(
     *,
     session: SessionDep,
     current_user: CurrentUser,
     webhook_id: uuid.UUID,
     webhook_in: WebhookEndpointBase,
-) -> Any:
+) -> WebhookEndpointPublic:
     """Update a webhook endpoint."""
     webhook = session.get(WebhookEndpoint, webhook_id)
     if not webhook:
@@ -434,22 +440,23 @@ def update_webhook(
     session.commit()
     session.refresh(webhook)
 
-    return {
-        "id": str(webhook.id),
-        "name": webhook.name,
-        "url": webhook.url,
-        "direction": webhook.direction,
-        "is_active": webhook.is_active,
-        "created_at": webhook.created_at.isoformat(),
-    }
+    return WebhookEndpointPublic(
+        id=str(webhook.id),
+        name=webhook.name,
+        url=webhook.url,
+        direction=webhook.direction,
+        event_types=webhook.event_types,
+        is_active=webhook.is_active,
+        created_at=webhook.created_at.isoformat(),
+    )
 
 
-@router.delete("/{webhook_id}")
+@router.delete("/{webhook_id}", response_model=Ok)
 def delete_webhook(
     session: SessionDep,
     current_user: CurrentUser,
     webhook_id: uuid.UUID,
-) -> Any:
+) -> Ok:
     """Delete a webhook endpoint."""
     webhook = session.get(WebhookEndpoint, webhook_id)
     if not webhook:
@@ -459,15 +466,15 @@ def delete_webhook(
 
     session.delete(webhook)
     session.commit()
-    return {"ok": True}
+    return Ok()
 
 
-@router.post("/inbound/{api_key}")
+@router.post("/inbound/{api_key}", response_model=WebhookEventResponse)
 async def inbound_webhook(
     session: SessionDep,
     api_key: str,
     payload: dict[str, Any],
-) -> Any:
+) -> WebhookEventResponse:
     """Inbound webhook receiver for external integrations (n8n, Aqara, etc.).
 
     Payload format:
@@ -518,11 +525,11 @@ async def inbound_webhook(
         contact = session.exec(statement).first()
 
     if not contact:
-        return {
-            "received": True,
-            "matched": False,
-            "error": "No matching contact found",
-        }
+        return WebhookEventResponse(
+            received=True,
+            matched=False,
+            error="No matching contact found",
+        )
 
     # Create interaction
     channel = payload.get("channel", "other")
@@ -562,9 +569,9 @@ async def inbound_webhook(
 
     session.commit()
 
-    return {
-        "received": True,
-        "matched": True,
-        "contact_id": str(contact.id),
-        "interaction_id": str(interaction.id),
-    }
+    return WebhookEventResponse(
+        received=True,
+        matched=True,
+        contact_id=str(contact.id),
+        interaction_id=str(interaction.id),
+    )

@@ -1,7 +1,6 @@
 """Interaction management routes."""
 
 import uuid
-from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from sqlmodel import func, select
@@ -21,6 +20,7 @@ from app.models import (
     InteractionPublic,
     InteractionsPublic,
     InteractionUpdate,
+    Ok,
 )
 
 router = APIRouter(prefix="/interactions", tags=["interactions"])
@@ -81,7 +81,7 @@ def list_interactions(
     contact_id: uuid.UUID | None = None,
     skip: int = 0,
     limit: int = 100,
-) -> Any:
+) -> InteractionsPublic:
     """List interactions. Pass ``contact_id`` to filter by attendee."""
     visible_ids = _resolve_visible_contact_ids(session, current_user)
 
@@ -121,7 +121,7 @@ def create_interaction_route(
     session: SessionDep,
     current_user: CurrentUser,
     interaction_in: InteractionCreate,
-) -> Any:
+) -> InteractionPublic:
     """Create a new interaction with one or more attendees."""
     visible_ids = _resolve_visible_contact_ids(session, current_user)
     for attendee_id in interaction_in.attendee_ids:
@@ -141,7 +141,7 @@ def update_interaction(
     current_user: CurrentUser,
     interaction_id: uuid.UUID,
     interaction_in: InteractionUpdate,
-) -> Any:
+) -> InteractionPublic:
     """Update an interaction; ``attendee_ids`` replaces the attendee set."""
     interaction = session.get(Interaction, interaction_id)
     if interaction is None:
@@ -201,12 +201,12 @@ def update_interaction(
     return _interaction_to_public(session, interaction, visible_ids)
 
 
-@router.delete("/{interaction_id}")
+@router.delete("/{interaction_id}", response_model=Ok)
 def delete_interaction(
     session: SessionDep,
     current_user: CurrentUser,
     interaction_id: uuid.UUID,
-) -> Any:
+) -> Ok:
     """Delete an interaction and recompute each attendee's last_contacted_at."""
     interaction = session.get(Interaction, interaction_id)
     if interaction is None:
@@ -228,4 +228,4 @@ def delete_interaction(
     for aid in attendee_ids:
         recompute_last_contacted_at(session=session, contact_id=aid)
     session.commit()
-    return {"ok": True}
+    return Ok()

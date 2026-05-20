@@ -14,6 +14,7 @@ from app.models import (
     LifeEventPublic,
     LifeEventsPublic,
     LifeEventUpdate,
+    Ok,
 )
 
 router = APIRouter(prefix="/life-events", tags=["life-events"])
@@ -29,7 +30,7 @@ def list_life_events(
     session: SessionDep,
     current_user: CurrentUser,
     contact_id: uuid.UUID,
-) -> Any:
+) -> LifeEventsPublic:
     """List life events for a contact."""
     _require_contact_visible(session, current_user, contact_id)
 
@@ -48,7 +49,7 @@ def create_life_event_route(
     session: SessionDep,
     current_user: CurrentUser,
     event_in: LifeEventCreate,
-) -> Any:
+) -> LifeEventPublic:
     """Create a new life event."""
     _require_contact_visible(session, current_user, event_in.contact_id)
 
@@ -65,7 +66,7 @@ def update_life_event(
     current_user: CurrentUser,
     event_id: uuid.UUID,
     event_in: LifeEventUpdate,
-) -> Any:
+) -> LifeEventPublic:
     """Update a life event."""
     event = session.get(LifeEvent, event_id)
     if event is None:
@@ -80,12 +81,12 @@ def update_life_event(
     return LifeEventPublic.model_validate(event)
 
 
-@router.delete("/{event_id}")
+@router.delete("/{event_id}", response_model=Ok)
 def delete_life_event(
     session: SessionDep,
     current_user: CurrentUser,
     event_id: uuid.UUID,
-) -> Any:
+) -> Ok:
     """Delete a life event."""
     event = session.get(LifeEvent, event_id)
     if event is None:
@@ -94,4 +95,4 @@ def delete_life_event(
 
     session.delete(event)
     session.commit()
-    return {"ok": True}
+    return Ok()

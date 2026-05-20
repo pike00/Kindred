@@ -613,6 +613,24 @@ class OverdueContactsPublic(SQLModel):
     count: int
 
 
+class HouseholdMember(SQLModel):
+    """Single household member entry returned by /contacts/{id}/household."""
+
+    id: str
+    first_name: str
+    last_name: str | None = None
+    nickname: str | None = None
+    birthday: str | None = None
+    age: int | None = None
+    avatar_url: str | None = None
+
+
+class HouseholdResponse(SQLModel):
+    """Household membership wrapper."""
+
+    data: list[HouseholdMember]
+
+
 # ─── ContactField ────────────────────────────────────────────────────────────
 
 
@@ -671,6 +689,11 @@ class ContactField(ContactFieldBase, table=True):
 class ContactFieldPublic(ContactFieldBase):
     id: uuid.UUID
     contact_id: uuid.UUID
+
+
+class ContactFieldsPublic(SQLModel):
+    data: list[ContactFieldPublic]
+    count: int
 
 
 # ─── Address ─────────────────────────────────────────────────────────────────
@@ -759,6 +782,11 @@ class AddressPublic(AddressBase):
     contact_id: uuid.UUID
 
 
+class AddressesPublic(SQLModel):
+    data: list[AddressPublic]
+    count: int
+
+
 # ─── Relationship ────────────────────────────────────────────────────────────
 
 
@@ -828,6 +856,11 @@ class RelationshipPublic(RelationshipBase):
     inverse_id: uuid.UUID | None = None
 
 
+class RelationshipsPublic(SQLModel):
+    data: list[RelationshipPublic]
+    count: int
+
+
 # ─── Pet ──────────────────────────────────────────────────────────────────────
 
 
@@ -884,6 +917,11 @@ class Pet(PetBase, table=True):
 class PetPublic(PetBase):
     id: uuid.UUID
     contact_id: uuid.UUID
+
+
+class PetsPublic(SQLModel):
+    data: list[PetPublic]
+    count: int
 
 
 # ─── CustomFieldDefinition ───────────────────────────────────────────────────
@@ -962,6 +1000,11 @@ class CustomFieldDefinitionPublic(CustomFieldDefinitionBase):
     created_at: datetime
 
 
+class CustomFieldDefinitionsPublic(SQLModel):
+    data: list[CustomFieldDefinitionPublic]
+    count: int
+
+
 # ─── CustomFieldValue ────────────────────────────────────────────────────────
 
 
@@ -1009,6 +1052,11 @@ class CustomFieldValuePublic(CustomFieldValueBase):
     contact_id: uuid.UUID
     field_definition_id: uuid.UUID
     field_name: str | None = None  # populated from join
+
+
+class CustomFieldValuesPublic(SQLModel):
+    data: list[CustomFieldValuePublic]
+    count: int
 
 
 # ─── Interaction ──────────────────────────────────────────────────────────────
@@ -1269,6 +1317,29 @@ class ReminderSnoozeRequest(SQLModel):
 # ─── ReminderSnooze ──────────────────────────────────────────────────────
 
 
+class ReminderSnoozeHistoryEntry(SQLModel):
+    """Single snooze history row returned by GET /reminders/{id}/snooze-history."""
+
+    snoozed_at: datetime
+    snoozed_until: datetime
+    reason: str | None = None
+
+
+class ReminderSnoozeStat(SQLModel):
+    """Aggregate snooze count for a reminder."""
+
+    reminder_id: str
+    snooze_count: int
+
+
+class ChronicSnoozer(SQLModel):
+    """Aggregate snooze stats for a (contact, reminder) pair."""
+
+    contact_id: str | None = None
+    reminder_id: str
+    snooze_count: int
+
+
 class ReminderSnooze(SQLModel, table=True):
     """Append-only log of snooze actions on reminders."""
 
@@ -1408,11 +1479,27 @@ class GiftPublic(GiftBase):
     contact_id: uuid.UUID
     created_at: datetime
     deleted_at: datetime | None = None
+    days_until_occasion: int | None = None
+    contact_birthday: date | None = None
+    contact_first_name: str | None = None
+    contact_last_name: str | None = None
 
 
 class GiftsPublic(SQLModel):
     data: list[GiftPublic]
     count: int
+
+
+class GiftKanbanCard(SQLModel):
+    gift: GiftPublic
+    is_overdue: bool
+    days_until_occasion: int | None = None
+
+
+class GiftKanbanColumn(SQLModel):
+    gifts: list[GiftKanbanCard]
+    count: int
+    total_value: float
 
 
 # ─── Debt ─────────────────────────────────────────────────────────────────────
@@ -1898,6 +1985,45 @@ class WebhookEndpoint(WebhookEndpointBase, table=True):
     )
 
 
+class WebhookEndpointPublic(SQLModel):
+    """Public representation of a webhook endpoint (without api_key)."""
+
+    id: str
+    name: str
+    url: str | None = None
+    direction: str
+    event_types: str | None = None
+    is_active: bool
+    created_at: str
+
+
+class WebhookEndpointsPublic(SQLModel):
+    data: list[WebhookEndpointPublic]
+    count: int
+
+
+class WebhookEndpointCreated(WebhookEndpointPublic):
+    """Returned once on creation; includes the plaintext api_key."""
+
+    api_key: str
+
+
+class WebhookEventResponse(SQLModel):
+    """Generic response shape for inbound/twilio webhook handlers.
+
+    Fields are optional because different code paths return different subsets
+    (e.g. unmatched contact vs successful interaction).
+    """
+
+    received: bool = True
+    matched: bool | None = None
+    channel: str | None = None
+    call_status: str | None = None
+    contact_id: str | None = None
+    interaction_id: str | None = None
+    error: str | None = None
+
+
 class ActivityLog(SQLModel, table=True):
     """Immutable record of a create/update/delete on any audited entity."""
 
@@ -1956,6 +2082,11 @@ class ActivityLogsPublic(SQLModel):
 # Generic message
 class Message(SQLModel):
     message: str
+
+
+# Generic ok response for delete/idempotent endpoints
+class Ok(SQLModel):
+    ok: bool = True
 
 
 # JSON payload containing access token

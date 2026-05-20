@@ -70,6 +70,11 @@ export type AddressCreate = {
     contact_id: string;
 };
 
+export type AddressesPublic = {
+    data: Array<AddressPublic>;
+    count: number;
+};
+
 export type AddressPublic = {
     /**
      * Label like "home", "work", "other".
@@ -229,6 +234,15 @@ export type CalendarMonthResponse = {
     };
 };
 
+/**
+ * Aggregate snooze stats for a (contact, reminder) pair.
+ */
+export type ChronicSnoozer = {
+    contact_id?: (string | null);
+    reminder_id: string;
+    snooze_count: number;
+};
+
 export type ContactCreate = {
     /**
      * Given name; required.
@@ -364,6 +378,11 @@ export type ContactFieldPublic = {
     sort_order?: number;
     id: string;
     contact_id: string;
+};
+
+export type ContactFieldsPublic = {
+    data: Array<ContactFieldPublic>;
+    count: number;
 };
 
 export type ContactFieldType = 'email' | 'phone';
@@ -570,6 +589,11 @@ export type CustomFieldDefinitionPublic = {
     created_at: string;
 };
 
+export type CustomFieldDefinitionsPublic = {
+    data: Array<CustomFieldDefinitionPublic>;
+    count: number;
+};
+
 export type CustomFieldDefinitionUpdate = {
     name?: (string | null);
     field_type?: (string | null);
@@ -596,6 +620,11 @@ export type CustomFieldValuePublic = {
     contact_id: string;
     field_definition_id: string;
     field_name?: (string | null);
+};
+
+export type CustomFieldValuesPublic = {
+    data: Array<CustomFieldValuePublic>;
+    count: number;
 };
 
 export type CustomFieldValueUpdate = {
@@ -717,6 +746,18 @@ export type GiftCreate = {
     contact_id: string;
 };
 
+export type GiftKanbanCard = {
+    gift: GiftPublic;
+    is_overdue: boolean;
+    days_until_occasion?: (number | null);
+};
+
+export type GiftKanbanColumn = {
+    gifts: Array<GiftKanbanCard>;
+    count: number;
+    total_value: number;
+};
+
 export type GiftPublic = {
     /**
      * Gift name.
@@ -754,6 +795,10 @@ export type GiftPublic = {
     contact_id: string;
     created_at: string;
     deleted_at?: (string | null);
+    days_until_occasion?: (number | null);
+    contact_birthday?: (string | null);
+    contact_first_name?: (string | null);
+    contact_last_name?: (string | null);
 };
 
 export type GiftsPublic = {
@@ -772,6 +817,26 @@ export type GiftUpdate = {
     value_amount?: (number | null);
     value_currency?: (string | null);
     url?: (string | null);
+};
+
+/**
+ * Single household member entry returned by /contacts/{id}/household.
+ */
+export type HouseholdMember = {
+    id: string;
+    first_name: string;
+    last_name?: (string | null);
+    nickname?: (string | null);
+    birthday?: (string | null);
+    age?: (number | null);
+    avatar_url?: (string | null);
+};
+
+/**
+ * Household membership wrapper.
+ */
+export type HouseholdResponse = {
+    data: Array<HouseholdMember>;
 };
 
 export type HTTPValidationError = {
@@ -986,6 +1051,15 @@ export type JournalEntryUpdate = {
     entry_date?: (string | null);
 };
 
+/**
+ * JSON export of all contact rows (raw model_dump per contact).
+ */
+export type JsonExportResponse = {
+    contacts: Array<{
+        [key: string]: unknown;
+    }>;
+};
+
 export type LifeEventCreate = {
     /**
      * Kind of milestone: job_change, move, wedding, baby, graduation, birthday, anniversary, etc.
@@ -1154,6 +1228,10 @@ export type NoteUpdate = {
     body?: (string | null);
 };
 
+export type Ok = {
+    ok?: boolean;
+};
+
 export type OverdueContactPublic = {
     /**
      * Given name; required.
@@ -1291,6 +1369,11 @@ export type PetPublic = {
     contact_id: string;
 };
 
+export type PetsPublic = {
+    data: Array<PetPublic>;
+    count: number;
+};
+
 export type PetUpdate = {
     name?: (string | null);
     species?: (string | null);
@@ -1328,6 +1411,11 @@ export type RelationshipPublic = {
     contact_id: string;
     related_contact_id: string;
     inverse_id?: (string | null);
+};
+
+export type RelationshipsPublic = {
+    data: Array<RelationshipPublic>;
+    count: number;
 };
 
 export type RelationshipUpdate = {
@@ -1436,6 +1524,15 @@ export type RemindersDuePublic = {
     count: number;
 };
 
+/**
+ * Single snooze history row returned by GET /reminders/{id}/snooze-history.
+ */
+export type ReminderSnoozeHistoryEntry = {
+    snoozed_at: string;
+    snoozed_until: string;
+    reason?: (string | null);
+};
+
 export type ReminderSnoozeRequest = {
     /**
      * Absolute time to snooze until (UTC). Mutually exclusive with minutes.
@@ -1445,6 +1542,14 @@ export type ReminderSnoozeRequest = {
      * Minutes from now to snooze for. Mutually exclusive with snoozed_until.
      */
     minutes?: (number | null);
+};
+
+/**
+ * Aggregate snooze count for a reminder.
+ */
+export type ReminderSnoozeStat = {
+    reminder_id: string;
+    snooze_count: number;
 };
 
 export type RemindersPublic = {
@@ -1616,6 +1721,14 @@ export type ValidationError = {
     };
 };
 
+/**
+ * Result of a vCard bulk import.
+ */
+export type VCardImportResponse = {
+    imported: number;
+    errors?: Array<(string)>;
+};
+
 export type WebhookEndpointBase = {
     /**
      * Human-readable endpoint name.
@@ -1643,6 +1756,54 @@ export type WebhookEndpointBase = {
     secret?: (string | null);
 };
 
+/**
+ * Returned once on creation; includes the plaintext api_key.
+ */
+export type WebhookEndpointCreated = {
+    id: string;
+    name: string;
+    url?: (string | null);
+    direction: string;
+    event_types?: (string | null);
+    is_active: boolean;
+    created_at: string;
+    api_key: string;
+};
+
+/**
+ * Public representation of a webhook endpoint (without api_key).
+ */
+export type WebhookEndpointPublic = {
+    id: string;
+    name: string;
+    url?: (string | null);
+    direction: string;
+    event_types?: (string | null);
+    is_active: boolean;
+    created_at: string;
+};
+
+export type WebhookEndpointsPublic = {
+    data: Array<WebhookEndpointPublic>;
+    count: number;
+};
+
+/**
+ * Generic response shape for inbound/twilio webhook handlers.
+ *
+ * Fields are optional because different code paths return different subsets
+ * (e.g. unmatched contact vs successful interaction).
+ */
+export type WebhookEventResponse = {
+    received?: boolean;
+    matched?: (boolean | null);
+    channel?: (string | null);
+    call_status?: (string | null);
+    contact_id?: (string | null);
+    interaction_id?: (string | null);
+    error?: (string | null);
+};
+
 export type ActivityLogsListActivityLogsData = {
     entityId?: (string | null);
     entityType?: (string | null);
@@ -1657,7 +1818,7 @@ export type AddressesListAddressesData = {
     contactId: string;
 };
 
-export type AddressesListAddressesResponse = (unknown);
+export type AddressesListAddressesResponse = (AddressesPublic);
 
 export type AddressesCreateAddressRouteData = {
     requestBody: AddressCreate;
@@ -1676,7 +1837,7 @@ export type AddressesDeleteAddressData = {
     addressId: string;
 };
 
-export type AddressesDeleteAddressResponse = (unknown);
+export type AddressesDeleteAddressResponse = (Ok);
 
 export type ApiKeysListMyApiKeysResponse = (APIKeysPublic);
 
@@ -1706,7 +1867,7 @@ export type ContactFieldsListContactFieldsData = {
     skip?: number;
 };
 
-export type ContactFieldsListContactFieldsResponse = (unknown);
+export type ContactFieldsListContactFieldsResponse = (ContactFieldsPublic);
 
 export type ContactFieldsCreateContactFieldRouteData = {
     requestBody: ContactFieldCreate;
@@ -1725,7 +1886,7 @@ export type ContactFieldsDeleteContactFieldData = {
     fieldId: string;
 };
 
-export type ContactFieldsDeleteContactFieldResponse = (unknown);
+export type ContactFieldsDeleteContactFieldResponse = (Ok);
 
 export type ContactsBulkUpdateContactsData = {
     requestBody: BulkContactRequest;
@@ -1802,7 +1963,7 @@ export type ContactsDeleteContactData = {
     contactId: string;
 };
 
-export type ContactsDeleteContactResponse = (unknown);
+export type ContactsDeleteContactResponse = (Ok);
 
 export type ContactsRestoreContactData = {
     contactId: string;
@@ -1832,9 +1993,15 @@ export type ContactsGetContactHouseholdData = {
     contactId: string;
 };
 
-export type ContactsGetContactHouseholdResponse = (unknown);
+export type ContactsGetContactHouseholdResponse = (HouseholdResponse);
 
-export type CustomFieldsListFieldDefinitionsResponse = (unknown);
+export type ContactsGetContactPdfData = {
+    contactId: string;
+};
+
+export type ContactsGetContactPdfResponse = (unknown);
+
+export type CustomFieldsListFieldDefinitionsResponse = (CustomFieldDefinitionsPublic);
 
 export type CustomFieldsCreateFieldDefinitionData = {
     requestBody: CustomFieldDefinitionCreate;
@@ -1853,13 +2020,13 @@ export type CustomFieldsDeleteFieldDefinitionData = {
     defId: string;
 };
 
-export type CustomFieldsDeleteFieldDefinitionResponse = (unknown);
+export type CustomFieldsDeleteFieldDefinitionResponse = (Ok);
 
 export type CustomFieldsListFieldValuesData = {
     contactId: string;
 };
 
-export type CustomFieldsListFieldValuesResponse = (unknown);
+export type CustomFieldsListFieldValuesResponse = (CustomFieldValuesPublic);
 
 export type CustomFieldsCreateFieldValueData = {
     requestBody: CustomFieldValueCreate;
@@ -1878,7 +2045,7 @@ export type CustomFieldsDeleteFieldValueData = {
     valueId: string;
 };
 
-export type CustomFieldsDeleteFieldValueResponse = (unknown);
+export type CustomFieldsDeleteFieldValueResponse = (Ok);
 
 export type DebtsListDebtsData = {
     contactId: string;
@@ -1903,7 +2070,7 @@ export type DebtsDeleteDebtData = {
     debtId: string;
 };
 
-export type DebtsDeleteDebtResponse = (unknown);
+export type DebtsDeleteDebtResponse = (Ok);
 
 export type GiftsListGiftsData = {
     contactId: string;
@@ -1928,10 +2095,10 @@ export type GiftsDeleteGiftData = {
     giftId: string;
 };
 
-export type GiftsDeleteGiftResponse = (unknown);
+export type GiftsDeleteGiftResponse = (Ok);
 
 export type GiftsGetKanbanBoardResponse = ({
-    [key: string]: unknown;
+    [key: string]: GiftKanbanColumn;
 });
 
 export type GiftsChangeGiftStatusData = {
@@ -1949,11 +2116,11 @@ export type ImportExportImportVcardData = {
     formData: Body_import_export_import_vcard;
 };
 
-export type ImportExportImportVcardResponse = (unknown);
+export type ImportExportImportVcardResponse = (VCardImportResponse);
 
 export type ImportExportExportVcardResponse = (unknown);
 
-export type ImportExportExportJsonResponse = (unknown);
+export type ImportExportExportJsonResponse = (JsonExportResponse);
 
 export type ImportExportPreviewCsvImportData = {
     formData: Body_import_export_preview_csv_import;
@@ -2002,7 +2169,7 @@ export type InteractionsDeleteInteractionData = {
     interactionId: string;
 };
 
-export type InteractionsDeleteInteractionResponse = (unknown);
+export type InteractionsDeleteInteractionResponse = (Ok);
 
 export type JournalListJournalEntriesData = {
     limit?: number;
@@ -2028,7 +2195,7 @@ export type JournalDeleteJournalEntryData = {
     entryId: string;
 };
 
-export type JournalDeleteJournalEntryResponse = (unknown);
+export type JournalDeleteJournalEntryResponse = (Ok);
 
 export type LifeEventsListLifeEventsData = {
     contactId: string;
@@ -2053,7 +2220,7 @@ export type LifeEventsDeleteLifeEventData = {
     eventId: string;
 };
 
-export type LifeEventsDeleteLifeEventResponse = (unknown);
+export type LifeEventsDeleteLifeEventResponse = (Ok);
 
 export type LoginLoginAccessTokenData = {
     formData: Body_login_login_access_token;
@@ -2104,7 +2271,7 @@ export type MediaRecommendationsDeleteMediaRecommendationData = {
     recId: string;
 };
 
-export type MediaRecommendationsDeleteMediaRecommendationResponse = (unknown);
+export type MediaRecommendationsDeleteMediaRecommendationResponse = (Ok);
 
 export type NotesListNotesData = {
     contactId: string;
@@ -2131,13 +2298,13 @@ export type NotesDeleteNoteData = {
     noteId: string;
 };
 
-export type NotesDeleteNoteResponse = (unknown);
+export type NotesDeleteNoteResponse = (Ok);
 
 export type PetsListPetsData = {
     contactId: string;
 };
 
-export type PetsListPetsResponse = (unknown);
+export type PetsListPetsResponse = (PetsPublic);
 
 export type PetsCreatePetRouteData = {
     requestBody: PetCreate;
@@ -2156,7 +2323,7 @@ export type PetsDeletePetData = {
     petId: string;
 };
 
-export type PetsDeletePetResponse = (unknown);
+export type PetsDeletePetResponse = (Ok);
 
 export type RelationshipsLookupInverseData = {
     type: string;
@@ -2170,7 +2337,7 @@ export type RelationshipsListRelationshipsData = {
     contactId: string;
 };
 
-export type RelationshipsListRelationshipsResponse = (unknown);
+export type RelationshipsListRelationshipsResponse = (RelationshipsPublic);
 
 export type RelationshipsCreateRelationshipRouteData = {
     requestBody: RelationshipCreate;
@@ -2189,7 +2356,7 @@ export type RelationshipsDeleteRelationshipData = {
     relId: string;
 };
 
-export type RelationshipsDeleteRelationshipResponse = (unknown);
+export type RelationshipsDeleteRelationshipResponse = (Ok);
 
 export type RemindersListRemindersData = {
     isActive?: (boolean | null);
@@ -2222,7 +2389,7 @@ export type RemindersDeleteReminderData = {
     reminderId: string;
 };
 
-export type RemindersDeleteReminderResponse = (unknown);
+export type RemindersDeleteReminderResponse = (Ok);
 
 export type RemindersSnoozeReminderData = {
     minutes?: (number | null);
@@ -2243,20 +2410,20 @@ export type RemindersGetSnoozeHistoryData = {
     reminderId: string;
 };
 
-export type RemindersGetSnoozeHistoryResponse = (unknown);
+export type RemindersGetSnoozeHistoryResponse = (Array<ReminderSnoozeHistoryEntry>);
 
 export type RemindersGetSnoozeStatsData = {
     days?: number;
 };
 
-export type RemindersGetSnoozeStatsResponse = (unknown);
+export type RemindersGetSnoozeStatsResponse = (Array<ReminderSnoozeStat>);
 
 export type RemindersGetChronicSnoozersData = {
     days?: number;
     threshold?: number;
 };
 
-export type RemindersGetChronicSnoozersResponse = (unknown);
+export type RemindersGetChronicSnoozersResponse = (Array<ChronicSnoozer>);
 
 export type SetupSetupPageData = {
     token: string;
@@ -2294,7 +2461,7 @@ export type TagsDeleteTagData = {
     tagId: string;
 };
 
-export type TagsDeleteTagResponse = (unknown);
+export type TagsDeleteTagResponse = (Ok);
 
 export type TagSharesCreateTagShareData = {
     requestBody: _ShareIn;
@@ -2385,28 +2552,28 @@ export type WebhooksTwilioWebhookData = {
     apiKey: string;
 };
 
-export type WebhooksTwilioWebhookResponse = (unknown);
+export type WebhooksTwilioWebhookResponse = (WebhookEventResponse);
 
-export type WebhooksListWebhooksResponse = (unknown);
+export type WebhooksListWebhooksResponse = (WebhookEndpointsPublic);
 
 export type WebhooksCreateWebhookData = {
     requestBody: WebhookEndpointBase;
 };
 
-export type WebhooksCreateWebhookResponse = (unknown);
+export type WebhooksCreateWebhookResponse = (WebhookEndpointCreated);
 
 export type WebhooksUpdateWebhookData = {
     requestBody: WebhookEndpointBase;
     webhookId: string;
 };
 
-export type WebhooksUpdateWebhookResponse = (unknown);
+export type WebhooksUpdateWebhookResponse = (WebhookEndpointPublic);
 
 export type WebhooksDeleteWebhookData = {
     webhookId: string;
 };
 
-export type WebhooksDeleteWebhookResponse = (unknown);
+export type WebhooksDeleteWebhookResponse = (Ok);
 
 export type WebhooksInboundWebhookData = {
     apiKey: string;
@@ -2415,4 +2582,4 @@ export type WebhooksInboundWebhookData = {
     };
 };
 
-export type WebhooksInboundWebhookResponse = (unknown);
+export type WebhooksInboundWebhookResponse = (WebhookEventResponse);

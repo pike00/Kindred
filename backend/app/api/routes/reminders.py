@@ -9,7 +9,9 @@ from sqlmodel import func, or_, select
 from app.api.deps import CurrentUser, SessionDep
 from app.crud import contact_visible, create_reminder, visible_contact_ids
 from app.models import (
+    ChronicSnoozer,
     Contact,
+    Ok,
     Reminder,
     ReminderContactSummary,
     ReminderCreate,
@@ -17,7 +19,9 @@ from app.models import (
     ReminderPublic,
     RemindersDuePublic,
     ReminderSnooze,
+    ReminderSnoozeHistoryEntry,
     ReminderSnoozeRequest,
+    ReminderSnoozeStat,
     RemindersPublic,
     ReminderUpdate,
 )
@@ -40,7 +44,7 @@ def list_reminders(
     skip: int = 0,
     limit: int = 100,
     is_active: bool | None = None,
-) -> Any:
+) -> RemindersPublic:
     """List reminders for the current user (owned + tied to visible contacts)."""
     statement = select(Reminder).where(
         or_(
@@ -69,7 +73,7 @@ def list_due_reminders(
     session: SessionDep,
     current_user: CurrentUser,
     limit: int = 100,
-) -> Any:
+) -> RemindersDuePublic:
     """List reminders that are due now for the current user.
 
     A reminder is "due" when it is active, its `remind_at` is in the past,
@@ -116,7 +120,7 @@ def create_reminder_route(
     session: SessionDep,
     current_user: CurrentUser,
     reminder_in: ReminderCreate,
-) -> Any:
+) -> ReminderPublic:
     """Create a new reminder."""
     if reminder_in.contact_id is not None and not contact_visible(
         session=session, user=current_user, contact_id=reminder_in.contact_id
@@ -135,7 +139,7 @@ def update_reminder(
     current_user: CurrentUser,
     reminder_id: uuid.UUID,
     reminder_in: ReminderUpdate,
-) -> Any:
+) -> ReminderPublic:
     """Update a reminder."""
     reminder = session.get(Reminder, reminder_id)
     if reminder is None or not _reminder_accessible(current_user, reminder, session):
@@ -158,7 +162,7 @@ def snooze_reminder(
     body: ReminderSnoozeRequest | None = None,
     minutes: int | None = None,
     reason: str | None = None,
-) -> Any:
+) -> ReminderPublic:
     """Snooze a reminder.
 
     Accepts either a JSON body with ``snoozed_until`` (absolute UTC datetime) or
@@ -208,7 +212,7 @@ def dismiss_reminder(
     session: SessionDep,
     current_user: CurrentUser,
     reminder_id: uuid.UUID,
-) -> Any:
+) -> ReminderPublic:
     """Soft-clear a reminder from the badge.
 
     Bumps ``snoozed_until`` to a far-future sentinel so the reminder
@@ -227,12 +231,12 @@ def dismiss_reminder(
     return ReminderPublic.model_validate(reminder)
 
 
-@router.get("/{reminder_id}/snooze-history")
+@router.get("/{reminder_id}/snooze-history", response_model=list[ReminderSnoozeHistoryEntry])
 def get_snooze_history(
     session: SessionDep,
     current_user: CurrentUser,
     reminder_id: uuid.UUID,
-) -> Any:
+) -> list[ReminderSnoozeHistoryEntry]:
     """Get snooze history for a reminder."""
     reminder = session.get(Reminder, reminder_id)
     if reminder is None or not _reminder_accessible(current_user, reminder, session):
@@ -244,15 +248,22 @@ def get_snooze_history(
         .order_by(ReminderSnooze.snoozed_at.desc())
     )
     history = session.exec(stmt).all()
-    return [{"snoozed_at": h.snoozed_at, "snoozed_until": h.snoozed_until, "reason": h.reason} for h in history]
+    return [
+        ReminderSnoozeHistoryEntry(
+            snoozed_at=h.snoozed_at,
+            snoozed_until=h.snoozed_until,
+            reason=h.reason,
+        )
+        for h in history
+    ]
 
 
-@router.get("/snooze-stats")
+@router.get("/snooze-stats", response_model=list[ReminderSnoozeStat])
 def get_snooze_stats(
     session: SessionDep,
     current_user: CurrentUser,
     days: int = 30,
-) -> Any:
+) -> list[ReminderSnoozeStat]:
     """Get snooze count per reminder in the last N days."""
     cutoff = datetime.now(timezone.utc) - timedelta(days=days)
     stmt = (
@@ -271,16 +282,16 @@ def get_snooze_stats(
         .group_by(ReminderSnooze.reminder_id)
     )
     results = session.exec(stmt).all()
-    return [{"reminder_id": str(r[0]), "snooze_count": r[1]} for r in results]
+    return [ReminderSnoozeStat(reminder_id=str(r[0]), snooze_count=r[1]) for r in results]
 
 
-@router.get("/chronic-snoozers")
+@router.get("/chronic-snoozers", response_model=list[ChronicSnoozer])
 def get_chronic_snoozers(
     session: SessionDep,
     current_user: CurrentUser,
     days: int = 7,
     threshold: int = 3,
-) -> Any:
+) -> list[ChronicSnoozer]:
     """Get contacts with reminders snoozed more than threshold times in N days."""
     cutoff = datetime.now(timezone.utc) - timedelta(days=days)
     stmt = (
@@ -302,21 +313,21 @@ def get_chronic_snoozers(
     )
     results = session.exec(stmt).all()
     return [
-        {
-            "contact_id": str(r[0]) if r[0] else None,
-            "reminder_id": str(r[1]),
-            "snooze_count": r[2],
-        }
+        ChronicSnoozer(
+            contact_id=str(r[0]) if r[0] else None,
+            reminder_id=str(r[1]),
+            snooze_count=r[2],
+        )
         for r in results
     ]
 
 
-@router.delete("/{reminder_id}")
+@router.delete("/{reminder_id}", response_model=Ok)
 def delete_reminder(
     session: SessionDep,
     current_user: CurrentUser,
     reminder_id: uuid.UUID,
-) -> Any:
+) -> Ok:
     """Delete a reminder."""
     reminder = session.get(Reminder, reminder_id)
     if reminder is None or not _reminder_accessible(current_user, reminder, session):
@@ -324,4 +335,4 @@ def delete_reminder(
 
     session.delete(reminder)
     session.commit()
-    return {"ok": True}
+    return Ok()

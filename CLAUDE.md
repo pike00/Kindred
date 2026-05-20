@@ -36,6 +36,10 @@ Secrets live in `.env.sops`; `just dev` symlinks `.env` from the main repo into 
 
 Always `just regen-client` after changing any backend route/schema — never `bash scripts/generate-client.sh` alone. The script refreshes `frontend/openapi.json` and `frontend/src/client/*.gen.ts` on disk, but Vite caches the compiled SDK in `node_modules/.vite/deps`. Without restarting the frontend container the dev server keeps serving the stale client. Symptom: API returns the new shape, UI still uses old types.
 
+### Regenerating the Python SDK
+
+After any backend schema change, also run `just sdk-regen` to update `sdk/src/kindred/_generated/` from the freshly-exported `frontend/openapi.json`. Commit the result — the generated tree is checked in so the package installs from a git URL without needing a live server. If new endpoints were added, wire CLI commands in `sdk/src/kindred/cli.py` and add tests in `sdk/tests/`.
+
 ## Three deployment tiers
 
 | Tier | Where | Domain | Compose | DB |
@@ -101,5 +105,4 @@ Run via `just tf-plan` / `just tf-apply` from those directories. Never run `terr
 - mypy is intentionally disabled in pre-commit (~90 pre-existing strict-mode errors). Run locally with `uv run --project backend mypy app`.
 - The Copier template's `items` module is removed from the router but the model and Alembic table remain; drop with a dedicated migration if/when desired.
 - Routes with incomplete or missing UI: `activity-logs` (no view), `import-export` (import UI done, export not wired), `calendar` (month view exists, no create/edit events). The previous list here (`addresses`, `pets`, `relationships`, etc.) is stale — all of those now have contact-card UIs.
-- `UserSettings/ApiKeys.tsx` bypasses the SDK and uses raw `apiRequest` calls directly — diverges from the generated-client pattern used elsewhere.
 - Several entity cards are create-only in the UI; edit/delete SDK methods exist but are uncalled for `interactions`, `journal`, `debts`, `gifts`, `media_recommendations`, `reminders`, and `tags`. See `docs/improvements.md` for tracking.

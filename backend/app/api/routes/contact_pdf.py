@@ -461,7 +461,7 @@ async def get_contact_pdf(
     session: SessionDep,
     current_user: CurrentUser,
     contact_id: uuid.UUID,
-) -> Any:
+) -> Response:
     """Generate a printable PDF one-pager for a contact."""
     try:
         from weasyprint import HTML

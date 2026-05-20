@@ -642,6 +642,25 @@ export const AddressUpdateSchema = {
     title: 'AddressUpdate'
 } as const;
 
+export const AddressesPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/AddressPublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'AddressesPublic'
+} as const;
+
 export const Body_import_export_import_csvSchema = {
     properties: {
         file: {
@@ -1090,6 +1109,34 @@ export const CalendarMonthResponseSchema = {
     title: 'CalendarMonthResponse'
 } as const;
 
+export const ChronicSnoozerSchema = {
+    properties: {
+        contact_id: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Contact Id'
+        },
+        reminder_id: {
+            type: 'string',
+            title: 'Reminder Id'
+        },
+        snooze_count: {
+            type: 'integer',
+            title: 'Snooze Count'
+        }
+    },
+    type: 'object',
+    required: ['reminder_id', 'snooze_count'],
+    title: 'ChronicSnoozer',
+    description: 'Aggregate snooze stats for a (contact, reminder) pair.'
+} as const;
+
 export const ContactCreateSchema = {
     properties: {
         first_name: {
@@ -1499,6 +1546,25 @@ export const ContactFieldUpdateSchema = {
     },
     type: 'object',
     title: 'ContactFieldUpdate'
+} as const;
+
+export const ContactFieldsPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/ContactFieldPublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'ContactFieldsPublic'
 } as const;
 
 export const ContactPublicSchema = {
@@ -2282,6 +2348,25 @@ export const CustomFieldDefinitionUpdateSchema = {
     title: 'CustomFieldDefinitionUpdate'
 } as const;
 
+export const CustomFieldDefinitionsPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/CustomFieldDefinitionPublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'CustomFieldDefinitionsPublic'
+} as const;
+
 export const CustomFieldValueCreateSchema = {
     properties: {
         value: {
@@ -2362,6 +2447,25 @@ export const CustomFieldValueUpdateSchema = {
     },
     type: 'object',
     title: 'CustomFieldValueUpdate'
+} as const;
+
+export const CustomFieldValuesPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/CustomFieldValuePublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'CustomFieldValuesPublic'
 } as const;
 
 export const DebtCreateSchema = {
@@ -2716,6 +2820,55 @@ export const GiftCreateSchema = {
     title: 'GiftCreate'
 } as const;
 
+export const GiftKanbanCardSchema = {
+    properties: {
+        gift: {
+            '$ref': '#/components/schemas/GiftPublic'
+        },
+        is_overdue: {
+            type: 'boolean',
+            title: 'Is Overdue'
+        },
+        days_until_occasion: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Days Until Occasion'
+        }
+    },
+    type: 'object',
+    required: ['gift', 'is_overdue'],
+    title: 'GiftKanbanCard'
+} as const;
+
+export const GiftKanbanColumnSchema = {
+    properties: {
+        gifts: {
+            items: {
+                '$ref': '#/components/schemas/GiftKanbanCard'
+            },
+            type: 'array',
+            title: 'Gifts'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        },
+        total_value: {
+            type: 'number',
+            title: 'Total Value'
+        }
+    },
+    type: 'object',
+    required: ['gifts', 'count', 'total_value'],
+    title: 'GiftKanbanColumn'
+} as const;
+
 export const GiftPublicSchema = {
     properties: {
         name: {
@@ -2827,6 +2980,51 @@ export const GiftPublicSchema = {
                 }
             ],
             title: 'Deleted At'
+        },
+        days_until_occasion: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Days Until Occasion'
+        },
+        contact_birthday: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Contact Birthday'
+        },
+        contact_first_name: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Contact First Name'
+        },
+        contact_last_name: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Contact Last Name'
         }
     },
     type: 'object',
@@ -2966,6 +3164,94 @@ export const HTTPValidationErrorSchema = {
     },
     type: 'object',
     title: 'HTTPValidationError'
+} as const;
+
+export const HouseholdMemberSchema = {
+    properties: {
+        id: {
+            type: 'string',
+            title: 'Id'
+        },
+        first_name: {
+            type: 'string',
+            title: 'First Name'
+        },
+        last_name: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Last Name'
+        },
+        nickname: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Nickname'
+        },
+        birthday: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Birthday'
+        },
+        age: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Age'
+        },
+        avatar_url: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Avatar Url'
+        }
+    },
+    type: 'object',
+    required: ['id', 'first_name'],
+    title: 'HouseholdMember',
+    description: 'Single household member entry returned by /contacts/{id}/household.'
+} as const;
+
+export const HouseholdResponseSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/HouseholdMember'
+            },
+            type: 'array',
+            title: 'Data'
+        }
+    },
+    type: 'object',
+    required: ['data'],
+    title: 'HouseholdResponse',
+    description: 'Household membership wrapper.'
 } as const;
 
 export const IMessageProfilePayloadSchema = {
@@ -3649,6 +3935,23 @@ export const JournalEntryUpdateSchema = {
     title: 'JournalEntryUpdate'
 } as const;
 
+export const JsonExportResponseSchema = {
+    properties: {
+        contacts: {
+            items: {
+                additionalProperties: true,
+                type: 'object'
+            },
+            type: 'array',
+            title: 'Contacts'
+        }
+    },
+    type: 'object',
+    required: ['contacts'],
+    title: 'JsonExportResponse',
+    description: 'JSON export of all contact rows (raw model_dump per contact).'
+} as const;
+
 export const LifeEventCreateSchema = {
     properties: {
         event_type: {
@@ -4217,6 +4520,18 @@ export const NotesPublicSchema = {
     title: 'NotesPublic'
 } as const;
 
+export const OkSchema = {
+    properties: {
+        ok: {
+            type: 'boolean',
+            title: 'Ok',
+            default: true
+        }
+    },
+    type: 'object',
+    title: 'Ok'
+} as const;
+
 export const OverdueContactPublicSchema = {
     properties: {
         first_name: {
@@ -4750,6 +5065,25 @@ export const PetUpdateSchema = {
     title: 'PetUpdate'
 } as const;
 
+export const PetsPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/PetPublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'PetsPublic'
+} as const;
+
 export const RelationshipCreateSchema = {
     properties: {
         relationship_type: {
@@ -4881,6 +5215,25 @@ export const RelationshipUpdateSchema = {
     },
     type: 'object',
     title: 'RelationshipUpdate'
+} as const;
+
+export const RelationshipsPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/RelationshipPublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'RelationshipsPublic'
 } as const;
 
 export const ReminderContactSummarySchema = {
@@ -5213,6 +5566,36 @@ export const ReminderPublicSchema = {
     title: 'ReminderPublic'
 } as const;
 
+export const ReminderSnoozeHistoryEntrySchema = {
+    properties: {
+        snoozed_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Snoozed At'
+        },
+        snoozed_until: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Snoozed Until'
+        },
+        reason: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Reason'
+        }
+    },
+    type: 'object',
+    required: ['snoozed_at', 'snoozed_until'],
+    title: 'ReminderSnoozeHistoryEntry',
+    description: 'Single snooze history row returned by GET /reminders/{id}/snooze-history.'
+} as const;
+
 export const ReminderSnoozeRequestSchema = {
     properties: {
         snoozed_until: {
@@ -5245,6 +5628,23 @@ export const ReminderSnoozeRequestSchema = {
     },
     type: 'object',
     title: 'ReminderSnoozeRequest'
+} as const;
+
+export const ReminderSnoozeStatSchema = {
+    properties: {
+        reminder_id: {
+            type: 'string',
+            title: 'Reminder Id'
+        },
+        snooze_count: {
+            type: 'integer',
+            title: 'Snooze Count'
+        }
+    },
+    type: 'object',
+    required: ['reminder_id', 'snooze_count'],
+    title: 'ReminderSnoozeStat',
+    description: 'Aggregate snooze count for a reminder.'
 } as const;
 
 export const ReminderUpdateSchema = {
@@ -5859,6 +6259,27 @@ export const UsersPublicSchema = {
     title: 'UsersPublic'
 } as const;
 
+export const VCardImportResponseSchema = {
+    properties: {
+        imported: {
+            type: 'integer',
+            title: 'Imported'
+        },
+        errors: {
+            items: {
+                type: 'string'
+            },
+            type: 'array',
+            title: 'Errors',
+            default: []
+        }
+    },
+    type: 'object',
+    required: ['imported'],
+    title: 'VCardImportResponse',
+    description: 'Result of a vCard bulk import.'
+} as const;
+
 export const ValidationErrorSchema = {
     properties: {
         loc: {
@@ -5960,6 +6381,213 @@ export const WebhookEndpointBaseSchema = {
     type: 'object',
     required: ['name', 'direction'],
     title: 'WebhookEndpointBase'
+} as const;
+
+export const WebhookEndpointCreatedSchema = {
+    properties: {
+        id: {
+            type: 'string',
+            title: 'Id'
+        },
+        name: {
+            type: 'string',
+            title: 'Name'
+        },
+        url: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Url'
+        },
+        direction: {
+            type: 'string',
+            title: 'Direction'
+        },
+        event_types: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Event Types'
+        },
+        is_active: {
+            type: 'boolean',
+            title: 'Is Active'
+        },
+        created_at: {
+            type: 'string',
+            title: 'Created At'
+        },
+        api_key: {
+            type: 'string',
+            title: 'Api Key'
+        }
+    },
+    type: 'object',
+    required: ['id', 'name', 'direction', 'is_active', 'created_at', 'api_key'],
+    title: 'WebhookEndpointCreated',
+    description: 'Returned once on creation; includes the plaintext api_key.'
+} as const;
+
+export const WebhookEndpointPublicSchema = {
+    properties: {
+        id: {
+            type: 'string',
+            title: 'Id'
+        },
+        name: {
+            type: 'string',
+            title: 'Name'
+        },
+        url: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Url'
+        },
+        direction: {
+            type: 'string',
+            title: 'Direction'
+        },
+        event_types: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Event Types'
+        },
+        is_active: {
+            type: 'boolean',
+            title: 'Is Active'
+        },
+        created_at: {
+            type: 'string',
+            title: 'Created At'
+        }
+    },
+    type: 'object',
+    required: ['id', 'name', 'direction', 'is_active', 'created_at'],
+    title: 'WebhookEndpointPublic',
+    description: 'Public representation of a webhook endpoint (without api_key).'
+} as const;
+
+export const WebhookEndpointsPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/WebhookEndpointPublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'WebhookEndpointsPublic'
+} as const;
+
+export const WebhookEventResponseSchema = {
+    properties: {
+        received: {
+            type: 'boolean',
+            title: 'Received',
+            default: true
+        },
+        matched: {
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Matched'
+        },
+        channel: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Channel'
+        },
+        call_status: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Call Status'
+        },
+        contact_id: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Contact Id'
+        },
+        interaction_id: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Interaction Id'
+        },
+        error: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Error'
+        }
+    },
+    type: 'object',
+    title: 'WebhookEventResponse',
+    description: `Generic response shape for inbound/twilio webhook handlers.
+
+Fields are optional because different code paths return different subsets
+(e.g. unmatched contact vs successful interaction).`
 } as const;
 
 export const _MentionPublicSchema = {
