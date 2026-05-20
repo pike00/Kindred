@@ -5,6 +5,12 @@ Set ``KINDRED_BASE_URL`` and ``KINDRED_API_KEY`` in the environment, then::
     kindred contacts list --search Alice
     kindred contacts losing-touch
     kindred reminders due
+    kindred reminders snooze <id> --minutes 60
+    kindred reminders snooze-history <id>
+    kindred reminders snooze-stats
+    kindred reminders chronic-snoozers
+    kindred webhooks list
+    kindred webhooks create --name "My hook" --direction outbound --url https://...
     kindred notes for-contact <uuid>
     kindred health
 
@@ -34,14 +40,26 @@ from ._generated.api.interactions import interactions_list_interactions
 from ._generated.api.journal import journal_list_journal_entries
 from ._generated.api.notes import notes_list_notes
 from ._generated.api.reminders import (
+    reminders_delete_reminder,
     reminders_dismiss_reminder,
+    reminders_get_chronic_snoozers,
+    reminders_get_snooze_history,
+    reminders_get_snooze_stats,
     reminders_list_due_reminders,
     reminders_list_reminders,
+    reminders_snooze_reminder,
 )
 from ._generated.api.tags import tags_list_tags
 from ._generated.api.users import users_read_user_me
 from ._generated.api.utils import utils_health_check
+from ._generated.api.webhooks import (
+    webhooks_create_webhook,
+    webhooks_delete_webhook,
+    webhooks_list_webhooks,
+    webhooks_update_webhook,
+)
 from ._generated.errors import UnexpectedStatus
+from ._generated.models.webhook_endpoint_base import WebhookEndpointBase
 from ._generated.types import UNSET
 
 app = typer.Typer(
@@ -53,6 +71,7 @@ contacts_app = typer.Typer(no_args_is_help=True, help="Contact operations.")
 reminders_app = typer.Typer(no_args_is_help=True, help="Reminder operations.")
 notes_app = typer.Typer(no_args_is_help=True, help="Note operations.")
 tags_app = typer.Typer(no_args_is_help=True, help="Tag operations.")
+webhooks_app = typer.Typer(no_args_is_help=True, help="Webhook endpoint operations.")
 interactions_app = typer.Typer(no_args_is_help=True, help="Interaction operations.")
 journal_app = typer.Typer(no_args_is_help=True, help="Journal operations.")
 
@@ -62,6 +81,7 @@ app.add_typer(notes_app, name="notes")
 app.add_typer(tags_app, name="tags")
 app.add_typer(interactions_app, name="interactions")
 app.add_typer(journal_app, name="journal")
+app.add_typer(webhooks_app, name="webhooks")
 
 
 PrettyOpt = Annotated[bool, typer.Option("--pretty", help="Indent JSON output.")]
@@ -199,6 +219,49 @@ def reminders_dismiss(reminder_id: UUID, pretty: PrettyOpt = False) -> None:
     _emit(_run(reminders_dismiss_reminder, reminder_id=reminder_id), pretty)
 
 
+@reminders_app.command("snooze")
+def reminders_snooze(
+    reminder_id: UUID,
+    pretty: PrettyOpt = False,
+    minutes: Annotated[int | None, typer.Option(help="Snooze duration in minutes.")] = None,
+    reason: Annotated[str | None, typer.Option(help="Optional snooze reason.")] = None,
+) -> None:
+    """Snooze a reminder."""
+    _emit(
+        _run(
+            reminders_snooze_reminder,
+            reminder_id=reminder_id,
+            minutes=minutes if minutes is not None else UNSET,
+            reason=reason if reason is not None else UNSET,
+        ),
+        pretty,
+    )
+
+
+@reminders_app.command("delete")
+def reminders_delete(reminder_id: UUID, pretty: PrettyOpt = False) -> None:
+    """Delete a reminder permanently."""
+    _emit(_run(reminders_delete_reminder, reminder_id=reminder_id), pretty)
+
+
+@reminders_app.command("snooze-history")
+def reminders_snooze_history(reminder_id: UUID, pretty: PrettyOpt = False) -> None:
+    """List snooze history for a reminder."""
+    _emit(_run(reminders_get_snooze_history, reminder_id=reminder_id), pretty)
+
+
+@reminders_app.command("snooze-stats")
+def reminders_snooze_stats(pretty: PrettyOpt = False) -> None:
+    """Aggregate snooze count per reminder across all reminders."""
+    _emit(_run(reminders_get_snooze_stats), pretty)
+
+
+@reminders_app.command("chronic-snoozers")
+def reminders_chronic_snoozers(pretty: PrettyOpt = False) -> None:
+    """List (contact, reminder) pairs with the highest snooze counts."""
+    _emit(_run(reminders_get_chronic_snoozers), pretty)
+
+
 # ── notes ───────────────────────────────────────────────────────────────────
 
 
@@ -270,6 +333,65 @@ def journal_list(
 ) -> None:
     """List journal entries."""
     _emit(_run(journal_list_journal_entries, skip=skip, limit=limit), pretty)
+
+
+# ── webhooks ────────────────────────────────────────────────────────────────
+
+
+@webhooks_app.command("list")
+def webhooks_list(pretty: PrettyOpt = False) -> None:
+    """List all webhook endpoints."""
+    _emit(_run(webhooks_list_webhooks), pretty)
+
+
+@webhooks_app.command("create")
+def webhooks_create(
+    name: Annotated[str, typer.Option(help="Human-readable endpoint name.")],
+    direction: Annotated[str, typer.Option(help='"inbound" or "outbound".')],
+    pretty: PrettyOpt = False,
+    url: Annotated[str | None, typer.Option(help="Target URL (outbound only).")] = None,
+    event_types: Annotated[
+        str | None,
+        typer.Option(help="Comma-separated event types, e.g. contact.created,interaction.logged."),
+    ] = None,
+    active: Annotated[bool, typer.Option(help="Enable immediately.")] = True,
+) -> None:
+    """Create a new webhook endpoint. Prints the plaintext api_key once on creation."""
+    body = WebhookEndpointBase(
+        name=name,
+        direction=direction,
+        url=url if url is not None else UNSET,
+        event_types=event_types if event_types is not None else UNSET,
+        is_active=active,
+    )
+    _emit(_run(webhooks_create_webhook, body=body), pretty)
+
+
+@webhooks_app.command("update")
+def webhooks_update(
+    webhook_id: UUID,
+    name: Annotated[str, typer.Option(help="Human-readable endpoint name.")],
+    direction: Annotated[str, typer.Option(help='"inbound" or "outbound".')],
+    pretty: PrettyOpt = False,
+    url: Annotated[str | None, typer.Option(help="Target URL (outbound only).")] = None,
+    event_types: Annotated[str | None, typer.Option(help="Comma-separated event types.")] = None,
+    active: Annotated[bool, typer.Option(help="Enable or disable.")] = True,
+) -> None:
+    """Update an existing webhook endpoint."""
+    body = WebhookEndpointBase(
+        name=name,
+        direction=direction,
+        url=url if url is not None else UNSET,
+        event_types=event_types if event_types is not None else UNSET,
+        is_active=active,
+    )
+    _emit(_run(webhooks_update_webhook, webhook_id=webhook_id, body=body), pretty)
+
+
+@webhooks_app.command("delete")
+def webhooks_delete(webhook_id: UUID, pretty: PrettyOpt = False) -> None:
+    """Delete a webhook endpoint."""
+    _emit(_run(webhooks_delete_webhook, webhook_id=webhook_id), pretty)
 
 
 # ── top-level utilities ─────────────────────────────────────────────────────

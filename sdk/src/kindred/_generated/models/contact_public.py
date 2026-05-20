@@ -1,16 +1,19 @@
 from __future__ import annotations
 
-import datetime
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, TypeVar, cast
-from uuid import UUID
+from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-from dateutil.parser import isoparse
+
+from ..types import UNSET, Unset
 
 from ..models.contact_source import ContactSource
 from ..types import UNSET, Unset
+from dateutil.parser import isoparse
+from typing import cast
+from uuid import UUID
+import datetime
 
 if TYPE_CHECKING:
     from ..models.contact_public_imessage_profile_type_0 import ContactPublicImessageProfileType0
@@ -92,6 +95,7 @@ class ContactPublic:
 
     def to_dict(self) -> dict[str, Any]:
         from ..models.contact_public_imessage_profile_type_0 import ContactPublicImessageProfileType0
+        from ..models.tag_public import TagPublic
 
         first_name = self.first_name
 

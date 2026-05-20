@@ -1,14 +1,17 @@
 from http import HTTPStatus
-from typing import Any
+from typing import Any, cast
 from urllib.parse import quote
-from uuid import UUID
 
 import httpx
 
-from ... import errors
 from ...client import AuthenticatedClient, Client
+from ...types import Response, UNSET
+from ... import errors
+
+from ...models.household_response import HouseholdResponse
 from ...models.http_validation_error import HTTPValidationError
-from ...types import Response
+from typing import cast
+from uuid import UUID
 
 
 def _get_kwargs(
@@ -27,9 +30,10 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Any | HTTPValidationError | None:
+) -> HTTPValidationError | HouseholdResponse | None:
     if response.status_code == 200:
-        response_200 = response.json()
+        response_200 = HouseholdResponse.from_dict(response.json())
+
         return response_200
 
     if response.status_code == 422:
@@ -45,7 +49,7 @@ def _parse_response(
 
 def _build_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Response[Any | HTTPValidationError]:
+) -> Response[HTTPValidationError | HouseholdResponse]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -58,7 +62,7 @@ def sync_detailed(
     contact_id: UUID,
     *,
     client: AuthenticatedClient,
-) -> Response[Any | HTTPValidationError]:
+) -> Response[HTTPValidationError | HouseholdResponse]:
     """Get Contact Household
 
      Get household members for a contact.
@@ -74,7 +78,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Any | HTTPValidationError]
+        Response[HTTPValidationError | HouseholdResponse]
     """
 
     kwargs = _get_kwargs(
@@ -92,7 +96,7 @@ def sync(
     contact_id: UUID,
     *,
     client: AuthenticatedClient,
-) -> Any | HTTPValidationError | None:
+) -> HTTPValidationError | HouseholdResponse | None:
     """Get Contact Household
 
      Get household members for a contact.
@@ -108,7 +112,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Any | HTTPValidationError
+        HTTPValidationError | HouseholdResponse
     """
 
     return sync_detailed(
@@ -121,7 +125,7 @@ async def asyncio_detailed(
     contact_id: UUID,
     *,
     client: AuthenticatedClient,
-) -> Response[Any | HTTPValidationError]:
+) -> Response[HTTPValidationError | HouseholdResponse]:
     """Get Contact Household
 
      Get household members for a contact.
@@ -137,7 +141,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Any | HTTPValidationError]
+        Response[HTTPValidationError | HouseholdResponse]
     """
 
     kwargs = _get_kwargs(
@@ -153,7 +157,7 @@ async def asyncio(
     contact_id: UUID,
     *,
     client: AuthenticatedClient,
-) -> Any | HTTPValidationError | None:
+) -> HTTPValidationError | HouseholdResponse | None:
     """Get Contact Household
 
      Get household members for a contact.
@@ -169,7 +173,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Any | HTTPValidationError
+        HTTPValidationError | HouseholdResponse
     """
 
     return (

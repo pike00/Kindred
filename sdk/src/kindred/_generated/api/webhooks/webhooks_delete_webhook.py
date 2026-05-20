@@ -1,14 +1,17 @@
 from http import HTTPStatus
-from typing import Any
+from typing import Any, cast
 from urllib.parse import quote
-from uuid import UUID
 
 import httpx
 
-from ... import errors
 from ...client import AuthenticatedClient, Client
+from ...types import Response, UNSET
+from ... import errors
+
 from ...models.http_validation_error import HTTPValidationError
-from ...types import Response
+from ...models.ok import Ok
+from typing import cast
+from uuid import UUID
 
 
 def _get_kwargs(
@@ -27,9 +30,10 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Any | HTTPValidationError | None:
+) -> HTTPValidationError | Ok | None:
     if response.status_code == 200:
-        response_200 = response.json()
+        response_200 = Ok.from_dict(response.json())
+
         return response_200
 
     if response.status_code == 422:
@@ -45,7 +49,7 @@ def _parse_response(
 
 def _build_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Response[Any | HTTPValidationError]:
+) -> Response[HTTPValidationError | Ok]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -58,7 +62,7 @@ def sync_detailed(
     webhook_id: UUID,
     *,
     client: AuthenticatedClient,
-) -> Response[Any | HTTPValidationError]:
+) -> Response[HTTPValidationError | Ok]:
     """Delete Webhook
 
      Delete a webhook endpoint.
@@ -71,7 +75,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Any | HTTPValidationError]
+        Response[HTTPValidationError | Ok]
     """
 
     kwargs = _get_kwargs(
@@ -89,7 +93,7 @@ def sync(
     webhook_id: UUID,
     *,
     client: AuthenticatedClient,
-) -> Any | HTTPValidationError | None:
+) -> HTTPValidationError | Ok | None:
     """Delete Webhook
 
      Delete a webhook endpoint.
@@ -102,7 +106,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Any | HTTPValidationError
+        HTTPValidationError | Ok
     """
 
     return sync_detailed(
@@ -115,7 +119,7 @@ async def asyncio_detailed(
     webhook_id: UUID,
     *,
     client: AuthenticatedClient,
-) -> Response[Any | HTTPValidationError]:
+) -> Response[HTTPValidationError | Ok]:
     """Delete Webhook
 
      Delete a webhook endpoint.
@@ -128,7 +132,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Any | HTTPValidationError]
+        Response[HTTPValidationError | Ok]
     """
 
     kwargs = _get_kwargs(
@@ -144,7 +148,7 @@ async def asyncio(
     webhook_id: UUID,
     *,
     client: AuthenticatedClient,
-) -> Any | HTTPValidationError | None:
+) -> HTTPValidationError | Ok | None:
     """Delete Webhook
 
      Delete a webhook endpoint.
@@ -157,7 +161,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Any | HTTPValidationError
+        HTTPValidationError | Ok
     """
 
     return (

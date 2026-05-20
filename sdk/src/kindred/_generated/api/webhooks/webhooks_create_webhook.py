@@ -1,13 +1,17 @@
 from http import HTTPStatus
-from typing import Any
+from typing import Any, cast
+from urllib.parse import quote
 
 import httpx
 
-from ... import errors
 from ...client import AuthenticatedClient, Client
+from ...types import Response, UNSET
+from ... import errors
+
 from ...models.http_validation_error import HTTPValidationError
 from ...models.webhook_endpoint_base import WebhookEndpointBase
-from ...types import Response
+from ...models.webhook_endpoint_created import WebhookEndpointCreated
+from typing import cast
 
 
 def _get_kwargs(
@@ -31,9 +35,10 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Any | HTTPValidationError | None:
+) -> HTTPValidationError | WebhookEndpointCreated | None:
     if response.status_code == 200:
-        response_200 = response.json()
+        response_200 = WebhookEndpointCreated.from_dict(response.json())
+
         return response_200
 
     if response.status_code == 422:
@@ -49,7 +54,7 @@ def _parse_response(
 
 def _build_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Response[Any | HTTPValidationError]:
+) -> Response[HTTPValidationError | WebhookEndpointCreated]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -62,7 +67,7 @@ def sync_detailed(
     *,
     client: AuthenticatedClient,
     body: WebhookEndpointBase,
-) -> Response[Any | HTTPValidationError]:
+) -> Response[HTTPValidationError | WebhookEndpointCreated]:
     """Create Webhook
 
      Create a new webhook endpoint.
@@ -75,7 +80,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Any | HTTPValidationError]
+        Response[HTTPValidationError | WebhookEndpointCreated]
     """
 
     kwargs = _get_kwargs(
@@ -93,7 +98,7 @@ def sync(
     *,
     client: AuthenticatedClient,
     body: WebhookEndpointBase,
-) -> Any | HTTPValidationError | None:
+) -> HTTPValidationError | WebhookEndpointCreated | None:
     """Create Webhook
 
      Create a new webhook endpoint.
@@ -106,7 +111,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Any | HTTPValidationError
+        HTTPValidationError | WebhookEndpointCreated
     """
 
     return sync_detailed(
@@ -119,7 +124,7 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
     body: WebhookEndpointBase,
-) -> Response[Any | HTTPValidationError]:
+) -> Response[HTTPValidationError | WebhookEndpointCreated]:
     """Create Webhook
 
      Create a new webhook endpoint.
@@ -132,7 +137,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Any | HTTPValidationError]
+        Response[HTTPValidationError | WebhookEndpointCreated]
     """
 
     kwargs = _get_kwargs(
@@ -148,7 +153,7 @@ async def asyncio(
     *,
     client: AuthenticatedClient,
     body: WebhookEndpointBase,
-) -> Any | HTTPValidationError | None:
+) -> HTTPValidationError | WebhookEndpointCreated | None:
     """Create Webhook
 
      Create a new webhook endpoint.
@@ -161,7 +166,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Any | HTTPValidationError
+        HTTPValidationError | WebhookEndpointCreated
     """
 
     return (

@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, TypeVar, cast
+from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
+
+from ..types import UNSET, Unset
+from typing import cast
 
 if TYPE_CHECKING:
     from ..models.i_message_profile_payload import IMessageProfilePayload
@@ -32,6 +35,11 @@ class IMessageSyncRequest:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        from ..models.i_message_profile_payload import IMessageProfilePayload
+        from ..models.i_message_sync_request_co_mentions_type_0_item import (
+            IMessageSyncRequestCoMentionsType0Item,
+        )
+
         profiles = []
         for profiles_item_data in self.profiles:
             profiles_item = profiles_item_data.to_dict()

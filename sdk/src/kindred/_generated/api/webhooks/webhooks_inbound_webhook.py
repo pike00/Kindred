@@ -1,14 +1,17 @@
 from http import HTTPStatus
-from typing import Any
+from typing import Any, cast
 from urllib.parse import quote
 
 import httpx
 
-from ... import errors
 from ...client import AuthenticatedClient, Client
+from ...types import Response, UNSET
+from ... import errors
+
 from ...models.http_validation_error import HTTPValidationError
+from ...models.webhook_event_response import WebhookEventResponse
 from ...models.webhooks_inbound_webhook_payload import WebhooksInboundWebhookPayload
-from ...types import Response
+from typing import cast
 
 
 def _get_kwargs(
@@ -35,9 +38,10 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Any | HTTPValidationError | None:
+) -> HTTPValidationError | WebhookEventResponse | None:
     if response.status_code == 200:
-        response_200 = response.json()
+        response_200 = WebhookEventResponse.from_dict(response.json())
+
         return response_200
 
     if response.status_code == 422:
@@ -53,7 +57,7 @@ def _parse_response(
 
 def _build_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Response[Any | HTTPValidationError]:
+) -> Response[HTTPValidationError | WebhookEventResponse]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -67,7 +71,7 @@ def sync_detailed(
     *,
     client: AuthenticatedClient | Client,
     body: WebhooksInboundWebhookPayload,
-) -> Response[Any | HTTPValidationError]:
+) -> Response[HTTPValidationError | WebhookEventResponse]:
     r"""Inbound Webhook
 
      Inbound webhook receiver for external integrations (n8n, Aqara, etc.).
@@ -90,7 +94,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Any | HTTPValidationError]
+        Response[HTTPValidationError | WebhookEventResponse]
     """
 
     kwargs = _get_kwargs(
@@ -110,7 +114,7 @@ def sync(
     *,
     client: AuthenticatedClient | Client,
     body: WebhooksInboundWebhookPayload,
-) -> Any | HTTPValidationError | None:
+) -> HTTPValidationError | WebhookEventResponse | None:
     r"""Inbound Webhook
 
      Inbound webhook receiver for external integrations (n8n, Aqara, etc.).
@@ -133,7 +137,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Any | HTTPValidationError
+        HTTPValidationError | WebhookEventResponse
     """
 
     return sync_detailed(
@@ -148,7 +152,7 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient | Client,
     body: WebhooksInboundWebhookPayload,
-) -> Response[Any | HTTPValidationError]:
+) -> Response[HTTPValidationError | WebhookEventResponse]:
     r"""Inbound Webhook
 
      Inbound webhook receiver for external integrations (n8n, Aqara, etc.).
@@ -171,7 +175,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Any | HTTPValidationError]
+        Response[HTTPValidationError | WebhookEventResponse]
     """
 
     kwargs = _get_kwargs(
@@ -189,7 +193,7 @@ async def asyncio(
     *,
     client: AuthenticatedClient | Client,
     body: WebhooksInboundWebhookPayload,
-) -> Any | HTTPValidationError | None:
+) -> HTTPValidationError | WebhookEventResponse | None:
     r"""Inbound Webhook
 
      Inbound webhook receiver for external integrations (n8n, Aqara, etc.).
@@ -212,7 +216,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Any | HTTPValidationError
+        HTTPValidationError | WebhookEventResponse
     """
 
     return (

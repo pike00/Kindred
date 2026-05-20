@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, TypeVar, cast
-from uuid import UUID
+from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
+
+from ..types import UNSET, Unset
+from typing import cast
+from uuid import UUID
 
 if TYPE_CHECKING:
     from ..models.bulk_contact_filter import BulkContactFilter
@@ -37,6 +40,7 @@ class BulkContactRequest:
 
     def to_dict(self) -> dict[str, Any]:
         from ..models.bulk_contact_filter import BulkContactFilter
+        from ..models.bulk_contact_operation import BulkContactOperation
 
         operations = self.operations.to_dict()
 
