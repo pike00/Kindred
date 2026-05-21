@@ -3,8 +3,8 @@ title: Feature Backlog Merge Train
 status: active
 repos: [personal-crm]
 started: 2026-05-15
-last_updated: 2026-05-15
-next_step: Resolve printable-contact-one-pager pyproject.toml conflict (weasyprint + phonenumbers union), continue Wave 2 (6 branches remaining)
+last_updated: 2026-05-21
+next_step: Merge dirac/journal-contact-join (Wave 2), then interaction-heatmap, ics-calendar-export, relationship-graph, feature/birthday-anniversary-calendar
 ---
 
 # Feature Backlog Merge Train
@@ -29,8 +29,8 @@ Land 46 unmerged feature branches into main, sequentially, with one squash commi
 - [x] `dirac/reminders-bell-badge` → v0.1.6
 - [x] `dirac/automated-release-notes` → v0.1.7
 - [x] `dirac/household-aggregate-view` → v0.1.8
-- [ ] `dirac/printable-contact-one-pager` (in-progress, conflict on pyproject.toml)
-- [ ] `dirac/journal-contact-join`
+- [x] `dirac/printable-contact-one-pager` — already on main, no merge (see 2026-05-21 log)
+- [x] `dirac/journal-contact-join` — commit `3985e65` (release pending)
 - [ ] `dirac/interaction-heatmap`
 - [ ] `dirac/ics-calendar-export`
 - [ ] `dirac/relationship-graph`
@@ -86,6 +86,15 @@ Land 46 unmerged feature branches into main, sequentially, with one squash commi
 - [ ] Smoke test UI (login, create contact, search, log interaction)
 
 ## Session Log
+
+### 2026-05-21
+- **`dirac/journal-contact-join` merged.** Squash merge: 4 conflicts (3 generated `client/*.gen.ts` → took HEAD + `just regen-client`; `contacts.py` add/add → kept all HEAD endpoints, grafted the branch's `/contacts/{id}/reflections` endpoint on top, retyped its return from `Any` to `list[JournalEntryPublic]`). Garbage files `git rm`'d: `NOTES.md`, `fix-alembic-heads.py` (the latter was orphaned from an earlier session, removed separately, not in this commit).
+- **Alembic fixes (branch was 128 commits stale):** the branch's migration `f6a7b8c9d0e1_add_journal_entry_contact_junction.py` had a filename-prefix collision with main's `f6a7b8c9d0e1_add_reminder_snooze.py`, and `down_revision = add_do_not_contact_fields` (a stale midpoint). Renamed file + `revision` to a unique `0971ddcc7160`, repointed `down_revision` to the true current head `3b51c1216e45`. Note: main's migration chain is **single-head and healthy** — an earlier scare about "3 heads" was a parser artifact (merge migrations carry tuple `down_revision`s; the AST-based check confirmed one head).
+- **Real bug fixed in the branch's code:** `journal.py` and the `/reflections` endpoint assigned `entry.contact_ids = [...]` onto a `JournalEntry` *table* instance, but the branch only added `contact_ids` to `JournalEntryCreate/Update/Public` — not the table model. SQLModel rejects unknown attrs on `table=True` models (`ValueError: "JournalEntry" object has no field "contact_ids"`). Fixed with a `_to_public(session, entry)` helper that supplies `contact_ids` via `model_validate(entry, update={...})` at all 4 call sites; also popped `contact_ids` out of `update_data` before `sqlmodel_update` in the PATCH route (same latent bug there) and changed an associations `session.flush()` to `session.commit()` for durability. `crud.create_journal_entry` was already correct.
+- Backend suite: **262 passed** (was 261 + the 1 journal failure now fixed), confirmed on two clean runs. One intervening run reported 256 `ProgrammingError`s — a DB-thrash flake under host load (177s vs 46-54s clean), not reproducible; every error-ing file passes in isolation.
+- Resumed the train. `dirac/printable-contact-one-pager` turned out to be a **no-op against current main** — the contact-PDF feature (`contact_pdf.py` 575 LOC, the `/{contact_id}.pdf` route, `phonenumbers`+`weasyprint` deps, the Download PDF button in `$contactId.tsx`) is all already on main. The squash-merge produced an empty diff except a regression: it flipped `get_contact_pdf`'s return annotation from `Response` back to `Any`, undoing the v0.1.9 typed-response-models work. Aborted the merge, no commit, no tag. Marked the task done.
+- **Why printable looked unmerged but wasn't:** `git cherry` and `git diff --stat main...branch` both show content because patch-ids differ (the branch carried 5 main-merge commits and a WIP-error commit). The reliable test is the squash-merge diff itself: if `git diff --cached --stat` after `git merge --squash` is empty/trivial, the feature is already in. The branch's real work likely landed informally or was re-derived by later main commits.
+- **Process note for the rest of the train:** before doing conflict resolution on any remaining branch, run `git merge --squash origin/<branch>` and check `git diff --cached --stat`. Several stale dirac branches may already be content-merged. Verified the other Wave 2 branches (`journal-contact-join` 3 commits, `interaction-heatmap` 2, `ics-calendar-export` 1, `relationship-graph` 1, `feature/birthday-anniversary-calendar` 5) do have genuine unmerged content.
 
 ### 2026-05-15
 - Landed 4 features in this session: reminder-snooze-history (v0.1.5), reminders-bell-badge (v0.1.6), automated-release-notes (v0.1.7), household-aggregate-view (v0.1.8). Each is a squash commit + tag + GH release.
