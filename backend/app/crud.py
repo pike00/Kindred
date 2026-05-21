@@ -31,6 +31,7 @@ from app.models import (
     InteractionAttendee,
     InteractionCreate,
     JournalEntry,
+    JournalEntryContact,
     JournalEntryCreate,
     LifeEvent,
     LifeEventCreate,
@@ -393,6 +394,11 @@ def create_journal_entry(
 ) -> JournalEntry:
     db_obj = JournalEntry.model_validate(journal_in, update={"owner_id": owner_id})
     session.add(db_obj)
+    session.flush()
+    # Sync contact associations
+    if journal_in.contact_ids:
+        for cid in set(journal_in.contact_ids):
+            session.add(JournalEntryContact(journal_entry_id=db_obj.id, contact_id=cid))
     session.commit()
     session.refresh(db_obj)
     return db_obj

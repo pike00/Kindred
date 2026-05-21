@@ -3838,6 +3838,21 @@ export const JournalEntryCreateSchema = {
             format: 'date',
             title: 'Entry Date',
             description: 'Date the entry is about (may differ from created_at).'
+        },
+        contact_ids: {
+            anyOf: [
+                {
+                    items: {
+                        type: 'string',
+                        format: 'uuid'
+                    },
+                    type: 'array'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Contact Ids'
         }
     },
     type: 'object',
@@ -3887,6 +3902,15 @@ export const JournalEntryPublicSchema = {
             type: 'string',
             format: 'date-time',
             title: 'Updated At'
+        },
+        contact_ids: {
+            items: {
+                type: 'string',
+                format: 'uuid'
+            },
+            type: 'array',
+            title: 'Contact Ids',
+            default: []
         }
     },
     type: 'object',
@@ -3929,6 +3953,21 @@ export const JournalEntryUpdateSchema = {
                 }
             ],
             title: 'Entry Date'
+        },
+        contact_ids: {
+            anyOf: [
+                {
+                    items: {
+                        type: 'string',
+                        format: 'uuid'
+                    },
+                    type: 'array'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Contact Ids'
         }
     },
     type: 'object',

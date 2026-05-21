@@ -1025,6 +1025,7 @@ export type JournalEntryCreate = {
      * Date the entry is about (may differ from created_at).
      */
     entry_date: string;
+    contact_ids?: (Array<(string)> | null);
 };
 
 export type JournalEntryPublic = {
@@ -1043,12 +1044,14 @@ export type JournalEntryPublic = {
     id: string;
     created_at: string;
     updated_at: string;
+    contact_ids?: Array<(string)>;
 };
 
 export type JournalEntryUpdate = {
     body?: (string | null);
     mood?: (string | null);
     entry_date?: (string | null);
+    contact_ids?: (Array<(string)> | null);
 };
 
 /**
@@ -1994,6 +1997,12 @@ export type ContactsGetContactHouseholdData = {
 };
 
 export type ContactsGetContactHouseholdResponse = (HouseholdResponse);
+
+export type ContactsListContactReflectionsData = {
+    contactId: string;
+};
+
+export type ContactsListContactReflectionsResponse = (Array<JournalEntryPublic>);
 
 export type ContactsGetContactPdfData = {
     contactId: string;

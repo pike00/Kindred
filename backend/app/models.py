@@ -1877,13 +1877,14 @@ class JournalEntryBase(SQLModel):
 
 
 class JournalEntryCreate(JournalEntryBase):
-    pass
+    contact_ids: list[uuid.UUID] | None = None
 
 
 class JournalEntryUpdate(SQLModel):
     body: str | None = None
     mood: str | None = None
     entry_date: date | None = None
+    contact_ids: list[uuid.UUID] | None = None
 
 
 class JournalEntry(JournalEntryBase, table=True):
@@ -1914,10 +1915,29 @@ class JournalEntry(JournalEntryBase, table=True):
     )
 
 
+class JournalEntryContact(SQLModel, table=True):
+    """Many-to-many link between journal entries and contacts."""
+
+    __tablename__ = "journal_entry_contact"
+    journal_entry_id: uuid.UUID = Field(
+        foreign_key="journal_entry.id",
+        primary_key=True,
+        ondelete="CASCADE",
+        description="Journal entry side of the link; cascades on delete.",
+    )
+    contact_id: uuid.UUID = Field(
+        foreign_key="contact.id",
+        primary_key=True,
+        ondelete="CASCADE",
+        description="Contact side of the link; cascades on delete.",
+    )
+
+
 class JournalEntryPublic(JournalEntryBase):
     id: uuid.UUID
     created_at: datetime
     updated_at: datetime
+    contact_ids: list[uuid.UUID] = []
 
 
 class JournalEntriesPublic(SQLModel):

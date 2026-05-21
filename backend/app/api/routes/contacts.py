@@ -24,6 +24,9 @@ from app.models import (
     ContactUpdate,
     HouseholdMember,
     HouseholdResponse,
+    JournalEntry,
+    JournalEntryContact,
+    JournalEntryPublic,
     Note,
     NoteMention,
     Ok,
@@ -1028,3 +1031,48 @@ def get_contact_household(
     return HouseholdResponse(
         data=[HouseholdMember(**m) for m in members],
     )
+
+
+@router.get("/{contact_id}/reflections", response_model=list[JournalEntryPublic])
+def list_contact_reflections(
+    session: SessionDep,
+    current_user: CurrentUser,
+    contact_id: uuid.UUID,
+) -> list[JournalEntryPublic]:
+    """List journal entries that reference this contact."""
+    contact = session.exec(
+        select(Contact).where(
+            Contact.id == contact_id,
+            Contact.id.in_(visible_contact_ids(current_user)),
+        )
+    ).first()
+    if not contact:
+        raise HTTPException(status_code=404, detail="Contact not found")
+
+    # Get journal entry IDs that reference this contact
+    journal_ids_stmt = select(JournalEntryContact.journal_entry_id).where(
+        JournalEntryContact.contact_id == contact_id
+    )
+    journal_ids = list(session.exec(journal_ids_stmt).all())
+
+    if not journal_ids:
+        return []
+
+    # Get journal entries owned by the current user
+    entries = session.exec(
+        select(JournalEntry)
+        .where(
+            JournalEntry.id.in_(journal_ids),
+            JournalEntry.owner_id == current_user.id,
+        )
+        .order_by(JournalEntry.entry_date.desc())
+    ).all()
+
+    # Load contact IDs for each entry
+    for entry in entries:
+        contact_ids_stmt = select(JournalEntryContact.contact_id).where(
+            JournalEntryContact.journal_entry_id == entry.id
+        )
+        entry.contact_ids = list(session.exec(contact_ids_stmt).all())
+
+    return [JournalEntryPublic.model_validate(e) for e in entries]
