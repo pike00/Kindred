@@ -3,8 +3,9 @@ title: Feature Backlog Merge Train
 status: active
 repos: [personal-crm]
 started: 2026-05-15
-last_updated: 2026-05-21
-next_step: Merge dirac/journal-contact-join (Wave 2), then interaction-heatmap, ics-calendar-export, relationship-graph, feature/birthday-anniversary-calendar
+last_updated: 2026-05-22
+next_step: Finish the in-progress ics-calendar-export squash merge (resolved + staged in the working tree, migration fixed, NOT tested/committed -- see docs/updates/2026-05-22/), then relationship-graph and feature/birthday-anniversary-calendar
+handoff: 2026-05-22 | partial: interaction-heatmap + /reflections fix committed (2 commits, 267 tests pass); ics-calendar-export merge staged-uncommitted, budget-capped
 ---
 
 # Feature Backlog Merge Train
