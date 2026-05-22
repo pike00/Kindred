@@ -1567,6 +1567,22 @@ export const ContactFieldsPublicSchema = {
     title: 'ContactFieldsPublic'
 } as const;
 
+export const ContactHeatmapSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/WeekBucket'
+            },
+            type: 'array',
+            title: 'Data'
+        }
+    },
+    type: 'object',
+    required: ['data'],
+    title: 'ContactHeatmap',
+    description: '52-week interaction heatmap for a contact.'
+} as const;
+
 export const ContactPublicSchema = {
     properties: {
         first_name: {
@@ -6627,6 +6643,24 @@ export const WebhookEventResponseSchema = {
 
 Fields are optional because different code paths return different subsets
 (e.g. unmatched contact vs successful interaction).`
+} as const;
+
+export const WeekBucketSchema = {
+    properties: {
+        week_start: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Week Start'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['week_start', 'count'],
+    title: 'WeekBucket',
+    description: 'A single week bucket for the interaction heatmap.'
 } as const;
 
 export const _MentionPublicSchema = {

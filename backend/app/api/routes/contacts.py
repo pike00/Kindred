@@ -24,6 +24,8 @@ from app.models import (
     ContactUpdate,
     HouseholdMember,
     HouseholdResponse,
+    Interaction,
+    InteractionAttendee,
     JournalEntry,
     JournalEntryContact,
     JournalEntryPublic,
@@ -1076,3 +1078,90 @@ def list_contact_reflections(
         entry.contact_ids = list(session.exec(contact_ids_stmt).all())
 
     return [JournalEntryPublic.model_validate(e) for e in entries]
+
+
+class WeekBucket(BaseModel):
+    """A single week bucket for the interaction heatmap."""
+
+    week_start: datetime  # Monday 00:00 UTC
+    count: int
+
+
+class ContactHeatmap(BaseModel):
+    """52-week interaction heatmap for a contact."""
+
+    data: list[WeekBucket]
+
+
+@router.get("/{contact_id}/heatmap", response_model=ContactHeatmap)
+def get_contact_heatmap(
+    session: SessionDep,
+    current_user: CurrentUser,
+    contact_id: uuid.UUID,
+) -> Any:
+    """Return 52 weekly interaction counts for the GitHub-style heatmap.
+
+    Uses ISO weeks (Monday-Sunday). Each bucket contains the week start date
+    (Monday) and the number of interactions that week.
+    """
+    # Verify contact exists and is visible to the user
+    contact = session.exec(
+        select(Contact).where(
+            Contact.id == contact_id,
+            Contact.id.in_(visible_contact_ids(current_user)),
+            Contact.deleted_at.is_(None),
+        )
+    ).first()
+    if not contact:
+        raise HTTPException(status_code=404, detail="Contact not found")
+
+    # Calculate the 52-week window (ending today)
+    today = datetime.now(timezone.utc).date()
+    # ISO week starts on Monday; find the Monday of the current week
+    days_since_monday = today.isoweekday() - 1  # Monday=0
+    week_end = (
+        today - timedelta(days=days_since_monday) + timedelta(days=7)
+    )  # Next Monday
+    week_start = week_end - timedelta(weeks=52)
+
+    # Query: count interactions per ISO week for this contact
+    # date_trunc('week', ...) in Postgres truncates to Monday (ISO week)
+    week_start_dt = datetime.combine(week_start, datetime.min.time()).replace(
+        tzinfo=timezone.utc
+    )
+    week_end_dt = datetime.combine(week_end, datetime.min.time()).replace(
+        tzinfo=timezone.utc
+    )
+
+    rows = session.exec(
+        select(
+            func.date_trunc("week", Interaction.occurred_at).label("week"),
+            func.count(Interaction.id).label("cnt"),
+        )
+        .join(
+            InteractionAttendee,
+            InteractionAttendee.interaction_id == Interaction.id,  # type: ignore[arg-type]
+        )
+        .where(
+            InteractionAttendee.contact_id == contact_id,
+            Interaction.occurred_at >= week_start_dt,
+            Interaction.occurred_at < week_end_dt,
+        )
+        .group_by("week")
+        .order_by("week")
+    ).all()
+
+    # Build a dict of week_start -> count
+    week_counts: dict[datetime, int] = {}
+    for row in rows:
+        week_counts[row.week] = row.cnt
+
+    # Generate all 52 weeks, filling in zeros
+    buckets = []
+    current = week_start_dt
+    for _ in range(52):
+        count = week_counts.get(current, 0)
+        buckets.append(WeekBucket(week_start=current, count=count))
+        current = current + timedelta(weeks=1)
+
+    return ContactHeatmap(data=buckets)

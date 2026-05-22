@@ -395,6 +395,13 @@ export type ContactFieldUpdate = {
     sort_order?: (number | null);
 };
 
+/**
+ * 52-week interaction heatmap for a contact.
+ */
+export type ContactHeatmap = {
+    data: Array<WeekBucket>;
+};
+
 export type ContactPublic = {
     /**
      * Given name; required.
@@ -1807,6 +1814,14 @@ export type WebhookEventResponse = {
     error?: (string | null);
 };
 
+/**
+ * A single week bucket for the interaction heatmap.
+ */
+export type WeekBucket = {
+    week_start: string;
+    count: number;
+};
+
 export type ActivityLogsListActivityLogsData = {
     entityId?: (string | null);
     entityType?: (string | null);
@@ -2003,6 +2018,12 @@ export type ContactsListContactReflectionsData = {
 };
 
 export type ContactsListContactReflectionsResponse = (Array<JournalEntryPublic>);
+
+export type ContactsGetContactHeatmapData = {
+    contactId: string;
+};
+
+export type ContactsGetContactHeatmapResponse = (ContactHeatmap);
 
 export type ContactsGetContactPdfData = {
     contactId: string;
