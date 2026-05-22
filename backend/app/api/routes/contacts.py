@@ -1070,14 +1070,21 @@ def list_contact_reflections(
         .order_by(JournalEntry.entry_date.desc())
     ).all()
 
-    # Load contact IDs for each entry
+    # Serialize each entry with its linked contact IDs. contact_ids lives only
+    # on JournalEntryPublic (the table model has no such column), so it is
+    # supplied at validation time rather than assigned onto the ORM object.
+    result: list[JournalEntryPublic] = []
     for entry in entries:
         contact_ids_stmt = select(JournalEntryContact.contact_id).where(
             JournalEntryContact.journal_entry_id == entry.id
         )
-        entry.contact_ids = list(session.exec(contact_ids_stmt).all())
-
-    return [JournalEntryPublic.model_validate(e) for e in entries]
+        contact_ids = list(session.exec(contact_ids_stmt).all())
+        result.append(
+            JournalEntryPublic.model_validate(
+                entry, update={"contact_ids": contact_ids}
+            )
+        )
+    return result
 
 
 class WeekBucket(BaseModel):
