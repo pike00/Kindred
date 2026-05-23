@@ -41,3 +41,4 @@ sdk/__pycache__/
 sdk/**/__pycache__/
 sdk/**/*.pyc
 sdk/**/*.pyo
+.codegraph/
