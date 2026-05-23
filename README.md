@@ -177,3 +177,13 @@ Three isolated environments. Each has its own credentials, database, and Docker 
 ## Origin
 
 This project was scaffolded from the [FastAPI full-stack template](https://github.com/fastapi/full-stack-fastapi-template) via Copier. The `backend/README.md` and `frontend/README.md` files are still mostly upstream template content — treat them as reference, not project-specific docs.
+
+## License
+
+Kindred is source-available under the [Elastic License 2.0](LICENSE) (ELv2).
+
+**You can:** self-host for personal use, fork, modify, contribute, and run it for your own contacts.
+
+**You cannot:** offer Kindred as a hosted or managed service to third parties without a commercial license. If you want to build a hosted personal CRM product on top of Kindred, [get in touch](https://github.com/pike00/Kindred/issues).
+
+The FastAPI full-stack template scaffold is MIT-licensed (Sebastián Ramírez); attribution is preserved in the LICENSE file.
