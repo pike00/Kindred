@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query"
 import { useParams } from "@tanstack/react-router"
 import { ContactsService } from "@/client"
+import { useTheme } from "@/components/theme-provider"
 import {
   Tooltip,
   TooltipContent,
@@ -54,6 +55,8 @@ interface HeatmapCellProps {
 function HeatmapCell({ weekStart, count, onClick }: HeatmapCellProps) {
   const step = getIntensityStep(count)
   const [lightColor, darkColor] = INTENSITY_COLORS[step]
+  const { resolvedTheme } = useTheme()
+  const color = resolvedTheme === "dark" ? darkColor : lightColor
 
   return (
     <Tooltip>
@@ -61,21 +64,8 @@ function HeatmapCell({ weekStart, count, onClick }: HeatmapCellProps) {
         <button
           type="button"
           onClick={() => onClick?.(weekStart, count)}
-          className={cn(
-            "w-3.5 h-3.5 rounded-sm transition-colors hover:ring-1 hover:ring-ring",
-            "dark:hidden",
-          )}
-          style={{ backgroundColor: lightColor }}
-          aria-label={`Week of ${formatWeekRange(weekStart)}: ${count} interaction${count !== 1 ? "s" : ""}`}
-        />
-        <button
-          type="button"
-          onClick={() => onClick?.(weekStart, count)}
-          className={cn(
-            "w-3.5 h-3.5 rounded-sm transition-colors hover:ring-1 hover:ring-ring hidden",
-            "dark:block",
-          )}
-          style={{ backgroundColor: darkColor }}
+          className="w-3.5 h-3.5 rounded-sm transition-colors hover:ring-1 hover:ring-ring"
+          style={{ backgroundColor: color }}
           aria-label={`Week of ${formatWeekRange(weekStart)}: ${count} interaction${count !== 1 ? "s" : ""}`}
         />
       </TooltipTrigger>

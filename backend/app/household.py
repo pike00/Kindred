@@ -114,7 +114,7 @@ def get_household_members(
         raise HTTPException(status_code=404, detail="Contact not found")
 
     visible_ids = {
-        str(uid) for uid in session.exec(visible_contact_ids(current_user)).all()
+        str(row[0]) for row in session.exec(visible_contact_ids(current_user)).all()
     }
     if str(contact.id) not in visible_ids:
         raise HTTPException(status_code=403, detail="Not enough permissions")
