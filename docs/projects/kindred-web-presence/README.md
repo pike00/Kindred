@@ -3,8 +3,8 @@ title: Kindred Web Presence
 status: active
 repos: [kindred]
 started: 2026-05-22
-last_updated: 2026-05-22
-next_step: Decide tech stack for the marketing site and pick a hosting target
+last_updated: 2026-05-23
+next_step: Choose hosting target (Cloudflare Pages or GitHub Pages) and deploy
 ---
 
 # Kindred Web Presence
@@ -15,9 +15,9 @@ Build two public-facing sites for Kindred: (1) a marketing/info landing page tha
 
 ## Tasks
 
-- [ ] Decide marketing site tech stack (Astro, plain HTML, or other SSG)
-- [ ] Design landing page structure: hero, feature highlights, screenshots, call-to-action
-- [ ] Build marketing/info site content and layout
+- [x] Decide marketing site tech stack (plain HTML + Tailwind CDN — no build step)
+- [x] Design landing page structure: hero, feature highlights, screenshots, call-to-action
+- [x] Build marketing/info site content and layout
 - [ ] Choose hosting for marketing site (Cloudflare Pages, GitHub Pages, etc.)
 - [ ] Deploy marketing site and wire DNS
 - [ ] Configure demo Kindred instance with seeded sample contacts/interactions
@@ -26,6 +26,12 @@ Build two public-facing sites for Kindred: (1) a marketing/info landing page tha
 - [ ] Verify version + git hash visible in demo UI footer
 
 ## Session Log
+
+### 2026-05-23
+- Built `website/index.html` — full marketing landing page with Tailwind CDN (no build step)
+- Sections: sticky nav, hero + CTA, dashboard screenshot, 9-feature grid, 6-screenshot gallery, self-host + code snippet, dark CTA banner, footer
+- Screenshots served from GitHub raw URLs; all 8 app screenshots referenced
+- Committed and pushed as `feat: kindred-web-presence marketing landing page`
 
 ### 2026-05-22
 - Project scaffolded — goal: marketing landing page (explain + feature showcase) + live seeded demo deployment
@@ -38,3 +44,9 @@ Build two public-facing sites for Kindred: (1) a marketing/info landing page tha
 - **Gotchas:** Demo seeding should be deterministic (`just seed-fixed`) so the instance looks polished; randomized seed data may surface awkward generated names
 - **Issues:** Tech stack for marketing site not yet chosen; hosting target not decided
 - **Accomplished:** Project created; scope defined (info site + demo deployment)
+
+### 2026-05-23
+- **Decisions:** Plain HTML + Tailwind Play CDN (no build step, deploys to any static host as-is); screenshots via GitHub raw URLs so they stay in sync with the repo
+- **Gotchas:** Tailwind Play CDN is fine for a low-traffic marketing page but should be swapped for a proper Tailwind build if the site grows; `cdn.tailwindcss.com` generates CSS at runtime in the browser
+- **Issues:** Hosting target not yet chosen; DNS not wired; demo site still pending
+- **Accomplished:** `website/index.html` — full landing page shipped (nav, hero, 9-feature grid, 6 screenshots, self-host section with code block, CTA banner, footer)
