@@ -1260,6 +1260,19 @@ class InteractionBase(SQLModel):
         ge=0,
         description="Length of the interaction in minutes.",
     )
+    location_label: str | None = Field(
+        default=None,
+        max_length=500,
+        description="Freeform location text like 'Starbucks on 5th', 'their home', 'the park'.",
+    )
+    latitude: float | None = Field(
+        default=None,
+        description="Geocoded latitude; used for map visualization.",
+    )
+    longitude: float | None = Field(
+        default=None,
+        description="Geocoded longitude; used for map visualization.",
+    )
 
     is_draft: bool = Field(
         default=False,
@@ -1272,6 +1285,9 @@ class InteractionBase(SQLModel):
 
 
 class InteractionCreate(InteractionBase):
+    location_label: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
     attendee_ids: list[uuid.UUID] = Field(
         min_length=1,
         description="Contacts that attended; must have at least one.",
@@ -1284,6 +1300,9 @@ class InteractionUpdate(SQLModel):
     notes: str | None = None
     mood: str | None = None
     duration_minutes: int | None = None
+    location_label: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
     attendee_ids: list[uuid.UUID] | None = Field(
         default=None,
         min_length=1,

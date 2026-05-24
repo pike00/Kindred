@@ -1039,6 +1039,9 @@ export type InteractionCreate = {
      * Length of the interaction in minutes.
      */
     duration_minutes?: (number | null);
+    location_label?: (string | null);
+    latitude?: (number | null);
+    longitude?: (number | null);
     /**
      * If True, this interaction is a draft and excluded from engagement metrics.
      */
@@ -1079,6 +1082,18 @@ export type InteractionPublic = {
      * Length of the interaction in minutes.
      */
     duration_minutes?: (number | null);
+    /**
+     * Freeform location text like 'Starbucks on 5th', 'their home', 'the park'.
+     */
+    location_label?: (string | null);
+    /**
+     * Geocoded latitude; used for map visualization.
+     */
+    latitude?: (number | null);
+    /**
+     * Geocoded longitude; used for map visualization.
+     */
+    longitude?: (number | null);
     is_draft?: boolean;
     draft_source?: (InteractionDraftSource | null);
     id: string;
@@ -1098,6 +1113,9 @@ export type InteractionUpdate = {
     notes?: (string | null);
     mood?: (string | null);
     duration_minutes?: (number | null);
+    location_label?: (string | null);
+    latitude?: (number | null);
+    longitude?: (number | null);
     /**
      * Replace the attendee set; must have at least one if provided.
      */

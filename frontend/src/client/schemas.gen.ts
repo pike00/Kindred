@@ -3860,6 +3860,39 @@ export const InteractionCreateSchema = {
             title: 'Duration Minutes',
             description: 'Length of the interaction in minutes.'
         },
+        location_label: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Location Label'
+        },
+        latitude: {
+            anyOf: [
+                {
+                    type: 'number'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Latitude'
+        },
+        longitude: {
+            anyOf: [
+                {
+                    type: 'number'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Longitude'
+        },
         is_draft: {
             type: 'boolean',
             title: 'Is Draft',
@@ -3950,6 +3983,43 @@ export const InteractionPublicSchema = {
             ],
             title: 'Duration Minutes',
             description: 'Length of the interaction in minutes.'
+        },
+        location_label: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 500
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Location Label',
+            description: "Freeform location text like 'Starbucks on 5th', 'their home', 'the park'."
+        },
+        latitude: {
+            anyOf: [
+                {
+                    type: 'number'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Latitude',
+            description: 'Geocoded latitude; used for map visualization.'
+        },
+        longitude: {
+            anyOf: [
+                {
+                    type: 'number'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Longitude',
+            description: 'Geocoded longitude; used for map visualization.'
         },
         is_draft: {
             type: 'boolean',
@@ -4058,6 +4128,39 @@ export const InteractionUpdateSchema = {
                 }
             ],
             title: 'Duration Minutes'
+        },
+        location_label: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Location Label'
+        },
+        latitude: {
+            anyOf: [
+                {
+                    type: 'number'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Latitude'
+        },
+        longitude: {
+            anyOf: [
+                {
+                    type: 'number'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Longitude'
         },
         attendee_ids: {
             anyOf: [

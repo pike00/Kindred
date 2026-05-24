@@ -27,6 +27,7 @@ import { RelationshipsCard } from "@/components/Contacts/RelationshipsCard"
 import { AddDebt } from "@/components/Debts/AddDebt"
 import { AddGift } from "@/components/Gifts/AddGift"
 import { AddInteractionDialog } from "@/components/Interactions/AddInteractionDialog"
+import { InteractionMap } from "@/components/Interactions/InteractionMap"
 import { AddMediaRecommendation } from "@/components/MediaRecommendations/AddMediaRecommendation"
 import { NotesCard } from "@/components/Notes/NotesCard"
 import { UnifiedTimeline } from "@/components/Timeline/UnifiedTimeline"
@@ -310,6 +311,19 @@ function ContactDetailPage() {
               </CardContent>
             </Card>
           )}
+
+          {/* Interaction Map */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="size-4" />
+                Interaction Locations
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <InteractionMap interactions={interactions} />
+            </CardContent>
+          </Card>
 
           <RelationshipsCard
             contactId={contactId}

@@ -1621,6 +1621,9 @@ export class InteractionsService {
     /**
      * List Interactions
      * List interactions. Pass ``contact_id`` to filter by attendee.
+     *
+     * By default, drafts are excluded. Pass ``is_draft=true`` to list only
+     * drafts, or ``is_draft=false`` to explicitly exclude them.
      * @param data The data for the request.
      * @param data.contactId
      * @param data.skip
