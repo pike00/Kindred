@@ -2227,6 +2227,11 @@ class NoteBase(SQLModel):
 
 class NoteCreate(NoteBase):
     contact_id: uuid.UUID
+    client_id: str | None = Field(
+        default=None,
+        max_length=36,
+        description="Client-generated UUID for idempotent POSTs; optional.",
+    )
 
 
 class NoteUpdate(SQLModel):
@@ -2263,6 +2268,12 @@ class Note(SoftDeleteMixin, NoteBase, table=True):
         primary_key=True,
         description="Primary key.",
     )
+    client_id: str | None = Field(
+        default=None,
+        index=True,
+        unique=True,
+        description="Client-generated UUID for idempotent POSTs; unique if set.",
+    )
     contact_id: uuid.UUID = Field(
         foreign_key="contact.id",
         nullable=False,
@@ -2294,6 +2305,7 @@ class NotePublic(NoteBase):
     created_at: datetime
     updated_at: datetime
     deleted_at: datetime | None = None
+    client_id: str | None = None
 
 
 class NotesPublic(SQLModel):

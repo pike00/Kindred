@@ -381,6 +381,13 @@ def _sync_note_mentions(*, session: Session, note: Note) -> None:
 
 
 def create_note(*, session: Session, note_in: NoteCreate, owner_id: uuid.UUID) -> Note:
+    # Check for idempotent POST: if client_id is provided, check for existing note
+    if note_in.client_id:
+        existing = session.exec(
+            select(Note).where(Note.client_id == note_in.client_id)
+        ).first()
+        if existing:
+            return existing
     db_obj = Note.model_validate(note_in, update={"owner_id": owner_id})
     session.add(db_obj)
     session.flush()
