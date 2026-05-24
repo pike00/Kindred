@@ -234,6 +234,31 @@ export type CalendarMonthResponse = {
     };
 };
 
+export type CalendarTokenCreate = {
+    /**
+     * Optional expiration date; null means never expires.
+     */
+    expires_at?: (string | null);
+};
+
+export type CalendarTokenPublic = {
+    /**
+     * Optional expiration date; null means never expires.
+     */
+    expires_at?: (string | null);
+    id: string;
+    owner_id: string;
+    token: string;
+    status: string;
+    last_used_at: (string | null);
+    created_at: string;
+};
+
+export type CalendarTokensPublic = {
+    data: Array<CalendarTokenPublic>;
+    count: number;
+};
+
 /**
  * Aggregate snooze stats for a (contact, reminder) pair.
  */
@@ -1877,6 +1902,29 @@ export type CalendarGetCalendarMonthData = {
 
 export type CalendarGetCalendarMonthResponse = (CalendarMonthResponse);
 
+export type CalendarCreateCalendarTokenData = {
+    requestBody: CalendarTokenCreate;
+};
+
+export type CalendarCreateCalendarTokenResponse = (CalendarTokenPublic);
+
+export type CalendarListCalendarTokensResponse = (CalendarTokensPublic);
+
+export type CalendarRevokeCalendarTokenData = {
+    tokenId: string;
+};
+
+export type CalendarRevokeCalendarTokenResponse = (unknown);
+
+export type CalendarGetCalendarIcsData = {
+    /**
+     * Optional timezone for output (e.g., America/Chicago)
+     */
+    tz?: (string | null);
+};
+
+export type CalendarGetCalendarIcsResponse = (unknown);
+
 export type CarddavWellKnownCarddavResponse = (unknown);
 
 export type ContactFieldsListContactFieldsData = {
@@ -2137,6 +2185,29 @@ export type GiftsChangeGiftStatusData = {
 };
 
 export type GiftsChangeGiftStatusResponse = (GiftPublic);
+
+export type GraphGetContactsGraphData = {
+    /**
+     * Hops from seed contacts (1-3)
+     */
+    depth?: number;
+    /**
+     * Optional root contact to focus on
+     */
+    rootContactId?: (string | null);
+};
+
+export type GraphGetContactsGraphResponse = (unknown);
+
+export type GraphGetContactGraphData = {
+    contactId: string;
+    /**
+     * Hops from the contact (1-3)
+     */
+    depth?: number;
+};
+
+export type GraphGetContactGraphResponse = (unknown);
 
 export type HealthHealthResponse = ({
     [key: string]: (string);

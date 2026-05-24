@@ -1109,6 +1109,101 @@ export const CalendarMonthResponseSchema = {
     title: 'CalendarMonthResponse'
 } as const;
 
+export const CalendarTokenCreateSchema = {
+    properties: {
+        expires_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Expires At',
+            description: 'Optional expiration date; null means never expires.'
+        }
+    },
+    type: 'object',
+    title: 'CalendarTokenCreate'
+} as const;
+
+export const CalendarTokenPublicSchema = {
+    properties: {
+        expires_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Expires At',
+            description: 'Optional expiration date; null means never expires.'
+        },
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        owner_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Owner Id'
+        },
+        token: {
+            type: 'string',
+            title: 'Token'
+        },
+        status: {
+            type: 'string',
+            title: 'Status'
+        },
+        last_used_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Last Used At'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        }
+    },
+    type: 'object',
+    required: ['id', 'owner_id', 'token', 'status', 'last_used_at', 'created_at'],
+    title: 'CalendarTokenPublic'
+} as const;
+
+export const CalendarTokensPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/CalendarTokenPublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'CalendarTokensPublic'
+} as const;
+
 export const ChronicSnoozerSchema = {
     properties: {
         contact_id: {

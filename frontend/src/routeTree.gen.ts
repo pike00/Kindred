@@ -20,6 +20,7 @@ import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
 import { Route as LayoutRemindersRouteImport } from './routes/_layout/reminders'
 import { Route as LayoutJournalRouteImport } from './routes/_layout/journal'
 import { Route as LayoutInteractionsRouteImport } from './routes/_layout/interactions'
+import { Route as LayoutGraphRouteImport } from './routes/_layout/graph'
 import { Route as LayoutContactsRouteImport } from './routes/_layout/contacts'
 import { Route as LayoutCalendarRouteImport } from './routes/_layout/calendar'
 import { Route as LayoutAdminRouteImport } from './routes/_layout/admin'
@@ -83,6 +84,11 @@ const LayoutInteractionsRoute = LayoutInteractionsRouteImport.update({
   path: '/interactions',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutGraphRoute = LayoutGraphRouteImport.update({
+  id: '/graph',
+  path: '/graph',
+  getParentRoute: () => LayoutRoute,
+} as any)
 const LayoutContactsRoute = LayoutContactsRouteImport.update({
   id: '/contacts',
   path: '/contacts',
@@ -133,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof LayoutAdminRouteWithChildren
   '/calendar': typeof LayoutCalendarRoute
   '/contacts': typeof LayoutContactsRouteWithChildren
+  '/graph': typeof LayoutGraphRoute
   '/interactions': typeof LayoutInteractionsRoute
   '/journal': typeof LayoutJournalRoute
   '/reminders': typeof LayoutRemindersRoute
@@ -150,6 +157,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/calendar': typeof LayoutCalendarRoute
+  '/graph': typeof LayoutGraphRoute
   '/interactions': typeof LayoutInteractionsRoute
   '/journal': typeof LayoutJournalRoute
   '/reminders': typeof LayoutRemindersRoute
@@ -172,6 +180,7 @@ export interface FileRoutesById {
   '/_layout/admin': typeof LayoutAdminRouteWithChildren
   '/_layout/calendar': typeof LayoutCalendarRoute
   '/_layout/contacts': typeof LayoutContactsRouteWithChildren
+  '/_layout/graph': typeof LayoutGraphRoute
   '/_layout/interactions': typeof LayoutInteractionsRoute
   '/_layout/journal': typeof LayoutJournalRoute
   '/_layout/reminders': typeof LayoutRemindersRoute
@@ -195,6 +204,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/calendar'
     | '/contacts'
+    | '/graph'
     | '/interactions'
     | '/journal'
     | '/reminders'
@@ -212,6 +222,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/calendar'
+    | '/graph'
     | '/interactions'
     | '/journal'
     | '/reminders'
@@ -233,6 +244,7 @@ export interface FileRouteTypes {
     | '/_layout/admin'
     | '/_layout/calendar'
     | '/_layout/contacts'
+    | '/_layout/graph'
     | '/_layout/interactions'
     | '/_layout/journal'
     | '/_layout/reminders'
@@ -333,6 +345,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutInteractionsRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/graph': {
+      id: '/_layout/graph'
+      path: '/graph'
+      fullPath: '/graph'
+      preLoaderRoute: typeof LayoutGraphRouteImport
+      parentRoute: typeof LayoutRoute
+    }
     '/_layout/contacts': {
       id: '/_layout/contacts'
       path: '/contacts'
@@ -426,6 +445,7 @@ interface LayoutRouteChildren {
   LayoutAdminRoute: typeof LayoutAdminRouteWithChildren
   LayoutCalendarRoute: typeof LayoutCalendarRoute
   LayoutContactsRoute: typeof LayoutContactsRouteWithChildren
+  LayoutGraphRoute: typeof LayoutGraphRoute
   LayoutInteractionsRoute: typeof LayoutInteractionsRoute
   LayoutJournalRoute: typeof LayoutJournalRoute
   LayoutRemindersRoute: typeof LayoutRemindersRoute
@@ -438,6 +458,7 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutAdminRoute: LayoutAdminRouteWithChildren,
   LayoutCalendarRoute: LayoutCalendarRoute,
   LayoutContactsRoute: LayoutContactsRouteWithChildren,
+  LayoutGraphRoute: LayoutGraphRoute,
   LayoutInteractionsRoute: LayoutInteractionsRoute,
   LayoutJournalRoute: LayoutJournalRoute,
   LayoutRemindersRoute: LayoutRemindersRoute,
