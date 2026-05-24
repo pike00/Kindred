@@ -249,6 +249,7 @@ def recompute_last_contacted_at(*, session: Session, contact_id: uuid.UUID) -> N
         )
         .where(InteractionAttendee.contact_id == contact_id)
         .where(Interaction.is_draft == False)  # noqa: E712
+        .where(Interaction.deleted_at == None)  # noqa: E711
         .order_by(Interaction.occurred_at.desc())
         .limit(1)
     )

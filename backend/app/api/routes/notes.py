@@ -1,6 +1,8 @@
 """Note management routes."""
 
 import uuid
+from datetime import datetime, timezone
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from sqlmodel import func, or_, select
@@ -50,13 +52,18 @@ def list_notes(
     statement = (
         select(Note)
         .where(where_clause)
+        .where(Note.deleted_at == None)  # noqa: E711
         .order_by(Note.created_at.desc())
         .offset(skip)
         .limit(limit)
     )
     notes = session.exec(statement).all()
 
-    count_statement = select(func.count(Note.id.distinct())).where(where_clause)
+    count_statement = (
+        select(func.count(Note.id.distinct()))
+        .where(where_clause)
+        .where(Note.deleted_at == None)  # noqa: E711
+    )
     count = session.exec(count_statement).one()
 
     return NotesPublic(
@@ -108,13 +115,33 @@ def delete_note(
     current_user: CurrentUser,
     note_id: uuid.UUID,
 ) -> Ok:
-    """Delete a note."""
+    """Soft-delete a note by setting deleted_at."""
     note = session.get(Note, note_id)
     if not note:
         raise HTTPException(status_code=404, detail="Note not found")
     if note.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not enough permissions")
 
-    session.delete(note)
+    note.deleted_at = datetime.now(timezone.utc)
+    session.add(note)
+    session.commit()
+    return Ok()
+
+
+@router.post("/{note_id}/restore")
+def restore_note(
+    session: SessionDep,
+    note_id: uuid.UUID,
+) -> Any:
+    """Restore a soft-deleted note by clearing deleted_at."""
+    from sqlalchemy import text, update
+
+    result = session.exec(
+        text("SELECT id FROM note WHERE id = :id AND deleted_at IS NOT NULL"),
+        params={"id": str(note_id)},
+    ).first()
+    if result is None:
+        raise HTTPException(status_code=404, detail="Note not found or not deleted")
+    session.exec(update(Note).where(Note.id == note_id).values(deleted_at=None))
     session.commit()
     return Ok()

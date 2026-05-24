@@ -1,7 +1,7 @@
 """Gift management routes."""
 
 import uuid
-from datetime import date
+from datetime import date, datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
@@ -43,6 +43,7 @@ def list_gifts(
         select(Gift, Contact.birthday, Contact.first_name, Contact.last_name)
         .join(Contact, Gift.contact_id == Contact.id)
         .where(Gift.contact_id == contact_id)
+        .where(Gift.deleted_at == None)  # noqa: E711
     )
     results = session.exec(statement).all()
 
@@ -109,13 +110,37 @@ def delete_gift(
     current_user: CurrentUser,
     gift_id: uuid.UUID,
 ) -> Ok:
-    """Delete a gift."""
+    """Soft-delete a gift by setting deleted_at."""
     gift = session.get(Gift, gift_id)
     if gift is None:
         raise HTTPException(status_code=404, detail="Gift not found")
+
+    if gift.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
     _require_contact_visible(session, current_user, gift.contact_id)
 
-    session.delete(gift)
+    gift.deleted_at = datetime.now(timezone.utc)
+    session.add(gift)
+    session.commit()
+    return Ok()
+
+
+@router.post("/{gift_id}/restore")
+def restore_gift(
+    session: SessionDep,
+    gift_id: uuid.UUID,
+) -> Any:
+    """Restore a soft-deleted gift by clearing deleted_at."""
+    from sqlalchemy import text, update
+
+    result = session.exec(
+        text("SELECT id FROM gift WHERE id = :id AND deleted_at IS NOT NULL"),
+        params={"id": str(gift_id)},
+    ).first()
+    if result is None:
+        raise HTTPException(status_code=404, detail="Gift not found or not deleted")
+    session.exec(update(Gift).where(Gift.id == gift_id).values(deleted_at=None))
     session.commit()
     return Ok()
 
@@ -130,6 +155,7 @@ def get_kanban_board(
         select(Gift, Contact.birthday, Contact.first_name, Contact.last_name)
         .join(Contact, Gift.contact_id == Contact.id)
         .where(Gift.owner_id == current_user.id)
+        .where(Gift.deleted_at == None)  # noqa: E711
     )
     results = session.exec(statement).all()
 

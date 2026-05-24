@@ -46,11 +46,15 @@ def list_reminders(
     is_active: bool | None = None,
 ) -> RemindersPublic:
     """List reminders for the current user (owned + tied to visible contacts)."""
-    statement = select(Reminder).where(
-        or_(
-            Reminder.owner_id == current_user.id,
-            Reminder.contact_id.in_(visible_contact_ids(current_user)),
+    statement = (
+        select(Reminder)
+        .where(
+            or_(
+                Reminder.owner_id == current_user.id,
+                Reminder.contact_id.in_(visible_contact_ids(current_user)),
+            )
         )
+        .where(Reminder.deleted_at == None)  # noqa: E711
     )
 
     if is_active is not None:
@@ -328,11 +332,33 @@ def delete_reminder(
     current_user: CurrentUser,
     reminder_id: uuid.UUID,
 ) -> Ok:
-    """Delete a reminder."""
+    """Soft-delete a reminder by setting deleted_at."""
     reminder = session.get(Reminder, reminder_id)
     if reminder is None or not _reminder_accessible(current_user, reminder, session):
         raise HTTPException(status_code=404, detail="Reminder not found")
 
-    session.delete(reminder)
+    reminder.deleted_at = datetime.now(timezone.utc)
+    session.add(reminder)
+    session.commit()
+    return Ok()
+
+
+@router.post("/{reminder_id}/restore")
+def restore_reminder(
+    session: SessionDep,
+    reminder_id: uuid.UUID,
+) -> Any:
+    """Restore a soft-deleted reminder by clearing deleted_at."""
+    from sqlalchemy import text, update
+
+    result = session.exec(
+        text("SELECT id FROM reminder WHERE id = :id AND deleted_at IS NOT NULL"),
+        params={"id": str(reminder_id)},
+    ).first()
+    if result is None:
+        raise HTTPException(status_code=404, detail="Reminder not found or not deleted")
+    session.exec(
+        update(Reminder).where(Reminder.id == reminder_id).values(deleted_at=None)
+    )
     session.commit()
     return Ok()

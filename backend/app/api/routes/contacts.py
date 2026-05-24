@@ -736,6 +736,7 @@ def list_contact_mentions(
             NoteMention.contact_id == contact_id,
             Note.owner_id == current_user.id,
             Note.contact_id != contact_id,
+            Note.deleted_at == None,  # noqa: E711
         )
         .order_by(Note.created_at.desc())
     ).all()

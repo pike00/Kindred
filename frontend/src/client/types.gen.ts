@@ -2576,6 +2576,12 @@ export type DebtsDeleteDebtData = {
 
 export type DebtsDeleteDebtResponse = (Ok);
 
+export type DebtsRestoreDebtData = {
+    debtId: string;
+};
+
+export type DebtsRestoreDebtResponse = (unknown);
+
 export type GiftsListGiftsData = {
     contactId: string;
 };
@@ -2600,6 +2606,12 @@ export type GiftsDeleteGiftData = {
 };
 
 export type GiftsDeleteGiftResponse = (Ok);
+
+export type GiftsRestoreGiftData = {
+    giftId: string;
+};
+
+export type GiftsRestoreGiftResponse = (unknown);
 
 export type GiftsGetKanbanBoardResponse = ({
     [key: string]: GiftKanbanColumn;
@@ -2756,6 +2768,12 @@ export type LifeEventsDeleteLifeEventData = {
 
 export type LifeEventsDeleteLifeEventResponse = (Ok);
 
+export type LifeEventsRestoreLifeEventData = {
+    eventId: string;
+};
+
+export type LifeEventsRestoreLifeEventResponse = (unknown);
+
 export type LoginLoginAccessTokenData = {
     formData: Body_login_login_access_token;
 };
@@ -2833,6 +2851,12 @@ export type NotesDeleteNoteData = {
 };
 
 export type NotesDeleteNoteResponse = (Ok);
+
+export type NotesRestoreNoteData = {
+    noteId: string;
+};
+
+export type NotesRestoreNoteResponse = (unknown);
 
 export type OrganizationsListOrganizationsData = {
     limit?: number;
@@ -3038,6 +3062,12 @@ export type RemindersGetChronicSnoozersData = {
 };
 
 export type RemindersGetChronicSnoozersResponse = (Array<ChronicSnoozer>);
+
+export type RemindersRestoreReminderData = {
+    reminderId: string;
+};
+
+export type RemindersRestoreReminderResponse = (unknown);
 
 export type SearchSearchData = {
     /**

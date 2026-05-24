@@ -12,6 +12,39 @@ def get_datetime_utc() -> datetime:
     return datetime.now(timezone.utc)
 
 
+class SoftDeleteMixin:
+    """Mixin that adds ``deleted_at`` for soft-delete support.
+
+    Apply to SQLModel table classes to get:
+    * ``deleted_at`` nullable datetime column (indexed)
+    * ``is_deleted`` property for readability
+    * ``mark_deleted()`` / ``restore()`` convenience helpers
+    """
+
+    deleted_at: datetime | None = Field(
+        default=None,
+        index=True,
+        sa_type=DateTime(timezone=True),
+        description=(
+            "Soft-delete marker. When non-null, the row is hidden from the "
+            "default query filter; restore by clearing this column."
+        ),
+    )
+
+    @property
+    def is_deleted(self) -> bool:
+        """Return True if the row has been soft-deleted."""
+        return self.deleted_at is not None
+
+    def mark_deleted(self) -> None:
+        """Set deleted_at to now (UTC)."""
+        self.deleted_at = datetime.now(timezone.utc)
+
+    def restore(self) -> None:
+        """Clear deleted_at to un-delete the row."""
+        self.deleted_at = None
+
+
 # Shared properties
 class UserBase(SQLModel):
     email: EmailStr = Field(
@@ -640,7 +673,7 @@ class ContactUpdate(SQLModel):
     tag_ids: list[uuid.UUID] | None = None
 
 
-class Contact(ContactBase, table=True):
+class Contact(SoftDeleteMixin, ContactBase, table=True):
     search_vector: str | None = Field(
         default=None,
         sa_column=sa.Column("search_vector", sa.Computed(None), nullable=True),
@@ -719,14 +752,6 @@ class Contact(ContactBase, table=True):
         nullable=False,
         description="Auto-bumped on any column change (UTC).",
     )
-    deleted_at: datetime | None = Field(
-        default=None,
-        index=True,
-        description=(
-            "Soft-delete marker. When non-null, the row is hidden from the "
-            "default visibility helpers; restore by clearing this column."
-        ),
-    )
     # Merge tracking
     is_merged: bool = Field(
         default=False,
@@ -739,7 +764,6 @@ class Contact(ContactBase, table=True):
         ondelete="SET NULL",
         description="If merged, points to the surviving contact.",
     )
-    # Relationships
     # Relationships
     tags: list["Tag"] = Relationship(
         back_populates=None,
@@ -1467,7 +1491,7 @@ class InteractionAttendee(SQLModel, table=True):
     )
 
 
-class Interaction(InteractionBase, table=True):
+class Interaction(SoftDeleteMixin, InteractionBase, table=True):
     search_vector: str | None = Field(
         default=None,
         sa_column=sa.Column("search_vector", sa.Computed(None), nullable=True),
@@ -1493,14 +1517,6 @@ class Interaction(InteractionBase, table=True):
         default_factory=lambda: datetime.now(timezone.utc),
         nullable=False,
         description="When the row was inserted (may be after occurred_at; UTC).",
-    )
-    deleted_at: datetime | None = Field(
-        default=None,
-        index=True,
-        description=(
-            "Soft-delete marker. When non-null, the row is hidden from "
-            "default queries; restore by clearing this column."
-        ),
     )
 
 
@@ -1573,7 +1589,7 @@ class ReminderUpdate(SQLModel):
     is_active: bool | None = None
 
 
-class Reminder(ReminderBase, table=True):
+class Reminder(SoftDeleteMixin, ReminderBase, table=True):
     """Scheduled reminder; contact-specific or standalone."""
 
     id: uuid.UUID = Field(
@@ -1605,14 +1621,6 @@ class Reminder(ReminderBase, table=True):
         default_factory=lambda: datetime.now(timezone.utc),
         nullable=False,
         description="When the reminder was created (UTC).",
-    )
-    deleted_at: datetime | None = Field(
-        default=None,
-        index=True,
-        description=(
-            "Soft-delete marker. When non-null, the row is hidden from "
-            "default queries; restore by clearing this column."
-        ),
     )
 
 class ReminderPublic(ReminderBase):
@@ -1792,7 +1800,7 @@ class GiftUpdate(SQLModel):
     url: str | None = None
 
 
-class Gift(GiftBase, table=True):
+class Gift(SoftDeleteMixin, GiftBase, table=True):
     """Gift idea or record for a contact."""
 
     id: uuid.UUID = Field(
@@ -1822,14 +1830,6 @@ class Gift(GiftBase, table=True):
         default_factory=lambda: datetime.now(timezone.utc),
         nullable=False,
         description="When the gift record was created (UTC).",
-    )
-    deleted_at: datetime | None = Field(
-        default=None,
-        index=True,
-        description=(
-            "Soft-delete marker. When non-null, the row is hidden from "
-            "default queries; restore by clearing this column."
-        ),
     )
 
 
@@ -1905,7 +1905,7 @@ class DebtUpdate(SQLModel):
     settled_at: date | None = None
 
 
-class Debt(DebtBase, table=True):
+class Debt(SoftDeleteMixin, DebtBase, table=True):
     """Money owed to or from a contact."""
 
     id: uuid.UUID = Field(
@@ -1929,14 +1929,6 @@ class Debt(DebtBase, table=True):
         default_factory=lambda: datetime.now(timezone.utc),
         nullable=False,
         description="When the debt was recorded (UTC).",
-    )
-    deleted_at: datetime | None = Field(
-        default=None,
-        index=True,
-        description=(
-            "Soft-delete marker. When non-null, the row is hidden from "
-            "default queries; restore by clearing this column."
-        ),
     )
 
 
@@ -1991,7 +1983,7 @@ class LifeEventUpdate(SQLModel):
     create_annual_reminder: bool | None = None
 
 
-class LifeEvent(LifeEventBase, table=True):
+class LifeEvent(SoftDeleteMixin, LifeEventBase, table=True):
     """Milestone on a contact's timeline (job change, wedding, move, etc.)."""
 
     __tablename__ = "life_event"
@@ -2016,14 +2008,6 @@ class LifeEvent(LifeEventBase, table=True):
         default_factory=lambda: datetime.now(timezone.utc),
         nullable=False,
         description="When the event was logged (UTC).",
-    )
-    deleted_at: datetime | None = Field(
-        default=None,
-        index=True,
-        description=(
-            "Soft-delete marker. When non-null, the row is hidden from "
-            "default queries; restore by clearing this column."
-        ),
     )
 
 
@@ -2076,7 +2060,7 @@ class NoteMention(SQLModel, table=True):
     )
 
 
-class Note(NoteBase, table=True):
+class Note(SoftDeleteMixin, NoteBase, table=True):
     search_vector: str | None = Field(
         default=None,
         sa_column=sa.Column("search_vector", sa.Computed(None), nullable=True),
@@ -2104,14 +2088,6 @@ class Note(NoteBase, table=True):
         default_factory=lambda: datetime.now(timezone.utc),
         nullable=False,
         description="When the note was created (UTC).",
-    )
-    deleted_at: datetime | None = Field(
-        default=None,
-        index=True,
-        description=(
-            "Soft-delete marker. When non-null, the row is hidden from "
-            "default queries; restore by clearing this column."
-        ),
     )
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
