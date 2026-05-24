@@ -218,6 +218,7 @@ build tag:
         --tag "$IMAGE:sha-$SHORT" \
         --build-arg "APP_VERSION={{tag}}" \
         --build-arg "GIT_HASH=$SHORT" \
+        --build-arg "VITE_API_URL=${VITE_API_URL:-}" \
         --file Dockerfile.prod \
         --cache-from type=local,src=/tmp/buildx-cache-kindred \
         --cache-to   type=local,dest=/tmp/buildx-cache-kindred,mode=max \
