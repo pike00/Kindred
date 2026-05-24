@@ -5929,6 +5929,23 @@ export const SetupSubmitSchema = {
     title: 'SetupSubmit'
 } as const;
 
+export const SharePreviewEntitySchema = {
+    properties: {
+        entity_type: {
+            type: 'string',
+            title: 'Entity Type'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['entity_type', 'count'],
+    title: 'SharePreviewEntity',
+    description: 'Preview counts for a single entity type.'
+} as const;
+
 export const TagCreateSchema = {
     properties: {
         name: {
@@ -6019,6 +6036,46 @@ export const TagPublicSchema = {
     type: 'object',
     required: ['name', 'id', 'created_at'],
     title: 'TagPublic'
+} as const;
+
+export const TagSharePreviewSchema = {
+    properties: {
+        tag_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Tag Id'
+        },
+        tag_name: {
+            type: 'string',
+            title: 'Tag Name'
+        },
+        contact_count: {
+            type: 'integer',
+            title: 'Contact Count'
+        },
+        sample_contacts: {
+            items: {
+                type: 'string'
+            },
+            type: 'array',
+            title: 'Sample Contacts'
+        },
+        entities: {
+            items: {
+                '$ref': '#/components/schemas/SharePreviewEntity'
+            },
+            type: 'array',
+            title: 'Entities'
+        },
+        total_related_rows: {
+            type: 'integer',
+            title: 'Total Related Rows'
+        }
+    },
+    type: 'object',
+    required: ['tag_id', 'tag_name', 'contact_count', 'sample_contacts', 'entities', 'total_related_rows'],
+    title: 'TagSharePreview',
+    description: 'Preview of what will be shared when granting access to a tag.'
 } as const;
 
 export const TagSharePublicSchema = {
@@ -6791,12 +6848,30 @@ export const _ShareInSchema = {
             title: 'Tag Id'
         },
         grantee_id: {
-            type: 'string',
-            format: 'uuid',
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'uuid'
+                },
+                {
+                    type: 'null'
+                }
+            ],
             title: 'Grantee Id'
+        },
+        grantee_email: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Grantee Email'
         }
     },
     type: 'object',
-    required: ['tag_id', 'grantee_id'],
+    required: ['tag_id'],
     title: '_ShareIn'
 } as const;

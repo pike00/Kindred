@@ -6,6 +6,7 @@
 
 export type { LucideIcon } from "lucide-react"
 export {
+  AlertTriangle,
   Archive,
   AtSign,
   Bell,
@@ -67,6 +68,7 @@ export {
   Search,
   Send,
   Settings,
+  Share2,
   ShieldCheck,
   Star,
   // Theme

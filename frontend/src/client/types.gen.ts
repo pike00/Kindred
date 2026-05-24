@@ -9,7 +9,8 @@ export type _MentionPublic = {
 
 export type _ShareIn = {
     tag_id: string;
-    grantee_id: string;
+    grantee_id?: (string | null);
+    grantee_email?: (string | null);
 };
 
 export type ActivityLogPublic = {
@@ -1607,6 +1608,14 @@ export type SetupSubmit = {
     full_name?: (string | null);
 };
 
+/**
+ * Preview counts for a single entity type.
+ */
+export type SharePreviewEntity = {
+    entity_type: string;
+    count: number;
+};
+
 export type TagCreate = {
     /**
      * Tag name, 1-100 chars.
@@ -1637,6 +1646,18 @@ export type TagPublic = {
     description?: (string | null);
     id: string;
     created_at: string;
+};
+
+/**
+ * Preview of what will be shared when granting access to a tag.
+ */
+export type TagSharePreview = {
+    tag_id: string;
+    tag_name: string;
+    contact_count: number;
+    sample_contacts: Array<(string)>;
+    entities: Array<SharePreviewEntity>;
+    total_related_rows: number;
 };
 
 export type TagSharePublic = {
@@ -2564,6 +2585,12 @@ export type TagsDeleteTagData = {
 
 export type TagsDeleteTagResponse = (Ok);
 
+export type TagSharesPreviewTagShareData = {
+    tagId: string;
+};
+
+export type TagSharesPreviewTagShareResponse = (TagSharePreview);
+
 export type TagSharesCreateTagShareData = {
     requestBody: _ShareIn;
 };
@@ -2582,6 +2609,15 @@ export type TagSharesDeleteTagShareData = {
 };
 
 export type TagSharesDeleteTagShareResponse = ({
+    [key: string]: (string);
+});
+
+export type TagSharesLogTagShareAuditData = {
+    granteeId: string;
+    tagId: string;
+};
+
+export type TagSharesLogTagShareAuditResponse = ({
     [key: string]: (string);
 });
 

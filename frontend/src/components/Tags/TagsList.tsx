@@ -1,15 +1,18 @@
 import { useSuspenseQuery } from "@tanstack/react-query"
-
+import { useState } from "react"
+import type { TagPublic } from "@/client"
 import { TagsService } from "@/client"
 import { DataTable } from "@/components/Common/DataTable"
 import { AddTagDialog } from "./AddTagDialog"
 import { columns } from "./columns"
+import { TagShareDialog } from "./TagShareDialog"
 
 export const TagsList = () => {
   const { data } = useSuspenseQuery({
     queryKey: ["tags"],
     queryFn: () => TagsService.listTags(),
   })
+  const [selectedTag, setSelectedTag] = useState<TagPublic | null>(null)
 
   return (
     <div className="space-y-4">
@@ -18,6 +21,13 @@ export const TagsList = () => {
         <AddTagDialog />
       </div>
       <DataTable columns={columns} data={data?.data || []} />
+      {selectedTag && (
+        <TagShareDialog
+          tag={selectedTag}
+          open={!!selectedTag}
+          onOpenChange={(open) => !open && setSelectedTag(null)}
+        />
+      )}
     </div>
   )
 }
