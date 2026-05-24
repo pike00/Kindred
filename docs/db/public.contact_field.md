@@ -37,6 +37,7 @@ Flexible contact info (emails, phones) attached to a contact.
 | contact_field_pkey | CREATE UNIQUE INDEX contact_field_pkey ON public.contact_field USING btree (id) |
 | ix_contact_field_contact_id | CREATE INDEX ix_contact_field_contact_id ON public.contact_field USING btree (contact_id) |
 | ix_contact_field_field_type | CREATE INDEX ix_contact_field_field_type ON public.contact_field USING btree (field_type) |
+| ix_contact_field_value | CREATE INDEX ix_contact_field_value ON public.contact_field USING btree (value) |
 
 ## Relations
 
@@ -86,6 +87,17 @@ erDiagram
   varchar_500_ source_external_id
   boolean do_not_contact
   varchar_500_ do_not_contact_reason
+  varchar_500_ imessage_id
+  timestamp_with_time_zone imessage_synced_at
+  varchar_64_ imessage_profile_hash
+  json imessage_profile
+  tsvector search_vector
+  boolean is_merged
+  uuid merged_into_id FK
+  varchar_64_ vcard_sha256
+  varchar_255_ timezone
+  text pronouns
+  boolean auto_log_email
 }
 ```
 

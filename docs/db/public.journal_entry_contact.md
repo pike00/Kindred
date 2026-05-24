@@ -1,51 +1,51 @@
-# public.note_mention
+# public.journal_entry_contact
 
 ## Columns
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| note_id | uuid |  | false |  | [public.note](public.note.md) |  |
+| journal_entry_id | uuid |  | false |  | [public.journal_entry](public.journal_entry.md) |  |
 | contact_id | uuid |  | false |  | [public.contact](public.contact.md) |  |
 
 ## Constraints
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
-| note_mention_contact_id_not_null | n | NOT NULL contact_id |
-| note_mention_note_id_not_null | n | NOT NULL note_id |
-| note_mention_contact_id_fkey | FOREIGN KEY | FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE |
-| note_mention_note_id_fkey | FOREIGN KEY | FOREIGN KEY (note_id) REFERENCES note(id) ON DELETE CASCADE |
-| note_mention_pkey | PRIMARY KEY | PRIMARY KEY (note_id, contact_id) |
+| journal_entry_contact_contact_id_not_null | n | NOT NULL contact_id |
+| journal_entry_contact_journal_entry_id_not_null | n | NOT NULL journal_entry_id |
+| journal_entry_contact_contact_id_fkey | FOREIGN KEY | FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE |
+| journal_entry_contact_journal_entry_id_fkey | FOREIGN KEY | FOREIGN KEY (journal_entry_id) REFERENCES journal_entry(id) ON DELETE CASCADE |
+| journal_entry_contact_pkey | PRIMARY KEY | PRIMARY KEY (journal_entry_id, contact_id) |
 
 ## Indexes
 
 | Name | Definition |
 | ---- | ---------- |
-| note_mention_pkey | CREATE UNIQUE INDEX note_mention_pkey ON public.note_mention USING btree (note_id, contact_id) |
-| ix_note_mention_contact_id | CREATE INDEX ix_note_mention_contact_id ON public.note_mention USING btree (contact_id) |
+| journal_entry_contact_pkey | CREATE UNIQUE INDEX journal_entry_contact_pkey ON public.journal_entry_contact USING btree (journal_entry_id, contact_id) |
+| ix_journal_entry_contact_contact_id | CREATE INDEX ix_journal_entry_contact_contact_id ON public.journal_entry_contact USING btree (contact_id) |
+| ix_journal_entry_contact_journal_entry_id | CREATE INDEX ix_journal_entry_contact_journal_entry_id ON public.journal_entry_contact USING btree (journal_entry_id) |
 
 ## Relations
 
 ```mermaid
 erDiagram
 
-"public.note_mention" }o--|| "public.note" : "FOREIGN KEY (note_id) REFERENCES note(id) ON DELETE CASCADE"
-"public.note_mention" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
+"public.journal_entry_contact" }o--|| "public.journal_entry" : "FOREIGN KEY (journal_entry_id) REFERENCES journal_entry(id) ON DELETE CASCADE"
+"public.journal_entry_contact" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 
-"public.note_mention" {
-  uuid note_id FK
+"public.journal_entry_contact" {
+  uuid journal_entry_id FK
   uuid contact_id FK
 }
-"public.note" {
+"public.journal_entry" {
   uuid id
   uuid owner_id FK
-  uuid contact_id FK
   varchar_50000_ body
+  varchar_50_ mood
+  date entry_date
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
-  timestamp_without_time_zone deleted_at
   tsvector search_vector
-  varchar_36_ client_id
 }
 "public.contact" {
   uuid id
