@@ -26,6 +26,7 @@ import { Route as LayoutCalendarRouteImport } from './routes/_layout/calendar'
 import { Route as LayoutAdminRouteImport } from './routes/_layout/admin'
 import { Route as LayoutContactsIndexRouteImport } from './routes/_layout/contacts/index'
 import { Route as LayoutAdminIndexRouteImport } from './routes/_layout/admin/index'
+import { Route as LayoutContactsKanbanRouteImport } from './routes/_layout/contacts/kanban'
 import { Route as LayoutContactsContactIdRouteImport } from './routes/_layout/contacts/$contactId'
 import { Route as LayoutAdminWebhooksRouteImport } from './routes/_layout/admin/webhooks'
 import { Route as LayoutAdminVcardConflictsRouteImport } from './routes/_layout/admin/vcard-conflicts'
@@ -115,6 +116,11 @@ const LayoutAdminIndexRoute = LayoutAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => LayoutAdminRoute,
 } as any)
+const LayoutContactsKanbanRoute = LayoutContactsKanbanRouteImport.update({
+  id: '/kanban',
+  path: '/kanban',
+  getParentRoute: () => LayoutContactsRoute,
+} as any)
 const LayoutContactsContactIdRoute = LayoutContactsContactIdRouteImport.update({
   id: '/$contactId',
   path: '/$contactId',
@@ -156,6 +162,7 @@ export interface FileRoutesByFullPath {
   '/admin/vcard-conflicts': typeof LayoutAdminVcardConflictsRoute
   '/admin/webhooks': typeof LayoutAdminWebhooksRoute
   '/contacts/$contactId': typeof LayoutContactsContactIdRoute
+  '/contacts/kanban': typeof LayoutContactsKanbanRoute
   '/admin/': typeof LayoutAdminIndexRoute
   '/contacts/': typeof LayoutContactsIndexRoute
 }
@@ -176,6 +183,7 @@ export interface FileRoutesByTo {
   '/admin/vcard-conflicts': typeof LayoutAdminVcardConflictsRoute
   '/admin/webhooks': typeof LayoutAdminWebhooksRoute
   '/contacts/$contactId': typeof LayoutContactsContactIdRoute
+  '/contacts/kanban': typeof LayoutContactsKanbanRoute
   '/admin': typeof LayoutAdminIndexRoute
   '/contacts': typeof LayoutContactsIndexRoute
 }
@@ -200,6 +208,7 @@ export interface FileRoutesById {
   '/_layout/admin/vcard-conflicts': typeof LayoutAdminVcardConflictsRoute
   '/_layout/admin/webhooks': typeof LayoutAdminWebhooksRoute
   '/_layout/contacts/$contactId': typeof LayoutContactsContactIdRoute
+  '/_layout/contacts/kanban': typeof LayoutContactsKanbanRoute
   '/_layout/admin/': typeof LayoutAdminIndexRoute
   '/_layout/contacts/': typeof LayoutContactsIndexRoute
 }
@@ -224,6 +233,7 @@ export interface FileRouteTypes {
     | '/admin/vcard-conflicts'
     | '/admin/webhooks'
     | '/contacts/$contactId'
+    | '/contacts/kanban'
     | '/admin/'
     | '/contacts/'
   fileRoutesByTo: FileRoutesByTo
@@ -244,6 +254,7 @@ export interface FileRouteTypes {
     | '/admin/vcard-conflicts'
     | '/admin/webhooks'
     | '/contacts/$contactId'
+    | '/contacts/kanban'
     | '/admin'
     | '/contacts'
   id:
@@ -267,6 +278,7 @@ export interface FileRouteTypes {
     | '/_layout/admin/vcard-conflicts'
     | '/_layout/admin/webhooks'
     | '/_layout/contacts/$contactId'
+    | '/_layout/contacts/kanban'
     | '/_layout/admin/'
     | '/_layout/contacts/'
   fileRoutesById: FileRoutesById
@@ -400,6 +412,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutAdminIndexRouteImport
       parentRoute: typeof LayoutAdminRoute
     }
+    '/_layout/contacts/kanban': {
+      id: '/_layout/contacts/kanban'
+      path: '/kanban'
+      fullPath: '/contacts/kanban'
+      preLoaderRoute: typeof LayoutContactsKanbanRouteImport
+      parentRoute: typeof LayoutContactsRoute
+    }
     '/_layout/contacts/$contactId': {
       id: '/_layout/contacts/$contactId'
       path: '/$contactId'
@@ -451,11 +470,13 @@ const LayoutAdminRouteWithChildren = LayoutAdminRoute._addFileChildren(
 
 interface LayoutContactsRouteChildren {
   LayoutContactsContactIdRoute: typeof LayoutContactsContactIdRoute
+  LayoutContactsKanbanRoute: typeof LayoutContactsKanbanRoute
   LayoutContactsIndexRoute: typeof LayoutContactsIndexRoute
 }
 
 const LayoutContactsRouteChildren: LayoutContactsRouteChildren = {
   LayoutContactsContactIdRoute: LayoutContactsContactIdRoute,
+  LayoutContactsKanbanRoute: LayoutContactsKanbanRoute,
   LayoutContactsIndexRoute: LayoutContactsIndexRoute,
 }
 

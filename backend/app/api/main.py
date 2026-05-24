@@ -10,6 +10,7 @@ from app.api.routes import (
     contact_pdf,
     contact_stage_events,
     contacts,
+    contacts_kanban,
     custom_fields,
     debts,
     gifts,
@@ -77,6 +78,7 @@ api_router.include_router(calendar.router)
 api_router.include_router(graph.router)
 api_router.include_router(ical.router)
 api_router.include_router(search.router)
+api_router.include_router(contacts_kanban.router)
 
 
 if settings.ENVIRONMENT == "local":

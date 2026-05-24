@@ -35,6 +35,7 @@ export {
   FileSpreadsheet,
   Film,
   Gift,
+  GripVertical,
   HeartHandshake,
   // Sidebar nav
   Home,

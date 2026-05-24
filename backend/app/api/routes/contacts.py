@@ -644,6 +644,9 @@ def update_contact(
     if contact.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not enough permissions")
 
+    # Capture old stage before any changes
+    old_stage = contact.stage
+
     update_data = contact_in.model_dump(exclude_unset=True)
     tag_ids = update_data.pop("tag_ids", None)
 
@@ -670,6 +673,8 @@ def update_contact(
     if "vcard_raw" in update_data and contact.vcard_raw:
         contact.vcard_sha256 = compute_vcard_hash(contact.vcard_raw)
     session.add(contact)
+
+    # Stage change already logged above via ContactStageEventCreate if applicable
 
     # Update tag associations if provided
     if tag_ids is not None:

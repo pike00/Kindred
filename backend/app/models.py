@@ -905,6 +905,87 @@ class Contact(SoftDeleteMixin, ContactBase, table=True):
     )
 
 
+# ─── ContactStageEvent ───────────────────────────────────────────
+
+
+class ContactStageEventBase(SQLModel):
+    """Stage change audit entry."""
+
+    from_stage: str | None = Field(
+        default=None,
+        max_length=100,
+        description="Previous stage value; null when the contact is first assigned a stage.",
+    )
+    to_stage: str | None = Field(
+        default=None,
+        max_length=100,
+        description="New stage value; null when the contact is cleared.",
+    )
+    occurred_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),
+        nullable=False,
+        description="When the stage change occurred (UTC).",
+    )
+    note: str | None = Field(
+        default=None,
+        max_length=2000,
+        description="Optional context about the stage change.",
+    )
+
+
+class ContactStageEvent(ContactStageEventBase, table=True):
+    """Audit trail for Contact.stage changes.
+
+    Rows are written atomically with the stage PATCH in the service layer
+    so that every transition is recorded without relying on the frontend.
+    """
+
+    __tablename__ = "contact_stage_event"
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
+    contact_id: uuid.UUID = Field(
+        foreign_key="contact.id",
+        nullable=False,
+        ondelete="CASCADE",
+        index=True,
+        description="Contact whose stage changed.",
+    )
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id",
+        nullable=False,
+        ondelete="CASCADE",
+        index=True,
+        description="Owner user; cascades on delete.",
+    )
+    created_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),
+        nullable=False,
+        description="When this row was inserted (UTC).",
+    )
+
+
+class ContactStageEventPublic(ContactStageEventBase):
+    id: uuid.UUID
+    contact_id: uuid.UUID
+    owner_id: uuid.UUID
+    created_at: datetime
+
+
+class ContactStageEventsPublic(SQLModel):
+    data: list[ContactStageEventPublic]
+    count: int
+
+
+class ContactStageEventCreate(ContactStageEventBase):
+    contact_id: uuid.UUID
+
+
 class ContactPublic(ContactBase):
     id: uuid.UUID
     source: ContactSource = Field(
@@ -939,79 +1020,6 @@ class ContactsPublic(SQLModel):
     count: int
 
 
-# ─── ContactStageEvent ───────────────────────────────────────────────
-
-
-class ContactStageEventBase(SQLModel):
-    """Single stage transition on a contact."""
-
-    from_stage: str | None = Field(
-        default=None,
-        max_length=100,
-        description="Previous stage; null for the initial seed event.",
-    )
-    to_stage: str | None = Field(
-        default=None,
-        max_length=100,
-        description="New stage; null when clearing stage (rare).",
-    )
-    occurred_at: datetime = Field(
-        description="When the transition happened (UTC).",
-    )
-    note: str | None = Field(
-        default=None,
-        max_length=2000,
-        description="Optional context about why the stage changed.",
-    )
-
-
-class ContactStageEventCreate(ContactStageEventBase):
-    contact_id: uuid.UUID
-
-
-class ContactStageEvent(ContactStageEventBase, table=True):
-    """Audit log of every stage transition for a contact.
-
-    Contact.stage is a denormalized cache of the latest row here,
-    so Kanban queries stay fast without a JOIN+ORDER BY on every read.
-    """
-
-    __tablename__ = "contact_stage_event"
-
-    id: uuid.UUID = Field(
-        default_factory=uuid.uuid4,
-        primary_key=True,
-        description="Primary key.",
-    )
-    contact_id: uuid.UUID = Field(
-        foreign_key="contact.id",
-        nullable=False,
-        ondelete="CASCADE",
-        description="Contact whose stage changed; cascades on delete.",
-    )
-    owner_id: uuid.UUID = Field(
-        foreign_key="user.id",
-        nullable=False,
-        ondelete="CASCADE",
-        description="Owner user; cascades on delete.",
-    )
-    created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
-        nullable=False,
-        description="When this event row was inserted (UTC).",
-    )
-
-
-class ContactStageEventPublic(ContactStageEventBase):
-    id: uuid.UUID
-    contact_id: uuid.UUID
-    owner_id: uuid.UUID
-    created_at: datetime
-
-
-class ContactStageEventsPublic(SQLModel):
-    data: list[ContactStageEventPublic]
-    count: int
 
 
 class OverdueContactPublic(ContactPublic):
