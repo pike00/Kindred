@@ -9,6 +9,7 @@
       "!**/src/routeTree.gen.ts",
       "!**/src/client/**/*",
       "!**/src/components/ui/**/*",
+      "!**/coverage/**/*",
       "!**/playwright-report",
       "!**/playwright.config.ts",
       "!**/__tests__/**/*",

@@ -11,6 +11,7 @@ from app.api.routes import (
     custom_fields,
     debts,
     gifts,
+    graph,
     import_export,
     interactions,
     journal,
@@ -58,7 +59,7 @@ api_router.include_router(contact_pdf.router)
 api_router.include_router(webhooks.router)
 api_router.include_router(activity_logs.router)
 api_router.include_router(calendar.router)
-
+api_router.include_router(graph.router)
 
 if settings.ENVIRONMENT == "local":
     api_router.include_router(private.router)
