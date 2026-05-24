@@ -3,9 +3,9 @@ title: Feature Backlog Merge Train
 status: active
 repos: [personal-crm]
 started: 2026-05-15
-last_updated: 2026-05-23
-next_step: Begin Wave 3 -- dirac/tagshare-scope-warning is first up
-progress: 15/46
+last_updated: 2026-05-24
+next_step: Begin Wave 4 -- worktree-stay-in-touch-dashboard is first up
+progress: 42/46
 ---
 
 # Feature Backlog Merge Train
@@ -39,40 +39,39 @@ Land 46 unmerged feature branches into main, sequentially, with one squash commi
 
 ### Wave 3 — medium (10-15 files)
 
-- [ ] `dirac/tagshare-scope-warning`
-- [ ] `dirac/keyboard-shortcut-overlay`
-- [ ] `dirac/gift-kanban`
-- [ ] `dirac/contact-stage-history`
-- [ ] `dirac/full-text-search`
-- [ ] `dirac/contact-merge-history`
-- [ ] `dirac/relationship-inverse-mapping`
-- [ ] `dirac/interaction-drafts`
-- [ ] `dirac/interaction-location`
-- [ ] `dirac/organizations-first-class`
-- [ ] `dirac/face-aware-avatar-crop`
-- [ ] `dirac/soft-delete-entities`
-- [ ] `dirac/empty-state-illustrations`
-- [ ] `dirac/contact-provenance`
-- [ ] `dirac/debt-partial-payments`
-- [ ] `dirac/carddav-server`
-- [ ] `dirac/saved-filters-smart-lists`
-- [ ] `dirac/vcard-hash-verification`
-- [ ] `dirac/ical-importer-backfill`
-- [ ] `dirac/voice-to-text-interaction`
-- [ ] `dirac/contact-timezone-pronouns`
-- [ ] `dirac/pwa-offline-notes`
-- [ ] `dirac/contacts-kanban`
-- [ ] `dirac/map-view-contacts`
-- [ ] `dirac/bulk-contact-operations`
-- [ ] `dirac/e2e-contact-crud-tests`
-- [ ] `dirac/email-log-ingestion`
+- [x] `dirac/tagshare-scope-warning` → v0.2.0
+- [x] `dirac/keyboard-shortcut-overlay` → v0.2.1
+- [x] `dirac/gift-kanban` → v0.2.2
+- [x] `dirac/contact-stage-history` → v0.2.3
+- [x] `dirac/full-text-search` → v0.2.4
+- [x] `dirac/contact-merge-history` → v0.2.5
+- [x] `dirac/relationship-inverse-mapping` → v0.2.6
+- [x] `dirac/interaction-drafts` → v0.2.7
+- [x] `dirac/interaction-location` → v0.2.8
+- [x] `dirac/organizations-first-class` → v0.2.9
+- [x] `dirac/face-aware-avatar-crop` → v0.2.10
+- [x] `dirac/soft-delete-entities` → v0.2.11
+- [x] `dirac/empty-state-illustrations` → v0.2.12
+- [x] `dirac/contact-provenance` → v0.2.13
+- [x] `dirac/debt-partial-payments` → v0.2.14
+- [x] `dirac/carddav-server` → v0.2.15
+- [x] `dirac/saved-filters-smart-lists` → v0.2.16
+- [x] `dirac/vcard-hash-verification` → v0.2.17
+- [x] `dirac/ical-importer-backfill` → v0.2.18
+- [x] `dirac/voice-to-text-interaction` → v0.2.19
+- [x] `dirac/contact-timezone-pronouns` → v0.2.20
+- [x] `dirac/pwa-offline-notes` → v0.2.21
+- [x] `dirac/contacts-kanban` → v0.2.22
+- [x] `dirac/map-view-contacts` → v0.2.23
+- [x] `dirac/bulk-contact-operations` → v0.2.24
+- [x] `dirac/e2e-contact-crud-tests` → v0.2.25
+- [x] `dirac/email-log-ingestion` → v0.2.26
 
 ### Wave 4 — large (32-101 files)
 
 - [ ] `worktree-stay-in-touch-dashboard`
 - [ ] `worktree-google-icloud-oauth-import`
 - [ ] `worktree-communication-preferences`
-- [ ] `dirac/empty-state-illustrations` (largest in Wave 3, may move here)
 
 ### Deferred
 
@@ -87,6 +86,10 @@ Land 46 unmerged feature branches into main, sequentially, with one squash commi
 - [ ] Smoke test UI (login, create contact, search, log interaction)
 
 ## Session Log
+
+### 2026-05-24
+- **Wave 3 complete — all 27 branches merged.** v0.2.0 through v0.2.26 tagged and pushed. 339 tests passing (up from 285, +54). Branches landed in order via a Sonnet subagent running the full merge-train playbook. No branches were skipped as already-on-main.
+- Notable merges: `full-text-search` (Meilisearch integration), `organizations-first-class` (Organization model), `soft-delete-entities` (soft delete across 6 entity types), `face-aware-avatar-crop` (MediaPipe face detection), `carddav-server` (enhanced vCard storage), `voice-to-text-interaction` (Whisper transcription), `contacts-kanban`, `map-view-contacts` (geocoding), `e2e-contact-crud-tests` (Playwright).
 
 ### 2026-05-23
 - **Worker crash loop fixed.** arq worker had stale `REDIS_URL=redis://kindred-redis:6379/0` from a previous stack naming. Force-recreated the container: `docker compose -f compose.dev.yml up -d --force-recreate worker`. Worker came up clean.
@@ -114,6 +117,11 @@ Land 46 unmerged feature branches into main, sequentially, with one squash commi
 - Conflict-resolution rules that proved correct: always take HEAD for `frontend/src/client/*.gen.ts` and re-run `just regen-client`. Always re-run `uv lock` for `uv.lock`. Garbage files (`front`, `NOTES.md`, `openapi.json` at repo root, `types_backup.ts`) get `git rm -f`.
 
 ## Notes
+
+### 2026-05-24
+- **Accomplished:** Wave 3 complete. 42/46 branches total merged. 339 tests. v0.2.0–v0.2.26 all tagged.
+- **Issues:** `dirac/empty-state-illustrations` is listed in both Wave 3 and Wave 4 — it was merged as v0.2.12 in Wave 3; remove the Wave 4 duplicate entry.
+- **Next:** Wave 4 has 3 worktree branches (stay-in-touch-dashboard, google-icloud-oauth-import, communication-preferences) + the deferred `dirac/kindred-sdk`. These are the largest (32-101 files each) and likely have the most conflicts.
 
 ### 2026-05-23
 - **Decisions:** `CalendarTokenPublic` now exposes `token: str` and `owner_id: uuid.UUID` — the token field is required so users can copy their ICS feed URL; intentional exposure, not accidental.
