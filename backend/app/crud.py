@@ -31,6 +31,7 @@ from app.models import (
     DebtCreate,
     Gift,
     GiftCreate,
+    IcalImportLog,
     Interaction,
     InteractionAttendee,
     InteractionCreate,
@@ -892,3 +893,22 @@ def get_api_key_by_plaintext(*, session: Session, plaintext: str) -> APIKey | No
     ):
         return None
     return api_key
+
+
+def create_ical_import_log(*, session: Session, log_in: IcalImportLog) -> IcalImportLog:
+    """Create an IcalImportLog entry for UID-based dedup."""
+    session.add(log_in)
+    session.commit()
+    session.refresh(log_in)
+    return log_in
+
+
+def get_ical_import_log_by_owner_and_uid(
+    *, session: Session, owner_id: uuid.UUID, uid: str
+) -> IcalImportLog | None:
+    """Fetch a single IcalImportLog by (owner_id, uid)."""
+    return session.exec(
+        select(IcalImportLog).where(
+            (IcalImportLog.owner_id == owner_id) & (IcalImportLog.uid == uid)
+        )
+    ).first()

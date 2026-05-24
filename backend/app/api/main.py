@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+from app.api.routes import ical
 
 from app.api.routes import (
     activity_logs,
@@ -71,7 +72,9 @@ api_router.include_router(organizations.router)
 api_router.include_router(vcard_conflicts.router)
 api_router.include_router(calendar.router)
 api_router.include_router(graph.router)
+api_router.include_router(ical.router)
 api_router.include_router(search.router)
+
 
 if settings.ENVIRONMENT == "local":
     api_router.include_router(private.router)

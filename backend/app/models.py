@@ -2587,6 +2587,7 @@ class ActivityLog(SQLModel, table=True):
     entity_type: str = Field(max_length=64)
     entity_id: uuid.UUID = Field(index=True)
     action: str = Field(max_length=32)
+
     changes_json: dict | None = Field(
         default=None,
         sa_column=sa.Column("changes_json", sa.JSON, nullable=True),
@@ -2805,6 +2806,61 @@ class CalendarTokenPublic(CalendarTokenBase):
 class CalendarTokensPublic(SQLModel):
     data: list[CalendarTokenPublic]
     count: int
+
+
+# ─── IcalImportLog ───────────────────────────────────────────────────────
+
+
+class IcalImportLog(SQLModel, table=True):
+    """Tracks imported iCal events for UID-based deduplication.
+
+    When the same .ics file is re-uploaded, events with UIDs already in this
+    table are skipped to prevent duplicate imports.
+    """
+
+    __tablename__ = "ical_import_log"
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id",
+        nullable=False,
+        ondelete="CASCADE",
+        index=True,
+        description="Owner user; cascades on delete.",
+    )
+    uid: str = Field(
+        max_length=2048,
+        index=True,
+        description="VEVENT.UID from the iCalendar file.",
+    )
+    contact_id: uuid.UUID | None = Field(
+        default=None,
+        foreign_key="contact.id",
+        ondelete="CASCADE",
+        description="Primary contact linked to this event (if any).",
+    )
+    event_type: str = Field(
+        max_length=50,
+        description="Classification: interaction, birthday, anniversary, etc.",
+    )
+    imported_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),
+        nullable=False,
+        description="When this event was imported (UTC).",
+    )
+
+    __table_args__ = (
+        sa.UniqueConstraint("owner_id", "uid", name="uq_ical_import_owner_uid"),
+    )
+
+
+class IcalImportLogPublic(SQLModel):
+    id: uuid.UUID
+    uid: str
+    contact_id: uuid.UUID | None
+    event_type: str
+    imported_at: datetime
 
 
 # Register the SetupState table with SQLModel.metadata so Alembic and the
