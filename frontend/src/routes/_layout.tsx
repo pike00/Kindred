@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query"
 import {
   createFileRoute,
   Outlet,
@@ -19,6 +20,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
+import { VoiceRecordButton } from "@/components/VoiceRecorder/VoiceRecordButton"
 import { isLoggedIn } from "@/hooks/useAuth"
 import { useRegisterShortcuts } from "@/hooks/useKeyboardShortcuts"
 import { Search } from "@/lib/icons"
@@ -56,6 +58,8 @@ function CommandPaletteTrigger() {
 }
 
 function Layout() {
+  const queryClient = useQueryClient()
+
   return (
     <CommandPaletteProvider>
       <LayoutShortcuts />
@@ -74,6 +78,11 @@ function Layout() {
           </main>
           <Footer />
         </SidebarInset>
+        <VoiceRecordButton
+          onInteractionCreated={() => {
+            queryClient.invalidateQueries({ queryKey: ["interactions"] })
+          }}
+        />
       </SidebarProvider>
       <QuickLogFAB />
       <CommandPalette />
