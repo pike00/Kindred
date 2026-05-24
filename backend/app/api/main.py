@@ -22,6 +22,7 @@ from app.api.routes import (
     notes,
     pets,
     private,
+    relationship_inverse_map,
     relationships,
     reminders,
     search,
@@ -47,6 +48,7 @@ api_router.include_router(tag_shares.router)
 api_router.include_router(contact_fields.router)
 api_router.include_router(addresses.router)
 api_router.include_router(relationships.router)
+api_router.include_router(relationship_inverse_map.router)
 api_router.include_router(pets.router)
 api_router.include_router(custom_fields.router)
 api_router.include_router(interactions.router)

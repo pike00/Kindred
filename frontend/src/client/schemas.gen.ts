@@ -4061,6 +4061,120 @@ export const InteractionsPublicSchema = {
     title: 'InteractionsPublic'
 } as const;
 
+export const InverseRelationshipMapCreateSchema = {
+    properties: {
+        relationship_type: {
+            type: 'string',
+            maxLength: 100,
+            title: 'Relationship Type',
+            description: "Forward relationship type (e.g. 'parent')."
+        },
+        inverse_type: {
+            type: 'string',
+            maxLength: 100,
+            title: 'Inverse Type',
+            description: "Inverse relationship type (e.g. 'child')."
+        },
+        is_symmetric: {
+            type: 'boolean',
+            title: 'Is Symmetric',
+            description: 'True when both sides use the same type (spouse<->spouse).',
+            default: false
+        }
+    },
+    type: 'object',
+    required: ['relationship_type', 'inverse_type'],
+    title: 'InverseRelationshipMapCreate',
+    description: 'Create schema for inverse relationship map.'
+} as const;
+
+export const InverseRelationshipMapPublicSchema = {
+    properties: {
+        relationship_type: {
+            type: 'string',
+            maxLength: 100,
+            title: 'Relationship Type',
+            description: "Forward relationship type (e.g. 'parent')."
+        },
+        inverse_type: {
+            type: 'string',
+            maxLength: 100,
+            title: 'Inverse Type',
+            description: "Inverse relationship type (e.g. 'child')."
+        },
+        is_symmetric: {
+            type: 'boolean',
+            title: 'Is Symmetric',
+            description: 'True when both sides use the same type (spouse<->spouse).',
+            default: false
+        },
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        }
+    },
+    type: 'object',
+    required: ['relationship_type', 'inverse_type', 'id', 'created_at'],
+    title: 'InverseRelationshipMapPublic'
+} as const;
+
+export const InverseRelationshipMapUpdateSchema = {
+    properties: {
+        inverse_type: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 100,
+                    minLength: 1
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Inverse Type'
+        },
+        is_symmetric: {
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Is Symmetric'
+        }
+    },
+    type: 'object',
+    title: 'InverseRelationshipMapUpdate',
+    description: 'Update schema - all fields optional.'
+} as const;
+
+export const InverseRelationshipMapsPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/InverseRelationshipMapPublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'InverseRelationshipMapsPublic'
+} as const;
+
 export const JournalEntriesPublicSchema = {
     properties: {
         data: {

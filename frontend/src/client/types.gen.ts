@@ -1089,6 +1089,54 @@ export type InteractionUpdate = {
     attendee_ids?: (Array<(string)> | null);
 };
 
+/**
+ * Create schema for inverse relationship map.
+ */
+export type InverseRelationshipMapCreate = {
+    /**
+     * Forward relationship type (e.g. 'parent').
+     */
+    relationship_type: string;
+    /**
+     * Inverse relationship type (e.g. 'child').
+     */
+    inverse_type: string;
+    /**
+     * True when both sides use the same type (spouse<->spouse).
+     */
+    is_symmetric?: boolean;
+};
+
+export type InverseRelationshipMapPublic = {
+    /**
+     * Forward relationship type (e.g. 'parent').
+     */
+    relationship_type: string;
+    /**
+     * Inverse relationship type (e.g. 'child').
+     */
+    inverse_type: string;
+    /**
+     * True when both sides use the same type (spouse<->spouse).
+     */
+    is_symmetric?: boolean;
+    id: string;
+    created_at: string;
+};
+
+export type InverseRelationshipMapsPublic = {
+    data: Array<InverseRelationshipMapPublic>;
+    count: number;
+};
+
+/**
+ * Update schema - all fields optional.
+ */
+export type InverseRelationshipMapUpdate = {
+    inverse_type?: (string | null);
+    is_symmetric?: (boolean | null);
+};
+
 export type JournalEntriesPublic = {
     data: Array<JournalEntryPublic>;
     count: number;
@@ -2608,6 +2656,46 @@ export type PetsDeletePetData = {
 };
 
 export type PetsDeletePetResponse = (Ok);
+
+export type RelationshipInverseMapListInverseMapsData = {
+    limit?: number;
+    skip?: number;
+};
+
+export type RelationshipInverseMapListInverseMapsResponse = (InverseRelationshipMapsPublic);
+
+export type RelationshipInverseMapCreateInverseMapData = {
+    requestBody: InverseRelationshipMapCreate;
+};
+
+export type RelationshipInverseMapCreateInverseMapResponse = (InverseRelationshipMapPublic);
+
+export type RelationshipInverseMapGetInverseMapData = {
+    mapId: string;
+};
+
+export type RelationshipInverseMapGetInverseMapResponse = (InverseRelationshipMapPublic);
+
+export type RelationshipInverseMapUpdateInverseMapData = {
+    mapId: string;
+    requestBody: InverseRelationshipMapUpdate;
+};
+
+export type RelationshipInverseMapUpdateInverseMapResponse = (InverseRelationshipMapPublic);
+
+export type RelationshipInverseMapDeleteInverseMapData = {
+    mapId: string;
+};
+
+export type RelationshipInverseMapDeleteInverseMapResponse = (unknown);
+
+export type RelationshipInverseMapSeedInverseMapEndpointResponse = (unknown);
+
+export type RelationshipInverseMapLookupInverseData = {
+    relationshipType: string;
+};
+
+export type RelationshipInverseMapLookupInverseResponse = (unknown);
 
 export type RelationshipsLookupInverseData = {
     type: string;
