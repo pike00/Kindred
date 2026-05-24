@@ -277,6 +277,18 @@ function ContactDetailPage() {
                 {contact.how_we_met}
               </span>
             )}
+            {contact.pronouns && (
+              <span className="flex items-center gap-1">
+                <UserRoundSearch className="size-3.5" /> Pronouns:{" "}
+                {contact.pronouns}
+              </span>
+            )}
+
+            {contact.timezone && (
+              <span className="flex items-center gap-1">
+                <Clock className="size-3.5" /> Timezone: {contact.timezone}
+              </span>
+            )}
             {contact.last_contacted_at && (
               <span className="flex items-center gap-1">
                 <Clock className="size-3.5" /> Last contacted:{" "}
