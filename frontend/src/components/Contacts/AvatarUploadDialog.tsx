@@ -95,11 +95,11 @@ export function AvatarUploadDialog({
         "@mediapipe/tasks-vision"
       )
 
-      const _filesetResolver = await FilesetResolver.forVisionTasks(
+      const filesetResolver = await FilesetResolver.forVisionTasks(
         "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/wasm",
       )
 
-      const detector = await FaceDetector.createFromOptions({
+      const detector = await FaceDetector.createFromOptions(filesetResolver, {
         baseOptions: {
           delegate: "GPU",
           modelAssetPath:
@@ -114,10 +114,10 @@ export function AvatarUploadDialog({
       if (detections && detections.length > 0) {
         const detectedFaces: DetectedFace[] = detections.map((det) => ({
           boundingBox: {
-            originX: det.boundingBox.originX ?? 0,
-            originY: det.boundingBox.originY ?? 0,
-            width: det.boundingBox.width ?? 0,
-            height: det.boundingBox.height ?? 0,
+            originX: det.boundingBox?.originX ?? 0,
+            originY: det.boundingBox?.originY ?? 0,
+            width: det.boundingBox?.width ?? 0,
+            height: det.boundingBox?.height ?? 0,
           },
           confidence: det.categories?.[0]?.score ?? 0,
         }))
@@ -325,9 +325,9 @@ export function AvatarUploadDialog({
       })
 
       try {
-        await ContactsService.uploadAvatar({
+        await ContactsService.uploadAvatarFile({
           contactId: contact.id,
-          formData: { file },
+          formData: { file: file as unknown as string },
         })
         showSuccessToast("Avatar uploaded successfully")
         queryClient.invalidateQueries({ queryKey: ["contacts", contact.id] })

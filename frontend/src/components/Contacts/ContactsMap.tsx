@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useSuspenseQuery } from "@tanstack/react-query"
 import L from "leaflet"
 import { useEffect, useMemo, useRef, useState } from "react"

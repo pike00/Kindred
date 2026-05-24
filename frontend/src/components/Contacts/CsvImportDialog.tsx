@@ -54,7 +54,7 @@ export const CsvImportDialog = () => {
 
   const previewMutation = useMutation({
     mutationFn: async (file: File) => {
-      return ImportExportService.previewCsvImport({ formData: { file } })
+      return ImportExportService.previewCsvImport({ formData: { file: file as unknown as string } })
     },
     onSuccess: (data) => {
       setPreview(data)
@@ -70,7 +70,7 @@ export const CsvImportDialog = () => {
       if (!file) throw new Error("No file selected")
       setStep("importing")
       return ImportExportService.importCsv({
-        formData: { file },
+        formData: { file: file as unknown as string },
         skipDuplicates: skipDuplicates,
         mergeDuplicates: false,
         createMissingTags: createMissingTags,

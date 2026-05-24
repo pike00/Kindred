@@ -1,5 +1,4 @@
 import { useMutation } from "@tanstack/react-query"
-import { useNavigate } from "@tanstack/react-router"
 import { format } from "date-fns"
 import { CalendarIcon, CheckIcon, InfoIcon, UploadIcon } from "lucide-react"
 import { useRef, useState } from "react"
@@ -27,10 +26,12 @@ import {
 import useCustomToast from "@/hooks/useCustomToast"
 
 interface Proposal {
+  [key: string]: unknown
   uid: string | null
   summary: string
   description: string | null
   occurred_at: string | null
+  already_imported?: boolean
   attendees: Array<{
     attendee: { email: string | null; cn: string | null; role: string | null }
     matches: Array<{
@@ -71,10 +72,10 @@ export default function IcalImport() {
     null,
   )
   const { showSuccessToast, showErrorToast } = useCustomToast()
-  const _navigate = useNavigate()
 
   const uploadMutation = useMutation({
-    mutationFn: (file: File) => IcalService.uploadIcal({ formData: { file } }),
+    mutationFn: (file: File) =>
+      IcalService.uploadIcal({ formData: { file: file as unknown as string } }),
     onSuccess: (data) => {
       const result = data as unknown as UploadResponse
       setUploadResult(result)

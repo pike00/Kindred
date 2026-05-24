@@ -20,13 +20,13 @@ function RelationshipGraphPage() {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["graph", "contacts", depth, rootContactId],
     queryFn: () =>
-      GraphService.getGraphContacts({
+      GraphService.getContactsGraph({
         depth,
         rootContactId: rootContactId || undefined,
       }),
   })
 
-  const graphData = data
+  const graphData = data as any
 
   return (
     <div className="space-y-6">

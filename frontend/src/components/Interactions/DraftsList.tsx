@@ -91,11 +91,11 @@ export const DraftsList = () => {
   const { data } = useSuspenseQuery({
     queryKey: ["drafts"],
     queryFn: () =>
-      InteractionsService.listInteractions({ is_draft: true, limit: 200 }),
+      InteractionsService.listInteractions({ isDraft: true, limit: 200 }),
   })
 
   const queryClient = useQueryClient()
-  const { showSuccess, showError } = useCustomToast()
+  const { showSuccessToast: showSuccess, showErrorToast: showError } = useCustomToast()
 
   const confirmMutation = useMutation({
     mutationFn: (id: string) =>
@@ -129,6 +129,7 @@ export const DraftsList = () => {
   if (interactions.length === 0) {
     return (
       <EmptyState
+        icon={MessageSquare}
         title="No draft interactions"
         description="Draft interactions from voice memos, email suggestions, and imports will appear here."
       />
@@ -180,15 +181,15 @@ export const DraftsList = () => {
                       </div>
                     </div>
                     <RowActionsMenu
-                      actions={[
+                      items={[
                         {
                           label: "Confirm",
-                          onClick: () => confirmMutation.mutate(ix.id),
+                          onSelect: () => confirmMutation.mutate(ix.id),
                           disabled: confirmMutation.isPending,
                         },
                         {
                           label: "Delete",
-                          onClick: () => deleteMutation.mutate(ix.id),
+                          onSelect: () => deleteMutation.mutate(ix.id),
                           variant: "destructive",
                           disabled: deleteMutation.isPending,
                         },

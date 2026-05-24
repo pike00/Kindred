@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/popover"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
-import { CalendarIcon, Trash2 } from "@/lib/icons"
+import { Calendar as CalendarIcon, Trash2 } from "@/lib/icons"
 
 interface DebtPaymentsCardProps {
   debt: DebtPublic
@@ -34,7 +34,7 @@ export function DebtPaymentsCard({ debt }: DebtPaymentsCardProps) {
   })
 
   const addPaymentMutation = useMutation({
-    mutationFn: (data: { amount: number; paidAt: string; note?: string }) =>
+    mutationFn: (data: { amount: number; paid_at: string; note?: string }) =>
       DebtsService.createDebtPayment({ debtId: debt.id, requestBody: data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["debt-payments", debt.id] })
@@ -70,7 +70,7 @@ export function DebtPaymentsCard({ debt }: DebtPaymentsCardProps) {
     }
     addPaymentMutation.mutate({
       amount: numAmount,
-      paidAt: format(paidAt, "yyyy-MM-dd"),
+      paid_at: format(paidAt, "yyyy-MM-dd"),
       note: note || undefined,
     })
   }

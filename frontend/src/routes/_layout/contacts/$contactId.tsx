@@ -5,12 +5,14 @@ import { useState } from "react"
 import type {
   DebtPublic,
   GiftPublic,
+  InteractionPublic,
   MediaRecommendationPublic,
 } from "@/client"
 import {
   ContactsService,
   DebtsService,
   GiftsService,
+  InteractionsService,
   MediaRecommendationsService,
 } from "@/client"
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
@@ -51,6 +53,7 @@ import {
   Download,
   Film,
   Info,
+  MapPin,
   MessagesSquare,
   Star,
   UserRoundSearch,
@@ -141,6 +144,12 @@ function ContactDetailPage() {
       MediaRecommendationsService.listMediaRecommendations({ contactId }),
   })
 
+  const { data: interactionsData } = useQuery({
+    queryKey: ["interactions", contactId],
+    queryFn: () =>
+      InteractionsService.listInteractions({ contactId, limit: 500 }),
+  })
+
   const fullName = [
     contact.prefix,
     contact.first_name,
@@ -154,6 +163,7 @@ function ContactDetailPage() {
   const gifts = giftsData?.data ?? []
   const debts = debtsData?.data ?? []
   const mediaRecs = mediaData?.data ?? []
+  const interactions: InteractionPublic[] = interactionsData?.data ?? []
 
   return (
     <div className="space-y-6 max-w-5xl">

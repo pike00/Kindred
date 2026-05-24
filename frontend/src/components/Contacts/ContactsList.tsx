@@ -242,7 +242,7 @@ export const ContactsList = () => {
   })
 
   const activeFilterId = urlFilterId
-  const activeFilter = filtersData?.data?.find(
+  const activeFilter = filtersData?.find(
     (f: SavedFilterPublic) => f.id === activeFilterId,
   )
 
@@ -250,7 +250,7 @@ export const ContactsList = () => {
     queryKey: ["contacts", activeFilterId],
     queryFn: () =>
       ContactsService.listContacts(
-        activeFilterId ? { saved_filter_id: activeFilterId as any } : {},
+        activeFilterId ? ({ savedFilterId: activeFilterId } as any) : {},
       ),
   })
 

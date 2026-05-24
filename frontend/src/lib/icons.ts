@@ -7,11 +7,15 @@
 export type { LucideIcon } from "lucide-react"
 // Additional icons for bulk operations
 export {
+  AlertCircle,
   AlertTriangle,
+  Building2,
   Archive,
   AtSign,
   Bell,
   BellOff,
+  Calendar,
+  Camera,
   // Contact meta
   Cake,
   CalendarHeart,
@@ -30,11 +34,13 @@ export {
   CircleCheck,
   Clock,
   Coffee,
+  Crop,
   Download,
   // Forms / inputs
   Eye,
   EyeOff,
   FileSpreadsheet,
+  Focus,
   Film,
   Gift,
   GripVertical,
@@ -43,10 +49,13 @@ export {
   Home,
   Info,
   Link,
+  ListFilter,
   ListPlus,
   Loader2,
   // Misc
   LogOut,
+  RefreshCw,
+  RotateCcw,
   // Contact field types
   Mail,
   Map,
@@ -90,5 +99,8 @@ export {
   Users,
   UsersRound,
   Video,
+  WifiOff,
   X,
+  ZoomIn,
+  ZoomOut,
 } from "lucide-react"
