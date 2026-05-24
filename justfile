@@ -171,6 +171,29 @@ test-all:
     just frontend-test
     just sdk-test
 
+# ─── Marketing site (website/) → Cloudflare Pages ───────────────────────
+
+# Deploy website/index.html to withkindred.app via Cloudflare Pages.
+# Credentials are auto-decrypted from website/deploy.env.sops.
+# Wrangler is fetched on-demand via bunx (no global install needed).
+[group('Deploy')]
+web-deploy:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    SOPS_CONFIG="{{justfile_directory()}}/.sops.yaml"
+    while IFS='=' read -r key value; do
+        [[ -z "$key" || "$key" == \#* ]] && continue
+        export "$key=$value"
+    done < <(sops --config "$SOPS_CONFIG" --input-type=dotenv --output-type=dotenv -d "{{justfile_directory()}}/website/deploy.env.sops")
+    CF_COMMIT_SHA=$(git rev-parse HEAD)
+    CF_COMMIT_MSG=$(git log -1 --pretty=%s)
+    CF_BRANCH=$(git branch --show-current)
+    bunx wrangler@latest pages deploy website \
+        --project-name=kindred-web \
+        --branch="$CF_BRANCH" \
+        --commit-hash="$CF_COMMIT_SHA" \
+        --commit-message="$CF_COMMIT_MSG"
+
 # ─── Release / build / deploy ────────────────────────────────────────────
 #
 # `release` comes from release.just (release-kit cut: preflight, git-cliff
