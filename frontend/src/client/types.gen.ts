@@ -176,22 +176,26 @@ export type AvatarUploadResponse = {
 };
 
 export type Body_contacts_upload_avatar_file = {
-    file: (Blob | File);
+    file: string;
+};
+
+export type Body_ical_upload_ical = {
+    file: string;
 };
 
 export type Body_import_export_import_csv = {
-    file: (Blob | File);
+    file: string;
     column_mapping?: ({
     [key: string]: (string | null);
 } | null);
 };
 
 export type Body_import_export_import_vcard = {
-    file: (Blob | File);
+    file: string;
 };
 
 export type Body_import_export_preview_csv_import = {
-    file: (Blob | File);
+    file: string;
 };
 
 export type Body_login_login_access_token = {
@@ -203,6 +207,13 @@ export type Body_login_login_access_token = {
     client_secret?: (string | null);
 };
 
+export type Body_transcribe_transcribe_audio = {
+    file: string;
+};
+
+/**
+ * Filter criteria matching list_contacts parameters.
+ */
 export type BulkContactFilter = {
     search?: (string | null);
     tag_id?: (string | null);
@@ -211,6 +222,9 @@ export type BulkContactFilter = {
     stage?: (string | null);
 };
 
+/**
+ * A single operation to apply to matching contacts.
+ */
 export type BulkContactOperation = {
     add_tag_ids?: (Array<(string)> | null);
     remove_tag_ids?: (Array<(string)> | null);
@@ -218,6 +232,9 @@ export type BulkContactOperation = {
     set_is_favorite?: (boolean | null);
 };
 
+/**
+ * Bulk operation request body.
+ */
 export type BulkContactRequest = {
     contact_ids?: (Array<(string)> | null);
     select_all_filtered?: boolean;
@@ -226,6 +243,9 @@ export type BulkContactRequest = {
     operations: BulkContactOperation;
 };
 
+/**
+ * Bulk operation result.
+ */
 export type BulkContactResult = {
     updated_count: number;
     skipped_count: number;
@@ -358,6 +378,14 @@ export type ContactCreate = {
      */
     stage?: (string | null);
     /**
+     * IANA timezone string (e.g., America/New_York); nullable.
+     */
+    timezone?: (string | null);
+    /**
+     * Contact's pronouns (free text, max 100 chars); nullable.
+     */
+    pronouns?: (string | null);
+    /**
      * Source system that created this contact.
      */
     source?: ContactSource;
@@ -430,6 +458,21 @@ export type ContactFieldUpdate = {
     value?: (string | null);
     is_primary?: (boolean | null);
     sort_order?: (number | null);
+};
+
+/**
+ * A geo point representing a contact's address.
+ */
+export type ContactGeoPoint = {
+    contact_id: string;
+    contact_name: string;
+    avatar_url?: (string | null);
+    latitude: number;
+    longitude: number;
+    address_label: string;
+    city?: (string | null);
+    country?: (string | null);
+    street?: (string | null);
 };
 
 /**
@@ -508,6 +551,14 @@ export type ContactPublic = {
      */
     stage?: (string | null);
     /**
+     * IANA timezone string (e.g., America/New_York); nullable.
+     */
+    timezone?: (string | null);
+    /**
+     * Contact's pronouns (free text, max 100 chars); nullable.
+     */
+    pronouns?: (string | null);
+    /**
      * Source system that created this contact.
      */
     source?: ContactSource;
@@ -529,6 +580,15 @@ export type ContactPublic = {
 } | null);
     stage_events?: Array<ContactStageEventPublic>;
     organization?: (OrganizationPublic | null);
+    vcard_sha256?: (string | null);
+};
+
+/**
+ * Response model for geo endpoint.
+ */
+export type ContactsGeoResponse = {
+    points: Array<ContactGeoPoint>;
+    count: number;
 };
 
 /**
@@ -543,19 +603,19 @@ export type ContactsPublic = {
 
 export type ContactStageEventCreate = {
     /**
-     * Previous stage; null for the initial seed event.
+     * Previous stage value; null when the contact is first assigned a stage.
      */
     from_stage?: (string | null);
     /**
-     * New stage; null when clearing stage (rare).
+     * New stage value; null when the contact is cleared.
      */
     to_stage?: (string | null);
     /**
-     * When the transition happened (UTC).
+     * When the stage change occurred (UTC).
      */
-    occurred_at: string;
+    occurred_at?: string;
     /**
-     * Optional context about why the stage changed.
+     * Optional context about the stage change.
      */
     note?: (string | null);
     contact_id: string;
@@ -563,19 +623,19 @@ export type ContactStageEventCreate = {
 
 export type ContactStageEventPublic = {
     /**
-     * Previous stage; null for the initial seed event.
+     * Previous stage value; null when the contact is first assigned a stage.
      */
     from_stage?: (string | null);
     /**
-     * New stage; null when clearing stage (rare).
+     * New stage value; null when the contact is cleared.
      */
     to_stage?: (string | null);
     /**
-     * When the transition happened (UTC).
+     * When the stage change occurred (UTC).
      */
-    occurred_at: string;
+    occurred_at?: string;
     /**
-     * Optional context about why the stage changed.
+     * Optional context about the stage change.
      */
     note?: (string | null);
     id: string;
@@ -609,6 +669,8 @@ export type ContactUpdate = {
     stage?: (string | null);
     source?: (ContactSource | null);
     source_external_id?: (string | null);
+    timezone?: (string | null);
+    pronouns?: (string | null);
     do_not_contact?: (boolean | null);
     do_not_contact_reason?: (string | null);
     tag_ids?: (Array<(string)> | null);
@@ -748,17 +810,49 @@ export type DebtCreate = {
      */
     reason?: (string | null);
     /**
-     * Marked paid off.
-     */
-    is_settled?: boolean;
-    /**
      * Date the debt was settled.
      */
     settled_at?: (string | null);
+    /**
+     * Marked paid off.
+     */
+    is_settled?: boolean;
     contact_id: string;
 };
 
 export type DebtDirection = 'i_owe' | 'they_owe';
+
+export type DebtPaymentCreate = {
+    /**
+     * Payment amount; must be greater than zero.
+     */
+    amount: number;
+    /**
+     * Date the payment was made.
+     */
+    paid_at: string;
+    /**
+     * Optional note about the payment.
+     */
+    note?: (string | null);
+};
+
+export type DebtPaymentPublic = {
+    /**
+     * Payment amount; must be greater than zero.
+     */
+    amount: number;
+    /**
+     * Date the payment was made.
+     */
+    paid_at: string;
+    /**
+     * Optional note about the payment.
+     */
+    note?: (string | null);
+    id: string;
+    created_at: string;
+};
 
 export type DebtPublic = {
     /**
@@ -778,17 +872,19 @@ export type DebtPublic = {
      */
     reason?: (string | null);
     /**
-     * Marked paid off.
-     */
-    is_settled?: boolean;
-    /**
      * Date the debt was settled.
      */
     settled_at?: (string | null);
+    /**
+     * Marked paid off.
+     */
+    is_settled?: boolean;
     id: string;
     contact_id: string;
     created_at: string;
     deleted_at?: (string | null);
+    payments?: Array<DebtPaymentPublic>;
+    paid_amount?: (number | null);
 };
 
 export type DebtsPublic = {
@@ -799,7 +895,6 @@ export type DebtsPublic = {
 export type DebtUpdate = {
     direction?: (DebtDirection | null);
     amount?: (number | null);
-    currency?: (string | null);
     reason?: (string | null);
     is_settled?: (boolean | null);
     settled_at?: (string | null);
@@ -1407,6 +1502,10 @@ export type NoteCreate = {
      */
     body: string;
     contact_id: string;
+    /**
+     * Client-generated UUID for idempotent POSTs; optional.
+     */
+    client_id?: (string | null);
 };
 
 export type NoteMentionPublic = {
@@ -1426,6 +1525,7 @@ export type NotePublic = {
     created_at: string;
     updated_at: string;
     deleted_at?: (string | null);
+    client_id?: (string | null);
 };
 
 export type NotesPublic = {
@@ -1646,6 +1746,14 @@ export type OverdueContactPublic = {
      */
     stage?: (string | null);
     /**
+     * IANA timezone string (e.g., America/New_York); nullable.
+     */
+    timezone?: (string | null);
+    /**
+     * Contact's pronouns (free text, max 100 chars); nullable.
+     */
+    pronouns?: (string | null);
+    /**
      * Source system that created this contact.
      */
     source?: ContactSource;
@@ -1667,6 +1775,7 @@ export type OverdueContactPublic = {
 } | null);
     stage_events?: Array<ContactStageEventPublic>;
     organization?: (OrganizationPublic | null);
+    vcard_sha256?: (string | null);
     days_overdue?: (number | null);
 };
 
@@ -1726,6 +1835,13 @@ export type PetUpdate = {
     species?: (string | null);
     breed?: (string | null);
     notes?: (string | null);
+};
+
+export type PrivateUserCreate = {
+    email: string;
+    password: string;
+    full_name: string;
+    is_verified?: boolean;
 };
 
 export type RelationshipCreate = {
@@ -1910,6 +2026,57 @@ export type ReminderUpdate = {
     remind_at?: (string | null);
     frequency?: (ReminderFrequency | null);
     is_active?: (boolean | null);
+};
+
+export type SavedFilterCreate = {
+    /**
+     * User-visible name for the smart list.
+     */
+    name: string;
+    /**
+     * Structured filter: {conditions: FilterCondition[], op: 'and'|'or'}.
+     */
+    filter_json: {
+        [key: string]: unknown;
+    };
+    /**
+     * Optional tag; if set, filter is shared with users who have TagShare access.
+     */
+    tag_id?: (string | null);
+};
+
+export type SavedFilterPublic = {
+    /**
+     * User-visible name for the smart list.
+     */
+    name: string;
+    /**
+     * Structured filter: {conditions: FilterCondition[], op: 'and'|'or'}.
+     */
+    filter_json: {
+        [key: string]: unknown;
+    };
+    /**
+     * Optional tag; if set, filter is shared with users who have TagShare access.
+     */
+    tag_id?: (string | null);
+    id: string;
+    owner_id: string;
+    created_at: string;
+    updated_at: string;
+};
+
+export type SavedFiltersPublic = {
+    data: Array<SavedFilterPublic>;
+    count: number;
+};
+
+export type SavedFilterUpdate = {
+    name?: (string | null);
+    filter_json?: ({
+    [key: string]: unknown;
+} | null);
+    tag_id?: (string | null);
 };
 
 /**
@@ -2111,6 +2278,47 @@ export type ValidationError = {
 };
 
 /**
+ * Public schema for returning conflict data to the API.
+ */
+export type VCardConflictPublic = {
+    /**
+     * The contact that has a conflict.
+     */
+    contact_id: string;
+    incoming_vcard_raw: string;
+    /**
+     * SHA-256 hash of the incoming normalized vCard.
+     */
+    incoming_hash: string;
+    /**
+     * SHA-256 hash of the locally-stored normalized vCard at time of conflict.
+     */
+    local_hash: string;
+    /**
+     * When the conflict was resolved; None means pending.
+     */
+    resolved_at?: (string | null);
+    /**
+     * How the conflict was resolved: 'keep_local', 'accept_remote', 'manual_merge'.
+     */
+    resolution_type?: (string | null);
+    id: string;
+    created_at: string;
+    /**
+     * The locally-stored vCard at time of conflict.
+     */
+    local_vcard_raw?: (string | null);
+};
+
+/**
+ * Paginated response for listing conflicts.
+ */
+export type VCardConflictsPublic = {
+    data: Array<VCardConflictPublic>;
+    count: number;
+};
+
+/**
  * Result of a vCard bulk import.
  */
 export type VCardImportResponse = {
@@ -2236,6 +2444,16 @@ export type AddressesDeleteAddressData = {
 
 export type AddressesDeleteAddressResponse = (Ok);
 
+export type AddressesGeocodeAddressManualData = {
+    addressId: string;
+};
+
+export type AddressesGeocodeAddressManualResponse = (AddressPublic);
+
+export type AddressesGeocodeMissingCoordinatesResponse = ({
+    [key: string]: unknown;
+});
+
 export type ApiKeysListMyApiKeysResponse = (APIKeysPublic);
 
 export type ApiKeysCreateMyApiKeyData = {
@@ -2333,6 +2551,7 @@ export type ContactsListContactsData = {
     isFavorite?: (boolean | null);
     limit?: number;
     onlyDeleted?: boolean;
+    savedFilterId?: (string | null);
     search?: (string | null);
     skip?: number;
     stage?: (string | null);
@@ -2396,6 +2615,27 @@ export type ContactsRestoreContactData = {
 };
 
 export type ContactsRestoreContactResponse = (ContactPublic);
+
+export type ContactsListContactsGeoData = {
+    /**
+     * Maximum latitude for bounding box filter
+     */
+    maxLat?: (number | null);
+    /**
+     * Maximum longitude for bounding box filter
+     */
+    maxLng?: (number | null);
+    /**
+     * Minimum latitude for bounding box filter
+     */
+    minLat?: (number | null);
+    /**
+     * Minimum longitude for bounding box filter
+     */
+    minLng?: (number | null);
+};
+
+export type ContactsListContactsGeoResponse = (ContactsGeoResponse);
 
 export type ContactsMergeContactsEndpointData = {
     requestBody: MergeContactsRequest;
@@ -2462,11 +2702,28 @@ export type ContactsDeleteAvatarData = {
 
 export type ContactsDeleteAvatarResponse = (unknown);
 
+export type ContactsGetContactStageEventsData = {
+    contactId: string;
+};
+
+export type ContactsGetContactStageEventsResponse = (ContactStageEventsPublic);
+
 export type ContactsGetContactPdfData = {
     contactId: string;
 };
 
 export type ContactsGetContactPdfResponse = (unknown);
+
+export type ContactsGetDistinctStagesResponse = (Array<(string)>);
+
+export type ContactsGetKanbanBoardData = {
+    search?: (string | null);
+    tagId?: (string | null);
+};
+
+export type ContactsGetKanbanBoardResponse = ({
+    [key: string]: ContactsPublic;
+});
 
 export type ContactStageEventsListContactStageHistoryData = {
     contactId: string;
@@ -2587,6 +2844,25 @@ export type DebtsRestoreDebtData = {
 
 export type DebtsRestoreDebtResponse = (unknown);
 
+export type DebtsListDebtPaymentsData = {
+    debtId: string;
+};
+
+export type DebtsListDebtPaymentsResponse = (Array<DebtPaymentPublic>);
+
+export type DebtsCreateDebtPaymentData = {
+    debtId: string;
+    requestBody: DebtPaymentCreate;
+};
+
+export type DebtsCreateDebtPaymentResponse = (DebtPaymentPublic);
+
+export type DebtsDeleteDebtPaymentData = {
+    paymentId: string;
+};
+
+export type DebtsDeleteDebtPaymentResponse = (unknown);
+
 export type GiftsListGiftsData = {
     contactId: string;
 };
@@ -2655,6 +2931,20 @@ export type GraphGetContactGraphResponse = (unknown);
 export type HealthHealthResponse = ({
     [key: string]: (string);
 });
+
+export type IcalUploadIcalData = {
+    formData: Body_ical_upload_ical;
+};
+
+export type IcalUploadIcalResponse = (unknown);
+
+export type IcalConfirmIcalImportData = {
+    requestBody: Array<{
+        [key: string]: unknown;
+    }>;
+};
+
+export type IcalConfirmIcalImportResponse = (unknown);
 
 export type ImportExportImportVcardData = {
     formData: Body_import_export_import_vcard;
@@ -2928,6 +3218,31 @@ export type PetsDeletePetData = {
 
 export type PetsDeletePetResponse = (Ok);
 
+export type PrivateCreateUserData = {
+    requestBody: PrivateUserCreate;
+};
+
+export type PrivateCreateUserResponse = (UserPublic);
+
+export type PrivateSeedDataData = {
+    /**
+     * Number of contacts to seed
+     */
+    count?: number;
+    /**
+     * Wipe existing data before seeding
+     */
+    reset?: boolean;
+    /**
+     * RNG seed for determinism
+     */
+    rngSeed?: (number | null);
+};
+
+export type PrivateSeedDataResponse = ({
+    [key: string]: unknown;
+});
+
 export type RelationshipInverseMapListInverseMapsData = {
     limit?: number;
     skip?: number;
@@ -3074,6 +3389,32 @@ export type RemindersRestoreReminderData = {
 
 export type RemindersRestoreReminderResponse = (unknown);
 
+export type SavedFiltersListSavedFiltersData = {
+    limit?: number;
+    skip?: number;
+};
+
+export type SavedFiltersListSavedFiltersResponse = (SavedFiltersPublic);
+
+export type SavedFiltersCreateSavedFilterRouteData = {
+    requestBody: SavedFilterCreate;
+};
+
+export type SavedFiltersCreateSavedFilterRouteResponse = (SavedFilterPublic);
+
+export type SavedFiltersUpdateSavedFilterRouteData = {
+    filterId: string;
+    requestBody: SavedFilterUpdate;
+};
+
+export type SavedFiltersUpdateSavedFilterRouteResponse = (SavedFilterPublic);
+
+export type SavedFiltersDeleteSavedFilterRouteData = {
+    filterId: string;
+};
+
+export type SavedFiltersDeleteSavedFilterRouteResponse = (unknown);
+
 export type SearchSearchData = {
     /**
      * Max results per type
@@ -3161,6 +3502,12 @@ export type TagSharesLogTagShareAuditResponse = ({
     [key: string]: (string);
 });
 
+export type TranscribeTranscribeAudioData = {
+    formData: Body_transcribe_transcribe_audio;
+};
+
+export type TranscribeTranscribeAudioResponse = (unknown);
+
 export type UsersReadUsersData = {
     limit?: number;
     skip?: number;
@@ -3224,6 +3571,26 @@ export type UtilsTestEmailResponse = (Message);
 export type UtilsHealthCheckResponse = (boolean);
 
 export type UtilsEnvironmentResponse = (EnvironmentInfo);
+
+export type VCardConflictsListVcardConflictsData = {
+    limit?: number;
+    skip?: number;
+};
+
+export type VCardConflictsListVcardConflictsResponse = (VCardConflictsPublic);
+
+export type VCardConflictsResolveVcardConflictData = {
+    conflictId: string;
+    resolutionType: string;
+};
+
+export type VCardConflictsResolveVcardConflictResponse = (VCardConflictPublic);
+
+export type VCardConflictsDeleteVcardConflictData = {
+    conflictId: string;
+};
+
+export type VCardConflictsDeleteVcardConflictResponse = (void);
 
 export type WebhooksTwilioWebhookData = {
     apiKey: string;

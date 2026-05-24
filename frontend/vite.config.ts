@@ -128,5 +128,6 @@ export default defineConfig({
           },
         ],
       },
+    }),
   ],
 })

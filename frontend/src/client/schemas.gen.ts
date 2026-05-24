@@ -678,7 +678,7 @@ export const Body_contacts_upload_avatar_fileSchema = {
     properties: {
         file: {
             type: 'string',
-            format: 'binary',
+            contentMediaType: 'application/octet-stream',
             title: 'File'
         }
     },
@@ -687,11 +687,24 @@ export const Body_contacts_upload_avatar_fileSchema = {
     title: 'Body_contacts-upload_avatar_file'
 } as const;
 
+export const Body_ical_upload_icalSchema = {
+    properties: {
+        file: {
+            type: 'string',
+            contentMediaType: 'application/octet-stream',
+            title: 'File'
+        }
+    },
+    type: 'object',
+    required: ['file'],
+    title: 'Body_ical-upload_ical'
+} as const;
+
 export const Body_import_export_import_csvSchema = {
     properties: {
         file: {
             type: 'string',
-            format: 'binary',
+            contentMediaType: 'application/octet-stream',
             title: 'File'
         },
         column_mapping: {
@@ -725,7 +738,7 @@ export const Body_import_export_import_vcardSchema = {
     properties: {
         file: {
             type: 'string',
-            format: 'binary',
+            contentMediaType: 'application/octet-stream',
             title: 'File'
         }
     },
@@ -738,7 +751,7 @@ export const Body_import_export_preview_csv_importSchema = {
     properties: {
         file: {
             type: 'string',
-            format: 'binary',
+            contentMediaType: 'application/octet-stream',
             title: 'File'
         }
     },
@@ -804,6 +817,19 @@ export const Body_login_login_access_tokenSchema = {
     title: 'Body_login-login_access_token'
 } as const;
 
+export const Body_transcribe_transcribe_audioSchema = {
+    properties: {
+        file: {
+            type: 'string',
+            contentMediaType: 'application/octet-stream',
+            title: 'File'
+        }
+    },
+    type: 'object',
+    required: ['file'],
+    title: 'Body_transcribe-transcribe_audio'
+} as const;
+
 export const BulkContactFilterSchema = {
     properties: {
         search: {
@@ -864,7 +890,8 @@ export const BulkContactFilterSchema = {
         }
     },
     type: 'object',
-    title: 'BulkContactFilter'
+    title: 'BulkContactFilter',
+    description: 'Filter criteria matching list_contacts parameters.'
 } as const;
 
 export const BulkContactOperationSchema = {
@@ -923,7 +950,8 @@ export const BulkContactOperationSchema = {
         }
     },
     type: 'object',
-    title: 'BulkContactOperation'
+    title: 'BulkContactOperation',
+    description: 'A single operation to apply to matching contacts.'
 } as const;
 
 export const BulkContactRequestSchema = {
@@ -969,7 +997,8 @@ export const BulkContactRequestSchema = {
     },
     type: 'object',
     required: ['operations'],
-    title: 'BulkContactRequest'
+    title: 'BulkContactRequest',
+    description: 'Bulk operation request body.'
 } as const;
 
 export const BulkContactResultSchema = {
@@ -994,7 +1023,8 @@ export const BulkContactResultSchema = {
     },
     type: 'object',
     required: ['updated_count', 'skipped_count'],
-    title: 'BulkContactResult'
+    title: 'BulkContactResult',
+    description: 'Bulk operation result.'
 } as const;
 
 export const CSVImportResponseSchema = {
@@ -1474,6 +1504,32 @@ export const ContactCreateSchema = {
             title: 'Stage',
             description: 'Kanban stage like Active, Dormant, Lost.'
         },
+        timezone: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Timezone',
+            description: 'IANA timezone string (e.g., America/New_York); nullable.'
+        },
+        pronouns: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 100
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Pronouns',
+            description: "Contact's pronouns (free text, max 100 chars); nullable."
+        },
         source: {
             '$ref': '#/components/schemas/ContactSource',
             description: 'Source system that created this contact.',
@@ -1686,6 +1742,80 @@ export const ContactFieldsPublicSchema = {
     type: 'object',
     required: ['data', 'count'],
     title: 'ContactFieldsPublic'
+} as const;
+
+export const ContactGeoPointSchema = {
+    properties: {
+        contact_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Contact Id'
+        },
+        contact_name: {
+            type: 'string',
+            title: 'Contact Name'
+        },
+        avatar_url: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Avatar Url'
+        },
+        latitude: {
+            type: 'number',
+            title: 'Latitude'
+        },
+        longitude: {
+            type: 'number',
+            title: 'Longitude'
+        },
+        address_label: {
+            type: 'string',
+            title: 'Address Label'
+        },
+        city: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'City'
+        },
+        country: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Country'
+        },
+        street: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Street'
+        }
+    },
+    type: 'object',
+    required: ['contact_id', 'contact_name', 'latitude', 'longitude', 'address_label'],
+    title: 'ContactGeoPoint',
+    description: "A geo point representing a contact's address."
 } as const;
 
 export const ContactHeatmapSchema = {
@@ -1914,6 +2044,32 @@ export const ContactPublicSchema = {
             title: 'Stage',
             description: 'Kanban stage like Active, Dormant, Lost.'
         },
+        timezone: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Timezone',
+            description: 'IANA timezone string (e.g., America/New_York); nullable.'
+        },
+        pronouns: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 100
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Pronouns',
+            description: "Contact's pronouns (free text, max 100 chars); nullable."
+        },
         source: {
             '$ref': '#/components/schemas/ContactSource',
             description: 'Source system that created this contact.',
@@ -2041,6 +2197,17 @@ export const ContactPublicSchema = {
                     type: 'null'
                 }
             ]
+        },
+        vcard_sha256: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Vcard Sha256'
         }
     },
     type: 'object',
@@ -2068,7 +2235,7 @@ export const ContactStageEventCreateSchema = {
                 }
             ],
             title: 'From Stage',
-            description: 'Previous stage; null for the initial seed event.'
+            description: 'Previous stage value; null when the contact is first assigned a stage.'
         },
         to_stage: {
             anyOf: [
@@ -2081,13 +2248,13 @@ export const ContactStageEventCreateSchema = {
                 }
             ],
             title: 'To Stage',
-            description: 'New stage; null when clearing stage (rare).'
+            description: 'New stage value; null when the contact is cleared.'
         },
         occurred_at: {
             type: 'string',
             format: 'date-time',
             title: 'Occurred At',
-            description: 'When the transition happened (UTC).'
+            description: 'When the stage change occurred (UTC).'
         },
         note: {
             anyOf: [
@@ -2100,7 +2267,7 @@ export const ContactStageEventCreateSchema = {
                 }
             ],
             title: 'Note',
-            description: 'Optional context about why the stage changed.'
+            description: 'Optional context about the stage change.'
         },
         contact_id: {
             type: 'string',
@@ -2109,7 +2276,7 @@ export const ContactStageEventCreateSchema = {
         }
     },
     type: 'object',
-    required: ['occurred_at', 'contact_id'],
+    required: ['contact_id'],
     title: 'ContactStageEventCreate'
 } as const;
 
@@ -2126,7 +2293,7 @@ export const ContactStageEventPublicSchema = {
                 }
             ],
             title: 'From Stage',
-            description: 'Previous stage; null for the initial seed event.'
+            description: 'Previous stage value; null when the contact is first assigned a stage.'
         },
         to_stage: {
             anyOf: [
@@ -2139,13 +2306,13 @@ export const ContactStageEventPublicSchema = {
                 }
             ],
             title: 'To Stage',
-            description: 'New stage; null when clearing stage (rare).'
+            description: 'New stage value; null when the contact is cleared.'
         },
         occurred_at: {
             type: 'string',
             format: 'date-time',
             title: 'Occurred At',
-            description: 'When the transition happened (UTC).'
+            description: 'When the stage change occurred (UTC).'
         },
         note: {
             anyOf: [
@@ -2158,7 +2325,7 @@ export const ContactStageEventPublicSchema = {
                 }
             ],
             title: 'Note',
-            description: 'Optional context about why the stage changed.'
+            description: 'Optional context about the stage change.'
         },
         id: {
             type: 'string',
@@ -2182,7 +2349,7 @@ export const ContactStageEventPublicSchema = {
         }
     },
     type: 'object',
-    required: ['occurred_at', 'id', 'contact_id', 'owner_id', 'created_at'],
+    required: ['id', 'contact_id', 'owner_id', 'created_at'],
     title: 'ContactStageEventPublic'
 } as const;
 
@@ -2419,6 +2586,28 @@ export const ContactUpdateSchema = {
             ],
             title: 'Source External Id'
         },
+        timezone: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Timezone'
+        },
+        pronouns: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Pronouns'
+        },
         do_not_contact: {
             anyOf: [
                 {
@@ -2459,6 +2648,26 @@ export const ContactUpdateSchema = {
     },
     type: 'object',
     title: 'ContactUpdate'
+} as const;
+
+export const ContactsGeoResponseSchema = {
+    properties: {
+        points: {
+            items: {
+                '$ref': '#/components/schemas/ContactGeoPoint'
+            },
+            type: 'array',
+            title: 'Points'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['points', 'count'],
+    title: 'ContactsGeoResponse',
+    description: 'Response model for geo endpoint.'
 } as const;
 
 export const ContactsPublicSchema = {
@@ -2826,12 +3035,6 @@ export const DebtCreateSchema = {
             title: 'Reason',
             description: 'What the debt is for.'
         },
-        is_settled: {
-            type: 'boolean',
-            title: 'Is Settled',
-            description: 'Marked paid off.',
-            default: false
-        },
         settled_at: {
             anyOf: [
                 {
@@ -2844,6 +3047,12 @@ export const DebtCreateSchema = {
             ],
             title: 'Settled At',
             description: 'Date the debt was settled.'
+        },
+        is_settled: {
+            type: 'boolean',
+            title: 'Is Settled',
+            description: 'Marked paid off.',
+            default: false
         },
         contact_id: {
             type: 'string',
@@ -2860,6 +3069,80 @@ export const DebtDirectionSchema = {
     type: 'string',
     enum: ['i_owe', 'they_owe'],
     title: 'DebtDirection'
+} as const;
+
+export const DebtPaymentCreateSchema = {
+    properties: {
+        amount: {
+            type: 'number',
+            title: 'Amount',
+            description: 'Payment amount; must be greater than zero.'
+        },
+        paid_at: {
+            type: 'string',
+            format: 'date',
+            title: 'Paid At',
+            description: 'Date the payment was made.'
+        },
+        note: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 1000
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Note',
+            description: 'Optional note about the payment.'
+        }
+    },
+    type: 'object',
+    required: ['amount', 'paid_at'],
+    title: 'DebtPaymentCreate'
+} as const;
+
+export const DebtPaymentPublicSchema = {
+    properties: {
+        amount: {
+            type: 'number',
+            title: 'Amount',
+            description: 'Payment amount; must be greater than zero.'
+        },
+        paid_at: {
+            type: 'string',
+            format: 'date',
+            title: 'Paid At',
+            description: 'Date the payment was made.'
+        },
+        note: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 1000
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Note',
+            description: 'Optional note about the payment.'
+        },
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        }
+    },
+    type: 'object',
+    required: ['amount', 'paid_at', 'id', 'created_at'],
+    title: 'DebtPaymentPublic'
 } as const;
 
 export const DebtPublicSchema = {
@@ -2894,12 +3177,6 @@ export const DebtPublicSchema = {
             title: 'Reason',
             description: 'What the debt is for.'
         },
-        is_settled: {
-            type: 'boolean',
-            title: 'Is Settled',
-            description: 'Marked paid off.',
-            default: false
-        },
         settled_at: {
             anyOf: [
                 {
@@ -2912,6 +3189,12 @@ export const DebtPublicSchema = {
             ],
             title: 'Settled At',
             description: 'Date the debt was settled.'
+        },
+        is_settled: {
+            type: 'boolean',
+            title: 'Is Settled',
+            description: 'Marked paid off.',
+            default: false
         },
         id: {
             type: 'string',
@@ -2939,6 +3222,25 @@ export const DebtPublicSchema = {
                 }
             ],
             title: 'Deleted At'
+        },
+        payments: {
+            items: {
+                '$ref': '#/components/schemas/DebtPaymentPublic'
+            },
+            type: 'array',
+            title: 'Payments',
+            default: []
+        },
+        paid_amount: {
+            anyOf: [
+                {
+                    type: 'number'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Paid Amount'
         }
     },
     type: 'object',
@@ -2968,17 +3270,6 @@ export const DebtUpdateSchema = {
                 }
             ],
             title: 'Amount'
-        },
-        currency: {
-            anyOf: [
-                {
-                    type: 'string'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Currency'
         },
         reason: {
             anyOf: [
@@ -5109,6 +5400,19 @@ export const NoteCreateSchema = {
             type: 'string',
             format: 'uuid',
             title: 'Contact Id'
+        },
+        client_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 36
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Client Id',
+            description: 'Client-generated UUID for idempotent POSTs; optional.'
         }
     },
     type: 'object',
@@ -5181,6 +5485,17 @@ export const NotePublicSchema = {
                 }
             ],
             title: 'Deleted At'
+        },
+        client_id: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Client Id'
         }
     },
     type: 'object',
@@ -5966,6 +6281,32 @@ export const OverdueContactPublicSchema = {
             title: 'Stage',
             description: 'Kanban stage like Active, Dormant, Lost.'
         },
+        timezone: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Timezone',
+            description: 'IANA timezone string (e.g., America/New_York); nullable.'
+        },
+        pronouns: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 100
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Pronouns',
+            description: "Contact's pronouns (free text, max 100 chars); nullable."
+        },
         source: {
             '$ref': '#/components/schemas/ContactSource',
             description: 'Source system that created this contact.',
@@ -6093,6 +6434,17 @@ export const OverdueContactPublicSchema = {
                     type: 'null'
                 }
             ]
+        },
+        vcard_sha256: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Vcard Sha256'
         },
         days_overdue: {
             anyOf: [
@@ -6323,6 +6675,31 @@ export const PetsPublicSchema = {
     type: 'object',
     required: ['data', 'count'],
     title: 'PetsPublic'
+} as const;
+
+export const PrivateUserCreateSchema = {
+    properties: {
+        email: {
+            type: 'string',
+            title: 'Email'
+        },
+        password: {
+            type: 'string',
+            title: 'Password'
+        },
+        full_name: {
+            type: 'string',
+            title: 'Full Name'
+        },
+        is_verified: {
+            type: 'boolean',
+            title: 'Is Verified',
+            default: false
+        }
+    },
+    type: 'object',
+    required: ['email', 'password', 'full_name'],
+    title: 'PrivateUserCreate'
 } as const;
 
 export const RelationshipCreateSchema = {
@@ -6988,6 +7365,157 @@ export const RemindersPublicSchema = {
     title: 'RemindersPublic'
 } as const;
 
+export const SavedFilterCreateSchema = {
+    properties: {
+        name: {
+            type: 'string',
+            maxLength: 255,
+            minLength: 1,
+            title: 'Name',
+            description: 'User-visible name for the smart list.'
+        },
+        filter_json: {
+            additionalProperties: true,
+            type: 'object',
+            title: 'Filter Json',
+            description: "Structured filter: {conditions: FilterCondition[], op: 'and'|'or'}."
+        },
+        tag_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'uuid'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Tag Id',
+            description: 'Optional tag; if set, filter is shared with users who have TagShare access.'
+        }
+    },
+    type: 'object',
+    required: ['name', 'filter_json'],
+    title: 'SavedFilterCreate'
+} as const;
+
+export const SavedFilterPublicSchema = {
+    properties: {
+        name: {
+            type: 'string',
+            maxLength: 255,
+            minLength: 1,
+            title: 'Name',
+            description: 'User-visible name for the smart list.'
+        },
+        filter_json: {
+            additionalProperties: true,
+            type: 'object',
+            title: 'Filter Json',
+            description: "Structured filter: {conditions: FilterCondition[], op: 'and'|'or'}."
+        },
+        tag_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'uuid'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Tag Id',
+            description: 'Optional tag; if set, filter is shared with users who have TagShare access.'
+        },
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        owner_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Owner Id'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        },
+        updated_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Updated At'
+        }
+    },
+    type: 'object',
+    required: ['name', 'filter_json', 'id', 'owner_id', 'created_at', 'updated_at'],
+    title: 'SavedFilterPublic'
+} as const;
+
+export const SavedFilterUpdateSchema = {
+    properties: {
+        name: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255,
+                    minLength: 1
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Name'
+        },
+        filter_json: {
+            anyOf: [
+                {
+                    additionalProperties: true,
+                    type: 'object'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Filter Json'
+        },
+        tag_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'uuid'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Tag Id'
+        }
+    },
+    type: 'object',
+    title: 'SavedFilterUpdate'
+} as const;
+
+export const SavedFiltersPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/SavedFilterPublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'SavedFiltersPublic'
+} as const;
+
 export const SearchResponseSchema = {
     properties: {
         results: {
@@ -7644,6 +8172,105 @@ export const UsersPublicSchema = {
     type: 'object',
     required: ['data', 'count'],
     title: 'UsersPublic'
+} as const;
+
+export const VCardConflictPublicSchema = {
+    properties: {
+        contact_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Contact Id',
+            description: 'The contact that has a conflict.'
+        },
+        incoming_vcard_raw: {
+            type: 'string',
+            title: 'Incoming Vcard Raw'
+        },
+        incoming_hash: {
+            type: 'string',
+            maxLength: 64,
+            title: 'Incoming Hash',
+            description: 'SHA-256 hash of the incoming normalized vCard.'
+        },
+        local_hash: {
+            type: 'string',
+            maxLength: 64,
+            title: 'Local Hash',
+            description: 'SHA-256 hash of the locally-stored normalized vCard at time of conflict.'
+        },
+        resolved_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Resolved At',
+            description: 'When the conflict was resolved; None means pending.'
+        },
+        resolution_type: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 50
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Resolution Type',
+            description: "How the conflict was resolved: 'keep_local', 'accept_remote', 'manual_merge'."
+        },
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        },
+        local_vcard_raw: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Local Vcard Raw',
+            description: 'The locally-stored vCard at time of conflict.'
+        }
+    },
+    type: 'object',
+    required: ['contact_id', 'incoming_vcard_raw', 'incoming_hash', 'local_hash', 'id', 'created_at'],
+    title: 'VCardConflictPublic',
+    description: 'Public schema for returning conflict data to the API.'
+} as const;
+
+export const VCardConflictsPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/VCardConflictPublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'VCardConflictsPublic',
+    description: 'Paginated response for listing conflicts.'
 } as const;
 
 export const VCardImportResponseSchema = {

@@ -1,8 +1,9 @@
 import { useSuspenseQuery } from "@tanstack/react-query"
 import { Link, useNavigate, useSearch } from "@tanstack/react-router"
-import { useMemo } from "react"
-
+import { useCallback, useMemo, useState } from "react"
+import { toast } from "sonner"
 import {
+  type BulkContactRequest,
   type ContactPublic,
   ContactsService,
   SavedFiltersService,
@@ -12,14 +13,26 @@ import { ContactAvatar } from "@/components/Common/ContactAvatar"
 import { EmptyState } from "@/components/Common/EmptyState"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import {
+  Archive,
   ChevronLeft,
   ChevronRight,
   Clock,
+  Download,
   Map as MapIcon,
   Search,
   Star,
+  Trash2,
   Users,
 } from "@/lib/icons"
 import { useSeedDemo } from "@/lib/seed"
@@ -27,8 +40,48 @@ import { cn } from "@/lib/utils"
 
 const PAGE_SIZE = 25
 
-import { useState } from "react"
 import { AddContactDialog } from "./AddContactDialog"
+
+// Bulk action types
+const BULK_ACTIONS = [
+  { id: "archive", label: "Archive", icon: Archive, color: "text-orange-600" },
+  {
+    id: "unarchive",
+    label: "Unarchive",
+    icon: Archive,
+    color: "text-green-600",
+  },
+  {
+    id: "favorite",
+    label: "Add to Favorites",
+    icon: Star,
+    color: "text-yellow-600",
+  },
+  {
+    id: "unfavorite",
+    label: "Remove from Favorites",
+    icon: Star,
+    color: "text-gray-600",
+  },
+  { id: "delete", label: "Delete", icon: Trash2, color: "text-red-600" },
+  { id: "export", label: "Export CSV", icon: Download, color: "text-blue-600" },
+]
+
+type BulkActionId =
+  | "archive"
+  | "unarchive"
+  | "favorite"
+  | "unfavorite"
+  | "delete"
+  | "export"
+
+// Preview modal state
+interface PreviewModalState {
+  open: boolean
+  action: BulkActionId | null
+  count: number
+  contacts: ContactPublic[]
+}
 
 function fullName(contact: ContactPublic): string {
   return (
@@ -83,65 +136,82 @@ function lastContactTone(days: number | null): string {
   return "text-muted-foreground"
 }
 
-function ContactRow({ contact }: { contact: ContactPublic }) {
+function ContactRow({
+  contact,
+  selected,
+  onToggle,
+}: {
+  contact: ContactPublic
+  selected: boolean
+  onToggle: (id: string) => void
+}) {
   const days = daysSince(contact.last_contacted_at)
   const tags = contact.tags ?? []
   const visibleTags = tags.slice(0, 3)
   const extraTags = tags.length - visibleTags.length
 
   return (
-    <Link
-      to="/contacts/$contactId"
-      params={{ contactId: contact.id }}
-      className="group flex items-center gap-4 rounded-2xl border bg-card p-4 shadow-xs transition-all hover:-translate-y-px hover:border-primary/30 hover:shadow-sm"
-    >
-      <ContactAvatar contact={contact} size="md" />
-      <div className="min-w-0 flex-1">
-        <div className="flex items-baseline gap-2">
-          <span className="font-display text-base font-semibold tracking-tight truncate">
-            {fullName(contact)}
-          </span>
-          {contact.pronouns && (
-            <span className="text-xs text-muted-foreground">
-              ({contact.pronouns})
+    <div className="group flex items-center gap-4 rounded-2xl border bg-card p-4 shadow-xs transition-all hover:-translate-y-px hover:border-primary/30 hover:shadow-sm">
+      <Checkbox
+        checked={selected}
+        onCheckedChange={() => onToggle(contact.id)}
+        className="shrink-0"
+        aria-label={`Select ${fullName(contact)}`}
+      />
+      <Link
+        to="/contacts/$contactId"
+        params={{ contactId: contact.id }}
+        className="flex flex-1 items-center gap-4 min-w-0"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <ContactAvatar contact={contact} size="md" />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline gap-2">
+            <span className="font-display text-base font-semibold tracking-tight truncate">
+              {fullName(contact)}
             </span>
-          )}
-          {titleLine(contact) && (
-            <span className="text-xs text-muted-foreground truncate hidden sm:inline">
-              · {titleLine(contact)}
-            </span>
-          )}
-          {contact.is_favorite && (
-            <Star className="size-3.5 shrink-0 fill-amber-400 text-amber-400" />
-          )}
-        </div>
-        <div className="mt-1 flex items-center gap-2 text-xs">
-          <span
-            className={cn(
-              "inline-flex items-center gap-1",
-              lastContactTone(days),
+            {contact.pronouns && (
+              <span className="text-xs text-muted-foreground">
+                ({contact.pronouns})
+              </span>
             )}
-          >
-            <Clock className="size-3" />
-            {days == null
-              ? "No interactions yet"
-              : `${days}d since last contact`}
-          </span>
+            {titleLine(contact) && (
+              <span className="text-xs text-muted-foreground truncate hidden sm:inline">
+                · {titleLine(contact)}
+              </span>
+            )}
+            {contact.is_favorite && (
+              <Star className="size-3.5 shrink-0 fill-amber-400 text-amber-400" />
+            )}
+          </div>
+          <div className="mt-1 flex items-center gap-2 text-xs">
+            <span
+              className={cn(
+                "inline-flex items-center gap-1",
+                lastContactTone(days),
+              )}
+            >
+              <Clock className="size-3" />
+              {days == null
+                ? "No interactions yet"
+                : `${days}d since last contact`}
+            </span>
+          </div>
         </div>
-      </div>
-      <div className="hidden md:flex shrink-0 items-center gap-1.5">
-        {visibleTags.map((tag) => (
-          <Badge key={tag.id} variant="secondary" className="text-xs">
-            {tag.name}
-          </Badge>
-        ))}
-        {extraTags > 0 && (
-          <Badge variant="outline" className="text-xs">
-            +{extraTags}
-          </Badge>
-        )}
-      </div>
-    </Link>
+        <div className="hidden md:flex shrink-0 items-center gap-1.5">
+          {visibleTags.map((tag) => (
+            <Badge key={tag.id} variant="secondary" className="text-xs">
+              {tag.name}
+            </Badge>
+          ))}
+          {extraTags > 0 && (
+            <Badge variant="outline" className="text-xs">
+              +{extraTags}
+            </Badge>
+          )}
+        </div>
+      </Link>
+    </div>
   )
 }
 
@@ -154,6 +224,15 @@ export const ContactsList = () => {
   })
   const [search, setSearch] = useState(urlSearch ?? "")
   const [pageIndex, setPageIndex] = useState(0)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [selectAllFiltered, setSelectAllFiltered] = useState(false)
+  const [previewModal, setPreviewModal] = useState<PreviewModalState>({
+    open: false,
+    action: null,
+    count: 0,
+    contacts: [],
+  })
+  const [isLoading, setIsLoading] = useState(false)
 
   // Fetch saved filters to find active filter name
   const { data: filtersData } = useSuspenseQuery({
@@ -177,7 +256,7 @@ export const ContactsList = () => {
 
   const allContacts = useMemo(() => data?.data ?? [], [data?.data])
   const filtered = useMemo(
-    () => allContacts.filter((c) => matchesSearch(c, search)),
+    () => allContacts.filter((c: ContactPublic) => matchesSearch(c, search)),
     [allContacts, search],
   )
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
@@ -186,6 +265,238 @@ export const ContactsList = () => {
     safePageIndex * PAGE_SIZE,
     (safePageIndex + 1) * PAGE_SIZE,
   )
+
+  const selectedCount = selectedIds.size
+  const isAllSelected =
+    paged.length > 0 && paged.every((c: ContactPublic) => selectedIds.has(c.id))
+  const isSomeSelected = paged.some((c: ContactPublic) => selectedIds.has(c.id))
+
+  const handleToggleAll = useCallback(() => {
+    if (isAllSelected) {
+      // Deselect all on current page
+      const newSelected = new Set(selectedIds)
+      paged.forEach((c: ContactPublic) => {
+        newSelected.delete(c.id)
+      })
+      setSelectedIds(newSelected)
+    } else {
+      // Select all on current page
+      const newSelected = new Set(selectedIds)
+      paged.forEach((c: ContactPublic) => {
+        newSelected.add(c.id)
+      })
+      setSelectedIds(newSelected)
+    }
+  }, [paged, selectedIds, isAllSelected])
+
+  const handleToggle = useCallback(
+    (id: string) => {
+      const newSelected = new Set(selectedIds)
+      if (newSelected.has(id)) {
+        newSelected.delete(id)
+      } else {
+        newSelected.add(id)
+      }
+      setSelectedIds(newSelected)
+    },
+    [selectedIds],
+  )
+
+  const handleSelectAllFiltered = useCallback(async () => {
+    if (selectAllFiltered) {
+      setSelectedIds(new Set())
+      setSelectAllFiltered(false)
+    } else {
+      // Preview how many contacts would be selected
+      try {
+        const result = await ContactsService.previewBulkContacts({
+          search: search || undefined,
+        })
+        setPreviewModal({
+          open: true,
+          action: null,
+          count: result.count ?? 0,
+          contacts: result.data ?? [],
+        })
+        setSelectAllFiltered(true)
+      } catch (_error) {
+        toast.error("Failed to preview contacts")
+      }
+    }
+  }, [search, selectAllFiltered])
+
+  const handleExportCsv = useCallback(async () => {
+    try {
+      // Build query string
+      const params = new URLSearchParams()
+      if (selectAllFiltered) params.append("select_all_filtered", "true")
+      if (search) params.append("search", search)
+
+      // Get token from localStorage
+      const token = localStorage.getItem("token") || ""
+
+      const response = await fetch(
+        `/api/v1/import-export/export/csv?${params.toString()}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      )
+
+      if (!response.ok) throw new Error("Failed to export CSV")
+
+      const blob = await response.blob()
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = url
+      link.setAttribute("download", "contacts.csv")
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+
+      toast.success("CSV exported successfully")
+    } catch (_error) {
+      toast.error("Failed to export CSV")
+    }
+  }, [selectAllFiltered, search])
+
+  const handleUndo = useCallback(
+    async (undoData: { ids: string[]; action: BulkActionId }) => {
+      // Reverse the action
+      const operations: BulkContactRequest["operations"] = {}
+      switch (undoData.action) {
+        case "archive":
+          operations.set_is_archived = false
+          break
+        case "unarchive":
+          operations.set_is_archived = true
+          break
+        case "favorite":
+          operations.set_is_favorite = false
+          break
+        case "unfavorite":
+          operations.set_is_favorite = true
+          break
+      }
+      try {
+        await ContactsService.bulkUpdateContacts({
+          requestBody: {
+            contact_ids: undoData.ids,
+            operations,
+          },
+        })
+        toast.success("Undo successful")
+      } catch (_error) {
+        toast.error("Undo failed")
+      }
+    },
+    [],
+  )
+
+  const handleBulkAction = useCallback(
+    async (actionId: BulkActionId) => {
+      if (actionId === "export") {
+        handleExportCsv()
+        return
+      }
+
+      if (selectedCount === 0 && !selectAllFiltered) {
+        toast.error("No contacts selected")
+        return
+      }
+
+      setIsLoading(true)
+      try {
+        const operations: BulkContactRequest["operations"] = {}
+
+        switch (actionId) {
+          case "archive":
+            operations.set_is_archived = true
+            break
+          case "unarchive":
+            operations.set_is_archived = false
+            break
+          case "favorite":
+            operations.set_is_favorite = true
+            break
+          case "unfavorite":
+            operations.set_is_favorite = false
+            break
+          case "delete":
+            operations.set_is_archived = true
+            break
+        }
+
+        const body: BulkContactRequest = {
+          operations,
+          select_all_filtered: selectAllFiltered || undefined,
+          contact_ids: selectAllFiltered ? undefined : Array.from(selectedIds),
+          filters: selectAllFiltered
+            ? {
+                search: search || undefined,
+              }
+            : undefined,
+        }
+
+        const result = await ContactsService.bulkUpdateContacts({
+          requestBody: body,
+        })
+        toast.success(`Updated ${result.updated_count} contacts`, {
+          action: {
+            label: "Undo",
+            onClick: () => {
+              const ids = selectAllFiltered
+                ? filtered.map((c: ContactPublic) => c.id)
+                : Array.from(selectedIds)
+              handleUndo({ ids, action: actionId })
+            },
+          },
+        })
+        if (result.failed_ids && result.failed_ids.length > 0) {
+          toast.error(`Failed to update ${result.failed_ids.length} contacts`)
+        }
+
+        // Clear selection and refresh
+        setSelectedIds(new Set())
+        setSelectAllFiltered(false)
+      } catch (_error) {
+        toast.error("Bulk operation failed")
+      } finally {
+        setIsLoading(false)
+        setPreviewModal({ open: false, action: null, count: 0, contacts: [] })
+      }
+    },
+    [
+      selectedCount,
+      selectAllFiltered,
+      selectedIds,
+      search,
+      handleExportCsv,
+      handleUndo,
+      filtered.map,
+    ],
+  )
+
+  const handlePreviewAction = useCallback(
+    (actionId: BulkActionId) => {
+      if (actionId === "export") {
+        handleExportCsv()
+        return
+      }
+      setPreviewModal((prev) => ({ ...prev, open: true, action: actionId }))
+    },
+    [handleExportCsv],
+  )
+
+  const handleConfirmAction = useCallback(() => {
+    if (previewModal.action) {
+      handleBulkAction(previewModal.action)
+    }
+  }, [previewModal.action, handleBulkAction])
 
   return (
     <div className="space-y-6">
@@ -209,6 +520,7 @@ export const ContactsList = () => {
                 </button>
               </span>
             )}
+            {selectedCount > 0 && <> · {selectedCount} selected</>}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -221,6 +533,43 @@ export const ContactsList = () => {
           <AddContactDialog />
         </div>
       </div>
+
+      {/* Bulk Action Bar */}
+      {selectedCount > 0 || selectAllFiltered ? (
+        <div className="flex items-center gap-2 p-4 bg-muted/50 rounded-2xl border">
+          <Button variant="outline" size="sm" onClick={handleSelectAllFiltered}>
+            {selectAllFiltered ? (
+              <>Deselect All ({previewModal.count})</>
+            ) : (
+              <>Select All Filtered</>
+            )}
+          </Button>
+          <div className="h-6 w-px bg-border" />
+          {BULK_ACTIONS.map((action) => (
+            <Button
+              key={action.id}
+              variant="ghost"
+              size="sm"
+              onClick={() => handlePreviewAction(action.id as BulkActionId)}
+              className={action.color}
+            >
+              <action.icon className="size-4 mr-2" />
+              {action.label}
+            </Button>
+          ))}
+          <div className="flex-1" />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setSelectedIds(new Set())
+              setSelectAllFiltered(false)
+            }}
+          >
+            Clear Selection
+          </Button>
+        </div>
+      ) : null}
 
       <div className="relative">
         <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -240,10 +589,32 @@ export const ContactsList = () => {
         />
       </div>
 
+      {/* Select all checkbox for current page */}
+      {filtered.length > 0 && (
+        <div className="flex items-center gap-2 px-4">
+          <Checkbox
+            checked={isAllSelected}
+            onCheckedChange={handleToggleAll}
+            aria-label="Select all on this page"
+            {...(isSomeSelected && !isAllSelected
+              ? { indeterminate: true }
+              : {})}
+          />
+          <span className="text-sm text-muted-foreground">
+            {isAllSelected ? "All on page selected" : "Select all on this page"}
+          </span>
+        </div>
+      )}
+
       {paged.length > 0 ? (
         <div className="space-y-2">
-          {paged.map((contact) => (
-            <ContactRow key={contact.id} contact={contact} />
+          {paged.map((contact: ContactPublic) => (
+            <ContactRow
+              key={contact.id}
+              contact={contact}
+              selected={selectedIds.has(contact.id)}
+              onToggle={handleToggle}
+            />
           ))}
         </div>
       ) : search ? (
@@ -308,6 +679,66 @@ export const ContactsList = () => {
           </div>
         </div>
       )}
+
+      {/* Preview/Confirm Modal */}
+      <Dialog
+        open={previewModal.open}
+        onOpenChange={(open) => setPreviewModal((prev) => ({ ...prev, open }))}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Bulk Action</DialogTitle>
+            <DialogDescription>
+              {previewModal.action === "delete" ? (
+                <>
+                  This will archive{" "}
+                  <strong>{previewModal.count || selectedCount}</strong>{" "}
+                  contacts. This action cannot be undone.
+                </>
+              ) : (
+                <>
+                  This will apply the "
+                  <strong>
+                    {
+                      BULK_ACTIONS.find((a) => a.id === previewModal.action)
+                        ?.label
+                    }
+                  </strong>
+                  " action to{" "}
+                  <strong>{previewModal.count || selectedCount}</strong>{" "}
+                  contacts.
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() =>
+                setPreviewModal({
+                  open: false,
+                  action: null,
+                  count: 0,
+                  contacts: [],
+                })
+              }
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmAction}
+              disabled={isLoading}
+              className={
+                previewModal.action === "delete"
+                  ? "bg-red-600 hover:bg-red-700"
+                  : undefined
+              }
+            >
+              {isLoading ? "Processing..." : "Confirm"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

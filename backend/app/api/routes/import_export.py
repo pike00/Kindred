@@ -150,6 +150,7 @@ def export_json(
     return JsonExportResponse(contacts=[c.model_dump() for c in contacts])
 
 
+
 def _split_vcards(text: str) -> list[str]:
     """Split a multi-vCard file into individual vCard strings."""
     cards = []

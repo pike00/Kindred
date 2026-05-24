@@ -1,5 +1,7 @@
 """Contact management routes."""
 
+from __future__ import annotations
+
 import logging
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -60,8 +62,17 @@ class AvatarUploadResponse(SQLModel):
 
     avatar_url: str
 
+logger = logging.getLogger(__name__)
+
+router = APIRouter(prefix="/contacts", tags=["contacts"])
+
+
+# ─── Bulk operations models ────────────────────────────────────────────────
+
 
 class BulkContactFilter(BaseModel):
+    """Filter criteria matching list_contacts parameters."""
+
     search: str | None = None
     tag_id: uuid.UUID | None = None
     is_favorite: bool | None = None
@@ -70,6 +81,9 @@ class BulkContactFilter(BaseModel):
 
 
 class BulkContactOperation(BaseModel):
+    """A single operation to apply to matching contacts."""
+
+    # Tag operations
     add_tag_ids: list[uuid.UUID] | None = None
     remove_tag_ids: list[uuid.UUID] | None = None
     set_is_archived: bool | None = None
@@ -77,23 +91,28 @@ class BulkContactOperation(BaseModel):
 
 
 class BulkContactRequest(BaseModel):
+    """Bulk operation request body."""
+
+    # Either provide explicit contact_ids...
     contact_ids: list[uuid.UUID] | None = None
+    # ...or use select_all_filtered with optional filters
     select_all_filtered: bool = False
     filters: BulkContactFilter | None = None
+    # Max contacts per request (safety limit)
     limit: int = 500
+    # Operations to apply
     operations: BulkContactOperation
 
 
 class BulkContactResult(BaseModel):
+    """Bulk operation result."""
+
     updated_count: int
     skipped_count: int
     failed_ids: list[uuid.UUID] = []
 
 
-logger = logging.getLogger(__name__)
-
-router = APIRouter(prefix="/contacts", tags=["contacts"])
-
+# ─── Helper functions ──────────────────────────────────────────────────────
 
 _arq_pool = None
 
@@ -163,15 +182,21 @@ def _build_filtered_contact_stmt(
     filters: BulkContactFilter | None,
     include_deleted: bool = False,
 ) -> Any:
+    """Build a SQLAlchemy statement for contacts matching the given filters."""
     stmt = select(Contact).where(
         Contact.id.in_(visible_contact_ids(user, include_deleted=include_deleted))
     )
+
     if filters is None:
-        return stmt.where(Contact.is_archived.is_(False))
+        # Default: exclude archived when not explicitly included
+        stmt = stmt.where(Contact.is_archived.is_(False))
+        return stmt
+
     if filters.is_archived is not None:
         stmt = stmt.where(Contact.is_archived == filters.is_archived)
     elif not include_deleted:
         stmt = stmt.where(Contact.is_archived.is_(False))
+
     if filters.is_favorite is not None:
         stmt = stmt.where(Contact.is_favorite == filters.is_favorite)
     if filters.stage is not None:
@@ -198,9 +223,13 @@ def bulk_update_contacts(
     """Bulk-update contacts atomically."""
     limit = min(max(1, body.limit), 500)
     if body.select_all_filtered:
-        stmt = _build_filtered_contact_stmt(current_user, body.filters)
-        contacts = session.exec(stmt.limit(limit)).all()
+        stmt = _build_filtered_contact_stmt(
+            current_user, body.filters, include_deleted=False
+        )
+        stmt = stmt.limit(limit)
+        contacts = session.exec(stmt).all()
     elif body.contact_ids:
+        # Fetch only the requested IDs that are visible to the user
         stmt = select(Contact).where(
             Contact.id.in_(visible_contact_ids(current_user, include_deleted=False)),
             Contact.id.in_(body.contact_ids),
@@ -211,15 +240,18 @@ def bulk_update_contacts(
             status_code=400,
             detail="Provide either contact_ids or set select_all_filtered=true",
         )
+
     if not contacts:
         return BulkContactResult(updated_count=0, skipped_count=0)
 
     ops = body.operations
     failed_ids: list[uuid.UUID] = []
     updated_count = 0
+
     try:
         for contact in contacts:
             try:
+                # Tag operations
                 if ops.add_tag_ids is not None:
                     existing_tag_ids = {
                         ct.tag_id
@@ -234,6 +266,7 @@ def bulk_update_contacts(
                             session.add(
                                 ContactTag(contact_id=contact.id, tag_id=tag_id)
                             )
+
                 if ops.remove_tag_ids is not None:
                     for tag_id in ops.remove_tag_ids:
                         ct = session.exec(
@@ -244,22 +277,40 @@ def bulk_update_contacts(
                         ).first()
                         if ct:
                             session.delete(ct)
+
                 if ops.set_is_archived is not None:
                     contact.is_archived = ops.set_is_archived
                     session.add(contact)
+
                 if ops.set_is_favorite is not None:
                     contact.is_favorite = ops.set_is_favorite
                     session.add(contact)
+
                 updated_count += 1
+
             except Exception as exc:
                 failed_ids.append(contact.id)
                 logger.warning(f"Failed to update contact {contact.id}: {exc}")
+
         session.commit()
+
     except Exception as exc:
         session.rollback()
+        logger.error(f"Bulk update transaction failed: {exc}")
         raise HTTPException(status_code=500, detail="Bulk update failed") from exc
 
     skipped_count = len(contacts) - updated_count - len(failed_ids)
+
+    # Re-index updated contacts in search (fire-and-forget)
+    try:
+        import asyncio
+
+        for contact in contacts:
+            if contact.id not in failed_ids:
+                asyncio.create_task(_enqueue_contact_index(contact))
+    except Exception:
+        pass  # Non-critical; search will catch up eventually
+
     return BulkContactResult(
         updated_count=updated_count,
         skipped_count=skipped_count,
@@ -280,6 +331,7 @@ def preview_bulk_contacts(
     limit: int = 500,
 ) -> ContactsPublic:
     """Preview contacts that would be affected by a bulk operation."""
+
     limit = min(max(1, limit), 500)
     if select_all_filtered:
         filters = BulkContactFilter(
@@ -325,11 +377,9 @@ def list_contacts(
     ``include_deleted=true`` to surface them alongside live rows, or
     ``only_deleted=true`` to fetch the trash view exclusively.
     """
-    # Trash view implies surfacing deleted rows.
     if only_deleted:
         include_deleted = True
 
-    # Build base query
     statement = select(Contact).where(
         Contact.id.in_(
             visible_contact_ids(current_user, include_deleted=include_deleted)
@@ -344,11 +394,9 @@ def list_contacts(
             return ContactsPublic(data=[], count=0)
         statement = statement.where(Contact.id.in_(ids))
 
-    # Apply filters
     if is_archived is not None:
         statement = statement.where(Contact.is_archived == is_archived)
     elif ids is None:
-        # Default: exclude archived (skipped when resolving by explicit id list)
         statement = statement.where(Contact.is_archived.is_(False))
 
     if is_favorite is not None:
@@ -394,16 +442,13 @@ def list_contacts(
         # Apply the filter_json to the statement
         statement = apply_filter_json(statement, saved_filter.filter_json)
 
-    # Count (before pagination)
     count_statement = select(func.count()).select_from(statement.subquery())
     count = session.exec(count_statement).one()
 
-    # Apply eager loading for relationships
     statement = statement.options(
         selectinload(Contact.tags),
     )
 
-    # Apply ordering and pagination
     statement = (
         statement.order_by(col(Contact.first_name).asc(), col(Contact.last_name).asc())
         .offset(skip)
@@ -411,9 +456,7 @@ def list_contacts(
     )
     contacts = session.exec(statement).all()
 
-    # Convert to response model
     result = [ContactPublic.model_validate(contact) for contact in contacts]
-
     return ContactsPublic(data=result, count=count)
 
 
@@ -454,14 +497,11 @@ def list_losing_touch(
             if now > deadline:
                 overdue.append(contact)
 
-    # Sort by most overdue first
     overdue.sort(
         key=lambda c: c.last_contacted_at or datetime.min.replace(tzinfo=timezone.utc)
     )
 
-    # Convert to response model
     result = [ContactPublic.model_validate(contact) for contact in overdue[:limit]]
-
     return ContactsPublic(data=result, count=len(overdue))
 
 
@@ -583,7 +623,6 @@ def get_contact(
     contact = session.exec(statement).first()
     if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
-
     return ContactPublic.model_validate(contact)
 
 
@@ -607,7 +646,6 @@ def create_contact(
     )
     session.commit()
 
-    # Reload contact with eager-loaded relationships
     statement = (
         select(Contact)
         .where(Contact.id == contact.id)
@@ -616,8 +654,6 @@ def create_contact(
         )
     )
     contact = session.exec(statement).first()
-
-    # Enqueue indexing in background (non-blocking)
     background_tasks.add_task(_enqueue_contact_index, contact)
     return ContactPublic.model_validate(contact)
 
@@ -679,19 +715,16 @@ def update_contact(
 
     # Update tag associations if provided
     if tag_ids is not None:
-        # Remove existing
         existing = session.exec(
             select(ContactTag).where(ContactTag.contact_id == contact.id)
         ).all()
         for ct in existing:
             session.delete(ct)
-        # Add new
         for tag_id in tag_ids:
             session.add(ContactTag(contact_id=contact.id, tag_id=tag_id))
 
     session.commit()
 
-    # Reload with eager loading
     statement = (
         select(Contact)
         .where(Contact.id == contact.id)
@@ -700,8 +733,6 @@ def update_contact(
         )
     )
     contact = session.exec(statement).first()
-
-    # Enqueue indexing in background (non-blocking)
     background_tasks.add_task(_enqueue_contact_index, contact)
     return ContactPublic.model_validate(contact)
 
@@ -729,8 +760,6 @@ def delete_contact(
     contact.deleted_at = datetime.now(timezone.utc)
     session.add(contact)
     session.commit()
-
-    # Hide from search results while soft-deleted; restore re-indexes.
     background_tasks.add_task(_enqueue_contact_removal, str(contact_id))
     return Ok()
 
@@ -794,6 +823,64 @@ def list_contact_mentions(
         for note, src in rows
     ]
 
+
+
+class _MentionSourceContact(BaseModel):
+    id: uuid.UUID
+    first_name: str
+    last_name: str | None = None
+    avatar_url: str | None = None
+
+
+class NoteMentionPublic(BaseModel):
+    note_id: uuid.UUID
+    note_body: str
+    note_created_at: datetime
+    source_contact: _MentionSourceContact
+
+
+@router.get("/{contact_id}/mentions", response_model=list[NoteMentionPublic])
+def list_contact_mentions(
+    session: SessionDep,
+    current_user: CurrentUser,
+    contact_id: uuid.UUID,
+) -> Any:
+    """List notes that @-mention this contact."""
+    contact = session.exec(
+        select(Contact).where(
+            Contact.id == contact_id,
+            Contact.id.in_(visible_contact_ids(current_user)),
+        )
+    ).first()
+    if not contact:
+        raise HTTPException(status_code=404, detail="Contact not found")
+
+    rows = session.exec(
+        select(Note, Contact)
+        .join(NoteMention, NoteMention.note_id == Note.id)
+        .join(Contact, Contact.id == Note.contact_id)
+        .where(
+            NoteMention.contact_id == contact_id,
+            Note.owner_id == current_user.id,
+            Note.contact_id != contact_id,
+        )
+        .order_by(Note.created_at.desc())
+    ).all()
+
+    return [
+        NoteMentionPublic(
+            note_id=note.id,
+            note_body=note.body,
+            note_created_at=note.created_at,
+            source_contact=_MentionSourceContact(
+                id=src.id,
+                first_name=src.first_name,
+                last_name=src.last_name,
+                avatar_url=src.avatar_url,
+            ),
+        )
+        for note, src in rows
+    ]
 
 
 @router.post("/{contact_id}/restore", response_model=ContactPublic)

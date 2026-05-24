@@ -105,7 +105,7 @@ export default function IcalImport() {
   })
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files && e.target.files[0] ?? null
+    const file = e.target.files?.[0] ?? null
     setSelectedFile(file)
     setProposals([])
     setUploadResult(null)
@@ -159,7 +159,7 @@ export default function IcalImport() {
     )
   }
 
-  const formatDate = (dateStr: string | null) => {
+  const _formatDate = (dateStr: string | null) => {
     if (!dateStr) return "Unknown"
     try {
       return format(new Date(dateStr), "yyyy-MM-dd HH:mm")
@@ -192,11 +192,11 @@ export default function IcalImport() {
               role="button"
               tabIndex={0}
               className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:bg-muted/50 transition-colors"
-              onClick={() => fileInputRef.current && fileInputRef.current.click()}
+              onClick={() => fileInputRef.current?.click()}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
-                  fileInputRef.current && fileInputRef.current.click();
+                  fileInputRef.current?.click();
                 }
               }
               onDragOver={(e) => {
@@ -206,7 +206,7 @@ export default function IcalImport() {
               onDrop={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                const file = e.dataTransfer.files && e.dataTransfer.files[0];
+                const file = e.dataTransfer.files?.[0];
                 if (file) {
                   setSelectedFile(file);
                   setProposals([]);
@@ -362,7 +362,7 @@ export default function IcalImport() {
                         </div>
                       </TableCell>
                       <TableCell className="text-sm">
-                        {formatDate(prop.occurred_at)}
+                        {_formatDate(prop.occurred_at)}
                       </TableCell>
                       <TableCell>
                         {prop.already_imported && (
