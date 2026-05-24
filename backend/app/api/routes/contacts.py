@@ -757,6 +757,7 @@ def list_contact_mentions(
     ]
 
 
+
 @router.post("/{contact_id}/restore", response_model=ContactPublic)
 def restore_contact(
     session: SessionDep,
