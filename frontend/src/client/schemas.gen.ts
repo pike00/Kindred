@@ -2006,6 +2006,16 @@ export const ContactPublicSchema = {
             type: 'array',
             title: 'Stage Events',
             default: []
+        },
+        organization: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/OrganizationPublic'
+                },
+                {
+                    type: 'null'
+                }
+            ]
         }
     },
     type: 'object',
@@ -5180,6 +5190,525 @@ export const OkSchema = {
     title: 'Ok'
 } as const;
 
+export const OrganizationCreateSchema = {
+    properties: {
+        name: {
+            type: 'string',
+            maxLength: 255,
+            title: 'Name',
+            description: 'Organization name; deduplicated via trimmed/lowercased value per owner.'
+        },
+        domain: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Domain',
+            description: "Domain for auto-linking (e.g., 'acme.com')."
+        },
+        industry: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Industry',
+            description: 'Industry sector.'
+        },
+        notes: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 2000
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Notes',
+            description: 'Freeform notes about the organization.'
+        },
+        address_label: {
+            type: 'string',
+            maxLength: 100,
+            title: 'Address Label',
+            description: "Label for the organization's address (e.g., 'main', 'hq').",
+            default: 'main'
+        },
+        address_street: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 500
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Street',
+            description: 'Street line 1.'
+        },
+        address_extended: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 500
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Extended',
+            description: 'Apartment, suite, floor, etc.'
+        },
+        address_city: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address City',
+            description: 'City.'
+        },
+        address_region: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Region',
+            description: 'State, province, or region.'
+        },
+        address_postal_code: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 50
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Postal Code',
+            description: 'ZIP or postal code.'
+        },
+        address_country: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Country',
+            description: 'Country.'
+        },
+        address_latitude: {
+            anyOf: [
+                {
+                    type: 'number'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Latitude',
+            description: 'Geocoded latitude.'
+        },
+        address_longitude: {
+            anyOf: [
+                {
+                    type: 'number'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Longitude',
+            description: 'Geocoded longitude.'
+        }
+    },
+    type: 'object',
+    required: ['name'],
+    title: 'OrganizationCreate'
+} as const;
+
+export const OrganizationPublicSchema = {
+    properties: {
+        name: {
+            type: 'string',
+            maxLength: 255,
+            title: 'Name',
+            description: 'Organization name; deduplicated via trimmed/lowercased value per owner.'
+        },
+        domain: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Domain',
+            description: "Domain for auto-linking (e.g., 'acme.com')."
+        },
+        industry: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Industry',
+            description: 'Industry sector.'
+        },
+        notes: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 2000
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Notes',
+            description: 'Freeform notes about the organization.'
+        },
+        address_label: {
+            type: 'string',
+            maxLength: 100,
+            title: 'Address Label',
+            description: "Label for the organization's address (e.g., 'main', 'hq').",
+            default: 'main'
+        },
+        address_street: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 500
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Street',
+            description: 'Street line 1.'
+        },
+        address_extended: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 500
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Extended',
+            description: 'Apartment, suite, floor, etc.'
+        },
+        address_city: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address City',
+            description: 'City.'
+        },
+        address_region: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Region',
+            description: 'State, province, or region.'
+        },
+        address_postal_code: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 50
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Postal Code',
+            description: 'ZIP or postal code.'
+        },
+        address_country: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Country',
+            description: 'Country.'
+        },
+        address_latitude: {
+            anyOf: [
+                {
+                    type: 'number'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Latitude',
+            description: 'Geocoded latitude.'
+        },
+        address_longitude: {
+            anyOf: [
+                {
+                    type: 'number'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Longitude',
+            description: 'Geocoded longitude.'
+        },
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        owner_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Owner Id'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        },
+        updated_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Updated At'
+        },
+        contact_count: {
+            type: 'integer',
+            title: 'Contact Count',
+            default: 0
+        }
+    },
+    type: 'object',
+    required: ['name', 'id', 'owner_id', 'created_at', 'updated_at'],
+    title: 'OrganizationPublic'
+} as const;
+
+export const OrganizationUpdateSchema = {
+    properties: {
+        name: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Name'
+        },
+        domain: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Domain'
+        },
+        industry: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Industry'
+        },
+        notes: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Notes'
+        },
+        address_label: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Label'
+        },
+        address_street: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Street'
+        },
+        address_extended: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Extended'
+        },
+        address_city: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address City'
+        },
+        address_region: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Region'
+        },
+        address_postal_code: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Postal Code'
+        },
+        address_country: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Country'
+        },
+        address_latitude: {
+            anyOf: [
+                {
+                    type: 'number'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Latitude'
+        },
+        address_longitude: {
+            anyOf: [
+                {
+                    type: 'number'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Longitude'
+        }
+    },
+    type: 'object',
+    title: 'OrganizationUpdate'
+} as const;
+
+export const OrganizationsPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/OrganizationPublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'OrganizationsPublic'
+} as const;
+
 export const OverdueContactPublicSchema = {
     properties: {
         first_name: {
@@ -5508,6 +6037,16 @@ export const OverdueContactPublicSchema = {
             type: 'array',
             title: 'Stage Events',
             default: []
+        },
+        organization: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/OrganizationPublic'
+                },
+                {
+                    type: 'null'
+                }
+            ]
         },
         days_overdue: {
             anyOf: [

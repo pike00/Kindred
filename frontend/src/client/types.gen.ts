@@ -517,6 +517,7 @@ export type ContactPublic = {
     [key: string]: unknown;
 } | null);
     stage_events?: Array<ContactStageEventPublic>;
+    organization?: (OrganizationPublic | null);
 };
 
 export type ContactSource = 'MANUAL' | 'VCARD_IMPORT' | 'CARDDAV' | 'GOOGLE' | 'WEBHOOK';
@@ -1424,6 +1425,142 @@ export type Ok = {
     ok?: boolean;
 };
 
+export type OrganizationCreate = {
+    /**
+     * Organization name; deduplicated via trimmed/lowercased value per owner.
+     */
+    name: string;
+    /**
+     * Domain for auto-linking (e.g., 'acme.com').
+     */
+    domain?: (string | null);
+    /**
+     * Industry sector.
+     */
+    industry?: (string | null);
+    /**
+     * Freeform notes about the organization.
+     */
+    notes?: (string | null);
+    /**
+     * Label for the organization's address (e.g., 'main', 'hq').
+     */
+    address_label?: string;
+    /**
+     * Street line 1.
+     */
+    address_street?: (string | null);
+    /**
+     * Apartment, suite, floor, etc.
+     */
+    address_extended?: (string | null);
+    /**
+     * City.
+     */
+    address_city?: (string | null);
+    /**
+     * State, province, or region.
+     */
+    address_region?: (string | null);
+    /**
+     * ZIP or postal code.
+     */
+    address_postal_code?: (string | null);
+    /**
+     * Country.
+     */
+    address_country?: (string | null);
+    /**
+     * Geocoded latitude.
+     */
+    address_latitude?: (number | null);
+    /**
+     * Geocoded longitude.
+     */
+    address_longitude?: (number | null);
+};
+
+export type OrganizationPublic = {
+    /**
+     * Organization name; deduplicated via trimmed/lowercased value per owner.
+     */
+    name: string;
+    /**
+     * Domain for auto-linking (e.g., 'acme.com').
+     */
+    domain?: (string | null);
+    /**
+     * Industry sector.
+     */
+    industry?: (string | null);
+    /**
+     * Freeform notes about the organization.
+     */
+    notes?: (string | null);
+    /**
+     * Label for the organization's address (e.g., 'main', 'hq').
+     */
+    address_label?: string;
+    /**
+     * Street line 1.
+     */
+    address_street?: (string | null);
+    /**
+     * Apartment, suite, floor, etc.
+     */
+    address_extended?: (string | null);
+    /**
+     * City.
+     */
+    address_city?: (string | null);
+    /**
+     * State, province, or region.
+     */
+    address_region?: (string | null);
+    /**
+     * ZIP or postal code.
+     */
+    address_postal_code?: (string | null);
+    /**
+     * Country.
+     */
+    address_country?: (string | null);
+    /**
+     * Geocoded latitude.
+     */
+    address_latitude?: (number | null);
+    /**
+     * Geocoded longitude.
+     */
+    address_longitude?: (number | null);
+    id: string;
+    owner_id: string;
+    created_at: string;
+    updated_at: string;
+    contact_count?: number;
+};
+
+export type OrganizationsPublic = {
+    data: Array<OrganizationPublic>;
+    count: number;
+};
+
+export type OrganizationUpdate = {
+    name?: (string | null);
+    domain?: (string | null);
+    industry?: (string | null);
+    notes?: (string | null);
+    address_label?: (string | null);
+    address_street?: (string | null);
+    address_extended?: (string | null);
+    address_city?: (string | null);
+    address_region?: (string | null);
+    address_postal_code?: (string | null);
+    address_country?: (string | null);
+    address_latitude?: (number | null);
+    address_longitude?: (number | null);
+};
+
 export type OverdueContactPublic = {
     /**
      * Given name; required.
@@ -1513,6 +1650,7 @@ export type OverdueContactPublic = {
     [key: string]: unknown;
 } | null);
     stage_events?: Array<ContactStageEventPublic>;
+    organization?: (OrganizationPublic | null);
     days_overdue?: (number | null);
 };
 
@@ -2671,6 +2809,46 @@ export type NotesDeleteNoteData = {
 };
 
 export type NotesDeleteNoteResponse = (Ok);
+
+export type OrganizationsListOrganizationsData = {
+    limit?: number;
+    skip?: number;
+};
+
+export type OrganizationsListOrganizationsResponse = (OrganizationsPublic);
+
+export type OrganizationsCreateOrganizationData = {
+    requestBody: OrganizationCreate;
+};
+
+export type OrganizationsCreateOrganizationResponse = (OrganizationPublic);
+
+export type OrganizationsGetOrganizationData = {
+    organizationId: string;
+};
+
+export type OrganizationsGetOrganizationResponse = (OrganizationPublic);
+
+export type OrganizationsUpdateOrganizationData = {
+    organizationId: string;
+    requestBody: OrganizationUpdate;
+};
+
+export type OrganizationsUpdateOrganizationResponse = (OrganizationPublic);
+
+export type OrganizationsDeleteOrganizationData = {
+    organizationId: string;
+};
+
+export type OrganizationsDeleteOrganizationResponse = (unknown);
+
+export type OrganizationsGetOrganizationWithContactsData = {
+    organizationId: string;
+};
+
+export type OrganizationsGetOrganizationWithContactsResponse = ({
+    [key: string]: unknown;
+});
 
 export type PetsListPetsData = {
     contactId: string;

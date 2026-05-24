@@ -20,6 +20,7 @@ from app.api.routes import (
     login,
     media_recommendations,
     notes,
+    organizations,
     pets,
     private,
     relationship_inverse_map,
@@ -63,6 +64,7 @@ api_router.include_router(import_export.router)
 api_router.include_router(contact_pdf.router)
 api_router.include_router(webhooks.router)
 api_router.include_router(activity_logs.router)
+api_router.include_router(organizations.router)
 api_router.include_router(calendar.router)
 api_router.include_router(graph.router)
 api_router.include_router(search.router)

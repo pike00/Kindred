@@ -375,6 +375,137 @@ class TagSharesPublic(SQLModel):
     count: int
 
 
+# ─── Organization ────────────────────────────────────────────────────────────
+
+
+class OrganizationBase(SQLModel):
+    name: str = Field(
+        max_length=255,
+        description="Organization name; deduplicated via trimmed/lowercased value per owner.",
+    )
+    domain: str | None = Field(
+        default=None,
+        max_length=255,
+        description="Domain for auto-linking (e.g., 'acme.com').",
+    )
+    industry: str | None = Field(
+        default=None,
+        max_length=255,
+        description="Industry sector.",
+    )
+    notes: str | None = Field(
+        default=None,
+        max_length=2000,
+        description="Freeform notes about the organization.",
+    )
+    # Address fields (structured, matching existing Address model)
+    address_label: str = Field(
+        default="main",
+        max_length=100,
+        description="Label for the organization's address (e.g., 'main', 'hq').",
+    )
+    address_street: str | None = Field(
+        default=None,
+        max_length=500,
+        description="Street line 1.",
+    )
+    address_extended: str | None = Field(
+        default=None,
+        max_length=500,
+        description="Apartment, suite, floor, etc.",
+    )
+    address_city: str | None = Field(
+        default=None,
+        max_length=255,
+        description="City.",
+    )
+    address_region: str | None = Field(
+        default=None,
+        max_length=255,
+        description="State, province, or region.",
+    )
+    address_postal_code: str | None = Field(
+        default=None,
+        max_length=50,
+        description="ZIP or postal code.",
+    )
+    address_country: str | None = Field(
+        default=None,
+        max_length=255,
+        description="Country.",
+    )
+    address_latitude: float | None = Field(
+        default=None,
+        description="Geocoded latitude.",
+    )
+    address_longitude: float | None = Field(
+        default=None,
+        description="Geocoded longitude.",
+    )
+
+
+class OrganizationCreate(OrganizationBase):
+    pass
+
+
+class OrganizationUpdate(SQLModel):
+    name: str | None = Field(default=None, max_length=255)
+    domain: str | None = None
+    industry: str | None = None
+    notes: str | None = None
+    address_label: str | None = None
+    address_street: str | None = None
+    address_extended: str | None = None
+    address_city: str | None = None
+    address_region: str | None = None
+    address_postal_code: str | None = None
+    address_country: str | None = None
+    address_latitude: float | None = None
+    address_longitude: float | None = None
+
+
+class Organization(OrganizationBase, table=True):
+    """First-class organization entity, replacing free-text Contact.company."""
+
+    __tablename__ = "organization"
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description="Owner user; cascades on delete.",
+    )
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        description="When the organization was created (UTC).",
+    )
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
+        nullable=False,
+        description="Auto-bumped on edit (UTC).",
+    )
+
+
+class OrganizationPublic(OrganizationBase):
+    id: uuid.UUID
+    owner_id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
+    contact_count: int = 0
+
+
+class OrganizationsPublic(SQLModel):
+    data: list[OrganizationPublic]
+    count: int
+
+
 # ─── Contact ─────────────────────────────────────────────────────────────────
 
 
@@ -565,7 +696,13 @@ class Contact(ContactBase, table=True):
         sa_column=sa.Column("imessage_profile", sa.JSON, nullable=True),
         description="Raw iMessage profile data (JSON).",
     )
-
+    # Organization link (replaces free-text company during transition)
+    organization_id: uuid.UUID | None = Field(
+        default=None,
+        foreign_key="organization.id",
+        ondelete="SET NULL",
+        description="Linked Organization record; null for legacy company string.",
+    )
     # Computed: last time any interaction was logged with this contact
     last_contacted_at: datetime | None = Field(
         default=None,
@@ -603,6 +740,7 @@ class Contact(ContactBase, table=True):
         description="If merged, points to the surviving contact.",
     )
     # Relationships
+    # Relationships
     tags: list["Tag"] = Relationship(
         back_populates=None,
         link_model=ContactTag,
@@ -632,6 +770,7 @@ class ContactPublic(ContactBase):
     imessage_profile: dict | None = None
 
     stage_events: list["ContactStageEventPublic"] = []
+    organization: OrganizationPublic | None = None
 
 
 class ContactsPublic(SQLModel):
