@@ -8,7 +8,6 @@
     "build": "tsc -p tsconfig.build.json && vite build",
     "typecheck": "tsc --noEmit -p tsconfig.build.json",
     "lint": "biome check --write --unsafe --no-errors-on-unmatched --files-ignore-unknown=true ./",
-    "typecheck": "tsc --noEmit -p tsconfig.build.json",
     "preview": "vite preview",
     "generate-client": "openapi-ts",
     "test": "vitest run",
