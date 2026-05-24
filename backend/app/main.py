@@ -90,10 +90,10 @@ if settings.all_cors_origins:
 radicale_configuration = RadicaleConfig(DEFAULT_CONFIG_SCHEMA)
 radicale_configuration.update(
     {
-        "auth": {"type": "http_x_remote_user"},
+        "auth": {"type": "app.carddav.auth"},
         "storage": {"type": "app.carddav.storage"},
-    },
-    "app",
+        "rights": {"type": "app.carddav.rights"},
+    }
 )
 radicale_app = RadicaleApp(radicale_configuration)
 app.mount("/dav", WSGIMiddleware(radicale_app))

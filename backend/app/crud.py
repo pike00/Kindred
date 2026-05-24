@@ -739,6 +739,7 @@ def backfill_stage_events(
     return created
 
 
+
 def upsert_contact(
     *, session: Session, contact_in: ContactCreate, owner_id: uuid.UUID
 ) -> Contact:

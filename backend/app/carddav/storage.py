@@ -17,7 +17,8 @@ from radicale.storage import BaseCollection, BaseStorage
 from sqlmodel import Session, create_engine, select
 
 from app.core.config import settings
-from app.models import Contact, ContactSource, User
+from app.models import Address, Contact, ContactField, ContactFieldType, User
+from app.vcard import compute_etag
 
 
 def _http_datetime(dt: datetime) -> str:
@@ -108,41 +109,54 @@ class Collection(BaseCollection):
         vcard_text = item.serialize()
         parsed = vcard_to_contact_data(vcard_text)
 
-        # Get vCard UID for source_external_id
-        vcard_uid = parsed.get("uid")
-        source_external_id = str(vcard_uid) if vcard_uid else None
+        # Extract contact data and related objects
+        contact_data = parsed["contact"]
+        fields_data = parsed.get("fields", [])
+        addresses_data = parsed.get("addresses", [])
 
         with self._storage.get_session() as session:
             user = session.exec(select(User).where(User.email == self._user)).first()
             if not user:
                 raise ValueError(f"User {self._user} not found")
 
-            # Check if contact exists by (owner_id, source, source_external_id)
-            existing = None
-            if source_external_id:
+            # Check if contact exists
+            # Filter only valid Contact model fields from contact_data
+            valid_contact_fields = {
+                "first_name",
+                "last_name",
+                "middle_name",
+                "prefix",
+                "suffix",
+                "nickname",
+                "company",
+                "department",
+                "title",
+                "birthday",
+                "how_we_met",
+                "is_favorite",
+                "is_archived",
+                "is_deceased",
+                "deceased_at",
+                "stage",
+                "contact_frequency_days",
+                "avatar_url",
+            }
+            filtered_contact_data = {
+                k: v for k, v in contact_data.items() if k in valid_contact_fields
+            }
+
+            uid_str = href.replace(".vcf", "")
+            old_item = None
+            try:
+                uid = uuid_mod.UUID(uid_str)
                 existing = session.exec(
                     select(Contact).where(
+                        Contact.id == uid,
                         Contact.owner_id == user.id,
-                        Contact.source == ContactSource.CARDDAV,
-                        Contact.source_external_id == source_external_id,
                     )
                 ).first()
-
-            # Fall back to checking by ID from href (for backwards compatibility)
-            if not existing:
-                uid_str = href.replace(".vcf", "")
-                try:
-                    uid = uuid_mod.UUID(uid_str)
-                    existing = session.exec(
-                        select(Contact).where(
-                            Contact.id == uid,
-                            Contact.owner_id == user.id,
-                        )
-                    ).first()
-                except ValueError:
-                    pass
-
-            old_item = None
+            except ValueError:
+                existing = None
 
             if existing:
                 # Update existing contact
@@ -153,31 +167,84 @@ class Collection(BaseCollection):
                         href=href,
                     )
                 # Update fields from parsed vCard
-                contact_data = parsed["contact"]
-                for key, value in contact_data.items():
+                for key, value in filtered_contact_data.items():
                     if hasattr(existing, key):
                         setattr(existing, key, value)
+
+                # Update ContactField entries (phone/email)
+                # First, remove existing fields for this contact
+                session.exec(
+                    ContactField.delete().where(ContactField.contact_id == existing.id)
+                )
+                # Then add new fields from vCard
+                for field_info in fields_data:
+                    field = ContactField(
+                        contact_id=existing.id,
+                        field_type=ContactFieldType(field_info["field_type"]),
+                        label=field_info["label"],
+                        value=field_info["value"],
+                        is_primary=field_info.get("is_primary", False),
+                    )
+                    session.add(field)
+
+                # Update Address entries
+                # First, remove existing addresses for this contact
+                session.exec(Address.delete().where(Address.contact_id == existing.id))
+                # Then add new addresses from vCard
+                for addr_info in addresses_data:
+                    addr = Address(
+                        contact_id=existing.id,
+                        label=addr_info["label"],
+                        street=addr_info.get("street"),
+                        extended=addr_info.get("extended"),
+                        city=addr_info.get("city"),
+                        region=addr_info.get("region"),
+                        postal_code=addr_info.get("postal_code"),
+                        country=addr_info.get("country"),
+                    )
+                    session.add(addr)
+
                 existing.vcard_raw = vcard_text
-                existing.vcard_etag = item.etag
-                # Set source and source_external_id for provenance tracking
-                existing.source = ContactSource.CARDDAV
-                if source_external_id:
-                    existing.source_external_id = source_external_id
+                existing.vcard_etag = compute_etag(vcard_text)
                 session.add(existing)
             else:
                 # Create new contact
-                contact_data = parsed["contact"]
+                # Create the contact first
                 new_contact = Contact(
                     owner_id=user.id,
                     vcard_raw=vcard_text,
-                    vcard_etag=item.etag,
-                    source=ContactSource.CARDDAV,
-                    source_external_id=source_external_id,
-                    **contact_data,
+                    vcard_etag=compute_etag(vcard_text),
+                    **filtered_contact_data,
                 )
                 if parsed.get("uid"):
                     new_contact.id = parsed["uid"]
                 session.add(new_contact)
+                session.flush()  # Flush to get the ID
+
+                # Add ContactField entries (phone/email)
+                for field_info in fields_data:
+                    field = ContactField(
+                        contact_id=new_contact.id,
+                        field_type=ContactFieldType(field_info["field_type"]),
+                        label=field_info["label"],
+                        value=field_info["value"],
+                        is_primary=field_info.get("is_primary", False),
+                    )
+                    session.add(field)
+
+                # Add Address entries
+                for addr_info in addresses_data:
+                    addr = Address(
+                        contact_id=new_contact.id,
+                        label=addr_info["label"],
+                        street=addr_info.get("street"),
+                        extended=addr_info.get("extended"),
+                        city=addr_info.get("city"),
+                        region=addr_info.get("region"),
+                        postal_code=addr_info.get("postal_code"),
+                        country=addr_info.get("country"),
+                    )
+                    session.add(addr)
 
             session.commit()
 
