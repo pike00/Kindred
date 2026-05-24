@@ -248,6 +248,7 @@ def recompute_last_contacted_at(*, session: Session, contact_id: uuid.UUID) -> N
             InteractionAttendee.interaction_id == Interaction.id,  # type: ignore[arg-type]
         )
         .where(InteractionAttendee.contact_id == contact_id)
+        .where(Interaction.is_draft == False)  # noqa: E712
         .order_by(Interaction.occurred_at.desc())
         .limit(1)
     )
@@ -271,13 +272,15 @@ def create_interaction(
         session.add(
             InteractionAttendee(interaction_id=db_obj.id, contact_id=attendee_id)
         )
-        contact = session.get(Contact, attendee_id)
-        if contact and (
-            contact.last_contacted_at is None
-            or db_obj.occurred_at > contact.last_contacted_at
-        ):
-            contact.last_contacted_at = db_obj.occurred_at
-            session.add(contact)
+        # Drafts do not affect last_contacted_at; only confirmed interactions do.
+        if not db_obj.is_draft:
+            contact = session.get(Contact, attendee_id)
+            if contact and (
+                contact.last_contacted_at is None
+                or db_obj.occurred_at > contact.last_contacted_at
+            ):
+                contact.last_contacted_at = db_obj.occurred_at
+                session.add(contact)
     session.commit()
     session.refresh(db_obj)
     return db_obj

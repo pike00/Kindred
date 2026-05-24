@@ -1040,10 +1040,23 @@ export type InteractionCreate = {
      */
     duration_minutes?: (number | null);
     /**
+     * If True, this interaction is a draft and excluded from engagement metrics.
+     */
+    is_draft?: boolean;
+    /**
+     * Origin of the draft (voice_memo, email_suggestion, manual, import).
+     */
+    draft_source?: (InteractionDraftSource | null);
+    /**
      * Contacts that attended; must have at least one.
      */
     attendee_ids: Array<(string)>;
 };
+
+/**
+ * Origin of a draft interaction.
+ */
+export type InteractionDraftSource = 'voice_memo' | 'email_suggestion' | 'manual' | 'import';
 
 export type InteractionPublic = {
     /**
@@ -1066,6 +1079,8 @@ export type InteractionPublic = {
      * Length of the interaction in minutes.
      */
     duration_minutes?: (number | null);
+    is_draft?: boolean;
+    draft_source?: (InteractionDraftSource | null);
     id: string;
     attendees?: Array<InteractionAttendeeSummary>;
     created_at: string;
@@ -2478,6 +2493,7 @@ export type ImportExportExportCsvResponse = (unknown);
 
 export type InteractionsListInteractionsData = {
     contactId?: (string | null);
+    isDraft?: (boolean | null);
     limit?: number;
     skip?: number;
 };
@@ -2502,6 +2518,12 @@ export type InteractionsDeleteInteractionData = {
 };
 
 export type InteractionsDeleteInteractionResponse = (Ok);
+
+export type InteractionsConfirmDraftData = {
+    interactionId: string;
+};
+
+export type InteractionsConfirmDraftResponse = (InteractionPublic);
 
 export type JournalListJournalEntriesData = {
     limit?: number;

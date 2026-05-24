@@ -3860,6 +3860,23 @@ export const InteractionCreateSchema = {
             title: 'Duration Minutes',
             description: 'Length of the interaction in minutes.'
         },
+        is_draft: {
+            type: 'boolean',
+            title: 'Is Draft',
+            description: 'If True, this interaction is a draft and excluded from engagement metrics.',
+            default: false
+        },
+        draft_source: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/InteractionDraftSource'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            description: 'Origin of the draft (voice_memo, email_suggestion, manual, import).'
+        },
         attendee_ids: {
             items: {
                 type: 'string',
@@ -3874,6 +3891,13 @@ export const InteractionCreateSchema = {
     type: 'object',
     required: ['channel', 'occurred_at', 'attendee_ids'],
     title: 'InteractionCreate'
+} as const;
+
+export const InteractionDraftSourceSchema = {
+    type: 'string',
+    enum: ['voice_memo', 'email_suggestion', 'manual', 'import'],
+    title: 'InteractionDraftSource',
+    description: 'Origin of a draft interaction.'
 } as const;
 
 export const InteractionPublicSchema = {
@@ -3926,6 +3950,21 @@ export const InteractionPublicSchema = {
             ],
             title: 'Duration Minutes',
             description: 'Length of the interaction in minutes.'
+        },
+        is_draft: {
+            type: 'boolean',
+            title: 'Is Draft',
+            default: false
+        },
+        draft_source: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/InteractionDraftSource'
+                },
+                {
+                    type: 'null'
+                }
+            ]
         },
         id: {
             type: 'string',
