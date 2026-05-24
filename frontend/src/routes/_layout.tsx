@@ -5,6 +5,9 @@ import {
   redirect,
   useNavigate,
 } from "@tanstack/react-router"
+import { useEffect } from "react"
+import { ApiError } from "@/client"
+import ErrorComponent from "@/components/Common/ErrorComponent"
 import { CommandPalette } from "@/components/CommandPalette/CommandPalette"
 import {
   CommandPaletteProvider,
@@ -25,8 +28,26 @@ import { isLoggedIn } from "@/hooks/useAuth"
 import { useRegisterShortcuts } from "@/hooks/useKeyboardShortcuts"
 import { Search } from "@/lib/icons"
 
+function AuthGuardError({ error }: { error: unknown }) {
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+      localStorage.removeItem("access_token")
+      navigate({ to: "/login", replace: true })
+    }
+  }, [error, navigate])
+
+  if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+    return null
+  }
+
+  return <ErrorComponent />
+}
+
 export const Route = createFileRoute("/_layout")({
   component: Layout,
+  errorComponent: AuthGuardError,
   beforeLoad: async () => {
     if (!isLoggedIn()) {
       throw redirect({ to: "/login" })
