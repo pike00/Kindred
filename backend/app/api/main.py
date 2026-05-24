@@ -26,6 +26,7 @@ from app.api.routes import (
     relationship_inverse_map,
     relationships,
     reminders,
+    saved_filters,
     search,
     tag_shares,
     tags,
@@ -46,6 +47,7 @@ api_router.include_router(contacts.router)
 api_router.include_router(contact_stage_events.router)
 api_router.include_router(tags.router)
 api_router.include_router(tag_shares.router)
+api_router.include_router(saved_filters.router)
 api_router.include_router(contact_fields.router)
 api_router.include_router(addresses.router)
 api_router.include_router(relationships.router)

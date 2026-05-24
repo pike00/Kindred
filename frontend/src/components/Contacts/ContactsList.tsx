@@ -1,8 +1,13 @@
 import { useSuspenseQuery } from "@tanstack/react-query"
 import { Link, useNavigate, useSearch } from "@tanstack/react-router"
-import { useMemo, useState } from "react"
+import { useMemo } from "react"
 
-import { type ContactPublic, ContactsService } from "@/client"
+import {
+  type ContactPublic,
+  ContactsService,
+  SavedFiltersService,
+} from "@/client"
+import type { SavedFilterPublic } from "@/client/types.gen"
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
 import { EmptyState } from "@/components/Common/EmptyState"
 import { Badge } from "@/components/ui/badge"
@@ -21,6 +26,8 @@ import { cn } from "@/lib/utils"
 import { AddContactDialog } from "./AddContactDialog"
 
 const PAGE_SIZE = 25
+
+import { useState } from "react"
 
 function fullName(contact: ContactPublic): string {
   return (
@@ -135,13 +142,30 @@ export const ContactsList = () => {
   const seedMutation = useSeedDemo()
 
   const navigate = useNavigate({ from: "/contacts" })
-  const { search: urlSearch } = useSearch({ from: "/_layout/contacts/" })
+  const { search: urlSearch, saved_filter_id: urlFilterId } = useSearch({
+    from: "/_layout/contacts/",
+  })
   const [search, setSearch] = useState(urlSearch ?? "")
   const [pageIndex, setPageIndex] = useState(0)
 
+  // Fetch saved filters to find active filter name
+  const { data: filtersData } = useSuspenseQuery({
+    queryKey: ["saved-filters"],
+    queryFn: () =>
+      SavedFiltersService.listSavedFilters().then((res) => res.data),
+  })
+
+  const activeFilterId = urlFilterId
+  const activeFilter = filtersData?.data?.find(
+    (f: SavedFilterPublic) => f.id === activeFilterId,
+  )
+
   const { data } = useSuspenseQuery({
-    queryKey: ["contacts"],
-    queryFn: () => ContactsService.listContacts(),
+    queryKey: ["contacts", activeFilterId],
+    queryFn: () =>
+      ContactsService.listContacts(
+        activeFilterId ? { saved_filter_id: activeFilterId as any } : {},
+      ),
   })
 
   const allContacts = useMemo(() => data?.data ?? [], [data?.data])
@@ -166,6 +190,18 @@ export const ContactsList = () => {
           <p className="text-muted-foreground mt-1">
             {allContacts.length}{" "}
             {allContacts.length === 1 ? "person" : "people"}
+            {activeFilter && (
+              <span className="text-primary">
+                · Filtered by: {activeFilter.name}
+                <button
+                  type="button"
+                  onClick={() => navigate({ search: search ? { search } : {} })}
+                  className="ml-2 text-xs underline"
+                >
+                  Clear filter
+                </button>
+              </span>
+            )}
           </p>
         </div>
         <AddContactDialog />
