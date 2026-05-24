@@ -24,6 +24,7 @@ from app.api.routes import (
     private,
     relationships,
     reminders,
+    search,
     tag_shares,
     tags,
     users,
@@ -62,6 +63,7 @@ api_router.include_router(webhooks.router)
 api_router.include_router(activity_logs.router)
 api_router.include_router(calendar.router)
 api_router.include_router(graph.router)
+api_router.include_router(search.router)
 
 if settings.ENVIRONMENT == "local":
     api_router.include_router(private.router)

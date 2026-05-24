@@ -1651,6 +1651,28 @@ export type ReminderUpdate = {
     is_active?: (boolean | null);
 };
 
+/**
+ * Search results grouped by type with total counts.
+ */
+export type SearchResponse = {
+    results: Array<SearchResultItem>;
+    total: number;
+    query: string;
+};
+
+/**
+ * A single search result with type discriminator and ranking info.
+ */
+export type SearchResultItem = {
+    id: string;
+    type: string;
+    title: string;
+    snippet?: (string | null);
+    rank?: (number | null);
+    created_at?: (string | null);
+    updated_at?: (string | null);
+};
+
 export type SetupSubmit = {
     token: string;
     email: string;
@@ -2638,6 +2660,19 @@ export type RemindersGetChronicSnoozersData = {
 };
 
 export type RemindersGetChronicSnoozersResponse = (Array<ChronicSnoozer>);
+
+export type SearchSearchData = {
+    /**
+     * Max results per type
+     */
+    limit?: number;
+    /**
+     * Search query
+     */
+    q: string;
+};
+
+export type SearchSearchResponse = (SearchResponse);
 
 export type SetupSetupPageData = {
     token: string;
