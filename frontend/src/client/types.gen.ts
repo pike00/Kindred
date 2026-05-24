@@ -386,6 +386,10 @@ export type ContactCreate = {
      */
     pronouns?: (string | null);
     /**
+     * Enable automatic email log ingestion for this contact.
+     */
+    auto_log_email?: boolean;
+    /**
      * Source system that created this contact.
      */
     source?: ContactSource;
@@ -559,6 +563,10 @@ export type ContactPublic = {
      */
     pronouns?: (string | null);
     /**
+     * Enable automatic email log ingestion for this contact.
+     */
+    auto_log_email?: boolean;
+    /**
      * Source system that created this contact.
      */
     source?: ContactSource;
@@ -671,6 +679,7 @@ export type ContactUpdate = {
     source_external_id?: (string | null);
     timezone?: (string | null);
     pronouns?: (string | null);
+    auto_log_email?: (boolean | null);
     do_not_contact?: (boolean | null);
     do_not_contact_reason?: (string | null);
     tag_ids?: (Array<(string)> | null);
@@ -898,6 +907,38 @@ export type DebtUpdate = {
     reason?: (string | null);
     is_settled?: (boolean | null);
     settled_at?: (string | null);
+};
+
+export type EmailOAuthTokenPublic = {
+    /**
+     * OAuth provider name (e.g. 'gmail').
+     */
+    provider?: string;
+    /**
+     * The email address these tokens are for.
+     */
+    email_address: string;
+    /**
+     * Encrypted access token for the Gmail API.
+     */
+    encrypted_access_token: string;
+    /**
+     * Encrypted refresh token for obtaining new access tokens.
+     */
+    encrypted_refresh_token?: (string | null);
+    /**
+     * When the access token expires (UTC).
+     */
+    token_expires_at?: (string | null);
+    id: string;
+    contact_id: string;
+    created_at: string;
+    updated_at: string;
+};
+
+export type EmailOAuthTokensPublic = {
+    data: Array<EmailOAuthTokenPublic>;
+    count: number;
 };
 
 export type EnvironmentInfo = {
@@ -1163,6 +1204,26 @@ export type InteractionCreate = {
      */
     draft_source?: (InteractionDraftSource | null);
     /**
+     * RFC 2822 Message-ID for deduplication (EMAIL channel only).
+     */
+    message_id?: (string | null);
+    /**
+     * Email subject line (EMAIL channel only).
+     */
+    email_subject?: (string | null);
+    /**
+     * Email From header (EMAIL channel only).
+     */
+    email_from?: (string | null);
+    /**
+     * Email To header (EMAIL channel only).
+     */
+    email_to?: (string | null);
+    /**
+     * Email Date header (EMAIL channel only).
+     */
+    email_date?: (string | null);
+    /**
      * Contacts that attended; must have at least one.
      */
     attendee_ids: Array<(string)>;
@@ -1208,6 +1269,26 @@ export type InteractionPublic = {
     longitude?: (number | null);
     is_draft?: boolean;
     draft_source?: (InteractionDraftSource | null);
+    /**
+     * RFC 2822 Message-ID for deduplication (EMAIL channel only).
+     */
+    message_id?: (string | null);
+    /**
+     * Email subject line (EMAIL channel only).
+     */
+    email_subject?: (string | null);
+    /**
+     * Email From header (EMAIL channel only).
+     */
+    email_from?: (string | null);
+    /**
+     * Email To header (EMAIL channel only).
+     */
+    email_to?: (string | null);
+    /**
+     * Email Date header (EMAIL channel only).
+     */
+    email_date?: (string | null);
     id: string;
     attendees?: Array<InteractionAttendeeSummary>;
     created_at: string;
@@ -1753,6 +1834,10 @@ export type OverdueContactPublic = {
      * Contact's pronouns (free text, max 100 chars); nullable.
      */
     pronouns?: (string | null);
+    /**
+     * Enable automatic email log ingestion for this contact.
+     */
+    auto_log_email?: boolean;
     /**
      * Source system that created this contact.
      */
@@ -2862,6 +2947,56 @@ export type DebtsDeleteDebtPaymentData = {
 };
 
 export type DebtsDeleteDebtPaymentResponse = (unknown);
+
+export type EmailGmailAuthorizeData = {
+    /**
+     * Contact ID to associate with this email
+     */
+    contactId: string;
+    /**
+     * Email address being authorized
+     */
+    emailAddress: string;
+};
+
+export type EmailGmailAuthorizeResponse = ({
+    [key: string]: unknown;
+});
+
+export type EmailGmailCallbackData = {
+    code: string;
+    state: string;
+};
+
+export type EmailGmailCallbackResponse = ({
+    [key: string]: unknown;
+});
+
+export type EmailListEmailTokensData = {
+    contactId?: (string | null);
+};
+
+export type EmailListEmailTokensResponse = (EmailOAuthTokensPublic);
+
+export type EmailDeleteEmailTokenData = {
+    tokenId: string;
+};
+
+export type EmailDeleteEmailTokenResponse = ({
+    [key: string]: (string);
+});
+
+export type EmailPollContactEmailData = {
+    contactId: string;
+};
+
+export type EmailPollContactEmailResponse = ({
+    [key: string]: unknown;
+});
+
+export type EmailPollAllEmailsResponse = ({
+    [key: string]: unknown;
+});
 
 export type GiftsListGiftsData = {
     contactId: string;

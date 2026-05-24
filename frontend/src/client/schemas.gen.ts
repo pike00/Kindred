@@ -1530,6 +1530,12 @@ export const ContactCreateSchema = {
             title: 'Pronouns',
             description: "Contact's pronouns (free text, max 100 chars); nullable."
         },
+        auto_log_email: {
+            type: 'boolean',
+            title: 'Auto Log Email',
+            description: 'Enable automatic email log ingestion for this contact.',
+            default: false
+        },
         source: {
             '$ref': '#/components/schemas/ContactSource',
             description: 'Source system that created this contact.',
@@ -2070,6 +2076,12 @@ export const ContactPublicSchema = {
             title: 'Pronouns',
             description: "Contact's pronouns (free text, max 100 chars); nullable."
         },
+        auto_log_email: {
+            type: 'boolean',
+            title: 'Auto Log Email',
+            description: 'Enable automatic email log ingestion for this contact.',
+            default: false
+        },
         source: {
             '$ref': '#/components/schemas/ContactSource',
             description: 'Source system that created this contact.',
@@ -2607,6 +2619,17 @@ export const ContactUpdateSchema = {
                 }
             ],
             title: 'Pronouns'
+        },
+        auto_log_email: {
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Auto Log Email'
         },
         do_not_contact: {
             anyOf: [
@@ -3327,6 +3350,96 @@ export const DebtsPublicSchema = {
     type: 'object',
     required: ['data', 'count'],
     title: 'DebtsPublic'
+} as const;
+
+export const EmailOAuthTokenPublicSchema = {
+    properties: {
+        provider: {
+            type: 'string',
+            maxLength: 50,
+            title: 'Provider',
+            description: "OAuth provider name (e.g. 'gmail').",
+            default: 'gmail'
+        },
+        email_address: {
+            type: 'string',
+            maxLength: 255,
+            title: 'Email Address',
+            description: 'The email address these tokens are for.'
+        },
+        encrypted_access_token: {
+            type: 'string',
+            title: 'Encrypted Access Token',
+            description: 'Encrypted access token for the Gmail API.'
+        },
+        encrypted_refresh_token: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Encrypted Refresh Token',
+            description: 'Encrypted refresh token for obtaining new access tokens.'
+        },
+        token_expires_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Token Expires At',
+            description: 'When the access token expires (UTC).'
+        },
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        contact_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Contact Id'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        },
+        updated_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Updated At'
+        }
+    },
+    type: 'object',
+    required: ['email_address', 'encrypted_access_token', 'id', 'contact_id', 'created_at', 'updated_at'],
+    title: 'EmailOAuthTokenPublic'
+} as const;
+
+export const EmailOAuthTokensPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/EmailOAuthTokenPublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'EmailOAuthTokensPublic'
 } as const;
 
 export const EnvironmentInfoSchema = {
@@ -4258,6 +4371,71 @@ export const InteractionCreateSchema = {
             ],
             description: 'Origin of the draft (voice_memo, email_suggestion, manual, import).'
         },
+        message_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 998
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Message Id',
+            description: 'RFC 2822 Message-ID for deduplication (EMAIL channel only).'
+        },
+        email_subject: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 998
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Email Subject',
+            description: 'Email subject line (EMAIL channel only).'
+        },
+        email_from: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 2048
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Email From',
+            description: 'Email From header (EMAIL channel only).'
+        },
+        email_to: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 2048
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Email To',
+            description: 'Email To header (EMAIL channel only).'
+        },
+        email_date: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Email Date',
+            description: 'Email Date header (EMAIL channel only).'
+        },
         attendee_ids: {
             items: {
                 type: 'string',
@@ -4383,6 +4561,71 @@ export const InteractionPublicSchema = {
                     type: 'null'
                 }
             ]
+        },
+        message_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 998
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Message Id',
+            description: 'RFC 2822 Message-ID for deduplication (EMAIL channel only).'
+        },
+        email_subject: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 998
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Email Subject',
+            description: 'Email subject line (EMAIL channel only).'
+        },
+        email_from: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 2048
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Email From',
+            description: 'Email From header (EMAIL channel only).'
+        },
+        email_to: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 2048
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Email To',
+            description: 'Email To header (EMAIL channel only).'
+        },
+        email_date: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Email Date',
+            description: 'Email Date header (EMAIL channel only).'
         },
         id: {
             type: 'string',
@@ -6306,6 +6549,12 @@ export const OverdueContactPublicSchema = {
             ],
             title: 'Pronouns',
             description: "Contact's pronouns (free text, max 100 chars); nullable."
+        },
+        auto_log_email: {
+            type: 'boolean',
+            title: 'Auto Log Email',
+            description: 'Enable automatic email log ingestion for this contact.',
+            default: false
         },
         source: {
             '$ref': '#/components/schemas/ContactSource',

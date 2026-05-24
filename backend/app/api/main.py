@@ -13,6 +13,7 @@ from app.api.routes import (
     contacts_kanban,
     custom_fields,
     debts,
+    email,
     gifts,
     graph,
     import_export,
@@ -74,6 +75,7 @@ api_router.include_router(transcribe.router)
 api_router.include_router(activity_logs.router)
 api_router.include_router(organizations.router)
 api_router.include_router(vcard_conflicts.router)
+api_router.include_router(email.router)
 api_router.include_router(calendar.router)
 api_router.include_router(graph.router)
 api_router.include_router(ical.router)
