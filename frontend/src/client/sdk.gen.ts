@@ -492,6 +492,9 @@ export class ContactsService {
     /**
      * Create Contact
      * Create a new contact.
+     *
+     * If source_external_id is provided, uses upsert logic to update existing
+     * contact with same (owner_id, source, source_external_id) or create new.
      * @param data The data for the request.
      * @param data.requestBody
      * @returns ContactPublic Successful Response

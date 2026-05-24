@@ -229,14 +229,6 @@ class ContactFieldType(str, enum.Enum):
     PHONE = "phone"
 
 
-class ContactSource(str, enum.Enum):
-    MANUAL = "MANUAL"
-    VCARD_IMPORT = "VCARD_IMPORT"
-    CARDDAV = "CARDDAV"
-    GOOGLE = "GOOGLE"
-    WEBHOOK = "WEBHOOK"
-
-
 class GiftStatus(str, enum.Enum):
     IDEA = "idea"
     PURCHASED = "purchased"
@@ -285,6 +277,16 @@ class MediaCategory(str, enum.Enum):
     MUSICIAN = "musician"
     BOOK = "book"
     OTHER = "other"
+
+
+class ContactSource(str, enum.Enum):
+    """Source system that created a contact."""
+
+    MANUAL = "manual"
+    VCARD_IMPORT = "vcard_import"
+    CARDDAV = "carddav"
+    GOOGLE = "google"
+    WEBHOOK = "webhook"
 
 
 # ─── Tag ──────────────────────────────────────────────────────────────────────
@@ -635,14 +637,15 @@ class ContactBase(SQLModel):
         max_length=100,
         description="Kanban stage like Active, Dormant, Lost.",
     )
+    # Provenance
     source: ContactSource = Field(
         default=ContactSource.MANUAL,
-        description="Where this contact originated.",
+        description="Source system that created this contact.",
     )
     source_external_id: str | None = Field(
         default=None,
         max_length=500,
-        description="Opaque external ID for idempotent upserts from integrations.",
+        description="External ID from the source system (e.g. Google contact ID, CardDAV UID).",
     )
 
 
@@ -668,6 +671,8 @@ class ContactUpdate(SQLModel):
     deceased_at: date | None = None
     contact_frequency_days: int | None = None
     stage: str | None = None
+    source: ContactSource | None = None
+    source_external_id: str | None = None
     do_not_contact: bool | None = None
     do_not_contact_reason: str | None = None
     tag_ids: list[uuid.UUID] | None = None
@@ -776,9 +781,27 @@ class Contact(SoftDeleteMixin, ContactBase, table=True):
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
 
+    # Unique constraint for idempotent upserts
+    __table_args__ = (
+        sa.UniqueConstraint(
+            "owner_id",
+            "source",
+            "source_external_id",
+            name="uq_contact_owner_source_external_id",
+        ),
+    )
+
 
 class ContactPublic(ContactBase):
     id: uuid.UUID
+    source: ContactSource = Field(
+        default=ContactSource.MANUAL,
+        description="Source system that created this contact.",
+    )
+    source_external_id: str | None = Field(
+        default=None,
+        description="External ID from the source system.",
+    )
     avatar_url: str | None
     last_contacted_at: datetime | None
     created_at: datetime

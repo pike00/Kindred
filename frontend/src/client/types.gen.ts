@@ -358,11 +358,11 @@ export type ContactCreate = {
      */
     stage?: (string | null);
     /**
-     * Where this contact originated.
+     * Source system that created this contact.
      */
     source?: ContactSource;
     /**
-     * Opaque external ID for idempotent upserts from integrations.
+     * External ID from the source system (e.g. Google contact ID, CardDAV UID).
      */
     source_external_id?: (string | null);
     tag_ids?: (Array<(string)> | null);
@@ -508,11 +508,11 @@ export type ContactPublic = {
      */
     stage?: (string | null);
     /**
-     * Where this contact originated.
+     * Source system that created this contact.
      */
     source?: ContactSource;
     /**
-     * Opaque external ID for idempotent upserts from integrations.
+     * External ID from the source system.
      */
     source_external_id?: (string | null);
     id: string;
@@ -531,7 +531,10 @@ export type ContactPublic = {
     organization?: (OrganizationPublic | null);
 };
 
-export type ContactSource = 'MANUAL' | 'VCARD_IMPORT' | 'CARDDAV' | 'GOOGLE' | 'WEBHOOK';
+/**
+ * Source system that created a contact.
+ */
+export type ContactSource = 'manual' | 'vcard_import' | 'carddav' | 'google' | 'webhook';
 
 export type ContactsPublic = {
     data: Array<ContactPublic>;
@@ -604,6 +607,8 @@ export type ContactUpdate = {
     deceased_at?: (string | null);
     contact_frequency_days?: (number | null);
     stage?: (string | null);
+    source?: (ContactSource | null);
+    source_external_id?: (string | null);
     do_not_contact?: (boolean | null);
     do_not_contact_reason?: (string | null);
     tag_ids?: (Array<(string)> | null);
@@ -1641,11 +1646,11 @@ export type OverdueContactPublic = {
      */
     stage?: (string | null);
     /**
-     * Where this contact originated.
+     * Source system that created this contact.
      */
     source?: ContactSource;
     /**
-     * Opaque external ID for idempotent upserts from integrations.
+     * External ID from the source system.
      */
     source_external_id?: (string | null);
     id: string;

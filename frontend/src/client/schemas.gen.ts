@@ -1476,8 +1476,8 @@ export const ContactCreateSchema = {
         },
         source: {
             '$ref': '#/components/schemas/ContactSource',
-            description: 'Where this contact originated.',
-            default: 'MANUAL'
+            description: 'Source system that created this contact.',
+            default: 'manual'
         },
         source_external_id: {
             anyOf: [
@@ -1490,7 +1490,7 @@ export const ContactCreateSchema = {
                 }
             ],
             title: 'Source External Id',
-            description: 'Opaque external ID for idempotent upserts from integrations.'
+            description: 'External ID from the source system (e.g. Google contact ID, CardDAV UID).'
         },
         tag_ids: {
             anyOf: [
@@ -1916,21 +1916,20 @@ export const ContactPublicSchema = {
         },
         source: {
             '$ref': '#/components/schemas/ContactSource',
-            description: 'Where this contact originated.',
-            default: 'MANUAL'
+            description: 'Source system that created this contact.',
+            default: 'manual'
         },
         source_external_id: {
             anyOf: [
                 {
-                    type: 'string',
-                    maxLength: 500
+                    type: 'string'
                 },
                 {
                     type: 'null'
                 }
             ],
             title: 'Source External Id',
-            description: 'Opaque external ID for idempotent upserts from integrations.'
+            description: 'External ID from the source system.'
         },
         id: {
             type: 'string',
@@ -2051,8 +2050,9 @@ export const ContactPublicSchema = {
 
 export const ContactSourceSchema = {
     type: 'string',
-    enum: ['MANUAL', 'VCARD_IMPORT', 'CARDDAV', 'GOOGLE', 'WEBHOOK'],
-    title: 'ContactSource'
+    enum: ['manual', 'vcard_import', 'carddav', 'google', 'webhook'],
+    title: 'ContactSource',
+    description: 'Source system that created a contact.'
 } as const;
 
 export const ContactStageEventCreateSchema = {
@@ -2397,6 +2397,27 @@ export const ContactUpdateSchema = {
                 }
             ],
             title: 'Stage'
+        },
+        source: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/ContactSource'
+                },
+                {
+                    type: 'null'
+                }
+            ]
+        },
+        source_external_id: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Source External Id'
         },
         do_not_contact: {
             anyOf: [
@@ -5947,21 +5968,20 @@ export const OverdueContactPublicSchema = {
         },
         source: {
             '$ref': '#/components/schemas/ContactSource',
-            description: 'Where this contact originated.',
-            default: 'MANUAL'
+            description: 'Source system that created this contact.',
+            default: 'manual'
         },
         source_external_id: {
             anyOf: [
                 {
-                    type: 'string',
-                    maxLength: 500
+                    type: 'string'
                 },
                 {
                     type: 'null'
                 }
             ],
             title: 'Source External Id',
-            description: 'Opaque external ID for idempotent upserts from integrations.'
+            description: 'External ID from the source system.'
         },
         id: {
             type: 'string',
