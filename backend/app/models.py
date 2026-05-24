@@ -9,6 +9,7 @@ from pydantic import EmailStr
 from sqlalchemy import JSON, DateTime
 from sqlmodel import Field, Relationship, SQLModel
 from sqlmodel import Relationship as SQLMRelationship  # alias; avoids shadowing by the Relationship table model below
+from app.models_vcard_conflict import VCardConflict, VCardConflictBase, VCardConflictPublic, VCardConflictsPublic  # noqa: F401
 
 
 def get_datetime_utc() -> datetime:
@@ -801,6 +802,11 @@ class Contact(SoftDeleteMixin, ContactBase, table=True):
         max_length=255,
         description="ETag from the CardDAV server for incremental sync.",
     )
+    vcard_sha256: str | None = Field(
+        default=None,
+        max_length=64,
+        description="SHA256 hash of normalized vcard_raw; used for round-trip integrity verification.",
+    )
     # Avatar stored as file path or URL
     avatar_url: str | None = Field(
         default=None,
@@ -913,6 +919,7 @@ class ContactPublic(ContactBase):
 
     stage_events: list["ContactStageEventPublic"] = []
     organization: OrganizationPublic | None = None
+    vcard_sha256: str | None = None
 
 
 class ContactsPublic(SQLModel):

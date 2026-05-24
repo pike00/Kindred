@@ -42,6 +42,7 @@ from app.models import (
     User,
     ContactSource,
 )
+from app.vcard import compute_vcard_hash
 
 
 # Avatar upload configuration
@@ -665,6 +666,9 @@ def update_contact(
             pass
 
     contact.sqlmodel_update(update_data)
+    # Compute vcard_sha256 if vcard_raw was updated
+    if "vcard_raw" in update_data and contact.vcard_raw:
+        contact.vcard_sha256 = compute_vcard_hash(contact.vcard_raw)
     session.add(contact)
 
     # Update tag associations if provided

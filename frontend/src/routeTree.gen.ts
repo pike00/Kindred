@@ -28,6 +28,7 @@ import { Route as LayoutContactsIndexRouteImport } from './routes/_layout/contac
 import { Route as LayoutAdminIndexRouteImport } from './routes/_layout/admin/index'
 import { Route as LayoutContactsContactIdRouteImport } from './routes/_layout/contacts/$contactId'
 import { Route as LayoutAdminWebhooksRouteImport } from './routes/_layout/admin/webhooks'
+import { Route as LayoutAdminVcardConflictsRouteImport } from './routes/_layout/admin/vcard-conflicts'
 import { Route as LayoutAdminImportExportRouteImport } from './routes/_layout/admin/import-export'
 
 const SignupRoute = SignupRouteImport.update({
@@ -124,6 +125,12 @@ const LayoutAdminWebhooksRoute = LayoutAdminWebhooksRouteImport.update({
   path: '/webhooks',
   getParentRoute: () => LayoutAdminRoute,
 } as any)
+const LayoutAdminVcardConflictsRoute =
+  LayoutAdminVcardConflictsRouteImport.update({
+    id: '/vcard-conflicts',
+    path: '/vcard-conflicts',
+    getParentRoute: () => LayoutAdminRoute,
+  } as any)
 const LayoutAdminImportExportRoute = LayoutAdminImportExportRouteImport.update({
   id: '/import-export',
   path: '/import-export',
@@ -146,6 +153,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof LayoutSettingsRoute
   '/tags': typeof LayoutTagsRoute
   '/admin/import-export': typeof LayoutAdminImportExportRoute
+  '/admin/vcard-conflicts': typeof LayoutAdminVcardConflictsRoute
   '/admin/webhooks': typeof LayoutAdminWebhooksRoute
   '/contacts/$contactId': typeof LayoutContactsContactIdRoute
   '/admin/': typeof LayoutAdminIndexRoute
@@ -165,6 +173,7 @@ export interface FileRoutesByTo {
   '/tags': typeof LayoutTagsRoute
   '/': typeof LayoutIndexRoute
   '/admin/import-export': typeof LayoutAdminImportExportRoute
+  '/admin/vcard-conflicts': typeof LayoutAdminVcardConflictsRoute
   '/admin/webhooks': typeof LayoutAdminWebhooksRoute
   '/contacts/$contactId': typeof LayoutContactsContactIdRoute
   '/admin': typeof LayoutAdminIndexRoute
@@ -188,6 +197,7 @@ export interface FileRoutesById {
   '/_layout/tags': typeof LayoutTagsRoute
   '/_layout/': typeof LayoutIndexRoute
   '/_layout/admin/import-export': typeof LayoutAdminImportExportRoute
+  '/_layout/admin/vcard-conflicts': typeof LayoutAdminVcardConflictsRoute
   '/_layout/admin/webhooks': typeof LayoutAdminWebhooksRoute
   '/_layout/contacts/$contactId': typeof LayoutContactsContactIdRoute
   '/_layout/admin/': typeof LayoutAdminIndexRoute
@@ -211,6 +221,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/tags'
     | '/admin/import-export'
+    | '/admin/vcard-conflicts'
     | '/admin/webhooks'
     | '/contacts/$contactId'
     | '/admin/'
@@ -230,6 +241,7 @@ export interface FileRouteTypes {
     | '/tags'
     | '/'
     | '/admin/import-export'
+    | '/admin/vcard-conflicts'
     | '/admin/webhooks'
     | '/contacts/$contactId'
     | '/admin'
@@ -252,6 +264,7 @@ export interface FileRouteTypes {
     | '/_layout/tags'
     | '/_layout/'
     | '/_layout/admin/import-export'
+    | '/_layout/admin/vcard-conflicts'
     | '/_layout/admin/webhooks'
     | '/_layout/contacts/$contactId'
     | '/_layout/admin/'
@@ -401,6 +414,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutAdminWebhooksRouteImport
       parentRoute: typeof LayoutAdminRoute
     }
+    '/_layout/admin/vcard-conflicts': {
+      id: '/_layout/admin/vcard-conflicts'
+      path: '/vcard-conflicts'
+      fullPath: '/admin/vcard-conflicts'
+      preLoaderRoute: typeof LayoutAdminVcardConflictsRouteImport
+      parentRoute: typeof LayoutAdminRoute
+    }
     '/_layout/admin/import-export': {
       id: '/_layout/admin/import-export'
       path: '/import-export'
@@ -413,12 +433,14 @@ declare module '@tanstack/react-router' {
 
 interface LayoutAdminRouteChildren {
   LayoutAdminImportExportRoute: typeof LayoutAdminImportExportRoute
+  LayoutAdminVcardConflictsRoute: typeof LayoutAdminVcardConflictsRoute
   LayoutAdminWebhooksRoute: typeof LayoutAdminWebhooksRoute
   LayoutAdminIndexRoute: typeof LayoutAdminIndexRoute
 }
 
 const LayoutAdminRouteChildren: LayoutAdminRouteChildren = {
   LayoutAdminImportExportRoute: LayoutAdminImportExportRoute,
+  LayoutAdminVcardConflictsRoute: LayoutAdminVcardConflictsRoute,
   LayoutAdminWebhooksRoute: LayoutAdminWebhooksRoute,
   LayoutAdminIndexRoute: LayoutAdminIndexRoute,
 }
