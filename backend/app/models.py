@@ -581,6 +581,18 @@ class Contact(ContactBase, table=True):
             "default visibility helpers; restore by clearing this column."
         ),
     )
+    # Merge tracking
+    is_merged: bool = Field(
+        default=False,
+        description="Set to True when this contact is absorbed into another contact during a merge.",
+    )
+    merged_into_id: uuid.UUID | None = Field(
+        default=None,
+        foreign_key="contact.id",
+        nullable=True,
+        ondelete="SET NULL",
+        description="If merged, points to the surviving contact.",
+    )
     # Relationships
     tags: list["Tag"] = Relationship(
         back_populates=None,
@@ -2227,6 +2239,73 @@ class NewPassword(SQLModel):
     new_password: str = Field(min_length=8, max_length=128)
 
 
+# ─── ContactMerge ───────────────────────────────────────────────────
+
+
+class ContactMerge(SQLModel, table=True):
+    """Audit log for contact merge operations.
+
+    Records which contact absorbed which, when, and who did it.
+    Used to drive unmerge operations.
+    """
+
+    __tablename__ = "contact_merge"
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
+    surviving_id: uuid.UUID = Field(
+        foreign_key="contact.id",
+        nullable=False,
+        index=True,
+        description="The contact that survives the merge.",
+    )
+    absorbed_id: uuid.UUID = Field(
+        foreign_key="contact.id",
+        nullable=False,
+        index=True,
+        unique=True,
+        description="The contact that was absorbed (can only be merged once).",
+    )
+    merged_by: uuid.UUID | None = Field(
+        foreign_key="user.id",
+        nullable=True,
+        ondelete="SET NULL",
+        description="User who performed the merge.",
+    )
+    merged_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        nullable=False,
+        sa_type=DateTime(timezone=True),
+        description="When the merge happened (UTC).",
+    )
+    notes: str | None = Field(
+        default=None,
+        max_length=1000,
+        description="Optional notes about why the merge was performed.",
+    )
+
+
+class ContactMergePublic(SQLModel):
+    """Public schema for contact merge log entries."""
+
+    id: uuid.UUID
+    surviving_id: uuid.UUID
+    absorbed_id: uuid.UUID
+    merged_by: uuid.UUID | None
+    merged_at: datetime
+    notes: str | None
+    surviving_name: str | None = None  # populated from join
+    absorbed_name: str | None = None  # populated from join
+
+
+class ContactMergesPublic(SQLModel):
+    """Paginated response for contact merge log."""
+
+    data: list[ContactMergePublic]
+    count: int
 # ─── Calendar ─────────────────────────────────────────────────────────────────
 
 

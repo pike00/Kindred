@@ -4694,6 +4694,65 @@ export const MediaRecommendationsPublicSchema = {
     title: 'MediaRecommendationsPublic'
 } as const;
 
+export const MergeContactsRequestSchema = {
+    properties: {
+        surviving_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Surviving Id'
+        },
+        absorbed_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Absorbed Id'
+        },
+        notes: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Notes'
+        }
+    },
+    type: 'object',
+    required: ['surviving_id', 'absorbed_id'],
+    title: 'MergeContactsRequest',
+    description: 'Request body for merging two contacts.'
+} as const;
+
+export const MergeResponseSchema = {
+    properties: {
+        merge_log_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Merge Log Id'
+        },
+        surviving_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Surviving Id'
+        },
+        absorbed_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Absorbed Id'
+        },
+        merged_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Merged At'
+        }
+    },
+    type: 'object',
+    required: ['merge_log_id', 'surviving_id', 'absorbed_id', 'merged_at'],
+    title: 'MergeResponse',
+    description: 'Response after a merge operation.'
+} as const;
+
 export const MessageSchema = {
     properties: {
         message: {
@@ -4742,6 +4801,31 @@ export const NoteCreateSchema = {
     type: 'object',
     required: ['body', 'contact_id'],
     title: 'NoteCreate'
+} as const;
+
+export const NoteMentionPublicSchema = {
+    properties: {
+        note_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Note Id'
+        },
+        note_body: {
+            type: 'string',
+            title: 'Note Body'
+        },
+        note_created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Note Created At'
+        },
+        source_contact: {
+            '$ref': '#/components/schemas/_MentionSourceContact'
+        }
+    },
+    type: 'object',
+    required: ['note_id', 'note_body', 'note_created_at', 'source_contact'],
+    title: 'NoteMentionPublic'
 } as const;
 
 export const NotePublicSchema = {
@@ -7070,29 +7154,43 @@ export const WeekBucketSchema = {
     description: 'A single week bucket for the interaction heatmap.'
 } as const;
 
-export const _MentionPublicSchema = {
+export const _MentionSourceContactSchema = {
     properties: {
-        note_id: {
+        id: {
             type: 'string',
             format: 'uuid',
-            title: 'Note Id'
+            title: 'Id'
         },
-        note_body: {
+        first_name: {
             type: 'string',
-            title: 'Note Body'
+            title: 'First Name'
         },
-        note_created_at: {
-            type: 'string',
-            format: 'date-time',
-            title: 'Note Created At'
+        last_name: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Last Name'
         },
-        source_contact: {
-            '$ref': '#/components/schemas/ContactPublic'
+        avatar_url: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Avatar Url'
         }
     },
     type: 'object',
-    required: ['note_id', 'note_body', 'note_created_at', 'source_contact'],
-    title: '_MentionPublic'
+    required: ['id', 'first_name'],
+    title: '_MentionSourceContact'
 } as const;
 
 export const _ShareInSchema = {
