@@ -248,7 +248,7 @@ sdk-regen:
 # Run the SDK's pytest suite.
 [group('SDK')]
 sdk-test *args:
-    cd sdk && uv sync --quiet && uv run pytest {{args}}
+    cd sdk && uv sync --frozen --quiet && uv run pytest {{args}}
 
 # Build a wheel + sdist into sdk/dist/.
 [group('SDK')]
