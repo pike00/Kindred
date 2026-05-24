@@ -89,16 +89,3 @@ applicable under the licensor's patents, using the software.
 
 **trademark** is a trademark, service mark, trade dress, or other designation
 of origin.
-
----
-
-## Upstream Attribution
-
-This project was scaffolded from the
-[FastAPI full-stack template](https://github.com/fastapi/full-stack-fastapi-template)
-by Sebastián Ramírez, which is available under the MIT License. The Elastic
-License 2.0 above applies to Kindred as a whole; upstream template code retains
-its original MIT copyright notice reproduced here for attribution:
-
-    MIT License
-    Copyright (c) 2019 Sebastián Ramírez

@@ -24,8 +24,12 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
     body { font-family: 'Inter', system-ui, sans-serif; }
-    .screenshot { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+    .screenshot { transition: transform 0.3s ease, box-shadow 0.3s ease; cursor: zoom-in; }
     .screenshot:hover { transform: translateY(-4px); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15); }
+
+    #lightbox { display: none; }
+    #lightbox.open { display: flex; }
+    #lightbox img { max-width: 90vw; max-height: 88vh; border-radius: 12px; box-shadow: 0 40px 80px rgba(0,0,0,0.6); }
   </style>
 </head>
 <body class="bg-white text-gray-900 antialiased">
@@ -412,5 +416,43 @@
     </div>
   </footer>
 
+  <!-- Lightbox -->
+  <div id="lightbox"
+       class="open fixed inset-0 z-50 items-center justify-center bg-black/80 backdrop-blur-sm"
+       style="display:none"
+       role="dialog" aria-modal="true" aria-label="Screenshot preview">
+    <img id="lightbox-img" src="" alt="" />
+  </div>
+
+  <script>
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightbox-img');
+
+    function openLightbox(src, alt) {
+      lightboxImg.src = src;
+      lightboxImg.alt = alt;
+      lightbox.classList.add('open');
+      lightbox.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+      lightbox.classList.remove('open');
+      lightbox.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+
+    document.querySelectorAll('.screenshot img').forEach(img => {
+      img.addEventListener('click', () => openLightbox(img.src, img.alt));
+    });
+
+    lightbox.addEventListener('click', e => {
+      if (e.target !== lightboxImg) closeLightbox();
+    });
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeLightbox();
+    });
+  </script>
 </body>
 </html>
