@@ -26,6 +26,7 @@ import { Route as LayoutCalendarRouteImport } from './routes/_layout/calendar'
 import { Route as LayoutAdminRouteImport } from './routes/_layout/admin'
 import { Route as LayoutContactsIndexRouteImport } from './routes/_layout/contacts/index'
 import { Route as LayoutAdminIndexRouteImport } from './routes/_layout/admin/index'
+import { Route as LayoutGiftsKanbanRouteImport } from './routes/_layout/gifts/kanban'
 import { Route as LayoutContactsMapRouteImport } from './routes/_layout/contacts/map'
 import { Route as LayoutContactsKanbanRouteImport } from './routes/_layout/contacts/kanban'
 import { Route as LayoutContactsContactIdRouteImport } from './routes/_layout/contacts/$contactId'
@@ -117,6 +118,11 @@ const LayoutAdminIndexRoute = LayoutAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => LayoutAdminRoute,
 } as any)
+const LayoutGiftsKanbanRoute = LayoutGiftsKanbanRouteImport.update({
+  id: '/gifts/kanban',
+  path: '/gifts/kanban',
+  getParentRoute: () => LayoutRoute,
+} as any)
 const LayoutContactsMapRoute = LayoutContactsMapRouteImport.update({
   id: '/map',
   path: '/map',
@@ -170,6 +176,7 @@ export interface FileRoutesByFullPath {
   '/contacts/$contactId': typeof LayoutContactsContactIdRoute
   '/contacts/kanban': typeof LayoutContactsKanbanRoute
   '/contacts/map': typeof LayoutContactsMapRoute
+  '/gifts/kanban': typeof LayoutGiftsKanbanRoute
   '/admin/': typeof LayoutAdminIndexRoute
   '/contacts/': typeof LayoutContactsIndexRoute
 }
@@ -192,6 +199,7 @@ export interface FileRoutesByTo {
   '/contacts/$contactId': typeof LayoutContactsContactIdRoute
   '/contacts/kanban': typeof LayoutContactsKanbanRoute
   '/contacts/map': typeof LayoutContactsMapRoute
+  '/gifts/kanban': typeof LayoutGiftsKanbanRoute
   '/admin': typeof LayoutAdminIndexRoute
   '/contacts': typeof LayoutContactsIndexRoute
 }
@@ -218,6 +226,7 @@ export interface FileRoutesById {
   '/_layout/contacts/$contactId': typeof LayoutContactsContactIdRoute
   '/_layout/contacts/kanban': typeof LayoutContactsKanbanRoute
   '/_layout/contacts/map': typeof LayoutContactsMapRoute
+  '/_layout/gifts/kanban': typeof LayoutGiftsKanbanRoute
   '/_layout/admin/': typeof LayoutAdminIndexRoute
   '/_layout/contacts/': typeof LayoutContactsIndexRoute
 }
@@ -244,6 +253,7 @@ export interface FileRouteTypes {
     | '/contacts/$contactId'
     | '/contacts/kanban'
     | '/contacts/map'
+    | '/gifts/kanban'
     | '/admin/'
     | '/contacts/'
   fileRoutesByTo: FileRoutesByTo
@@ -266,6 +276,7 @@ export interface FileRouteTypes {
     | '/contacts/$contactId'
     | '/contacts/kanban'
     | '/contacts/map'
+    | '/gifts/kanban'
     | '/admin'
     | '/contacts'
   id:
@@ -291,6 +302,7 @@ export interface FileRouteTypes {
     | '/_layout/contacts/$contactId'
     | '/_layout/contacts/kanban'
     | '/_layout/contacts/map'
+    | '/_layout/gifts/kanban'
     | '/_layout/admin/'
     | '/_layout/contacts/'
   fileRoutesById: FileRoutesById
@@ -424,6 +436,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutAdminIndexRouteImport
       parentRoute: typeof LayoutAdminRoute
     }
+    '/_layout/gifts/kanban': {
+      id: '/_layout/gifts/kanban'
+      path: '/gifts/kanban'
+      fullPath: '/gifts/kanban'
+      preLoaderRoute: typeof LayoutGiftsKanbanRouteImport
+      parentRoute: typeof LayoutRoute
+    }
     '/_layout/contacts/map': {
       id: '/_layout/contacts/map'
       path: '/map'
@@ -516,6 +535,7 @@ interface LayoutRouteChildren {
   LayoutSettingsRoute: typeof LayoutSettingsRoute
   LayoutTagsRoute: typeof LayoutTagsRoute
   LayoutIndexRoute: typeof LayoutIndexRoute
+  LayoutGiftsKanbanRoute: typeof LayoutGiftsKanbanRoute
 }
 
 const LayoutRouteChildren: LayoutRouteChildren = {
@@ -529,6 +549,7 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutSettingsRoute: LayoutSettingsRoute,
   LayoutTagsRoute: LayoutTagsRoute,
   LayoutIndexRoute: LayoutIndexRoute,
+  LayoutGiftsKanbanRoute: LayoutGiftsKanbanRoute,
 }
 
 const LayoutRouteWithChildren =

@@ -11,6 +11,9 @@ node_modules/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+e2e/.auth/
+e2e/report/
+e2e/screenshots/
 
 # superpowers brainstorming mockups
 .superpowers/
