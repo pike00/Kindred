@@ -5,7 +5,7 @@ repos: [personal-crm]
 started: 2026-05-15
 last_updated: 2026-05-23
 next_step: Begin Wave 3 -- dirac/tagshare-scope-warning is first up
-handoff: 2026-05-22 | partial: interaction-heatmap + /reflections fix committed (2 commits, 267 tests pass); ics-calendar-export merge staged-uncommitted, budget-capped
+progress: 15/46
 ---
 
 # Feature Backlog Merge Train
@@ -88,6 +88,15 @@ Land 46 unmerged feature branches into main, sequentially, with one squash commi
 
 ## Session Log
 
+### 2026-05-23
+- **Worker crash loop fixed.** arq worker had stale `REDIS_URL=redis://kindred-redis:6379/0` from a previous stack naming. Force-recreated the container: `docker compose -f compose.dev.yml up -d --force-recreate worker`. Worker came up clean.
+- **`dirac/ics-calendar-export` committed and tagged v0.2.0.** Merge was staged from prior session (uncommitted). Fixed two test bugs blocking the suite: (1) `test_user` fixture used bare `User(table=True)` instead of `UserCreate` — `crud.create_user()` expects the latter; (2) `CalendarTokenPublic` was missing `token: str` and `owner_id: uuid.UUID` fields needed by test assertions and the UI. Suite went from 267 to 285 tests passing after fixes.
+- **biome coverage exclusion fix.** `frontend/biome.json` was missing `"!**/coverage/**/*"` in `files.includes`. Without it, biome linted the HTML coverage report files (445 errors) and `just regen-client` failed for every merge. Added the exclusion; unblocks regen-client for all future Wave 3 merges.
+- **`dirac/relationship-graph` merged → v0.2.1.** Squash merge. Conflict in `backend/app/api/main.py`: branch added `graph,` and `groups,`; kept only `graph,` (groups already merged into tags). Sidebar conflict: branch added Graph nav item, dropped Groups — accepted. 285 tests pass; regen-client clean.
+- **`feature/birthday-anniversary-calendar` merged → v0.2.2.** Squash merge. Auto-merge produced a duplicate `{ icon: CalendarHeart, title: "Calendar", path: "/calendar" }` entry in `AppSidebar.tsx` — removed the duplicate. `routeTree.gen.ts` conflict took HEAD + regen-client. Biome lint flagged decorative `<svg>` in `graph.tsx` — added `aria-hidden="true"`. 285 tests pass; typecheck clean.
+- **Website lightbox + license cleanup committed.** `website/index.html` had staged screenshot lightbox (click-to-zoom with Esc/click-outside dismiss). Also removed upstream template attribution section from `LICENSE` per ELv2 intent. Committed as `b9d9269`.
+- **Wave 2 complete.** All 11 Wave 2 branches merged (plus the no-op `printable-contact-one-pager`). 15/46 total branches landed. Test count: 285 passing.
+
 ### 2026-05-21
 - **`dirac/journal-contact-join` merged.** Squash merge: 4 conflicts (3 generated `client/*.gen.ts` → took HEAD + `just regen-client`; `contacts.py` add/add → kept all HEAD endpoints, grafted the branch's `/contacts/{id}/reflections` endpoint on top, retyped its return from `Any` to `list[JournalEntryPublic]`). Garbage files `git rm`'d: `NOTES.md`, `fix-alembic-heads.py` (the latter was orphaned from an earlier session, removed separately, not in this commit).
 - **Alembic fixes (branch was 128 commits stale):** the branch's migration `f6a7b8c9d0e1_add_journal_entry_contact_junction.py` had a filename-prefix collision with main's `f6a7b8c9d0e1_add_reminder_snooze.py`, and `down_revision = add_do_not_contact_fields` (a stale midpoint). Renamed file + `revision` to a unique `0971ddcc7160`, repointed `down_revision` to the true current head `3b51c1216e45`. Note: main's migration chain is **single-head and healthy** — an earlier scare about "3 heads" was a parser artifact (merge migrations carry tuple `down_revision`s; the AST-based check confirmed one head).
@@ -105,6 +114,14 @@ Land 46 unmerged feature branches into main, sequentially, with one squash commi
 - Conflict-resolution rules that proved correct: always take HEAD for `frontend/src/client/*.gen.ts` and re-run `just regen-client`. Always re-run `uv lock` for `uv.lock`. Garbage files (`front`, `NOTES.md`, `openapi.json` at repo root, `types_backup.ts`) get `git rm -f`.
 
 ## Notes
+
+### 2026-05-23
+- **Decisions:** `CalendarTokenPublic` now exposes `token: str` and `owner_id: uuid.UUID` — the token field is required so users can copy their ICS feed URL; intentional exposure, not accidental.
+- **Gotchas:** `biome.json` coverage exclusion was the silent blocker for all `just regen-client` calls since test coverage was merged. Any merge that touches a route would have failed at regen; fix it early or every Wave 3 merge would have hit it. The exclusion is `"!**/coverage/**/*"` in the `files.includes` array.
+- **Gotchas:** birthday-anniversary-calendar auto-merge duplicated the Calendar sidebar entry — auto-merge can silently produce duplicate list items when both branches add an entry near the same array position. Always diff AppSidebar after auto-merge.
+- **Gotchas:** arq worker environment is baked at container creation; force-recreate is required after `.env` changes, not just restart.
+- **Issues:** Wave 3 has 27 branches. `dirac/tagshare-scope-warning` is next up. Several branches are likely already on main (same printable-contact-one-pager pattern) — run `git diff --cached --stat` after `git merge --squash` before resolving conflicts.
+- **Accomplished:** Worker fixed, ics-calendar-export committed (v0.2.0), relationship-graph merged (v0.2.1), birthday-anniversary-calendar merged (v0.2.2), biome coverage fix, website lightbox. Wave 2 complete. 285 tests passing.
 
 ### 2026-05-15
 - **Decisions:** Squash-merge per branch with one tagged release each (v0.1.0 through v0.1.8 so far). Conflict resolution rule for backend route conflicts: keep HEAD's accumulated logic, graft branch's net-new endpoints on top. Frontend client files always regenerated, never merged.
