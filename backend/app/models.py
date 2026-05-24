@@ -1,11 +1,14 @@
 import enum
 import uuid
+from decimal import Decimal
+
 from datetime import date, datetime, timezone
 
 import sqlalchemy as sa
 from pydantic import EmailStr
 from sqlalchemy import DateTime
 from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import Relationship as SQLMRelationship  # alias; avoids shadowing by the Relationship table model below
 
 
 def get_datetime_utc() -> datetime:
@@ -1887,6 +1890,32 @@ class GiftKanbanColumn(SQLModel):
 # ─── Debt ─────────────────────────────────────────────────────────────────────
 
 
+# ─── DebtPayment ───────────────────────────────────────────────────────
+
+
+class DebtPaymentBase(SQLModel):
+    amount: float = Field(
+        description="Payment amount; must be greater than zero.",
+    )
+    paid_at: date = Field(
+        description="Date the payment was made.",
+    )
+    note: str | None = Field(
+        default=None,
+        max_length=1000,
+        description="Optional note about the payment.",
+    )
+
+
+class DebtPaymentCreate(DebtPaymentBase):
+    pass
+
+
+class DebtPaymentPublic(DebtPaymentBase):
+    id: uuid.UUID
+    created_at: datetime
+
+
 class DebtBase(SQLModel):
     direction: DebtDirection = Field(
         description="Who owes whom: i_owe (you owe them) or they_owe (they owe you).",
@@ -1905,13 +1934,13 @@ class DebtBase(SQLModel):
         max_length=1000,
         description="What the debt is for.",
     )
-    is_settled: bool = Field(
-        default=False,
-        description="Marked paid off.",
-    )
     settled_at: date | None = Field(
         default=None,
         description="Date the debt was settled.",
+    )
+    is_settled: bool = Field(
+        default=False,
+        description="Marked paid off.",
     )
 
 
@@ -1922,7 +1951,6 @@ class DebtCreate(DebtBase):
 class DebtUpdate(SQLModel):
     direction: DebtDirection | None = None
     amount: float | None = None
-    currency: str | None = None
     reason: str | None = None
     is_settled: bool | None = None
     settled_at: date | None = None
@@ -1954,12 +1982,41 @@ class Debt(SoftDeleteMixin, DebtBase, table=True):
         description="When the debt was recorded (UTC).",
     )
 
+    # Relationship to payments
+    payments: list["DebtPayment"] = SQLMRelationship(back_populates="debt")
+
+
+class DebtPayment(DebtPaymentBase, table=True):
+    """Individual payment made toward a debt."""
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
+    debt_id: uuid.UUID = Field(
+        foreign_key="debt.id",
+        nullable=False,
+        ondelete="CASCADE",
+        index=True,
+        description="Parent debt; cascades on delete.",
+    )
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        description="When the payment was recorded (UTC).",
+    )
+    # Relationship back to debt
+    debt: "Debt" = SQLMRelationship(back_populates="payments")
+
 
 class DebtPublic(DebtBase):
     id: uuid.UUID
     contact_id: uuid.UUID
     created_at: datetime
     deleted_at: datetime | None = None
+    payments: list[DebtPaymentPublic] = []
+    paid_amount: float | None = None  # computed field
 
 
 class DebtsPublic(SQLModel):
