@@ -3145,7 +3145,7 @@ export const GiftPublicSchema = {
 
 export const GiftStatusSchema = {
     type: 'string',
-    enum: ['idea', 'given', 'received'],
+    enum: ['idea', 'purchased', 'wrapped', 'given', 'received'],
     title: 'GiftStatus'
 } as const;
 

@@ -206,6 +206,8 @@ class ContactSource(str, enum.Enum):
 
 class GiftStatus(str, enum.Enum):
     IDEA = "idea"
+    PURCHASED = "purchased"
+    WRAPPED = "wrapped"
     GIVEN = "given"
     RECEIVED = "received"
 
@@ -1459,6 +1461,7 @@ class Gift(GiftBase, table=True):
         sa_column=sa.Column("date", sa.Date, nullable=True),
         description="When the gift was given or received (stored in the `date` column).",
     )
+
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
         nullable=False,
