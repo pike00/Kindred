@@ -1,5 +1,9 @@
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router"
-
+import {
+  createFileRoute,
+  Outlet,
+  redirect,
+  useNavigate,
+} from "@tanstack/react-router"
 import { CommandPalette } from "@/components/CommandPalette/CommandPalette"
 import {
   CommandPaletteProvider,
@@ -16,6 +20,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { isLoggedIn } from "@/hooks/useAuth"
+import { useRegisterShortcuts } from "@/hooks/useKeyboardShortcuts"
 import { Search } from "@/lib/icons"
 
 export const Route = createFileRoute("/_layout")({
@@ -53,6 +58,7 @@ function CommandPaletteTrigger() {
 function Layout() {
   return (
     <CommandPaletteProvider>
+      <LayoutShortcuts />
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset>
@@ -73,6 +79,63 @@ function Layout() {
       <CommandPalette />
     </CommandPaletteProvider>
   )
+}
+
+function LayoutShortcuts() {
+  const navigate = useNavigate()
+
+  useRegisterShortcuts([
+    {
+      keys: "g c",
+      description: "Go to Contacts",
+      group: "Navigation",
+      callback: () => navigate({ to: "/contacts" }),
+    },
+    {
+      keys: "g i",
+      description: "Go to Interactions",
+      group: "Navigation",
+      callback: () => navigate({ to: "/interactions" }),
+    },
+    {
+      keys: "g j",
+      description: "Go to Journal",
+      group: "Navigation",
+      callback: () => navigate({ to: "/journal" }),
+    },
+    {
+      keys: "g t",
+      description: "Go to Tags",
+      group: "Navigation",
+      callback: () => navigate({ to: "/tags" }),
+    },
+    {
+      keys: "g r",
+      description: "Go to Reminders",
+      group: "Navigation",
+      callback: () => navigate({ to: "/reminders" }),
+    },
+    {
+      keys: "g s",
+      description: "Go to Settings",
+      group: "Navigation",
+      callback: () => navigate({ to: "/settings" }),
+    },
+    {
+      keys: "Meta+Shift+n",
+      description: "New Contact",
+      group: "Actions",
+      callback: () => navigate({ to: "/contacts" }),
+    },
+    {
+      keys: "Meta+Shift+i",
+      description: "New Interaction",
+      group: "Actions",
+      callback: () => navigate({ to: "/interactions" }),
+    },
+  ])
+
+  return null
 }
 
 export default Layout
