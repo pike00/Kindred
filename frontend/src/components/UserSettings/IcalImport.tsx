@@ -198,7 +198,7 @@ export default function IcalImport() {
                   e.preventDefault();
                   fileInputRef.current?.click();
                 }
-              }
+              }}
               onDragOver={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -212,7 +212,7 @@ export default function IcalImport() {
                   setProposals([]);
                   setUploadResult(null);
                 }
-              }
+              }}
             >
               <UploadIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
               <p className="text-sm text-muted-foreground mb-2">
