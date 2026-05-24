@@ -7,6 +7,7 @@ from app.api.routes import (
     calendar,
     contact_fields,
     contact_pdf,
+    contact_stage_events,
     contacts,
     custom_fields,
     debts,
@@ -39,6 +40,7 @@ api_router.include_router(utils.router)
 
 # CRM routes
 api_router.include_router(contacts.router)
+api_router.include_router(contact_stage_events.router)
 api_router.include_router(tags.router)
 api_router.include_router(tag_shares.router)
 api_router.include_router(contact_fields.router)

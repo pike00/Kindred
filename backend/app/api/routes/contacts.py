@@ -13,13 +13,14 @@ from sqlmodel import SQLModel, col, func, select, Field
 
 from app.api.deps import CurrentUser, SessionDep
 from app.core.config import settings as app_settings
-from app.crud import visible_contact_ids
+from app.crud import create_stage_event, visible_contact_ids
 from app.household import get_household_members
 from app.models import (
     Contact,
     ContactCreate,
     ContactPublic,
     ContactsPublic,
+    ContactStageEventCreate,
     ContactTag,
     ContactUpdate,
     HouseholdMember,
@@ -600,6 +601,24 @@ def update_contact(
 
     update_data = contact_in.model_dump(exclude_unset=True)
     tag_ids = update_data.pop("tag_ids", None)
+
+    # Track stage changes via the service layer
+    new_stage = update_data.get("stage", None)
+    if new_stage is not None and new_stage != contact.stage:
+        event_in = ContactStageEventCreate(
+            contact_id=contact.id,
+            from_stage=contact.stage,
+            to_stage=new_stage,
+            occurred_at=datetime.now(timezone.utc),
+            note="Stage change via contact update",
+        )
+        try:
+            create_stage_event(
+                session=session, event_in=event_in, owner_id=current_user.id
+            )
+        except Exception:
+            # Don't fail the whole update if event creation fails
+            pass
 
     contact.sqlmodel_update(update_data)
     session.add(contact)

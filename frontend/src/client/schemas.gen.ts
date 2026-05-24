@@ -1998,6 +1998,14 @@ export const ContactPublicSchema = {
                 }
             ],
             title: 'Imessage Profile'
+        },
+        stage_events: {
+            items: {
+                '$ref': '#/components/schemas/ContactStageEventPublic'
+            },
+            type: 'array',
+            title: 'Stage Events',
+            default: []
         }
     },
     type: 'object',
@@ -2009,6 +2017,156 @@ export const ContactSourceSchema = {
     type: 'string',
     enum: ['MANUAL', 'VCARD_IMPORT', 'CARDDAV', 'GOOGLE', 'WEBHOOK'],
     title: 'ContactSource'
+} as const;
+
+export const ContactStageEventCreateSchema = {
+    properties: {
+        from_stage: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 100
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'From Stage',
+            description: 'Previous stage; null for the initial seed event.'
+        },
+        to_stage: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 100
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'To Stage',
+            description: 'New stage; null when clearing stage (rare).'
+        },
+        occurred_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Occurred At',
+            description: 'When the transition happened (UTC).'
+        },
+        note: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 2000
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Note',
+            description: 'Optional context about why the stage changed.'
+        },
+        contact_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Contact Id'
+        }
+    },
+    type: 'object',
+    required: ['occurred_at', 'contact_id'],
+    title: 'ContactStageEventCreate'
+} as const;
+
+export const ContactStageEventPublicSchema = {
+    properties: {
+        from_stage: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 100
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'From Stage',
+            description: 'Previous stage; null for the initial seed event.'
+        },
+        to_stage: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 100
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'To Stage',
+            description: 'New stage; null when clearing stage (rare).'
+        },
+        occurred_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Occurred At',
+            description: 'When the transition happened (UTC).'
+        },
+        note: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 2000
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Note',
+            description: 'Optional context about why the stage changed.'
+        },
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        contact_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Contact Id'
+        },
+        owner_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Owner Id'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        }
+    },
+    type: 'object',
+    required: ['occurred_at', 'id', 'contact_id', 'owner_id', 'created_at'],
+    title: 'ContactStageEventPublic'
+} as const;
+
+export const ContactStageEventsPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/ContactStageEventPublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'ContactStageEventsPublic'
 } as const;
 
 export const ContactUpdateSchema = {
@@ -5002,6 +5160,14 @@ export const OverdueContactPublicSchema = {
                 }
             ],
             title: 'Imessage Profile'
+        },
+        stage_events: {
+            items: {
+                '$ref': '#/components/schemas/ContactStageEventPublic'
+            },
+            type: 'array',
+            title: 'Stage Events',
+            default: []
         },
         days_overdue: {
             anyOf: [

@@ -583,6 +583,12 @@ class Contact(ContactBase, table=True):
         link_model=ContactTag,
     )
 
+    # Stage history
+    stage_events: list["ContactStageEvent"] = Relationship(
+        back_populates=None,
+        sa_relationship_kwargs={"cascade": "all, delete-orphan"},
+    )
+
 
 class ContactPublic(ContactBase):
     id: uuid.UUID
@@ -600,9 +606,86 @@ class ContactPublic(ContactBase):
     imessage_synced_at: datetime | None = None
     imessage_profile: dict | None = None
 
+    stage_events: list["ContactStageEventPublic"] = []
+
 
 class ContactsPublic(SQLModel):
     data: list[ContactPublic]
+    count: int
+
+
+# ─── ContactStageEvent ───────────────────────────────────────────────
+
+
+class ContactStageEventBase(SQLModel):
+    """Single stage transition on a contact."""
+
+    from_stage: str | None = Field(
+        default=None,
+        max_length=100,
+        description="Previous stage; null for the initial seed event.",
+    )
+    to_stage: str | None = Field(
+        default=None,
+        max_length=100,
+        description="New stage; null when clearing stage (rare).",
+    )
+    occurred_at: datetime = Field(
+        description="When the transition happened (UTC).",
+    )
+    note: str | None = Field(
+        default=None,
+        max_length=2000,
+        description="Optional context about why the stage changed.",
+    )
+
+
+class ContactStageEventCreate(ContactStageEventBase):
+    contact_id: uuid.UUID
+
+
+class ContactStageEvent(ContactStageEventBase, table=True):
+    """Audit log of every stage transition for a contact.
+
+    Contact.stage is a denormalized cache of the latest row here,
+    so Kanban queries stay fast without a JOIN+ORDER BY on every read.
+    """
+
+    __tablename__ = "contact_stage_event"
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
+    contact_id: uuid.UUID = Field(
+        foreign_key="contact.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description="Contact whose stage changed; cascades on delete.",
+    )
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description="Owner user; cascades on delete.",
+    )
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        description="When this event row was inserted (UTC).",
+    )
+
+
+class ContactStageEventPublic(ContactStageEventBase):
+    id: uuid.UUID
+    contact_id: uuid.UUID
+    owner_id: uuid.UUID
+    created_at: datetime
+
+
+class ContactStageEventsPublic(SQLModel):
+    data: list[ContactStageEventPublic]
     count: int
 
 

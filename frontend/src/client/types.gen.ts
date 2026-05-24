@@ -516,12 +516,61 @@ export type ContactPublic = {
     imessage_profile?: ({
     [key: string]: unknown;
 } | null);
+    stage_events?: Array<ContactStageEventPublic>;
 };
 
 export type ContactSource = 'MANUAL' | 'VCARD_IMPORT' | 'CARDDAV' | 'GOOGLE' | 'WEBHOOK';
 
 export type ContactsPublic = {
     data: Array<ContactPublic>;
+    count: number;
+};
+
+export type ContactStageEventCreate = {
+    /**
+     * Previous stage; null for the initial seed event.
+     */
+    from_stage?: (string | null);
+    /**
+     * New stage; null when clearing stage (rare).
+     */
+    to_stage?: (string | null);
+    /**
+     * When the transition happened (UTC).
+     */
+    occurred_at: string;
+    /**
+     * Optional context about why the stage changed.
+     */
+    note?: (string | null);
+    contact_id: string;
+};
+
+export type ContactStageEventPublic = {
+    /**
+     * Previous stage; null for the initial seed event.
+     */
+    from_stage?: (string | null);
+    /**
+     * New stage; null when clearing stage (rare).
+     */
+    to_stage?: (string | null);
+    /**
+     * When the transition happened (UTC).
+     */
+    occurred_at: string;
+    /**
+     * Optional context about why the stage changed.
+     */
+    note?: (string | null);
+    id: string;
+    contact_id: string;
+    owner_id: string;
+    created_at: string;
+};
+
+export type ContactStageEventsPublic = {
+    data: Array<ContactStageEventPublic>;
     count: number;
 };
 
@@ -1356,6 +1405,7 @@ export type OverdueContactPublic = {
     imessage_profile?: ({
     [key: string]: unknown;
 } | null);
+    stage_events?: Array<ContactStageEventPublic>;
     days_overdue?: (number | null);
 };
 
@@ -2099,6 +2149,48 @@ export type ContactsGetContactPdfData = {
 };
 
 export type ContactsGetContactPdfResponse = (unknown);
+
+export type ContactStageEventsListContactStageHistoryData = {
+    contactId: string;
+};
+
+export type ContactStageEventsListContactStageHistoryResponse = (ContactStageEventsPublic);
+
+export type ContactStageEventsGetLatestStageData = {
+    contactId: string;
+};
+
+export type ContactStageEventsGetLatestStageResponse = (ContactStageEventPublic);
+
+export type ContactStageEventsCreateContactStageEventData = {
+    contactId: string;
+    requestBody: ContactStageEventCreate;
+};
+
+export type ContactStageEventsCreateContactStageEventResponse = (ContactStageEventPublic);
+
+export type ContactStageEventsGetStageDurationRouteData = {
+    contactId: string;
+    stage: string;
+};
+
+export type ContactStageEventsGetStageDurationRouteResponse = (Array<[
+    string,
+    (string | null),
+    (number | null)
+]>);
+
+export type ContactStageEventsBackfillStageEventsRouteResponse = ({
+    [key: string]: (number);
+});
+
+export type ContactStageEventsGetStageAnalyticsData = {
+    contactId: string;
+};
+
+export type ContactStageEventsGetStageAnalyticsResponse = ({
+    [key: string]: Array<Array<unknown>>;
+});
 
 export type CustomFieldsListFieldDefinitionsResponse = (CustomFieldDefinitionsPublic);
 
