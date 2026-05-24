@@ -1,9 +1,11 @@
 """Address management routes."""
 
+import logging
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+import httpx
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
 from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
@@ -16,6 +18,14 @@ from app.models import (
     AddressUpdate,
     Ok,
 )
+
+try:
+    from app.services import geocoding
+    _geocoding_available = True
+except ImportError:
+    _geocoding_available = False
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/addresses", tags=["addresses"])
 
@@ -54,6 +64,11 @@ def create_address_route(
     _require_contact_visible(session, current_user, address_in.contact_id)
 
     address = create_address(session=session, address_in=address_in)
+
+    # Geocode if latitude/longitude not provided
+    if address.latitude is None or address.longitude is None:
+        _geocode_address(session, address)
+
     return AddressPublic.model_validate(address)
 
 
@@ -75,6 +90,12 @@ def update_address(
     address.sqlmodel_update(update_data)
     session.add(address)
     session.commit()
+
+    # Geocode if coordinates still missing after update
+    session.refresh(address)
+    if address.latitude is None or address.longitude is None:
+        _geocode_address(session, address)
+
     session.refresh(address)
     return AddressPublic.model_validate(address)
 
@@ -94,3 +115,94 @@ def delete_address(
     session.delete(address)
     session.commit()
     return Ok()
+
+
+def _geocode_address(session: Any, address: Address) -> None:
+    """Attempt to geocode an address and update its coordinates."""
+    if not _geocoding_available:
+        return
+    try:
+        result = geocoding.geocode_address(
+            street=address.street,
+            city=address.city,
+            region=address.region,
+            postal_code=address.postal_code,
+            country=address.country,
+        )
+        if result:
+            address.latitude = result[0]
+            address.longitude = result[1]
+            session.add(address)
+            session.commit()
+            logger.info(f"Geocoded address {address.id}: ({result[0]}, {result[1]})")
+    except Exception as e:
+        logger.warning(f"Failed to geocode address {address.id}: {e}")
+
+
+@router.post("/{address_id}/geocode", response_model=AddressPublic)
+def geocode_address_manual(
+    session: SessionDep,
+    current_user: CurrentUser,
+    address_id: uuid.UUID,
+) -> Any:
+    """Manually trigger geocoding for an address."""
+    address = session.get(Address, address_id)
+    if address is None:
+        raise HTTPException(status_code=404, detail="Address not found")
+    _require_contact_visible(session, current_user, address.contact_id)
+
+    _geocode_address(session, address)
+    session.refresh(address)
+
+    if address.latitude is None or address.longitude is None:
+        raise HTTPException(status_code=400, detail="Geocoding failed - could not find coordinates")
+
+    return AddressPublic.model_validate(address)
+
+
+@router.post("/geocode-missing", response_model=dict)
+def geocode_missing_coordinates(
+    session: SessionDep,
+    current_user: CurrentUser,
+) -> Any:
+    """Trigger geocoding for all addresses missing coordinates (owned by user)."""
+    from app.models import Contact
+
+    contacts = session.exec(
+        select(Contact).where(Contact.owner_id == current_user.id)
+    ).all()
+    contact_ids = [c.id for c in contacts]
+
+    addresses = session.exec(
+        select(Address).where(
+            Address.contact_id.in_(contact_ids),
+            (Address.latitude.is_(None) | Address.longitude.is_(None)),
+        )
+    ).all()
+
+    count = 0
+    for address in addresses:
+        try:
+            if _geocoding_available:
+                result = geocoding.geocode_address(
+                    street=address.street,
+                    city=address.city,
+                    region=address.region,
+                    postal_code=address.postal_code,
+                    country=address.country,
+                )
+                if result:
+                    address.latitude = result[0]
+                    address.longitude = result[1]
+                    session.add(address)
+                    count += 1
+        except Exception as e:
+            logger.warning(f"Failed to geocode address {address.id}: {e}")
+
+    session.commit()
+
+    return {
+        "ok": True,
+        "geocoded": count,
+        "total": len(addresses),
+    }

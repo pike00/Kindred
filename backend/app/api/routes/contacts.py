@@ -18,6 +18,7 @@ from app.crud import create_stage_event, visible_contact_ids
 from app.filter_compiler import apply_filter_json
 from app.household import get_household_members
 from app.models import (
+    Address,
     Contact,
     ContactCreate,
     ContactPublic,
@@ -826,6 +827,112 @@ def restore_contact(
     contact = session.exec(statement).first()
     background_tasks.add_task(_enqueue_contact_index, contact)
     return ContactPublic.model_validate(contact)
+
+
+class ContactGeoPoint(BaseModel):
+    """A geo point representing a contact's address."""
+
+    contact_id: uuid.UUID
+    contact_name: str
+    avatar_url: str | None = None
+    latitude: float
+    longitude: float
+    address_label: str
+    city: str | None = None
+    country: str | None = None
+    street: str | None = None
+
+
+class ContactsGeoResponse(BaseModel):
+    """Response model for geo endpoint."""
+
+    points: list[ContactGeoPoint]
+    count: int
+
+
+@router.get("/geo", response_model=ContactsGeoResponse)
+def list_contacts_geo(
+    session: SessionDep,
+    current_user: CurrentUser,
+    min_lat: float | None = Query(
+        default=None, description="Minimum latitude for bounding box filter"
+    ),
+    max_lat: float | None = Query(
+        default=None, description="Maximum latitude for bounding box filter"
+    ),
+    min_lng: float | None = Query(
+        default=None, description="Minimum longitude for bounding box filter"
+    ),
+    max_lng: float | None = Query(
+        default=None, description="Maximum longitude for bounding box filter"
+    ),
+) -> Any:
+    """List contacts with geographic coordinates for map visualization.
+
+    Returns contacts that have addresses with valid latitude/longitude.
+    Supports optional bounding box filtering.
+    Respects tag-share visibility rules.
+    """
+    # Get visible contact IDs (owned + shared via tag shares)
+    visible_ids = visible_contact_ids(current_user, include_deleted=False)
+
+    # Build query joining Contact -> Address where address has coordinates
+    statement = (
+        select(Contact, Address)
+        .join(Address, Contact.id == Address.contact_id)
+        .where(
+            Contact.id.in_(visible_ids),
+            Address.latitude.is_not(None),
+            Address.longitude.is_not(None),
+        )
+    )
+
+    # Apply bounding box filter if provided
+    if all(v is not None for v in [min_lat, max_lat, min_lng, max_lng]):
+        statement = statement.where(
+            Address.latitude >= min_lat,
+            Address.latitude <= max_lat,
+            Address.longitude >= min_lng,
+            Address.longitude <= max_lng,
+        )
+
+    results = session.exec(statement).all()
+
+    points = []
+    seen = set()  # Avoid duplicate contacts (multiple addresses)
+
+    for contact, address in results:
+        if contact.id in seen:
+            continue
+        seen.add(contact.id)
+
+        # Build full name
+        name_parts = [
+            contact.first_name,
+            contact.middle_name,
+            contact.last_name,
+        ]
+        if contact.prefix:
+            name_parts = [contact.prefix] + name_parts
+        if contact.suffix:
+            name_parts.append(contact.suffix)
+        full_name = " ".join(p for p in name_parts if p).strip() or "Unnamed contact"
+
+        points.append(
+            ContactGeoPoint(
+                contact_id=contact.id,
+                contact_name=full_name,
+                avatar_url=contact.avatar_url,
+                latitude=address.latitude,
+                longitude=address.longitude,
+                address_label=address.label or "home",
+                city=address.city,
+                country=address.country,
+                street=address.street,
+            )
+        )
+
+    return ContactsGeoResponse(points=points, count=len(points))
 
 
 class _MentionPublic(SQLModel):

@@ -47,6 +47,7 @@ export {
   LogOut,
   // Contact field types
   Mail,
+  Map,
   // Card section icons
   MapPin,
   MessageSquare,

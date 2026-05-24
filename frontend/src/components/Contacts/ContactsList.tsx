@@ -17,17 +17,18 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
+  Map as MapIcon,
   Search,
   Star,
   Users,
 } from "@/lib/icons"
 import { useSeedDemo } from "@/lib/seed"
 import { cn } from "@/lib/utils"
-import { AddContactDialog } from "./AddContactDialog"
 
 const PAGE_SIZE = 25
 
 import { useState } from "react"
+import { AddContactDialog } from "./AddContactDialog"
 
 function fullName(contact: ContactPublic): string {
   return (
@@ -210,7 +211,15 @@ export const ContactsList = () => {
             )}
           </p>
         </div>
-        <AddContactDialog />
+        <div className="flex items-center gap-2">
+          <Button variant="outline" asChild>
+            <a href="/contacts/map">
+              <MapIcon className="size-4" />
+              Map View
+            </a>
+          </Button>
+          <AddContactDialog />
+        </div>
       </div>
 
       <div className="relative">

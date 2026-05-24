@@ -26,6 +26,7 @@ import { Route as LayoutCalendarRouteImport } from './routes/_layout/calendar'
 import { Route as LayoutAdminRouteImport } from './routes/_layout/admin'
 import { Route as LayoutContactsIndexRouteImport } from './routes/_layout/contacts/index'
 import { Route as LayoutAdminIndexRouteImport } from './routes/_layout/admin/index'
+import { Route as LayoutContactsMapRouteImport } from './routes/_layout/contacts/map'
 import { Route as LayoutContactsKanbanRouteImport } from './routes/_layout/contacts/kanban'
 import { Route as LayoutContactsContactIdRouteImport } from './routes/_layout/contacts/$contactId'
 import { Route as LayoutAdminWebhooksRouteImport } from './routes/_layout/admin/webhooks'
@@ -116,6 +117,11 @@ const LayoutAdminIndexRoute = LayoutAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => LayoutAdminRoute,
 } as any)
+const LayoutContactsMapRoute = LayoutContactsMapRouteImport.update({
+  id: '/map',
+  path: '/map',
+  getParentRoute: () => LayoutContactsRoute,
+} as any)
 const LayoutContactsKanbanRoute = LayoutContactsKanbanRouteImport.update({
   id: '/kanban',
   path: '/kanban',
@@ -163,6 +169,7 @@ export interface FileRoutesByFullPath {
   '/admin/webhooks': typeof LayoutAdminWebhooksRoute
   '/contacts/$contactId': typeof LayoutContactsContactIdRoute
   '/contacts/kanban': typeof LayoutContactsKanbanRoute
+  '/contacts/map': typeof LayoutContactsMapRoute
   '/admin/': typeof LayoutAdminIndexRoute
   '/contacts/': typeof LayoutContactsIndexRoute
 }
@@ -184,6 +191,7 @@ export interface FileRoutesByTo {
   '/admin/webhooks': typeof LayoutAdminWebhooksRoute
   '/contacts/$contactId': typeof LayoutContactsContactIdRoute
   '/contacts/kanban': typeof LayoutContactsKanbanRoute
+  '/contacts/map': typeof LayoutContactsMapRoute
   '/admin': typeof LayoutAdminIndexRoute
   '/contacts': typeof LayoutContactsIndexRoute
 }
@@ -209,6 +217,7 @@ export interface FileRoutesById {
   '/_layout/admin/webhooks': typeof LayoutAdminWebhooksRoute
   '/_layout/contacts/$contactId': typeof LayoutContactsContactIdRoute
   '/_layout/contacts/kanban': typeof LayoutContactsKanbanRoute
+  '/_layout/contacts/map': typeof LayoutContactsMapRoute
   '/_layout/admin/': typeof LayoutAdminIndexRoute
   '/_layout/contacts/': typeof LayoutContactsIndexRoute
 }
@@ -234,6 +243,7 @@ export interface FileRouteTypes {
     | '/admin/webhooks'
     | '/contacts/$contactId'
     | '/contacts/kanban'
+    | '/contacts/map'
     | '/admin/'
     | '/contacts/'
   fileRoutesByTo: FileRoutesByTo
@@ -255,6 +265,7 @@ export interface FileRouteTypes {
     | '/admin/webhooks'
     | '/contacts/$contactId'
     | '/contacts/kanban'
+    | '/contacts/map'
     | '/admin'
     | '/contacts'
   id:
@@ -279,6 +290,7 @@ export interface FileRouteTypes {
     | '/_layout/admin/webhooks'
     | '/_layout/contacts/$contactId'
     | '/_layout/contacts/kanban'
+    | '/_layout/contacts/map'
     | '/_layout/admin/'
     | '/_layout/contacts/'
   fileRoutesById: FileRoutesById
@@ -412,6 +424,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutAdminIndexRouteImport
       parentRoute: typeof LayoutAdminRoute
     }
+    '/_layout/contacts/map': {
+      id: '/_layout/contacts/map'
+      path: '/map'
+      fullPath: '/contacts/map'
+      preLoaderRoute: typeof LayoutContactsMapRouteImport
+      parentRoute: typeof LayoutContactsRoute
+    }
     '/_layout/contacts/kanban': {
       id: '/_layout/contacts/kanban'
       path: '/kanban'
@@ -471,12 +490,14 @@ const LayoutAdminRouteWithChildren = LayoutAdminRoute._addFileChildren(
 interface LayoutContactsRouteChildren {
   LayoutContactsContactIdRoute: typeof LayoutContactsContactIdRoute
   LayoutContactsKanbanRoute: typeof LayoutContactsKanbanRoute
+  LayoutContactsMapRoute: typeof LayoutContactsMapRoute
   LayoutContactsIndexRoute: typeof LayoutContactsIndexRoute
 }
 
 const LayoutContactsRouteChildren: LayoutContactsRouteChildren = {
   LayoutContactsContactIdRoute: LayoutContactsContactIdRoute,
   LayoutContactsKanbanRoute: LayoutContactsKanbanRoute,
+  LayoutContactsMapRoute: LayoutContactsMapRoute,
   LayoutContactsIndexRoute: LayoutContactsIndexRoute,
 }
 
