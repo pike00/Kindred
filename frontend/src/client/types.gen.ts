@@ -168,6 +168,17 @@ export type APIKeysPublic = {
     count: number;
 };
 
+/**
+ * Response model for avatar upload.
+ */
+export type AvatarUploadResponse = {
+    avatar_url: string;
+};
+
+export type Body_contacts_upload_avatar_file = {
+    file: (Blob | File);
+};
+
 export type Body_import_export_import_csv = {
     file: (Blob | File);
     column_mapping?: ({
@@ -2432,6 +2443,19 @@ export type ContactsListMergeLogsData = {
 export type ContactsListMergeLogsResponse = ({
     [key: string]: unknown;
 });
+
+export type ContactsUploadAvatarFileData = {
+    contactId: string;
+    formData: Body_contacts_upload_avatar_file;
+};
+
+export type ContactsUploadAvatarFileResponse = (AvatarUploadResponse);
+
+export type ContactsDeleteAvatarData = {
+    contactId: string;
+};
+
+export type ContactsDeleteAvatarResponse = (unknown);
 
 export type ContactsGetContactPdfData = {
     contactId: string;

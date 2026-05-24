@@ -3,10 +3,11 @@
 import logging
 import uuid
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Any
 
 from arq.connections import RedisSettings
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, File, HTTPException, Query, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import selectinload
 from sqlmodel import SQLModel, col, func, select, Field
@@ -39,6 +40,21 @@ from app.models import (
     User,
     ContactSource,
 )
+
+
+# Avatar upload configuration
+AVATAR_UPLOAD_DIR = Path("uploads/avatars")
+AVATAR_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+# Max file size: 10MB
+MAX_AVATAR_SIZE = 10 * 1024 * 1024
+ALLOWED_AVATAR_TYPES = {"image/jpeg", "image/png", "image/webp"}
+
+
+class AvatarUploadResponse(SQLModel):
+    """Response model for avatar upload."""
+
+    avatar_url: str
 
 
 class BulkContactFilter(BaseModel):
@@ -1383,3 +1399,87 @@ def list_merge_logs(
         )
 
     return {"data": logs, "count": count}
+
+
+@router.post(
+    "/{contact_id}/avatar",
+    response_model=AvatarUploadResponse,
+    name="upload_avatar_file",
+)
+async def upload_avatar(
+    session: SessionDep,
+    current_user: CurrentUser,
+    contact_id: uuid.UUID,
+    file: UploadFile = File(...),
+) -> Any:
+    """Upload a contact's avatar image with automatic face detection crop.
+
+    The client is responsible for cropping the image before upload.
+    This endpoint stores the cropped image and updates the contact's avatar_url.
+    """
+    contact = session.get(Contact, contact_id)
+    if not contact or contact.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="Contact not found")
+    if contact.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
+    # Validate file type
+    if file.content_type not in ALLOWED_AVATAR_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid file type. Allowed: {', '.join(ALLOWED_AVATAR_TYPES)}",
+        )
+
+    # Read file content
+    content = await file.read()
+
+    # Check file size
+    if len(content) > MAX_AVATAR_SIZE:
+        raise HTTPException(
+            status_code=400,
+            detail=f"File too large. Max size: {MAX_AVATAR_SIZE // (1024 * 1024)}MB",
+        )
+
+    # Generate unique filename
+    file_ext = Path(file.filename).suffix if file.filename else ".jpg"
+    avatar_filename = f"{contact_id}_{uuid.uuid4().hex}{file_ext}"
+    avatar_path = AVATAR_UPLOAD_DIR / avatar_filename
+
+    # Save file
+    avatar_path.write_bytes(content)
+
+    # Update contact's avatar_url
+    avatar_url = f"/uploads/avatars/{avatar_filename}"
+    contact.avatar_url = avatar_url
+    session.add(contact)
+    session.commit()
+
+    return AvatarUploadResponse(avatar_url=avatar_url)
+
+
+@router.delete("/{contact_id}/avatar")
+async def delete_avatar(
+    session: SessionDep,
+    current_user: CurrentUser,
+    contact_id: uuid.UUID,
+) -> Any:
+    """Delete a contact's avatar image."""
+    contact = session.get(Contact, contact_id)
+    if not contact or contact.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="Contact not found")
+    if contact.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
+    if contact.avatar_url:
+        # Extract filename and delete file
+        avatar_filename = Path(contact.avatar_url).name
+        avatar_path = AVATAR_UPLOAD_DIR / avatar_filename
+        if avatar_path.exists():
+            avatar_path.unlink()
+
+        # Clear avatar_url
+        contact.avatar_url = None
+        session.add(contact)
+        session.commit()
+
+    return {"ok": True, "message": "Avatar deleted successfully"}
