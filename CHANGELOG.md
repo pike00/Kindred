@@ -5,6 +5,11 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.69] - 2026-05-25
+
+### Added
+- Feat: iMessage sync integration (06ece7c)
+
 ## [0.2.68] - 2026-05-25
 
 ### Added
