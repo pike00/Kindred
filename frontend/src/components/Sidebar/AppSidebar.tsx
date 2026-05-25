@@ -19,6 +19,7 @@ import {
   Users,
 } from "@/lib/icons"
 import { type Item, Main } from "./Main"
+import { SmartLists } from "./SmartLists"
 import { User } from "./User"
 
 const baseItems: Item[] = [
@@ -26,6 +27,7 @@ const baseItems: Item[] = [
   { icon: Users, title: "Contacts", path: "/contacts" },
   { icon: MessagesSquare, title: "Interactions", path: "/interactions" },
   { icon: Tag, title: "Tags", path: "/tags" },
+  { icon: Users, title: "Graph", path: "/graph" },
   { icon: Bell, title: "Reminders", path: "/reminders" },
   { icon: CalendarHeart, title: "Calendar", path: "/calendar" },
   { icon: Gift, title: "Gift Kanban", path: "/gifts/kanban" },
@@ -46,6 +48,7 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <Main items={items} />
+        <SmartLists />
       </SidebarContent>
       <SidebarFooter>
         <SidebarAppearance />

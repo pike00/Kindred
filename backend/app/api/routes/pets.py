@@ -1,24 +1,31 @@
 """Pet management routes."""
 
 import uuid
-from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.crud import create_pet
-from app.models import Contact, Pet, PetCreate, PetPublic, PetUpdate
+from app.models import (
+    Contact,
+    Ok,
+    Pet,
+    PetCreate,
+    PetPublic,
+    PetsPublic,
+    PetUpdate,
+)
 
 router = APIRouter(prefix="/pets", tags=["pets"])
 
 
-@router.get("/contact/{contact_id}")
+@router.get("/contact/{contact_id}", response_model=PetsPublic)
 def list_pets(
     session: SessionDep,
     current_user: CurrentUser,
     contact_id: uuid.UUID,
-) -> Any:
+) -> PetsPublic:
     """List pets for a contact."""
     contact = session.get(Contact, contact_id)
     if not contact:
@@ -29,10 +36,10 @@ def list_pets(
     statement = select(Pet).where(Pet.contact_id == contact_id)
     pets = session.exec(statement).all()
 
-    return {
-        "data": [PetPublic.model_validate(p) for p in pets],
-        "count": len(pets),
-    }
+    return PetsPublic(
+        data=[PetPublic.model_validate(p) for p in pets],
+        count=len(pets),
+    )
 
 
 @router.post("/", response_model=PetPublic)
@@ -41,7 +48,7 @@ def create_pet_route(
     session: SessionDep,
     current_user: CurrentUser,
     pet_in: PetCreate,
-) -> Any:
+) -> PetPublic:
     """Create a new pet."""
     contact = session.get(Contact, pet_in.contact_id)
     if not contact:
@@ -60,7 +67,7 @@ def update_pet(
     current_user: CurrentUser,
     pet_id: uuid.UUID,
     pet_in: PetUpdate,
-) -> Any:
+) -> PetPublic:
     """Update a pet."""
     pet = session.get(Pet, pet_id)
     if not pet:
@@ -78,12 +85,12 @@ def update_pet(
     return PetPublic.model_validate(pet)
 
 
-@router.delete("/{pet_id}")
+@router.delete("/{pet_id}", response_model=Ok)
 def delete_pet(
     session: SessionDep,
     current_user: CurrentUser,
     pet_id: uuid.UUID,
-) -> Any:
+) -> Ok:
     """Delete a pet."""
     pet = session.get(Pet, pet_id)
     if not pet:
@@ -95,4 +102,4 @@ def delete_pet(
 
     session.delete(pet)
     session.commit()
-    return {"ok": True}
+    return Ok()
