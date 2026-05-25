@@ -220,20 +220,13 @@ export function useRegisterShortcuts(
   const { register, unregister } = ctx
   const shortcuts = Array.isArray(arg) ? arg : [arg]
 
-  // Callers usually pass inline array literals, so `shortcuts` is a fresh
-  // reference every render. Hash the descriptor identity so the effect only
-  // re-runs when the registration set actually changes — otherwise we churn
-  // registry state on every parent render, which previously cascaded into a
-  // "Maximum update depth exceeded" loop and crashed the whole layout.
-  const _contentKey = shortcuts
-    .map(
-      (s) => `${s.keys}::${s.description}::${s.group}::${s.enabled !== false}`,
-    )
-    .join("|")
-
-  // Always call the freshest callback. Without this, the registered handler
-  // would close over the callback from first registration and ignore the one
-  // passed in subsequent renders.
+  // IMPORTANT: callers MUST pass a stable reference (useMemo or a
+  // module-level const). Passing a fresh array literal every render causes
+  // the effect to cleanup + re-register every render, which cascades into a
+  // "Maximum update depth exceeded" loop and crashes the layout.
+  //
+  // We route callbacks through a ref so they stay fresh even when the
+  // shortcuts reference itself is stable across renders.
   const shortcutsRef = useRef(shortcuts)
   shortcutsRef.current = shortcuts
 

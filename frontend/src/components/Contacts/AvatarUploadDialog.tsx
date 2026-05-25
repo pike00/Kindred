@@ -327,7 +327,7 @@ export function AvatarUploadDialog({
       try {
         await ContactsService.uploadAvatarFile({
           contactId: contact.id,
-          formData: { file: file as unknown as string },
+          formData: { file },
         })
         showSuccessToast("Avatar uploaded successfully")
         queryClient.invalidateQueries({ queryKey: ["contacts", contact.id] })

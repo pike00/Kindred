@@ -74,8 +74,7 @@ export default function IcalImport() {
   const { showSuccessToast, showErrorToast } = useCustomToast()
 
   const uploadMutation = useMutation({
-    mutationFn: (file: File) =>
-      IcalService.uploadIcal({ formData: { file: file as unknown as string } }),
+    mutationFn: (file: File) => IcalService.uploadIcal({ formData: { file } }),
     onSuccess: (data) => {
       const result = data as unknown as UploadResponse
       setUploadResult(result)
