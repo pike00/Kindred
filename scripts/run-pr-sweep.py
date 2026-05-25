@@ -241,10 +241,10 @@ def ensure_worktree(pr: PR) -> Path:
 
 
 def bring_stack_up(wt: Path) -> None:
-    """Use the worktree's `just up` to bring its compose stack online."""
+    """Use the worktree's `just dev` to bring its compose stack online."""
     log(f"Bringing stack up at {wt}")
     proc = subprocess.run(
-        ["just", "up"],
+        ["just", "dev"],
         cwd=wt,
         text=True,
         capture_output=True,
@@ -252,7 +252,7 @@ def bring_stack_up(wt: Path) -> None:
         timeout=300,
     )
     if proc.returncode != 0:
-        log(f"WARN: just up failed in {wt}:\n{proc.stderr[-2000:]}")
+        log(f"WARN: just dev failed in {wt}:\n{proc.stderr[-2000:]}")
         raise RuntimeError("stack failed to come up")
 
 
@@ -444,31 +444,74 @@ def check_python_syntax(wt: Path) -> list[tuple[Path, str]]:
 
 
 def llm_fix_syntax_errors(wt: Path, pr: PR, errors: list[tuple[Path, str]]) -> bool:
-    """Ask LLM to fix syntax errors in files that a prior patch left broken."""
-    parts = []
+    """Ask LLM to fix syntax errors in files that a prior patch left broken.
+
+    Sends the full current file content and asks the LLM to return the corrected
+    file verbatim (not a diff) — avoids line-number skew from applying two
+    sequential diffs to a moving target.
+    """
+    fixed_any = False
     for f, err in errors[:5]:
         content = f.read_text(errors="replace")
-        if len(content) > 8192:
-            content = content[:8192] + "\n... [truncated]"
-        parts.append(f"=== {f.relative_to(wt)} ===\nSyntaxError: {err}\n\n{content}\n")
-    blob = "\n".join(parts)
-    sys_prompt = (
-        REPAIR_SYSTEM + "\nThe previous conflict resolution left Python syntax errors. "
-        "Output a unified diff that fixes only the syntax errors — do not change "
-        "any logic. Ensure parentheses, brackets, and indentation are balanced."
-    )
-    user = f"# Syntax errors in PR #{pr.number} after merge-conflict repair\n\n{blob}"
-    save_prompt(pr, "syntax-fix", user)
-    try:
-        reply = litellm_chat(sys_prompt, user)
-    except Exception as e:
-        log(f"PR #{pr.number}: litellm syntax-fix call failed: {e}")
-        return False
-    diff = extract_diff(reply)
-    if diff is None:
-        log(f"PR #{pr.number}: LLM returned no diff for syntax fix")
-        return False
-    return apply_patch(wt, pr, "syntax-fix", diff)
+        if len(content) > 12000:
+            content = content[:12000] + "\n... [truncated]"
+        sys_prompt = (
+            "You are a Python syntax fixer. You will be given a Python file that has "
+            "a syntax error introduced by a merge-conflict resolution patch. "
+            "Return the COMPLETE corrected file — every line — with ONLY the syntax "
+            "error fixed. Do not change any logic, imports, or formatting beyond what "
+            "is necessary to make the file parse. "
+            "Output the file inside a ```python ... ``` fenced block and nothing else."
+        )
+        user = (
+            f"File: {f.relative_to(wt)}\n"
+            f"SyntaxError: {err}\n\n"
+            f"```python\n{content}\n```"
+        )
+        save_prompt(pr, f"syntax-fix-{f.name}", user)
+        try:
+            reply = litellm_chat(sys_prompt, user)
+        except Exception as e:
+            log(f"PR #{pr.number}: litellm syntax-fix call failed for {f.name}: {e}")
+            continue
+
+        # Extract content from ```python ... ``` block
+        import re
+
+        m = re.search(r"```python\s*\n(.*?)```", reply, re.DOTALL)
+        if not m:
+            # fall back: strip any single leading/trailing fence line
+            lines = reply.strip().splitlines()
+            if lines and lines[0].startswith("```"):
+                lines = lines[1:]
+            if lines and lines[-1].startswith("```"):
+                lines = lines[:-1]
+            fixed = "\n".join(lines)
+        else:
+            fixed = m.group(1)
+
+        # Verify the fix actually compiles before writing
+        chk = subprocess.run(
+            [
+                "python3",
+                "-c",
+                f"compile({repr(fixed)}, {repr(str(f.relative_to(wt)))}, 'exec')",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if chk.returncode != 0:
+            log(
+                f"PR #{pr.number}: LLM syntax fix for {f.name} still has errors: "
+                f"{chk.stderr.strip()[-200:]}"
+            )
+            continue
+
+        f.write_text(fixed)
+        log(f"PR #{pr.number}: syntax fixed in {f.relative_to(wt)}")
+        fixed_any = True
+
+    return fixed_any
 
 
 def handle_update_branch(wt: Path, pr: PR) -> bool:
@@ -1035,7 +1078,7 @@ def build_apply_review_prompt(pr: PR, review_text: str, wt: Path) -> str:
     file_blocks = ""
     for rel in dict.fromkeys(mentioned):  # deduplicate, preserve order
         full = wt / rel
-        if not full.exists():
+        if not full.is_file():
             continue
         content = full.read_text(errors="replace")
         if len(content) > 8000:

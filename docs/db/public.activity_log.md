@@ -10,7 +10,7 @@
 | entity_type | varchar(64) |  | false |  |  |  |
 | entity_id | uuid |  | false |  |  |  |
 | action | varchar(32) |  | false |  |  |  |
-| changes_json | json |  | true |  |  |  |
+| changes_json | jsonb |  | true |  |  |  |
 | occurred_at | timestamp with time zone |  | false |  |  |  |
 | acting_api_key_id | uuid |  | true |  | [public.api_key](public.api_key.md) |  |
 
@@ -55,7 +55,7 @@ erDiagram
   varchar_64_ entity_type
   uuid entity_id
   varchar_32_ action
-  json changes_json
+  jsonb changes_json
   timestamp_with_time_zone occurred_at
   uuid acting_api_key_id FK
 }
