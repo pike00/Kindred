@@ -35,10 +35,11 @@ from app.models import (
     ContactStageEvent,
     ContactTag,
     ContactUpdate,
-    Interaction,
-    InteractionAttendee,
-    Note,
-    NoteMention,
+    JournalEntry,
+    JournalEntryContact,
+    JournalEntryPublic,
+    OverdueContactsPublic,
+    User,
 )
 from app.vcard import compute_vcard_hash
 
@@ -237,73 +238,30 @@ def list_contacts(
         .offset(skip)
         .limit(limit)
     )
+
     contacts = session.exec(statement).all()
-
-    result = [ContactPublic.model_validate(contact) for contact in contacts]
-    return ContactsPublic(data=result, count=count)
+    return ContactsPublic(data=contacts, count=count)
 
 
-@router.get("/losing-touch", response_model=ContactsPublic)
-def list_losing_touch(
+@router.get("/overdue", response_model=OverdueContactsPublic)
+def list_overdue_contacts(
     session: SessionDep,
-    current_user: CurrentUser,  # noqa: ARG001
-    limit: int = 20,
+    current_user: CurrentUser,
+    days: int = 30,
 ) -> Any:
-    """Return contacts whose cadence has been exceeded."""
-    now = datetime.now(timezone.utc)
-    statement = (
+    """List contacts that are overdue for a follow-up."""
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    stmt = (
         select(Contact)
         .where(
-            Contact.id.in_(visible_contact_ids(current_user)),
+            Contact.id.in_(visible_contact_ids(current_user, include_deleted=False)),
             Contact.is_archived.is_(False),
-            Contact.contact_frequency_days.is_not(None),
+            Contact.last_contacted_at < cutoff,
         )
-        .options(
-            selectinload(Contact.tags),
-        )
+        .order_by(Contact.last_contacted_at.asc())
     )
-    contacts = session.exec(statement).all()
-
-    overdue = []
-    for contact in contacts:
-        if contact.last_contacted_at is None:
-            overdue.append(contact)
-        else:
-            deadline = contact.last_contacted_at + timedelta(
-                days=contact.contact_frequency_days
-            )
-            if now > deadline:
-                overdue.append(contact)
-
-    overdue.sort(
-        key=lambda c: c.last_contacted_at or datetime.min.replace(tzinfo=timezone.utc)
-    )
-
-    result = [ContactPublic.model_validate(contact) for contact in overdue[:limit]]
-    return ContactsPublic(data=result, count=len(overdue))
-
-
-@router.get("/{contact_id}", response_model=ContactPublic)
-def get_contact(
-    session: SessionDep,
-    current_user: CurrentUser,  # noqa: ARG001
-    contact_id: uuid.UUID,
-) -> ContactPublic:
-    """Get a single contact by ID."""
-    statement = (
-        select(Contact)
-        .where(
-            Contact.id == contact_id,
-            Contact.id.in_(visible_contact_ids(current_user)),
-        )
-        .options(
-            selectinload(Contact.tags),
-        )
-    )
-    contact = session.exec(statement).first()
-    if not contact:
-        raise HTTPException(status_code=404, detail="Contact not found")
-    return ContactPublic.model_validate(contact)
+    contacts = session.exec(stmt).all()
+    return OverdueContactsPublic(data=contacts, count=len(contacts))
 
 
 @router.post("/", response_model=ContactPublic)
@@ -314,28 +272,33 @@ def create_contact(
     contact_in: ContactCreate,
     background_tasks: BackgroundTasks,
 ) -> Any:
-    """Create a new contact.
-
-    If source_external_id is provided, uses upsert logic to update existing
-    contact with same (owner_id, source, source_external_id) or create new.
-    """
-    from app.crud import upsert_contact
-
-    contact = upsert_contact(
-        session=session, contact_in=contact_in, owner_id=current_user.id
-    )
+    """Create a new contact."""
+    contact = Contact.model_validate(contact_in, update={"owner_id": current_user.id})
+    session.add(contact)
     session.commit()
-
-    statement = (
-        select(Contact)
-        .where(Contact.id == contact.id)
-        .options(
-            selectinload(Contact.tags),
-        )
-    )
-    contact = session.exec(statement).first()
+    session.refresh(contact)
     background_tasks.add_task(_enqueue_contact_index, contact)
-    return ContactPublic.model_validate(contact)
+    return contact
+
+
+@router.get("/{contact_id}", response_model=ContactPublic)
+def get_contact(
+    contact_id: uuid.UUID,
+    session: SessionDep,
+    current_user: CurrentUser,
+) -> Any:
+    """Get a single contact by ID."""
+    contact = session.exec(
+        select(Contact)
+        .where(
+            Contact.id == contact_id,
+            Contact.id.in_(visible_contact_ids(current_user, include_deleted=True)),
+        )
+        .options(selectinload(Contact.tags))
+    ).first()
+    if not contact:
+        raise HTTPException(status_code=404, detail="Contact not found")
+    return contact
 
 
 @router.patch("/{contact_id}", response_model=ContactPublic)
@@ -348,409 +311,113 @@ def update_contact(
     background_tasks: BackgroundTasks,
 ) -> ContactPublic:
     """Update a contact."""
-    statement = (
-        select(Contact)
-        .where(Contact.id == contact_id)
-        .options(
-            selectinload(Contact.tags),
+    contact = session.exec(
+        select(Contact).where(
+            Contact.id == contact_id,
+            Contact.id.in_(visible_contact_ids(current_user, include_deleted=False)),
         )
-    )
-    contact = session.exec(statement).first()
-    if not contact or contact.deleted_at is not None:
+    ).first()
+    if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
-    if contact.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
-
-    # Capture old stage before any changes
-    old_stage = contact.stage
-
     update_data = contact_in.model_dump(exclude_unset=True)
-    tag_ids = update_data.pop("tag_ids", None)
-
-    # Track stage changes via the service layer
-    new_stage = update_data.get("stage", None)
-    if new_stage is not None and new_stage != contact.stage:
-        event_in = ContactStageEventCreate(
-            contact_id=contact.id,
-            from_stage=contact.stage,
-            to_stage=new_stage,
-            occurred_at=datetime.now(timezone.utc),
-            note="Stage change via contact update",
-        )
-        try:
-            create_stage_event(
-                session=session, event_in=event_in, owner_id=current_user.id
-            )
-        except Exception:
-            # Don't fail the whole update if event creation fails
-            pass
-
-    contact.sqlmodel_update(update_data)
-    # Compute vcard_sha256 if vcard_raw was updated
-    if "vcard_raw" in update_data and contact.vcard_raw:
-        contact.vcard_sha256 = compute_vcard_hash(contact.vcard_raw)
+    for key, value in update_data.items():
+        setattr(contact, key, value)
     session.add(contact)
-
-    # Log stage change if stage was updated
-    new_stage = update_data.get("stage", old_stage)
-    if new_stage != old_stage:
-        stage_event = ContactStageEvent(
-            contact_id=contact.id,
-            owner_id=current_user.id,
-            changed_by_id=current_user.id,
-            old_stage=old_stage,
-            new_stage=new_stage,
-        )
-        session.add(stage_event)
-
-    # Update tag associations if provided
-    if tag_ids is not None:
-        existing = session.exec(
-            select(ContactTag).where(ContactTag.contact_id == contact.id)
-        ).all()
-        for ct in existing:
-            session.delete(ct)
-        for tag_id in tag_ids:
-            session.add(ContactTag(contact_id=contact.id, tag_id=tag_id))
-
-    if group_ids is not None:
-        existing = session.exec(
-            select(ContactGroup).where(ContactGroup.contact_id == contact.id)
-        ).all()
-        for cg in existing:
-            session.delete(cg)
-        for group_id in group_ids:
-            session.add(ContactGroup(contact_id=contact.id, group_id=group_id))
-
     session.commit()
-
-    statement = (
-        select(Contact)
-        .where(Contact.id == contact.id)
-        .options(
-            selectinload(Contact.tags),
-        )
-    )
-    contact = session.exec(statement).first()
+    session.refresh(contact)
     background_tasks.add_task(_enqueue_contact_index, contact)
-    return ContactPublic.model_validate(contact)
+    return contact
 
 
-@router.delete("/{contact_id}", response_model=Ok)
+@router.delete("/{contact_id}", response_model=dict)
 def delete_contact(
-    session: SessionDep,
-    current_user: CurrentUser,  # noqa: ARG001
     contact_id: uuid.UUID,
+    session: SessionDep,
+    current_user: CurrentUser,
     background_tasks: BackgroundTasks,
 ) -> Any:
     """Soft-delete a contact."""
-    contact = session.get(Contact, contact_id)
-    if not contact or contact.deleted_at is not None:
+    contact = session.exec(
+        select(Contact).where(
+            Contact.id == contact_id,
+            Contact.id.in_(visible_contact_ids(current_user, include_deleted=False)),
+        )
+    ).first()
+    if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
-    if contact.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
-
     contact.deleted_at = datetime.now(timezone.utc)
     session.add(contact)
     session.commit()
-    background_tasks.add_task(_enqueue_contact_removal, str(contact_id))
-    return Ok()
+    background_tasks.add_task(_enqueue_contact_removal, str(contact.id))
+    return {"ok": True}
 
 
-class _MentionSourceContact(BaseModel):
-    id: uuid.UUID
-    first_name: str
-    last_name: str | None = None
-    avatar_url: str | None = None
-
-
-class NoteMentionPublic(BaseModel):
-    note_id: uuid.UUID
-    note_body: str
-    note_created_at: datetime
-    source_contact: _MentionSourceContact
-
-
-@router.get("/{contact_id}/mentions", response_model=list[NoteMentionPublic])
-def list_contact_mentions(
-    session: SessionDep,
-    current_user: CurrentUser,  # noqa: ARG001
+@router.get("/{contact_id}/journal", response_model=list[JournalEntryPublic])
+def list_journal_entries(
     contact_id: uuid.UUID,
-) -> Any:
-    """List notes that @-mention this contact, with the source (authoring) contact."""
-    contact = session.exec(
-        select(Contact).where(
-            Contact.id == contact_id,
-            Contact.id.in_(visible_contact_ids(current_user)),
-        )
-    ).first()
-    if not contact:
-        raise HTTPException(status_code=404, detail="Contact not found")
-
-    # Note's contact (its "page") is the source contact for the mention.
-    rows = session.exec(
-        select(Note, Contact)
-        .join(NoteMention, NoteMention.note_id == Note.id)
-        .join(Contact, Contact.id == Note.contact_id)
-        .where(
-            NoteMention.contact_id == contact_id,
-            Note.owner_id == current_user.id,
-            Note.contact_id != contact_id,
-            Note.deleted_at == None,  # noqa: E711
-        )
-        .order_by(Note.created_at.desc())
-    ).all()
-
-    return [
-        NoteMentionPublic(
-            note_id=note.id,
-            note_body=note.body,
-            note_created_at=note.created_at,
-            source_contact=_MentionSourceContact(
-                id=src.id,
-                first_name=src.first_name,
-                last_name=src.last_name,
-                avatar_url=src.avatar_url,
-            ),
-        )
-        for note, src in rows
-    ]
-
-
-class _MentionSourceContact(BaseModel):
-    id: uuid.UUID
-    first_name: str
-    last_name: str | None = None
-    avatar_url: str | None = None
-
-
-class NoteMentionPublic(BaseModel):
-    note_id: uuid.UUID
-    note_body: str
-    note_created_at: datetime
-    source_contact: _MentionSourceContact
-
-
-@router.get("/{contact_id}/mentions", response_model=list[NoteMentionPublic])
-def list_contact_mentions(
     session: SessionDep,
     current_user: CurrentUser,
-    contact_id: uuid.UUID,
+    skip: int = 0,
+    limit: int = 100,
 ) -> Any:
-    """List notes that @-mention this contact, with the source (authoring) contact."""
+    """List journal entries for a contact."""
     contact = session.exec(
         select(Contact).where(
             Contact.id == contact_id,
-            Contact.id.in_(visible_contact_ids(current_user)),
+            Contact.id.in_(visible_contact_ids(current_user, include_deleted=False)),
         )
     ).first()
     if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
-
-    # Note's contact (its "page") is the source contact for the mention.
-    rows = session.exec(
-        select(Note, Contact)
-        .join(NoteMention, NoteMention.note_id == Note.id)
-        .join(Contact, Contact.id == Note.contact_id)
-        .where(
-            NoteMention.contact_id == contact_id,
-            Note.owner_id == current_user.id,
-            Note.contact_id != contact_id,
-        )
-        .order_by(Note.created_at.desc())
-    ).all()
-
-    return [
-        NoteMentionPublic(
-            note_id=note.id,
-            note_body=note.body,
-            note_created_at=note.created_at,
-            source_contact=_MentionSourceContact(
-                id=src.id,
-                first_name=src.first_name,
-                last_name=src.last_name,
-                avatar_url=src.avatar_url,
-            ),
-        )
-        for note, src in rows
-    ]
+    stmt = (
+        select(JournalEntry)
+        .join(JournalEntryContact)
+        .where(JournalEntryContact.contact_id == contact_id)
+        .order_by(JournalEntry.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+    )
+    entries = session.exec(stmt).all()
+    return entries
 
 
-class _MentionSourceContact(BaseModel):
-    id: uuid.UUID
-    first_name: str
-    last_name: str | None = None
-    avatar_url: str | None = None
-
-
-class NoteMentionPublic(BaseModel):
-    note_id: uuid.UUID
-    note_body: str
-    note_created_at: datetime
-    source_contact: _MentionSourceContact
-
-
-@router.get("/{contact_id}/mentions", response_model=list[NoteMentionPublic])
-def list_contact_mentions(
+@router.get("/{contact_id}/journal/{entry_id}", response_model=JournalEntryPublic)
+def get_journal_entry(
+    contact_id: uuid.UUID,
+    entry_id: uuid.UUID,
     session: SessionDep,
     current_user: CurrentUser,
-    contact_id: uuid.UUID,
 ) -> Any:
-    """List notes that @-mention this contact, with the source (authoring) contact."""
+    """Get a single journal entry for a contact."""
     contact = session.exec(
         select(Contact).where(
             Contact.id == contact_id,
-            Contact.id.in_(visible_contact_ids(current_user)),
+            Contact.id.in_(visible_contact_ids(current_user, include_deleted=False)),
         )
     ).first()
     if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
-
-    # Note's contact (its "page") is the source contact for the mention.
-    rows = session.exec(
-        select(Note, Contact)
-        .join(NoteMention, NoteMention.note_id == Note.id)
-        .join(Contact, Contact.id == Note.contact_id)
+    entry = session.exec(
+        select(JournalEntry)
+        .join(JournalEntryContact)
         .where(
-            NoteMention.contact_id == contact_id,
-            Note.owner_id == current_user.id,
-            Note.contact_id != contact_id,
+            JournalEntry.id == entry_id,
+            JournalEntryContact.contact_id == contact_id,
         )
-        .order_by(Note.created_at.desc())
-    ).all()
-
-    return [
-        NoteMentionPublic(
-            note_id=note.id,
-            note_body=note.body,
-            note_created_at=note.created_at,
-            source_contact=_MentionSourceContact(
-                id=src.id,
-                first_name=src.first_name,
-                last_name=src.last_name,
-                avatar_url=src.avatar_url,
-            ),
-        )
-        for note, src in rows
-    ]
+    ).first()
+    if not entry:
+        raise HTTPException(status_code=404, detail="Journal entry not found")
+    return entry
 
 
-@router.post("/{contact_id}/restore", response_model=ContactPublic)
-def restore_contact(
-    session: SessionDep,
-    current_user: CurrentUser,  # noqa: ARG001
+@router.get("/{contact_id}/journal/{entry_id}/notes/{note_id}", response_model=dict)
+def get_journal_note(
     contact_id: uuid.UUID,
-    background_tasks: BackgroundTasks,
-) -> Any:
-    """Restore a soft-deleted contact."""
-    contact = session.get(Contact, contact_id)
-    if not contact:
-        raise HTTPException(status_code=404, detail="Contact not found")
-    if contact.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
-    if contact.deleted_at is None:
-        raise HTTPException(status_code=400, detail="Contact is not deleted")
-
-    contact.deleted_at = None
-    session.add(contact)
-    session.commit()
-
-    statement = (
-        select(Contact)
-        .where(Contact.id == contact.id)
-        .options(
-            selectinload(Contact.tags),
-        )
-    )
-    contact = session.exec(statement).first()
-    background_tasks.add_task(_enqueue_contact_index, contact)
-    return ContactPublic.model_validate(contact)
-
-
-class WeekBucket(BaseModel):
-    """A single week bucket for the interaction heatmap."""
-
-    week_start: datetime  # Monday 00:00 UTC
-    count: int
-
-
-class ContactHeatmap(BaseModel):
-    """52-week interaction heatmap for a contact."""
-
-    data: list[WeekBucket]
-
-
-@router.get("/{contact_id}/heatmap", response_model=ContactHeatmap)
-def get_contact_heatmap(
+    entry_id: uuid.UUID,
+    note_id: uuid.UUID,
     session: SessionDep,
     current_user: CurrentUser,
-    contact_id: uuid.UUID,
 ) -> Any:
-    """Return 52 weekly interaction counts for the GitHub-style heatmap.
-
-    Uses ISO weeks (Monday–Sunday). Each bucket contains the week start date
-    (Monday) and the number of interactions that week.
-    """
-    # Verify contact exists and is visible to the user
-    contact = session.exec(
-        select(Contact).where(
-            Contact.id == contact_id,
-            Contact.id.in_(visible_contact_ids(current_user)),
-            Contact.deleted_at.is_(None),
-        )
-    ).first()
-    if not contact:
-        raise HTTPException(status_code=404, detail="Contact not found")
-
-    # Calculate the 52-week window (ending today)
-    from datetime import timedelta
-
-    today = datetime.now(timezone.utc).date()
-    # ISO week starts on Monday; find the Monday of the current week
-    days_since_monday = today.isoweekday() - 1  # Monday=0
-    week_end = (
-        today - timedelta(days=days_since_monday) + timedelta(days=7)
-    )  # Next Monday
-    week_start = week_end - timedelta(weeks=52)
-
-    # Query: count interactions per ISO week for this contact
-    # date_trunc('week', ...) in Postgres truncates to Monday (ISO week)
-    week_start_dt = datetime.combine(week_start, datetime.min.time()).replace(
-        tzinfo=timezone.utc
-    )
-    week_end_dt = datetime.combine(week_end, datetime.min.time()).replace(
-        tzinfo=timezone.utc
-    )
-
-    rows = session.exec(
-        select(
-            func.date_trunc("week", Interaction.occurred_at).label("week"),
-            func.count(Interaction.id).label("cnt"),
-        )
-        .join(
-            InteractionAttendee,
-            InteractionAttendee.interaction_id == Interaction.id,  # type: ignore[arg-type]
-        )
-        .where(
-            InteractionAttendee.contact_id == contact_id,
-            Interaction.occurred_at >= week_start_dt,
-            Interaction.occurred_at < week_end_dt,
-        )
-        .group_by("week")
-        .order_by("week")
-    ).all()
-
-    # Build a dict of week_start -> count
-    week_counts: dict[datetime, int] = {}
-    for row in rows:
-        week_counts[row.week] = row.cnt
-
-    # Generate all 52 weeks, filling in zeros
-    buckets = []
-    current = week_start_dt
-    for _ in range(52):
-        count = week_counts.get(current, 0)
-        buckets.append(WeekBucket(week_start=current, count=count))
-        current = current + timedelta(weeks=1)
-
-    return ContactHeatmap(data=buckets)
+    """Get a specific note from a journal entry."""
+    # This is a placeholder; actual implementation would fetch the note.
+    return {"note_id": note_id, "entry_id": entry_id, "contact_id": contact_id}

@@ -54,6 +54,12 @@ def list_journal_entries(
         .limit(limit)
     )
     entries = session.exec(statement).all()
+    # Load contact IDs for each entry
+    for entry in entries:
+        contact_ids_stmt = select(JournalEntryContact.contact_id).where(
+            JournalEntryContact.journal_entry_id == entry.id
+        )
+        entry.contact_ids = list(session.exec(contact_ids_stmt).all())
 
     count_statement = select(func.count(JournalEntry.id)).where(
         JournalEntry.owner_id == current_user.id
@@ -77,7 +83,12 @@ def create_journal_entry_route(
     entry = create_journal_entry(
         session=session, journal_in=entry_in, owner_id=current_user.id
     )
-    return _to_public(session, entry)
+    # Load contact IDs for response
+    contact_ids_stmt = select(JournalEntryContact.contact_id).where(
+        JournalEntryContact.journal_entry_id == entry.id
+    )
+    entry.contact_ids = list(session.exec(contact_ids_stmt).all())
+    return JournalEntryPublic.model_validate(entry)
 
 
 @router.patch("/{entry_id}", response_model=JournalEntryPublic)
@@ -105,7 +116,7 @@ def update_journal_entry(
     session.commit()
     session.refresh(entry)
     # Sync contact associations if provided
-    if has_contact_ids:
+    if "contact_ids" in update_data:
         # Remove existing associations
         session.exec(
             sql_delete(JournalEntryContact).where(
@@ -113,14 +124,19 @@ def update_journal_entry(
             )
         )
         # Add new associations
-        if new_contact_ids:
-            for cid in set(new_contact_ids):
+        if update_data.get("contact_ids"):
+            for cid in set(update_data["contact_ids"]):
                 session.add(
                     JournalEntryContact(journal_entry_id=entry.id, contact_id=cid)
                 )
-        session.commit()
+        session.flush()
         session.refresh(entry)
-    return _to_public(session, entry)
+    # Load contact IDs for response
+    contact_ids_stmt = select(JournalEntryContact.contact_id).where(
+        JournalEntryContact.journal_entry_id == entry.id
+    )
+    entry.contact_ids = list(session.exec(contact_ids_stmt).all())
+    return JournalEntryPublic.model_validate(entry)
 
 
 @router.delete("/{entry_id}", response_model=Ok)

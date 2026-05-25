@@ -1,55 +1,50 @@
-# Interaction Location - Implementation Notes
+# Journal to Contact Join - Implementation Notes
 
 ## Completed Tasks
 
-### 1. Database Migration
-- Added `location_label` (VARCHAR(500)), `latitude` (FLOAT), and `longitude` (FLOAT) columns to the `interaction` table
-- Migration file created: `backend/app/alembic/versions/e6f7a8b9c0d1_add_interaction_location_fields.py`
-- Applied migration via SQL: `ALTER TABLE interaction ADD COLUMN...`
-- Stamped alembic to mark migration as applied
+### 1. Created Alembic Migration
+- Created `backend/app/alembic/versions/f6a7b8c9d0e1_add_journal_entry_contact_junction.py`
+- Migration creates `journal_entry_contact` junction table with:
+  - `journal_entry_id` (FK to journal_entry, CASCADE delete)
+  - `contact_id` (FK to contact, CASCADE delete)
+  - Primary key on both columns
+  - Indexes on both columns for query performance
 
-### 2. Backend Models (Already Done)
-- `InteractionBase` already had the location fields defined
-- `InteractionCreate` already had location fields
-- `InteractionUpdate` already had location fields
-- `InteractionPublic` already had location fields exposed
+### 2. Updated Models (`backend/app/models.py`)
+- Added `JournalEntryContact` junction table model
+- Updated `JournalEntryCreate` to include `contact_ids: list[uuid.UUID] | None = None`
+- Updated `JournalEntryUpdate` to include `contact_ids: list[uuid.UUID] | None = None`
+- Updated `JournalEntryPublic` to include `contact_ids: list[uuid.UUID] = []`
 
-### 3. API Endpoints (Already Working)
-- All interaction CRUD routes work with location fields
-- Privacy/sharing: Location data inherits visibility from the existing TagShare mechanism
-- Backend tests pass (228 tests)
+### 3. Updated CRUD (`backend/app/crud.py`)
+- Added `JournalEntryContact` to imports
+- Updated `create_journal_entry` to handle `contact_ids` and sync junction table entries
 
-### 4. Frontend Form Fields
-- Updated `frontend/src/components/Interactions/AddInteractionDialog.tsx`:
-  - Added `location_label`, `latitude`, `longitude` to the form schema
-  - Added form fields UI (text input for location_label, number inputs for lat/lon)
+### 4. Updated Journal API (`backend/app/api/routes/journal.py`)
+- Added `JournalEntryContact` to imports
+- Added `sql_delete` import from sqlmodel
+- Updated `create_journal_entry_route` to load `contact_ids` in response
+- Updated `update_journal_entry` to sync `contact_ids` when provided
+- Updated `list_journal_entries` to load `contact_ids` for each entry
 
-### 5. Frontend Display
-- Updated `frontend/src/components/Interactions/InteractionTimeline.tsx`:
-  - Added MapPin icon import
-  - Display location_label below interaction notes
-  - Display lat/lon coordinates when both are present
+### 5. Updated Contacts API (`backend/app/api/routes/contacts.py`)
+- Added `JournalEntry`, `JournalEntryContact`, `JournalEntryPublic` to imports
+- Added `GET /{contact_id}/reflections` endpoint to list journal entries referencing a contact
 
-### 6. Map Visualization
-- Created `frontend/src/components/Interactions/InteractionMap.tsx`:
-  - Uses Leaflet (react-leaflet) for map rendering
-  - Shows markers for interactions with location data
-  - Popup shows interaction details (channel, location_label, notes, date)
-  - Empty state when no location data exists
-- Added to contact detail page (`frontend/src/routes/_layout/contacts/$contactId.tsx`)
+## Committed
+- Commit: `82fa306` - `feat(journal): add journal_entry_contact junction table and API`
 
-### 7. Dependencies Added
-- `leaflet@1.9.4`
-- `react-leaflet@5.0.0`
+## Remaining Tasks
+- [ ] Apply migration (needs running backend service)
+- [ ] Test cascade behavior on contact/journal entry deletion
+- [ ] Implement journal entry editor person picker UI component (frontend)
+- [ ] Add "reflections" section to contact detail page (frontend)
 
-## Verification
-- ✅ Backend tests pass: `docker exec personal-crm-backend-1 uv run pytest -x -q` (228 passed)
-- ✅ Frontend build passes: `docker exec personal-crm-frontend-1 bun run build`
+## Privacy Model
+- Journal entries remain private to owner even when linked to contacts
+- Contact's `visible_contact_ids` query does NOT grant access to linked journal entries
+- The `/{contact_id}/reflections` endpoint only returns journal entries owned by the requesting user
 
-## Database State
-The columns were added directly via SQL since the running container uses the main repo, not the worktree. The alembic migration file exists but the worktree and main repo share the same database.
-
-## Privacy Notes
-- Location data visibility is inherited from the existing interaction visibility logic
-- If a Contact is shared via TagShare, the associated Interactions (including location) are visible to the grantee
-- This is handled by `_resolve_visible_contact_ids()` in the interaction routes
+## Cascade Behavior
+- Deleting a contact: Removes junction table rows (CASCADE), journal entry remains intact
+- Deleting a journal entry: Removes junction table rows (CASCADE), contact remains intact
