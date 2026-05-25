@@ -12,7 +12,7 @@ from arq.connections import RedisSettings
 from fastapi import APIRouter, BackgroundTasks, File, HTTPException, Query, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import selectinload
-from sqlmodel import SQLModel, col, func, select, Field
+from sqlmodel import Field, SQLModel, col, func, select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.core.config import settings as app_settings
@@ -24,6 +24,7 @@ from app.models import (
     Contact,
     ContactCreate,
     ContactPublic,
+    ContactSource,
     ContactsPublic,
     ContactStageEventCreate,
     ContactTag,
@@ -43,10 +44,8 @@ from app.models import (
     Relationship,
     SavedFilter,
     User,
-    ContactSource,
 )
 from app.vcard import compute_vcard_hash
-
 
 # Avatar upload configuration
 AVATAR_UPLOAD_DIR = Path("uploads/avatars")
@@ -61,6 +60,7 @@ class AvatarUploadResponse(SQLModel):
     """Response model for avatar upload."""
 
     avatar_url: str
+
 
 logger = logging.getLogger(__name__)
 
@@ -681,9 +681,6 @@ def update_contact(
     if contact.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not enough permissions")
 
-    # Capture old stage before any changes
-    old_stage = contact.stage
-
     update_data = contact_in.model_dump(exclude_unset=True)
     tag_ids = update_data.pop("tag_ids", None)
 
@@ -804,65 +801,6 @@ def list_contact_mentions(
             Note.owner_id == current_user.id,
             Note.contact_id != contact_id,
             Note.deleted_at == None,  # noqa: E711
-        )
-        .order_by(Note.created_at.desc())
-    ).all()
-
-    return [
-        NoteMentionPublic(
-            note_id=note.id,
-            note_body=note.body,
-            note_created_at=note.created_at,
-            source_contact=_MentionSourceContact(
-                id=src.id,
-                first_name=src.first_name,
-                last_name=src.last_name,
-                avatar_url=src.avatar_url,
-            ),
-        )
-        for note, src in rows
-    ]
-
-
-
-class _MentionSourceContact(BaseModel):
-    id: uuid.UUID
-    first_name: str
-    last_name: str | None = None
-    avatar_url: str | None = None
-
-
-class NoteMentionPublic(BaseModel):
-    note_id: uuid.UUID
-    note_body: str
-    note_created_at: datetime
-    source_contact: _MentionSourceContact
-
-
-@router.get("/{contact_id}/mentions", response_model=list[NoteMentionPublic])
-def list_contact_mentions(
-    session: SessionDep,
-    current_user: CurrentUser,
-    contact_id: uuid.UUID,
-) -> Any:
-    """List notes that @-mention this contact."""
-    contact = session.exec(
-        select(Contact).where(
-            Contact.id == contact_id,
-            Contact.id.in_(visible_contact_ids(current_user)),
-        )
-    ).first()
-    if not contact:
-        raise HTTPException(status_code=404, detail="Contact not found")
-
-    rows = session.exec(
-        select(Note, Contact)
-        .join(NoteMention, NoteMention.note_id == Note.id)
-        .join(Contact, Contact.id == Note.contact_id)
-        .where(
-            NoteMention.contact_id == contact_id,
-            Note.owner_id == current_user.id,
-            Note.contact_id != contact_id,
         )
         .order_by(Note.created_at.desc())
     ).all()

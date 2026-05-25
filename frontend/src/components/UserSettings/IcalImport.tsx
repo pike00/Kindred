@@ -190,29 +190,22 @@ export default function IcalImport() {
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
-            <div
-              role="button"
-              tabIndex={0}
-              className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:bg-muted/50 transition-colors"
+            <button
+              type="button"
+              className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:bg-muted/50 transition-colors w-full"
               onClick={() => fileInputRef.current?.click()}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  fileInputRef.current?.click();
-                }
-              }}
               onDragOver={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
+                e.preventDefault()
+                e.stopPropagation()
               }}
               onDrop={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                const file = e.dataTransfer.files?.[0];
+                e.preventDefault()
+                e.stopPropagation()
+                const file = e.dataTransfer.files?.[0]
                 if (file) {
-                  setSelectedFile(file);
-                  setProposals([]);
-                  setUploadResult(null);
+                  setSelectedFile(file)
+                  setProposals([])
+                  setUploadResult(null)
                 }
               }}
             >
@@ -228,7 +221,7 @@ export default function IcalImport() {
                 onChange={handleFileSelect}
                 className="hidden"
               />
-            </div>
+            </button>
 
             {selectedFile && (
               <div className="flex items-center justify-between gap-2 p-3 bg-muted rounded-md">

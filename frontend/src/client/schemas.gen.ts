@@ -678,7 +678,7 @@ export const Body_contacts_upload_avatar_fileSchema = {
     properties: {
         file: {
             type: 'string',
-            contentMediaType: 'application/octet-stream',
+            format: 'binary',
             title: 'File'
         }
     },
@@ -691,7 +691,7 @@ export const Body_ical_upload_icalSchema = {
     properties: {
         file: {
             type: 'string',
-            contentMediaType: 'application/octet-stream',
+            format: 'binary',
             title: 'File'
         }
     },
@@ -704,7 +704,7 @@ export const Body_import_export_import_csvSchema = {
     properties: {
         file: {
             type: 'string',
-            contentMediaType: 'application/octet-stream',
+            format: 'binary',
             title: 'File'
         },
         column_mapping: {
@@ -738,7 +738,7 @@ export const Body_import_export_import_vcardSchema = {
     properties: {
         file: {
             type: 'string',
-            contentMediaType: 'application/octet-stream',
+            format: 'binary',
             title: 'File'
         }
     },
@@ -751,7 +751,7 @@ export const Body_import_export_preview_csv_importSchema = {
     properties: {
         file: {
             type: 'string',
-            contentMediaType: 'application/octet-stream',
+            format: 'binary',
             title: 'File'
         }
     },
@@ -821,7 +821,7 @@ export const Body_transcribe_transcribe_audioSchema = {
     properties: {
         file: {
             type: 'string',
-            contentMediaType: 'application/octet-stream',
+            format: 'binary',
             title: 'File'
         }
     },
@@ -6924,31 +6924,6 @@ export const PetsPublicSchema = {
     type: 'object',
     required: ['data', 'count'],
     title: 'PetsPublic'
-} as const;
-
-export const PrivateUserCreateSchema = {
-    properties: {
-        email: {
-            type: 'string',
-            title: 'Email'
-        },
-        password: {
-            type: 'string',
-            title: 'Password'
-        },
-        full_name: {
-            type: 'string',
-            title: 'Full Name'
-        },
-        is_verified: {
-            type: 'boolean',
-            title: 'Is Verified',
-            default: false
-        }
-    },
-    type: 'object',
-    required: ['email', 'password', 'full_name'],
-    title: 'PrivateUserCreate'
 } as const;
 
 export const RelationshipCreateSchema = {

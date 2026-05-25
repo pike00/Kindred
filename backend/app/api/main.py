@@ -1,5 +1,4 @@
 from fastapi import APIRouter
-from app.api.routes import ical
 
 from app.api.routes import (
     activity_logs,
@@ -16,6 +15,7 @@ from app.api.routes import (
     email,
     gifts,
     graph,
+    ical,
     import_export,
     interactions,
     journal,

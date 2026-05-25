@@ -176,26 +176,26 @@ export type AvatarUploadResponse = {
 };
 
 export type Body_contacts_upload_avatar_file = {
-    file: string;
+    file: (Blob | File);
 };
 
 export type Body_ical_upload_ical = {
-    file: string;
+    file: (Blob | File);
 };
 
 export type Body_import_export_import_csv = {
-    file: string;
+    file: (Blob | File);
     column_mapping?: ({
     [key: string]: (string | null);
 } | null);
 };
 
 export type Body_import_export_import_vcard = {
-    file: string;
+    file: (Blob | File);
 };
 
 export type Body_import_export_preview_csv_import = {
-    file: string;
+    file: (Blob | File);
 };
 
 export type Body_login_login_access_token = {
@@ -208,7 +208,7 @@ export type Body_login_login_access_token = {
 };
 
 export type Body_transcribe_transcribe_audio = {
-    file: string;
+    file: (Blob | File);
 };
 
 /**
@@ -1922,13 +1922,6 @@ export type PetUpdate = {
     notes?: (string | null);
 };
 
-export type PrivateUserCreate = {
-    email: string;
-    password: string;
-    full_name: string;
-    is_verified?: boolean;
-};
-
 export type RelationshipCreate = {
     /**
      * Kind of relationship: spouse, child, parent, sibling, friend, colleague, etc.
@@ -3352,31 +3345,6 @@ export type PetsDeletePetData = {
 };
 
 export type PetsDeletePetResponse = (Ok);
-
-export type PrivateCreateUserData = {
-    requestBody: PrivateUserCreate;
-};
-
-export type PrivateCreateUserResponse = (UserPublic);
-
-export type PrivateSeedDataData = {
-    /**
-     * Number of contacts to seed
-     */
-    count?: number;
-    /**
-     * Wipe existing data before seeding
-     */
-    reset?: boolean;
-    /**
-     * RNG seed for determinism
-     */
-    rngSeed?: (number | null);
-};
-
-export type PrivateSeedDataResponse = ({
-    [key: string]: unknown;
-});
 
 export type RelationshipInverseMapListInverseMapsData = {
     limit?: number;

@@ -5,6 +5,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react"
 import { tinykeys } from "tinykeys"
@@ -106,17 +107,26 @@ export function ShortcutRegistryProvider({
     setOverlayOpen((v) => !v)
   }, [])
 
-  // Global keybinding for Cmd+/ or ? to open overlay
+  // Global keybinding for Cmd+/ or ? to open overlay.
+  //
+  // tinykeys' `"?"` binding does NOT match when shiftKey is true, but on a US
+  // keyboard typing `?` always sets shiftKey. So we listen for `?` directly
+  // via event.key and let tinykeys handle the modifier-key combos.
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key !== "?") return
+      if (shouldSuppress(event)) return
+      event.preventDefault()
+      toggleOverlay()
+    }
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [toggleOverlay])
+
   useEffect(() => {
     const unsubscribe = tinykeys(
       window,
       {
-        "?": (event: KeyboardEvent) => {
-          // Only trigger if not in input/textarea/contenteditable
-          if (shouldSuppress(event)) return
-          event.preventDefault()
-          toggleOverlay()
-        },
         "Meta+/": (event: KeyboardEvent) => {
           if (shouldSuppress(event)) return
           event.preventDefault()
@@ -207,19 +217,50 @@ export function useRegisterShortcuts(
     )
   }
 
+  const { register, unregister } = ctx
   const shortcuts = Array.isArray(arg) ? arg : [arg]
 
-  useEffect(() => {
-    for (const shortcut of shortcuts) {
-      ctx.register(shortcut)
-    }
+  // Callers usually pass inline array literals, so `shortcuts` is a fresh
+  // reference every render. Hash the descriptor identity so the effect only
+  // re-runs when the registration set actually changes — otherwise we churn
+  // registry state on every parent render, which previously cascaded into a
+  // "Maximum update depth exceeded" loop and crashed the whole layout.
+  const _contentKey = shortcuts
+    .map(
+      (s) => `${s.keys}::${s.description}::${s.group}::${s.enabled !== false}`,
+    )
+    .join("|")
 
+  // Always call the freshest callback. Without this, the registered handler
+  // would close over the callback from first registration and ignore the one
+  // passed in subsequent renders.
+  const shortcutsRef = useRef(shortcuts)
+  shortcutsRef.current = shortcuts
+
+  useEffect(() => {
+    const snapshot = shortcutsRef.current.map((s) => ({
+      keys: s.keys,
+      description: s.description,
+      group: s.group,
+      enabled: s.enabled,
+      callback: s.callback
+        ? () => {
+            const current = shortcutsRef.current.find(
+              (x) => x.keys === s.keys && x.description === s.description,
+            )
+            current?.callback?.()
+          }
+        : undefined,
+    }))
+    for (const shortcut of snapshot) {
+      register(shortcut)
+    }
     return () => {
-      for (const shortcut of shortcuts) {
-        ctx.unregister(shortcut.keys, shortcut.description)
+      for (const shortcut of snapshot) {
+        unregister(shortcut.keys, shortcut.description)
       }
     }
-  }, [shortcuts, ctx])
+  }, [register, unregister])
 }
 
 /**

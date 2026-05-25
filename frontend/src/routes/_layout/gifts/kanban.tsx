@@ -27,7 +27,7 @@ import { useCallback, useState } from "react"
 import { toast } from "sonner"
 import { type GiftKanbanCard, type GiftStatus, GiftsService } from "@/client"
 import { Badge } from "@/components/ui/badge"
-import { GripVertical, Gift } from "@/lib/icons"
+import { Gift, GripVertical } from "@/lib/icons"
 import { cn } from "@/lib/utils"
 
 export const Route = createFileRoute("/_layout/gifts/kanban")({
@@ -195,8 +195,13 @@ function GiftsKanbanPage() {
   })
 
   const changeStatusMutation = useMutation({
-    mutationFn: ({ giftId, newStatus }: { giftId: string; newStatus: GiftStatus }) =>
-      GiftsService.changeGiftStatus({ giftId, newStatus }),
+    mutationFn: ({
+      giftId,
+      newStatus,
+    }: {
+      giftId: string
+      newStatus: GiftStatus
+    }) => GiftsService.changeGiftStatus({ giftId, newStatus }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["gifts-kanban"] })
     },

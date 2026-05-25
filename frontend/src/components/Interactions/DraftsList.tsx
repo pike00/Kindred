@@ -95,7 +95,8 @@ export const DraftsList = () => {
   })
 
   const queryClient = useQueryClient()
-  const { showSuccessToast: showSuccess, showErrorToast: showError } = useCustomToast()
+  const { showSuccessToast: showSuccess, showErrorToast: showError } =
+    useCustomToast()
 
   const confirmMutation = useMutation({
     mutationFn: (id: string) =>

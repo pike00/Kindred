@@ -4,14 +4,38 @@ const BASE_URL = process.env.E2E_BASE_URL ?? "http://localhost:5173"
 export const API_URL = BASE_URL.replace(":5173", ":8001")
 
 export async function getToken(request: APIRequestContext): Promise<string> {
-  const res = await request.post(`${API_URL}/api/v1/login/access-token`, {
-    form: {
-      username: process.env.E2E_TEST_EMAIL ?? "admin@example.com",
-      password: process.env.E2E_TEST_PASSWORD ?? "changethis",
-    },
-  })
-  const { access_token } = await res.json()
-  return access_token
+  let lastErr: unknown = null
+  for (let attempt = 1; attempt <= 4; attempt++) {
+    try {
+      const res = await request.post(`${API_URL}/api/v1/login/access-token`, {
+        form: {
+          username: process.env.E2E_TEST_EMAIL ?? "admin@example.com",
+          password: process.env.E2E_TEST_PASSWORD ?? "changethis",
+        },
+        timeout: 15_000,
+      })
+      const text = await res.text()
+      if (!text) {
+        throw new Error(`empty body, status=${res.status()}`)
+      }
+      const parsed = JSON.parse(text) as { access_token?: string }
+      if (!parsed.access_token) {
+        throw new Error(
+          `missing access_token, status=${res.status()}: ${text.slice(0, 120)}`,
+        )
+      }
+      return parsed.access_token
+    } catch (e) {
+      lastErr = e
+      // brief backoff
+      await new Promise((r) => setTimeout(r, 400 * attempt))
+    }
+  }
+  throw new Error(
+    `getToken failed after retries: ${
+      lastErr instanceof Error ? lastErr.message : String(lastErr)
+    }`,
+  )
 }
 
 function authHeaders(token: string) {
@@ -101,17 +125,81 @@ export async function deleteAllTags(
   await Promise.all(tags.map((t) => deleteTag(request, token, t.id)))
 }
 
+export async function updateTag(
+  request: APIRequestContext,
+  token: string,
+  tagId: string,
+  data: Record<string, unknown>,
+) {
+  const res = await request.patch(`${API_URL}/api/v1/tags/${tagId}`, {
+    headers: authHeaders(token),
+    data,
+  })
+  if (!res.ok()) {
+    throw new Error(`updateTag failed ${res.status()}: ${await res.text()}`)
+  }
+  return res.json()
+}
+
 // ─── Interactions ────────────────────────────────────────────────────────────
 
 export async function createInteraction(
   request: APIRequestContext,
   token: string,
-  data: { contact_id: string; summary: string; interaction_type?: string },
+  data: {
+    contact_id?: string
+    attendee_ids?: string[]
+    channel?: string
+    notes?: string
+    occurred_at?: string
+    mood?: string | null
+    duration_minutes?: number | null
+    location_label?: string | null
+    is_draft?: boolean
+  },
 ) {
+  const attendeeIds = data.attendee_ids ?? (data.contact_id ? [data.contact_id] : [])
+  const payload: Record<string, unknown> = {
+    attendee_ids: attendeeIds,
+    channel: data.channel ?? "call",
+    occurred_at: data.occurred_at ?? new Date().toISOString(),
+    notes: data.notes ?? null,
+  }
+  if (data.mood !== undefined) payload.mood = data.mood
+  if (data.duration_minutes !== undefined) payload.duration_minutes = data.duration_minutes
+  if (data.location_label !== undefined) payload.location_label = data.location_label
+  if (data.is_draft !== undefined) payload.is_draft = data.is_draft
+
   const res = await request.post(`${API_URL}/api/v1/interactions/`, {
     headers: authHeaders(token),
-    data: { interaction_type: "call", ...data },
+    data: payload,
   })
+  if (!res.ok()) {
+    throw new Error(
+      `createInteraction failed ${res.status()}: ${await res.text()}`,
+    )
+  }
+  return res.json()
+}
+
+export async function updateInteraction(
+  request: APIRequestContext,
+  token: string,
+  interactionId: string,
+  data: Record<string, unknown>,
+) {
+  const res = await request.patch(
+    `${API_URL}/api/v1/interactions/${interactionId}`,
+    {
+      headers: authHeaders(token),
+      data,
+    },
+  )
+  if (!res.ok()) {
+    throw new Error(
+      `updateInteraction failed ${res.status()}: ${await res.text()}`,
+    )
+  }
   return res.json()
 }
 
@@ -149,12 +237,43 @@ export async function deleteAllInteractions(
 export async function createJournalEntry(
   request: APIRequestContext,
   token: string,
-  data: { title: string; content?: string },
+  data: { body?: string; title?: string; mood?: string | null; entry_date?: string },
 ) {
+  // Legacy callers pass `title`; map to body.
+  const body = data.body ?? data.title ?? ""
+  const payload: Record<string, unknown> = {
+    body,
+    entry_date: data.entry_date ?? new Date().toISOString().slice(0, 10),
+  }
+  if (data.mood !== undefined) payload.mood = data.mood
+
   const res = await request.post(`${API_URL}/api/v1/journal/`, {
+    headers: authHeaders(token),
+    data: payload,
+  })
+  if (!res.ok()) {
+    throw new Error(
+      `createJournalEntry failed ${res.status()}: ${await res.text()}`,
+    )
+  }
+  return res.json()
+}
+
+export async function updateJournalEntry(
+  request: APIRequestContext,
+  token: string,
+  entryId: string,
+  data: Record<string, unknown>,
+) {
+  const res = await request.patch(`${API_URL}/api/v1/journal/${entryId}`, {
     headers: authHeaders(token),
     data,
   })
+  if (!res.ok()) {
+    throw new Error(
+      `updateJournalEntry failed ${res.status()}: ${await res.text()}`,
+    )
+  }
   return res.json()
 }
 
@@ -192,12 +311,59 @@ export async function deleteAllJournalEntries(
 export async function createReminder(
   request: APIRequestContext,
   token: string,
-  data: { title: string; contact_id?: string; due_date?: string },
+  data: {
+    title: string
+    contact_id?: string | null
+    remind_at?: string
+    due_date?: string
+    description?: string | null
+    is_active?: boolean
+    frequency?: string
+  },
 ) {
+  const payload: Record<string, unknown> = {
+    title: data.title,
+    remind_at:
+      data.remind_at ??
+      data.due_date ??
+      // default: 1 hour from now
+      new Date(Date.now() + 3600_000).toISOString(),
+  }
+  if (data.contact_id !== undefined) payload.contact_id = data.contact_id
+  if (data.description !== undefined) payload.description = data.description
+  if (data.is_active !== undefined) payload.is_active = data.is_active
+  if (data.frequency !== undefined) payload.frequency = data.frequency
+
   const res = await request.post(`${API_URL}/api/v1/reminders/`, {
     headers: authHeaders(token),
-    data,
+    data: payload,
   })
+  if (!res.ok()) {
+    throw new Error(
+      `createReminder failed ${res.status()}: ${await res.text()}`,
+    )
+  }
+  return res.json()
+}
+
+export async function updateReminder(
+  request: APIRequestContext,
+  token: string,
+  reminderId: string,
+  data: Record<string, unknown>,
+) {
+  const res = await request.patch(
+    `${API_URL}/api/v1/reminders/${reminderId}`,
+    {
+      headers: authHeaders(token),
+      data,
+    },
+  )
+  if (!res.ok()) {
+    throw new Error(
+      `updateReminder failed ${res.status()}: ${await res.text()}`,
+    )
+  }
   return res.json()
 }
 

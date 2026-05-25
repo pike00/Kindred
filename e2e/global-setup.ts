@@ -7,12 +7,24 @@ const API_URL = BASE_URL.replace(":5173", ":8001")
 async function globalSetup() {
   const ctx = await request.newContext({ baseURL: API_URL })
 
-  const res = await ctx.post("/api/v1/login/access-token", {
+  // The dev-tier Traefik returns transient 404s for /api/v1/login/access-token
+  // when CrowdSec is restarting or the backend has just bounced. Retry a
+  // few times before declaring failure.
+  let res = await ctx.post("/api/v1/login/access-token", {
     form: {
       username: process.env.E2E_TEST_EMAIL ?? "admin@example.com",
       password: process.env.E2E_TEST_PASSWORD ?? "changethis",
     },
   })
+  for (let attempt = 0; !res.ok() && attempt < 3; attempt++) {
+    await new Promise((r) => setTimeout(r, 1500))
+    res = await ctx.post("/api/v1/login/access-token", {
+      form: {
+        username: process.env.E2E_TEST_EMAIL ?? "admin@example.com",
+        password: process.env.E2E_TEST_PASSWORD ?? "changethis",
+      },
+    })
+  }
 
   if (!res.ok()) {
     throw new Error(`Login failed: ${res.status()} ${await res.text()}`)

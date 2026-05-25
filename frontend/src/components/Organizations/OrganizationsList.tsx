@@ -36,7 +36,9 @@ export function OrganizationsList() {
       }),
   })
 
-  const orgs = ((data as any)?.data ?? []).filter((o: any) => matchesSearch(o, search))
+  const orgs = ((data as any)?.data ?? []).filter((o: any) =>
+    matchesSearch(o, search),
+  )
   const total = (data as any)?.count ?? 0
   const totalPages = Math.ceil(total / PAGE_SIZE)
 
