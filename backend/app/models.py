@@ -1,15 +1,61 @@
+from __future__ import annotations
+
 import enum
+import re
 import uuid
 from datetime import date, datetime, timezone
 
 import sqlalchemy as sa
-from pydantic import EmailStr
+from pydantic import EmailStr, field_validator
 from sqlalchemy import DateTime
 from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import (
+    Relationship as SQLMRelationship,  # alias; avoids shadowing by the Relationship table model below
+)
+
+from app.models_vcard_conflict import (  # noqa: F401
+    VCardConflict,
+    VCardConflictBase,
+    VCardConflictPublic,
+    VCardConflictsPublic,
+)
 
 
 def get_datetime_utc() -> datetime:
     return datetime.now(timezone.utc)
+
+
+class SoftDeleteMixin:
+    """Mixin that adds ``deleted_at`` for soft-delete support.
+
+    Apply to SQLModel table classes to get:
+    * ``deleted_at`` nullable datetime column (indexed)
+    * ``is_deleted`` property for readability
+    * ``mark_deleted()`` / ``restore()`` convenience helpers
+    """
+
+    deleted_at: datetime | None = Field(
+        default=None,
+        index=True,
+        sa_type=DateTime(timezone=True),
+        description=(
+            "Soft-delete marker. When non-null, the row is hidden from the "
+            "default query filter; restore by clearing this column."
+        ),
+    )
+
+    @property
+    def is_deleted(self) -> bool:
+        """Return True if the row has been soft-deleted."""
+        return self.deleted_at is not None
+
+    def mark_deleted(self) -> None:
+        """Set deleted_at to now (UTC)."""
+        self.deleted_at = datetime.now(timezone.utc)
+
+    def restore(self) -> None:
+        """Clear deleted_at to un-delete the row."""
+        self.deleted_at = None
 
 
 # Shared properties
@@ -206,6 +252,8 @@ class ContactSource(str, enum.Enum):
 
 class GiftStatus(str, enum.Enum):
     IDEA = "idea"
+    PURCHASED = "purchased"
+    WRAPPED = "wrapped"
     GIVEN = "given"
     RECEIVED = "received"
 
@@ -219,6 +267,15 @@ class InteractionChannel(str, enum.Enum):
     SOCIAL = "social"
     OTHER = "other"
     SKIP = "skip"
+
+
+class InteractionDraftSource(str, enum.Enum):
+    """Origin of a draft interaction."""
+
+    VOICE_MEMO = "voice_memo"
+    EMAIL_SUGGESTION = "email_suggestion"
+    MANUAL = "manual"
+    IMPORT = "import"
 
 
 class ReminderFrequency(str, enum.Enum):
@@ -243,6 +300,16 @@ class MediaCategory(str, enum.Enum):
     OTHER = "other"
 
 
+class ContactSource(str, enum.Enum):
+    """Source system that created a contact."""
+
+    MANUAL = "manual"
+    VCARD_IMPORT = "vcard_import"
+    CARDDAV = "carddav"
+    GOOGLE = "google"
+    WEBHOOK = "webhook"
+
+
 # ─── Tag ──────────────────────────────────────────────────────────────────────
 
 
@@ -257,6 +324,11 @@ class TagBase(SQLModel):
         max_length=7,
         description="Optional hex color like #ff0000 for UI display.",
     )
+    description: str | None = Field(
+        default=None,
+        max_length=1000,
+        description="Optional tag description.",
+    )
 
 
 class TagCreate(TagBase):
@@ -266,6 +338,7 @@ class TagCreate(TagBase):
 class TagUpdate(SQLModel):
     name: str | None = Field(default=None, min_length=1, max_length=100)
     color: str | None = None
+    description: str | None = None
 
 
 class Tag(TagBase, table=True):
@@ -358,33 +431,99 @@ class TagSharesPublic(SQLModel):
     count: int
 
 
-# ─── Group ────────────────────────────────────────────────────────────────────
+# ─── Organization ────────────────────────────────────────────────────────────
 
 
-class GroupBase(SQLModel):
+class OrganizationBase(SQLModel):
     name: str = Field(
-        min_length=1,
         max_length=255,
-        description="Group name, 1-255 chars.",
+        description="Organization name; deduplicated via trimmed/lowercased value per owner.",
     )
-    description: str | None = Field(
+    domain: str | None = Field(
         default=None,
-        max_length=1000,
-        description="Optional group description.",
+        max_length=255,
+        description="Domain for auto-linking (e.g., 'acme.com').",
+    )
+    industry: str | None = Field(
+        default=None,
+        max_length=255,
+        description="Industry sector.",
+    )
+    notes: str | None = Field(
+        default=None,
+        max_length=2000,
+        description="Freeform notes about the organization.",
+    )
+    # Address fields (structured, matching existing Address model)
+    address_label: str = Field(
+        default="main",
+        max_length=100,
+        description="Label for the organization's address (e.g., 'main', 'hq').",
+    )
+    address_street: str | None = Field(
+        default=None,
+        max_length=500,
+        description="Street line 1.",
+    )
+    address_extended: str | None = Field(
+        default=None,
+        max_length=500,
+        description="Apartment, suite, floor, etc.",
+    )
+    address_city: str | None = Field(
+        default=None,
+        max_length=255,
+        description="City.",
+    )
+    address_region: str | None = Field(
+        default=None,
+        max_length=255,
+        description="State, province, or region.",
+    )
+    address_postal_code: str | None = Field(
+        default=None,
+        max_length=50,
+        description="ZIP or postal code.",
+    )
+    address_country: str | None = Field(
+        default=None,
+        max_length=255,
+        description="Country.",
+    )
+    address_latitude: float | None = Field(
+        default=None,
+        description="Geocoded latitude.",
+    )
+    address_longitude: float | None = Field(
+        default=None,
+        description="Geocoded longitude.",
     )
 
 
-class GroupCreate(GroupBase):
+class OrganizationCreate(OrganizationBase):
     pass
 
 
-class GroupUpdate(SQLModel):
-    name: str | None = Field(default=None, min_length=1, max_length=255)
-    description: str | None = None
+class OrganizationUpdate(SQLModel):
+    name: str | None = Field(default=None, max_length=255)
+    domain: str | None = None
+    industry: str | None = None
+    notes: str | None = None
+    address_label: str | None = None
+    address_street: str | None = None
+    address_extended: str | None = None
+    address_city: str | None = None
+    address_region: str | None = None
+    address_postal_code: str | None = None
+    address_country: str | None = None
+    address_latitude: float | None = None
+    address_longitude: float | None = None
 
 
-class Group(GroupBase, table=True):
-    """Named collection of contacts (e.g. 'Family', 'Work Team')."""
+class Organization(OrganizationBase, table=True):
+    """First-class organization entity, replacing free-text Contact.company."""
+
+    __tablename__ = "organization"
 
     id: uuid.UUID = Field(
         default_factory=uuid.uuid4,
@@ -400,39 +539,27 @@ class Group(GroupBase, table=True):
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
         nullable=False,
-        description="When the group was created (UTC).",
+        description="When the organization was created (UTC).",
+    )
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
+        nullable=False,
+        description="Auto-bumped on edit (UTC).",
     )
 
 
-class GroupPublic(GroupBase):
+class OrganizationPublic(OrganizationBase):
     id: uuid.UUID
+    owner_id: uuid.UUID
     created_at: datetime
+    updated_at: datetime
+    contact_count: int = 0
 
 
-class GroupsPublic(SQLModel):
-    data: list[GroupPublic]
+class OrganizationsPublic(SQLModel):
+    data: list[OrganizationPublic]
     count: int
-
-
-# ─── ContactGroup (junction) ─────────────────────────────────────────────────
-
-
-class ContactGroup(SQLModel, table=True):
-    """Many-to-many link between contacts and groups."""
-
-    __tablename__ = "contact_group"
-    contact_id: uuid.UUID = Field(
-        foreign_key="contact.id",
-        primary_key=True,
-        ondelete="CASCADE",
-        description="Contact side of the link; cascades on delete.",
-    )
-    group_id: uuid.UUID = Field(
-        foreign_key="group.id",
-        primary_key=True,
-        ondelete="CASCADE",
-        description="Group side of the link; cascades on delete.",
-    )
 
 
 # ─── Contact ─────────────────────────────────────────────────────────────────
@@ -544,7 +671,6 @@ class ContactBase(SQLModel):
 
 class ContactCreate(ContactBase):
     tag_ids: list[uuid.UUID] | None = None
-    group_ids: list[uuid.UUID] | None = None
 
 
 class ContactUpdate(SQLModel):
@@ -568,10 +694,13 @@ class ContactUpdate(SQLModel):
     do_not_contact: bool | None = None
     do_not_contact_reason: str | None = None
     tag_ids: list[uuid.UUID] | None = None
-    group_ids: list[uuid.UUID] | None = None
 
 
-class Contact(ContactBase, table=True):
+class Contact(SoftDeleteMixin, ContactBase, table=True):
+    search_vector: str | None = Field(
+        default=None,
+        sa_column=sa.Column("search_vector", sa.Computed(None), nullable=True),
+    )
     """Core contact entity — the subject of everything else in the CRM."""
 
     id: uuid.UUID = Field(
@@ -595,11 +724,45 @@ class Contact(ContactBase, table=True):
         max_length=255,
         description="ETag from the CardDAV server for incremental sync.",
     )
+    vcard_sha256: str | None = Field(
+        default=None,
+        max_length=64,
+        description="SHA256 hash of normalized vcard_raw; used for round-trip integrity verification.",
+    )
     # Avatar stored as file path or URL
     avatar_url: str | None = Field(
         default=None,
         max_length=2048,
         description="URL or on-disk path to the contact's avatar image.",
+    )
+
+    # iMessage integration fields
+    imessage_id: str | None = Field(
+        default=None,
+        max_length=500,
+        index=True,
+        description="E.164 phone or email for stable iMessage identity.",
+    )
+    imessage_synced_at: datetime | None = Field(
+        default=None,
+        description="When the contact was last synced from iMessage (UTC).",
+    )
+    imessage_profile_hash: str | None = Field(
+        default=None,
+        max_length=64,
+        description="Hash of the iMessage profile data for idempotent updates.",
+    )
+    imessage_profile: dict | None = Field(
+        default=None,
+        sa_column=sa.Column("imessage_profile", sa.JSON, nullable=True),
+        description="Raw iMessage profile data (JSON).",
+    )
+    # Organization link (replaces free-text company during transition)
+    organization_id: uuid.UUID | None = Field(
+        default=None,
+        foreign_key="organization.id",
+        ondelete="SET NULL",
+        description="Linked Organization record; null for legacy company string.",
     )
     # Computed: last time any interaction was logged with this contact
     last_contacted_at: datetime | None = Field(
@@ -617,27 +780,126 @@ class Contact(ContactBase, table=True):
         nullable=False,
         description="Auto-bumped on any column change (UTC).",
     )
-    deleted_at: datetime | None = Field(
+    # Merge tracking
+    is_merged: bool = Field(
+        default=False,
+        description="Set to True when this contact is absorbed into another contact during a merge.",
+    )
+    merged_into_id: uuid.UUID | None = Field(
         default=None,
-        index=True,
-        description=(
-            "Soft-delete marker. When non-null, the row is hidden from the "
-            "default visibility helpers; restore by clearing this column."
-        ),
+        foreign_key="contact.id",
+        nullable=True,
+        ondelete="SET NULL",
+        description="If merged, points to the surviving contact.",
+    )
+    # Merge tracking
+    is_merged: bool = Field(
+        default=False,
+        description="Set to True when this contact is absorbed into another contact during a merge.",
+    )
+    merged_into_id: uuid.UUID | None = Field(
+        default=None,
+        foreign_key="contact.id",
+        nullable=True,
+        ondelete="SET NULL",
+        description="If merged, points to the surviving contact.",
     )
     # Relationships
-    tags: list["Tag"] = Relationship(
-        back_populates=None,
-        link_model=ContactTag,
+    tags: list["Tag"] = Relationship(back_populates=None, link_model=ContactTag)
+    groups: list["Group"] = Relationship(back_populates=None, link_model=ContactGroup)
+    # Unique constraint for idempotent upserts
+    __table_args__ = (
+        sa.UniqueConstraint(
+            "owner_id",
+            "source",
+            "source_external_id",
+            name="uq_contact_owner_source_external_id",
+        ),
     )
-    groups: list["Group"] = Relationship(
-        back_populates=None,
-        link_model=ContactGroup,
+
+
+# ─── ContactStageEvent ───────────────────────────────────────────
+
+
+class ContactStageEventBase(SQLModel):
+    """Stage change audit entry."""
+
+    old_stage: str | None = Field(
+        default=None,
+        max_length=100,
+        description="Previous stage value; null when the contact is first assigned a stage.",
     )
+    new_stage: str | None = Field(
+        default=None,
+        max_length=100,
+        description="New stage value; null when the contact is cleared.",
+    )
+    changed_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),
+        nullable=False,
+        description="When the stage change occurred (UTC).",
+    )
+
+
+class ContactStageEvent(ContactStageEventBase, table=True):
+    """Audit trail for Contact.stage changes.
+
+    Rows are written atomically with the stage PATCH in the service layer
+    so that every transition is recorded without relying on the frontend.
+    """
+
+    __tablename__ = "contact_stage_event"
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
+    contact_id: uuid.UUID = Field(
+        foreign_key="contact.id",
+        nullable=False,
+        ondelete="CASCADE",
+        index=True,
+        description="Contact whose stage changed.",
+    )
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id",
+        nullable=False,
+        ondelete="CASCADE",
+        index=True,
+        description="Owner user; cascades on delete.",
+    )
+    changed_by_id: uuid.UUID | None = Field(
+        foreign_key="user.id",
+        nullable=True,
+        ondelete="SET NULL",
+        description="User who performed the change; null for system-initiated changes.",
+    )
+
+
+class ContactStageEventPublic(ContactStageEventBase):
+    id: uuid.UUID
+    contact_id: uuid.UUID
+    owner_id: uuid.UUID
+    changed_by_id: uuid.UUID | None
+
+
+class ContactStageEventsPublic(SQLModel):
+    data: list[ContactStageEventPublic]
+    count: int
 
 
 class ContactPublic(ContactBase):
     id: uuid.UUID
+    source: ContactSource = Field(
+        default=ContactSource.MANUAL,
+        description="Source system that created this contact.",
+    )
+    source_external_id: str | None = Field(
+        default=None,
+        description="External ID from the source system.",
+    )
     avatar_url: str | None
     last_contacted_at: datetime | None
     created_at: datetime
@@ -648,6 +910,7 @@ class ContactPublic(ContactBase):
     do_not_contact_reason: str | None = None
     tags: list[TagPublic] = []
     groups: list[GroupPublic] = []
+    stage_events: list[ContactStageEventPublic] = []
 
 
 class ContactsPublic(SQLModel):
@@ -722,6 +985,11 @@ class ContactField(ContactFieldBase, table=True):
 class ContactFieldPublic(ContactFieldBase):
     id: uuid.UUID
     contact_id: uuid.UUID
+
+
+class ContactFieldsPublic(SQLModel):
+    data: list[ContactFieldPublic]
+    count: int
 
 
 # ─── Address ─────────────────────────────────────────────────────────────────
@@ -810,7 +1078,78 @@ class AddressPublic(AddressBase):
     contact_id: uuid.UUID
 
 
+class AddressesPublic(SQLModel):
+    data: list[AddressPublic]
+    count: int
+
+
 # ─── Relationship ────────────────────────────────────────────────────────────
+
+
+class InverseRelationshipMapBase(SQLModel):
+    relationship_type: str = Field(
+        max_length=100,
+        description="Forward relationship type (e.g. 'parent').",
+    )
+    inverse_type: str = Field(
+        max_length=100,
+        description="Inverse relationship type (e.g. 'child').",
+    )
+    is_symmetric: bool = Field(
+        default=False,
+        description="True when both sides use the same type (spouse<->spouse).",
+    )
+
+
+class InverseRelationshipMap(InverseRelationshipMapBase, table=True):
+    """Seed table mapping relationship types to their inverses.
+
+    This replaces the Python-only mapping in ``relationship_inverses.py``
+    so the database is the single source of truth and can be updated
+    at runtime without a code deploy.
+    """
+
+    __tablename__ = "inverse_relationship_map"
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        description="When the mapping row was inserted (UTC).",
+    )
+
+    __table_args__ = (
+        sa.UniqueConstraint(
+            "relationship_type", name="uq_inverse_map_relationship_type"
+        ),
+    )
+
+
+class InverseRelationshipMapPublic(InverseRelationshipMapBase):
+    id: uuid.UUID
+    created_at: datetime
+
+
+class InverseRelationshipMapsPublic(SQLModel):
+    data: list[InverseRelationshipMapPublic]
+    count: int
+
+
+class InverseRelationshipMapCreate(InverseRelationshipMapBase):
+    """Create schema for inverse relationship map."""
+
+    pass
+
+
+class InverseRelationshipMapUpdate(SQLModel):
+    """Update schema - all fields optional."""
+
+    inverse_type: str | None = Field(default=None, min_length=1, max_length=100)
+    is_symmetric: bool | None = None
 
 
 class RelationshipBase(SQLModel):
@@ -828,11 +1167,6 @@ class RelationshipBase(SQLModel):
 class RelationshipCreate(RelationshipBase):
     contact_id: uuid.UUID  # "from" contact
     related_contact_id: uuid.UUID  # "to" contact
-    inverse_relationship_type: str | None = Field(
-        default=None,
-        max_length=100,
-        description="Type for the auto-created inverse row (e.g. 'parent' for 'child'). Inferred when omitted.",
-    )
 
 
 class RelationshipUpdate(SQLModel):
@@ -863,20 +1197,17 @@ class Relationship(RelationshipBase, table=True):
         ondelete="CASCADE",
         description='"To" contact in the directional relationship.',
     )
-    inverse_id: uuid.UUID | None = Field(
-        default=None,
-        foreign_key="relationship.id",
-        nullable=True,
-        ondelete="SET NULL",
-        description="ID of the paired inverse row; NULL for one-way links.",
-    )
 
 
 class RelationshipPublic(RelationshipBase):
     id: uuid.UUID
     contact_id: uuid.UUID
     related_contact_id: uuid.UUID
-    inverse_id: uuid.UUID | None = None
+
+
+class RelationshipsPublic(SQLModel):
+    data: list[RelationshipPublic]
+    count: int
 
 
 # ─── Pet ──────────────────────────────────────────────────────────────────────
@@ -935,6 +1266,11 @@ class Pet(PetBase, table=True):
 class PetPublic(PetBase):
     id: uuid.UUID
     contact_id: uuid.UUID
+
+
+class PetsPublic(SQLModel):
+    data: list[PetPublic]
+    count: int
 
 
 # ─── CustomFieldDefinition ───────────────────────────────────────────────────
@@ -1013,6 +1349,11 @@ class CustomFieldDefinitionPublic(CustomFieldDefinitionBase):
     created_at: datetime
 
 
+class CustomFieldDefinitionsPublic(SQLModel):
+    data: list[CustomFieldDefinitionPublic]
+    count: int
+
+
 # ─── CustomFieldValue ────────────────────────────────────────────────────────
 
 
@@ -1062,6 +1403,11 @@ class CustomFieldValuePublic(CustomFieldValueBase):
     field_name: str | None = None  # populated from join
 
 
+class CustomFieldValuesPublic(SQLModel):
+    data: list[CustomFieldValuePublic]
+    count: int
+
+
 # ─── Interaction ──────────────────────────────────────────────────────────────
 
 
@@ -1087,9 +1433,95 @@ class InteractionBase(SQLModel):
         ge=0,
         description="Length of the interaction in minutes.",
     )
+    location_label: str | None = Field(
+        default=None,
+        max_length=500,
+        description="Freeform location text like 'Starbucks on 5th', 'their home', 'the park'.",
+    )
+    latitude: float | None = Field(
+        default=None,
+        description="Geocoded latitude; used for map visualization.",
+    )
+    longitude: float | None = Field(
+        default=None,
+        description="Geocoded longitude; used for map visualization.",
+    )
+
+    is_draft: bool = Field(
+        default=False,
+        description="If True, this interaction is a draft and excluded from engagement metrics.",
+    )
+    draft_source: InteractionDraftSource | None = Field(
+        default=None,
+        description="Origin of the draft (voice_memo, email_suggestion, manual, import).",
+    )
+
+    # Email-specific fields (for EMAIL channel)
+    message_id: str | None = Field(
+        default=None,
+        max_length=998,
+        description="RFC 2822 Message-ID for deduplication (EMAIL channel only).",
+    )
+    email_subject: str | None = Field(
+        default=None,
+        max_length=998,
+        description="Email subject line (EMAIL channel only).",
+    )
+    email_from: str | None = Field(
+        default=None,
+        max_length=2048,
+        description="Email From header (EMAIL channel only).",
+    )
+    email_to: str | None = Field(
+        default=None,
+        max_length=2048,
+        description="Email To header (EMAIL channel only).",
+    )
+    email_date: datetime | None = Field(
+        default=None,
+        description="Email Date header (EMAIL channel only).",
+    )
+
+    # Email-specific fields (for EMAIL channel)
+    message_id: str | None = Field(
+        default=None,
+        max_length=998,
+        description="RFC 2822 Message-ID for deduplication (EMAIL channel only).",
+    )
+    email_subject: str | None = Field(
+        default=None,
+        max_length=998,
+        description="Email subject line (EMAIL channel only).",
+    )
+    email_from: str | None = Field(
+        default=None,
+        max_length=2048,
+        description="Email From header (EMAIL channel only).",
+    )
+    email_to: str | None = Field(
+        default=None,
+        max_length=2048,
+        description="Email To header (EMAIL channel only).",
+    )
+    email_date: datetime | None = Field(
+        default=None,
+        description="Email Date header (EMAIL channel only).",
+    )
+
+    is_draft: bool = Field(
+        default=False,
+        description="If True, this interaction is a draft and excluded from engagement metrics.",
+    )
+    draft_source: InteractionDraftSource | None = Field(
+        default=None,
+        description="Origin of the draft (voice_memo, email_suggestion, manual, import).",
+    )
 
 
 class InteractionCreate(InteractionBase):
+    location_label: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
     attendee_ids: list[uuid.UUID] = Field(
         min_length=1,
         description="Contacts that attended; must have at least one.",
@@ -1102,6 +1534,9 @@ class InteractionUpdate(SQLModel):
     notes: str | None = None
     mood: str | None = None
     duration_minutes: int | None = None
+    location_label: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
     attendee_ids: list[uuid.UUID] | None = Field(
         default=None,
         min_length=1,
@@ -1127,7 +1562,11 @@ class InteractionAttendee(SQLModel, table=True):
     )
 
 
-class Interaction(InteractionBase, table=True):
+class Interaction(SoftDeleteMixin, InteractionBase, table=True):
+    search_vector: str | None = Field(
+        default=None,
+        sa_column=sa.Column("search_vector", sa.Computed(None), nullable=True),
+    )
     """Logged touchpoint with one or more contacts (call, meeting, text, etc.).
 
     A single interaction can have multiple attendees via ``interaction_attendee``.
@@ -1163,6 +1602,17 @@ class InteractionPublic(InteractionBase):
     id: uuid.UUID
     attendees: list[InteractionAttendeeSummary] = []
     created_at: datetime
+    is_draft: bool = False
+    draft_source: InteractionDraftSource | None = None
+
+
+# ─── Draft Interaction helpers ──────────────────────────────────────────────
+
+
+class InteractionConfirm(SQLModel):
+    """Payload to confirm (promote) a draft interaction."""
+
+    confirm: bool = True
 
 
 class InteractionsPublic(SQLModel):
@@ -1209,7 +1659,7 @@ class ReminderUpdate(SQLModel):
     is_active: bool | None = None
 
 
-class Reminder(ReminderBase, table=True):
+class Reminder(SoftDeleteMixin, ReminderBase, table=True):
     """Scheduled reminder; contact-specific or standalone."""
 
     id: uuid.UUID = Field(
@@ -1250,11 +1700,119 @@ class ReminderPublic(ReminderBase):
     last_sent_at: datetime | None
     snoozed_until: datetime | None
     created_at: datetime
+    deleted_at: datetime | None = None
+
+
+class ReminderWithContactPublic(ReminderPublic):
+    """Reminder with optional contact name for list views."""
+
+    contact_name: str | None = None
 
 
 class RemindersPublic(SQLModel):
     data: list[ReminderPublic]
     count: int
+
+
+class RemindersWithContactPublic(SQLModel):
+    """Response wrapper for reminders that include contact name."""
+
+    data: list[ReminderWithContactPublic]
+    count: int
+
+
+class ReminderContactSummary(SQLModel):
+    id: uuid.UUID
+    first_name: str
+    last_name: str | None = None
+    nickname: str | None = None
+    avatar_url: str | None = None
+
+
+class ReminderDuePublic(ReminderPublic):
+    """Reminder enriched with the linked contact (if any) for the bell popover."""
+
+    contact: ReminderContactSummary | None = None
+
+
+class RemindersDuePublic(SQLModel):
+    data: list[ReminderDuePublic]
+    count: int
+
+
+class ReminderSnoozeRequest(SQLModel):
+    snoozed_until: datetime | None = Field(
+        default=None,
+        description="Absolute time to snooze until (UTC). Mutually exclusive with minutes.",
+    )
+    minutes: int | None = Field(
+        default=None,
+        ge=1,
+        le=60 * 24 * 30,
+        description="Minutes from now to snooze for. Mutually exclusive with snoozed_until.",
+    )
+
+
+# ─── ReminderSnooze ──────────────────────────────────────────────────────
+
+
+class ReminderSnoozeHistoryEntry(SQLModel):
+    """Single snooze history row returned by GET /reminders/{id}/snooze-history."""
+
+    snoozed_at: datetime
+    snoozed_until: datetime
+    reason: str | None = None
+
+
+class ReminderSnoozeStat(SQLModel):
+    """Aggregate snooze count for a reminder."""
+
+    reminder_id: str
+    snooze_count: int
+
+
+class ChronicSnoozer(SQLModel):
+    """Aggregate snooze stats for a (contact, reminder) pair."""
+
+    contact_id: str | None = None
+    reminder_id: str
+    snooze_count: int
+
+
+class ReminderSnooze(SQLModel, table=True):
+    """Append-only log of snooze actions on reminders."""
+
+    __tablename__ = "reminder_snooze"  # type: ignore[assignment]
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
+    reminder_id: uuid.UUID = Field(
+        foreign_key="reminder.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description="Reminder being snoozed.",
+    )
+    snoozed_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        description="When the user clicked snooze.",
+    )
+    snoozed_until: datetime = Field(
+        nullable=False,
+        description="New snooze deadline.",
+    )
+    reason: str | None = Field(
+        default=None,
+        description="Optional user-entered reason for snoozing.",
+    )
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        description="Row creation time (may equal snoozed_at).",
+    )
 
 
 # ─── Gift ─────────────────────────────────────────────────────────────────────
@@ -1315,7 +1873,7 @@ class GiftUpdate(SQLModel):
     url: str | None = None
 
 
-class Gift(GiftBase, table=True):
+class Gift(SoftDeleteMixin, GiftBase, table=True):
     """Gift idea or record for a contact."""
 
     id: uuid.UUID = Field(
@@ -1340,6 +1898,7 @@ class Gift(GiftBase, table=True):
         sa_column=sa.Column("date", sa.Date, nullable=True),
         description="When the gift was given or received (stored in the `date` column).",
     )
+
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
         nullable=False,
@@ -1351,6 +1910,10 @@ class GiftPublic(GiftBase):
     id: uuid.UUID
     contact_id: uuid.UUID
     created_at: datetime
+    days_until_occasion: int | None = None
+    contact_birthday: date | None = None
+    contact_first_name: str | None = None
+    contact_last_name: str | None = None
 
 
 class GiftsPublic(SQLModel):
@@ -1358,7 +1921,70 @@ class GiftsPublic(SQLModel):
     count: int
 
 
+class GiftKanbanCard(SQLModel):
+    gift: GiftPublic
+    is_overdue: bool
+    days_until_occasion: int | None = None
+
+
+class GiftKanbanColumn(SQLModel):
+    gifts: list[GiftKanbanCard]
+    count: int
+    total_value: float
+
+
 # ─── Debt ─────────────────────────────────────────────────────────────────────
+
+
+# ─── DebtPayment ───────────────────────────────────────────────────────
+
+
+class DebtPaymentBase(SQLModel):
+    amount: float = Field(
+        gt=0,
+        description="Payment amount; must be greater than zero.",
+    )
+    paid_at: date = Field(
+        description="Date the payment was made.",
+    )
+    note: str | None = Field(
+        default=None,
+        max_length=1000,
+        description="Optional note about the payment.",
+    )
+
+
+class DebtPaymentCreate(DebtPaymentBase):
+    pass
+
+
+class DebtPaymentPublic(DebtPaymentBase):
+    id: uuid.UUID
+    created_at: datetime
+
+
+class DebtPayment(DebtPaymentBase, table=True):
+    """Individual payment made toward a debt."""
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
+    debt_id: uuid.UUID = Field(
+        foreign_key="debt.id",
+        nullable=False,
+        ondelete="CASCADE",
+        index=True,
+        description="Parent debt; cascades on delete.",
+    )
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        description="When the payment was recorded (UTC).",
+    )
+    # Relationship back to debt
+    debt: "Debt" = Relationship(back_populates="payments")
 
 
 class DebtBase(SQLModel):
@@ -1379,13 +2005,13 @@ class DebtBase(SQLModel):
         max_length=1000,
         description="What the debt is for.",
     )
-    is_settled: bool = Field(
-        default=False,
-        description="Marked paid off.",
-    )
     settled_at: date | None = Field(
         default=None,
         description="Date the debt was settled.",
+    )
+    is_settled: bool = Field(
+        default=False,
+        description="Marked paid off.",
     )
 
 
@@ -1396,13 +2022,12 @@ class DebtCreate(DebtBase):
 class DebtUpdate(SQLModel):
     direction: DebtDirection | None = None
     amount: float | None = None
-    currency: str | None = None
     reason: str | None = None
     is_settled: bool | None = None
     settled_at: date | None = None
 
 
-class Debt(DebtBase, table=True):
+class Debt(SoftDeleteMixin, DebtBase, table=True):
     """Money owed to or from a contact."""
 
     id: uuid.UUID = Field(
@@ -1428,11 +2053,16 @@ class Debt(DebtBase, table=True):
         description="When the debt was recorded (UTC).",
     )
 
+    # Relationship to payments
+    payments: list["DebtPayment"] = Relationship(back_populates="debt")
+
 
 class DebtPublic(DebtBase):
     id: uuid.UUID
     contact_id: uuid.UUID
     created_at: datetime
+    payments: list[DebtPaymentPublic] = []
+    paid_amount: float | None = None  # computed field
 
 
 class DebtsPublic(SQLModel):
@@ -1479,7 +2109,7 @@ class LifeEventUpdate(SQLModel):
     create_annual_reminder: bool | None = None
 
 
-class LifeEvent(LifeEventBase, table=True):
+class LifeEvent(SoftDeleteMixin, LifeEventBase, table=True):
     """Milestone on a contact's timeline (job change, wedding, move, etc.)."""
 
     __tablename__ = "life_event"
@@ -1511,6 +2141,7 @@ class LifeEventPublic(LifeEventBase):
     id: uuid.UUID
     contact_id: uuid.UUID
     created_at: datetime
+    deleted_at: datetime | None = None
 
 
 class LifeEventsPublic(SQLModel):
@@ -1531,6 +2162,11 @@ class NoteBase(SQLModel):
 
 class NoteCreate(NoteBase):
     contact_id: uuid.UUID
+    client_id: str | None = Field(
+        default=None,
+        max_length=36,
+        description="Client-generated UUID for idempotent POSTs; optional.",
+    )
 
 
 class NoteUpdate(SQLModel):
@@ -1555,13 +2191,23 @@ class NoteMention(SQLModel, table=True):
     )
 
 
-class Note(NoteBase, table=True):
+class Note(SoftDeleteMixin, NoteBase, table=True):
+    search_vector: str | None = Field(
+        default=None,
+        sa_column=sa.Column("search_vector", sa.Computed(None), nullable=True),
+    )
     """Timestamped freeform note attached to a specific contact."""
 
     id: uuid.UUID = Field(
         default_factory=uuid.uuid4,
         primary_key=True,
         description="Primary key.",
+    )
+    client_id: str | None = Field(
+        default=None,
+        index=True,
+        unique=True,
+        description="Client-generated UUID for idempotent POSTs; unique if set.",
     )
     contact_id: uuid.UUID = Field(
         foreign_key="contact.id",
@@ -1593,6 +2239,8 @@ class NotePublic(NoteBase):
     contact_id: uuid.UUID
     created_at: datetime
     updated_at: datetime
+    deleted_at: datetime | None = None
+    client_id: str | None = None
 
 
 class NotesPublic(SQLModel):
@@ -1706,16 +2354,21 @@ class JournalEntryBase(SQLModel):
 
 
 class JournalEntryCreate(JournalEntryBase):
-    pass
+    contact_ids: list[uuid.UUID] | None = None
 
 
 class JournalEntryUpdate(SQLModel):
     body: str | None = None
     mood: str | None = None
     entry_date: date | None = None
+    contact_ids: list[uuid.UUID] | None = None
 
 
 class JournalEntry(JournalEntryBase, table=True):
+    search_vector: str | None = Field(
+        default=None,
+        sa_column=sa.Column("search_vector", sa.Computed(None), nullable=True),
+    )
     """Personal journal entry, not tied to a specific contact."""
 
     __tablename__ = "journal_entry"
@@ -1743,10 +2396,29 @@ class JournalEntry(JournalEntryBase, table=True):
     )
 
 
+class JournalEntryContact(SQLModel, table=True):
+    """Many-to-many link between journal entries and contacts."""
+
+    __tablename__ = "journal_entry_contact"
+    journal_entry_id: uuid.UUID = Field(
+        foreign_key="journal_entry.id",
+        primary_key=True,
+        ondelete="CASCADE",
+        description="Journal entry side of the link; cascades on delete.",
+    )
+    contact_id: uuid.UUID = Field(
+        foreign_key="contact.id",
+        primary_key=True,
+        ondelete="CASCADE",
+        description="Contact side of the link; cascades on delete.",
+    )
+
+
 class JournalEntryPublic(JournalEntryBase):
     id: uuid.UUID
     created_at: datetime
     updated_at: datetime
+    contact_ids: list[uuid.UUID] = []
 
 
 class JournalEntriesPublic(SQLModel):
@@ -1814,6 +2486,45 @@ class WebhookEndpoint(WebhookEndpointBase, table=True):
     )
 
 
+class WebhookEndpointPublic(SQLModel):
+    """Public representation of a webhook endpoint (without api_key)."""
+
+    id: str
+    name: str
+    url: str | None = None
+    direction: str
+    event_types: str | None = None
+    is_active: bool
+    created_at: str
+
+
+class WebhookEndpointsPublic(SQLModel):
+    data: list[WebhookEndpointPublic]
+    count: int
+
+
+class WebhookEndpointCreated(WebhookEndpointPublic):
+    """Returned once on creation; includes the plaintext api_key."""
+
+    api_key: str
+
+
+class WebhookEventResponse(SQLModel):
+    """Generic response shape for inbound/twilio webhook handlers.
+
+    Fields are optional because different code paths return different subsets
+    (e.g. unmatched contact vs successful interaction).
+    """
+
+    received: bool = True
+    matched: bool | None = None
+    channel: str | None = None
+    call_status: str | None = None
+    contact_id: str | None = None
+    interaction_id: str | None = None
+    error: str | None = None
+
+
 class ActivityLog(SQLModel, table=True):
     """Immutable record of a create/update/delete on any audited entity."""
 
@@ -1835,6 +2546,7 @@ class ActivityLog(SQLModel, table=True):
     entity_type: str = Field(max_length=64)
     entity_id: uuid.UUID = Field(index=True)
     action: str = Field(max_length=32)
+
     changes_json: dict | None = Field(
         default=None,
         sa_column=sa.Column("changes_json", sa.JSON, nullable=True),
@@ -1874,6 +2586,11 @@ class Message(SQLModel):
     message: str
 
 
+# Generic ok response for delete/idempotent endpoints
+class Ok(SQLModel):
+    ok: bool = True
+
+
 # JSON payload containing access token
 class Token(SQLModel):
     access_token: str
@@ -1883,6 +2600,95 @@ class Token(SQLModel):
 # Contents of JWT token
 class TokenPayload(SQLModel):
     sub: str | None = None
+
+
+# ─── Email OAuth Token Storage ───────────────────────────────────────────────
+
+
+class EmailOAuthTokenBase(SQLModel):
+    """Encrypted OAuth tokens for Gmail API access."""
+
+    provider: str = Field(
+        default="gmail",
+        max_length=50,
+        description="OAuth provider name (e.g. 'gmail').",
+    )
+    email_address: str = Field(
+        max_length=255,
+        description="The email address these tokens are for.",
+    )
+    encrypted_access_token: str = Field(
+        description="Encrypted access token for the Gmail API.",
+    )
+    encrypted_refresh_token: str | None = Field(
+        default=None,
+        description="Encrypted refresh token for obtaining new access tokens.",
+    )
+    token_expires_at: datetime | None = Field(
+        default=None,
+        description="When the access token expires (UTC).",
+    )
+
+
+class EmailOAuthTokenCreate(EmailOAuthTokenBase):
+    pass
+
+
+class EmailOAuthTokenUpdate(SQLModel):
+    encrypted_access_token: str | None = None
+    encrypted_refresh_token: str | None = None
+    token_expires_at: datetime | None = None
+
+
+class EmailOAuthToken(EmailOAuthTokenBase, table=True):
+    """Stored OAuth tokens for a contact's email account.
+
+    Tokens are encrypted at rest using Fernet (symmetric encryption)
+    with a key derived from the SECRET_KEY in settings.
+    """
+
+    __tablename__ = "email_oauth_token"
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description="User who owns this token; cascades on delete.",
+    )
+    contact_id: uuid.UUID = Field(
+        foreign_key="contact.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description="Contact these tokens belong to; cascades on delete.",
+    )
+    created_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        nullable=False,
+        description="When the token was first stored (UTC).",
+    )
+    updated_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
+        nullable=False,
+        description="Auto-bumped on token refresh (UTC).",
+    )
+
+
+class EmailOAuthTokenPublic(EmailOAuthTokenBase):
+    id: uuid.UUID
+    contact_id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
+
+
+class EmailOAuthTokensPublic(SQLModel):
+    data: list[EmailOAuthTokenPublic]
+    count: int
 
 
 class NewPassword(SQLModel):
@@ -1898,5 +2704,86 @@ class CalendarEntry(SQLModel):
 
 
 class CalendarMonthResponse(SQLModel):
+    month: str
+    days: dict[str, list[CalendarEntry]]
+
+
+# ─── CalendarToken ───────────────────────────────────────────────
+
+# ─── CalendarToken ───────────────────────────────────────────────────────
+
+
+class CalendarTokenBase(SQLModel):
+    expires_at: datetime | None = Field(
+        default=None,
+        description="Optional expiration date; null means never expires.",
+    )
+
+
+class CalendarTokenCreate(CalendarTokenBase):
+    pass
+
+
+class CalendarTokenUpdate(SQLModel):
+    status: str | None = Field(
+        default=None,
+        max_length=20,
+        description="Token status: active or revoked.",
+    )
+
+
+class CalendarToken(CalendarTokenBase, table=True):
+    """Per-user bearer token for accessing /calendar.ics feed."""
+
+    __tablename__ = "calendar_token"
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description="Owner user; cascades on delete.",
+    )
+    token: str = Field(
+        max_length=255,
+        unique=True,
+        index=True,
+        description="The bearer token value (UUID or secure random string).",
+    )
+    status: str = Field(
+        default="active",
+        max_length=20,
+        description="Token status: active or revoked.",
+    )
+    last_used_at: datetime | None = Field(
+        default=None,
+        description="When the token was last used to access the feed.",
+    )
+    revoked_at: datetime | None = Field(
+        default=None,
+        description="When the token was revoked.",
+    )
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        description="When the token was created (UTC).",
+    )
+
+
+class CalendarTokenPublic(CalendarTokenBase):
+    id: uuid.UUID
+    status: str
+    last_used_at: datetime | None
+    created_at: datetime
+
+
+class CalendarTokensPublic(SQLModel):
+    data: list[CalendarTokenPublic]
+    count: int
+
     month: str
     days: dict[str, list[CalendarEntry]]

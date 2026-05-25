@@ -48,7 +48,8 @@ def _migrate_test_database() -> None:
 
     from app.core.config import settings
 
-    cfg = Config("alembic.ini")
+    cfg = Config("/app/backend/alembic.ini")
+    cfg.set_main_option("script_location", "/app/backend/app/alembic")
     cfg.set_main_option("sqlalchemy.url", str(settings.SQLALCHEMY_DATABASE_URI))
     command.upgrade(cfg, "head")
 
@@ -76,6 +77,41 @@ def db() -> Generator[Session, None, None]:
     with Session(engine) as session:
         init_db(session)
         yield session
+
+
+@pytest.fixture
+def user_factory(db: Session):
+    """Factory fixture to create users."""
+    from app.crud import create_user
+    from app.models import UserCreate
+    from tests.utils.utils import random_email, random_lower_string
+
+    def _user_factory(email=None, password=None):
+        if email is None:
+            email = random_email()
+        if password is None:
+            password = random_lower_string()
+        user_in = UserCreate(email=email, password=password)
+        return create_user(session=db, user_create=user_in)
+
+    return _user_factory
+
+
+@pytest.fixture
+def tag_factory(db: Session):
+    """Factory fixture to create tags."""
+    from app.crud import create_tag
+    from app.models import TagCreate
+
+    def _tag_factory(user, name=None):
+        if name is None:
+            import uuid
+
+            name = f"tag-{uuid.uuid4().hex[:8]}"
+        tag_in = TagCreate(name=name, color="#ff0000")
+        return create_tag(session=db, tag_in=tag_in, owner_id=user.id)
+
+    return _tag_factory
 
 
 @pytest.fixture(scope="module")
