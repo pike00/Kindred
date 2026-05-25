@@ -8,7 +8,7 @@ Core contact entity — the subject of everything else in the CRM.
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | uuid |  | false | [public.contact](public.contact.md) [public.contact_tag](public.contact_tag.md) [public.contact_field](public.contact_field.md) [public.address](public.address.md) [public.relationship](public.relationship.md) [public.pet](public.pet.md) [public.custom_field_value](public.custom_field_value.md) [public.reminder](public.reminder.md) [public.gift](public.gift.md) [public.debt](public.debt.md) [public.life_event](public.life_event.md) [public.note](public.note.md) [public.media_recommendation](public.media_recommendation.md) [public.interaction_attendee](public.interaction_attendee.md) [public.note_mention](public.note_mention.md) [public.journal_entry_contact](public.journal_entry_contact.md) [public.contact_stage_event](public.contact_stage_event.md) [public.contact_merge](public.contact_merge.md) [public.ical_import_log](public.ical_import_log.md) [public.email_oauth_token](public.email_oauth_token.md) |  | Primary key. |
+| id | uuid |  | false | [public.contact](public.contact.md) [public.contact_tag](public.contact_tag.md) [public.contact_field](public.contact_field.md) [public.address](public.address.md) [public.relationship](public.relationship.md) [public.pet](public.pet.md) [public.custom_field_value](public.custom_field_value.md) [public.reminder](public.reminder.md) [public.gift](public.gift.md) [public.debt](public.debt.md) [public.life_event](public.life_event.md) [public.note](public.note.md) [public.media_recommendation](public.media_recommendation.md) [public.interaction_attendee](public.interaction_attendee.md) [public.note_mention](public.note_mention.md) [public.journal_entry_contact](public.journal_entry_contact.md) [public.contact_stage_event](public.contact_stage_event.md) [public.contact_merge](public.contact_merge.md) [public.ical_import_log](public.ical_import_log.md) [public.email_oauth_token](public.email_oauth_token.md) [public.vcard_conflict](public.vcard_conflict.md) |  | Primary key. |
 | owner_id | uuid |  | false |  | [public.user](public.user.md) | Owner user; cascades on delete. |
 | first_name | varchar(255) |  | false |  |  | Given name; required. |
 | last_name | varchar(255) |  | true |  |  | Family name. |
@@ -122,6 +122,7 @@ erDiagram
 "public.contact_merge" }o--|| "public.contact" : "FOREIGN KEY (surviving_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.ical_import_log" }o--o| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.email_oauth_token" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
+"public.vcard_conflict" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.contact" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.contact" }o--o| "public.organization" : "FOREIGN KEY (organization_id) REFERENCES organization(id) ON DELETE SET NULL"
 
@@ -343,6 +344,16 @@ erDiagram
   timestamp_with_time_zone token_expires_at
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
+}
+"public.vcard_conflict" {
+  uuid id
+  uuid contact_id FK
+  text incoming_vcard_raw
+  varchar_64_ incoming_hash
+  varchar_64_ local_hash
+  timestamp_with_time_zone resolved_at
+  varchar_50_ resolution_type
+  timestamp_with_time_zone created_at
 }
 "public.user" {
   varchar_255_ email

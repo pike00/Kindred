@@ -42,6 +42,7 @@
 | [public.saved_filter](public.saved_filter.md) | 7 |  | BASE TABLE |
 | [public.ical_import_log](public.ical_import_log.md) | 6 |  | BASE TABLE |
 | [public.email_oauth_token](public.email_oauth_token.md) | 10 |  | BASE TABLE |
+| [public.vcard_conflict](public.vcard_conflict.md) | 8 |  | BASE TABLE |
 
 ## Stored procedures and functions
 
@@ -138,6 +139,7 @@ erDiagram
 "public.ical_import_log" }o--o| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.email_oauth_token" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.email_oauth_token" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
+"public.vcard_conflict" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 
 "public.alembic_version" {
   varchar_32_ version_num
@@ -530,6 +532,16 @@ erDiagram
   timestamp_with_time_zone token_expires_at
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
+}
+"public.vcard_conflict" {
+  uuid id
+  uuid contact_id FK
+  text incoming_vcard_raw
+  varchar_64_ incoming_hash
+  varchar_64_ local_hash
+  timestamp_with_time_zone resolved_at
+  varchar_50_ resolution_type
+  timestamp_with_time_zone created_at
 }
 ```
 

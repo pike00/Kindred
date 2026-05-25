@@ -682,6 +682,22 @@ Table "email_oauth_token" {
   }
 }
 
+Table "vcard_conflict" {
+  "id" uuid [pk, not null]
+  "contact_id" uuid [not null]
+  "incoming_vcard_raw" text [not null]
+  "incoming_hash" varchar(64) [not null]
+  "local_hash" varchar(64) [not null]
+  "resolved_at" timestamptz
+  "resolution_type" varchar(50)
+  "created_at" timestamptz [not null, default: `now()`]
+
+  Indexes {
+    contact_id [type: btree, name: "ix_vcard_conflict_contact_id"]
+    resolved_at [type: btree, name: "ix_vcard_conflict_resolved_at"]
+  }
+}
+
 Ref "activity_log_actor_id_fkey":"user"."id" < "activity_log"."actor_id" [delete: set null]
 
 Ref "activity_log_owner_id_fkey":"user"."id" < "activity_log"."owner_id" [delete: cascade]
@@ -797,5 +813,7 @@ Ref "tag_owner_id_fkey":"user"."id" < "tag"."owner_id" [delete: cascade]
 Ref "tag_share_grantee_id_fkey":"user"."id" < "tag_share"."grantee_id" [delete: cascade]
 
 Ref "tag_share_tag_id_fkey":"tag"."id" < "tag_share"."tag_id" [delete: cascade]
+
+Ref "vcard_conflict_contact_id_fkey":"contact"."id" < "vcard_conflict"."contact_id" [delete: cascade]
 
 Ref "webhook_endpoint_owner_id_fkey":"user"."id" < "webhook_endpoint"."owner_id" [delete: cascade]

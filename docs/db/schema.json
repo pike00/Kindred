@@ -6381,6 +6381,164 @@
           ]
         }
       ]
+    },
+    {
+      "name": "public.vcard_conflict",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "contact_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "incoming_vcard_raw",
+          "type": "text",
+          "nullable": false
+        },
+        {
+          "name": "incoming_hash",
+          "type": "varchar(64)",
+          "nullable": false
+        },
+        {
+          "name": "local_hash",
+          "type": "varchar(64)",
+          "nullable": false
+        },
+        {
+          "name": "resolved_at",
+          "type": "timestamp with time zone",
+          "nullable": true
+        },
+        {
+          "name": "resolution_type",
+          "type": "varchar(50)",
+          "nullable": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "vcard_conflict_pkey",
+          "def": "CREATE UNIQUE INDEX vcard_conflict_pkey ON public.vcard_conflict USING btree (id)",
+          "table": "public.vcard_conflict",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "ix_vcard_conflict_contact_id",
+          "def": "CREATE INDEX ix_vcard_conflict_contact_id ON public.vcard_conflict USING btree (contact_id)",
+          "table": "public.vcard_conflict",
+          "columns": [
+            "contact_id"
+          ]
+        },
+        {
+          "name": "ix_vcard_conflict_resolved_at",
+          "def": "CREATE INDEX ix_vcard_conflict_resolved_at ON public.vcard_conflict USING btree (resolved_at)",
+          "table": "public.vcard_conflict",
+          "columns": [
+            "resolved_at"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "vcard_conflict_contact_id_not_null",
+          "type": "n",
+          "def": "NOT NULL contact_id",
+          "table": "public.vcard_conflict",
+          "referenced_table": "",
+          "columns": [
+            "contact_id"
+          ]
+        },
+        {
+          "name": "vcard_conflict_created_at_not_null",
+          "type": "n",
+          "def": "NOT NULL created_at",
+          "table": "public.vcard_conflict",
+          "referenced_table": "",
+          "columns": [
+            "created_at"
+          ]
+        },
+        {
+          "name": "vcard_conflict_id_not_null",
+          "type": "n",
+          "def": "NOT NULL id",
+          "table": "public.vcard_conflict",
+          "referenced_table": "",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "vcard_conflict_incoming_hash_not_null",
+          "type": "n",
+          "def": "NOT NULL incoming_hash",
+          "table": "public.vcard_conflict",
+          "referenced_table": "",
+          "columns": [
+            "incoming_hash"
+          ]
+        },
+        {
+          "name": "vcard_conflict_incoming_vcard_raw_not_null",
+          "type": "n",
+          "def": "NOT NULL incoming_vcard_raw",
+          "table": "public.vcard_conflict",
+          "referenced_table": "",
+          "columns": [
+            "incoming_vcard_raw"
+          ]
+        },
+        {
+          "name": "vcard_conflict_local_hash_not_null",
+          "type": "n",
+          "def": "NOT NULL local_hash",
+          "table": "public.vcard_conflict",
+          "referenced_table": "",
+          "columns": [
+            "local_hash"
+          ]
+        },
+        {
+          "name": "vcard_conflict_contact_id_fkey",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE",
+          "table": "public.vcard_conflict",
+          "referenced_table": "public.contact",
+          "columns": [
+            "contact_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "vcard_conflict_pkey",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "public.vcard_conflict",
+          "referenced_table": "",
+          "columns": [
+            "id"
+          ]
+        }
+      ]
     }
   ],
   "relations": [
@@ -7140,6 +7298,19 @@
     },
     {
       "table": "public.email_oauth_token",
+      "columns": [
+        "contact_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.contact",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
+    },
+    {
+      "table": "public.vcard_conflict",
       "columns": [
         "contact_id"
       ],
