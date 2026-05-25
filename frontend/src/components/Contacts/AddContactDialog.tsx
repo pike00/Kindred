@@ -29,6 +29,8 @@ const contactCreateSchema = z.object({
   first_name: z.string().min(1, "First name is required"),
   last_name: z.string().optional(),
   birthday: z.string().optional(),
+  timezone: z.string().optional(),
+  pronouns: z.string().max(100).optional(),
 })
 
 type ContactCreateFormData = z.infer<typeof contactCreateSchema>
@@ -44,6 +46,8 @@ export const AddContactDialog = () => {
       first_name: "",
       last_name: "",
       birthday: "",
+      timezone: "",
+      pronouns: "",
     },
   })
 
@@ -66,6 +70,8 @@ export const AddContactDialog = () => {
       first_name: data.first_name,
       last_name: data.last_name || null,
       birthday: data.birthday ? data.birthday : null,
+      timezone: data.timezone || null,
+      pronouns: data.pronouns || null,
     }
     addContactMutation.mutate(payload)
   }
@@ -118,6 +124,32 @@ export const AddContactDialog = () => {
                   <FormLabel>Birthday</FormLabel>
                   <FormControl>
                     <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="timezone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Timezone</FormLabel>
+                  <FormControl>
+                    <Input placeholder="America/New_York" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="pronouns"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Pronouns</FormLabel>
+                  <FormControl>
+                    <Input placeholder="they/them" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

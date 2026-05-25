@@ -37,6 +37,7 @@ Flexible contact info (emails, phones) attached to a contact.
 | contact_field_pkey | CREATE UNIQUE INDEX contact_field_pkey ON public.contact_field USING btree (id) |
 | ix_contact_field_contact_id | CREATE INDEX ix_contact_field_contact_id ON public.contact_field USING btree (contact_id) |
 | ix_contact_field_field_type | CREATE INDEX ix_contact_field_field_type ON public.contact_field USING btree (field_type) |
+| ix_contact_field_value | CREATE INDEX ix_contact_field_value ON public.contact_field USING btree (value) |
 
 ## Relations
 
@@ -81,11 +82,8 @@ erDiagram
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
   timestamp_with_time_zone deleted_at
-  contactsource source
-  varchar_500_ source_external_id
-  uuid organization_id FK
-  boolean do_not_contact
-  varchar_500_ do_not_contact_reason
+  contactsource source_provider
+  varchar_255_ source_external_id
 }
 ```
 
