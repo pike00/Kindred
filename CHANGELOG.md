@@ -5,6 +5,11 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.57] - 2026-05-25
+
+### Added
+- Feat: printable contact one-pager PDF (9167057)
+
 ## [0.2.56] - 2026-05-25
 
 ### Added
