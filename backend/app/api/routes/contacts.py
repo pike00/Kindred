@@ -712,18 +712,12 @@ def create_contact(
     contact_in: ContactCreate,
     background_tasks: BackgroundTasks,
 ) -> Any:
-    """Create a new contact."""
-    contact = Contact.model_validate(contact_in, update={"owner_id": current_user.id})
-    session.add(contact)
-    session.flush()
+    """Create a new contact.
 
-    if contact_in.tag_ids:
-        for tag_id in contact_in.tag_ids:
-            session.add(ContactTag(contact_id=contact.id, tag_id=tag_id))
-
-    if contact_in.group_ids:
-        for group_id in contact_in.group_ids:
-            session.add(ContactGroup(contact_id=contact.id, group_id=group_id))
+    If source_external_id is provided, uses upsert logic to update existing
+    contact with same (owner_id, source, source_external_id) or create new.
+    """
+    from app.crud import upsert_contact
 
     contact = upsert_contact(
         session=session, contact_in=contact_in, owner_id=current_user.id

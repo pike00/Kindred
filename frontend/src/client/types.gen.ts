@@ -370,18 +370,6 @@ export type ContactCreate = {
      */
     stage?: (string | null);
     /**
-     * IANA timezone string (e.g., America/New_York); nullable.
-     */
-    timezone?: (string | null);
-    /**
-     * Contact's pronouns (free text, max 100 chars); nullable.
-     */
-    pronouns?: (string | null);
-    /**
-     * Enable automatic email log ingestion for this contact.
-     */
-    auto_log_email?: boolean;
-    /**
      * Source system that created this contact.
      */
     source?: ContactSource;
@@ -547,18 +535,6 @@ export type ContactPublic = {
      */
     stage?: (string | null);
     /**
-     * IANA timezone string (e.g., America/New_York); nullable.
-     */
-    timezone?: (string | null);
-    /**
-     * Contact's pronouns (free text, max 100 chars); nullable.
-     */
-    pronouns?: (string | null);
-    /**
-     * Enable automatic email log ingestion for this contact.
-     */
-    auto_log_email?: boolean;
-    /**
      * Source system that created this contact.
      */
     source?: ContactSource;
@@ -575,14 +551,6 @@ export type ContactPublic = {
     tags?: Array<TagPublic>;
     groups?: Array<GroupPublic>;
     communication_preference?: (CommunicationPreferencePublic | null);
-};
-
-/**
- * Response model for geo endpoint.
- */
-export type ContactsGeoResponse = {
-    points: Array<ContactGeoPoint>;
-    count: number;
 };
 
 /**
@@ -663,9 +631,6 @@ export type ContactUpdate = {
     stage?: (string | null);
     source?: (ContactSource | null);
     source_external_id?: (string | null);
-    timezone?: (string | null);
-    pronouns?: (string | null);
-    auto_log_email?: (boolean | null);
     do_not_contact?: (boolean | null);
     do_not_contact_reason?: (string | null);
     tag_ids?: (Array<(string)> | null);
@@ -1825,18 +1790,6 @@ export type OverdueContactPublic = {
      * Kanban stage like Active, Dormant, Lost.
      */
     stage?: (string | null);
-    /**
-     * IANA timezone string (e.g., America/New_York); nullable.
-     */
-    timezone?: (string | null);
-    /**
-     * Contact's pronouns (free text, max 100 chars); nullable.
-     */
-    pronouns?: (string | null);
-    /**
-     * Enable automatic email log ingestion for this contact.
-     */
-    auto_log_email?: boolean;
     /**
      * Source system that created this contact.
      */

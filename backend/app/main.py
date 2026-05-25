@@ -86,7 +86,7 @@ if settings.all_cors_origins:
         allow_headers=["*"],
     )
 
-# Configure Radicale CardDAV server with PostgreSQL storage backend
+# Configure Radicale with custom auth and storage backends
 radicale_configuration = RadicaleConfig(DEFAULT_CONFIG_SCHEMA)
 radicale_configuration.update(
     {
