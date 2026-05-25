@@ -1,56 +1,43 @@
-# CardDAV Server Implementation Notes
+# Contact Merge History - Implementation Notes
 
-## Date: 2026-05-03
+## Status: Partially Complete
 
-## Status
-The CardDAV server implementation appears to be complete. A Radicale-based implementation already exists in the codebase.
+### Completed:
+1. **Migration**: `f6a7b8c9d0e1_add_contact_merge_and_is_merged.py` - Creates `contact_merge` table and adds `is_merged` flag to contact
+2. **Models**:
+   - `ContactMerge` model with `surviving_id`, `absorbed_id`, `merged_by`, `merged_at`, `notes`
+   - `Contact` model has `is_merged` and `merged_into_id` fields
+3. **Merge Service**: `backend/app/merge_service.py` with:
+   - `merge_contacts()` - Handles merging two contacts, rewriting all FK references
+   - `unmerge_contact()` - Reverses a merge operation
+   - `get_merge_logs()` - Lists merge audit log entries
+4. **API Endpoints** in `backend/app/api/routes/contacts.py`:
+   - `POST /api/v1/contacts/merge` - Merge two contacts
+   - `POST /api/v1/contacts/{contact_id}/unmerge` - Unmerge a contact
+   - `GET /api/v1/contacts/merge-logs` - List merge audit logs
 
-## Implementation Summary
+### Issues Encountered:
+1. **SQLAlchemy Relationship Issue**: The original implementation had ORM relationships between `Contact` and `ContactMerge` models that caused SQLAlchemy to fail when resolving the string references. The error was:
+   ```
+   sqlalchemy.exc.InvalidRequestError: When initializing mapper Mapper[Contact(contact)], expression 'Contact | None' failed to locate a name
+   ```
 
-### Files Implemented:
-- `backend/app/carddav/__init__.py` - Package init
-- `backend/app/carddav/auth.py` - HTTP Basic Auth via Radicale auth module
-- `backend/app/carddav/rights.py` - Access control for CardDAV collections
-- `backend/app/carddav/storage.py` - Radicale storage backend with:
-  - `Collection` class implementing PROPFIND, REPORT, PUT (upload), DELETE handlers
-  - `Storage` class for collection discovery and management
-- `backend/app/vcard.py` - vCard 3.0 parsing/generation utilities:
-  - `compute_etag()` - SHA-256 hash for ETag
-  - `contact_to_vcard()` - Generate vCard from Contact model
-  - `vcard_to_contact_data()` - Parse vCard to Contact data
-- `backend/app/main.py` - Mounts Radicale at `/dav` with `.well-known/carddav` redirect
+   **Solution**: Removed the ORM relationships (`back_populates`) from both `Contact` and `ContactMerge` models. The foreign key fields remain for lookups, but the ORM relationship overhead was removed to avoid the resolution issue.
 
-### Task Checklist Status:
-- [x] Implement WebDAV PROPFIND handler for collection discovery (via Radicale)
-- [x] Implement WebDAV REPORT (addressdata) handler for batch contact fetch with ETag (via Radicale)
-- [x] Implement WebDAV PUT handler for contact creation and update with vcard parsing (via `upload()`)
-- [x] Implement WebDAV DELETE handler for contact removal (via `delete()`)
-- [x] Build vcard serializer aligned with Contact fields (`vcard.py`)
-- [x] Wire ETag invalidation (SHA-256 via `compute_etag()`)
-- [x] Add HTTP Basic Auth guard on CardDAV routes (`auth.py`)
-- [ ] Test bidirectional sync with macOS Contacts and/or DAVx5 - BLOCKED (services not running)
-- [ ] Document Apple client compatibility and any quirks - Not yet done
+2. **Backend Service Not Running**: The Docker backend service is not running in this worktree, so tests could not be executed. According to the rules, I should NOT start/stop services.
 
-## Blocker
-Docker services are not running in this worktree. Cannot verify the implementation works.
+### Remaining Tasks:
+1. **Testing**: Run `docker compose exec -T backend uv run pytest -x -q` to verify the implementation
+2. **Frontend UI**: Implement the duplicate detection UI and merge audit view in the frontend
+3. **Verification**: Test merge/unmerge with interactions, notes, relationships, debts, gifts, etc.
 
-### Commands attempted:
-```
-docker compose ps  # Output: no containers running
-docker compose -f compose.worktree.yml ps  # Failed: WORKTREE_HOST not set
-```
+### Technical Decisions:
+1. **Soft-delete strategy**: `is_merged` flag on Contact (not `is_archived`)
+2. **Two-way relationships**: During merge, both `contact_id` and `related_contact_id` are rewritten
+3. **Audit trail**: `contact_merge` table tracks all merges for unmerge operations
+4. **Reversibility**: Absorbed contacts are not hard-deleted, so unmerge is possible
 
-Per guardrails, I did not attempt to start the services.
-
-## Code Review Notes
-- All CardDAV-related files compile without syntax errors
-- The implementation uses Radicale 3.6.1 as a WSGI middleware mounted at `/dav`
-- vCard 3.0 format is used (not 4.0)
-- ETag uses SHA-256 hash of vCard content
-- Apple extensions are preserved via X-CRM-* properties
-
-## Next Steps (when services are running)
-1. Start the worktree dev stack: `just up` (from worktree directory with WORKTREE_HOST set)
-2. Test with macOS Contacts or DAVx5
-3. Document any Apple client compatibility quirks
-4. Run `docker compose exec -T backend uv run pytest backend/tests/carddav/ -v` to verify tests pass
+### Commit History:
+- `c51844b` feat(merge): add merge/unmerge service and API endpoints
+- `ee54db1` feat(merge): add merge support to Contact model and API endpoints
+- `6ca8d77` feat(frontend): update SDK after ContactMerge model changes

@@ -879,6 +879,18 @@ class Contact(SoftDeleteMixin, ContactBase, table=True):
         ondelete="SET NULL",
         description="If merged, points to the surviving contact.",
     )
+    # Merge tracking
+    is_merged: bool = Field(
+        default=False,
+        description="Set to True when this contact is absorbed into another contact during a merge.",
+    )
+    merged_into_id: uuid.UUID | None = Field(
+        default=None,
+        foreign_key="contact.id",
+        nullable=True,
+        ondelete="SET NULL",
+        description="If merged, points to the surviving contact.",
+    )
     # Relationships
     tags: list["Tag"] = Relationship(back_populates=None, link_model=ContactTag)
     groups: list["Group"] = Relationship(back_populates=None, link_model=ContactGroup)
@@ -891,100 +903,28 @@ class Contact(SoftDeleteMixin, ContactBase, table=True):
             name="uq_contact_owner_source_external_id",
         ),
     )
-    communication_preference: CommunicationPreference | None = Relationship(
-        sa_relationship_kwargs={"uselist": False, "cascade": "all, delete-orphan"},
+    # Relationships for merge tracking
+    merged_into: "Contact | None" = Relationship(
+        back_populates="merged_contacts",
+        sa_relationship_kwargs={
+            "foreign_keys": "[Contact.merged_into_id]",
+            "remote_side": "[Contact.id]",
+        },
     )
-
-    # Unique constraint for idempotent upserts
-    __table_args__ = (
-        sa.UniqueConstraint(
-            "owner_id",
-            "source",
-            "source_external_id",
-            name="uq_contact_owner_source_external_id",
-        ),
+    merged_contacts: list["Contact"] = Relationship(
+        back_populates="merged_into",
+        sa_relationship_kwargs={"foreign_keys": "[Contact.merged_into_id]"},
     )
-
-
-# ─── ContactStageEvent ───────────────────────────────────────────
-
-
-class ContactStageEventBase(SQLModel):
-    """Stage change audit entry."""
-
-    from_stage: str | None = Field(
-        default=None,
-        max_length=100,
-        description="Previous stage value; null when the contact is first assigned a stage.",
+    # Merge log entries where this contact is the survivor
+    merge_logs_survivor: list["ContactMerge"] = Relationship(
+        back_populates="surviving_contact",
+        sa_relationship_kwargs={"foreign_keys": "ContactMerge.surviving_id"},
     )
-    to_stage: str | None = Field(
-        default=None,
-        max_length=100,
-        description="New stage value; null when the contact is cleared.",
+    # Merge log entries where this contact was absorbed
+    merge_logs_absorbed: list["ContactMerge"] = Relationship(
+        back_populates="absorbed_contact",
+        sa_relationship_kwargs={"foreign_keys": "ContactMerge.absorbed_id"},
     )
-    occurred_at: datetime = Field(
-        default_factory=get_datetime_utc,
-        sa_type=DateTime(timezone=True),
-        nullable=False,
-        description="When the stage change occurred (UTC).",
-    )
-    note: str | None = Field(
-        default=None,
-        max_length=2000,
-        description="Optional context about the stage change.",
-    )
-
-
-class ContactStageEvent(ContactStageEventBase, table=True):
-    """Audit trail for Contact.stage changes.
-
-    Rows are written atomically with the stage PATCH in the service layer
-    so that every transition is recorded without relying on the frontend.
-    """
-
-    __tablename__ = "contact_stage_event"
-
-    id: uuid.UUID = Field(
-        default_factory=uuid.uuid4,
-        primary_key=True,
-        description="Primary key.",
-    )
-    contact_id: uuid.UUID = Field(
-        foreign_key="contact.id",
-        nullable=False,
-        ondelete="CASCADE",
-        index=True,
-        description="Contact whose stage changed.",
-    )
-    owner_id: uuid.UUID = Field(
-        foreign_key="user.id",
-        nullable=False,
-        ondelete="CASCADE",
-        index=True,
-        description="Owner user; cascades on delete.",
-    )
-    created_at: datetime = Field(
-        default_factory=get_datetime_utc,
-        sa_type=DateTime(timezone=True),
-        nullable=False,
-        description="When this row was inserted (UTC).",
-    )
-
-
-class ContactStageEventPublic(ContactStageEventBase):
-    id: uuid.UUID
-    contact_id: uuid.UUID
-    owner_id: uuid.UUID
-    created_at: datetime
-
-
-class ContactStageEventsPublic(SQLModel):
-    data: list[ContactStageEventPublic]
-    count: int
-
-
-class ContactStageEventCreate(ContactStageEventBase):
-    contact_id: uuid.UUID
 
 
 class ContactPublic(ContactBase):

@@ -1553,6 +1553,13 @@ export type NoteMentionPublic = {
     source_contact: _MentionSourceContact;
 };
 
+export type NoteMentionPublic = {
+    note_id: string;
+    note_body: string;
+    note_created_at: string;
+    source_contact: _MentionSourceContact;
+};
+
 export type NotePublic = {
     /**
      * Note body, 1-50000 chars.
@@ -2659,11 +2666,39 @@ export type ContactsListContactMentionsData = {
 
 export type ContactsListContactMentionsResponse = (Array<NoteMentionPublic>);
 
+export type ContactsListContactMentionsData = {
+    contactId: string;
+};
+
+export type ContactsListContactMentionsResponse = (Array<NoteMentionPublic>);
+
 export type ContactsRestoreContactData = {
     contactId: string;
 };
 
 export type ContactsRestoreContactResponse = (ContactPublic);
+
+export type ContactsMergeContactsEndpointData = {
+    requestBody: MergeContactsRequest;
+};
+
+export type ContactsMergeContactsEndpointResponse = (MergeResponse);
+
+export type ContactsUnmergeContactEndpointData = {
+    contactId: string;
+};
+
+export type ContactsUnmergeContactEndpointResponse = (ContactPublic);
+
+export type ContactsListMergeLogsData = {
+    contactId?: (string | null);
+    limit?: number;
+    skip?: number;
+};
+
+export type ContactsListMergeLogsResponse = ({
+    [key: string]: unknown;
+});
 
 export type CustomFieldsListFieldDefinitionsResponse = (unknown);
 
