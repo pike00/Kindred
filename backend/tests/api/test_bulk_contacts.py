@@ -8,7 +8,7 @@ from typing import Any
 from fastapi.testclient import TestClient
 from sqlmodel import Session, select
 
-from app.models import Contact, ContactTag, Tag
+from app.models import Contact, ContactGroup, ContactTag, Group, Tag
 
 
 def get_superuser_id(db: Session) -> uuid.UUID:
@@ -203,25 +203,97 @@ def test_bulk_remove_tags(
     assert len(tags) == 0
 
 
+def test_bulk_add_groups(
+    client: TestClient, superuser_token_headers: dict[str, str], db: Session
+) -> None:
+    """Test bulk add groups operation."""
+
+    user_id = get_superuser_id(db)
+
+    # Create groups with required owner_id
+    group1 = Group(name="Family", description="Family members", owner_id=user_id)
+    group2 = Group(name="Work", description="Work colleagues", owner_id=user_id)
+    db.add(group1)
+    db.add(group2)
+    db.commit()
+    db.refresh(group1)
+    db.refresh(group2)
+
+    # Create contact
+    contact1 = create_test_contact(db, user_id, first_name="Alice")
+
+    response = client.patch(
+        "/api/v1/contacts/bulk",
+        headers=superuser_token_headers,
+        json={
+            "contact_ids": [str(contact1.id)],
+            "operations": {"add_group_ids": [str(group1.id), str(group2.id)]},
+        },
+    )
+    assert response.status_code == 200
+    result = response.json()
+    assert result["updated_count"] == 1
+
+    # Verify groups were added
+    stmt = select(ContactGroup).where(ContactGroup.contact_id == contact1.id)
+    groups = db.exec(stmt).all()
+    assert len(groups) == 2
+
+
+def test_bulk_remove_groups(
+    client: TestClient, superuser_token_headers: dict[str, str], db: Session
+) -> None:
+    """Test bulk remove groups operation."""
+    from app.models import ContactGroup
+
+    user_id = get_superuser_id(db)
+
+    # Create group with required owner_id
+    group1 = Group(name="Family", description="Family members", owner_id=user_id)
+    db.add(group1)
+    db.commit()
+    db.refresh(group1)
+
+    # Create contact with group
+    contact1 = create_test_contact(db, user_id, first_name="Alice")
+    contact_group = ContactGroup(contact_id=contact1.id, group_id=group1.id)
+    db.add(contact_group)
+    db.commit()
+
+    # Remove group via bulk operation
+    response = client.patch(
+        "/api/v1/contacts/bulk",
+        headers=superuser_token_headers,
+        json={
+            "contact_ids": [str(contact1.id)],
+            "operations": {"remove_group_ids": [str(group1.id)]},
+        },
+    )
+    assert response.status_code == 200
+    result = response.json()
+    assert result["updated_count"] == 1
+
+    # Verify group was removed
+    stmt = select(ContactGroup).where(ContactGroup.contact_id == contact1.id)
+    groups = db.exec(stmt).all()
+    assert len(groups) == 0
+
+
 def test_bulk_select_all_filtered(
     client: TestClient, superuser_token_headers: dict[str, str], db: Session
 ) -> None:
     """Test bulk update with select_all_filtered."""
-    import uuid as _uuid
-
-    suffix = _uuid.uuid4().hex[:8]
     user_id = get_superuser_id(db)
-    create_test_contact(db, user_id, first_name=f"Alice{suffix}")
-    create_test_contact(db, user_id, first_name=f"Bob{suffix}")
-    create_test_contact(db, user_id, first_name=f"Charlie{suffix}")
+    create_test_contact(db, user_id, first_name="Alice")
+    create_test_contact(db, user_id, first_name="Bob")
+    create_test_contact(db, user_id, first_name="Charlie")
 
-    # Bulk update only contacts whose name contains the unique suffix
+    # Bulk update all contacts (no filter)
     response = client.patch(
         "/api/v1/contacts/bulk",
         headers=superuser_token_headers,
         json={
             "select_all_filtered": True,
-            "filters": {"search": suffix},
             "operations": {"set_is_favorite": True},
         },
     )
@@ -234,22 +306,18 @@ def test_bulk_select_all_filtered_with_search(
     client: TestClient, superuser_token_headers: dict[str, str], db: Session
 ) -> None:
     """Test bulk update with select_all_filtered and search filter."""
-    import uuid as _uuid
-
-    suffix = _uuid.uuid4().hex[:8]
     user_id = get_superuser_id(db)
-    create_test_contact(db, user_id, first_name=f"Alice{suffix}")
-    create_test_contact(db, user_id, first_name=f"Bob{suffix}")
-    create_test_contact(db, user_id, first_name=f"Charlie{suffix}")
+    create_test_contact(db, user_id, first_name="Alice")
+    create_test_contact(db, user_id, first_name="Bob")
+    create_test_contact(db, user_id, first_name="Charlie")
 
-    # Search for the unique Alice using both the Alice prefix and the suffix
-    alice_search = f"Alice{suffix}"
+    # Bulk update only contacts matching "Ali" (should only match Alice)
     response = client.patch(
         "/api/v1/contacts/bulk",
         headers=superuser_token_headers,
         json={
             "select_all_filtered": True,
-            "filters": {"search": alice_search},
+            "filters": {"search": "Ali"},
             "operations": {"set_is_favorite": True},
         },
     )
@@ -262,17 +330,14 @@ def test_bulk_preview(
     client: TestClient, superuser_token_headers: dict[str, str], db: Session
 ) -> None:
     """Test bulk preview endpoint."""
-    import uuid as _uuid
-
-    suffix = _uuid.uuid4().hex[:8]
     user_id = get_superuser_id(db)
-    create_test_contact(db, user_id, first_name=f"Alice{suffix}")
-    create_test_contact(db, user_id, first_name=f"Bob{suffix}")
+    create_test_contact(db, user_id, first_name="Alice")
+    create_test_contact(db, user_id, first_name="Bob")
 
     response = client.get(
         "/api/v1/contacts/bulk/preview",
         headers=superuser_token_headers,
-        params={"select_all_filtered": True, "search": suffix},
+        params={"select_all_filtered": True},
     )
     assert response.status_code == 200
     result = response.json()
@@ -284,24 +349,20 @@ def test_bulk_preview_with_search(
     client: TestClient, superuser_token_headers: dict[str, str], db: Session
 ) -> None:
     """Test bulk preview with search filter."""
-    import uuid as _uuid
-
-    suffix = _uuid.uuid4().hex[:8]
     user_id = get_superuser_id(db)
-    create_test_contact(db, user_id, first_name=f"Alice{suffix}")
-    create_test_contact(db, user_id, first_name=f"Bob{suffix}")
+    create_test_contact(db, user_id, first_name="Alice")
+    create_test_contact(db, user_id, first_name="Bob")
 
-    alice_search = f"Alice{suffix}"
     response = client.get(
         "/api/v1/contacts/bulk/preview",
         headers=superuser_token_headers,
-        params={"select_all_filtered": True, "search": alice_search},
+        params={"select_all_filtered": True, "search": "Ali"},
     )
     assert response.status_code == 200
     result = response.json()
     assert result["count"] == 1  # Only Alice
     assert len(result["data"]) == 1
-    assert result["data"][0]["first_name"] == f"Alice{suffix}"
+    assert result["data"][0]["first_name"] == "Alice"
 
 
 def test_bulk_no_ids_or_filter(
@@ -323,16 +384,11 @@ def test_bulk_empty_result(
     client: TestClient, superuser_token_headers: dict[str, str]
 ) -> None:
     """Test bulk update with no matching contacts."""
-    import uuid as _uuid
-
-    # Use a guaranteed-no-match search term
-    no_match = f"NOMATCH_{_uuid.uuid4().hex}"
     response = client.patch(
         "/api/v1/contacts/bulk",
         headers=superuser_token_headers,
         json={
             "select_all_filtered": True,
-            "filters": {"search": no_match},
             "operations": {"set_is_favorite": True},
         },
     )
@@ -370,34 +426,30 @@ def test_bulk_other_user_contacts_not_affected(
     client: TestClient, superuser_token_headers: dict[str, str], db: Session
 ) -> None:
     """Test that bulk operations only affect contacts owned by the current user."""
-    import uuid as _uuid
-
     from app.models import User
 
-    suffix = _uuid.uuid4().hex[:8]
     user_id = get_superuser_id(db)
 
     # Create another user
     other_user = User(
-        email=f"other_{suffix}@example.com", hashed_password="fakehash", is_active=True
+        email="other@example.com", hashed_password="fakehash", is_active=True
     )
     db.add(other_user)
     db.commit()
     db.refresh(other_user)
 
-    # Create contact for other user (with the unique suffix so it's identifiable)
-    other_contact = create_test_contact(db, other_user.id, first_name=f"Other{suffix}")
+    # Create contact for other user
+    other_contact = create_test_contact(db, other_user.id, first_name="Other")
 
-    # Create contact for superuser (with the unique suffix)
-    create_test_contact(db, user_id, first_name=f"Mine{suffix}")
+    # Create contact for superuser
+    create_test_contact(db, user_id, first_name="Mine")
 
-    # Bulk update only contacts with our unique suffix
+    # Bulk update all - should only affect my contact
     response = client.patch(
         "/api/v1/contacts/bulk",
         headers=superuser_token_headers,
         json={
             "select_all_filtered": True,
-            "filters": {"search": suffix},
             "operations": {"set_is_favorite": True},
         },
     )

@@ -84,9 +84,7 @@ def test_create_pet_unknown_contact_404(
     assert r.status_code == 404
 
 
-def test_list_pets(
-    client: TestClient, superuser_token_headers: dict[str, str]
-) -> None:
+def test_list_pets(client: TestClient, superuser_token_headers: dict[str, str]) -> None:
     contact_id = _create_contact(client, superuser_token_headers)
     client.post(
         f"{settings.API_V1_STR}/pets/",
