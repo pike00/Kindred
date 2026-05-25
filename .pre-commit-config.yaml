@@ -71,3 +71,16 @@ repos:
         language: system
         stages: [pre-push]
         always_run: true
+
+      # Runs on `git push`. Drives the SPA via puppeteer to catch UI regressions
+      # unit tests can't see (sidebar wiring, dialog flows, response shape
+      # mismatches). Brings up the dev stack with loopback ports if needed.
+      # Skips with a warning if Docker isn't available (e.g. CI without
+      # docker-in-docker) — never silently passes when the stack IS up.
+      - id: e2e-tests
+        name: e2e (puppeteer) suite
+        entry: bash ./scripts/run-e2e-prepush.sh
+        pass_filenames: false
+        language: system
+        stages: [pre-push]
+        always_run: true

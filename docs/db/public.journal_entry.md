@@ -8,13 +8,14 @@ Personal journal entry, not tied to a specific contact.
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | uuid |  | false |  |  | Primary key. |
+| id | uuid |  | false | [public.journal_entry_contact](public.journal_entry_contact.md) |  | Primary key. |
 | owner_id | uuid |  | false |  | [public.user](public.user.md) | Owner user; cascades on delete. |
 | body | varchar(50000) |  | false |  |  | Entry body, 1-50000 chars. |
 | mood | varchar(50) |  | true |  |  | Emoji or keyword capturing the mood. |
 | entry_date | date |  | false |  |  | Date the entry is about (may differ from created_at). |
 | created_at | timestamp with time zone |  | false |  |  | When the entry was logged (UTC). |
 | updated_at | timestamp with time zone |  | false |  |  | Auto-bumped on edit (UTC). |
+| search_vector | tsvector |  | true |  |  |  |
 
 ## Constraints
 
@@ -36,12 +37,20 @@ Personal journal entry, not tied to a specific contact.
 | journal_entry_pkey | CREATE UNIQUE INDEX journal_entry_pkey ON public.journal_entry USING btree (id) |
 | ix_journal_entry_owner_id | CREATE INDEX ix_journal_entry_owner_id ON public.journal_entry USING btree (owner_id) |
 | ix_journal_entry_entry_date | CREATE INDEX ix_journal_entry_entry_date ON public.journal_entry USING btree (entry_date) |
+| ix_journal_entry_search_vector | CREATE INDEX ix_journal_entry_search_vector ON public.journal_entry USING gin (search_vector) |
+
+## Triggers
+
+| Name | Definition |
+| ---- | ---------- |
+| tsvectorupdate_journal_entry | CREATE TRIGGER tsvectorupdate_journal_entry BEFORE INSERT OR UPDATE ON public.journal_entry FOR EACH ROW EXECUTE FUNCTION update_journal_entry_search_vector() |
 
 ## Relations
 
 ```mermaid
 erDiagram
 
+"public.journal_entry_contact" }o--|| "public.journal_entry" : "FOREIGN KEY (journal_entry_id) REFERENCES journal_entry(id) ON DELETE CASCADE"
 "public.journal_entry" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 
 "public.journal_entry" {
@@ -52,6 +61,11 @@ erDiagram
   date entry_date
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
+  tsvector search_vector
+}
+"public.journal_entry_contact" {
+  uuid journal_entry_id FK
+  uuid contact_id FK
 }
 "public.user" {
   varchar_255_ email

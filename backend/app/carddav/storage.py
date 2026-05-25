@@ -153,10 +153,43 @@ class Collection(BaseCollection):
                         href=href,
                     )
                 # Update fields from parsed vCard
-                contact_data = parsed["contact"]
-                for key, value in contact_data.items():
+                for key, value in filtered_contact_data.items():
                     if hasattr(existing, key):
                         setattr(existing, key, value)
+
+                # Update ContactField entries (phone/email)
+                # First, remove existing fields for this contact
+                session.exec(
+                    ContactField.delete().where(ContactField.contact_id == existing.id)
+                )
+                # Then add new fields from vCard
+                for field_info in fields_data:
+                    field = ContactField(
+                        contact_id=existing.id,
+                        field_type=ContactFieldType(field_info["field_type"]),
+                        label=field_info["label"],
+                        value=field_info["value"],
+                        is_primary=field_info.get("is_primary", False),
+                    )
+                    session.add(field)
+
+                # Update Address entries
+                # First, remove existing addresses for this contact
+                session.exec(Address.delete().where(Address.contact_id == existing.id))
+                # Then add new addresses from vCard
+                for addr_info in addresses_data:
+                    addr = Address(
+                        contact_id=existing.id,
+                        label=addr_info["label"],
+                        street=addr_info.get("street"),
+                        extended=addr_info.get("extended"),
+                        city=addr_info.get("city"),
+                        region=addr_info.get("region"),
+                        postal_code=addr_info.get("postal_code"),
+                        country=addr_info.get("country"),
+                    )
+                    session.add(addr)
+
                 existing.vcard_raw = vcard_text
                 existing.vcard_etag = item.etag
                 # Set source and source_external_id for provenance tracking
@@ -166,7 +199,7 @@ class Collection(BaseCollection):
                 session.add(existing)
             else:
                 # Create new contact
-                contact_data = parsed["contact"]
+                # Create the contact first
                 new_contact = Contact(
                     owner_id=user.id,
                     vcard_raw=vcard_text,
@@ -178,6 +211,32 @@ class Collection(BaseCollection):
                 if parsed.get("uid"):
                     new_contact.id = parsed["uid"]
                 session.add(new_contact)
+                session.flush()  # Flush to get the ID
+
+                # Add ContactField entries (phone/email)
+                for field_info in fields_data:
+                    field = ContactField(
+                        contact_id=new_contact.id,
+                        field_type=ContactFieldType(field_info["field_type"]),
+                        label=field_info["label"],
+                        value=field_info["value"],
+                        is_primary=field_info.get("is_primary", False),
+                    )
+                    session.add(field)
+
+                # Add Address entries
+                for addr_info in addresses_data:
+                    addr = Address(
+                        contact_id=new_contact.id,
+                        label=addr_info["label"],
+                        street=addr_info.get("street"),
+                        extended=addr_info.get("extended"),
+                        city=addr_info.get("city"),
+                        region=addr_info.get("region"),
+                        postal_code=addr_info.get("postal_code"),
+                        country=addr_info.get("country"),
+                    )
+                    session.add(addr)
 
             session.commit()
 

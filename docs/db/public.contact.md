@@ -8,7 +8,7 @@ Core contact entity — the subject of everything else in the CRM.
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | uuid |  | false | [public.contact_tag](public.contact_tag.md) [public.contact_group](public.contact_group.md) [public.contact_field](public.contact_field.md) [public.address](public.address.md) [public.relationship](public.relationship.md) [public.pet](public.pet.md) [public.custom_field_value](public.custom_field_value.md) [public.reminder](public.reminder.md) [public.gift](public.gift.md) [public.debt](public.debt.md) [public.life_event](public.life_event.md) [public.note](public.note.md) [public.media_recommendation](public.media_recommendation.md) [public.interaction_attendee](public.interaction_attendee.md) [public.note_mention](public.note_mention.md) [public.communication_preference](public.communication_preference.md) |  | Primary key. |
+| id | uuid |  | false | [public.contact_tag](public.contact_tag.md) [public.contact_group](public.contact_group.md) [public.contact_field](public.contact_field.md) [public.address](public.address.md) [public.relationship](public.relationship.md) [public.pet](public.pet.md) [public.custom_field_value](public.custom_field_value.md) [public.reminder](public.reminder.md) [public.gift](public.gift.md) [public.debt](public.debt.md) [public.life_event](public.life_event.md) [public.note](public.note.md) [public.media_recommendation](public.media_recommendation.md) [public.interaction_attendee](public.interaction_attendee.md) |  | Primary key. |
 | owner_id | uuid |  | false |  | [public.user](public.user.md) | Owner user; cascades on delete. |
 | first_name | varchar(255) |  | false |  |  | Given name; required. |
 | last_name | varchar(255) |  | true |  |  | Family name. |
@@ -34,30 +34,27 @@ Core contact entity — the subject of everything else in the CRM.
 | created_at | timestamp with time zone |  | false |  |  | When the contact was created (UTC). |
 | updated_at | timestamp with time zone |  | false |  |  | Auto-bumped on any column change (UTC). |
 | deleted_at | timestamp with time zone |  | true |  |  |  |
-| source | contactsource | 'MANUAL'::contactsource | false |  |  |  |
-| source_external_id | varchar(500) |  | true |  |  |  |
-| organization_id | uuid |  | true |  | [public.organization](public.organization.md) |  |
-| do_not_contact | boolean | false | false |  |  |  |
-| do_not_contact_reason | varchar(500) |  | true |  |  |  |
+| source_provider | contactsource | 'MANUAL'::contactsource | false |  |  |  |
+| source_external_id | varchar(255) |  | true |  |  |  |
 
 ## Constraints
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
+| contact_auto_log_email_not_null | n | NOT NULL auto_log_email |
 | contact_created_at_not_null | n | NOT NULL created_at |
-| contact_do_not_contact_not_null | n | NOT NULL do_not_contact |
 | contact_first_name_not_null | n | NOT NULL first_name |
 | contact_id_not_null | n | NOT NULL id |
 | contact_is_archived_not_null | n | NOT NULL is_archived |
 | contact_is_deceased_not_null | n | NOT NULL is_deceased |
 | contact_is_favorite_not_null | n | NOT NULL is_favorite |
+| contact_is_merged_not_null | n | NOT NULL is_merged |
 | contact_owner_id_not_null | n | NOT NULL owner_id |
-| contact_source_not_null | n | NOT NULL source |
+| contact_source_provider_not_null | n | NOT NULL source_provider |
 | contact_updated_at_not_null | n | NOT NULL updated_at |
 | contact_owner_id_fkey | FOREIGN KEY | FOREIGN KEY (owner_id) REFERENCES "user"(id) ON DELETE CASCADE |
+| contact_merged_into_id_fkey | FOREIGN KEY | FOREIGN KEY (merged_into_id) REFERENCES contact(id) ON DELETE SET NULL |
 | contact_pkey | PRIMARY KEY | PRIMARY KEY (id) |
-| uq_contact_owner_source_external_id | UNIQUE | UNIQUE (owner_id, source, source_external_id) |
-| fk_contact_organization_id | FOREIGN KEY | FOREIGN KEY (organization_id) REFERENCES organization(id) ON DELETE SET NULL |
 
 ## Indexes
 
@@ -69,15 +66,17 @@ Core contact entity — the subject of everything else in the CRM.
 | ix_contact_owner_id | CREATE INDEX ix_contact_owner_id ON public.contact USING btree (owner_id) |
 | ix_contact_contact_frequency_days | CREATE INDEX ix_contact_contact_frequency_days ON public.contact USING btree (contact_frequency_days) |
 | ix_contact_deleted_at | CREATE INDEX ix_contact_deleted_at ON public.contact USING btree (deleted_at) |
-| uq_contact_owner_source_external_id | CREATE UNIQUE INDEX uq_contact_owner_source_external_id ON public.contact USING btree (owner_id, source, source_external_id) |
+| ix_contact_source_provider | CREATE INDEX ix_contact_source_provider ON public.contact USING btree (source_provider) |
+| ix_contact_source_external_id | CREATE INDEX ix_contact_source_external_id ON public.contact USING btree (source_external_id) |
+| ux_contact_owner_provider_external | CREATE UNIQUE INDEX ux_contact_owner_provider_external ON public.contact USING btree (owner_id, source_provider, source_external_id) WHERE (source_external_id IS NOT NULL) |
 
 ## Relations
 
 ```mermaid
 erDiagram
 
+"public.contact" }o--o| "public.contact" : "FOREIGN KEY (merged_into_id) REFERENCES contact(id) ON DELETE SET NULL"
 "public.contact_tag" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
-"public.contact_group" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.contact_field" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.address" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.relationship" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
@@ -91,10 +90,7 @@ erDiagram
 "public.note" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.media_recommendation" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.interaction_attendee" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
-"public.note_mention" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
-"public.communication_preference" |o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.contact" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
-"public.contact" }o--o| "public.organization" : "FOREIGN KEY (organization_id) REFERENCES organization(id) ON DELETE SET NULL"
 
 "public.contact" {
   uuid id
@@ -123,19 +119,12 @@ erDiagram
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
   timestamp_with_time_zone deleted_at
-  contactsource source
-  varchar_500_ source_external_id
-  uuid organization_id FK
-  boolean do_not_contact
-  varchar_500_ do_not_contact_reason
+  contactsource source_provider
+  varchar_255_ source_external_id
 }
 "public.contact_tag" {
   uuid contact_id FK
   uuid tag_id FK
-}
-"public.contact_group" {
-  uuid contact_id FK
-  uuid group_id FK
 }
 "public.contact_field" {
   uuid id
@@ -165,7 +154,6 @@ erDiagram
   uuid related_contact_id FK
   varchar_100_ relationship_type
   varchar_1000_ notes
-  uuid inverse_id FK
 }
 "public.pet" {
   uuid id
@@ -193,6 +181,7 @@ erDiagram
   timestamp_with_time_zone last_sent_at
   timestamp_with_time_zone snoozed_until
   timestamp_with_time_zone created_at
+  timestamp_without_time_zone deleted_at
 }
 "public.gift" {
   uuid id
@@ -207,6 +196,7 @@ erDiagram
   varchar_3_ value_currency
   varchar_2048_ url
   timestamp_with_time_zone created_at
+  timestamp_without_time_zone deleted_at
 }
 "public.debt" {
   uuid id
@@ -219,6 +209,7 @@ erDiagram
   boolean is_settled
   date settled_at
   timestamp_with_time_zone created_at
+  timestamp_without_time_zone deleted_at
 }
 "public.life_event" {
   uuid id
@@ -230,6 +221,7 @@ erDiagram
   date occurred_at
   boolean create_annual_reminder
   timestamp_with_time_zone created_at
+  timestamp_without_time_zone deleted_at
 }
 "public.note" {
   uuid id
@@ -238,6 +230,9 @@ erDiagram
   varchar_50000_ body
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
+  timestamp_without_time_zone deleted_at
+  tsvector search_vector
+  varchar_36_ client_id
 }
 "public.media_recommendation" {
   uuid id
@@ -255,20 +250,6 @@ erDiagram
   uuid interaction_id FK
   uuid contact_id FK
 }
-"public.note_mention" {
-  uuid note_id FK
-  uuid contact_id FK
-}
-"public.communication_preference" {
-  uuid id
-  uuid contact_id FK
-  varchar_20_ preferred_channel
-  varchar_11_ best_time_local
-  boolean do_not_contact
-  varchar_500_ do_not_contact_reason
-  timestamp_with_time_zone created_at
-  timestamp_with_time_zone updated_at
-}
 "public.user" {
   varchar_255_ email
   boolean is_active
@@ -279,25 +260,6 @@ erDiagram
   timestamp_with_time_zone created_at
   varchar_512_ oidc_iss
   varchar_255_ oidc_sub
-}
-"public.organization" {
-  varchar_255_ name
-  varchar_255_ domain
-  varchar_255_ industry
-  varchar_2000_ notes
-  varchar_100_ address_label
-  varchar_500_ address_street
-  varchar_500_ address_extended
-  varchar_255_ address_city
-  varchar_255_ address_region
-  varchar_50_ address_postal_code
-  varchar_255_ address_country
-  double_precision address_latitude
-  double_precision address_longitude
-  uuid id
-  uuid owner_id FK
-  timestamp_with_time_zone created_at
-  timestamp_with_time_zone updated_at
 }
 ```
 
