@@ -176,6 +176,37 @@ def contact_to_vcard(
     elif hasattr(card, "bday"):
         card.remove(card.bday)
 
+    # NICKNAME
+    if contact.nickname:
+        if hasattr(card, "nickname"):
+            card.nickname.value = contact.nickname
+        else:
+            card.add("nickname").value = contact.nickname
+    elif hasattr(card, "nickname"):
+        card.remove(card.nickname)
+
+    # NOTE (maps to how_we_met in CRM)
+    if contact.how_we_met:
+        if hasattr(card, "note"):
+            card.note.value = contact.how_we_met
+        else:
+            card.add("note").value = contact.how_we_met
+    elif hasattr(card, "note"):
+        card.remove(card.note)
+
+    # PHOTO (avatar_url)
+    if contact.avatar_url:
+        if hasattr(card, "photo"):
+            card.photo.value = contact.avatar_url
+            card.photo.params["VALUE"] = ["URI"]
+        else:
+            photo = card.add("photo")
+            photo.value = contact.avatar_url
+            photo.params["VALUE"] = ["URI"]
+    elif hasattr(card, "photo"):
+        card.remove(card.photo)
+        card.remove(card.bday)
+
     # UID
     uid_str = str(contact.id)
     if hasattr(card, "uid"):
@@ -189,6 +220,67 @@ def contact_to_vcard(
         card.rev.value = rev_str
     else:
         card.add("rev").value = rev_str
+
+    # ─── CRM-specific X-properties (preserved through round-trips) ─────
+    # These are ignored by standard CardDAV clients but preserved for CRM use
+
+    # X-CRM-FAVORITE
+    if contact.is_favorite:
+        if "x-crm-favorite" in card.contents:
+            card.contents["x-crm-favorite"][0].value = "TRUE"
+        else:
+            card.add("x-crm-favorite").value = "TRUE"
+    elif "x-crm-favorite" in card.contents:
+        del card.contents["x-crm-favorite"]
+
+    # X-CRM-STAGE
+    if contact.stage:
+        if "x-crm-stage" in card.contents:
+            card.contents["x-crm-stage"][0].value = contact.stage
+        else:
+            card.add("x-crm-stage").value = contact.stage
+    elif "x-crm-stage" in card.contents:
+        del card.contents["x-crm-stage"]
+
+    # X-CRM-FREQUENCY-DAYS
+    if contact.contact_frequency_days:
+        if "x-crm-frequency-days" in card.contents:
+            card.contents["x-crm-frequency-days"][0].value = str(
+                contact.contact_frequency_days
+            )
+        else:
+            card.add("x-crm-frequency-days").value = str(contact.contact_frequency_days)
+    elif "x-crm-frequency-days" in card.contents:
+        del card.contents["x-crm-frequency-days"]
+
+    # X-CRM-ARCHIVED
+    if contact.is_archived:
+        if "x-crm-archived" in card.contents:
+            card.contents["x-crm-archived"][0].value = "TRUE"
+        else:
+            card.add("x-crm-archived").value = "TRUE"
+    elif "x-crm-archived" in card.contents:
+        del card.contents["x-crm-archived"]
+
+    # X-CRM-DECEASED
+    if contact.is_deceased:
+        if "x-crm-deceased" in card.contents:
+            card.contents["x-crm-deceased"][0].value = "TRUE"
+        else:
+            card.add("x-crm-deceased").value = "TRUE"
+    elif "x-crm-deceased" in card.contents:
+        del card.contents["x-crm-deceased"]
+
+    # X-CRM-DECEASED-AT
+    if contact.deceased_at:
+        if "x-crm-deceased-at" in card.contents:
+            card.contents["x-crm-deceased-at"][
+                0
+            ].value = contact.deceased_at.isoformat()
+        else:
+            card.add("x-crm-deceased-at").value = contact.deceased_at.isoformat()
+    elif "x-crm-deceased-at" in card.contents:
+        del card.contents["x-crm-deceased-at"]
 
     # ─── Multi-value fields: TEL, EMAIL ───────────────────────────────────
     # Remove existing TEL, EMAIL entries (we regenerate from DB)
@@ -282,7 +374,64 @@ def vcard_to_contact_data(vcard_text: str) -> dict:
     if hasattr(card, "nickname"):
         contact["nickname"] = card.nickname.value
 
-    # UID — use as contact ID if it's a valid UUID
+    # NOTE (maps to how_we_met in CRM)
+    if hasattr(card, "note"):
+        contact["how_we_met"] = card.note.value
+
+    # PHOTO (maps to avatar_url in CRM)
+    if hasattr(card, "photo"):
+        photo_value = card.photo.value
+        # Handle both URI and binary photo data
+        if isinstance(photo_value, str) and (
+            photo_value.startswith("http://")
+            or photo_value.startswith("https://")
+            or photo_value.startswith("data:")
+        ):
+            contact["avatar_url"] = photo_value
+
+    # X-CRM-* properties
+    # is_favorite
+    if "x-crm-favorite" in card.contents:
+        contact["is_favorite"] = (
+            card.contents["x-crm-favorite"][0].value.upper() == "TRUE"
+        )
+
+    # stage
+    if "x-crm-stage" in card.contents:
+        contact["stage"] = card.contents["x-crm-stage"][0].value
+
+    # contact_frequency_days
+    if "x-crm-frequency-days" in card.contents:
+        try:
+            contact["contact_frequency_days"] = int(
+                card.contents["x-crm-frequency-days"][0].value
+            )
+        except (ValueError, TypeError):
+            pass
+
+    # is_archived
+    if "x-crm-archived" in card.contents:
+        contact["is_archived"] = (
+            card.contents["x-crm-archived"][0].value.upper() == "TRUE"
+        )
+
+    # is_deceased
+    if "x-crm-deceased" in card.contents:
+        contact["is_deceased"] = (
+            card.contents["x-crm-deceased"][0].value.upper() == "TRUE"
+        )
+
+    # deceased_at
+    if "x-crm-deceased-at" in card.contents:
+        try:
+            from dateutil.parser import parse as dateparse
+
+            contact["deceased_at"] = dateparse(
+                card.contents["x-crm-deceased-at"][0].value
+            ).date()
+        except Exception:
+            pass
+
     uid = None
     if hasattr(card, "uid"):
         uid_val = card.uid.value

@@ -70,7 +70,7 @@ def create_gift_route(
     session: SessionDep,
     current_user: CurrentUser,
     gift_in: GiftCreate,
-) -> Any:
+) -> GiftPublic:
     """Create a new gift."""
     _require_contact_visible(session, current_user, gift_in.contact_id)
 
@@ -85,7 +85,7 @@ def update_gift(
     current_user: CurrentUser,
     gift_id: uuid.UUID,
     gift_in: GiftUpdate,
-) -> Any:
+) -> GiftPublic:
     """Update a gift."""
     gift = session.get(Gift, gift_id)
     if gift is None:
@@ -100,19 +100,66 @@ def update_gift(
     return GiftPublic.model_validate(gift)
 
 
-@router.delete("/{gift_id}")
+@router.delete("/{gift_id}", response_model=Ok)
 def delete_gift(
     session: SessionDep,
     current_user: CurrentUser,
     gift_id: uuid.UUID,
-) -> Any:
-    """Delete a gift."""
+) -> Ok:
+    """Soft-delete a gift by setting deleted_at."""
     gift = session.get(Gift, gift_id)
     if gift is None:
         raise HTTPException(status_code=404, detail="Gift not found")
+
+    if gift.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
     _require_contact_visible(session, current_user, gift.contact_id)
 
-    session.delete(gift)
+    gift.deleted_at = datetime.now(timezone.utc)
+    session.add(gift)
+    session.commit()
+    return Ok()
+
+
+@router.post("/{gift_id}/restore")
+def restore_gift(
+    session: SessionDep,
+    gift_id: uuid.UUID,
+) -> Any:
+    """Soft-delete a gift by setting deleted_at."""
+    gift = session.get(Gift, gift_id)
+    if gift is None:
+        raise HTTPException(status_code=404, detail="Gift not found")
+
+    if gift.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
+    _require_contact_visible(session, current_user, gift.contact_id)
+
+    from datetime import datetime, timezone
+
+    gift.deleted_at = datetime.now(timezone.utc)
+    session.add(gift)
+    session.commit()
+    return {"ok": True}
+
+
+@router.post("/{gift_id}/restore")
+def restore_gift(
+    session: SessionDep,
+    gift_id: uuid.UUID,
+) -> Any:
+    """Restore a soft-deleted gift by clearing deleted_at."""
+    from sqlalchemy import text, update
+
+    result = session.exec(
+        text("SELECT id FROM gift WHERE id = :id AND deleted_at IS NOT NULL"),
+        params={"id": str(gift_id)},
+    ).first()
+    if result is None:
+        raise HTTPException(status_code=404, detail="Gift not found or not deleted")
+    session.exec(update(Gift).where(Gift.id == gift_id).values(deleted_at=None))
     session.commit()
     return {"ok": True}
 

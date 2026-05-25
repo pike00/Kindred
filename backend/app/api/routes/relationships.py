@@ -1,18 +1,18 @@
 """Relationship management routes."""
 
 import uuid
-from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
 from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
-from app.crud import create_relationship
 from app.models import (
     Contact,
+    Ok,
     Relationship,
     RelationshipCreate,
     RelationshipPublic,
+    RelationshipsPublic,
     RelationshipUpdate,
 )
 from app.relationship_inverses import infer_inverse
@@ -35,12 +35,12 @@ def lookup_inverse(
     return {"inverse": infer_inverse(type)}
 
 
-@router.get("/contact/{contact_id}")
+@router.get("/contact/{contact_id}", response_model=RelationshipsPublic)
 def list_relationships(
     session: SessionDep,
     current_user: CurrentUser,
     contact_id: uuid.UUID,
-) -> Any:
+) -> RelationshipsPublic:
     """List relationships for a contact."""
     contact = session.get(Contact, contact_id)
     if not contact:
@@ -51,10 +51,10 @@ def list_relationships(
     statement = select(Relationship).where(Relationship.contact_id == contact_id)
     relationships = session.exec(statement).all()
 
-    return {
-        "data": [RelationshipPublic.model_validate(r) for r in relationships],
-        "count": len(relationships),
-    }
+    return RelationshipsPublic(
+        data=[RelationshipPublic.model_validate(r) for r in relationships],
+        count=len(relationships),
+    )
 
 
 @router.post("/", response_model=RelationshipPublic)
@@ -63,7 +63,7 @@ def create_relationship_route(
     session: SessionDep,
     current_user: CurrentUser,
     rel_in: RelationshipCreate,
-) -> Any:
+) -> RelationshipPublic:
     """Create a relationship plus its inverse so both contacts stay symmetric."""
     contact = session.get(Contact, rel_in.contact_id)
     if not contact:
@@ -90,7 +90,7 @@ def create_relationship_route(
             ),
         )
 
-    rel = create_relationship(
+    rel = create_relationship_idempotent(
         session=session, relationship_in=rel_in, inverse_type=inverse_type
     )
     return RelationshipPublic.model_validate(rel)
@@ -103,7 +103,7 @@ def update_relationship(
     current_user: CurrentUser,
     rel_id: uuid.UUID,
     rel_in: RelationshipUpdate,
-) -> Any:
+) -> RelationshipPublic:
     """Update a relationship.
 
     Only the row addressed by ``rel_id`` is touched; the paired
@@ -120,19 +120,18 @@ def update_relationship(
         raise HTTPException(status_code=403, detail="Not enough permissions")
 
     update_data = rel_in.model_dump(exclude_unset=True)
-    rel.sqlmodel_update(update_data)
-    session.add(rel)
-    session.commit()
-    session.refresh(rel)
+    from app.crud_relationship import update_relationship_with_inverse
+
+    rel = update_relationship_with_inverse(session=session, rel=rel, rel_in=rel_in)
     return RelationshipPublic.model_validate(rel)
 
 
-@router.delete("/{rel_id}")
+@router.delete("/{rel_id}", response_model=Ok)
 def delete_relationship(
     session: SessionDep,
     current_user: CurrentUser,
     rel_id: uuid.UUID,
-) -> Any:
+) -> Ok:
     """Delete a relationship and its paired inverse row."""
     rel = session.get(Relationship, rel_id)
     if not rel:
@@ -147,4 +146,4 @@ def delete_relationship(
     if inverse is not None:
         session.delete(inverse)
     session.commit()
-    return {"ok": True}
+    return Ok()

@@ -1,6 +1,5 @@
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute, Link } from "@tanstack/react-router"
-
 import {
   ContactsService,
   InteractionsService,
@@ -11,6 +10,7 @@ import { ContactAvatar } from "@/components/Common/ContactAvatar"
 import { EmptyState } from "@/components/Common/EmptyState"
 import { FeaturedCard } from "@/components/Common/FeaturedCard"
 import { SectionHeading } from "@/components/Common/SectionHeading"
+import { StayInTouchWidget } from "@/components/Dashboard/StayInTouchWidget"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import useAuth from "@/hooks/useAuth"
@@ -177,55 +177,7 @@ function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <SectionHeading
-            icon={Clock}
-            title="Losing touch"
-            count={losingTouch?.count}
-            className="mb-4"
-          />
-          {losingTouchList.length > 0 ? (
-            <div className="space-y-2">
-              {losingTouchList.map((contact) => {
-                const fullName = [contact.first_name, contact.last_name]
-                  .filter(Boolean)
-                  .join(" ")
-                const daysSince = contact.last_contacted_at
-                  ? daysBetween(contact.last_contacted_at)
-                  : null
-                return (
-                  <Link
-                    key={contact.id}
-                    to="/contacts/$contactId"
-                    params={{ contactId: contact.id }}
-                    className="flex items-center gap-3 rounded-2xl border bg-card p-3 shadow-xs transition-colors hover:bg-accent/50"
-                  >
-                    <ContactAvatar contact={contact} size="sm" />
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-sm">
-                        {fullName || "Unnamed contact"}
-                      </p>
-                      {contact.company && (
-                        <p className="text-xs text-muted-foreground truncate">
-                          {contact.company}
-                        </p>
-                      )}
-                    </div>
-                    <Badge className="bg-accent-amber text-accent-amber-fg border-transparent shrink-0">
-                      {daysSince != null ? `${daysSince}d ago` : "Never"}
-                    </Badge>
-                  </Link>
-                )
-              })}
-            </div>
-          ) : (
-            <EmptyState
-              icon={Clock}
-              title="Everyone's caught up"
-              description="No contacts you're at risk of losing touch with."
-            />
-          )}
-        </div>
+        <StayInTouchWidget />
 
         <div>
           <SectionHeading
