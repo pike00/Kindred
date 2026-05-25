@@ -1,0 +1,60 @@
+# iMessage Sync Implementation Notes
+
+## Date: 2026-05-03
+
+## Completed Tasks
+
+### 1. Database Migration
+- Created Alembic migration `backend/app/alembic/versions/add_imessage_fields.py`
+- Added the following columns to the `contact` table:
+  - `imessage_id` (String(500)) - E.164 phone or email for stable iMessage identity
+  - `imessage_synced_at` (DateTime with timezone) - Last sync timestamp
+  - `imessage_profile_hash` (String(64)) - Hash for idempotent updates
+  - `imessage_profile` (JSON) - Raw iMessage profile data
+- Added index on `imessage_id` for faster lookups
+
+### 2. Model Updates
+- Updated `backend/app/models.py`:
+  - Added iMessage fields to `Contact` model
+  - Added iMessage fields to `ContactPublic` response model
+
+### 3. API Endpoints
+- Updated `backend/app/api/routes/contacts.py`:
+  - Added `IMessageProfilePayload` - Input model for iMessage profile data
+  - Added `IMessageSyncRequest` - Request model for bulk sync
+  - Added `IMessageSyncResult` - Response model for sync results
+  - Added `IMessageProfileResponse` - Response model for single profile
+  - Added `POST /api/contacts/imessage-sync` endpoint:
+    - Performs idempotent upsert matching by `imessage_id`
+    - Updates only if `profile_hash` changed
+    - Creates new contacts if not found
+    - Handles co-mention edges as relationships (optional)
+  - Added `GET /api/contacts/{contact_id}/imessage-profile` endpoint:
+    - Returns raw iMessage profile data for UI display
+
+### 4. Commit
+- Committed as `6df718c`: `feat(imessage): add iMessage sync support with API endpoints`
+
+## Pending Tasks
+
+### Backend Container Not Running
+- The backend container for this worktree (`dirac-imessage-sync`) is not currently running
+- Cannot apply the Alembic migration `add_imessage_fields` to the database
+- Cannot run `pytest` to verify the implementation
+- According to project guardrails, I should not start containers
+
+### Frontend Tasks (Not Started)
+- [ ] Add "iMessage data" section in contact detail view showing message stats + pattern_notes
+- [ ] Add social graph visualization powered by `social.json` edge data
+- [ ] Expose sync status in contact list (badge/icon for contacts with iMessage enrichment)
+
+## Next Steps
+1. Start the worktree's Docker containers (requires `just up` or equivalent - not done per guardrails)
+2. Apply the migration: `docker compose exec backend uv run alembic upgrade head`
+3. Run tests: `docker compose exec -T backend uv run pytest -x -q`
+4. Implement frontend components for iMessage data display
+
+## Testing Notes
+- Syntax verification passed for:
+  - `backend/app/alembic/versions/add_imessage_fields.py`
+  - `backend/app/api/routes/contacts.py`

@@ -45,7 +45,6 @@ Authenticated user; tenant-scope owner of every row below.
 erDiagram
 
 "public.tag" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
-"public.group" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.contact" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.custom_field_definition" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.interaction" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
@@ -82,13 +81,7 @@ erDiagram
   varchar_100_ name
   varchar_7_ color
   timestamp_with_time_zone created_at
-}
-"public.group" {
-  uuid id
-  uuid owner_id FK
-  varchar_255_ name
   varchar_1000_ description
-  timestamp_with_time_zone created_at
 }
 "public.contact" {
   uuid id
@@ -142,6 +135,18 @@ erDiagram
   varchar_50_ mood
   integer duration_minutes
   timestamp_with_time_zone created_at
+  timestamp_without_time_zone deleted_at
+  tsvector search_vector
+  boolean is_draft
+  varchar_32_ draft_source
+  varchar_500_ location_label
+  double_precision latitude
+  double_precision longitude
+  varchar_998_ message_id
+  varchar_998_ email_subject
+  varchar_2048_ email_from
+  varchar_2048_ email_to
+  timestamp_without_time_zone email_date
 }
 "public.reminder" {
   uuid id
@@ -155,6 +160,7 @@ erDiagram
   timestamp_with_time_zone last_sent_at
   timestamp_with_time_zone snoozed_until
   timestamp_with_time_zone created_at
+  timestamp_without_time_zone deleted_at
 }
 "public.gift" {
   uuid id
@@ -169,6 +175,7 @@ erDiagram
   varchar_3_ value_currency
   varchar_2048_ url
   timestamp_with_time_zone created_at
+  timestamp_without_time_zone deleted_at
 }
 "public.debt" {
   uuid id
@@ -181,6 +188,7 @@ erDiagram
   boolean is_settled
   date settled_at
   timestamp_with_time_zone created_at
+  timestamp_without_time_zone deleted_at
 }
 "public.life_event" {
   uuid id
@@ -192,6 +200,7 @@ erDiagram
   date occurred_at
   boolean create_annual_reminder
   timestamp_with_time_zone created_at
+  timestamp_without_time_zone deleted_at
 }
 "public.note" {
   uuid id
@@ -200,6 +209,9 @@ erDiagram
   varchar_50000_ body
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
+  timestamp_without_time_zone deleted_at
+  tsvector search_vector
+  varchar_36_ client_id
 }
 "public.journal_entry" {
   uuid id
@@ -209,6 +221,7 @@ erDiagram
   date entry_date
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
+  tsvector search_vector
 }
 "public.webhook_endpoint" {
   uuid id
@@ -246,7 +259,7 @@ erDiagram
   varchar_64_ entity_type
   uuid entity_id
   varchar_32_ action
-  json changes_json
+  jsonb changes_json
   timestamp_with_time_zone occurred_at
   uuid acting_api_key_id FK
 }
