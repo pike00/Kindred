@@ -1,24 +1,38 @@
 """Contact management routes."""
 
+from __future__ import annotations
+
 import logging
 import uuid
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Any
 
 from arq.connections import RedisSettings
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    File,
+    HTTPException,
+    Query,
+    UploadFile,
+)
 from pydantic import BaseModel
 from sqlalchemy.orm import selectinload
-from sqlmodel import SQLModel, col, func, select
+from sqlmodel import col, func, select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.core.config import settings as app_settings
 from app.crud import visible_contact_ids
+from app.household import get_household_members
 from app.models import (
+    Address,
     Contact,
     ContactCreate,
     ContactPublic,
+    ContactSource,
     ContactsPublic,
+    ContactStageEvent,
     ContactTag,
     ContactUpdate,
     JournalEntry,
@@ -28,36 +42,41 @@ from app.models import (
     OverdueContactsPublic,
     User,
 )
+from app.vcard import compute_vcard_hash
+
+# Avatar upload configuration
+AVATAR_UPLOAD_DIR = Path("uploads/avatars")
+AVATAR_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+# Max file size: 10MB
+MAX_AVATAR_SIZE = 10 * 1024 * 1024
+ALLOWED_AVATAR_TYPES = {"image/jpeg", "image/png", "image/webp"}
+
+logger = logging.getLogger(__name__)
+
+router = APIRouter(prefix="/contacts", tags=["contacts"])
 
 
-class BulkContactFilter(BaseModel):
-    search: str | None = None
-    tag_id: uuid.UUID | None = None
-    is_favorite: bool | None = None
-    is_archived: bool | None = None
-    stage: str | None = None
+# ─── Bulk operations models ────────────────────────────────────────────────
+
+# Avatar upload configuration
+AVATAR_UPLOAD_DIR = Path("uploads/avatars")
+AVATAR_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+# Max file size: 10MB
+MAX_AVATAR_SIZE = 10 * 1024 * 1024
+ALLOWED_AVATAR_TYPES = {"image/jpeg", "image/png", "image/webp"}
 
 
-class BulkContactOperation(BaseModel):
-    add_tag_ids: list[uuid.UUID] | None = None
-    remove_tag_ids: list[uuid.UUID] | None = None
-    set_is_archived: bool | None = None
-    set_is_favorite: bool | None = None
+class AvatarUploadResponse(SQLModel):
+    """Response model for avatar upload."""
 
+    avatar_url: str
+    message: str = "Avatar uploaded successfully"
 
-class BulkContactRequest(BaseModel):
-    contact_ids: list[uuid.UUID] | None = None
-    select_all_filtered: bool = False
-    filters: BulkContactFilter | None = None
-    limit: int = 500
-    operations: BulkContactOperation
+logger = logging.getLogger(__name__)
 
-
-class BulkContactResult(BaseModel):
-    updated_count: int
-    skipped_count: int
-    failed_ids: list[uuid.UUID] = []
-
+# ─── Bulk operations models ────────────────────────────────────────────────
 
 logger = logging.getLogger(__name__)
 
@@ -127,151 +146,10 @@ def _remove_contact_safe(contact_id: str) -> None:
         logger.warning(f"Meilisearch removal failed: {e}")
 
 
-def _build_filtered_contact_stmt(
-    user: User,
-    filters: BulkContactFilter | None,
-    include_deleted: bool = False,
-) -> Any:
-    stmt = select(Contact).where(
-        Contact.id.in_(visible_contact_ids(user, include_deleted=include_deleted))
-    )
-    if filters is None:
-        return stmt.where(Contact.is_archived.is_(False))
-    if filters.is_archived is not None:
-        stmt = stmt.where(Contact.is_archived == filters.is_archived)
-    elif not include_deleted:
-        stmt = stmt.where(Contact.is_archived.is_(False))
-    if filters.is_favorite is not None:
-        stmt = stmt.where(Contact.is_favorite == filters.is_favorite)
-    if filters.stage is not None:
-        stmt = stmt.where(Contact.stage == filters.stage)
-    if filters.search:
-        search_filter = f"%{filters.search}%"
-        stmt = stmt.where(
-            col(Contact.first_name).ilike(search_filter)
-            | col(Contact.last_name).ilike(search_filter)
-            | col(Contact.nickname).ilike(search_filter)
-            | col(Contact.company).ilike(search_filter)
-        )
-    if filters.tag_id:
-        stmt = stmt.join(ContactTag).where(ContactTag.tag_id == filters.tag_id)
-    return stmt
-
-
-@router.patch("/bulk", response_model=BulkContactResult)
-def bulk_update_contacts(
-    session: SessionDep,
-    current_user: CurrentUser,
-    body: BulkContactRequest,
-) -> Any:
-    """Bulk-update contacts atomically."""
-    limit = min(max(1, body.limit), 500)
-    if body.select_all_filtered:
-        stmt = _build_filtered_contact_stmt(current_user, body.filters)
-        contacts = session.exec(stmt.limit(limit)).all()
-    elif body.contact_ids:
-        stmt = select(Contact).where(
-            Contact.id.in_(visible_contact_ids(current_user, include_deleted=False)),
-            Contact.id.in_(body.contact_ids),
-        )
-        contacts = session.exec(stmt).all()
-    else:
-        raise HTTPException(
-            status_code=400,
-            detail="Provide either contact_ids or set select_all_filtered=true",
-        )
-    if not contacts:
-        return BulkContactResult(updated_count=0, skipped_count=0)
-
-    ops = body.operations
-    failed_ids: list[uuid.UUID] = []
-    updated_count = 0
-    try:
-        for contact in contacts:
-            try:
-                if ops.add_tag_ids is not None:
-                    existing_tag_ids = {
-                        ct.tag_id
-                        for ct in session.exec(
-                            select(ContactTag).where(
-                                ContactTag.contact_id == contact.id
-                            )
-                        ).all()
-                    }
-                    for tag_id in ops.add_tag_ids:
-                        if tag_id not in existing_tag_ids:
-                            session.add(
-                                ContactTag(contact_id=contact.id, tag_id=tag_id)
-                            )
-                if ops.remove_tag_ids is not None:
-                    for tag_id in ops.remove_tag_ids:
-                        ct = session.exec(
-                            select(ContactTag).where(
-                                ContactTag.contact_id == contact.id,
-                                ContactTag.tag_id == tag_id,
-                            )
-                        ).first()
-                        if ct:
-                            session.delete(ct)
-                if ops.set_is_archived is not None:
-                    contact.is_archived = ops.set_is_archived
-                    session.add(contact)
-                if ops.set_is_favorite is not None:
-                    contact.is_favorite = ops.set_is_favorite
-                    session.add(contact)
-                updated_count += 1
-            except Exception as exc:
-                failed_ids.append(contact.id)
-                logger.warning(f"Failed to update contact {contact.id}: {exc}")
-        session.commit()
-    except Exception as exc:
-        session.rollback()
-        raise HTTPException(status_code=500, detail="Bulk update failed") from exc
-
-    skipped_count = len(contacts) - updated_count - len(failed_ids)
-    return BulkContactResult(
-        updated_count=updated_count,
-        skipped_count=skipped_count,
-        failed_ids=failed_ids,
-    )
-
-
-@router.get("/bulk/preview", response_model=ContactsPublic)
-def preview_bulk_contacts(
-    session: SessionDep,
-    current_user: CurrentUser,
-    select_all_filtered: bool = False,
-    search: str | None = None,
-    tag_id: uuid.UUID | None = None,
-    is_favorite: bool | None = None,
-    is_archived: bool | None = None,
-    stage: str | None = None,
-    limit: int = 500,
-) -> Any:
-    """Preview contacts that would be affected by a bulk operation."""
-    limit = min(max(1, limit), 500)
-    if select_all_filtered:
-        filters = BulkContactFilter(
-            search=search,
-            tag_id=tag_id,
-            is_favorite=is_favorite,
-            is_archived=is_archived,
-            stage=stage,
-        )
-        stmt = _build_filtered_contact_stmt(current_user, filters)
-    else:
-        stmt = select(Contact).where(
-            Contact.id.in_(visible_contact_ids(current_user, include_deleted=False)),
-            Contact.is_archived.is_(False),
-        )
-    contacts = session.exec(stmt.limit(limit)).all()
-    return ContactsPublic(data=contacts, count=len(contacts))
-
-
 @router.get("/", response_model=ContactsPublic)
 def list_contacts(
     session: SessionDep,
-    current_user: CurrentUser,
+    current_user: CurrentUser,  # noqa: ARG001
     skip: int = 0,
     limit: int = 100,
     search: str | None = None,
@@ -283,21 +161,10 @@ def list_contacts(
     only_deleted: bool = False,
     ids: list[uuid.UUID] | None = Query(default=None),
 ) -> Any:
-    """List contacts with filtering.
-
-    Pass `ids=<uuid>&ids=<uuid>` to fetch a specific batch of contacts (useful for
-    hydrating references from other resources). When `ids` is provided, the default
-    `is_archived=false` filter is lifted so callers can resolve archived rows too.
-
-    Soft-deleted contacts (``deleted_at`` set) are hidden by default. Pass
-    ``include_deleted=true`` to surface them alongside live rows, or
-    ``only_deleted=true`` to fetch the trash view exclusively.
-    """
-    # Trash view implies surfacing deleted rows.
+    """List contacts with filtering."""
     if only_deleted:
         include_deleted = True
 
-    # Build base query
     statement = select(Contact).where(
         Contact.id.in_(
             visible_contact_ids(current_user, include_deleted=include_deleted)
@@ -312,11 +179,9 @@ def list_contacts(
             return ContactsPublic(data=[], count=0)
         statement = statement.where(Contact.id.in_(ids))
 
-    # Apply filters
     if is_archived is not None:
         statement = statement.where(Contact.is_archived == is_archived)
     elif ids is None:
-        # Default: exclude archived (skipped when resolving by explicit id list)
         statement = statement.where(Contact.is_archived.is_(False))
 
     if is_favorite is not None:
@@ -337,16 +202,38 @@ def list_contacts(
     if tag_id:
         statement = statement.join(ContactTag).where(ContactTag.tag_id == tag_id)
 
-    # Count (before pagination)
+    # Apply saved filter if requested
+    if saved_filter_id is not None:
+        saved_filter = session.get(SavedFilter, saved_filter_id)
+        if not saved_filter:
+            raise HTTPException(status_code=404, detail="Saved filter not found")
+        # Check permissions: owner or shared via tag
+        if saved_filter.owner_id != current_user.id:
+            if saved_filter.tag_id is None:
+                raise HTTPException(status_code=403, detail="Not enough permissions")
+            # Check TagShare access
+            from sqlmodel import select as sql_select
+
+            from app.models import TagShare
+
+            share = session.exec(
+                sql_select(TagShare).where(
+                    TagShare.tag_id == saved_filter.tag_id,
+                    TagShare.grantee_id == current_user.id,
+                )
+            ).first()
+            if not share:
+                raise HTTPException(status_code=403, detail="Not enough permissions")
+        # Apply the filter_json to the statement
+        statement = apply_filter_json(statement, saved_filter.filter_json)
+
     count_statement = select(func.count()).select_from(statement.subquery())
     count = session.exec(count_statement).one()
 
-    # Apply eager loading for relationships
     statement = statement.options(
         selectinload(Contact.tags),
     )
 
-    # Apply ordering and pagination
     statement = (
         statement.order_by(col(Contact.first_name).asc(), col(Contact.last_name).asc())
         .offset(skip)
@@ -382,7 +269,7 @@ def list_overdue_contacts(
 def create_contact(
     *,
     session: SessionDep,
-    current_user: CurrentUser,
+    current_user: CurrentUser,  # noqa: ARG001
     contact_in: ContactCreate,
     background_tasks: BackgroundTasks,
 ) -> Any:
@@ -419,11 +306,11 @@ def get_contact(
 def update_contact(
     *,
     session: SessionDep,
-    current_user: CurrentUser,
+    current_user: CurrentUser,  # noqa: ARG001
     contact_id: uuid.UUID,
     contact_in: ContactUpdate,
     background_tasks: BackgroundTasks,
-) -> Any:
+) -> ContactPublic:
     """Update a contact."""
     contact = session.exec(
         select(Contact).where(

@@ -1,15 +1,61 @@
+from __future__ import annotations
+
 import enum
+import re
 import uuid
 from datetime import date, datetime, timezone
 
 import sqlalchemy as sa
-from pydantic import EmailStr
+from pydantic import EmailStr, field_validator
 from sqlalchemy import DateTime
 from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import (
+    Relationship as SQLMRelationship,  # alias; avoids shadowing by the Relationship table model below
+)
+
+from app.models_vcard_conflict import (  # noqa: F401
+    VCardConflict,
+    VCardConflictBase,
+    VCardConflictPublic,
+    VCardConflictsPublic,
+)
 
 
 def get_datetime_utc() -> datetime:
     return datetime.now(timezone.utc)
+
+
+class SoftDeleteMixin:
+    """Mixin that adds ``deleted_at`` for soft-delete support.
+
+    Apply to SQLModel table classes to get:
+    * ``deleted_at`` nullable datetime column (indexed)
+    * ``is_deleted`` property for readability
+    * ``mark_deleted()`` / ``restore()`` convenience helpers
+    """
+
+    deleted_at: datetime | None = Field(
+        default=None,
+        index=True,
+        sa_type=DateTime(timezone=True),
+        description=(
+            "Soft-delete marker. When non-null, the row is hidden from the "
+            "default query filter; restore by clearing this column."
+        ),
+    )
+
+    @property
+    def is_deleted(self) -> bool:
+        """Return True if the row has been soft-deleted."""
+        return self.deleted_at is not None
+
+    def mark_deleted(self) -> None:
+        """Set deleted_at to now (UTC)."""
+        self.deleted_at = datetime.now(timezone.utc)
+
+    def restore(self) -> None:
+        """Clear deleted_at to un-delete the row."""
+        self.deleted_at = None
 
 
 # Shared properties
@@ -206,6 +252,8 @@ class ContactSource(str, enum.Enum):
 
 class GiftStatus(str, enum.Enum):
     IDEA = "idea"
+    PURCHASED = "purchased"
+    WRAPPED = "wrapped"
     GIVEN = "given"
     RECEIVED = "received"
 
@@ -219,6 +267,15 @@ class InteractionChannel(str, enum.Enum):
     SOCIAL = "social"
     OTHER = "other"
     SKIP = "skip"
+
+
+class InteractionDraftSource(str, enum.Enum):
+    """Origin of a draft interaction."""
+
+    VOICE_MEMO = "voice_memo"
+    EMAIL_SUGGESTION = "email_suggestion"
+    MANUAL = "manual"
+    IMPORT = "import"
 
 
 class ReminderFrequency(str, enum.Enum):
@@ -241,6 +298,16 @@ class MediaCategory(str, enum.Enum):
     MUSICIAN = "musician"
     BOOK = "book"
     OTHER = "other"
+
+
+class ContactSource(str, enum.Enum):
+    """Source system that created a contact."""
+
+    MANUAL = "manual"
+    VCARD_IMPORT = "vcard_import"
+    CARDDAV = "carddav"
+    GOOGLE = "google"
+    WEBHOOK = "webhook"
 
 
 # ─── Tag ──────────────────────────────────────────────────────────────────────

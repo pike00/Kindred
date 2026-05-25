@@ -1,9 +1,10 @@
 ---
 title: Communication Preferences
-status: active
+status: paused
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-04-21
+last_updated: 2026-04-28
+progress: 0/6
 next_step: Create Alembic migration for communication_preference table with preferred_channel, best_time_local, do_not_contact fields
 ---
 
@@ -22,10 +23,26 @@ Replace free-text `how_we_met` narrative with structured communication metadata:
 
 ## Session Log
 
+### 2026-04-28
+- Loaded as prerequisite for stay-in-touch-dashboard, which is now blocked on shipping this. Status flipped active → paused; verified pristine starting state — no `CommunicationPreference` model, table, migration, or related fields exist anywhere in `backend/`.
+- Brainstorm initiated but paused before clarifying questions; design decisions not yet locked.
+- Resumed context exploration: Alembic head confirmed as `f5a6b7c8d9e0`; `check_cadences` (worker.py:89) is the cadence overdue function (distinct from `check_reminders`) — both need `do_not_contact` filtering.
+- Asked Q1 (separate `communication_preference` table vs. columns on Contact); user saved before answering.
+- **Next:** Resume brainstorm — answer Q1, then how_we_met treatment, dashboard widget scope, timezone placement; write spec + plan.
+
 ### 2026-04-21
 - Project created.
 
 ## Notes
+
+### 2026-04-28
+- **State sync:** No work started since 2026-04-21 scaffold; verified spec prerequisites against current codebase. Status flipped active → paused. Loaded as prerequisite for the stay-in-touch-dashboard project (now blocked on this).
+- **Discrepancies:** None (no false claims in the README).
+- **Verified clean:** `backend/app/models.py` and `worker.py` exist; `frontend/src/components/Contacts/EditContactDialog.tsx` exists (correct attach point for the new form section); `InteractionChannel` enum at `models.py:126-133` confirmed; `how_we_met` field present on Contact model (lines 403, 454); ARQ worker `check_reminders` exists with no `do_not_contact` filter yet (correct starting state for task 6); no `CommunicationPreference` model/table or related migrations exist anywhere in `backend/` (correct starting state for tasks 1-3).
+- **Decisions:** Promoted to prerequisite-of-record for stay-in-touch-dashboard; that project is now formally `blocked` on shipping the full scope here (preferred_channel + best_time_local + do_not_contact + reason + reminder suppression). User explicitly rejected the do_not_contact-only thin slice in favor of full scope.
+- **Issues:** Q1 (schema: separate table vs columns) not yet answered — brainstorm resumes here. Remaining open: (b) how_we_met treatment, (c) dashboard widget scope, (d) reminder-suppression composition with `is_deceased`, (e) timezone field placement.
+- **Gotchas:** `check_cadences` (worker.py:89) is the cadence overdue notification function — distinct from `check_reminders` (Reminder record handler). Both need `do_not_contact` filtering once comm-prefs ships. Neither currently checks `is_deceased` either.
+- **Accomplished:** Worktree created at `.claude/worktrees/communication-preferences`; README state-synced; pristine starting state confirmed across backend models, migrations, ARQ worker, and frontend dialog; relevant code locations cataloged in Notes.
 
 - **InteractionChannel enum:** [Defined in models.py](../../../backend/app/models.py) lines 126-133; values are CALL, IN_PERSON, TEXT, EMAIL, VIDEO, SOCIAL, OTHER. Communication preferences will reuse this to keep sync between interaction tracking and preferred contact method.
 - **best_time_local timezone pairing:** The best_time_local field (HH:MM range like "09:00-17:00") operates in the contact's local timezone. Contacts lack a timezone field currently; consider adding timezone (IANA string, e.g. "America/Denver") to Contact model or storing in communication_preference itself to enable proper scheduling recommendations (item 8 in original spec).

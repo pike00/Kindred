@@ -20,10 +20,13 @@ dependencies = [
     "pyjwt<3.0.0,>=2.8.0",
     "pwdlib[argon2,bcrypt]>=0.3.0",
     "vobject>=0.9.9",
+    "icalendar>=6.0.0",
+    "rapidfuzz>=3.9.0",
     "radicale>=3.6.1",
     "arq>=0.26",
     "apprise>=1.9.0",
     "meilisearch>=0.31.0",
+    "icalendar>=6.0.0",
 ]
 
 [dependency-groups]

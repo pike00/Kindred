@@ -241,10 +241,10 @@ def ensure_worktree(pr: PR) -> Path:
 
 
 def bring_stack_up(wt: Path) -> None:
-    """Use the worktree's `just up` to bring its compose stack online."""
+    """Use the worktree's `just dev` to bring its compose stack online."""
     log(f"Bringing stack up at {wt}")
     proc = subprocess.run(
-        ["just", "up"],
+        ["just", "dev"],
         cwd=wt,
         text=True,
         capture_output=True,
@@ -252,7 +252,7 @@ def bring_stack_up(wt: Path) -> None:
         timeout=300,
     )
     if proc.returncode != 0:
-        log(f"WARN: just up failed in {wt}:\n{proc.stderr[-2000:]}")
+        log(f"WARN: just dev failed in {wt}:\n{proc.stderr[-2000:]}")
         raise RuntimeError("stack failed to come up")
 
 
@@ -1078,7 +1078,7 @@ def build_apply_review_prompt(pr: PR, review_text: str, wt: Path) -> str:
     file_blocks = ""
     for rel in dict.fromkeys(mentioned):  # deduplicate, preserve order
         full = wt / rel
-        if not full.exists():
+        if not full.is_file():
             continue
         content = full.read_text(errors="replace")
         if len(content) > 8000:

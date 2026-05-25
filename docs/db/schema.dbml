@@ -114,9 +114,9 @@ Table "contact" {
   "created_at" timestamptz [not null]
   "updated_at" timestamptz [not null]
   "deleted_at" timestamptz
-  "organization_id" uuid
   "source" contactsource [not null, default: 'MANUAL']
   "source_external_id" varchar(500)
+  "organization_id" uuid
   "do_not_contact" bool [not null, default: false]
   "do_not_contact_reason" varchar(500)
 
@@ -124,8 +124,10 @@ Table "contact" {
     (owner_id, source, source_external_id) [type: btree, unique, name: "uq_contact_owner_source_external_id"]
     contact_frequency_days [type: btree, name: "ix_contact_contact_frequency_days"]
     deleted_at [type: btree, name: "ix_contact_deleted_at"]
+    imessage_id [type: btree, name: "ix_contact_imessage_id"]
     is_archived [type: btree, name: "ix_contact_is_archived"]
     is_favorite [type: btree, name: "ix_contact_is_favorite"]
+    is_merged [type: btree, name: "ix_contact_is_merged"]
     owner_id [type: btree, name: "ix_contact_owner_id"]
   }
 }
@@ -151,6 +153,7 @@ Table "contact_field" {
   Indexes {
     contact_id [type: btree, name: "ix_contact_field_contact_id"]
     field_type [type: btree, name: "ix_contact_field_field_type"]
+    value [type: btree, name: "ix_contact_field_value"]
   }
 }
 
@@ -178,11 +181,9 @@ Table "relationship" {
   "related_contact_id" uuid [not null]
   "relationship_type" varchar(100) [not null]
   "notes" varchar(1000)
-  "inverse_id" uuid
 
   Indexes {
     contact_id [type: btree, name: "ix_relationship_contact_id"]
-    inverse_id [type: btree, name: "ix_relationship_inverse_id"]
     related_contact_id [type: btree, name: "ix_relationship_related_contact_id"]
   }
 }
@@ -236,11 +237,25 @@ Table "interaction" {
   "mood" varchar(50)
   "duration_minutes" int4
   "created_at" timestamptz [not null]
+  "deleted_at" timestamp
+  "search_vector" tsvector
+  "is_draft" bool [not null]
+  "draft_source" varchar(32)
+  "location_label" varchar(500)
+  "latitude" float8
+  "longitude" float8
+  "message_id" varchar(998)
+  "email_subject" varchar(998)
+  "email_from" varchar(2048)
+  "email_to" varchar(2048)
+  "email_date" timestamp
 
   Indexes {
     channel [type: btree, name: "ix_interaction_channel"]
+    deleted_at [type: btree, name: "ix_interaction_deleted_at"]
     occurred_at [type: btree, name: "ix_interaction_occurred_at"]
     owner_id [type: btree, name: "ix_interaction_owner_id"]
+    search_vector [type: gin, name: "ix_interaction_search_vector"]
   }
 }
 
@@ -256,9 +271,11 @@ Table "reminder" {
   "last_sent_at" timestamptz
   "snoozed_until" timestamptz
   "created_at" timestamptz [not null]
+  "deleted_at" timestamp
 
   Indexes {
     contact_id [type: btree, name: "ix_reminder_contact_id"]
+    deleted_at [type: btree, name: "ix_reminder_deleted_at"]
     is_active [type: btree, name: "ix_reminder_is_active"]
     owner_id [type: btree, name: "ix_reminder_owner_id"]
     remind_at [type: btree, name: "ix_reminder_remind_at"]
@@ -278,9 +295,11 @@ Table "gift" {
   "value_currency" varchar(3) [not null]
   "url" varchar(2048)
   "created_at" timestamptz [not null]
+  "deleted_at" timestamp
 
   Indexes {
     contact_id [type: btree, name: "ix_gift_contact_id"]
+    deleted_at [type: btree, name: "ix_gift_deleted_at"]
     owner_id [type: btree, name: "ix_gift_owner_id"]
     status [type: btree, name: "ix_gift_status"]
   }
@@ -297,9 +316,11 @@ Table "debt" {
   "is_settled" bool [not null]
   "settled_at" date
   "created_at" timestamptz [not null]
+  "deleted_at" timestamp
 
   Indexes {
     contact_id [type: btree, name: "ix_debt_contact_id"]
+    deleted_at [type: btree, name: "ix_debt_deleted_at"]
     is_settled [type: btree, name: "ix_debt_is_settled"]
     owner_id [type: btree, name: "ix_debt_owner_id"]
   }
@@ -315,9 +336,11 @@ Table "life_event" {
   "occurred_at" date [not null]
   "create_annual_reminder" bool [not null]
   "created_at" timestamptz [not null]
+  "deleted_at" timestamp
 
   Indexes {
     contact_id [type: btree, name: "ix_life_event_contact_id"]
+    deleted_at [type: btree, name: "ix_life_event_deleted_at"]
     occurred_at [type: btree, name: "ix_life_event_occurred_at"]
     owner_id [type: btree, name: "ix_life_event_owner_id"]
   }
@@ -330,11 +353,17 @@ Table "note" {
   "body" varchar(50000) [not null]
   "created_at" timestamptz [not null]
   "updated_at" timestamptz [not null]
+  "deleted_at" timestamp
+  "search_vector" tsvector
+  "client_id" varchar(36)
 
   Indexes {
+    client_id [type: btree, name: "ix_note_client_id"]
     contact_id [type: btree, name: "ix_note_contact_id"]
     created_at [type: btree, name: "ix_note_created_at"]
+    deleted_at [type: btree, name: "ix_note_deleted_at"]
     owner_id [type: btree, name: "ix_note_owner_id"]
+    search_vector [type: gin, name: "ix_note_search_vector"]
   }
 }
 
@@ -346,10 +375,12 @@ Table "journal_entry" {
   "entry_date" date [not null]
   "created_at" timestamptz [not null]
   "updated_at" timestamptz [not null]
+  "search_vector" tsvector
 
   Indexes {
     entry_date [type: btree, name: "ix_journal_entry_entry_date"]
     owner_id [type: btree, name: "ix_journal_entry_owner_id"]
+    search_vector [type: gin, name: "ix_journal_entry_search_vector"]
   }
 }
 
@@ -417,7 +448,7 @@ Table "activity_log" {
   "entity_type" varchar(64) [not null]
   "entity_id" uuid [not null]
   "action" varchar(32) [not null]
-  "changes_json" json
+  "changes_json" jsonb
   "occurred_at" timestamptz [not null]
   "acting_api_key_id" uuid
 
@@ -426,6 +457,26 @@ Table "activity_log" {
     actor_id [type: btree, name: "ix_activity_log_actor_id"]
     entity_id [type: btree, name: "ix_activity_log_entity_id"]
     owner_id [type: btree, name: "ix_activity_log_owner_id"]
+  }
+}
+
+Table "oauth_credential" {
+  "id" uuid [pk, not null]
+  "user_id" uuid [not null]
+  "provider" oauthprovider [not null]
+  "encrypted_refresh_token" varchar [not null]
+  "encrypted_access_token" varchar
+  "access_token_expires_at" timestamptz
+  "scopes" varchar(2000) [not null, default: '']
+  "sync_token" varchar(4000)
+  "last_synced_at" timestamptz
+  "created_at" timestamptz [not null]
+  "updated_at" timestamptz [not null]
+
+  Indexes {
+    (user_id, provider) [type: btree, unique, name: "uq_oauth_credential_user_provider"]
+    provider [type: btree, name: "ix_oauth_credential_provider"]
+    user_id [type: btree, name: "ix_oauth_credential_user_id"]
   }
 }
 
@@ -439,42 +490,15 @@ Table "note_mention" {
   }
 }
 
-Table "reminder_snooze" {
-  "id" uuid [pk, not null]
-  "reminder_id" uuid [not null]
-  "snoozed_at" timestamptz [not null, default: `now()`]
-  "snoozed_until" timestamptz [not null]
-  "reason" text
+Table "communication_preference" {
+  "id" uuid [pk, not null, default: `gen_random_uuid()`]
+  "contact_id" uuid [unique, not null]
+  "preferred_channel" varchar(20)
+  "best_time_local" varchar(11)
+  "do_not_contact" bool [not null, default: false]
+  "do_not_contact_reason" varchar(500)
   "created_at" timestamptz [not null, default: `now()`]
-
-  Indexes {
-    reminder_id [type: btree, name: "ix_reminder_snooze_reminder_id"]
-    snoozed_at [type: btree, name: "ix_reminder_snooze_snoozed_at"]
-  }
-}
-
-Table "organization" {
-  "name" varchar(255) [not null]
-  "domain" varchar(255)
-  "industry" varchar(255)
-  "notes" varchar(2000)
-  "address_label" varchar(100) [not null]
-  "address_street" varchar(500)
-  "address_extended" varchar(500)
-  "address_city" varchar(255)
-  "address_region" varchar(255)
-  "address_postal_code" varchar(50)
-  "address_country" varchar(255)
-  "address_latitude" float8
-  "address_longitude" float8
-  "id" uuid [pk, not null]
-  "owner_id" uuid [not null]
-  "created_at" timestamptz [not null]
-  "updated_at" timestamptz [not null]
-
-  Indexes {
-    owner_id [type: btree, name: "ix_organization_owner_id"]
-  }
+  "updated_at" timestamptz [not null, default: `now()`]
 }
 
 Table "api_key" {
@@ -503,10 +527,42 @@ Table "api_key_impersonate" {
   }
 }
 
-Table "setup_state" {
-  "id" int4 [pk, not null, increment]
-  "complete" bool [not null, default: false]
-  "token_hash" varchar(128)
+Table "organization" {
+  "name" varchar(255) [not null]
+  "domain" varchar(255)
+  "industry" varchar(255)
+  "notes" varchar(2000)
+  "address_label" varchar(100) [not null]
+  "address_street" varchar(500)
+  "address_extended" varchar(500)
+  "address_city" varchar(255)
+  "address_region" varchar(255)
+  "address_postal_code" varchar(50)
+  "address_country" varchar(255)
+  "address_latitude" float8
+  "address_longitude" float8
+  "id" uuid [pk, not null]
+  "owner_id" uuid [not null]
+  "created_at" timestamptz [not null]
+  "updated_at" timestamptz [not null]
+
+  Indexes {
+    owner_id [type: btree, name: "ix_organization_owner_id"]
+  }
+}
+
+Table "reminder_snooze" {
+  "id" uuid [pk, not null]
+  "reminder_id" uuid [not null]
+  "snoozed_at" timestamptz [not null, default: `now()`]
+  "snoozed_until" timestamptz [not null]
+  "reason" text
+  "created_at" timestamptz [not null, default: `now()`]
+
+  Indexes {
+    reminder_id [type: btree, name: "ix_reminder_snooze_reminder_id"]
+    snoozed_at [type: btree, name: "ix_reminder_snooze_snoozed_at"]
+  }
 }
 
 Ref "activity_log_actor_id_fkey":"user"."id" < "activity_log"."actor_id" [delete: set null]
@@ -523,11 +579,23 @@ Ref "api_key_impersonate_api_key_id_fkey":"api_key"."id" < "api_key_impersonate"
 
 Ref "api_key_impersonate_user_id_fkey":"user"."id" < "api_key_impersonate"."user_id" [delete: cascade]
 
+Ref "communication_preference_contact_id_fkey":"contact"."id" < "communication_preference"."contact_id" [delete: cascade]
+
 Ref "contact_owner_id_fkey":"user"."id" < "contact"."owner_id" [delete: cascade]
 
 Ref "fk_contact_organization_id":"organization"."id" < "contact"."organization_id" [delete: set null]
 
 Ref "contact_field_contact_id_fkey":"contact"."id" < "contact_field"."contact_id" [delete: cascade]
+
+Ref "contact_merge_absorbed_id_fkey":"contact"."id" < "contact_merge"."absorbed_id" [delete: cascade]
+
+Ref "contact_merge_merged_by_fkey":"user"."id" < "contact_merge"."merged_by" [delete: set null]
+
+Ref "contact_merge_surviving_id_fkey":"contact"."id" < "contact_merge"."surviving_id" [delete: cascade]
+
+Ref "contact_stage_event_contact_id_fkey":"contact"."id" < "contact_stage_event"."contact_id" [delete: cascade]
+
+Ref "contact_stage_event_owner_id_fkey":"user"."id" < "contact_stage_event"."owner_id" [delete: cascade]
 
 Ref "contact_tag_contact_id_fkey":"contact"."id" < "contact_tag"."contact_id" [delete: cascade]
 
@@ -543,9 +611,19 @@ Ref "debt_contact_id_fkey":"contact"."id" < "debt"."contact_id" [delete: cascade
 
 Ref "debt_owner_id_fkey":"user"."id" < "debt"."owner_id" [delete: cascade]
 
+Ref "debt_payment_debt_id_fkey":"debt"."id" < "debt_payment"."debt_id" [delete: cascade]
+
+Ref "email_oauth_token_contact_id_fkey":"contact"."id" < "email_oauth_token"."contact_id" [delete: cascade]
+
+Ref "email_oauth_token_owner_id_fkey":"user"."id" < "email_oauth_token"."owner_id" [delete: cascade]
+
 Ref "gift_contact_id_fkey":"contact"."id" < "gift"."contact_id" [delete: cascade]
 
 Ref "gift_owner_id_fkey":"user"."id" < "gift"."owner_id" [delete: cascade]
+
+Ref "ical_import_log_contact_id_fkey":"contact"."id" < "ical_import_log"."contact_id" [delete: cascade]
+
+Ref "ical_import_log_owner_id_fkey":"user"."id" < "ical_import_log"."owner_id" [delete: cascade]
 
 Ref "interaction_owner_id_fkey":"user"."id" < "interaction"."owner_id" [delete: cascade]
 
@@ -554,6 +632,10 @@ Ref "interaction_attendee_contact_id_fkey":"contact"."id" < "interaction_attende
 Ref "interaction_attendee_interaction_id_fkey":"interaction"."id" < "interaction_attendee"."interaction_id" [delete: cascade]
 
 Ref "journal_entry_owner_id_fkey":"user"."id" < "journal_entry"."owner_id" [delete: cascade]
+
+Ref "journal_entry_contact_contact_id_fkey":"contact"."id" < "journal_entry_contact"."contact_id" [delete: cascade]
+
+Ref "journal_entry_contact_journal_entry_id_fkey":"journal_entry"."id" < "journal_entry_contact"."journal_entry_id" [delete: cascade]
 
 Ref "life_event_contact_id_fkey":"contact"."id" < "life_event"."contact_id" [delete: cascade]
 
@@ -567,15 +649,11 @@ Ref "note_contact_id_fkey":"contact"."id" < "note"."contact_id" [delete: cascade
 
 Ref "note_owner_id_fkey":"user"."id" < "note"."owner_id" [delete: cascade]
 
-Ref "note_mention_contact_id_fkey":"contact"."id" < "note_mention"."contact_id" [delete: cascade]
-
-Ref "note_mention_note_id_fkey":"note"."id" < "note_mention"."note_id" [delete: cascade]
+Ref "oauth_credential_user_id_fkey":"user"."id" < "oauth_credential"."user_id" [delete: cascade]
 
 Ref "organization_owner_id_fkey":"user"."id" < "organization"."owner_id" [delete: cascade]
 
 Ref "pet_contact_id_fkey":"contact"."id" < "pet"."contact_id" [delete: cascade]
-
-Ref "fk_relationship_inverse_id":"relationship"."id" < "relationship"."inverse_id" [delete: set null]
 
 Ref "relationship_contact_id_fkey":"contact"."id" < "relationship"."contact_id" [delete: cascade]
 
@@ -592,5 +670,7 @@ Ref "tag_owner_id_fkey":"user"."id" < "tag"."owner_id" [delete: cascade]
 Ref "tag_share_grantee_id_fkey":"user"."id" < "tag_share"."grantee_id" [delete: cascade]
 
 Ref "tag_share_tag_id_fkey":"tag"."id" < "tag_share"."tag_id" [delete: cascade]
+
+Ref "vcard_conflict_contact_id_fkey":"contact"."id" < "vcard_conflict"."contact_id" [delete: cascade]
 
 Ref "webhook_endpoint_owner_id_fkey":"user"."id" < "webhook_endpoint"."owner_id" [delete: cascade]
