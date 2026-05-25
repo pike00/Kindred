@@ -22,7 +22,6 @@ import { AvatarUploadDialog } from "@/components/Contacts/AvatarUploadDialog"
 import { ContactFieldsCard } from "@/components/Contacts/ContactFieldsCard"
 import { CustomFieldsCard } from "@/components/Contacts/CustomFieldsCard"
 import { EditContactDialog } from "@/components/Contacts/EditContactDialog"
-import { HouseholdCard } from "@/components/Contacts/HouseholdCard"
 import { InteractionHeatmap } from "@/components/Contacts/InteractionHeatmap"
 import { LifeEventsCard } from "@/components/Contacts/LifeEventsCard"
 import { PetsCard } from "@/components/Contacts/PetsCard"
@@ -112,11 +111,7 @@ function ContactDetailPage() {
     endDate: string
   } | null>(null)
 
-  const handleWeekClick = (
-    weekStart: string,
-    weekEnd: string,
-    count: number,
-  ) => {
+  const handleWeekClick = (weekStart: string, weekEnd: string, count: number) => {
     if (count === 0) return
     setHeatmapFilter({ startDate: weekStart, endDate: weekEnd })
   }
@@ -191,11 +186,7 @@ function ContactDetailPage() {
           {heatmapFilter && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span>
-                Filtered to week of{" "}
-                {new Date(heatmapFilter.startDate).toLocaleDateString(
-                  undefined,
-                  { month: "short", day: "numeric" },
-                )}
+                Filtered to week of {new Date(heatmapFilter.startDate).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
               </span>
               <button
                 type="button"
@@ -251,6 +242,19 @@ function ContactDetailPage() {
                   <BellOff className="size-3" /> No reminders
                 </Badge>
               )}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  window.open(`/api/v1/contacts/${contactId}.pdf`, "_blank")
+                }}
+              >
+                <Download className="size-4 mr-2" />
+                Download PDF
+              </Button>
+              <EditContactDialog contact={contact} />
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -373,6 +377,33 @@ function ContactDetailPage() {
             </Card>
           )}
 
+<<<<<<< HEAD
+          {/* Groups */}
+          {contact.groups && contact.groups.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  Groups
+                  <InfoHint>
+                    Named collections of people with a shared context, like
+                    "Family", "D&D Group", or "Work Team". Groups have a
+                    description; tags don't.
+                  </InfoHint>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-1.5">
+                  {contact.groups.map((group) => (
+                    <Badge key={group.id} variant="outline">
+                      {group.name}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+=======
+>>>>>>> origin/main
           {/* Interaction Map */}
           <Card>
             <CardHeader>

@@ -13,7 +13,8 @@ migrate time so runtime behaviour can be changed without a code deploy.
 
 import uuid
 
-from sqlmodel import Session, select
+from sqlalchemy import select
+from sqlmodel import Session
 
 from app.models import InverseRelationshipMap
 

@@ -18,6 +18,19 @@ default:
 compose := "compose.dev.yml"
 _dc := "docker compose -f " + compose
 
+# Exhaustive overnight sweep — loops sweep+review until all PRs are resolved or stuck.
+# Set DRY_RUN=1 for a dry-run first pass. Set ONLY_PR=<n> to test a single PR.
+# Runs in a tmux session named 'pr-overnight'; logs to .pr-sweep-runner/overnight.log.
+sweep-overnight:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    tmux kill-session -t pr-overnight 2>/dev/null || true
+    tmux new-session -d -s pr-overnight -c "$(pwd)" \
+        'bash scripts/sweep-overnight.sh'
+    echo "Started in tmux session 'pr-overnight'."
+    echo "Attach:  tmux attach -t pr-overnight"
+    echo "Tail:    tail -f .pr-sweep-runner/overnight.log"
+
 # Run the PR sweep orchestrator (Task 8+9). Loads .env, then runs the full pipeline.
 # Set DRY_RUN=1 to print the plan without pushing anything.
 # Set ONLY_PR=<n> to process a single PR for smoke-testing.

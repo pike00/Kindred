@@ -285,7 +285,9 @@ async def twilio_webhook(
         call_status = params.get("CallStatus", "")
 
         # Check if this is a StatusCallback (call completed)
-        is_status_callback = params.get("CallbackSource") == "call-progress-events" or call_status in (
+        is_status_callback = params.get(
+            "CallbackSource"
+        ) == "call-progress-events" or call_status in (
             "completed",
             "busy",
             "no-answer",
@@ -560,10 +562,7 @@ async def inbound_webhook(
     )
 
     # Update last_contacted_at
-    if (
-        contact.last_contacted_at is None
-        or occurred_at > contact.last_contacted_at
-    ):
+    if contact.last_contacted_at is None or occurred_at > contact.last_contacted_at:
         contact.last_contacted_at = occurred_at
         session.add(contact)
 

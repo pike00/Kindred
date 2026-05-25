@@ -15,7 +15,6 @@ from app.models import (
     RelationshipsPublic,
     RelationshipUpdate,
 )
-from app.crud_relationship import create_relationship_idempotent
 from app.relationship_inverses import infer_inverse
 
 router = APIRouter(prefix="/relationships", tags=["relationships"])

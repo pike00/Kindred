@@ -7,34 +7,6 @@ import react from "@vitejs/plugin-react-swc"
 import { defineConfig } from "vite"
 import { VitePWA } from "vite-plugin-pwa"
 
-function gitHash(): string {
-  if (process.env.GIT_HASH) return process.env.GIT_HASH
-  try {
-    return execSync("git rev-parse --short HEAD", { encoding: "utf8" }).trim()
-  } catch {
-    return "unknown"
-  }
-}
-
-function appVersion(): string {
-  // Footer renders as "v{APP_VERSION}", so strip any leading "v" here.
-  const raw =
-    process.env.APP_VERSION ??
-    (() => {
-      try {
-        return execSync("git describe --tags --abbrev=0", {
-          encoding: "utf8",
-        }).trim()
-      } catch {
-        const pkg = JSON.parse(
-          readFileSync(new URL("./package.json", import.meta.url), "utf-8"),
-        )
-        return pkg.version
-      }
-    })()
-  return raw.replace(/^v/, "")
-}
-
 // https://vitejs.dev/config/
 export default defineConfig({
   define: {
@@ -128,6 +100,5 @@ export default defineConfig({
           },
         ],
       },
-    }),
   ],
 })

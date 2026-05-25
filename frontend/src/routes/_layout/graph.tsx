@@ -20,13 +20,13 @@ function RelationshipGraphPage() {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["graph", "contacts", depth, rootContactId],
     queryFn: () =>
-      GraphService.getContactsGraph({
+      GraphService.getGraphContacts({
         depth,
         rootContactId: rootContactId || undefined,
       }),
   })
 
-  const graphData = data as any
+  const graphData = data
 
   return (
     <div className="space-y-6">
@@ -136,7 +136,7 @@ function RelationshipGraphPage() {
               <span>Favorite</span>
             </div>
             <div className="flex items-center gap-2">
-              <svg width="24" height="12" aria-hidden="true">
+              <svg width="24" height="12">
                 <line
                   x1="0"
                   y1="6"

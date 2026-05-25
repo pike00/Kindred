@@ -1,9 +1,8 @@
 import { useSuspenseQuery } from "@tanstack/react-query"
 import { Link, useNavigate, useSearch } from "@tanstack/react-router"
-import { useCallback, useMemo, useState } from "react"
-import { toast } from "sonner"
+import { useMemo } from "react"
+
 import {
-  type BulkContactRequest,
   type ContactPublic,
   ContactsService,
   SavedFiltersService,
@@ -11,7 +10,6 @@ import {
 import type { SavedFilterPublic } from "@/client/types.gen"
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
 import { EmptyState } from "@/components/Common/EmptyState"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -28,7 +26,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
-  Download,
   Map as MapIcon,
   Search,
   Star,
@@ -40,48 +37,7 @@ import { cn } from "@/lib/utils"
 
 const PAGE_SIZE = 25
 
-import { AddContactDialog } from "./AddContactDialog"
-
-// Bulk action types
-const BULK_ACTIONS = [
-  { id: "archive", label: "Archive", icon: Archive, color: "text-orange-600" },
-  {
-    id: "unarchive",
-    label: "Unarchive",
-    icon: Archive,
-    color: "text-green-600",
-  },
-  {
-    id: "favorite",
-    label: "Add to Favorites",
-    icon: Star,
-    color: "text-yellow-600",
-  },
-  {
-    id: "unfavorite",
-    label: "Remove from Favorites",
-    icon: Star,
-    color: "text-gray-600",
-  },
-  { id: "delete", label: "Delete", icon: Trash2, color: "text-red-600" },
-  { id: "export", label: "Export CSV", icon: Download, color: "text-blue-600" },
-]
-
-type BulkActionId =
-  | "archive"
-  | "unarchive"
-  | "favorite"
-  | "unfavorite"
-  | "delete"
-  | "export"
-
-// Preview modal state
-interface PreviewModalState {
-  open: boolean
-  action: BulkActionId | null
-  count: number
-  contacts: ContactPublic[]
-}
+import { useState } from "react"
 
 function fullName(contact: ContactPublic): string {
   return (
@@ -151,30 +107,26 @@ function ContactRow({
   const extraTags = tags.length - visibleTags.length
 
   return (
-    <div className="group flex items-center gap-4 rounded-2xl border bg-card p-4 shadow-xs transition-all hover:-translate-y-px hover:border-primary/30 hover:shadow-sm">
-      <Checkbox
-        checked={selected}
-        onCheckedChange={() => onToggle(contact.id)}
-        className="shrink-0"
-        aria-label={`Select ${fullName(contact)}`}
-      />
-      <Link
-        to="/contacts/$contactId"
-        params={{ contactId: contact.id }}
-        className="flex flex-1 items-center gap-4 min-w-0"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <ContactAvatar contact={contact} size="md" />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-baseline gap-2">
-            <span className="font-display text-base font-semibold tracking-tight truncate">
-              {fullName(contact)}
+    <Link
+      to="/contacts/$contactId"
+      params={{ contactId: contact.id }}
+      className="group flex items-center gap-4 rounded-2xl border bg-card p-4 shadow-xs transition-all hover:-translate-y-px hover:border-primary/30 hover:shadow-sm"
+    >
+      <ContactAvatar contact={contact} size="md" />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-baseline gap-2">
+          <span className="font-display text-base font-semibold tracking-tight truncate">
+            {fullName(contact)}
+          </span>
+          {contact.pronouns && (
+            <span className="text-xs text-muted-foreground">
+              ({contact.pronouns})
             </span>
-            {contact.pronouns && (
-              <span className="text-xs text-muted-foreground">
-                ({contact.pronouns})
-              </span>
-            )}
+          )}
+          {titleLine(contact) && (
+            <span className="text-xs text-muted-foreground truncate hidden sm:inline">
+              · {titleLine(contact)}
+            </span>
             {titleLine(contact) && (
               <span className="text-xs text-muted-foreground truncate hidden sm:inline">
                 · {titleLine(contact)}
@@ -242,7 +194,7 @@ export const ContactsList = () => {
   })
 
   const activeFilterId = urlFilterId
-  const activeFilter = filtersData?.find(
+  const activeFilter = filtersData?.data?.find(
     (f: SavedFilterPublic) => f.id === activeFilterId,
   )
 
@@ -250,7 +202,7 @@ export const ContactsList = () => {
     queryKey: ["contacts", activeFilterId],
     queryFn: () =>
       ContactsService.listContacts(
-        activeFilterId ? ({ savedFilterId: activeFilterId } as any) : {},
+        activeFilterId ? { saved_filter_id: activeFilterId as any } : {},
       ),
   })
 
@@ -520,7 +472,6 @@ export const ContactsList = () => {
                 </button>
               </span>
             )}
-            {selectedCount > 0 && <> · {selectedCount} selected</>}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -532,6 +483,29 @@ export const ContactsList = () => {
           </Button>
           <AddContactDialog />
         </div>
+      </div>
+
+      {/* Filter controls */}
+      <div className="flex flex-wrap items-center gap-2">
+        <Select value={channelFilter} onValueChange={setChannelFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter by channel" />
+          </SelectTrigger>
+          <SelectContent>
+            {CHANNEL_OPTIONS.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button
+          variant={showDncOnly ? "default" : "outline"}
+          size="sm"
+          onClick={() => setShowDncOnly(!showDncOnly)}
+        >
+          DNC Only
+        </Button>
       </div>
 
       {/* Bulk Action Bar */}

@@ -13,7 +13,7 @@ from app import crud
 from app.core import oidc, security
 from app.core.api_keys import hash_key, looks_like_api_key
 from app.core.config import settings
-from app.core.db import engine
+from app.core.db import SessionLocal, configure_session
 from app.models import TokenPayload, User
 
 CF_ACCESS_HEADER = "Cf-Access-Jwt-Assertion"
@@ -27,7 +27,8 @@ reusable_oauth2 = OAuth2PasswordBearer(
 
 
 def get_db() -> Generator[Session, None, None]:
-    with Session(engine) as session:
+    with SessionLocal() as session:
+        configure_session(session)
         yield session
 
 

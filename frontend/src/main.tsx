@@ -23,7 +23,10 @@ OpenAPI.TOKEN = async () => {
 }
 
 const handleApiError = (error: Error) => {
-  if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+  if (
+    error instanceof ApiError &&
+    (error.status === 401 || error.status === 403)
+  ) {
     localStorage.removeItem("access_token")
     window.location.href = "/login"
   }
@@ -100,16 +103,13 @@ function ServiceWorkerUpdatePrompt() {
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <ShortcutRegistryProvider>
-      <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-        <QueryClientProvider client={queryClient}>
-          <RouterProvider router={router} />
-          <Toaster richColors closeButton />
-          <KeyboardShortcutOverlay />
-          <PwaInstallPrompt />
-          <ServiceWorkerUpdatePrompt />
-        </QueryClientProvider>
-      </ThemeProvider>
-    </ShortcutRegistryProvider>
+    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+        <Toaster richColors closeButton />
+        <PwaInstallPrompt />
+        <ServiceWorkerUpdatePrompt />
+      </QueryClientProvider>
+    </ThemeProvider>
   </StrictMode>,
 )

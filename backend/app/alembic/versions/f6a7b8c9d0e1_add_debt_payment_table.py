@@ -13,7 +13,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "add_debt_payment_table"
-down_revision = "add_interaction_location"
+down_revision = "add_do_not_contact_fields"
 branch_labels = None
 depends_on = None
 

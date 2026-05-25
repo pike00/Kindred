@@ -27,17 +27,14 @@ export function OrganizationsList() {
   const [page, setPage] = useState(0)
   const [addOpen, setAddOpen] = useState(false)
 
-  const { data } = useSuspenseQuery({
-    queryKey: ["organizations", page],
-    queryFn: () =>
-      OrganizationsService.listOrganizations({
-        skip: page * PAGE_SIZE,
-        limit: PAGE_SIZE,
-      }),
-  })
-
-  const orgs = ((data as any)?.data ?? []).filter((o: any) => matchesSearch(o, search))
-  const total = (data as any)?.count ?? 0
+  const { data } = useSuspenseQuery(
+    OrganizationsService.listOrganizationsQueryOptions({
+      skip: page * PAGE_SIZE,
+      limit: PAGE_SIZE,
+    }),
+  )
+  const orgs = (data?.data ?? []).filter((o) => matchesSearch(o, search))
+  const total = data?.count ?? 0
   const totalPages = Math.ceil(total / PAGE_SIZE)
 
   return (
@@ -68,7 +65,7 @@ export function OrganizationsList() {
       {/* List */}
       {orgs.length === 0 ? (
         <EmptyState
-          icon={Building2}
+          icon={<Building2 className="h-8 w-8 text-muted-foreground" />}
           title="No organizations yet"
           description="Add your first organization to get started."
           action={
@@ -77,11 +74,11 @@ export function OrganizationsList() {
         />
       ) : (
         <div className="space-y-2">
-          {orgs.map((org: any) => (
+          {orgs.map((org) => (
             <Link
               key={org.id}
-              to={"/organizations/$orgId" as never}
-              params={{ orgId: org.id } as never}
+              to="/organizations/$orgId"
+              params={{ orgId: org.id }}
               className="block rounded-lg border p-4 transition-colors hover:bg-muted/50"
             >
               <div className="flex items-center justify-between">

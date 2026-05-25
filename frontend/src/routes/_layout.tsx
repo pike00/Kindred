@@ -1,18 +1,15 @@
-import { useQueryClient } from "@tanstack/react-query"
 import {
   createFileRoute,
   Outlet,
   redirect,
   useNavigate,
 } from "@tanstack/react-router"
-import { useEffect } from "react"
-import { ApiError } from "@/client"
-import ErrorComponent from "@/components/Common/ErrorComponent"
 import { CommandPalette } from "@/components/CommandPalette/CommandPalette"
 import {
   CommandPaletteProvider,
   useCommandPalette,
 } from "@/components/CommandPalette/CommandPaletteContext"
+import ErrorComponent from "@/components/Common/ErrorComponent"
 import { Footer } from "@/components/Common/Footer"
 import { QuickLogFAB } from "@/components/Common/QuickLogFAB"
 import { ReminderBell } from "@/components/Reminders/ReminderBell"
@@ -32,13 +29,19 @@ function AuthGuardError({ error }: { error: unknown }) {
   const navigate = useNavigate()
 
   useEffect(() => {
-    if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+    if (
+      error instanceof ApiError &&
+      (error.status === 401 || error.status === 403)
+    ) {
       localStorage.removeItem("access_token")
       navigate({ to: "/login", replace: true })
     }
   }, [error, navigate])
 
-  if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+  if (
+    error instanceof ApiError &&
+    (error.status === 401 || error.status === 403)
+  ) {
     return null
   }
 

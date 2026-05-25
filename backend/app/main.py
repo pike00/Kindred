@@ -1,7 +1,3 @@
-import logging
-import os
-from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
 from pathlib import Path
 
 import sentry_sdk
@@ -104,16 +100,6 @@ def well_known_carddav():
     """Redirect to CardDAV server for iOS/macOS client discovery."""
     return RedirectResponse(url="/dav/", status_code=301)
 
-
-# Bare /api/v1/health endpoint exempted from the setup gate so liveness
-# probes work even before the operator has completed first-boot setup.
-@app.get(f"{settings.API_V1_STR}/health", tags=["health"])
-def health() -> dict[str, str]:
-    return {"status": "ok"}
-
-
-# /setup is not under /api/v1 — see app/api/setup.py for the rationale.
-app.include_router(setup_router)
 
 # Serve uploaded files (avatars, etc.)
 uploads_dir = Path("uploads")

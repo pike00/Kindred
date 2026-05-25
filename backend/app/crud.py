@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import union
+from sqlalchemy import func, union
 from sqlmodel import Session, select
 from sqlmodel import delete as sql_delete
 
@@ -33,6 +33,8 @@ from app.models import (
     EmailOAuthTokenCreate,
     Gift,
     GiftCreate,
+    Group,
+    GroupCreate,
     IcalImportLog,
     Interaction,
     InteractionAttendee,
@@ -181,24 +183,10 @@ def create_address(*, session: Session, address_in: AddressCreate) -> Address:
 
 
 def create_relationship(
-    *,
-    session: Session,
-    relationship_in: RelationshipCreate,
-    inverse_type: str | None = None,
+    *, session: Session, relationship_in: RelationshipCreate
 ) -> Relationship:
     db_obj = Relationship.model_validate(relationship_in)
     session.add(db_obj)
-    if inverse_type:
-        inverse = Relationship(
-            contact_id=relationship_in.related_contact_id,
-            related_contact_id=relationship_in.contact_id,
-            relationship_type=inverse_type,
-            notes=relationship_in.notes,
-        )
-        session.add(inverse)
-        session.flush()  # materialise IDs before cross-linking
-        db_obj.inverse_id = inverse.id
-        inverse.inverse_id = db_obj.id
     session.commit()
     session.refresh(db_obj)
     return db_obj
@@ -259,7 +247,6 @@ def recompute_last_contacted_at(*, session: Session, contact_id: uuid.UUID) -> N
         )
         .where(InteractionAttendee.contact_id == contact_id)
         .where(Interaction.is_draft == False)  # noqa: E712
-        .where(Interaction.deleted_at == None)  # noqa: E711
         .order_by(Interaction.occurred_at.desc())
         .limit(1)
     )
@@ -622,216 +609,6 @@ def get_or_create_user_from_claims(
     return new_user
 
 
-# ─── ContactStageEvent CRUD ──────────────────────────────────────
-
-
-def create_stage_event(
-    *,
-    session: Session,
-    event_in: ContactStageEventCreate,
-    owner_id: uuid.UUID,
-) -> ContactStageEvent:
-    """Create a stage event and update Contact.stage as a denormalized cache."""
-    # Fetch the contact to update its cached stage
-    contact = session.get(Contact, event_in.contact_id)
-    if contact is None:
-        raise ValueError(f"Contact {event_in.contact_id} not found")
-    if contact.owner_id != owner_id:
-        raise PermissionError("Not the contact owner")
-
-    # Create the event
-    db_obj = ContactStageEvent.model_validate(event_in, update={"owner_id": owner_id})
-    session.add(db_obj)
-
-    # Update the denormalized stage cache on the contact
-    contact.stage = event_in.to_stage
-    session.add(contact)
-
-    session.commit()
-    session.refresh(db_obj)
-    return db_obj
-
-
-def get_contact_stage_history(
-    *,
-    session: Session,
-    contact_id: uuid.UUID,
-    owner_id: uuid.UUID | None = None,
-) -> list[ContactStageEvent]:
-    """Return all stage events for a contact, newest first."""
-    from sqlmodel import select
-
-    stmt = (
-        select(ContactStageEvent)
-        .where(ContactStageEvent.contact_id == contact_id)
-        .order_by(ContactStageEvent.occurred_at.desc())
-    )
-    if owner_id is not None:
-        stmt = stmt.where(ContactStageEvent.owner_id == owner_id)
-    return session.exec(stmt).all()
-
-
-def get_latest_stage_event(
-    *,
-    session: Session,
-    contact_id: uuid.UUID,
-    owner_id: uuid.UUID | None = None,
-) -> ContactStageEvent | None:
-    """Return the most recent stage event for a contact."""
-    from sqlmodel import select
-
-    stmt = (
-        select(ContactStageEvent)
-        .where(ContactStageEvent.contact_id == contact_id)
-        .order_by(ContactStageEvent.occurred_at.desc())
-        .limit(1)
-    )
-    if owner_id is not None:
-        stmt = stmt.where(ContactStageEvent.owner_id == owner_id)
-    return session.exec(stmt).first()
-
-
-def get_stage_duration(
-    *,
-    session: Session,
-    contact_id: uuid.UUID,
-    stage: str,
-    owner_id: uuid.UUID | None = None,
-) -> list[tuple]:
-    """Return (entered_at, exited_at, duration_seconds) for each dwell in `stage`.
-
-    Returns a list of tuples because a contact may re-enter the same stage.
-    """
-
-    # Get all events where the contact entered or exited the given stage
-    events = get_contact_stage_history(
-        session=session, contact_id=contact_id, owner_id=owner_id
-    )
-
-    durations = []
-    entered_at = None
-
-    for event in events:
-        if event.to_stage == stage:
-            entered_at = event.occurred_at
-        elif event.from_stage == stage and entered_at is not None:
-            exited_at = event.occurred_at
-            duration = (exited_at - entered_at).total_seconds()
-            durations.append((entered_at, exited_at, duration))
-            entered_at = None
-
-    # If still in this stage, use now as the end time
-    if entered_at is not None:
-        from datetime import datetime as dt
-        from datetime import timezone
-
-        now = dt.now(timezone.utc)
-        duration = (now - entered_at).total_seconds()
-        durations.append((entered_at, None, duration))
-
-    return durations
-
-
-def backfill_stage_events(
-    *,
-    session: Session,
-    owner_id: uuid.UUID | None = None,
-) -> int:
-    """Backfill seed stage events for contacts that don't have one.
-
-    Creates one event per contact using the current stage and created_at.
-    Returns the number of events created.
-    """
-    from sqlmodel import select
-
-    # Find contacts without a stage event
-    stmt = select(Contact)
-    if owner_id is not None:
-        stmt = stmt.where(Contact.owner_id == owner_id)
-
-    contacts = session.exec(stmt).all()
-    created = 0
-
-    for contact in contacts:
-        # Check if a seed event already exists
-        existing = session.exec(
-            select(ContactStageEvent)
-            .where(
-                ContactStageEvent.contact_id == contact.id,
-                ContactStageEvent.from_stage.is_(None),
-            )
-            .limit(1)
-        ).first()
-
-        if existing is not None:
-            continue
-
-        # Create seed event
-        event = ContactStageEvent(
-            contact_id=contact.id,
-            owner_id=contact.owner_id,
-            from_stage=None,
-            to_stage=contact.stage,
-            occurred_at=contact.created_at,
-            note="Seed event: initial stage on contact creation",
-        )
-        session.add(event)
-        created += 1
-
-    session.commit()
-    return created
-
-
-
-def upsert_contact(
-    *, session: Session, contact_in: ContactCreate, owner_id: uuid.UUID
-) -> Contact:
-    """Create or update a contact based on (owner_id, source, source_external_id) match.
-
-    If a contact with the same (owner_id, source, source_external_id) exists,
-    update it with the new data. Otherwise, create a new contact.
-    Only applies when source_external_id is not None.
-    """
-    # Only attempt upsert if source_external_id is provided
-    if contact_in.source_external_id is not None:
-        existing = session.exec(
-            select(Contact).where(
-                Contact.owner_id == owner_id,
-                Contact.source == contact_in.source,
-                Contact.source_external_id == contact_in.source_external_id,
-            )
-        ).first()
-
-        if existing:
-            # Update existing contact with new data
-            update_data = contact_in.model_dump(
-                exclude_unset=True, exclude={"tag_ids"}
-            )
-            existing.sqlmodel_update(update_data)
-            session.add(existing)
-            session.commit()
-            session.refresh(existing)
-
-            # Handle tag associations if provided
-            if contact_in.tag_ids is not None:
-                # Remove existing tags
-                existing_tags = session.exec(
-                    select(ContactTag).where(ContactTag.contact_id == existing.id)
-                ).all()
-                for ct in existing_tags:
-                    session.delete(ct)
-                # Add new tags
-                for tag_id in contact_in.tag_ids:
-                    session.add(ContactTag(contact_id=existing.id, tag_id=tag_id))
-                session.commit()
-
-            session.refresh(existing)
-            return existing
-
-    # Fall through to normal create
-    return create_contact(session=session, contact_in=contact_in, owner_id=owner_id)
-
-
 # ─── API Keys ─────────────────────────────────────────────────────────────────
 
 
@@ -921,84 +698,3 @@ def get_ical_import_log_by_owner_and_uid(
             (IcalImportLog.owner_id == owner_id) & (IcalImportLog.uid == uid)
         )
     ).first()
-
-
-# ─── EmailOAuthToken CRUD ───────────────────────────────────────────────
-
-
-def create_email_oauth_token(
-    *,
-    session: Session,
-    token_in: EmailOAuthTokenCreate,
-    owner_id: uuid.UUID,
-    contact_id: uuid.UUID,
-) -> EmailOAuthToken:
-    """Create a new EmailOAuthToken record."""
-    from app.core.encryption import encrypt_refresh_token, encrypt_token
-
-    db_obj = EmailOAuthToken(
-        owner_id=owner_id,
-        contact_id=contact_id,
-        provider=token_in.provider,
-        email_address=token_in.email_address,
-        encrypted_access_token=encrypt_token(token_in.encrypted_access_token),
-        encrypted_refresh_token=encrypt_refresh_token(token_in.encrypted_refresh_token),
-        token_expires_at=token_in.token_expires_at,
-    )
-    session.add(db_obj)
-    session.commit()
-    session.refresh(db_obj)
-    return db_obj
-
-
-def get_email_oauth_token(
-    *, session: Session, token_id: uuid.UUID
-) -> EmailOAuthToken | None:
-    """Get an EmailOAuthToken by ID."""
-    return session.get(EmailOAuthToken, token_id)
-
-
-def list_email_oauth_tokens(
-    *, session: Session, owner_id: uuid.UUID, contact_id: uuid.UUID | None = None
-) -> list[EmailOAuthToken]:
-    """List EmailOAuthToken records for a user, optionally filtered by contact."""
-    stmt = select(EmailOAuthToken).where(EmailOAuthToken.owner_id == owner_id)
-    if contact_id:
-        stmt = stmt.where(EmailOAuthToken.contact_id == contact_id)
-    return list(session.exec(stmt).all())
-
-
-def update_email_oauth_token(
-    *,
-    session: Session,
-    token_id: uuid.UUID,
-    access_token: str | None = None,
-    refresh_token: str | None = None,
-    expires_at: datetime | None = None,
-) -> EmailOAuthToken | None:
-    """Update an EmailOAuthToken with new token data (encrypted)."""
-    from app.core.encryption import encrypt_refresh_token, encrypt_token
-
-    token_row = session.get(EmailOAuthToken, token_id)
-    if not token_row:
-        return None
-    if access_token is not None:
-        token_row.encrypted_access_token = encrypt_token(access_token)
-    if refresh_token is not None:
-        token_row.encrypted_refresh_token = encrypt_refresh_token(refresh_token)
-    if expires_at is not None:
-        token_row.token_expires_at = expires_at
-    session.add(token_row)
-    session.commit()
-    session.refresh(token_row)
-    return token_row
-
-
-def delete_email_oauth_token(*, session: Session, token_id: uuid.UUID) -> bool:
-    """Delete an EmailOAuthToken. Returns True if deleted."""
-    token_row = session.get(EmailOAuthToken, token_id)
-    if not token_row:
-        return False
-    session.delete(token_row)
-    session.commit()
-    return True
