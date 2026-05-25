@@ -1,15 +1,61 @@
+from __future__ import annotations
+
 import enum
+import re
 import uuid
 from datetime import date, datetime, timezone
 
 import sqlalchemy as sa
-from pydantic import EmailStr
+from pydantic import EmailStr, field_validator
 from sqlalchemy import DateTime
 from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import (
+    Relationship as SQLMRelationship,  # alias; avoids shadowing by the Relationship table model below
+)
+
+from app.models_vcard_conflict import (  # noqa: F401
+    VCardConflict,
+    VCardConflictBase,
+    VCardConflictPublic,
+    VCardConflictsPublic,
+)
 
 
 def get_datetime_utc() -> datetime:
     return datetime.now(timezone.utc)
+
+
+class SoftDeleteMixin:
+    """Mixin that adds ``deleted_at`` for soft-delete support.
+
+    Apply to SQLModel table classes to get:
+    * ``deleted_at`` nullable datetime column (indexed)
+    * ``is_deleted`` property for readability
+    * ``mark_deleted()`` / ``restore()`` convenience helpers
+    """
+
+    deleted_at: datetime | None = Field(
+        default=None,
+        index=True,
+        sa_type=DateTime(timezone=True),
+        description=(
+            "Soft-delete marker. When non-null, the row is hidden from the "
+            "default query filter; restore by clearing this column."
+        ),
+    )
+
+    @property
+    def is_deleted(self) -> bool:
+        """Return True if the row has been soft-deleted."""
+        return self.deleted_at is not None
+
+    def mark_deleted(self) -> None:
+        """Set deleted_at to now (UTC)."""
+        self.deleted_at = datetime.now(timezone.utc)
+
+    def restore(self) -> None:
+        """Clear deleted_at to un-delete the row."""
+        self.deleted_at = None
 
 
 # Shared properties
@@ -206,6 +252,8 @@ class ContactSource(str, enum.Enum):
 
 class GiftStatus(str, enum.Enum):
     IDEA = "idea"
+    PURCHASED = "purchased"
+    WRAPPED = "wrapped"
     GIVEN = "given"
     RECEIVED = "received"
 
@@ -219,6 +267,15 @@ class InteractionChannel(str, enum.Enum):
     SOCIAL = "social"
     OTHER = "other"
     SKIP = "skip"
+
+
+class InteractionDraftSource(str, enum.Enum):
+    """Origin of a draft interaction."""
+
+    VOICE_MEMO = "voice_memo"
+    EMAIL_SUGGESTION = "email_suggestion"
+    MANUAL = "manual"
+    IMPORT = "import"
 
 
 class ReminderFrequency(str, enum.Enum):
@@ -243,6 +300,16 @@ class MediaCategory(str, enum.Enum):
     OTHER = "other"
 
 
+class ContactSource(str, enum.Enum):
+    """Source system that created a contact."""
+
+    MANUAL = "manual"
+    VCARD_IMPORT = "vcard_import"
+    CARDDAV = "carddav"
+    GOOGLE = "google"
+    WEBHOOK = "webhook"
+
+
 # ─── Tag ──────────────────────────────────────────────────────────────────────
 
 
@@ -257,6 +324,11 @@ class TagBase(SQLModel):
         max_length=7,
         description="Optional hex color like #ff0000 for UI display.",
     )
+    description: str | None = Field(
+        default=None,
+        max_length=1000,
+        description="Optional tag description.",
+    )
 
 
 class TagCreate(TagBase):
@@ -266,6 +338,7 @@ class TagCreate(TagBase):
 class TagUpdate(SQLModel):
     name: str | None = Field(default=None, min_length=1, max_length=100)
     color: str | None = None
+    description: str | None = None
 
 
 class Tag(TagBase, table=True):
@@ -356,83 +429,6 @@ class TagSharePublic(SQLModel):
 class TagSharesPublic(SQLModel):
     data: list[TagSharePublic]
     count: int
-
-
-# ─── Group ────────────────────────────────────────────────────────────────────
-
-
-class GroupBase(SQLModel):
-    name: str = Field(
-        min_length=1,
-        max_length=255,
-        description="Group name, 1-255 chars.",
-    )
-    description: str | None = Field(
-        default=None,
-        max_length=1000,
-        description="Optional group description.",
-    )
-
-
-class GroupCreate(GroupBase):
-    pass
-
-
-class GroupUpdate(SQLModel):
-    name: str | None = Field(default=None, min_length=1, max_length=255)
-    description: str | None = None
-
-
-class Group(GroupBase, table=True):
-    """Named collection of contacts (e.g. 'Family', 'Work Team')."""
-
-    id: uuid.UUID = Field(
-        default_factory=uuid.uuid4,
-        primary_key=True,
-        description="Primary key.",
-    )
-    owner_id: uuid.UUID = Field(
-        foreign_key="user.id",
-        nullable=False,
-        ondelete="CASCADE",
-        description="Owner user; cascades on delete.",
-    )
-    created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
-        nullable=False,
-        description="When the group was created (UTC).",
-    )
-
-
-class GroupPublic(GroupBase):
-    id: uuid.UUID
-    created_at: datetime
-
-
-class GroupsPublic(SQLModel):
-    data: list[GroupPublic]
-    count: int
-
-
-# ─── ContactGroup (junction) ─────────────────────────────────────────────────
-
-
-class ContactGroup(SQLModel, table=True):
-    """Many-to-many link between contacts and groups."""
-
-    __tablename__ = "contact_group"
-    contact_id: uuid.UUID = Field(
-        foreign_key="contact.id",
-        primary_key=True,
-        ondelete="CASCADE",
-        description="Contact side of the link; cascades on delete.",
-    )
-    group_id: uuid.UUID = Field(
-        foreign_key="group.id",
-        primary_key=True,
-        ondelete="CASCADE",
-        description="Group side of the link; cascades on delete.",
-    )
 
 
 # ─── Contact ─────────────────────────────────────────────────────────────────
@@ -544,7 +540,6 @@ class ContactBase(SQLModel):
 
 class ContactCreate(ContactBase):
     tag_ids: list[uuid.UUID] | None = None
-    group_ids: list[uuid.UUID] | None = None
 
 
 class ContactUpdate(SQLModel):
@@ -568,7 +563,6 @@ class ContactUpdate(SQLModel):
     do_not_contact: bool | None = None
     do_not_contact_reason: str | None = None
     tag_ids: list[uuid.UUID] | None = None
-    group_ids: list[uuid.UUID] | None = None
 
 
 class Contact(ContactBase, table=True):
@@ -630,10 +624,6 @@ class Contact(ContactBase, table=True):
         back_populates=None,
         link_model=ContactTag,
     )
-    groups: list["Group"] = Relationship(
-        back_populates=None,
-        link_model=ContactGroup,
-    )
 
 
 class ContactPublic(ContactBase):
@@ -647,7 +637,6 @@ class ContactPublic(ContactBase):
     do_not_contact: bool = False
     do_not_contact_reason: str | None = None
     tags: list[TagPublic] = []
-    groups: list[GroupPublic] = []
 
 
 class ContactsPublic(SQLModel):
@@ -1257,6 +1246,38 @@ class RemindersPublic(SQLModel):
     count: int
 
 
+class ReminderContactSummary(SQLModel):
+    id: uuid.UUID
+    first_name: str
+    last_name: str | None = None
+    nickname: str | None = None
+    avatar_url: str | None = None
+
+
+class ReminderDuePublic(ReminderPublic):
+    """Reminder enriched with the linked contact (if any) for the bell popover."""
+
+    contact: ReminderContactSummary | None = None
+
+
+class RemindersDuePublic(SQLModel):
+    data: list[ReminderDuePublic]
+    count: int
+
+
+class ReminderSnoozeRequest(SQLModel):
+    snoozed_until: datetime | None = Field(
+        default=None,
+        description="Absolute time to snooze until (UTC). Mutually exclusive with minutes.",
+    )
+    minutes: int | None = Field(
+        default=None,
+        ge=1,
+        le=60 * 24 * 30,
+        description="Minutes from now to snooze for. Mutually exclusive with snoozed_until.",
+    )
+
+
 # ─── Gift ─────────────────────────────────────────────────────────────────────
 
 
@@ -1706,13 +1727,14 @@ class JournalEntryBase(SQLModel):
 
 
 class JournalEntryCreate(JournalEntryBase):
-    pass
+    contact_ids: list[uuid.UUID] | None = None
 
 
 class JournalEntryUpdate(SQLModel):
     body: str | None = None
     mood: str | None = None
     entry_date: date | None = None
+    contact_ids: list[uuid.UUID] | None = None
 
 
 class JournalEntry(JournalEntryBase, table=True):
@@ -1743,10 +1765,29 @@ class JournalEntry(JournalEntryBase, table=True):
     )
 
 
+class JournalEntryContact(SQLModel, table=True):
+    """Many-to-many link between journal entries and contacts."""
+
+    __tablename__ = "journal_entry_contact"
+    journal_entry_id: uuid.UUID = Field(
+        foreign_key="journal_entry.id",
+        primary_key=True,
+        ondelete="CASCADE",
+        description="Journal entry side of the link; cascades on delete.",
+    )
+    contact_id: uuid.UUID = Field(
+        foreign_key="contact.id",
+        primary_key=True,
+        ondelete="CASCADE",
+        description="Contact side of the link; cascades on delete.",
+    )
+
+
 class JournalEntryPublic(JournalEntryBase):
     id: uuid.UUID
     created_at: datetime
     updated_at: datetime
+    contact_ids: list[uuid.UUID] = []
 
 
 class JournalEntriesPublic(SQLModel):
@@ -1900,3 +1941,8 @@ class CalendarEntry(SQLModel):
 class CalendarMonthResponse(SQLModel):
     month: str
     days: dict[str, list[CalendarEntry]]
+
+
+# Register the SetupState table with SQLModel.metadata so Alembic and the
+# test bootstrap (alembic upgrade head) see it.
+from app.core.setup_state import SetupState  # noqa: E402,F401

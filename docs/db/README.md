@@ -10,20 +10,19 @@
 | [public.group](public.group.md) | 5 | Named collection of contacts (e.g. 'Family', 'Work Team'). | BASE TABLE |
 | [public.contact](public.contact.md) | 31 | Core contact entity — the subject of everything else in the CRM. | BASE TABLE |
 | [public.contact_tag](public.contact_tag.md) | 2 | Many-to-many link between contacts and tags. | BASE TABLE |
-| [public.contact_group](public.contact_group.md) | 2 | Many-to-many link between contacts and groups. | BASE TABLE |
 | [public.contact_field](public.contact_field.md) | 7 | Flexible contact info (emails, phones) attached to a contact. | BASE TABLE |
 | [public.address](public.address.md) | 11 | Physical address attached to a contact. | BASE TABLE |
-| [public.relationship](public.relationship.md) | 6 | Directional link between two contacts (spouse, child, friend, etc.). | BASE TABLE |
+| [public.relationship](public.relationship.md) | 5 | Directional link between two contacts (spouse, child, friend, etc.). | BASE TABLE |
 | [public.pet](public.pet.md) | 6 | Pet owned by a contact; useful for memorable conversation hooks. | BASE TABLE |
 | [public.custom_field_definition](public.custom_field_definition.md) | 8 | User-defined custom field schema, scoped to one owner. | BASE TABLE |
 | [public.custom_field_value](public.custom_field_value.md) | 4 | Value of a custom field for a specific contact (one per contact per definition). | BASE TABLE |
-| [public.interaction](public.interaction.md) | 8 | Logged touchpoint with one or more contacts (call, meeting, text, etc.). Attendees are attached via interaction_attendee. | BASE TABLE |
-| [public.reminder](public.reminder.md) | 11 | Scheduled reminder; contact-specific or standalone. | BASE TABLE |
-| [public.gift](public.gift.md) | 12 | Gift idea or record for a contact. | BASE TABLE |
-| [public.debt](public.debt.md) | 10 | Money owed to or from a contact. | BASE TABLE |
-| [public.life_event](public.life_event.md) | 9 | Milestone on a contact's timeline (job change, wedding, move, etc.). | BASE TABLE |
-| [public.note](public.note.md) | 6 | Timestamped freeform note attached to a specific contact. | BASE TABLE |
-| [public.journal_entry](public.journal_entry.md) | 7 | Personal journal entry, not tied to a specific contact. | BASE TABLE |
+| [public.interaction](public.interaction.md) | 20 | Logged touchpoint with one or more contacts (call, meeting, text, etc.). Attendees are attached via interaction_attendee. | BASE TABLE |
+| [public.reminder](public.reminder.md) | 12 | Scheduled reminder; contact-specific or standalone. | BASE TABLE |
+| [public.gift](public.gift.md) | 13 | Gift idea or record for a contact. | BASE TABLE |
+| [public.debt](public.debt.md) | 11 | Money owed to or from a contact. | BASE TABLE |
+| [public.life_event](public.life_event.md) | 10 | Milestone on a contact's timeline (job change, wedding, move, etc.). | BASE TABLE |
+| [public.note](public.note.md) | 9 | Timestamped freeform note attached to a specific contact. | BASE TABLE |
+| [public.journal_entry](public.journal_entry.md) | 8 | Personal journal entry, not tied to a specific contact. | BASE TABLE |
 | [public.webhook_endpoint](public.webhook_endpoint.md) | 10 | Inbound or outbound webhook configuration. | BASE TABLE |
 | [public.tag_share](public.tag_share.md) | 3 | Grants another user read access to all rows bearing a given tag. | BASE TABLE |
 | [public.media_recommendation](public.media_recommendation.md) | 10 | Media (book, show, podcast, etc.) recommended to or by a contact. | BASE TABLE |
@@ -51,6 +50,10 @@
 | public.uuid_generate_v3 | uuid | namespace uuid, name text | FUNCTION |
 | public.uuid_generate_v4 | uuid |  | FUNCTION |
 | public.uuid_generate_v5 | uuid | namespace uuid, name text | FUNCTION |
+| public.update_contact_search_vector | trigger |  | FUNCTION |
+| public.update_note_search_vector | trigger |  | FUNCTION |
+| public.update_interaction_search_vector | trigger |  | FUNCTION |
+| public.update_journal_entry_search_vector | trigger |  | FUNCTION |
 
 ## Enums
 
@@ -62,7 +65,6 @@
 | public.giftstatus | GIVEN, IDEA, PURCHASED, RECEIVED, WRAPPED |
 | public.interactionchannel | CALL, EMAIL, IN_PERSON, OTHER, SOCIAL, TEXT, VIDEO |
 | public.mediacategory | BOOK, MOVIE, MUSICIAN, OTHER, PODCAST, TV_SHOW |
-| public.oauthprovider | GOOGLE |
 | public.reminderfrequency | DAILY, MONTHLY, ONCE, WEEKLY, YEARLY |
 
 ## Relations
@@ -71,18 +73,14 @@
 erDiagram
 
 "public.tag" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
-"public.group" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.contact" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.contact" }o--o| "public.organization" : "FOREIGN KEY (organization_id) REFERENCES organization(id) ON DELETE SET NULL"
 "public.contact_tag" }o--|| "public.tag" : "FOREIGN KEY (tag_id) REFERENCES tag(id) ON DELETE CASCADE"
 "public.contact_tag" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
-"public.contact_group" }o--|| "public.group" : "FOREIGN KEY (group_id) REFERENCES #quot;group#quot;(id) ON DELETE CASCADE"
-"public.contact_group" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.contact_field" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.address" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.relationship" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.relationship" }o--|| "public.contact" : "FOREIGN KEY (related_contact_id) REFERENCES contact(id) ON DELETE CASCADE"
-"public.relationship" }o--o| "public.relationship" : "FOREIGN KEY (inverse_id) REFERENCES relationship(id) ON DELETE SET NULL"
 "public.pet" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.custom_field_definition" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.custom_field_value" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
@@ -139,13 +137,7 @@ erDiagram
   varchar_100_ name
   varchar_7_ color
   timestamp_with_time_zone created_at
-}
-"public.group" {
-  uuid id
-  uuid owner_id FK
-  varchar_255_ name
   varchar_1000_ description
-  timestamp_with_time_zone created_at
 }
 "public.contact" {
   uuid id
@@ -184,10 +176,6 @@ erDiagram
   uuid contact_id FK
   uuid tag_id FK
 }
-"public.contact_group" {
-  uuid contact_id FK
-  uuid group_id FK
-}
 "public.contact_field" {
   uuid id
   uuid contact_id FK
@@ -216,7 +204,6 @@ erDiagram
   uuid related_contact_id FK
   varchar_100_ relationship_type
   varchar_1000_ notes
-  uuid inverse_id FK
 }
 "public.pet" {
   uuid id
@@ -251,6 +238,18 @@ erDiagram
   varchar_50_ mood
   integer duration_minutes
   timestamp_with_time_zone created_at
+  timestamp_without_time_zone deleted_at
+  tsvector search_vector
+  boolean is_draft
+  varchar_32_ draft_source
+  varchar_500_ location_label
+  double_precision latitude
+  double_precision longitude
+  varchar_998_ message_id
+  varchar_998_ email_subject
+  varchar_2048_ email_from
+  varchar_2048_ email_to
+  timestamp_without_time_zone email_date
 }
 "public.reminder" {
   uuid id
@@ -264,6 +263,7 @@ erDiagram
   timestamp_with_time_zone last_sent_at
   timestamp_with_time_zone snoozed_until
   timestamp_with_time_zone created_at
+  timestamp_without_time_zone deleted_at
 }
 "public.gift" {
   uuid id
@@ -278,6 +278,7 @@ erDiagram
   varchar_3_ value_currency
   varchar_2048_ url
   timestamp_with_time_zone created_at
+  timestamp_without_time_zone deleted_at
 }
 "public.debt" {
   uuid id
@@ -290,6 +291,7 @@ erDiagram
   boolean is_settled
   date settled_at
   timestamp_with_time_zone created_at
+  timestamp_without_time_zone deleted_at
 }
 "public.life_event" {
   uuid id
@@ -301,6 +303,7 @@ erDiagram
   date occurred_at
   boolean create_annual_reminder
   timestamp_with_time_zone created_at
+  timestamp_without_time_zone deleted_at
 }
 "public.note" {
   uuid id
@@ -309,6 +312,9 @@ erDiagram
   varchar_50000_ body
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
+  timestamp_without_time_zone deleted_at
+  tsvector search_vector
+  varchar_36_ client_id
 }
 "public.journal_entry" {
   uuid id
@@ -318,6 +324,7 @@ erDiagram
   date entry_date
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
+  tsvector search_vector
 }
 "public.webhook_endpoint" {
   uuid id
@@ -359,7 +366,7 @@ erDiagram
   varchar_64_ entity_type
   uuid entity_id
   varchar_32_ action
-  json changes_json
+  jsonb changes_json
   timestamp_with_time_zone occurred_at
   uuid acting_api_key_id FK
 }
