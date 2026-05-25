@@ -20,13 +20,19 @@ import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
 import { Route as LayoutRemindersRouteImport } from './routes/_layout/reminders'
 import { Route as LayoutJournalRouteImport } from './routes/_layout/journal'
 import { Route as LayoutInteractionsRouteImport } from './routes/_layout/interactions'
+import { Route as LayoutGraphRouteImport } from './routes/_layout/graph'
 import { Route as LayoutContactsRouteImport } from './routes/_layout/contacts'
 import { Route as LayoutCalendarRouteImport } from './routes/_layout/calendar'
 import { Route as LayoutAdminRouteImport } from './routes/_layout/admin'
 import { Route as LayoutContactsIndexRouteImport } from './routes/_layout/contacts/index'
+import { Route as LayoutContactsKanbanRouteImport } from './routes/_layout/contacts/kanban'
 import { Route as LayoutAdminIndexRouteImport } from './routes/_layout/admin/index'
+import { Route as LayoutGiftsKanbanRouteImport } from './routes/_layout/gifts/kanban'
+import { Route as LayoutContactsMapRouteImport } from './routes/_layout/contacts/map'
+import { Route as LayoutContactsKanbanRouteImport } from './routes/_layout/contacts/kanban'
 import { Route as LayoutContactsContactIdRouteImport } from './routes/_layout/contacts/$contactId'
 import { Route as LayoutAdminWebhooksRouteImport } from './routes/_layout/admin/webhooks'
+import { Route as LayoutAdminVcardConflictsRouteImport } from './routes/_layout/admin/vcard-conflicts'
 import { Route as LayoutAdminImportExportRouteImport } from './routes/_layout/admin/import-export'
 
 const SignupRoute = SignupRouteImport.update({
@@ -34,90 +40,120 @@ const SignupRoute = SignupRouteImport.update({
   path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
+
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+
 const RecoverPasswordRoute = RecoverPasswordRouteImport.update({
   id: '/recover-password',
   path: '/recover-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+
 const LayoutRoute = LayoutRouteImport.update({
   id: '/_layout',
   getParentRoute: () => rootRouteImport,
 } as any)
+
 const LayoutIndexRoute = LayoutIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => LayoutRoute,
 } as any)
+
 const LayoutTagsRoute = LayoutTagsRouteImport.update({
   id: '/tags',
   path: '/tags',
   getParentRoute: () => LayoutRoute,
 } as any)
+
 const LayoutSettingsRoute = LayoutSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
   getParentRoute: () => LayoutRoute,
 } as any)
+
 const LayoutRemindersRoute = LayoutRemindersRouteImport.update({
   id: '/reminders',
   path: '/reminders',
   getParentRoute: () => LayoutRoute,
 } as any)
+
 const LayoutJournalRoute = LayoutJournalRouteImport.update({
   id: '/journal',
   path: '/journal',
   getParentRoute: () => LayoutRoute,
 } as any)
+
 const LayoutInteractionsRoute = LayoutInteractionsRouteImport.update({
   id: '/interactions',
   path: '/interactions',
   getParentRoute: () => LayoutRoute,
 } as any)
+
+const LayoutGroupsRoute = LayoutGroupsRouteImport.update({
+  id: '/groups',
+  path: '/groups',
+  getParentRoute: () => LayoutRoute,
+} as any)
+
 const LayoutContactsRoute = LayoutContactsRouteImport.update({
   id: '/contacts',
   path: '/contacts',
   getParentRoute: () => LayoutRoute,
 } as any)
+
 const LayoutCalendarRoute = LayoutCalendarRouteImport.update({
   id: '/calendar',
   path: '/calendar',
   getParentRoute: () => LayoutRoute,
 } as any)
+
 const LayoutAdminRoute = LayoutAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
   getParentRoute: () => LayoutRoute,
 } as any)
+
 const LayoutContactsIndexRoute = LayoutContactsIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => LayoutContactsRoute,
 } as any)
+
 const LayoutAdminIndexRoute = LayoutAdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => LayoutAdminRoute,
 } as any)
+
 const LayoutContactsContactIdRoute = LayoutContactsContactIdRouteImport.update({
   id: '/$contactId',
   path: '/$contactId',
   getParentRoute: () => LayoutContactsRoute,
 } as any)
+
+const LayoutContactsKanbanRoute = LayoutContactsKanbanRouteImport.update({
+  id: '/kanban',
+  path: '/kanban',
+  getParentRoute: () => LayoutContactsRoute,
+} as any)
+
 const LayoutAdminWebhooksRoute = LayoutAdminWebhooksRouteImport.update({
   id: '/webhooks',
   path: '/webhooks',
   getParentRoute: () => LayoutAdminRoute,
 } as any)
+
 const LayoutAdminImportExportRoute = LayoutAdminImportExportRouteImport.update({
   id: '/import-export',
   path: '/import-export',
@@ -133,23 +169,31 @@ export interface FileRoutesByFullPath {
   '/admin': typeof LayoutAdminRouteWithChildren
   '/calendar': typeof LayoutCalendarRoute
   '/contacts': typeof LayoutContactsRouteWithChildren
+  '/graph': typeof LayoutGraphRoute
   '/interactions': typeof LayoutInteractionsRoute
   '/journal': typeof LayoutJournalRoute
   '/reminders': typeof LayoutRemindersRoute
   '/settings': typeof LayoutSettingsRoute
   '/tags': typeof LayoutTagsRoute
   '/admin/import-export': typeof LayoutAdminImportExportRoute
+  '/admin/vcard-conflicts': typeof LayoutAdminVcardConflictsRoute
   '/admin/webhooks': typeof LayoutAdminWebhooksRoute
   '/contacts/$contactId': typeof LayoutContactsContactIdRoute
+  '/contacts/kanban': typeof LayoutContactsKanbanRoute
+  '/contacts/map': typeof LayoutContactsMapRoute
+  '/gifts/kanban': typeof LayoutGiftsKanbanRoute
   '/admin/': typeof LayoutAdminIndexRoute
   '/contacts/': typeof LayoutContactsIndexRoute
+  '/contacts/kanban': typeof LayoutContactsKanbanRoute
 }
+
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/recover-password': typeof RecoverPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/calendar': typeof LayoutCalendarRoute
+  '/graph': typeof LayoutGraphRoute
   '/interactions': typeof LayoutInteractionsRoute
   '/journal': typeof LayoutJournalRoute
   '/reminders': typeof LayoutRemindersRoute
@@ -157,11 +201,17 @@ export interface FileRoutesByTo {
   '/tags': typeof LayoutTagsRoute
   '/': typeof LayoutIndexRoute
   '/admin/import-export': typeof LayoutAdminImportExportRoute
+  '/admin/vcard-conflicts': typeof LayoutAdminVcardConflictsRoute
   '/admin/webhooks': typeof LayoutAdminWebhooksRoute
   '/contacts/$contactId': typeof LayoutContactsContactIdRoute
+  '/contacts/kanban': typeof LayoutContactsKanbanRoute
+  '/contacts/map': typeof LayoutContactsMapRoute
+  '/gifts/kanban': typeof LayoutGiftsKanbanRoute
   '/admin': typeof LayoutAdminIndexRoute
   '/contacts': typeof LayoutContactsIndexRoute
+  '/contacts/kanban': typeof LayoutContactsKanbanRoute
 }
+
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_layout': typeof LayoutRouteWithChildren
@@ -172,6 +222,7 @@ export interface FileRoutesById {
   '/_layout/admin': typeof LayoutAdminRouteWithChildren
   '/_layout/calendar': typeof LayoutCalendarRoute
   '/_layout/contacts': typeof LayoutContactsRouteWithChildren
+  '/_layout/graph': typeof LayoutGraphRoute
   '/_layout/interactions': typeof LayoutInteractionsRoute
   '/_layout/journal': typeof LayoutJournalRoute
   '/_layout/reminders': typeof LayoutRemindersRoute
@@ -179,11 +230,17 @@ export interface FileRoutesById {
   '/_layout/tags': typeof LayoutTagsRoute
   '/_layout/': typeof LayoutIndexRoute
   '/_layout/admin/import-export': typeof LayoutAdminImportExportRoute
+  '/_layout/admin/vcard-conflicts': typeof LayoutAdminVcardConflictsRoute
   '/_layout/admin/webhooks': typeof LayoutAdminWebhooksRoute
   '/_layout/contacts/$contactId': typeof LayoutContactsContactIdRoute
+  '/_layout/contacts/kanban': typeof LayoutContactsKanbanRoute
+  '/_layout/contacts/map': typeof LayoutContactsMapRoute
+  '/_layout/gifts/kanban': typeof LayoutGiftsKanbanRoute
   '/_layout/admin/': typeof LayoutAdminIndexRoute
   '/_layout/contacts/': typeof LayoutContactsIndexRoute
+  '/_layout/contacts/kanban': typeof LayoutContactsKanbanRoute
 }
+
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
@@ -195,16 +252,22 @@ export interface FileRouteTypes {
     | '/admin'
     | '/calendar'
     | '/contacts'
+    | '/graph'
     | '/interactions'
     | '/journal'
     | '/reminders'
     | '/settings'
     | '/tags'
     | '/admin/import-export'
+    | '/admin/vcard-conflicts'
     | '/admin/webhooks'
     | '/contacts/$contactId'
+    | '/contacts/kanban'
+    | '/contacts/map'
+    | '/gifts/kanban'
     | '/admin/'
     | '/contacts/'
+    | '/contacts/kanban'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -212,6 +275,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/calendar'
+    | '/graph'
     | '/interactions'
     | '/journal'
     | '/reminders'
@@ -219,10 +283,15 @@ export interface FileRouteTypes {
     | '/tags'
     | '/'
     | '/admin/import-export'
+    | '/admin/vcard-conflicts'
     | '/admin/webhooks'
     | '/contacts/$contactId'
+    | '/contacts/kanban'
+    | '/contacts/map'
+    | '/gifts/kanban'
     | '/admin'
     | '/contacts'
+    | '/contacts/kanban'
   id:
     | '__root__'
     | '/_layout'
@@ -233,6 +302,7 @@ export interface FileRouteTypes {
     | '/_layout/admin'
     | '/_layout/calendar'
     | '/_layout/contacts'
+    | '/_layout/graph'
     | '/_layout/interactions'
     | '/_layout/journal'
     | '/_layout/reminders'
@@ -240,12 +310,18 @@ export interface FileRouteTypes {
     | '/_layout/tags'
     | '/_layout/'
     | '/_layout/admin/import-export'
+    | '/_layout/admin/vcard-conflicts'
     | '/_layout/admin/webhooks'
     | '/_layout/contacts/$contactId'
+    | '/_layout/contacts/kanban'
+    | '/_layout/contacts/map'
+    | '/_layout/gifts/kanban'
     | '/_layout/admin/'
     | '/_layout/contacts/'
+    | '/_layout/contacts/kanban'
   fileRoutesById: FileRoutesById
 }
+
 export interface RootRouteChildren {
   LayoutRoute: typeof LayoutRouteWithChildren
   LoginRoute: typeof LoginRoute
@@ -333,6 +409,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutInteractionsRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/graph': {
+      id: '/_layout/graph'
+      path: '/graph'
+      fullPath: '/graph'
+      preLoaderRoute: typeof LayoutGraphRouteImport
+      parentRoute: typeof LayoutRoute
+    }
     '/_layout/contacts': {
       id: '/_layout/contacts'
       path: '/contacts'
@@ -361,12 +444,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutContactsIndexRouteImport
       parentRoute: typeof LayoutContactsRoute
     }
+    '/_layout/contacts/kanban': {
+      id: '/_layout/contacts/kanban'
+      path: '/kanban'
+      fullPath: '/contacts/kanban'
+      preLoaderRoute: typeof LayoutContactsKanbanRouteImport
+      parentRoute: typeof LayoutContactsRoute
+    }
     '/_layout/admin/': {
       id: '/_layout/admin/'
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof LayoutAdminIndexRouteImport
       parentRoute: typeof LayoutAdminRoute
+    }
+    '/_layout/gifts/kanban': {
+      id: '/_layout/gifts/kanban'
+      path: '/gifts/kanban'
+      fullPath: '/gifts/kanban'
+      preLoaderRoute: typeof LayoutGiftsKanbanRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/contacts/map': {
+      id: '/_layout/contacts/map'
+      path: '/map'
+      fullPath: '/contacts/map'
+      preLoaderRoute: typeof LayoutContactsMapRouteImport
+      parentRoute: typeof LayoutContactsRoute
+    }
+    '/_layout/contacts/kanban': {
+      id: '/_layout/contacts/kanban'
+      path: '/kanban'
+      fullPath: '/contacts/kanban'
+      preLoaderRoute: typeof LayoutContactsKanbanRouteImport
+      parentRoute: typeof LayoutContactsRoute
     }
     '/_layout/contacts/$contactId': {
       id: '/_layout/contacts/$contactId'
@@ -382,6 +493,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutAdminWebhooksRouteImport
       parentRoute: typeof LayoutAdminRoute
     }
+    '/_layout/admin/vcard-conflicts': {
+      id: '/_layout/admin/vcard-conflicts'
+      path: '/vcard-conflicts'
+      fullPath: '/admin/vcard-conflicts'
+      preLoaderRoute: typeof LayoutAdminVcardConflictsRouteImport
+      parentRoute: typeof LayoutAdminRoute
+    }
     '/_layout/admin/import-export': {
       id: '/_layout/admin/import-export'
       path: '/import-export'
@@ -394,12 +512,14 @@ declare module '@tanstack/react-router' {
 
 interface LayoutAdminRouteChildren {
   LayoutAdminImportExportRoute: typeof LayoutAdminImportExportRoute
+  LayoutAdminVcardConflictsRoute: typeof LayoutAdminVcardConflictsRoute
   LayoutAdminWebhooksRoute: typeof LayoutAdminWebhooksRoute
   LayoutAdminIndexRoute: typeof LayoutAdminIndexRoute
 }
 
 const LayoutAdminRouteChildren: LayoutAdminRouteChildren = {
   LayoutAdminImportExportRoute: LayoutAdminImportExportRoute,
+  LayoutAdminVcardConflictsRoute: LayoutAdminVcardConflictsRoute,
   LayoutAdminWebhooksRoute: LayoutAdminWebhooksRoute,
   LayoutAdminIndexRoute: LayoutAdminIndexRoute,
 }
@@ -410,12 +530,18 @@ const LayoutAdminRouteWithChildren = LayoutAdminRoute._addFileChildren(
 
 interface LayoutContactsRouteChildren {
   LayoutContactsContactIdRoute: typeof LayoutContactsContactIdRoute
+  LayoutContactsKanbanRoute: typeof LayoutContactsKanbanRoute
+  LayoutContactsMapRoute: typeof LayoutContactsMapRoute
   LayoutContactsIndexRoute: typeof LayoutContactsIndexRoute
+  LayoutContactsKanbanRoute: typeof LayoutContactsKanbanRoute
 }
 
 const LayoutContactsRouteChildren: LayoutContactsRouteChildren = {
   LayoutContactsContactIdRoute: LayoutContactsContactIdRoute,
+  LayoutContactsKanbanRoute: LayoutContactsKanbanRoute,
+  LayoutContactsMapRoute: LayoutContactsMapRoute,
   LayoutContactsIndexRoute: LayoutContactsIndexRoute,
+  LayoutContactsKanbanRoute: LayoutContactsKanbanRoute,
 }
 
 const LayoutContactsRouteWithChildren = LayoutContactsRoute._addFileChildren(
@@ -426,24 +552,28 @@ interface LayoutRouteChildren {
   LayoutAdminRoute: typeof LayoutAdminRouteWithChildren
   LayoutCalendarRoute: typeof LayoutCalendarRoute
   LayoutContactsRoute: typeof LayoutContactsRouteWithChildren
+  LayoutGraphRoute: typeof LayoutGraphRoute
   LayoutInteractionsRoute: typeof LayoutInteractionsRoute
   LayoutJournalRoute: typeof LayoutJournalRoute
   LayoutRemindersRoute: typeof LayoutRemindersRoute
   LayoutSettingsRoute: typeof LayoutSettingsRoute
   LayoutTagsRoute: typeof LayoutTagsRoute
   LayoutIndexRoute: typeof LayoutIndexRoute
+  LayoutGiftsKanbanRoute: typeof LayoutGiftsKanbanRoute
 }
 
 const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutAdminRoute: LayoutAdminRouteWithChildren,
   LayoutCalendarRoute: LayoutCalendarRoute,
   LayoutContactsRoute: LayoutContactsRouteWithChildren,
+  LayoutGraphRoute: LayoutGraphRoute,
   LayoutInteractionsRoute: LayoutInteractionsRoute,
   LayoutJournalRoute: LayoutJournalRoute,
   LayoutRemindersRoute: LayoutRemindersRoute,
   LayoutSettingsRoute: LayoutSettingsRoute,
   LayoutTagsRoute: LayoutTagsRoute,
   LayoutIndexRoute: LayoutIndexRoute,
+  LayoutGiftsKanbanRoute: LayoutGiftsKanbanRoute,
 }
 
 const LayoutRouteWithChildren =
@@ -456,6 +586,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
 }
+
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()

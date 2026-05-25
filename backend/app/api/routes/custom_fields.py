@@ -16,11 +16,14 @@ from app.models import (
     CustomFieldDefinition,
     CustomFieldDefinitionCreate,
     CustomFieldDefinitionPublic,
+    CustomFieldDefinitionsPublic,
     CustomFieldDefinitionUpdate,
     CustomFieldValue,
     CustomFieldValueCreate,
     CustomFieldValuePublic,
+    CustomFieldValuesPublic,
     CustomFieldValueUpdate,
+    Ok,
 )
 
 router = APIRouter(prefix="/custom-fields", tags=["custom-fields"])
@@ -34,21 +37,21 @@ def _require_contact_visible(session: Any, user: Any, contact_id: uuid.UUID) -> 
 # ─── Field Definitions ─────────────────────────────────────────────────────
 
 
-@router.get("/definitions/")
+@router.get("/definitions/", response_model=CustomFieldDefinitionsPublic)
 def list_field_definitions(
     session: SessionDep,
     current_user: CurrentUser,
-) -> Any:
+) -> CustomFieldDefinitionsPublic:
     """List all custom field definitions for the user."""
     statement = select(CustomFieldDefinition).where(
         CustomFieldDefinition.owner_id == current_user.id
     )
     definitions = session.exec(statement).all()
 
-    return {
-        "data": [CustomFieldDefinitionPublic.model_validate(d) for d in definitions],
-        "count": len(definitions),
-    }
+    return CustomFieldDefinitionsPublic(
+        data=[CustomFieldDefinitionPublic.model_validate(d) for d in definitions],
+        count=len(definitions),
+    )
 
 
 @router.post("/definitions/", response_model=CustomFieldDefinitionPublic)
@@ -57,7 +60,7 @@ def create_field_definition(
     session: SessionDep,
     current_user: CurrentUser,
     def_in: CustomFieldDefinitionCreate,
-) -> Any:
+) -> CustomFieldDefinitionPublic:
     """Create a new custom field definition."""
     definition = create_custom_field_definition(
         session=session, field_def_in=def_in, owner_id=current_user.id
@@ -72,7 +75,7 @@ def update_field_definition(
     current_user: CurrentUser,
     def_id: uuid.UUID,
     def_in: CustomFieldDefinitionUpdate,
-) -> Any:
+) -> CustomFieldDefinitionPublic:
     """Update a custom field definition."""
     definition = session.get(CustomFieldDefinition, def_id)
     if not definition:
@@ -88,12 +91,12 @@ def update_field_definition(
     return CustomFieldDefinitionPublic.model_validate(definition)
 
 
-@router.delete("/definitions/{def_id}")
+@router.delete("/definitions/{def_id}", response_model=Ok)
 def delete_field_definition(
     session: SessionDep,
     current_user: CurrentUser,
     def_id: uuid.UUID,
-) -> Any:
+) -> Ok:
     """Delete a custom field definition."""
     definition = session.get(CustomFieldDefinition, def_id)
     if not definition:
@@ -103,18 +106,18 @@ def delete_field_definition(
 
     session.delete(definition)
     session.commit()
-    return {"ok": True}
+    return Ok()
 
 
 # ─── Field Values ──────────────────────────────────────────────────────────
 
 
-@router.get("/values/contact/{contact_id}")
+@router.get("/values/contact/{contact_id}", response_model=CustomFieldValuesPublic)
 def list_field_values(
     session: SessionDep,
     current_user: CurrentUser,
     contact_id: uuid.UUID,
-) -> Any:
+) -> CustomFieldValuesPublic:
     """List custom field values for a contact."""
     _require_contact_visible(session, current_user, contact_id)
 
@@ -123,10 +126,10 @@ def list_field_values(
     )
     values = session.exec(statement).all()
 
-    return {
-        "data": [CustomFieldValuePublic.model_validate(v) for v in values],
-        "count": len(values),
-    }
+    return CustomFieldValuesPublic(
+        data=[CustomFieldValuePublic.model_validate(v) for v in values],
+        count=len(values),
+    )
 
 
 @router.post("/values/", response_model=CustomFieldValuePublic)
@@ -135,7 +138,7 @@ def create_field_value(
     session: SessionDep,
     current_user: CurrentUser,
     value_in: CustomFieldValueCreate,
-) -> Any:
+) -> CustomFieldValuePublic:
     """Create a custom field value for a contact."""
     _require_contact_visible(session, current_user, value_in.contact_id)
 
@@ -150,7 +153,7 @@ def update_field_value(
     current_user: CurrentUser,
     value_id: uuid.UUID,
     value_in: CustomFieldValueUpdate,
-) -> Any:
+) -> CustomFieldValuePublic:
     """Update a custom field value."""
     value = session.get(CustomFieldValue, value_id)
     if value is None:
@@ -165,12 +168,12 @@ def update_field_value(
     return CustomFieldValuePublic.model_validate(value)
 
 
-@router.delete("/values/{value_id}")
+@router.delete("/values/{value_id}", response_model=Ok)
 def delete_field_value(
     session: SessionDep,
     current_user: CurrentUser,
     value_id: uuid.UUID,
-) -> Any:
+) -> Ok:
     """Delete a custom field value."""
     value = session.get(CustomFieldValue, value_id)
     if value is None:
@@ -179,4 +182,4 @@ def delete_field_value(
 
     session.delete(value)
     session.commit()
-    return {"ok": True}
+    return Ok()
