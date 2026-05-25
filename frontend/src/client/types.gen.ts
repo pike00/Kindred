@@ -740,7 +740,6 @@ export type DebtPublic = {
     id: string;
     contact_id: string;
     created_at: string;
-    deleted_at?: (string | null);
     payments?: Array<DebtPaymentPublic>;
     paid_amount?: (number | null);
 };
@@ -2451,6 +2450,25 @@ export type EmailPollContactEmailResponse = ({
 export type EmailPollAllEmailsResponse = ({
     [key: string]: unknown;
 });
+
+export type DebtsListDebtPaymentsData = {
+    debtId: string;
+};
+
+export type DebtsListDebtPaymentsResponse = (Array<DebtPaymentPublic>);
+
+export type DebtsCreateDebtPaymentData = {
+    debtId: string;
+    requestBody: DebtPaymentCreate;
+};
+
+export type DebtsCreateDebtPaymentResponse = (DebtPaymentPublic);
+
+export type DebtsDeleteDebtPaymentData = {
+    paymentId: string;
+};
+
+export type DebtsDeleteDebtPaymentResponse = (unknown);
 
 export type GiftsListGiftsData = {
     contactId: string;

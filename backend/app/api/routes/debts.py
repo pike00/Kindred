@@ -18,7 +18,6 @@ from app.models import (
     DebtPublic,
     DebtsPublic,
     DebtUpdate,
-    Ok,
 )
 
 router = APIRouter(prefix="/debts", tags=["debts"])
@@ -180,6 +179,46 @@ def create_debt_payment(
     )
     session.add(payment)
     session.commit()
+    return {"ok": True}
+
+
+# ─── Debt Payment endpoints ─────────────────────────────────────────────
+
+
+@router.get("/{debt_id}/payments", response_model=list[DebtPaymentPublic])
+def list_debt_payments(
+    session: SessionDep,
+    current_user: CurrentUser,
+    debt_id: uuid.UUID,
+) -> Any:
+    """List all payments for a specific debt."""
+    debt = session.get(Debt, debt_id)
+    if debt is None:
+        raise HTTPException(status_code=404, detail="Debt not found")
+    _require_contact_visible(session, current_user, debt.contact_id)
+    return debt.payments
+
+
+@router.post("/{debt_id}/payments", response_model=DebtPaymentPublic)
+def create_debt_payment(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    debt_id: uuid.UUID,
+    payment_in: DebtPaymentCreate,
+) -> Any:
+    """Add a payment to a debt."""
+    debt = session.get(Debt, debt_id)
+    if debt is None:
+        raise HTTPException(status_code=404, detail="Debt not found")
+    _require_contact_visible(session, current_user, debt.contact_id)
+
+    payment = DebtPayment(
+        debt_id=debt_id,
+        **payment_in.model_dump(),
+    )
+    session.add(payment)
+    session.commit()
     session.refresh(payment)
     return payment
 
@@ -203,4 +242,4 @@ def delete_debt_payment(
 
     session.delete(payment)
     session.commit()
-    return Ok()
+    return {"ok": True}

@@ -2254,6 +2254,7 @@ export const DebtPaymentCreateSchema = {
     properties: {
         amount: {
             type: 'number',
+            exclusiveMinimum: 0,
             title: 'Amount',
             description: 'Payment amount; must be greater than zero.'
         },
@@ -2286,6 +2287,7 @@ export const DebtPaymentPublicSchema = {
     properties: {
         amount: {
             type: 'number',
+            exclusiveMinimum: 0,
             title: 'Amount',
             description: 'Payment amount; must be greater than zero.'
         },
@@ -2389,18 +2391,6 @@ export const DebtPublicSchema = {
             type: 'string',
             format: 'date-time',
             title: 'Created At'
-        },
-        deleted_at: {
-            anyOf: [
-                {
-                    type: 'string',
-                    format: 'date-time'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Deleted At'
         },
         payments: {
             items: {

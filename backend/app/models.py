@@ -2120,6 +2120,7 @@ class GiftKanbanColumn(SQLModel):
 
 class DebtPaymentBase(SQLModel):
     amount: float = Field(
+        gt=0,
         description="Payment amount; must be greater than zero.",
     )
     paid_at: date = Field(
@@ -2139,6 +2140,30 @@ class DebtPaymentCreate(DebtPaymentBase):
 class DebtPaymentPublic(DebtPaymentBase):
     id: uuid.UUID
     created_at: datetime
+
+
+class DebtPayment(DebtPaymentBase, table=True):
+    """Individual payment made toward a debt."""
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
+    debt_id: uuid.UUID = Field(
+        foreign_key="debt.id",
+        nullable=False,
+        ondelete="CASCADE",
+        index=True,
+        description="Parent debt; cascades on delete.",
+    )
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        description="When the payment was recorded (UTC).",
+    )
+    # Relationship back to debt
+    debt: "Debt" = Relationship(back_populates="payments")
 
 
 class DebtBase(SQLModel):
@@ -2208,38 +2233,13 @@ class Debt(SoftDeleteMixin, DebtBase, table=True):
     )
 
     # Relationship to payments
-    payments: list["DebtPayment"] = SQLMRelationship(back_populates="debt")
-
-
-class DebtPayment(DebtPaymentBase, table=True):
-    """Individual payment made toward a debt."""
-
-    id: uuid.UUID = Field(
-        default_factory=uuid.uuid4,
-        primary_key=True,
-        description="Primary key.",
-    )
-    debt_id: uuid.UUID = Field(
-        foreign_key="debt.id",
-        nullable=False,
-        ondelete="CASCADE",
-        index=True,
-        description="Parent debt; cascades on delete.",
-    )
-    created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
-        nullable=False,
-        description="When the payment was recorded (UTC).",
-    )
-    # Relationship back to debt
-    debt: "Debt" = SQLMRelationship(back_populates="payments")
+    payments: list["DebtPayment"] = Relationship(back_populates="debt")
 
 
 class DebtPublic(DebtBase):
     id: uuid.UUID
     contact_id: uuid.UUID
     created_at: datetime
-    deleted_at: datetime | None = None
     payments: list[DebtPaymentPublic] = []
     paid_amount: float | None = None  # computed field
 
