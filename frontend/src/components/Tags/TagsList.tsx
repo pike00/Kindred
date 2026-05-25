@@ -1,5 +1,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query"
-
+import { useState } from "react"
+import type { TagPublic } from "@/client"
 import { TagsService } from "@/client"
 import { DataTable } from "@/components/Common/DataTable"
 import { EmptyState } from "@/components/Common/EmptyState"
@@ -7,6 +8,7 @@ import { Tag } from "@/lib/icons"
 import { useSeedDemo } from "@/lib/seed"
 import { AddTagDialog } from "./AddTagDialog"
 import { columns } from "./columns"
+import { TagShareDialog } from "./TagShareDialog"
 
 export const TagsList = () => {
   const seedMutation = useSeedDemo()
@@ -15,6 +17,7 @@ export const TagsList = () => {
     queryKey: ["tags"],
     queryFn: () => TagsService.listTags(),
   })
+  const [selectedTag, setSelectedTag] = useState<TagPublic | null>(null)
 
   const tags = data?.data || []
 

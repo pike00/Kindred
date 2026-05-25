@@ -229,9 +229,7 @@ def test_delete_life_event_not_found(
     assert r.status_code == 404
 
 
-def test_life_event_isolation_between_users(
-    client: TestClient, db: Session
-) -> None:
+def test_life_event_isolation_between_users(client: TestClient, db: Session) -> None:
     from tests.utils.user import (
         authentication_token_from_email,
         create_random_user,
