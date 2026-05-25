@@ -120,7 +120,7 @@ services:
       retries: 5
 
   meilisearch:
-    image: getmeili/meilisearch:v1.42.1
+    image: getmeili/meilisearch:v1.43.1
     env_file: .env
     volumes:
       - crm-meili:/meili_data
@@ -142,6 +142,28 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+
+  whisper:
+    build:
+      context: ./whisper-service
+    env_file: .env
+    networks:
+      - kindred-internal-crm
+    dns:
+      - 172.20.2.253
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 volumes:
   crm-db:

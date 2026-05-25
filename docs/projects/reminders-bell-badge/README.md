@@ -1,10 +1,10 @@
 ---
 title: Reminders Bell and Badge
-status: active
+status: completed
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-05-06
-next_step: Wire "Log as interaction" from the popover into the FAB pre-populated with the reminder's contact_id.
+last_updated: 2026-05-15
+next_step: Released as v0.1.6. Log-as-interaction wiring (FAB pre-populated with contact_id) remains as a follow-up.
 ---
 
 # Reminders Bell and Badge
@@ -25,6 +25,12 @@ Persistent header bell icon with a badge showing the count of reminders due toda
 
 ## Session Log
 
+### 2026-05-15
+- Squash-merged `dirac/reminders-bell-badge` into main as commit `6fe926b`; tagged and released **v0.1.6**.
+- Resolved 4 conflict sections in `backend/app/api/routes/reminders.py`: kept HEAD's richer `list_due_reminders` (uses `RemindersDuePublic` with full contact object via `selectinload`-style join, vs branch's flat `RemindersWithContactPublic` with first/last_name strings); kept HEAD's flexible `snooze_reminder` signature (body + minutes + reason); kept HEAD's sentinel-based `dismiss_reminder` (sets `snoozed_until = 9999-12-31T23:59:59Z`, vs branch's `snoozed_until = now()` which the `/due` filter would re-include immediately).
+- Re-added `count: int` to `RemindersPublic` after the branch's squash dropped it — the dashboard at `_layout/index.tsx:127` reads `reminders?.count`.
+- Branch's `ReminderWithContactPublic` and `RemindersWithContactPublic` models auto-merged into `models.py` and remain there as dead code; the chosen `/due` implementation uses `RemindersDuePublic` instead. Acceptable for now.
+
 ### 2026-04-21
 - Project created.
 
@@ -41,6 +47,11 @@ Persistent header bell icon with a badge showing the count of reminders due toda
 - Deferred: "Log as interaction" — needs the FAB to accept a pre-populated contact_id and the bell needs context access. Left as a TODO in `ReminderBell.tsx` so the next pass can pick it up cleanly.
 
 ## Notes
+
+### 2026-05-15
+- **Decisions:** When two branches both add a "reminders due" response shape, prefer the richer one (full contact object) over the flatter one (concatenated name string). The flatter type is left in the registry as dead but harmless.
+- **Decisions:** Dismiss must use a far-future sentinel (`9999-12-31T23:59:59Z`), not `now()`, because the `/due` filter is `snoozed_until IS NULL OR snoozed_until <= now()` — `= now()` re-includes immediately.
+- **Accomplished:** v0.1.6 shipped, 262 backend tests green, GH release published.
 
 - **Live count refresh strategy**: Start with polling every 60s (simple, no server-side state). Consider SSE later if users find stale badges frustrating.
 - **Snooze writes**: Snooze button updates `Reminder.snoozed_until` to a future datetime; the endpoint filters `WHERE remind_at <= now() AND (snoozed_until IS NULL OR snoozed_until <= now())`.
