@@ -49,7 +49,7 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <Main items={items} />
-        <SmartLists />
+        Reward2§ <SmartLists />
       </SidebarContent>
       <SidebarFooter>
         <SidebarAppearance />

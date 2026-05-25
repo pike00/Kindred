@@ -1,12 +1,13 @@
 import { useSuspenseQuery } from "@tanstack/react-query"
 import { Link, useNavigate, useSearch } from "@tanstack/react-router"
-import { useCallback, useMemo, useState } from "react"
-import { toast } from "sonner"
+import { useMemo } from "react"
+
 import {
-  type BulkContactRequest,
   type ContactPublic,
   ContactsService,
+  SavedFiltersService,
 } from "@/client"
+import type { SavedFilterPublic } from "@/client/types.gen"
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
 import { EmptyState } from "@/components/Common/EmptyState"
 import { Button } from "@/components/ui/button"
@@ -36,7 +37,7 @@ import { cn } from "@/lib/utils"
 
 const PAGE_SIZE = 25
 
-import { AddContactDialog } from "./AddContactDialog"
+import { useState } from "react"
 
 function fullName(contact: ContactPublic): string {
   return (
@@ -185,11 +186,23 @@ export const ContactsList = () => {
   })
   const [isLoading, setIsLoading] = useState(false)
 
+  // Fetch saved filters to find active filter name
+  const { data: filtersData } = useSuspenseQuery({
+    queryKey: ["saved-filters"],
+    queryFn: () =>
+      SavedFiltersService.listSavedFilters().then((res) => res.data),
+  })
+
+  const activeFilterId = urlFilterId
+  const activeFilter = filtersData?.data?.find(
+    (f: SavedFilterPublic) => f.id === activeFilterId,
+  )
+
   const { data } = useSuspenseQuery({
     queryKey: ["contacts", activeFilterId],
     queryFn: () =>
       ContactsService.listContacts(
-        activeFilterId ? ({ savedFilterId: activeFilterId } as any) : {},
+        activeFilterId ? { saved_filter_id: activeFilterId as any } : {},
       ),
   })
 
@@ -447,7 +460,18 @@ export const ContactsList = () => {
           <p className="text-muted-foreground mt-1">
             {allContacts.length}{" "}
             {allContacts.length === 1 ? "person" : "people"}
-            {selectedCount > 0 && <> · {selectedCount} selected</>}
+            {activeFilter && (
+              <span className="text-primary">
+                · Filtered by: {activeFilter.name}
+                <button
+                  type="button"
+                  onClick={() => navigate({ search: search ? { search } : {} })}
+                  className="ml-2 text-xs underline"
+                >
+                  Clear filter
+                </button>
+              </span>
+            )}
           </p>
         </div>
         <div className="flex items-center gap-2">

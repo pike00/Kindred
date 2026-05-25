@@ -256,7 +256,7 @@ export function SmartLists() {
     }
   }
 
-  const filters = filtersData || []
+  const filters = filtersData?.data || []
 
   return (
     <>

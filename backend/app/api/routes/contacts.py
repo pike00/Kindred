@@ -24,7 +24,7 @@ from sqlmodel import col, func, select
 from app.api.deps import CurrentUser, SessionDep
 from app.core.config import settings as app_settings
 from app.crud import visible_contact_ids
-from app.household import get_household_members
+from app.filter_compiler import apply_filter_json
 from app.models import (
     Address,
     Contact,
@@ -39,7 +39,7 @@ from app.models import (
     JournalEntryContact,
     JournalEntryPublic,
     OverdueContactsPublic,
-    User,
+    SavedFilter,
 )
 from app.vcard import compute_vcard_hash
 
@@ -159,6 +159,7 @@ def list_contacts(
     include_deleted: bool = False,
     only_deleted: bool = False,
     ids: list[uuid.UUID] | None = Query(default=None),
+    saved_filter_id: uuid.UUID | None = None,
 ) -> Any:
     """List contacts with filtering."""
     if only_deleted:
@@ -226,6 +227,32 @@ def list_contacts(
         # Apply the filter_json to the statement
         statement = apply_filter_json(statement, saved_filter.filter_json)
 
+    # Apply saved filter if requested
+    if saved_filter_id is not None:
+        saved_filter = session.get(SavedFilter, saved_filter_id)
+        if not saved_filter:
+            raise HTTPException(status_code=404, detail="Saved filter not found")
+        # Check permissions: owner or shared via tag
+        if saved_filter.owner_id != current_user.id:
+            if saved_filter.tag_id is None:
+                raise HTTPException(status_code=403, detail="Not enough permissions")
+            # Check TagShare access
+            from sqlmodel import select as sql_select
+
+            from app.models import TagShare
+
+            share = session.exec(
+                sql_select(TagShare).where(
+                    TagShare.tag_id == saved_filter.tag_id,
+                    TagShare.grantee_id == current_user.id,
+                )
+            ).first()
+            if not share:
+                raise HTTPException(status_code=403, detail="Not enough permissions")
+        # Apply the filter_json to the statement
+        statement = apply_filter_json(statement, saved_filter.filter_json)
+
+    # Count (before pagination)
     count_statement = select(func.count()).select_from(statement.subquery())
     count = session.exec(count_statement).one()
 

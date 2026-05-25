@@ -1747,43 +1747,6 @@ export type SavedFilterUpdate = {
     tag_id?: (string | null);
 };
 
-/**
- * Search results grouped by type with total counts.
- */
-export type SearchResponse = {
-    results: Array<SearchResultItem>;
-    total: number;
-    query: string;
-};
-
-/**
- * A single search result with type discriminator and ranking info.
- */
-export type SearchResultItem = {
-    id: string;
-    type: string;
-    title: string;
-    snippet?: (string | null);
-    rank?: (number | null);
-    created_at?: (string | null);
-    updated_at?: (string | null);
-};
-
-export type SetupSubmit = {
-    token: string;
-    email: string;
-    password: string;
-    full_name?: (string | null);
-};
-
-/**
- * Preview counts for a single entity type.
- */
-export type SharePreviewEntity = {
-    entity_type: string;
-    count: number;
-};
-
 export type TagCreate = {
     /**
      * Tag name, 1-100 chars.
@@ -3104,65 +3067,31 @@ export type RemindersSnoozeReminderResponse = (ReminderPublic);
 
 export type RemindersSnoozeReminderResponse = (unknown);
 
-/**
- * Snooze history entry for a reminder.
- */
-export type SnoozeHistoryEntry = {
-    snoozed_at: string;
-    snoozed_until: string;
-    reason?: (string | null);
+export type SavedFiltersListSavedFiltersData = {
+    limit?: number;
+    skip?: number;
 };
 
-/**
- * Snooze stats per reminder.
- */
-export type SnoozeStatsEntry = {
-    reminder_id: string;
-    snooze_count: number;
+export type SavedFiltersListSavedFiltersResponse = (SavedFiltersPublic);
+
+export type SavedFiltersCreateSavedFilterRouteData = {
+    requestBody: SavedFilterCreate;
 };
 
-/**
- * Chronic snoozer entry.
- */
-export type ChronicSnoozerEntry = {
-    contact_id: (string | null);
-    reminder_id: string;
-    snooze_count: number;
+export type SavedFiltersCreateSavedFilterRouteResponse = (SavedFilterPublic);
+
+export type SavedFiltersUpdateSavedFilterRouteData = {
+    filterId: string;
+    requestBody: SavedFilterUpdate;
 };
 
-/**
- * Snooze history response.
- */
-export type RemindersGetSnoozeHistoryResponse = Array<SnoozeHistoryEntry>;
+export type SavedFiltersUpdateSavedFilterRouteResponse = (SavedFilterPublic);
 
-/**
- * Snooze stats response.
- */
-export type RemindersGetSnoozeStatsResponse = Array<SnoozeStatsEntry>;
+export type SavedFiltersDeleteSavedFilterRouteData = {
+    filterId: string;
+};
 
-/**
- * Chronic snoozers response.
- */
-export type RemindersGetChronicSnoozersResponse = Array<ChronicSnoozerEntry>;
-
-
-
-/**
- * Snooze history response.
- */
-export type RemindersGetSnoozeHistoryResponse = Array<SnoozeHistoryEntry>;
-
-/**
- * Snooze stats response.
- */
-export type RemindersGetSnoozeStatsResponse = Array<SnoozeStatsEntry>;
-
-/**
- * Chronic snoozers response.
- */
-export type RemindersGetChronicSnoozersResponse = Array<ChronicSnoozerEntry>;
-
-
+export type SavedFiltersDeleteSavedFilterRouteResponse = (unknown);
 
 export type TagsListTagsData = {
     limit?: number;

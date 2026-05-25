@@ -12,7 +12,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "001_add_saved_filter"
-down_revision: Union[str, None] = "add_debt_payment_table"
+down_revision: Union[str, None] = "add_do_not_contact_fields"
 branch_labels: Union[str, None] = None
 depends_on: Union[str, None] = None
 
