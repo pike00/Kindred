@@ -105,10 +105,7 @@ def list_interactions(
         .where(InteractionAttendee.contact_id.in_(visible_ids))  # type: ignore[union-attr]
         .where(Interaction.deleted_at == None)  # noqa: E711  # soft-delete filter
     )
-    # Default: exclude drafts; caller can override by passing is_draft=true or is_draft=false
-    if is_draft is None:
-        base = base.where(Interaction.is_draft == False)  # noqa: E712
-    else:
+    if is_draft is not None:
         base = base.where(Interaction.is_draft == is_draft)
     if contact_id is not None:
         base = base.where(InteractionAttendee.contact_id == contact_id)
@@ -242,7 +239,7 @@ def delete_interaction(
     for aid in attendee_ids:
         recompute_last_contacted_at(session=session, contact_id=aid)
     session.commit()
-    return Ok()
+    return {"ok": True}
 
 
 @router.post("/{interaction_id}/confirm", response_model=InteractionPublic)

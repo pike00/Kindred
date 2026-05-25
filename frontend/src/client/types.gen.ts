@@ -1129,6 +1129,14 @@ export type InteractionCreate = {
      */
     email_date?: (string | null);
     /**
+     * If True, this interaction is a draft and excluded from engagement metrics.
+     */
+    is_draft?: boolean;
+    /**
+     * Origin of the draft (voice_memo, email_suggestion, manual, import).
+     */
+    draft_source?: (InteractionDraftSource | null);
+    /**
      * Contacts that attended; must have at least one.
      */
     attendee_ids: Array<(string)>;
@@ -1160,26 +1168,8 @@ export type InteractionPublic = {
      * Length of the interaction in minutes.
      */
     duration_minutes?: (number | null);
-    /**
-     * RFC 2822 Message-ID for deduplication (EMAIL channel only).
-     */
-    message_id?: (string | null);
-    /**
-     * Email subject line (EMAIL channel only).
-     */
-    email_subject?: (string | null);
-    /**
-     * Email From header (EMAIL channel only).
-     */
-    email_from?: (string | null);
-    /**
-     * Email To header (EMAIL channel only).
-     */
-    email_to?: (string | null);
-    /**
-     * Email Date header (EMAIL channel only).
-     */
-    email_date?: (string | null);
+    is_draft?: boolean;
+    draft_source?: (InteractionDraftSource | null);
     id: string;
     attendees?: Array<InteractionAttendeeSummary>;
     created_at: string;
@@ -2766,6 +2756,12 @@ export type InteractionsDeleteInteractionData = {
 };
 
 export type InteractionsDeleteInteractionResponse = (Ok);
+
+export type InteractionsConfirmDraftData = {
+    interactionId: string;
+};
+
+export type InteractionsConfirmDraftResponse = (InteractionPublic);
 
 export type InteractionsConfirmDraftData = {
     interactionId: string;

@@ -3622,70 +3622,22 @@ export const InteractionCreateSchema = {
             title: 'Duration Minutes',
             description: 'Length of the interaction in minutes.'
         },
-        message_id: {
-            anyOf: [
-                {
-                    type: 'string',
-                    maxLength: 998
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Message Id',
-            description: 'RFC 2822 Message-ID for deduplication (EMAIL channel only).'
+        is_draft: {
+            type: 'boolean',
+            title: 'Is Draft',
+            description: 'If True, this interaction is a draft and excluded from engagement metrics.',
+            default: false
         },
-        email_subject: {
+        draft_source: {
             anyOf: [
                 {
-                    type: 'string',
-                    maxLength: 998
+                    '$ref': '#/components/schemas/InteractionDraftSource'
                 },
                 {
                     type: 'null'
                 }
             ],
-            title: 'Email Subject',
-            description: 'Email subject line (EMAIL channel only).'
-        },
-        email_from: {
-            anyOf: [
-                {
-                    type: 'string',
-                    maxLength: 2048
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Email From',
-            description: 'Email From header (EMAIL channel only).'
-        },
-        email_to: {
-            anyOf: [
-                {
-                    type: 'string',
-                    maxLength: 2048
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Email To',
-            description: 'Email To header (EMAIL channel only).'
-        },
-        email_date: {
-            anyOf: [
-                {
-                    type: 'string',
-                    format: 'date-time'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Email Date',
-            description: 'Email Date header (EMAIL channel only).'
+            description: 'Origin of the draft (voice_memo, email_suggestion, manual, import).'
         },
         attendee_ids: {
             items: {
@@ -3761,70 +3713,20 @@ export const InteractionPublicSchema = {
             title: 'Duration Minutes',
             description: 'Length of the interaction in minutes.'
         },
-        message_id: {
-            anyOf: [
-                {
-                    type: 'string',
-                    maxLength: 998
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Message Id',
-            description: 'RFC 2822 Message-ID for deduplication (EMAIL channel only).'
+        is_draft: {
+            type: 'boolean',
+            title: 'Is Draft',
+            default: false
         },
-        email_subject: {
+        draft_source: {
             anyOf: [
                 {
-                    type: 'string',
-                    maxLength: 998
+                    '$ref': '#/components/schemas/InteractionDraftSource'
                 },
                 {
                     type: 'null'
                 }
-            ],
-            title: 'Email Subject',
-            description: 'Email subject line (EMAIL channel only).'
-        },
-        email_from: {
-            anyOf: [
-                {
-                    type: 'string',
-                    maxLength: 2048
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Email From',
-            description: 'Email From header (EMAIL channel only).'
-        },
-        email_to: {
-            anyOf: [
-                {
-                    type: 'string',
-                    maxLength: 2048
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Email To',
-            description: 'Email To header (EMAIL channel only).'
-        },
-        email_date: {
-            anyOf: [
-                {
-                    type: 'string',
-                    format: 'date-time'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Email Date',
-            description: 'Email Date header (EMAIL channel only).'
+            ]
         },
         id: {
             type: 'string',
