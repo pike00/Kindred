@@ -256,6 +256,19 @@ function ContactDetailPage() {
               </Button>
               <EditContactDialog contact={contact} />
             </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  window.open(`/api/v1/contacts/${contactId}.pdf`, "_blank")
+                }}
+              >
+                <Download className="size-4 mr-2" />
+                Download PDF
+              </Button>
+              <EditContactDialog contact={contact} />
+            </div>
           </div>
           {contact.company && (
             <p className="text-lg text-muted-foreground">

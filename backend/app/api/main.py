@@ -8,7 +8,6 @@ from app.api.routes import (
     communication_preferences,
     contact_fields,
     contact_pdf,
-    contact_stage_events,
     contacts,
     contacts_kanban,
     custom_fields,

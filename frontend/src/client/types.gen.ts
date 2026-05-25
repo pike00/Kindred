@@ -2341,6 +2341,12 @@ export type ContactsListContactMentionsData = {
 
 export type ContactsGetContactHeatmapResponse = (ContactHeatmap);
 
+export type ContactsGetContactPdfData = {
+    contactId: string;
+};
+
+export type ContactsGetContactPdfResponse = (unknown);
+
 export type CustomFieldsListFieldDefinitionsResponse = (unknown);
 
 export type CustomFieldsCreateFieldDefinitionData = {
