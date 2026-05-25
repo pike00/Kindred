@@ -811,6 +811,72 @@ class AddressPublic(AddressBase):
 # ─── Relationship ────────────────────────────────────────────────────────────
 
 
+class InverseRelationshipMapBase(SQLModel):
+    relationship_type: str = Field(
+        max_length=100,
+        description="Forward relationship type (e.g. 'parent').",
+    )
+    inverse_type: str = Field(
+        max_length=100,
+        description="Inverse relationship type (e.g. 'child').",
+    )
+    is_symmetric: bool = Field(
+        default=False,
+        description="True when both sides use the same type (spouse<->spouse).",
+    )
+
+
+class InverseRelationshipMap(InverseRelationshipMapBase, table=True):
+    """Seed table mapping relationship types to their inverses.
+
+    This replaces the Python-only mapping in ``relationship_inverses.py``
+    so the database is the single source of truth and can be updated
+    at runtime without a code deploy.
+    """
+
+    __tablename__ = "inverse_relationship_map"
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        description="When the mapping row was inserted (UTC).",
+    )
+
+    __table_args__ = (
+        sa.UniqueConstraint(
+            "relationship_type", name="uq_inverse_map_relationship_type"
+        ),
+    )
+
+
+class InverseRelationshipMapPublic(InverseRelationshipMapBase):
+    id: uuid.UUID
+    created_at: datetime
+
+
+class InverseRelationshipMapsPublic(SQLModel):
+    data: list[InverseRelationshipMapPublic]
+    count: int
+
+
+class InverseRelationshipMapCreate(InverseRelationshipMapBase):
+    """Create schema for inverse relationship map."""
+
+    pass
+
+
+class InverseRelationshipMapUpdate(SQLModel):
+    """Update schema - all fields optional."""
+
+    inverse_type: str | None = Field(default=None, min_length=1, max_length=100)
+    is_symmetric: bool | None = None
+
+
 class RelationshipBase(SQLModel):
     relationship_type: str = Field(
         max_length=100,
@@ -875,6 +941,10 @@ class RelationshipPublic(RelationshipBase):
     contact_id: uuid.UUID
     related_contact_id: uuid.UUID
     inverse_id: uuid.UUID | None = None
+
+
+# ─── InverseRelationshipMap API routes ─────────────────────────────────────
+# (imported by app/api/routes/relationship_inverse_map.py)
 
 
 # ─── Pet ──────────────────────────────────────────────────────────────────────

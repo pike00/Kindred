@@ -13,7 +13,8 @@ migrate time so runtime behaviour can be changed without a code deploy.
 
 import uuid
 
-from sqlmodel import Session, select
+from sqlalchemy import select
+from sqlmodel import Session
 
 from app.models import InverseRelationshipMap
 
@@ -131,7 +132,7 @@ def infer_inverse(relationship_type: str) -> str | None:
     return ASYMMETRIC.get(key)
 
 
-def seed_inverse_map(session: Session, owner_id: uuid.UUID | None = None) -> int:  # noqa: ARG001
+def seed_inverse_map(session: Session, owner_id: uuid.UUID | None = None) -> int:
     """Populate ``inverse_relationship_map`` with the canonical pairs.
 
     Idempotent: existing rows are skipped based on ``relationship_type``.

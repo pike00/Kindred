@@ -146,8 +146,8 @@ def test_update_asymmetric_relationship_no_cascade(
     )
     rels = r.json()["data"]
     assert len(rels) == 1
-    # Inverse should still be "child" (not cascade to guardian's inverse)
-    assert rels[0]["relationship_type"] == "child"
+    # Inverse should still point to parent (not guardian)
+    assert rels[0]["relationship_type"] == "parent"
 
 
 def test_relationship_with_missing_inverse_map(

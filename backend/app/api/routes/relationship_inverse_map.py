@@ -14,15 +14,9 @@ from app.models import (
     InverseRelationshipMapsPublic,
     InverseRelationshipMapUpdate,
 )
-from app.relationship_inverses import (
-    get_inverse_from_db,
-    infer_inverse,
-    seed_inverse_map,
-)
+from app.relationship_inverses import get_inverse_from_db, infer_inverse, seed_inverse_map
 
-router = APIRouter(
-    prefix="/relationship-inverse-map", tags=["relationship-inverse-map"]
-)
+router = APIRouter(prefix="/relationship-inverse-map", tags=["relationship-inverse-map"])
 
 
 @router.get("/", response_model=InverseRelationshipMapsPublic)
@@ -54,8 +48,7 @@ def create_inverse_map(
 
     existing = session.exec(
         select(InverseRelationshipMap).where(
-            InverseRelationshipMap.relationship_type
-            == body.relationship_type.strip().lower()
+            InverseRelationshipMap.relationship_type == body.relationship_type.strip().lower()
         )
     ).first()
 
@@ -171,8 +164,4 @@ def lookup_inverse(
             "inverse_type": inv,
             "is_symmetric": inv == relationship_type.strip().lower(),
         }
-    return {
-        "relationship_type": relationship_type,
-        "inverse_type": None,
-        "is_symmetric": False,
-    }
+    return {"relationship_type": relationship_type, "inverse_type": None, "is_symmetric": False}
