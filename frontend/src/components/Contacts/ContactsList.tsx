@@ -172,24 +172,25 @@ function ContactRow({
   const extraTags = tags.length - visibleTags.length
 
   return (
-    <div className="group flex items-center gap-4 rounded-2xl border bg-card p-4 shadow-xs transition-all hover:-translate-y-px hover:border-primary/30 hover:shadow-sm">
-      <Checkbox
-        checked={selected}
-        onCheckedChange={() => onToggle(contact.id)}
-        className="shrink-0"
-        aria-label={`Select ${fullName(contact)}`}
-      />
-      <Link
-        to="/contacts/$contactId"
-        params={{ contactId: contact.id }}
-        className="flex flex-1 items-center gap-4 min-w-0"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <ContactAvatar contact={contact} size="md" />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-baseline gap-2">
-            <span className="font-display text-base font-semibold tracking-tight truncate">
-              {fullName(contact)}
+    <Link
+      to="/contacts/$contactId"
+      params={{ contactId: contact.id }}
+      className="group flex items-center gap-4 rounded-2xl border bg-card p-4 shadow-xs transition-all hover:-translate-y-px hover:border-primary/30 hover:shadow-sm"
+    >
+      <ContactAvatar contact={contact} size="md" />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-baseline gap-2">
+          <span className="font-display text-base font-semibold tracking-tight truncate">
+            {fullName(contact)}
+          </span>
+          {contact.pronouns && (
+            <span className="text-xs text-muted-foreground">
+              ({contact.pronouns})
+            </span>
+          )}
+          {titleLine(contact) && (
+            <span className="text-xs text-muted-foreground truncate hidden sm:inline">
+              · {titleLine(contact)}
             </span>
             {titleLine(contact) && (
               <span className="text-xs text-muted-foreground truncate hidden sm:inline">

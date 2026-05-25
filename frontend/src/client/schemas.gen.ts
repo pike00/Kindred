@@ -1447,12 +1447,6 @@ export const ContactCreateSchema = {
             title: 'Pronouns',
             description: "Contact's pronouns (free text, max 100 chars); nullable."
         },
-        auto_log_email: {
-            type: 'boolean',
-            title: 'Auto Log Email',
-            description: 'Enable automatic email log ingestion for this contact.',
-            default: false
-        },
         source: {
             '$ref': '#/components/schemas/ContactSource',
             description: 'Source system that created this contact.',
@@ -1993,12 +1987,6 @@ export const ContactPublicSchema = {
             title: 'Pronouns',
             description: "Contact's pronouns (free text, max 100 chars); nullable."
         },
-        auto_log_email: {
-            type: 'boolean',
-            title: 'Auto Log Email',
-            description: 'Enable automatic email log ingestion for this contact.',
-            default: false
-        },
         source: {
             '$ref': '#/components/schemas/ContactSource',
             description: 'Source system that created this contact.',
@@ -2417,17 +2405,7 @@ export const ContactUpdateSchema = {
             ],
             title: 'Stage'
         },
-        source: {
-            anyOf: [
-                {
-                    '$ref': '#/components/schemas/ContactSource'
-                },
-                {
-                    type: 'null'
-                }
-            ]
-        },
-        source_external_id: {
+        timezone: {
             anyOf: [
                 {
                     type: 'string'
@@ -2436,7 +2414,18 @@ export const ContactUpdateSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Source External Id'
+            title: 'Timezone'
+        },
+        pronouns: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Pronouns'
         },
         do_not_contact: {
             anyOf: [
@@ -6344,12 +6333,6 @@ export const OverdueContactPublicSchema = {
             ],
             title: 'Pronouns',
             description: "Contact's pronouns (free text, max 100 chars); nullable."
-        },
-        auto_log_email: {
-            type: 'boolean',
-            title: 'Auto Log Email',
-            description: 'Enable automatic email log ingestion for this contact.',
-            default: false
         },
         source: {
             '$ref': '#/components/schemas/ContactSource',

@@ -370,7 +370,15 @@ export type ContactCreate = {
      */
     stage?: (string | null);
     /**
-     * Source system that created this contact.
+     * IANA timezone string (e.g., America/New_York); nullable.
+     */
+    timezone?: (string | null);
+    /**
+     * Contact's pronouns (free text, max 100 chars); nullable.
+     */
+    pronouns?: (string | null);
+    /**
+     * Where this contact originated.
      */
     source?: ContactSource;
     /**
@@ -535,7 +543,15 @@ export type ContactPublic = {
      */
     stage?: (string | null);
     /**
-     * Source system that created this contact.
+     * IANA timezone string (e.g., America/New_York); nullable.
+     */
+    timezone?: (string | null);
+    /**
+     * Contact's pronouns (free text, max 100 chars); nullable.
+     */
+    pronouns?: (string | null);
+    /**
+     * Where this contact originated.
      */
     source?: ContactSource;
     /**
@@ -605,8 +621,8 @@ export type ContactUpdate = {
     deceased_at?: (string | null);
     contact_frequency_days?: (number | null);
     stage?: (string | null);
-    source?: (ContactSource | null);
-    source_external_id?: (string | null);
+    timezone?: (string | null);
+    pronouns?: (string | null);
     do_not_contact?: (boolean | null);
     do_not_contact_reason?: (string | null);
     tag_ids?: (Array<(string)> | null);
@@ -1767,7 +1783,15 @@ export type OverdueContactPublic = {
      */
     stage?: (string | null);
     /**
-     * Source system that created this contact.
+     * IANA timezone string (e.g., America/New_York); nullable.
+     */
+    timezone?: (string | null);
+    /**
+     * Contact's pronouns (free text, max 100 chars); nullable.
+     */
+    pronouns?: (string | null);
+    /**
+     * Where this contact originated.
      */
     source?: ContactSource;
     /**

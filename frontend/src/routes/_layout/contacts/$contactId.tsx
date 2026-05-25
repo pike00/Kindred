@@ -373,18 +373,30 @@ function ContactDetailPage() {
             </Card>
           )}
 
-          {/* Interaction Map */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin className="size-4" />
-                Interaction Locations
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <InteractionMap interactions={interactions} />
-            </CardContent>
-          </Card>
+          {/* Groups */}
+          {contact.groups && contact.groups.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  Groups
+                  <InfoHint>
+                    Named collections of people with a shared context, like
+                    "Family", "D and D Group", or "Work Team". Groups have a
+                    description; tags don't.
+                  </InfoHint>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-1.5">
+                  {contact.groups.map((group) => (
+                    <Badge key={group.id} variant="outline">
+                      {group.name}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <RelationshipsCard
             contactId={contactId}

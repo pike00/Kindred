@@ -742,7 +742,16 @@ class ContactBase(SQLModel):
         max_length=100,
         description="Kanban stage like Active, Dormant, Lost.",
     )
-    # Provenance
+    timezone: str | None = Field(
+        default=None,
+        max_length=255,
+        description="IANA timezone string (e.g., America/New_York); nullable.",
+    )
+    pronouns: str | None = Field(
+        default=None,
+        max_length=100,
+        description="Contact's pronouns (free text, max 100 chars); nullable.",
+    )
     source: ContactSource = Field(
         default=ContactSource.MANUAL,
         description="Source system that created this contact.",
@@ -776,8 +785,8 @@ class ContactUpdate(SQLModel):
     deceased_at: date | None = None
     contact_frequency_days: int | None = None
     stage: str | None = None
-    source: ContactSource | None = None
-    source_external_id: str | None = None
+    timezone: str | None = None
+    pronouns: str | None = None
     do_not_contact: bool | None = None
     do_not_contact_reason: str | None = None
     tag_ids: list[uuid.UUID] | None = None
