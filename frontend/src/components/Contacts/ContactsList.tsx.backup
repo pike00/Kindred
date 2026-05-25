@@ -1,0 +1,540 @@
+import { useSuspenseQuery } from "@tanstack/react-query"
+import { Link, useNavigate, useSearch } from "@tanstack/react-router"
+import { useMemo, useState, useCallback } from "react"
+
+import { type ContactPublic, ContactsService, type BulkContactRequest, type BulkContactResult } from "@/client"
+import { ContactAvatar } from "@/components/Common/ContactAvatar"
+import { EmptyState } from "@/components/Common/EmptyState"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Checkbox } from "@/components/ui/checkbox"
+import {
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Search,
+  Star,
+  Users,
+  CheckSquare,
+  Square,
+  Archive,
+  Tag,
+  Trash2,
+} from "@/lib/icons"
+import { cn } from "@/lib/utils"
+import { AddContactDialog } from "./AddContactDialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { toast } from "sonner"
+const PAGE_SIZE = 25
+
+// Bulk action types
+const BULK_ACTIONS = [
+  { id: "archive", label: "Archive", icon: Archive, color: "text-orange-600" },
+  { id: "unarchive", label: "Unarchive", icon: Archive, color: "text-green-600" },
+  { id: "favorite", label: "Add to Favorites", icon: Star, color: "text-yellow-600" },
+  { id: "unfavorite", label: "Remove from Favorites", icon: Star, color: "text-gray-600" },
+  { id: "delete", label: "Delete", icon: Trash2, color: "text-red-600" },
+]
+
+type BulkActionId = "archive" | "unarchive" | "favorite" | "unfavorite" | "delete"
+
+// Preview modal state
+interface PreviewModalState {
+  open: boolean
+  action: BulkActionId | null
+  count: number
+  contacts: ContactPublic[]
+}
+
+function fullName(contact: ContactPublic): string {
+  return (
+    [
+      contact.prefix,
+      contact.first_name,
+      contact.middle_name,
+      contact.last_name,
+      contact.suffix,
+    ]
+      .filter(Boolean)
+      .join(" ") || "Unnamed contact"
+  )
+}
+
+function titleLine(contact: ContactPublic): string {
+  if (contact.title && contact.company)
+    return `${contact.title} at ${contact.company}`
+  if (contact.title) return contact.title
+  if (contact.company) return contact.company
+  return ""
+}
+
+function matchesSearch(contact: ContactPublic, q: string): boolean {
+  if (!q) return true
+  const needle = q.toLowerCase()
+  const haystack = [
+    contact.first_name,
+    contact.last_name,
+    contact.middle_name,
+    contact.nickname,
+    contact.company,
+    contact.title,
+    ...(contact.tags?.map((t) => t.name) ?? []),
+    ...(contact.groups?.map((g) => g.name) ?? []),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase()
+  return haystack.includes(needle)
+}
+
+function daysSince(iso: string | null | undefined): number | null {
+  if (!iso) return null
+  return Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000)
+}
+
+function lastContactTone(days: number | null): string {
+  if (days == null) return "text-muted-foreground"
+  if (days >= 60) return "text-accent-rose-fg font-medium"
+  if (days >= 30) return "text-accent-amber-fg font-medium"
+  return "text-muted-foreground"
+}
+
+function ContactRow({
+  contact,
+  selected,
+  onToggle,
+}: {
+  contact: ContactPublic
+  selected: boolean
+  onToggle: (id: string) => void
+}) {
+  const days = daysSince(contact.last_contacted_at)
+  const tags = contact.tags ?? []
+  const visibleTags = tags.slice(0, 3)
+  const extraTags = tags.length - visibleTags.length
+
+  return (
+    <div
+      className="group flex items-center gap-4 rounded-2xl border bg-card p-4 shadow-xs transition-all hover:-translate-y-px hover:border-primary/30 hover:shadow-sm"
+    >
+      <Checkbox
+        checked={selected}
+        onCheckedChange={() => onToggle(contact.id)}
+        className="shrink-0"
+        aria-label={`Select ${fullName(contact)}`}
+      />
+      <Link
+        to="/contacts/$contactId"
+        params={{ contactId: contact.id }}
+        className="flex flex-1 items-center gap-4 min-w-0"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <ContactAvatar contact={contact} size="md" />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline gap-2">
+            <span className="font-display text-base font-semibold tracking-tight truncate">
+              {fullName(contact)}
+            </span>
+            {titleLine(contact) && (
+              <span className="text-xs text-muted-foreground truncate hidden sm:inline">
+                · {titleLine(contact)}
+              </span>
+            )}
+            {contact.is_favorite && (
+              <Star className="size-3.5 shrink-0 fill-amber-400 text-amber-400" />
+            )}
+          </div>
+          <div className="mt-1 flex items-center gap-2 text-xs">
+            <span
+              className={cn(
+                "inline-flex items-center gap-1",
+                lastContactTone(days),
+              )}
+            >
+              <Clock className="size-3" />
+              {days == null
+                ? "No interactions yet"
+                : `${days}d since last contact`}
+            </span>
+          </div>
+        </div>
+        <div className="hidden md:flex shrink-0 items-center gap-1.5">
+          {visibleTags.map((tag) => (
+            <Badge key={tag.id} variant="secondary" className="text-xs">
+              {tag.name}
+            </Badge>
+          ))}
+          {extraTags > 0 && (
+            <Badge variant="outline" className="text-xs">
+              +{extraTags}
+            </Badge>
+          )}
+        </div>
+      </Link>
+    </div>
+  )
+}
+
+export const ContactsList = () => {
+  const navigate = useNavigate({ from: "/contacts" })
+  const { search: urlSearch } = useSearch({ from: "/_layout/contacts/" })
+  const [search, setSearch] = useState(urlSearch ?? "")
+  const [pageIndex, setPageIndex] = useState(0)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [selectAllFiltered, setSelectAllFiltered] = useState(false)
+  const [previewModal, setPreviewModal] = useState<PreviewModalState>({
+    open: false,
+    action: null,
+    count: 0,
+    contacts: [],
+  })
+  const [isLoading, setIsLoading] = useState(false)
+
+  const { data } = useSuspenseQuery({
+    queryKey: ["contacts"],
+    queryFn: () => ContactsService.listContacts(),
+  })
+
+  const allContacts = useMemo(() => data?.data ?? [], [data?.data])
+  const filtered = useMemo(
+    () => allContacts.filter((c) => matchesSearch(c, search)),
+    [allContacts, search],
+  )
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const safePageIndex = Math.min(pageIndex, pageCount - 1)
+  const paged = filtered.slice(
+    safePageIndex * PAGE_SIZE,
+    (safePageIndex + 1) * PAGE_SIZE,
+  )
+
+  const selectedCount = selectedIds.size
+  const isAllSelected = paged.length > 0 && paged.every((c) => selectedIds.has(c.id))
+  const isSomeSelected = paged.some((c) => selectedIds.has(c.id))
+
+  const handleToggleAll = useCallback(() => {
+    if (isAllSelected) {
+      // Deselect all on current page
+      const newSelected = new Set(selectedIds)
+      paged.forEach((c) => newSelected.delete(c.id))
+      setSelectedIds(newSelected)
+    } else {
+      // Select all on current page
+      const newSelected = new Set(selectedIds)
+      paged.forEach((c) => newSelected.add(c.id))
+      setSelectedIds(newSelected)
+    }
+  }, [paged, selectedIds, isAllSelected])
+
+  const handleToggle = useCallback((id: string) => {
+    const newSelected = new Set(selectedIds)
+    if (newSelected.has(id)) {
+      newSelected.delete(id)
+    } else {
+      newSelected.add(id)
+    }
+    setSelectedIds(newSelected)
+  }, [selectedIds])
+
+  const handleSelectAllFiltered = useCallback(async () => {
+    if (selectAllFiltered) {
+      setSelectedIds(new Set())
+      setSelectAllFiltered(false)
+    } else {
+      // Preview how many contacts would be selected
+      try {
+        const result = await ContactsService.previewBulkContacts({
+          selectAllFiltered: true,
+          search: search || undefined,
+        })
+        setPreviewModal({
+          open: true,
+          action: null,
+          count: result.count ?? 0,
+          contacts: result.data ?? [],
+        })
+        setSelectAllFiltered(true)
+      } catch (error) {
+        toast.error("Failed to preview contacts")
+      }
+    }
+  }, [search, selectAllFiltered])
+
+  const handleBulkAction = useCallback(async (actionId: BulkActionId) => {
+    if (selectedCount === 0 && !selectAllFiltered) {
+      toast.error("No contacts selected")
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      const operations: BulkContactRequest["operations"] = {}
+
+      switch (actionId) {
+        case "archive":
+          operations.setIsArchived = true
+          break
+        case "unarchive":
+          operations.setIsArchived = false
+          break
+        case "favorite":
+          operations.setIsFavorite = true
+          break
+        case "unfavorite":
+          operations.setIsFavorite = false
+          break
+        case "delete":
+          operations.setIsArchived = true
+          break
+      }
+
+      const body: BulkContactRequest = {
+        operations,
+        selectAllFiltered: selectAllFiltered || undefined,
+        contactIds: selectAllFiltered ? undefined : Array.from(selectedIds),
+        filters: selectAllFiltered ? {
+          search: search || undefined,
+        } : undefined,
+      }
+
+      const result = await ContactsService.bulkUpdateContacts({ requestBody: body })
+
+      toast.success(`Updated ${result.updatedCount} contacts`)
+      if (result.failedIds && result.failedIds.length > 0) {
+        toast.error(`Failed to update ${result.failedIds.length} contacts`)
+      }
+
+      // Clear selection and refresh
+      setSelectedIds(new Set())
+      setSelectAllFiltered(false)
+      // Refetch contacts
+      // Note: In production, you'd invalidate the query
+    } catch (error) {
+      toast.error("Bulk operation failed")
+    } finally {
+      setIsLoading(false)
+      setPreviewModal({ open: false, action: null, count: 0, contacts: [] })
+    }
+  }, [selectedCount, selectAllFiltered, selectedIds, search])
+
+  const handlePreviewAction = useCallback((actionId: BulkActionId) => {
+    setPreviewModal((prev) => ({ ...prev, open: true, action: actionId }))
+  }, [])
+
+  const handleConfirmAction = useCallback(() => {
+    if (previewModal.action) {
+      handleBulkAction(previewModal.action)
+    }
+  }, [previewModal.action, handleBulkAction])
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display text-4xl font-bold tracking-tight">
+            Contacts
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            {allContacts.length}{" "}
+            {allContacts.length === 1 ? "person" : "people"}
+            {selectedCount > 0 && (
+              <> · {selectedCount} selected</>
+            )}
+          </p>
+        </div>
+        <AddContactDialog />
+      </div>
+
+      {/* Bulk Action Bar */}
+      {selectedCount > 0 || selectAllFiltered ? (
+        <div className="flex items-center gap-2 p-4 bg-muted/50 rounded-2xl border">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSelectAllFiltered}
+          >
+            {selectAllFiltered ? (
+              <>Deselect All ({previewModal.count})</>
+            ) : (
+              <>Select All Filtered</>
+            )}
+          </Button>
+          <div className="h-6 w-px bg-border" />
+          {BULK_ACTIONS.map((action) => (
+            <Button
+              key={action.id}
+              variant="ghost"
+              size="sm"
+              onClick={() => handlePreviewAction(action.id as BulkActionId)}
+              className={action.color}
+            >
+              <action.icon className="size-4 mr-2" />
+              {action.label}
+            </Button>
+          ))}
+          <div className="flex-1" />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setSelectedIds(new Set())
+              setSelectAllFiltered(false)
+            }}
+          >
+            Clear Selection
+          </Button>
+        </div>
+      ) : null}
+
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={search}
+          onChange={(e) => {
+            const next = e.target.value
+            setSearch(next)
+            setPageIndex(0)
+            navigate({
+              search: next ? { search: next } : {},
+              replace: true,
+            })
+          }}
+          placeholder="Search by name, company, or tag..."
+          className="pl-10"
+        />
+      </div>
+
+      {/* Select all checkbox for current page */}
+      {filtered.length > 0 && (
+        <div className="flex items-center gap-2 px-4">
+          <Checkbox
+            checked={isAllSelected}
+            indeterminate={isSomeSelected && !isAllSelected}
+            onCheckedChange={handleToggleAll}
+            aria-label="Select all on this page"
+          />
+          <span className="text-sm text-muted-foreground">
+            {isAllSelected ? "All on page selected" : "Select all on this page"}
+          </span>
+        </div>
+      )}
+
+      {paged.length > 0 ? (
+        <div className="space-y-2">
+          {paged.map((contact) => (
+            <ContactRow
+              key={contact.id}
+              contact={contact}
+              selected={selectedIds.has(contact.id)}
+              onToggle={handleToggle}
+            />
+          ))}
+        </div>
+      ) : search ? (
+        <EmptyState
+          icon={Search}
+          title="No matches"
+          description={`Nothing matches "${search}".`}
+        />
+      ) : (
+        <EmptyState
+          icon={Users}
+          title="No contacts yet"
+          description="Add your first contact to start tracking relationships."
+          action={<AddContactDialog />}
+        />
+      )}
+
+      {pageCount > 1 && (
+        <div className="flex items-center justify-between gap-4 pt-2">
+          <p className="text-xs text-muted-foreground">
+            Page {safePageIndex + 1} of {pageCount} · {filtered.length} result
+            {filtered.length === 1 ? "" : "s"}
+          </p>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="icon-sm"
+              onClick={() => setPageIndex((i) => Math.max(0, i - 1))}
+              disabled={safePageIndex === 0}
+              aria-label="Previous page"
+            >
+              <ChevronLeft className="size-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon-sm"
+              onClick={() =>
+                setPageIndex((i) => Math.min(pageCount - 1, i + 1))
+              }
+              disabled={safePageIndex >= pageCount - 1}
+              aria-label="Next page"
+            >
+              <ChevronRight className="size-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Preview/Confirm Modal */}
+      <AlertDialog
+        open={previewModal.open}
+        onOpenChange={(open) =>
+          setPreviewModal((prev) => ({ ...prev, open }))
+        }
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Confirm Bulk Action
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {previewModal.action === "delete" ? (
+                <>
+                  This will archive <strong>{previewModal.count || selectedCount}</strong> contacts.
+                  This action cannot be undone.
+                </>
+              ) : (
+                <>
+                  This will apply the "<strong>
+                  {BULK_ACTIONS.find((a) => a.id === previewModal.action)?.label}
+                  </strong>" action to <strong>{previewModal.count || selectedCount}</strong> contacts.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() =>
+                setPreviewModal({ open: false, action: null, count: 0, contacts: [] })
+              }
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmAction}
+              disabled={isLoading}
+              className={
+                previewModal.action === "delete"
+                  ? "bg-red-600 hover:bg-red-700"
+                  : undefined
+              }
+            >
+              {isLoading ? "Processing..." : "Confirm"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  )
+  )
+}

@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kindred — Self-hosted personal CRM</title>
+  <meta name="description" content="Track your relationships, interactions, reminders, and journals. Open-source and self-hosted — your data stays on your server." />
+  <meta property="og:title" content="Kindred — Self-hosted personal CRM" />
+  <meta property="og:description" content="Remember everyone who matters. Track contacts, interactions, reminders, and journals. Your data, your server." />
+  <meta property="og:image" content="https://raw.githubusercontent.com/pike00/Kindred/main/docs/screenshots/dashboard.png" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    .screenshot { transition: transform 0.3s ease, box-shadow 0.3s ease; cursor: zoom-in; }
+    .screenshot:hover { transform: translateY(-4px); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15); }
+
+    #lightbox { display: none; }
+    #lightbox.open { display: flex; }
+    #lightbox img { max-width: 90vw; max-height: 88vh; border-radius: 12px; box-shadow: 0 40px 80px rgba(0,0,0,0.6); }
+  </style>
+</head>
+<body class="bg-white text-gray-900 antialiased">
+
+  <!-- Nav -->
+  <header class="sticky top-0 z-50 bg-white/90 backdrop-blur-sm border-b border-gray-100">
+    <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center h-16 gap-6">
+      <a href="/" class="flex items-center gap-2 font-semibold text-gray-900 text-lg shrink-0">
+        <svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        Kindred
+      </a>
+      <div class="hidden sm:flex items-center gap-6 ml-4">
+        <a href="#features" class="text-sm text-gray-500 hover:text-gray-900 transition-colors">Features</a>
+        <a href="#screenshots" class="text-sm text-gray-500 hover:text-gray-900 transition-colors">Screenshots</a>
+        <a href="#self-host" class="text-sm text-gray-500 hover:text-gray-900 transition-colors">Self-host</a>
+      </div>
+      <div class="ml-auto flex items-center gap-3">
+        <a href="https://github.com/pike00/Kindred" target="_blank" rel="noopener" class="text-gray-500 hover:text-gray-900 transition-colors" aria-label="GitHub">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 32 32">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M16 0C7.16 0 0 7.16 0 16C0 23.08 4.58 29.06 10.94 31.18C11.74 31.32 12.04 30.84 12.04 30.42C12.04 30.04 12.02 28.78 12.02 27.44C8 28.18 6.96 26.46 6.64 25.56C6.46 25.1 5.68 23.68 5 23.3C4.44 23 3.64 22.26 4.98 22.24C6.24 22.22 7.14 23.4 7.44 23.88C8.88 26.3 11.18 25.62 12.1 25.2C12.24 24.16 12.66 23.46 13.12 23.06C9.56 22.66 5.84 21.28 5.84 15.16C5.84 13.42 6.46 11.98 7.48 10.86C7.32 10.46 6.76 8.82 7.64 6.62C7.64 6.62 8.98 6.2 12.04 8.26C13.32 7.9 14.68 7.72 16.04 7.72C17.4 7.72 18.76 7.9 20.04 8.26C23.1 6.18 24.44 6.62 24.44 6.62C25.32 8.82 24.76 10.46 24.6 10.86C25.62 11.98 26.24 13.4 26.24 15.16C26.24 21.3 22.5 22.66 18.94 23.06C19.52 23.56 20.02 24.52 20.02 26.02C20.02 28.16 20 29.88 20 30.42C20 30.84 20.3 31.34 21.1 31.18C27.42 29.06 32 23.06 32 16C32 7.16 24.84 0 16 0V0Z"/>
+          </svg>
+        </a>
+        <a href="https://github.com/pike00/Kindred#running-the-stack" target="_blank" rel="noopener"
+           class="text-sm bg-gray-900 text-white px-4 py-2 rounded-full hover:bg-gray-700 transition-colors font-medium">
+          Self-host &rarr;
+        </a>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Hero -->
+  <section class="relative pt-20 pb-16 px-4 sm:px-6 lg:px-8 text-center overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-b from-amber-50/70 via-white to-white pointer-events-none"></div>
+    <div class="relative max-w-4xl mx-auto">
+      <div class="inline-flex items-center gap-2 bg-amber-100 text-amber-800 text-xs font-semibold px-3 py-1.5 rounded-full mb-8">
+        <span class="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
+        Source-available &middot; Self-hosted &middot; Elastic License 2.0
+      </div>
+      <h1 class="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-gray-900 leading-[1.1]">
+        Remember everyone<br class="hidden sm:block" /> who matters.
+      </h1>
+      <p class="mt-6 text-lg sm:text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed">
+        Kindred is a self-hosted personal CRM for tracking the people in your life &mdash; contacts, interactions, reminders, journals, gifts, and more. Your data stays on your server, always.
+      </p>
+      <div class="mt-10 flex items-center justify-center gap-3 flex-wrap">
+        <a href="https://github.com/pike00/Kindred" target="_blank" rel="noopener"
+           class="inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-full text-sm font-semibold hover:bg-gray-700 transition-colors shadow-sm">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 32 32">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M16 0C7.16 0 0 7.16 0 16C0 23.08 4.58 29.06 10.94 31.18C11.74 31.32 12.04 30.84 12.04 30.42C12.04 30.04 12.02 28.78 12.02 27.44C8 28.18 6.96 26.46 6.64 25.56C6.46 25.1 5.68 23.68 5 23.3C4.44 23 3.64 22.26 4.98 22.24C6.24 22.22 7.14 23.4 7.44 23.88C8.88 26.3 11.18 25.62 12.1 25.2C12.24 24.16 12.66 23.46 13.12 23.06C9.56 22.66 5.84 21.28 5.84 15.16C5.84 13.42 6.46 11.98 7.48 10.86C7.32 10.46 6.76 8.82 7.64 6.62C7.64 6.62 8.98 6.2 12.04 8.26C13.32 7.9 14.68 7.72 16.04 7.72C17.4 7.72 18.76 7.9 20.04 8.26C23.1 6.18 24.44 6.62 24.44 6.62C25.32 8.82 24.76 10.46 24.6 10.86C25.62 11.98 26.24 13.4 26.24 15.16C26.24 21.3 22.5 22.66 18.94 23.06C19.52 23.56 20.02 24.52 20.02 26.02C20.02 28.16 20 29.88 20 30.42C20 30.84 20.3 31.34 21.1 31.18C27.42 29.06 32 23.06 32 16C32 7.16 24.84 0 16 0V0Z"/>
+          </svg>
+          View on GitHub
+        </a>
+        <a href="#features"
+           class="inline-flex items-center gap-2 border border-gray-200 text-gray-700 px-6 py-3 rounded-full text-sm font-semibold hover:bg-gray-50 transition-colors">
+          See features &darr;
+        </a>
+      </div>
+
+      <!-- GitHub live counts -->
+      <div class="mt-8 flex items-center justify-center gap-3 flex-wrap">
+        <a class="github-button" href="https://github.com/pike00/Kindred" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star pike00/Kindred on GitHub">Star</a>
+        <a class="github-button" href="https://github.com/pike00/Kindred/fork" data-icon="octicon-repo-forked" data-size="large" data-show-count="true" aria-label="Fork pike00/Kindred on GitHub">Fork</a>
+      </div>
+
+      <!-- Quick stats row -->
+      <div class="mt-8 flex items-center justify-center gap-8 flex-wrap text-sm text-gray-500">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-green-400"></span>
+          FastAPI + React
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-blue-400"></span>
+          PostgreSQL + Meilisearch
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+          Docker Compose deploy
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+          CardDAV sync
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Hero screenshot -->
+  <section class="py-8 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-5xl mx-auto">
+      <div class="screenshot rounded-2xl overflow-hidden border border-gray-100 shadow-xl">
+        <img
+          src="https://raw.githubusercontent.com/pike00/Kindred/main/docs/screenshots/dashboard.png"
+          alt="Kindred dashboard showing losing-touch alerts and recent interactions"
+          class="w-full block"
+          loading="eager"
+        />
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section id="features" class="py-24 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">
+          Everything for personal relationships
+        </h2>
+        <p class="mt-4 text-lg text-gray-500 max-w-xl mx-auto">
+          Built for nurturing the people in your life, not managing a sales pipeline.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+
+        <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+          <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center mb-4">
+            <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+          </div>
+          <h3 class="font-semibold text-gray-900 text-base mb-2">Smart Dashboard</h3>
+          <p class="text-sm text-gray-500 leading-relaxed">
+            See who you're losing touch with before it's too late. Birthday alerts, recent interaction history, and "stay in touch" nudges surface the right people at the right time.
+          </p>
+        </div>
+
+        <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+          <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center mb-4">
+            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </div>
+          <h3 class="font-semibold text-gray-900 text-base mb-2">Rich Contact Profiles</h3>
+          <p class="text-sm text-gray-500 leading-relaxed">
+            Full contact details with birthdays, company, social links, relationships, and custom fields. Tag and group contacts any way you want. Archive instead of delete.
+          </p>
+        </div>
+
+        <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+          <div class="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center mb-4">
+            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+            </svg>
+          </div>
+          <h3 class="font-semibold text-gray-900 text-base mb-2">Interaction Log</h3>
+          <p class="text-sm text-gray-500 leading-relaxed">
+            Log calls, texts, emails, and in-person meetings with notes and timestamps. Every conversation is searchable. See a full timeline on each contact.
+          </p>
+        </div>
+
+        <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+          <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center mb-4">
+            <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+          </div>
+          <h3 class="font-semibold text-gray-900 text-base mb-2">Reminders &amp; Calendar</h3>
+          <p class="text-sm text-gray-500 leading-relaxed">
+            Set date-based reminders linked to specific contacts. Export birthdays and life events as an ICS feed &mdash; subscribe directly in Apple Calendar, Google Calendar, or Outlook.
+          </p>
+        </div>
+
+        <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+          <div class="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center mb-4">
+            <svg class="w-5 h-5 text-rose-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+          </div>
+          <h3 class="font-semibold text-gray-900 text-base mb-2">Private Journal</h3>
+          <p class="text-sm text-gray-500 leading-relaxed">
+            Freeform daily journal entries with optional mood tracking. Write about your day, your thoughts, or anything worth remembering &mdash; completely private to you.
+          </p>
+        </div>
+
+        <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+          <div class="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center mb-4">
+            <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <h3 class="font-semibold text-gray-900 text-base mb-2">Full-text Search</h3>
+          <p class="text-sm text-gray-500 leading-relaxed">
+            Hit <kbd class="px-1.5 py-0.5 text-xs font-mono bg-gray-100 border border-gray-200 rounded">&#8984; K</kbd> for the command palette. Meilisearch powers instant search across contacts, interactions, and journal entries.
+          </p>
+        </div>
+
+        <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+          <div class="w-10 h-10 rounded-xl bg-yellow-100 flex items-center justify-center mb-4">
+            <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+            </svg>
+          </div>
+          <h3 class="font-semibold text-gray-900 text-base mb-2">Gifts &amp; Debts</h3>
+          <p class="text-sm text-gray-500 leading-relaxed">
+            Track gifts given and received per contact so you never forget what someone means to you. Log money owed in both directions and mark debts settled.
+          </p>
+        </div>
+
+        <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+          <div class="w-10 h-10 rounded-xl bg-teal-100 flex items-center justify-center mb-4">
+            <svg class="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            </svg>
+          </div>
+          <h3 class="font-semibold text-gray-900 text-base mb-2">CardDAV Sync</h3>
+          <p class="text-sm text-gray-500 leading-relaxed">
+            Built-in Radicale CardDAV server lets you sync contacts directly to iOS, macOS, and Android. Your Kindred contacts become your phone's address book.
+          </p>
+        </div>
+
+        <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+          <div class="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center mb-4">
+            <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+            </svg>
+          </div>
+          <h3 class="font-semibold text-gray-900 text-base mb-2">Tags &amp; Groups</h3>
+          <p class="text-sm text-gray-500 leading-relaxed">
+            Organize contacts with flexible tags and groups. Filter your entire list instantly. Create segments &mdash; colleagues, family, close friends, old classmates.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Screenshots -->
+  <section id="screenshots" class="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">See it in action</h2>
+        <p class="mt-4 text-lg text-gray-500">Real screenshots from a seeded demo instance.</p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="space-y-2">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest pl-1">Contacts</p>
+          <div class="screenshot rounded-xl overflow-hidden border border-gray-100 shadow-md">
+            <img src="https://raw.githubusercontent.com/pike00/Kindred/main/docs/screenshots/contacts.png"
+                 alt="Contacts list with last-contact decay, tags, and company" class="w-full block" loading="lazy" />
+          </div>
+        </div>
+        <div class="space-y-2">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest pl-1">Contact detail</p>
+          <div class="screenshot rounded-xl overflow-hidden border border-gray-100 shadow-md">
+            <img src="https://raw.githubusercontent.com/pike00/Kindred/main/docs/screenshots/contact-detail.png"
+                 alt="Contact detail with interaction timeline and relationships sidebar" class="w-full block" loading="lazy" />
+          </div>
+        </div>
+        <div class="space-y-2">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest pl-1">Interactions</p>
+          <div class="screenshot rounded-xl overflow-hidden border border-gray-100 shadow-md">
+            <img src="https://raw.githubusercontent.com/pike00/Kindred/main/docs/screenshots/interactions.png"
+                 alt="Interaction feed grouped by date with channel badges" class="w-full block" loading="lazy" />
+          </div>
+        </div>
+        <div class="space-y-2">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest pl-1">Journal</p>
+          <div class="screenshot rounded-xl overflow-hidden border border-gray-100 shadow-md">
+            <img src="https://raw.githubusercontent.com/pike00/Kindred/main/docs/screenshots/journal.png"
+                 alt="Journal entries with mood and freeform text" class="w-full block" loading="lazy" />
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
+        <div class="space-y-2">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest pl-1">Reminders</p>
+          <div class="screenshot rounded-xl overflow-hidden border border-gray-100 shadow-md">
+            <img src="https://raw.githubusercontent.com/pike00/Kindred/main/docs/screenshots/reminders.png"
+                 alt="Reminders list linked to contacts" class="w-full block" loading="lazy" />
+          </div>
+        </div>
+        <div class="space-y-2">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest pl-1">Calendar</p>
+          <div class="screenshot rounded-xl overflow-hidden border border-gray-100 shadow-md">
+            <img src="https://raw.githubusercontent.com/pike00/Kindred/main/docs/screenshots/calendar.png"
+                 alt="Calendar view with birthdays and life events" class="w-full block" loading="lazy" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Self-host -->
+  <section id="self-host" class="py-24 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-5xl mx-auto">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div>
+          <div class="inline-flex items-center gap-2 bg-gray-100 text-gray-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
+            </svg>
+            Self-hosted
+          </div>
+          <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight leading-tight">
+            Your data.<br/>Your server.
+          </h2>
+          <p class="mt-5 text-gray-500 leading-relaxed">
+            Kindred runs entirely on infrastructure you control. No SaaS subscriptions, no data sharing, no vendor lock-in. Deploy with Docker Compose in minutes on any server or homelab.
+          </p>
+          <p class="mt-4 text-gray-500 leading-relaxed">
+            Secrets are encrypted at rest with <a href="https://getsops.io/" class="underline hover:text-gray-900" target="_blank" rel="noopener">sops</a> + age. Postgres backups, Traefik TLS termination, and an arq background worker are all included.
+          </p>
+
+          <div class="mt-8 flex flex-wrap gap-2">
+            <span class="text-xs font-medium bg-green-50 text-green-700 border border-green-100 px-3 py-1.5 rounded-full">FastAPI</span>
+            <span class="text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100 px-3 py-1.5 rounded-full">React 19</span>
+            <span class="text-xs font-medium bg-sky-50 text-sky-700 border border-sky-100 px-3 py-1.5 rounded-full">PostgreSQL 18</span>
+            <span class="text-xs font-medium bg-orange-50 text-orange-700 border border-orange-100 px-3 py-1.5 rounded-full">Meilisearch</span>
+            <span class="text-xs font-medium bg-red-50 text-red-700 border border-red-100 px-3 py-1.5 rounded-full">Redis + arq</span>
+            <span class="text-xs font-medium bg-gray-50 text-gray-700 border border-gray-200 px-3 py-1.5 rounded-full">Docker Compose</span>
+            <span class="text-xs font-medium bg-violet-50 text-violet-700 border border-violet-100 px-3 py-1.5 rounded-full">Traefik</span>
+            <span class="text-xs font-medium bg-teal-50 text-teal-700 border border-teal-100 px-3 py-1.5 rounded-full">Radicale CardDAV</span>
+          </div>
+
+          <div class="mt-8 flex gap-3 flex-wrap items-center">
+            <a class="github-button" href="https://github.com/pike00/Kindred" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star pike00/Kindred on GitHub">Star</a>
+            <a class="github-button" href="https://github.com/pike00/Kindred/fork" data-icon="octicon-repo-forked" data-size="large" data-show-count="true" aria-label="Fork pike00/Kindred on GitHub">Fork</a>
+            <a href="https://github.com/pike00/Kindred#running-the-stack" target="_blank" rel="noopener"
+               class="inline-flex items-center gap-2 border border-gray-200 text-gray-700 px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-gray-50 transition-colors">
+              Read the docs &rarr;
+            </a>
+          </div>
+        </div>
+
+        <!-- Code block -->
+        <div class="rounded-2xl bg-gray-950 text-gray-100 p-6 font-mono text-sm leading-loose overflow-auto">
+          <p class="text-gray-500 text-xs mb-4 select-none"># Get started in minutes</p>
+          <p><span class="text-green-400">git</span> clone https://github.com/pike00/Kindred</p>
+          <p><span class="text-blue-400">cd</span> Kindred</p>
+          <p class="mt-3 text-gray-500"># Copy and fill in your secrets</p>
+          <p><span class="text-green-400">cp</span> .env.example .env</p>
+          <p class="mt-3 text-gray-500"># Bring up the full stack</p>
+          <p><span class="text-green-400">docker</span> compose up -d</p>
+          <p class="mt-3 text-gray-500"># Create the first superuser</p>
+          <p><span class="text-green-400">docker</span> compose exec backend \</p>
+          <p class="pl-4">python -m app.initial_data</p>
+          <p class="mt-4 text-amber-400">&#9679; Kindred running at localhost:8000</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA banner -->
+  <section class="py-20 px-4 sm:px-6 lg:px-8 bg-gray-950 text-white text-center">
+    <div class="max-w-2xl mx-auto">
+      <h2 class="text-3xl sm:text-4xl font-bold tracking-tight">Stay close to the people who matter.</h2>
+      <p class="mt-4 text-gray-400 text-lg">
+        Source-available under the Elastic License 2.0, running entirely on your own infrastructure.
+      </p>
+      <div class="mt-8 flex items-center justify-center gap-4 flex-wrap">
+        <a href="https://github.com/pike00/Kindred" target="_blank" rel="noopener"
+           class="inline-flex items-center gap-2 bg-white text-gray-900 px-6 py-3 rounded-full text-sm font-semibold hover:bg-gray-100 transition-colors">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 32 32">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M16 0C7.16 0 0 7.16 0 16C0 23.08 4.58 29.06 10.94 31.18C11.74 31.32 12.04 30.84 12.04 30.42C12.04 30.04 12.02 28.78 12.02 27.44C8 28.18 6.96 26.46 6.64 25.56C6.46 25.1 5.68 23.68 5 23.3C4.44 23 3.64 22.26 4.98 22.24C6.24 22.22 7.14 23.4 7.44 23.88C8.88 26.3 11.18 25.62 12.1 25.2C12.24 24.16 12.66 23.46 13.12 23.06C9.56 22.66 5.84 21.28 5.84 15.16C5.84 13.42 6.46 11.98 7.48 10.86C7.32 10.46 6.76 8.82 7.64 6.62C7.64 6.62 8.98 6.2 12.04 8.26C13.32 7.9 14.68 7.72 16.04 7.72C17.4 7.72 18.76 7.9 20.04 8.26C23.1 6.18 24.44 6.62 24.44 6.62C25.32 8.82 24.76 10.46 24.6 10.86C25.62 11.98 26.24 13.4 26.24 15.16C26.24 21.3 22.5 22.66 18.94 23.06C19.52 23.56 20.02 24.52 20.02 26.02C20.02 28.16 20 29.88 20 30.42C20 30.84 20.3 31.34 21.1 31.18C27.42 29.06 32 23.06 32 16C32 7.16 24.84 0 16 0V0Z"/>
+          </svg>
+          View on GitHub
+        </a>
+        <a class="github-button" href="https://github.com/pike00/Kindred" data-color-scheme="no-preference: dark; light: dark; dark: dark;" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star pike00/Kindred on GitHub">Star</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="py-10 px-4 sm:px-6 lg:px-8 border-t border-gray-100">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
+      <div class="flex items-center gap-2">
+        <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        <span class="font-medium text-gray-900">Kindred</span>
+        &mdash; Elastic License 2.0
+      </div>
+      <div class="flex items-center gap-6">
+        <a href="https://github.com/pike00/Kindred" target="_blank" rel="noopener" class="hover:text-gray-900 transition-colors">GitHub</a>
+        <a href="https://github.com/pike00/Kindred/issues" target="_blank" rel="noopener" class="hover:text-gray-900 transition-colors">Issues</a>
+        <a href="https://github.com/pike00/Kindred/releases" target="_blank" rel="noopener" class="hover:text-gray-900 transition-colors">Releases</a>
+        <a href="https://github.com/pike00/Kindred/commit/__APP_HASH__" target="_blank" rel="noopener"
+           class="font-mono hover:text-gray-900 transition-colors">v__APP_VERSION__ &middot; __APP_HASH__</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Lightbox -->
+  <div id="lightbox"
+       class="open fixed inset-0 z-50 items-center justify-center bg-black/80 backdrop-blur-sm"
+       style="display:none"
+       role="dialog" aria-modal="true" aria-label="Screenshot preview">
+    <img id="lightbox-img" src="" alt="" />
+  </div>
+
+  <script>
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightbox-img');
+
+    function openLightbox(src, alt) {
+      lightboxImg.src = src;
+      lightboxImg.alt = alt;
+      lightbox.classList.add('open');
+      lightbox.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+      lightbox.classList.remove('open');
+      lightbox.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+
+    document.querySelectorAll('.screenshot img').forEach(img => {
+      img.addEventListener('click', () => openLightbox(img.src, img.alt));
+    });
+
+    lightbox.addEventListener('click', e => {
+      if (e.target !== lightboxImg) closeLightbox();
+    });
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeLightbox();
+    });
+  </script>
+</body>
+</html>
