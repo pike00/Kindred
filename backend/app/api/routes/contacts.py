@@ -38,7 +38,6 @@ from app.models import (
     JournalEntry,
     JournalEntryContact,
     JournalEntryPublic,
-    OverdueContactPublic,
     OverdueContactsPublic,
     User,
 )
