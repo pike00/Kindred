@@ -8,6 +8,7 @@ from zoneinfo import ZoneInfo
 from email.utils import format_datetime
 from hashlib import md5
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -40,7 +41,7 @@ def get_calendar_month(
     session: SessionDep,
     current_user: CurrentUser,
     yyyy_mm: str,
-) -> Any:
+) -> CalendarMonthResponse:
     if not _MONTH_RE.match(yyyy_mm):
         raise HTTPException(
             status_code=422, detail="Invalid month format; expected YYYY-MM"
