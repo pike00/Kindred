@@ -19,7 +19,7 @@ export {
   CalendarHeart,
   Camera,
   Check,
-  CheckCircle2,
+  CheckSquare,
   ChevronDown,
   // Pagination
   ChevronLeft,
@@ -32,7 +32,6 @@ export {
   CircleCheck,
   Clock,
   Coffee,
-  Crop,
   Download,
   // Forms / inputs
   Eye,

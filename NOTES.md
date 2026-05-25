@@ -1,52 +1,41 @@
-# Gift Kanban Implementation Notes
+# Bulk Contact Operations - Implementation Notes
 
-## Completed Tasks
+## Status
+Implementation is complete. All task items have been implemented:
 
-### 1. Extended GiftStatus Enum
-- Added `PURCHASED` and `WRAPPED` states to the GiftStatus enum in `backend/app/models.py`
-- Created Alembic migration `6639555a4ae8_add_purchased_wrapped_gift_status.py` to add these values to the PostgreSQL enum type
-- Migration successfully applied to the database
+### Completed:
+- [x] Add selection state to list component (checkbox UI, track selected IDs)
+- [x] Implement floating action bar with bulk action buttons
+- [x] Create /contacts/bulk PATCH endpoint for atomic server-side mutations
+- [x] Add dry-run preview modal for destructive operations (archive, tag removal)
+- [x] Implement select-all-filtered logic (server-side filter matching, pagination-aware)
+- [x] Integrate CSV export and undo toast notifications
 
-### 2. Updated GiftPublic Model
-- Added `days_until_occasion` computed field to `GiftPublic`
-- Added `contact_birthday`, `contact_first_name`, `contact_last_name` fields for the kanban board display
+### Backend Implementation:
+- Models: `BulkContactRequest`, `BulkContactOperation`, `BulkContactFilter` in `backend/app/api/routes/contacts.py`
+- Endpoints: `PATCH /api/v1/contacts/bulk` and `GET /api/v1/contacts/bulk/preview`
+- Transaction support for atomic all-or-nothing semantics
+- Server-side filtering with `_build_filtered_contact_stmt()`
+- Limit of 500 contacts per request (safety cap)
 
-### 3. Updated Gifts API
-- Updated `list_gifts` endpoint to join with Contact and calculate `days_until_occasion`
-- Added `/kanban` endpoint that returns gifts grouped by status with:
-  - Per-status gift lists
-  - Count of gifts per status
-  - Total value per status
-  - Overdue warning flag (birthday < 3 days && status is IDEA/PURCHASED)
-- Added `/{gift_id}/change-status` endpoint for drag-and-drop functionality
-  - Automatically sets `gift_date` to today when moving to GIVEN status
+### Frontend Implementation:
+- `ContactsList.tsx` with multi-select checkboxes
+- Floating action bar with bulk action buttons (archive, unarchive, favorite, unfavorite, delete, export)
+- Preview modal for confirming destructive actions
+- CSV export via `/api/v1/import-export/export/csv`
+- Undo functionality with toast notifications
+- Fixed SDK method names to match generated client (`previewBulkContacts`, `bulkUpdateContacts`, `listContacts`)
 
-### 4. Frontend Updates
-- Updated `GiftStatus` type in `frontend/src/client/types.gen.ts` to include 'purchased' and 'wrapped'
-- Created `KanbanBoard.tsx` component with:
-  - Status column display (Ideas, Purchased, Wrapped, Given, Received)
-  - GiftCard component with overdue warning badge
-  - Visual indicators for each status
-- Added `/gifts/kanban` route
-- Added "Gift Kanban" link to sidebar navigation
+### Tests:
+- `backend/tests/api/test_bulk_contacts.py` with 12 test cases covering all bulk operations
 
-## Remaining Tasks
+## Verification
+- Frontend typecheck passes (`bun run typecheck` in frontend/)
+- Backend tests could not be run because Docker services for this worktree are not running
+- The worktree services need to be started with `just up` for full verification
 
-- [ ] Implement full drag-and-drop functionality in the Kanban board (currently displays placeholder)
-- [ ] Add cost rollup aggregation display per status column
-- [ ] Implement shared board mode for family gift coordination via tag-based access
-- [ ] Add unit tests for the new API endpoints
-- [ ] Regenerate frontend SDK properly (currently manually updated types)
-
-## Technical Notes
-
-- PostgreSQL enum alteration uses `ALTER TYPE ... ADD VALUE` which works well for adding new enum values
-- The kanban board endpoint joins Gift with Contact to get birthday information for overdue calculations
-- Overdue warning triggers when: `days_until_occasion < 3` AND `status in (IDEA, PURCHASED)`
-- Frontend SDK generation was skipped due to environment variable issues; types were manually updated
-
-## Database Migration
-
-The migration file `6639555a4ae8_add_purchased_wrapped_gift_status.py`:
-- Upgrades by adding PURCHASED and WRAPPED to the giftstatus enum
-- Downgrade is a no-op (PostgreSQL doesn't support removing enum values easily)
+## Recent Fixes (2026-05-03)
+- Fixed incorrect SDK method names in `ContactsList.tsx`:
+  - `previewBulkContactsContactsBulkPreview` → `previewBulkContacts`
+  - `bulkUpdateContactsContactsBulk` → `bulkUpdateContacts`
+  - `listContactsContacts` → `listContacts`

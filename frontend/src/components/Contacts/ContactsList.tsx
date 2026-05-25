@@ -1,8 +1,12 @@
 import { useSuspenseQuery } from "@tanstack/react-query"
 import { Link, useNavigate, useSearch } from "@tanstack/react-router"
-import { Users } from "lucide-react"
-import { useMemo, useState } from "react"
-import { type ContactPublic, ContactsService } from "@/client"
+import { useCallback, useMemo, useState } from "react"
+import { toast } from "sonner"
+import {
+  type BulkContactRequest,
+  type ContactPublic,
+  ContactsService,
+} from "@/client"
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
 import { EmptyState } from "@/components/Common/EmptyState"
 import { Button } from "@/components/ui/button"
@@ -21,13 +25,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
-  Mail,
-  MessageSquare,
-  Pencil,
-  Phone,
+  Download,
   Search,
   Star,
-  Video,
+  Trash2,
+  Users,
 } from "@/lib/icons"
 
 const CHANNELS = [
@@ -60,8 +62,6 @@ import {
 import { cn } from "@/lib/utils"
 
 const PAGE_SIZE = 25
-
-import { AddContactDialog } from "./AddContactDialog"
 
 // Bulk action types
 const BULK_ACTIONS = [
@@ -191,23 +191,6 @@ function ContactRow({
             <span className="font-display text-base font-semibold tracking-tight truncate">
               {fullName(contact)}
             </span>
-          )}
-          {contact.is_favorite && (
-            <Star className="size-3.5 shrink-0 fill-amber-400 text-amber-400" />
-          )}
-
-          {contact.communication_preference?.do_not_contact && (
-            <Badge variant="destructive" className="text-xs">
-              DNC
-            </Badge>
-          )}
-        </div>
-        <div className="mt-1 flex items-center gap-2 text-xs">
-          <span
-            className={cn(
-              "inline-flex items-center gap-1",
-              lastContactTone(days),
-            )}
             {titleLine(contact) && (
               <span className="text-xs text-muted-foreground truncate hidden sm:inline">
                 · {titleLine(contact)}
@@ -231,31 +214,20 @@ function ContactRow({
             </span>
           </div>
         </div>
-      </div>
-      <div className="hidden md:flex shrink-0 items-center gap-1.5">
-        {visibleTags.map((tag) => (
-          <Badge key={tag.id} variant="secondary" className="text-xs">
-            {tag.name}
-          </Badge>
-        ))}
-        {extraTags > 0 && (
-          <Badge variant="outline" className="text-xs">
-            +{extraTags}
-          </Badge>
-        )}
-      </div>
-      {contact.communication_preference?.preferred_channel && (
-        <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-          {CHANNEL_ICON_MAP[contact.communication_preference.preferred_channel]}
-          <span>
-            {CHANNELS.find(
-              (c) =>
-                c.value === contact.communication_preference?.preferred_channel,
-            )?.label ?? contact.communication_preference.preferred_channel}
-          </span>
+        <div className="hidden md:flex shrink-0 items-center gap-1.5">
+          {visibleTags.map((tag) => (
+            <Badge key={tag.id} variant="secondary" className="text-xs">
+              {tag.name}
+            </Badge>
+          ))}
+          {extraTags > 0 && (
+            <Badge variant="outline" className="text-xs">
+              +{extraTags}
+            </Badge>
+          )}
         </div>
-      )}
-    </Link>
+      </Link>
+    </div>
   )
 }
 
@@ -278,21 +250,6 @@ export const ContactsList = () => {
   })
   const [isLoading, setIsLoading] = useState(false)
 
-  // Fetch saved filters to find active filter name
-  const { data: filtersData } = useSuspenseQuery({
-    queryKey: ["saved-filters"],
-    queryFn: () =>
-      SavedFiltersService.listSavedFilters().then((res) => res.data),
-  })
-
-  const activeFilterId = urlFilterId
-  const activeFilter = filtersData?.find(
-    (f: SavedFilterPublic) => f.id === activeFilterId,
-  )
-
-  const [channelFilter, setChannelFilter] = useState<string>("")
-  const [showDncOnly, setShowDncOnly] = useState(false)
-
   const { data } = useSuspenseQuery({
     queryKey: ["contacts", activeFilterId],
     queryFn: () =>
@@ -303,22 +260,8 @@ export const ContactsList = () => {
 
   const allContacts = useMemo(() => data?.data ?? [], [data?.data])
   const filtered = useMemo(
-    () =>
-      allContacts
-        .filter((c) => matchesSearch(c, search))
-        .filter((c) => {
-          if (
-            channelFilter &&
-            c.communication_preference?.preferred_channel !== channelFilter
-          ) {
-            return false
-          }
-          if (showDncOnly && !c.communication_preference?.do_not_contact) {
-            return false
-          }
-          return true
-        }),
-    [allContacts, search, channelFilter, showDncOnly],
+    () => allContacts.filter((c: ContactPublic) => matchesSearch(c, search)),
+    [allContacts, search],
   )
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const safePageIndex = Math.min(pageIndex, pageCount - 1)
@@ -569,18 +512,6 @@ export const ContactsList = () => {
           <p className="text-muted-foreground mt-1">
             {allContacts.length}{" "}
             {allContacts.length === 1 ? "person" : "people"}
-            {activeFilter && (
-              <span className="text-primary">
-                · Filtered by: {activeFilter.name}
-                <button
-                  type="button"
-                  onClick={() => navigate({ search: search ? { search } : {} })}
-                  className="ml-2 text-xs underline"
-                >
-                  Clear filter
-                </button>
-              </span>
-            )}
             {selectedCount > 0 && <> · {selectedCount} selected</>}
           </p>
         </div>
@@ -617,6 +548,43 @@ export const ContactsList = () => {
           DNC Only
         </Button>
       </div>
+
+      {/* Bulk Action Bar */}
+      {selectedCount > 0 || selectAllFiltered ? (
+        <div className="flex items-center gap-2 p-4 bg-muted/50 rounded-2xl border">
+          <Button variant="outline" size="sm" onClick={handleSelectAllFiltered}>
+            {selectAllFiltered ? (
+              <>Deselect All ({previewModal.count})</>
+            ) : (
+              <>Select All Filtered</>
+            )}
+          </Button>
+          <div className="h-6 w-px bg-border" />
+          {BULK_ACTIONS.map((action) => (
+            <Button
+              key={action.id}
+              variant="ghost"
+              size="sm"
+              onClick={() => handlePreviewAction(action.id as BulkActionId)}
+              className={action.color}
+            >
+              <action.icon className="size-4 mr-2" />
+              {action.label}
+            </Button>
+          ))}
+          <div className="flex-1" />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setSelectedIds(new Set())
+              setSelectAllFiltered(false)
+            }}
+          >
+            Clear Selection
+          </Button>
+        </div>
+      ) : null}
 
       <div className="relative">
         <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />

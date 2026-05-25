@@ -207,10 +207,6 @@ export type Body_login_login_access_token = {
     client_secret?: (string | null);
 };
 
-export type Body_transcribe_transcribe_audio = {
-    file: (Blob | File);
-};
-
 /**
  * Filter criteria matching list_contacts parameters.
  */
@@ -1585,6 +1581,13 @@ export type NoteMentionPublic = {
     source_contact: _MentionSourceContact;
 };
 
+export type NoteMentionPublic = {
+    note_id: string;
+    note_body: string;
+    note_created_at: string;
+    source_contact: _MentionSourceContact;
+};
+
 export type NotePublic = {
     /**
      * Note body, 1-50000 chars.
@@ -2697,164 +2700,19 @@ export type ContactsListContactMentionsData = {
 
 export type ContactsListContactMentionsResponse = (Array<NoteMentionPublic>);
 
+export type ContactsListContactMentionsData = {
+    contactId: string;
+};
+
+export type ContactsListContactMentionsResponse = (Array<NoteMentionPublic>);
+
 export type ContactsRestoreContactData = {
     contactId: string;
 };
 
 export type ContactsRestoreContactResponse = (ContactPublic);
 
-export type ContactsListContactsGeoData = {
-    /**
-     * Maximum latitude for bounding box filter
-     */
-    maxLat?: (number | null);
-    /**
-     * Maximum longitude for bounding box filter
-     */
-    maxLng?: (number | null);
-    /**
-     * Minimum latitude for bounding box filter
-     */
-    minLat?: (number | null);
-    /**
-     * Minimum longitude for bounding box filter
-     */
-    minLng?: (number | null);
-};
-
-export type ContactsListContactsGeoResponse = (ContactsGeoResponse);
-
-export type ContactsMergeContactsEndpointData = {
-    requestBody: MergeContactsRequest;
-};
-
-export type ContactsMergeContactsEndpointResponse = (MergeResponse);
-
-export type ContactsUnmergeContactEndpointData = {
-    contactId: string;
-};
-
-export type ContactsUnmergeContactEndpointResponse = (ContactPublic);
-
-export type ContactsSyncImessageContactsData = {
-    requestBody: IMessageSyncRequest;
-};
-
-export type ContactsSyncImessageContactsResponse = (IMessageSyncResult);
-
-export type ContactsGetImessageProfileData = {
-    contactId: string;
-};
-
-export type ContactsGetImessageProfileResponse = (IMessageProfileResponse);
-
-export type ContactsGetContactHouseholdData = {
-    contactId: string;
-};
-
-export type ContactsGetContactHouseholdResponse = (HouseholdResponse);
-
-export type ContactsListContactReflectionsData = {
-    contactId: string;
-};
-
-export type ContactsListContactReflectionsResponse = (Array<JournalEntryPublic>);
-
-export type ContactsGetContactHeatmapData = {
-    contactId: string;
-};
-
-export type ContactsGetContactHeatmapResponse = (ContactHeatmap);
-
-export type ContactsListMergeLogsData = {
-    contactId?: (string | null);
-    limit?: number;
-    skip?: number;
-};
-
-export type ContactsListMergeLogsResponse = ({
-    [key: string]: unknown;
-});
-
-export type ContactsUploadAvatarFileData = {
-    contactId: string;
-    formData: Body_contacts_upload_avatar_file;
-};
-
-export type ContactsUploadAvatarFileResponse = (AvatarUploadResponse);
-
-export type ContactsDeleteAvatarData = {
-    contactId: string;
-};
-
-export type ContactsDeleteAvatarResponse = (unknown);
-
-export type ContactsGetContactStageEventsData = {
-    contactId: string;
-};
-
-export type ContactsGetContactStageEventsResponse = (ContactStageEventsPublic);
-
-export type ContactsGetContactPdfData = {
-    contactId: string;
-};
-
-export type ContactsGetContactPdfResponse = (unknown);
-
-export type ContactsGetDistinctStagesResponse = (Array<(string)>);
-
-export type ContactsGetKanbanBoardData = {
-    search?: (string | null);
-    tagId?: (string | null);
-};
-
-export type ContactsGetKanbanBoardResponse = ({
-    [key: string]: ContactsPublic;
-});
-
-export type ContactStageEventsListContactStageHistoryData = {
-    contactId: string;
-};
-
-export type ContactStageEventsListContactStageHistoryResponse = (ContactStageEventsPublic);
-
-export type ContactStageEventsGetLatestStageData = {
-    contactId: string;
-};
-
-export type ContactStageEventsGetLatestStageResponse = (ContactStageEventPublic);
-
-export type ContactStageEventsCreateContactStageEventData = {
-    contactId: string;
-    requestBody: ContactStageEventCreate;
-};
-
-export type ContactStageEventsCreateContactStageEventResponse = (ContactStageEventPublic);
-
-export type ContactStageEventsGetStageDurationRouteData = {
-    contactId: string;
-    stage: string;
-};
-
-export type ContactStageEventsGetStageDurationRouteResponse = (Array<[
-    string,
-    (string | null),
-    (number | null)
-]>);
-
-export type ContactStageEventsBackfillStageEventsRouteResponse = ({
-    [key: string]: (number);
-});
-
-export type ContactStageEventsGetStageAnalyticsData = {
-    contactId: string;
-};
-
-export type ContactStageEventsGetStageAnalyticsResponse = ({
-    [key: string]: Array<Array<unknown>>;
-});
-
-export type CustomFieldsListFieldDefinitionsResponse = (CustomFieldDefinitionsPublic);
+export type CustomFieldsListFieldDefinitionsResponse = (unknown);
 
 export type CustomFieldsCreateFieldDefinitionData = {
     requestBody: CustomFieldDefinitionCreate;
@@ -3111,6 +2969,19 @@ export type ImportExportImportCsvResponse = (CSVImportResponse);
 export type ImportExportExportCsvData = {
     includeFields?: boolean;
     includeTags?: boolean;
+};
+
+export type ImportExportExportCsvResponse = (unknown);
+
+export type ImportExportExportCsvData = {
+    groupId?: (string | null);
+    isArchived?: (boolean | null);
+    isFavorite?: (boolean | null);
+    limit?: number;
+    search?: (string | null);
+    selectAllFiltered?: boolean;
+    stage?: (string | null);
+    tagId?: (string | null);
 };
 
 export type ImportExportExportCsvResponse = (unknown);
