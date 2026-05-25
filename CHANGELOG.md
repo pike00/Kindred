@@ -5,6 +5,26 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.30] - 2026-05-25
+
+### Added
+- Feat(pr-sweep): add sweep-overnight.sh + just sweep-overnight recipe (492b1b2)
+- Feat: gifts kanban route + Playwright e2e migration (9e32370)
+
+### Documentation
+- Docs: regenerate db schema docs — add vcard_conflict table (165878a)
+- Docs: regenerate db schema docs (tbls) — sync with live schema (cd0ee1e)
+
+### Fixed
+- Fix(release-kit): correct LiteLLM URL (no .lab. subdomain) (3c082fc)
+- Fix(release-kit): use correct 'model' and 'base_url' keys (7e524cc)
+- Fix: route shadowing, render loop, sidebar text, ? shortcut, vcard_conflict table; e2e 14->176 (fc8a8c0)
+- Fix(sweep): skip directories when reading review file blocks (fe6d079)
+- Fix(sweep-overnight): remove double-tee logging; count all non-ready PRs for STUCK detection (9659006)
+
+### Other
+- Chore: gitignore container-owned backend/uv.lock (7de9b30)
+
 ## [0.1.9] - 2026-05-17
 
 ### Added
