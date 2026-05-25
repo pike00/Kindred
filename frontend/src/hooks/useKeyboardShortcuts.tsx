@@ -7,6 +7,7 @@ import {
   useMemo,
   useState,
 } from "react"
+// @ts-expect-error: tinykeys has types but they're not resolved correctly due to package.json exports
 import { tinykeys } from "tinykeys"
 
 export type ShortcutGroup =

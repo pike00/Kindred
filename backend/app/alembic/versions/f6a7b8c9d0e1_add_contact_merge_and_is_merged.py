@@ -12,7 +12,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic
 revision = "add_contact_merge_history"
-down_revision = "a0b1c2d3e4f5"
+down_revision = "add_do_not_contact_fields"
 branch_labels = None
 depends_on = None
 
@@ -27,16 +27,6 @@ def upgrade() -> None:
         "ix_contact_is_merged",
         "contact",
         ["is_merged"],
-    )
-    # Add merged_into_id column to contact table
-    op.add_column(
-        "contact",
-        sa.Column(
-            "merged_into_id",
-            sa.Uuid(),
-            sa.ForeignKey("contact.id", ondelete="SET NULL"),
-            nullable=True,
-        ),
     )
 
     # Create contact_merge table
@@ -86,11 +76,3 @@ def downgrade() -> None:
     op.drop_table("contact_merge")
     op.drop_index("ix_contact_is_merged", "contact")
     op.drop_column("contact", "is_merged")
-    # merged_into_id may not exist in all environments due to partial migration
-    from alembic import op as _op
-    from sqlalchemy import inspect
-    conn = _op.get_bind()
-    inspector = inspect(conn)
-    cols = [c["name"] for c in inspector.get_columns("contact")]
-    if "merged_into_id" in cols:
-        op.drop_column("contact", "merged_into_id")

@@ -95,11 +95,11 @@ export function AvatarUploadDialog({
         "@mediapipe/tasks-vision"
       )
 
-      const filesetResolver = await FilesetResolver.forVisionTasks(
+      const _filesetResolver = await FilesetResolver.forVisionTasks(
         "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/wasm",
       )
 
-      const detector = await FaceDetector.createFromOptions(filesetResolver, {
+      const detector = await FaceDetector.createFromOptions({
         baseOptions: {
           delegate: "GPU",
           modelAssetPath:
@@ -114,10 +114,10 @@ export function AvatarUploadDialog({
       if (detections && detections.length > 0) {
         const detectedFaces: DetectedFace[] = detections.map((det) => ({
           boundingBox: {
-            originX: det.boundingBox?.originX ?? 0,
-            originY: det.boundingBox?.originY ?? 0,
-            width: det.boundingBox?.width ?? 0,
-            height: det.boundingBox?.height ?? 0,
+            originX: det.boundingBox.originX ?? 0,
+            originY: det.boundingBox.originY ?? 0,
+            width: det.boundingBox.width ?? 0,
+            height: det.boundingBox.height ?? 0,
           },
           confidence: det.categories?.[0]?.score ?? 0,
         }))
@@ -325,9 +325,9 @@ export function AvatarUploadDialog({
       })
 
       try {
-        await ContactsService.uploadAvatarFile({
+        await ContactsService.uploadAvatar({
           contactId: contact.id,
-          formData: { file: file as unknown as string },
+          formData: { file },
         })
         showSuccessToast("Avatar uploaded successfully")
         queryClient.invalidateQueries({ queryKey: ["contacts", contact.id] })
@@ -389,7 +389,6 @@ export function AvatarUploadDialog({
           {/* Image Preview with Crop Overlay */}
           {previewUrl && (
             <div className="space-y-4">
-              {/* biome-ignore lint/a11y/noStaticElementInteractions: mouse tracking container for crop overlay */}
               <div
                 ref={containerRef}
                 className="relative inline-block max-w-full overflow-hidden rounded-lg border bg-muted"
@@ -406,7 +405,6 @@ export function AvatarUploadDialog({
                 />
 
                 {/* Crop Overlay */}
-                {/* biome-ignore lint/a11y/noStaticElementInteractions: drag handle for crop positioning */}
                 <div
                   className="absolute border-2 border-primary bg-primary/10 cursor-move"
                   style={{
@@ -432,14 +430,13 @@ export function AvatarUploadDialog({
                   const scaleY = imgEl.height / imgEl.naturalHeight
 
                   return (
-                    <button
+                    <div
                       key={index}
-                      type="button"
                       className={`absolute border-2 ${
                         index === selectedFaceIndex
                           ? "border-green-500"
                           : "border-yellow-500/50"
-                      } rounded cursor-pointer bg-transparent p-0`}
+                      } rounded cursor-pointer`}
                       style={{
                         left: face.boundingBox.originX * scaleX,
                         top: face.boundingBox.originY * scaleY,
@@ -451,7 +448,7 @@ export function AvatarUploadDialog({
                       <span className="absolute -top-5 left-0 text-xs bg-background px-1 rounded">
                         Face {index + 1}
                       </span>
-                    </button>
+                    </div>
                   )
                 })}
               </div>

@@ -1,15 +1,24 @@
-import enum
-import uuid
-from decimal import Decimal
+from __future__ import annotations
 
+import enum
+import re
+import uuid
 from datetime import date, datetime, timezone
 
 import sqlalchemy as sa
-from pydantic import EmailStr
-from sqlalchemy import JSON, DateTime
+from pydantic import EmailStr, field_validator
+from sqlalchemy import DateTime
 from sqlmodel import Field, Relationship, SQLModel
-from sqlmodel import Relationship as SQLMRelationship  # alias; avoids shadowing by the Relationship table model below
-from app.models_vcard_conflict import VCardConflict, VCardConflictBase, VCardConflictPublic, VCardConflictsPublic  # noqa: F401
+from sqlmodel import (
+    Relationship as SQLMRelationship,  # alias; avoids shadowing by the Relationship table model below
+)
+
+from app.models_vcard_conflict import (  # noqa: F401
+    VCardConflict,
+    VCardConflictBase,
+    VCardConflictPublic,
+    VCardConflictsPublic,
+)
 
 
 def get_datetime_utc() -> datetime:
@@ -146,97 +155,6 @@ class UsersPublic(SQLModel):
     count: int
 
 
-# ─── SavedFilter ─────────────────────────────────────────────────────────────
-
-
-class FilterCondition(SQLModel):
-    """Pydantic schema for a single filter condition (validated, not injected)."""
-
-    field: str = Field(
-        description="Contact column name, must be in the allowed fields list."
-    )
-    operator: str = Field(
-        description="One of: equals, contains, in, gt, gte, lt, lte, before, after, is"
-    )
-    value: str | int | float | bool | date | list[str | int] | None = Field(
-        description="Value to compare against; type depends on field and operator."
-    )
-
-
-class SavedFilterBase(SQLModel):
-    name: str = Field(
-        min_length=1,
-        max_length=255,
-        description="User-visible name for the smart list.",
-    )
-    filter_json: dict = Field(
-        description="Structured filter: {conditions: FilterCondition[], op: 'and'|'or'}.",
-        sa_column=sa.Column("filter_json", JSON, nullable=False),
-    )
-    tag_id: uuid.UUID | None = Field(
-        default=None,
-        description="Optional tag; if set, filter is shared with users who have TagShare access.",
-    )
-
-
-class SavedFilterCreate(SavedFilterBase):
-    pass
-
-
-class SavedFilterUpdate(SQLModel):
-    name: str | None = Field(default=None, min_length=1, max_length=255)
-    filter_json: dict | None = None
-    tag_id: uuid.UUID | None = None
-
-
-class SavedFilter(SavedFilterBase, table=True):
-    """Saved filter / smart list owned by a user."""
-
-    __tablename__ = "saved_filter"
-
-    id: uuid.UUID = Field(
-        default_factory=uuid.uuid4,
-        primary_key=True,
-        description="Primary key.",
-    )
-    owner_id: uuid.UUID = Field(
-        foreign_key="user.id",
-        nullable=False,
-        ondelete="CASCADE",
-        description="Owner user; cascades on delete.",
-    )
-    tag_id: uuid.UUID | None = Field(
-        default=None,
-        foreign_key="tag.id",
-        nullable=True,
-        ondelete="SET NULL",
-        description="Optional tag for sharing; nulled when the tag is deleted.",
-    )
-    created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
-        nullable=False,
-        description="When the filter was created (UTC).",
-    )
-    updated_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
-        sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
-        nullable=False,
-        description="Auto-bumped on edit (UTC).",
-    )
-
-
-class SavedFilterPublic(SavedFilterBase):
-    id: uuid.UUID
-    owner_id: uuid.UUID
-    created_at: datetime
-    updated_at: datetime
-
-
-class SavedFiltersPublic(SQLModel):
-    data: list[SavedFilterPublic]
-    count: int
-
-
 # ─── API Keys ─────────────────────────────────────────────────────────────────
 
 
@@ -317,12 +235,19 @@ class APIKeysPublic(SQLModel):
 
 
 # ─── Enums ────────────────────────────────────────────────────────────────────
-# ─── Enums ────────────────────────────────────────────────────────────────────
 
 
 class ContactFieldType(str, enum.Enum):
     EMAIL = "email"
     PHONE = "phone"
+
+
+class ContactSource(str, enum.Enum):
+    MANUAL = "MANUAL"
+    VCARD_IMPORT = "VCARD_IMPORT"
+    CARDDAV = "CARDDAV"
+    GOOGLE = "GOOGLE"
+    WEBHOOK = "WEBHOOK"
 
 
 class GiftStatus(str, enum.Enum):

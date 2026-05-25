@@ -5,6 +5,160 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.52] - 2026-05-25
+
+### Added
+- Feat: interaction frequency heatmap (2c32861)
+
+## [0.2.51] - 2026-05-25
+
+### Added
+- Feat: interaction draft saving (220618b)
+
+## [0.2.50] - 2026-05-25
+
+### Added
+- Feat: ICS calendar export (85e3e95)
+
+## [0.2.49] - 2026-05-25
+
+### Added
+- Feat: iCal importer backfill for calendar events (dacf264)
+
+## [0.2.48] - 2026-05-25
+
+### Added
+- Feat: household aggregate view (863be47)
+
+## [0.2.47] - 2026-05-25
+
+### Added
+- Feat: face-aware avatar crop with MediaPipe detection (b6d4f91)
+
+## [0.2.46] - 2026-05-25
+
+### Added
+- Feat: empty state illustrations (9d1e24f)
+
+## [0.2.45] - 2026-05-25
+
+### Added
+- Feat: email log ingestion for contacts (8ed6ace)
+
+## [0.2.44] - 2026-05-25
+
+### Added
+- Feat: debt partial payment tracking (f2720c9)
+
+## [0.2.43] - 2026-05-25
+
+### Added
+- Feat: CSV import and export for contacts (4d7dff7)
+
+## [0.2.42] - 2026-05-25
+
+### Added
+- Feat: contact timezone and pronouns fields (9f996ae)
+
+## [0.2.41] - 2026-05-25
+
+### Added
+- Feat: contacts kanban board (0a54a17)
+
+## [0.2.40] - 2026-05-25
+
+### Added
+- Feat: contact provenance tracking (979abb5)
+
+## [0.2.39] - 2026-05-25
+
+### Added
+- Feat: contact merge history tracking (7714fbb)
+
+## [0.2.38] - 2026-05-25
+
+### Added
+- Feat: bulk contact operations (ddbda75)
+
+## [0.2.37] - 2026-05-25
+
+### Added
+- Feat: communication preferences per contact (49166c7)
+
+## [0.2.36] - 2026-05-25
+
+### Added
+- Feat: tag share scope warning (f851957)
+
+## [0.2.35] - 2026-05-25
+
+### Added
+- Feat: quick-log floating action button (f06c641)
+
+## [0.2.34] - 2026-05-25
+
+### Added
+- Feat: kindred Python SDK (0113d8a)
+
+## [0.2.33] - 2026-05-25
+
+### Added
+- Feat: keyboard shortcut overlay (452a2c6)
+
+## [0.2.32] - 2026-05-25
+
+### Added
+- Feat: gift kanban board view (2256155)
+- Feat: e2e contact CRUD tests (Playwright) (c5325f9)
+
+## [0.2.31] - 2026-05-25
+
+### Added
+- Feat: automated release notes generation script (ce99996)
+
+### Fixed
+- Fix(frontend): prod-build TS errors; restore Cmd-K fix via useMemo at call sites (3a8ef76)
+
+## [0.2.30] - 2026-05-25
+
+### Added
+- Feat(pr-sweep): add sweep-overnight.sh + just sweep-overnight recipe (492b1b2)
+- Feat: gifts kanban route + Playwright e2e migration (9e32370)
+
+### Documentation
+- Docs: regenerate db schema docs — add vcard_conflict table (165878a)
+- Docs: regenerate db schema docs (tbls) — sync with live schema (cd0ee1e)
+
+### Fixed
+- Fix(release-kit): correct LiteLLM URL (no .lab. subdomain) (3c082fc)
+- Fix(release-kit): use correct 'model' and 'base_url' keys (7e524cc)
+- Fix: route shadowing, render loop, sidebar text, ? shortcut, vcard_conflict table; e2e 14->176 (fc8a8c0)
+- Fix(sweep): skip directories when reading review file blocks (fe6d079)
+- Fix(sweep-overnight): remove double-tee logging; count all non-ready PRs for STUCK detection (9659006)
+
+### Other
+- Chore: gitignore container-owned backend/uv.lock (7de9b30)
+
+## [0.2.30] - 2026-05-25
+
+### Added
+- Feat(pr-sweep): add sweep-overnight.sh + just sweep-overnight recipe (492b1b2)
+- Feat: gifts kanban route + Playwright e2e migration (9e32370)
+
+### Documentation
+- Docs: regenerate db schema docs — add vcard_conflict table (165878a)
+- Docs: regenerate db schema docs (tbls) — sync with live schema (cd0ee1e)
+
+### Fixed
+- Fix(release-kit): correct LiteLLM URL (no .lab. subdomain) (3c082fc)
+- Fix(release-kit): use correct 'model' and 'base_url' keys (7e524cc)
+- Fix: route shadowing, render loop, sidebar text, ? shortcut, vcard_conflict table; e2e 14->176 (fc8a8c0)
+- Fix(sweep): skip directories when reading review file blocks (fe6d079)
+- Fix(sweep-overnight): remove double-tee logging; count all non-ready PRs for STUCK detection (9659006)
+
+### Other
+- Chore: gitignore container-owned backend/uv.lock (7de9b30)
+
 ## [0.1.9] - 2026-05-17
 
 ### Added

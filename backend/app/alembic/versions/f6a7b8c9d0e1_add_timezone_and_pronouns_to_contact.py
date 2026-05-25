@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "add_timezone_pronouns"
-down_revision = "add_ical_import_log"
+down_revision = "add_do_not_contact_fields"
 branch_labels = None
 depends_on = None
 

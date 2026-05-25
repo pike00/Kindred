@@ -6,12 +6,9 @@ import {
   type BulkContactRequest,
   type ContactPublic,
   ContactsService,
-  SavedFiltersService,
 } from "@/client"
-import type { SavedFilterPublic } from "@/client/types.gen"
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
 import { EmptyState } from "@/components/Common/EmptyState"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -29,7 +26,6 @@ import {
   ChevronRight,
   Clock,
   Download,
-  Map as MapIcon,
   Search,
   Star,
   Trash2,
@@ -39,8 +35,6 @@ import { useSeedDemo } from "@/lib/seed"
 import { cn } from "@/lib/utils"
 
 const PAGE_SIZE = 25
-
-import { AddContactDialog } from "./AddContactDialog"
 
 // Bulk action types
 const BULK_ACTIONS = [
@@ -151,30 +145,26 @@ function ContactRow({
   const extraTags = tags.length - visibleTags.length
 
   return (
-    <div className="group flex items-center gap-4 rounded-2xl border bg-card p-4 shadow-xs transition-all hover:-translate-y-px hover:border-primary/30 hover:shadow-sm">
-      <Checkbox
-        checked={selected}
-        onCheckedChange={() => onToggle(contact.id)}
-        className="shrink-0"
-        aria-label={`Select ${fullName(contact)}`}
-      />
-      <Link
-        to="/contacts/$contactId"
-        params={{ contactId: contact.id }}
-        className="flex flex-1 items-center gap-4 min-w-0"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <ContactAvatar contact={contact} size="md" />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-baseline gap-2">
-            <span className="font-display text-base font-semibold tracking-tight truncate">
-              {fullName(contact)}
+    <Link
+      to="/contacts/$contactId"
+      params={{ contactId: contact.id }}
+      className="group flex items-center gap-4 rounded-2xl border bg-card p-4 shadow-xs transition-all hover:-translate-y-px hover:border-primary/30 hover:shadow-sm"
+    >
+      <ContactAvatar contact={contact} size="md" />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-baseline gap-2">
+          <span className="font-display text-base font-semibold tracking-tight truncate">
+            {fullName(contact)}
+          </span>
+          {contact.pronouns && (
+            <span className="text-xs text-muted-foreground">
+              ({contact.pronouns})
             </span>
-            {contact.pronouns && (
-              <span className="text-xs text-muted-foreground">
-                ({contact.pronouns})
-              </span>
-            )}
+          )}
+          {titleLine(contact) && (
+            <span className="text-xs text-muted-foreground truncate hidden sm:inline">
+              · {titleLine(contact)}
+            </span>
             {titleLine(contact) && (
               <span className="text-xs text-muted-foreground truncate hidden sm:inline">
                 · {titleLine(contact)}
@@ -233,18 +223,6 @@ export const ContactsList = () => {
     contacts: [],
   })
   const [isLoading, setIsLoading] = useState(false)
-
-  // Fetch saved filters to find active filter name
-  const { data: filtersData } = useSuspenseQuery({
-    queryKey: ["saved-filters"],
-    queryFn: () =>
-      SavedFiltersService.listSavedFilters().then((res) => res.data),
-  })
-
-  const activeFilterId = urlFilterId
-  const activeFilter = filtersData?.find(
-    (f: SavedFilterPublic) => f.id === activeFilterId,
-  )
 
   const { data } = useSuspenseQuery({
     queryKey: ["contacts", activeFilterId],
@@ -508,18 +486,6 @@ export const ContactsList = () => {
           <p className="text-muted-foreground mt-1">
             {allContacts.length}{" "}
             {allContacts.length === 1 ? "person" : "people"}
-            {activeFilter && (
-              <span className="text-primary">
-                · Filtered by: {activeFilter.name}
-                <button
-                  type="button"
-                  onClick={() => navigate({ search: search ? { search } : {} })}
-                  className="ml-2 text-xs underline"
-                >
-                  Clear filter
-                </button>
-              </span>
-            )}
             {selectedCount > 0 && <> · {selectedCount} selected</>}
           </p>
         </div>
@@ -532,6 +498,29 @@ export const ContactsList = () => {
           </Button>
           <AddContactDialog />
         </div>
+      </div>
+
+      {/* Filter controls */}
+      <div className="flex flex-wrap items-center gap-2">
+        <Select value={channelFilter} onValueChange={setChannelFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter by channel" />
+          </SelectTrigger>
+          <SelectContent>
+            {CHANNEL_OPTIONS.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button
+          variant={showDncOnly ? "default" : "outline"}
+          size="sm"
+          onClick={() => setShowDncOnly(!showDncOnly)}
+        >
+          DNC Only
+        </Button>
       </div>
 
       {/* Bulk Action Bar */}

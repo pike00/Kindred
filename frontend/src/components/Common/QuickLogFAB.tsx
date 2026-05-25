@@ -216,8 +216,7 @@ export function QuickLogFAB() {
               variant="ghost"
               size="icon"
               className="h-6 w-6"
-              aria-label="Close"
-              onClick={() => handleOpenChange(false)}
+              onClick={() => setOpen(false)}
             >
               <X className="size-3.5" />
             </Button>
@@ -242,7 +241,6 @@ export function QuickLogFAB() {
                         <Button
                           variant="outline"
                           role="combobox"
-                          data-testid="contact-picker-button"
                           className={cn(
                             "w-full justify-between text-sm",
                             !field.value && "text-muted-foreground",

@@ -35,6 +35,7 @@ export const CsvImportDialog = () => {
   const [result, setResult] = useState<CSVImportResponse | null>(null)
   const [skipDuplicates, setSkipDuplicates] = useState(true)
   const [createMissingTags, setCreateMissingTags] = useState(true)
+  const [createMissingGroups, setCreateMissingGroups] = useState(true)
   const { showSuccessToast, showErrorToast } = useCustomToast()
   const queryClient = useQueryClient()
 
@@ -54,7 +55,9 @@ export const CsvImportDialog = () => {
 
   const previewMutation = useMutation({
     mutationFn: async (file: File) => {
-      return ImportExportService.previewCsvImport({ formData: { file: file as unknown as string } })
+      const formData = new FormData()
+      formData.append("file", file)
+      return ImportExportService.previewCsvImport({ formData })
     },
     onSuccess: (data) => {
       setPreview(data)
@@ -69,11 +72,14 @@ export const CsvImportDialog = () => {
     mutationFn: async () => {
       if (!file) throw new Error("No file selected")
       setStep("importing")
+      const formData = new FormData()
+      formData.append("file", file)
       return ImportExportService.importCsv({
-        formData: { file: file as unknown as string },
+        formData,
         skipDuplicates: skipDuplicates,
         mergeDuplicates: false,
         createMissingTags: createMissingTags,
+        createMissingGroups: createMissingGroups,
       })
     },
     onSuccess: (data) => {
@@ -275,6 +281,15 @@ export const CsvImportDialog = () => {
                 />
                 Auto-create missing tags
               </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={createMissingGroups}
+                  onChange={(e) => setCreateMissingGroups(e.target.checked)}
+                  className="rounded"
+                />
+                Auto-create missing groups
+              </label>
             </div>
           </div>
         )}
@@ -315,6 +330,15 @@ export const CsvImportDialog = () => {
                         <strong>{result.tag_names_created.length}</strong> tag
                         {result.tag_names_created.length === 1 ? "" : "s"}{" "}
                         created: {result.tag_names_created.join(", ")}
+                      </p>
+                    )}
+                  {result.group_names_created &&
+                    result.group_names_created.length > 0 && (
+                      <p>
+                        <strong>{result.group_names_created.length}</strong>{" "}
+                        group
+                        {result.group_names_created.length === 1 ? "" : "s"}{" "}
+                        created: {result.group_names_created.join(", ")}
                       </p>
                     )}
                   {result.errors && result.errors.length > 0 && (

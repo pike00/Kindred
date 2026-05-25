@@ -131,7 +131,7 @@ def infer_inverse(relationship_type: str) -> str | None:
     return ASYMMETRIC.get(key)
 
 
-def seed_inverse_map(session: Session, owner_id: uuid.UUID | None = None) -> int:
+def seed_inverse_map(session: Session, owner_id: uuid.UUID | None = None) -> int:  # noqa: ARG001
     """Populate ``inverse_relationship_map`` with the canonical pairs.
 
     Idempotent: existing rows are skipped based on ``relationship_type``.

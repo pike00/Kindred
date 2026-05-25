@@ -11,7 +11,8 @@ import {
   useMapEvent,
 } from "react-leaflet"
 import supercluster, { type Cluster } from "supercluster"
-import { type ContactGeoPoint, CustomContactsService } from "@/client/custom"
+import { ContactsService } from "@/client/sdk.gen"
+import type { ContactGeoPoint } from "@/client/types.gen"
 import "leaflet/dist/leaflet.css"
 import { MapIcon } from "lucide-react"
 import { ContactMapCard } from "@/components/Contacts/ContactMapCard"
@@ -170,7 +171,7 @@ export function ContactsMap({ bounds: initialBounds }: ContactsMapProps) {
   const { data } = useSuspenseQuery({
     queryKey: ["contactsGeo", bounds],
     queryFn: () =>
-      CustomContactsService.listContactsGeo({
+      ContactsService.listContactsGeo({
         minLat: bounds?.minLat,
         maxLat: bounds?.maxLat,
         minLng: bounds?.minLng,

@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException, Query
 from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
+from app.crud_relationship import create_relationship_idempotent
 from app.models import (
     Contact,
     Ok,
@@ -15,7 +16,6 @@ from app.models import (
     RelationshipsPublic,
     RelationshipUpdate,
 )
-from app.crud_relationship import create_relationship_idempotent
 from app.relationship_inverses import infer_inverse
 
 router = APIRouter(prefix="/relationships", tags=["relationships"])
@@ -120,7 +120,7 @@ def update_relationship(
     if contact.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not enough permissions")
 
-    update_data = rel_in.model_dump(exclude_unset=True)
+    update_data = rel_in.model_dump(exclude_unset=True)  # noqa: F841
     from app.crud_relationship import update_relationship_with_inverse
 
     rel = update_relationship_with_inverse(session=session, rel=rel, rel_in=rel_in)

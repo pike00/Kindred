@@ -4,8 +4,7 @@ import logging
 import uuid
 from typing import Any
 
-import httpx
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
+from fastapi import APIRouter, HTTPException
 from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
@@ -21,6 +20,7 @@ from app.models import (
 
 try:
     from app.services import geocoding
+
     _geocoding_available = True
 except ImportError:
     _geocoding_available = False
@@ -155,7 +155,9 @@ def geocode_address_manual(
     session.refresh(address)
 
     if address.latitude is None or address.longitude is None:
-        raise HTTPException(status_code=400, detail="Geocoding failed - could not find coordinates")
+        raise HTTPException(
+            status_code=400, detail="Geocoding failed - could not find coordinates"
+        )
 
     return AddressPublic.model_validate(address)
 

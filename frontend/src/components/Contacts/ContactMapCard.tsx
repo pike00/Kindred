@@ -1,5 +1,5 @@
 import { MapIcon } from "lucide-react"
-import type { ContactGeoPoint } from "@/client/custom"
+import type { ContactGeoPoint } from "@/client/types.gen"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { getInitials } from "@/utils"
