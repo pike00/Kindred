@@ -74,11 +74,8 @@ erDiagram
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
   timestamp_with_time_zone deleted_at
-  uuid organization_id FK
-  contactsource source
-  varchar_500_ source_external_id
-  boolean do_not_contact
-  varchar_500_ do_not_contact_reason
+  contactsource source_provider
+  varchar_255_ source_external_id
 }
 ```
 

@@ -23,9 +23,13 @@ COPY frontend/ frontend/
 ARG VITE_API_URL=https://kindred.example.com
 ARG VITE_AUTH_MODE=local
 ARG VITE_CF_LOGOUT_URL=
+ARG APP_VERSION=
+ARG GIT_HASH=
 ENV VITE_API_URL=${VITE_API_URL} \
     VITE_AUTH_MODE=${VITE_AUTH_MODE} \
     VITE_CF_LOGOUT_URL=${VITE_CF_LOGOUT_URL} \
+    APP_VERSION=${APP_VERSION} \
+    GIT_HASH=${GIT_HASH} \
     NODE_ENV=production
 
 RUN bun run --cwd frontend build

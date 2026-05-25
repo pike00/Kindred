@@ -20,6 +20,7 @@ Gift idea or record for a contact.
 | value_currency | varchar(3) |  | false |  |  | ISO 4217 currency code. |
 | url | varchar(2048) |  | true |  |  | Link to the product page (e.g. Amazon). |
 | created_at | timestamp with time zone |  | false |  |  | When the gift record was created (UTC). |
+| deleted_at | timestamp without time zone |  | true |  |  |  |
 
 ## Constraints
 
@@ -44,6 +45,7 @@ Gift idea or record for a contact.
 | ix_gift_contact_id | CREATE INDEX ix_gift_contact_id ON public.gift USING btree (contact_id) |
 | ix_gift_owner_id | CREATE INDEX ix_gift_owner_id ON public.gift USING btree (owner_id) |
 | ix_gift_status | CREATE INDEX ix_gift_status ON public.gift USING btree (status) |
+| ix_gift_deleted_at | CREATE INDEX ix_gift_deleted_at ON public.gift USING btree (deleted_at) |
 
 ## Relations
 
@@ -66,6 +68,7 @@ erDiagram
   varchar_3_ value_currency
   varchar_2048_ url
   timestamp_with_time_zone created_at
+  timestamp_without_time_zone deleted_at
 }
 "public.user" {
   varchar_255_ email
@@ -105,11 +108,8 @@ erDiagram
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
   timestamp_with_time_zone deleted_at
-  uuid organization_id FK
-  contactsource source
-  varchar_500_ source_external_id
-  boolean do_not_contact
-  varchar_500_ do_not_contact_reason
+  contactsource source_provider
+  varchar_255_ source_external_id
 }
 ```
 

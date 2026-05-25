@@ -1,0 +1,49 @@
+# Contact Provenance - Implementation Notes
+
+## Session: 2026-05-03
+
+### Completed Tasks
+
+1. **Alembic migration** - `add_contact_provenance.py` adding `source` enum and `source_external_id` columns to contact table, with unique constraint `uq_contact_owner_source_external_id` and backfill to MANUAL
+2. **Model updates** - `ContactSource` enum and `source`/`source_external_id` fields added to `ContactBase`/`ContactCreate`/`ContactPublic` in models.py
+3. **Upsert logic** - `upsert_contact()` function in `crud.py` checks (owner_id, source, source_external_id) match for idempotent re-sync
+4. **API route** - `create_contact()` in `api/routes/contacts.py` already uses `upsert_contact()`
+5. **CardDAV sync** - Updated `carddav/storage.py` `upload()` method to:
+   - Set `source=CARDDAV` and `source_external_id` from vCard UID
+   - Check (owner_id, source, source_external_id) before falling back to ID-based lookup
+   - Handle contact fields and addresses idempotently
+6. **vCard import** - Updated `api/routes/import_export.py` `import_vcard()` to:
+   - Use `upsert_contact()` for idempotent imports
+   - Set `source=VCARD_IMPORT` and `source_external_id` from vCard UID
+   - Handle contact fields and addresses idempotently (delete existing before re-importing)
+
+### Remaining Tasks (from spec)
+
+- [ ] Add UI badge on contact detail page showing source and import date (created_at or metadata from sync)
+- [ ] Write tests for upsert paths (CardDAV re-sync, Google import retry), unique constraint violation, and manual contact creation
+
+### Technical Notes
+
+**ContactSource enum:** `manual`, `vcard_import`, `carddav`, `google`, `webhook`
+
+**Unique constraint:** `(owner_id, source, source_external_id)` allows same external ID from different sources. PostgreSQL unique constraint allows multiple NULLs, so manual contacts (source_external_id=NULL) won't collide.
+
+**Webhook path:** The inbound webhook route (`/webhooks/inbound/{api_key}`) only looks up existing contacts by email or name - it doesn't create new contacts. So it doesn't need provenance tracking for contact creation. It creates Interactions for existing contacts.
+
+**Idempotent re-sync:** CardDAV and vCard import paths now:
+1. Parse the incoming vCard to extract UID
+2. Check if a contact exists with (owner_id, source=CARDDAV/VCARD_IMPORT, source_external_id=UID)
+3. If exists: update the contact and replace fields/addresses
+4. If not: create new contact with provenance fields
+
+### Commit History
+
+- `a9770a5` - Migration and models for contact provenance (bundled with API key M2M auth)
+- `4feef84` - DB schema docs regenerated
+- `4711240` - Wire provenance tracking into CardDAV and vCard import paths
+
+### Verification
+
+Docker services were not running in the worktree environment, so tests could not be run. The code was verified by:
+- Python syntax check (`python3 -m py_compile`) passed for both modified files
+- Git pre-commit hooks (ruff check/format) passed

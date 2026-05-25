@@ -1,6 +1,7 @@
 """Debt management routes."""
 
 import uuid
+from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
@@ -32,11 +33,13 @@ def list_debts(
     session: SessionDep,
     current_user: CurrentUser,
     contact_id: uuid.UUID,
-) -> Any:
+) -> DebtsPublic:
     """List debts for a contact."""
     _require_contact_visible(session, current_user, contact_id)
 
-    statement = select(Debt).where(Debt.contact_id == contact_id)
+    statement = (
+        select(Debt).where(Debt.contact_id == contact_id).where(Debt.deleted_at == None)  # noqa: E711
+    )
     debts = session.exec(statement).all()
 
     # Compute paid_amount and is_settled for each debt
@@ -63,7 +66,7 @@ def create_debt_route(
     session: SessionDep,
     current_user: CurrentUser,
     debt_in: DebtCreate,
-) -> Any:
+) -> DebtPublic:
     """Create a new debt."""
     _require_contact_visible(session, current_user, debt_in.contact_id)
 
@@ -78,7 +81,7 @@ def update_debt(
     current_user: CurrentUser,
     debt_id: uuid.UUID,
     debt_in: DebtUpdate,
-) -> Any:
+) -> DebtPublic:
     """Update a debt."""
     debt = session.get(Debt, debt_id)
     if debt is None:
@@ -100,19 +103,81 @@ def update_debt(
     return debt_public
 
 
-@router.delete("/{debt_id}")
+@router.delete("/{debt_id}", response_model=Ok)
 def delete_debt(
     session: SessionDep,
     current_user: CurrentUser,
     debt_id: uuid.UUID,
+) -> Ok:
+    """Soft-delete a debt by setting deleted_at."""
+    debt = session.get(Debt, debt_id)
+    if debt is None:
+        raise HTTPException(status_code=404, detail="Debt not found")
+    if debt.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    _require_contact_visible(session, current_user, debt.contact_id)
+
+    debt.deleted_at = datetime.now(timezone.utc)
+    session.add(debt)
+    session.commit()
+    return Ok()
+
+
+@router.post("/{debt_id}/restore")
+def restore_debt(
+    session: SessionDep,
+    debt_id: uuid.UUID,
 ) -> Any:
-    """Delete a debt."""
+    """Restore a soft-deleted debt by clearing deleted_at."""
+    from sqlalchemy import text, update
+
+    result = session.exec(
+        text("SELECT id FROM debt WHERE id = :id AND deleted_at IS NOT NULL"),
+        params={"id": str(debt_id)},
+    ).first()
+    if result is None:
+        raise HTTPException(status_code=404, detail="Debt not found or not deleted")
+    session.exec(update(Debt).where(Debt.id == debt_id).values(deleted_at=None))
+    session.commit()
+    return Ok()
+
+
+# ─── Debt Payment endpoints ─────────────────────────────────────────────
+
+
+@router.get("/{debt_id}/payments", response_model=list[DebtPaymentPublic])
+def list_debt_payments(
+    session: SessionDep,
+    current_user: CurrentUser,
+    debt_id: uuid.UUID,
+) -> Any:
+    """List all payments for a specific debt."""
+    debt = session.get(Debt, debt_id)
+    if debt is None:
+        raise HTTPException(status_code=404, detail="Debt not found")
+    _require_contact_visible(session, current_user, debt.contact_id)
+    return debt.payments
+
+
+@router.post("/{debt_id}/payments", response_model=DebtPaymentPublic)
+def create_debt_payment(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    debt_id: uuid.UUID,
+    payment_in: DebtPaymentCreate,
+) -> Any:
+    """Add a payment to a debt."""
     debt = session.get(Debt, debt_id)
     if debt is None:
         raise HTTPException(status_code=404, detail="Debt not found")
     _require_contact_visible(session, current_user, debt.contact_id)
 
-    session.delete(debt)
+    payment = DebtPayment(
+        debt_id=debt_id,
+        **payment_in.model_dump(),
+    )
+    session.add(payment)
     session.commit()
     return {"ok": True}
 

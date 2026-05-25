@@ -8,7 +8,7 @@ Scheduled reminder; contact-specific or standalone.
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | uuid |  | false | [public.reminder_snooze](public.reminder_snooze.md) |  | Primary key. |
+| id | uuid |  | false |  |  | Primary key. |
 | owner_id | uuid |  | false |  | [public.user](public.user.md) | Owner user; cascades on delete. |
 | contact_id | uuid |  | true |  | [public.contact](public.contact.md) | Optional contact; null for standalone reminders. |
 | title | varchar(500) |  | false |  |  | Reminder title. |
@@ -19,6 +19,7 @@ Scheduled reminder; contact-specific or standalone.
 | last_sent_at | timestamp with time zone |  | true |  |  | When the ARQ worker last fired this reminder. |
 | snoozed_until | timestamp with time zone |  | true |  |  | If set, suppress firing until this time. |
 | created_at | timestamp with time zone |  | false |  |  | When the reminder was created (UTC). |
+| deleted_at | timestamp without time zone |  | true |  |  |  |
 
 ## Constraints
 
@@ -44,13 +45,13 @@ Scheduled reminder; contact-specific or standalone.
 | ix_reminder_contact_id | CREATE INDEX ix_reminder_contact_id ON public.reminder USING btree (contact_id) |
 | ix_reminder_remind_at | CREATE INDEX ix_reminder_remind_at ON public.reminder USING btree (remind_at) |
 | ix_reminder_is_active | CREATE INDEX ix_reminder_is_active ON public.reminder USING btree (is_active) |
+| ix_reminder_deleted_at | CREATE INDEX ix_reminder_deleted_at ON public.reminder USING btree (deleted_at) |
 
 ## Relations
 
 ```mermaid
 erDiagram
 
-"public.reminder_snooze" }o--|| "public.reminder" : "FOREIGN KEY (reminder_id) REFERENCES reminder(id) ON DELETE CASCADE"
 "public.reminder" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.reminder" }o--o| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 
@@ -66,14 +67,7 @@ erDiagram
   timestamp_with_time_zone last_sent_at
   timestamp_with_time_zone snoozed_until
   timestamp_with_time_zone created_at
-}
-"public.reminder_snooze" {
-  uuid id
-  uuid reminder_id FK
-  timestamp_with_time_zone snoozed_at
-  timestamp_with_time_zone snoozed_until
-  text reason
-  timestamp_with_time_zone created_at
+  timestamp_without_time_zone deleted_at
 }
 "public.user" {
   varchar_255_ email
@@ -113,11 +107,8 @@ erDiagram
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
   timestamp_with_time_zone deleted_at
-  uuid organization_id FK
-  contactsource source
-  varchar_500_ source_external_id
-  boolean do_not_contact
-  varchar_500_ do_not_contact_reason
+  contactsource source_provider
+  varchar_255_ source_external_id
 }
 ```
 
