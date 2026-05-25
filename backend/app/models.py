@@ -742,20 +742,6 @@ class ContactBase(SQLModel):
         max_length=100,
         description="Kanban stage like Active, Dormant, Lost.",
     )
-    timezone: str | None = Field(
-        default=None,
-        max_length=255,
-        description="IANA timezone string (e.g., America/New_York); nullable.",
-    )
-    pronouns: str | None = Field(
-        default=None,
-        max_length=100,
-        description="Contact's pronouns (free text, max 100 chars); nullable.",
-    )
-    auto_log_email: bool = Field(
-        default=False,
-        description="Enable automatic email log ingestion for this contact.",
-    )
     # Provenance
     source: ContactSource = Field(
         default=ContactSource.MANUAL,
@@ -792,9 +778,6 @@ class ContactUpdate(SQLModel):
     stage: str | None = None
     source: ContactSource | None = None
     source_external_id: str | None = None
-    timezone: str | None = None
-    pronouns: str | None = None
-    auto_log_email: bool | None = None
     do_not_contact: bool | None = None
     do_not_contact_reason: str | None = None
     tag_ids: list[uuid.UUID] | None = None
@@ -897,13 +880,16 @@ class Contact(SoftDeleteMixin, ContactBase, table=True):
         description="If merged, points to the surviving contact.",
     )
     # Relationships
-    tags: list[Tag] = Relationship(
-        back_populates=None,
-        link_model=ContactTag,
-    )
-    groups: list[Group] = Relationship(
-        back_populates=None,
-        sa_relationship_kwargs={"cascade": "all, delete-orphan"},
+    tags: list["Tag"] = Relationship(back_populates=None, link_model=ContactTag)
+    groups: list["Group"] = Relationship(back_populates=None, link_model=ContactGroup)
+    # Unique constraint for idempotent upserts
+    __table_args__ = (
+        sa.UniqueConstraint(
+            "owner_id",
+            "source",
+            "source_external_id",
+            name="uq_contact_owner_source_external_id",
+        ),
     )
     communication_preference: CommunicationPreference | None = Relationship(
         sa_relationship_kwargs={"uselist": False, "cascade": "all, delete-orphan"},

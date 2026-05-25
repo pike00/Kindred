@@ -1,41 +1,56 @@
-# Bulk Contact Operations - Implementation Notes
+# CardDAV Server Implementation Notes
+
+## Date: 2026-05-03
 
 ## Status
-Implementation is complete. All task items have been implemented:
+The CardDAV server implementation appears to be complete. A Radicale-based implementation already exists in the codebase.
 
-### Completed:
-- [x] Add selection state to list component (checkbox UI, track selected IDs)
-- [x] Implement floating action bar with bulk action buttons
-- [x] Create /contacts/bulk PATCH endpoint for atomic server-side mutations
-- [x] Add dry-run preview modal for destructive operations (archive, tag removal)
-- [x] Implement select-all-filtered logic (server-side filter matching, pagination-aware)
-- [x] Integrate CSV export and undo toast notifications
+## Implementation Summary
 
-### Backend Implementation:
-- Models: `BulkContactRequest`, `BulkContactOperation`, `BulkContactFilter` in `backend/app/api/routes/contacts.py`
-- Endpoints: `PATCH /api/v1/contacts/bulk` and `GET /api/v1/contacts/bulk/preview`
-- Transaction support for atomic all-or-nothing semantics
-- Server-side filtering with `_build_filtered_contact_stmt()`
-- Limit of 500 contacts per request (safety cap)
+### Files Implemented:
+- `backend/app/carddav/__init__.py` - Package init
+- `backend/app/carddav/auth.py` - HTTP Basic Auth via Radicale auth module
+- `backend/app/carddav/rights.py` - Access control for CardDAV collections
+- `backend/app/carddav/storage.py` - Radicale storage backend with:
+  - `Collection` class implementing PROPFIND, REPORT, PUT (upload), DELETE handlers
+  - `Storage` class for collection discovery and management
+- `backend/app/vcard.py` - vCard 3.0 parsing/generation utilities:
+  - `compute_etag()` - SHA-256 hash for ETag
+  - `contact_to_vcard()` - Generate vCard from Contact model
+  - `vcard_to_contact_data()` - Parse vCard to Contact data
+- `backend/app/main.py` - Mounts Radicale at `/dav` with `.well-known/carddav` redirect
 
-### Frontend Implementation:
-- `ContactsList.tsx` with multi-select checkboxes
-- Floating action bar with bulk action buttons (archive, unarchive, favorite, unfavorite, delete, export)
-- Preview modal for confirming destructive actions
-- CSV export via `/api/v1/import-export/export/csv`
-- Undo functionality with toast notifications
-- Fixed SDK method names to match generated client (`previewBulkContacts`, `bulkUpdateContacts`, `listContacts`)
+### Task Checklist Status:
+- [x] Implement WebDAV PROPFIND handler for collection discovery (via Radicale)
+- [x] Implement WebDAV REPORT (addressdata) handler for batch contact fetch with ETag (via Radicale)
+- [x] Implement WebDAV PUT handler for contact creation and update with vcard parsing (via `upload()`)
+- [x] Implement WebDAV DELETE handler for contact removal (via `delete()`)
+- [x] Build vcard serializer aligned with Contact fields (`vcard.py`)
+- [x] Wire ETag invalidation (SHA-256 via `compute_etag()`)
+- [x] Add HTTP Basic Auth guard on CardDAV routes (`auth.py`)
+- [ ] Test bidirectional sync with macOS Contacts and/or DAVx5 - BLOCKED (services not running)
+- [ ] Document Apple client compatibility and any quirks - Not yet done
 
-### Tests:
-- `backend/tests/api/test_bulk_contacts.py` with 12 test cases covering all bulk operations
+## Blocker
+Docker services are not running in this worktree. Cannot verify the implementation works.
 
-## Verification
-- Frontend typecheck passes (`bun run typecheck` in frontend/)
-- Backend tests could not be run because Docker services for this worktree are not running
-- The worktree services need to be started with `just up` for full verification
+### Commands attempted:
+```
+docker compose ps  # Output: no containers running
+docker compose -f compose.worktree.yml ps  # Failed: WORKTREE_HOST not set
+```
 
-## Recent Fixes (2026-05-03)
-- Fixed incorrect SDK method names in `ContactsList.tsx`:
-  - `previewBulkContactsContactsBulkPreview` → `previewBulkContacts`
-  - `bulkUpdateContactsContactsBulk` → `bulkUpdateContacts`
-  - `listContactsContacts` → `listContacts`
+Per guardrails, I did not attempt to start the services.
+
+## Code Review Notes
+- All CardDAV-related files compile without syntax errors
+- The implementation uses Radicale 3.6.1 as a WSGI middleware mounted at `/dav`
+- vCard 3.0 format is used (not 4.0)
+- ETag uses SHA-256 hash of vCard content
+- Apple extensions are preserved via X-CRM-* properties
+
+## Next Steps (when services are running)
+1. Start the worktree dev stack: `just up` (from worktree directory with WORKTREE_HOST set)
+2. Test with macOS Contacts or DAVx5
+3. Document any Apple client compatibility quirks
+4. Run `docker compose exec -T backend uv run pytest backend/tests/carddav/ -v` to verify tests pass
