@@ -2524,24 +2524,17 @@ export const DebtPublicSchema = {
             format: 'date-time',
             title: 'Created At'
         },
-        payments: {
-            items: {
-                '$ref': '#/components/schemas/DebtPaymentPublic'
-            },
-            type: 'array',
-            title: 'Payments',
-            default: []
-        },
-        paid_amount: {
+        deleted_at: {
             anyOf: [
                 {
-                    type: 'number'
+                    type: 'string',
+                    format: 'date-time'
                 },
                 {
                     type: 'null'
                 }
             ],
-            title: 'Paid Amount'
+            title: 'Deleted At'
         }
     },
     type: 'object',
@@ -2977,50 +2970,17 @@ export const GiftPublicSchema = {
             format: 'date-time',
             title: 'Created At'
         },
-        days_until_occasion: {
-            anyOf: [
-                {
-                    type: 'integer'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Days Until Occasion'
-        },
-        contact_birthday: {
+        deleted_at: {
             anyOf: [
                 {
                     type: 'string',
-                    format: 'date'
+                    format: 'date-time'
                 },
                 {
                     type: 'null'
                 }
             ],
-            title: 'Contact Birthday'
-        },
-        contact_first_name: {
-            anyOf: [
-                {
-                    type: 'string'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Contact First Name'
-        },
-        contact_last_name: {
-            anyOf: [
-                {
-                    type: 'string'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Contact Last Name'
+            title: 'Deleted At'
         }
     },
     type: 'object',
@@ -4783,16 +4743,17 @@ export const NotePublicSchema = {
             format: 'date-time',
             title: 'Updated At'
         },
-        client_id: {
+        deleted_at: {
             anyOf: [
                 {
-                    type: 'string'
+                    type: 'string',
+                    format: 'date-time'
                 },
                 {
                     type: 'null'
                 }
             ],
-            title: 'Client Id'
+            title: 'Deleted At'
         }
     },
     type: 'object',

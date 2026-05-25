@@ -344,107 +344,37 @@ def delete_reminder(
     session: SessionDep,
     current_user: CurrentUser,
     reminder_id: uuid.UUID,
-) -> list[ReminderSnoozeHistoryEntry]:
-    """Get snooze history for a reminder."""
-    reminder = session.get(Reminder, reminder_id)
-    if reminder is None or not _reminder_accessible(current_user, reminder, session):
-        raise HTTPException(status_code=404, detail="Reminder not found")
-
-    stmt = (
-        select(ReminderSnooze)
-        .where(ReminderSnooze.reminder_id == reminder_id)
-        .order_by(ReminderSnooze.snoozed_at.desc())
-    )
-    history = session.exec(stmt).all()
-    return [
-        ReminderSnoozeHistoryEntry(
-            snoozed_at=h.snoozed_at,
-            snoozed_until=h.snoozed_until,
-            reason=h.reason,
-        )
-        for h in history
-    ]
-
-
-@router.get("/snooze-stats", response_model=list[ReminderSnoozeStat])
-def get_snooze_stats(
-    session: SessionDep,
-    current_user: CurrentUser,
-    days: int = 30,
-) -> list[ReminderSnoozeStat]:
-    """Get snooze count per reminder in the last N days."""
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
-    stmt = (
-        select(
-            ReminderSnooze.reminder_id,
-            func.count(ReminderSnooze.id).label("snooze_count"),
-        )
-        .join(Reminder, ReminderSnooze.reminder_id == Reminder.id)
-        .where(
-            ReminderSnooze.snoozed_at >= cutoff,
-            or_(
-                Reminder.owner_id == current_user.id,
-                Reminder.contact_id.in_(visible_contact_ids(current_user)),
-            ),
-        )
-        .group_by(ReminderSnooze.reminder_id)
-    )
-    results = session.exec(stmt).all()
-    return [
-        ReminderSnoozeStat(reminder_id=str(r[0]), snooze_count=r[1]) for r in results
-    ]
-
-
-@router.get("/chronic-snoozers", response_model=list[ChronicSnoozer])
-def get_chronic_snoozers(
-    session: SessionDep,
-    current_user: CurrentUser,
-    days: int = 7,
-    threshold: int = 3,
-) -> list[ChronicSnoozer]:
-    """Get contacts with reminders snoozed more than threshold times in N days."""
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
-    stmt = (
-        select(
-            Reminder.contact_id,
-            Reminder.id.label("reminder_id"),
-            func.count(ReminderSnooze.id).label("snooze_count"),
-        )
-        .join(ReminderSnooze, ReminderSnooze.reminder_id == Reminder.id)
-        .where(
-            ReminderSnooze.snoozed_at >= cutoff,
-            or_(
-                Reminder.owner_id == current_user.id,
-                Reminder.contact_id.in_(visible_contact_ids(current_user)),
-            ),
-        )
-        .group_by(Reminder.contact_id, Reminder.id)
-        .having(func.count(ReminderSnooze.id) > threshold)
-    )
-    results = session.exec(stmt).all()
-    return [
-        ChronicSnoozer(
-            contact_id=str(r[0]) if r[0] else None,
-            reminder_id=str(r[1]),
-            snooze_count=r[2],
-        )
-        for r in results
-    ]
-
-
-@router.delete("/{reminder_id}", response_model=Ok)
-def delete_reminder(
-    session: SessionDep,
-    current_user: CurrentUser,
-    reminder_id: uuid.UUID,
-) -> Ok:
+) -> Any:
     """Soft-delete a reminder by setting deleted_at."""
     reminder = session.get(Reminder, reminder_id)
     if reminder is None or not _reminder_accessible(current_user, reminder, session):
         raise HTTPException(status_code=404, detail="Reminder not found")
 
+    from datetime import datetime, timezone
+
     reminder.deleted_at = datetime.now(timezone.utc)
     session.add(reminder)
+    session.commit()
+    return {"ok": True}
+
+
+@router.post("/{reminder_id}/restore")
+def restore_reminder(
+    session: SessionDep,
+    reminder_id: uuid.UUID,
+) -> Any:
+    """Restore a soft-deleted reminder by clearing deleted_at."""
+    from sqlalchemy import text, update
+
+    result = session.exec(
+        text("SELECT id FROM reminder WHERE id = :id AND deleted_at IS NOT NULL"),
+        params={"id": str(reminder_id)},
+    ).first()
+    if result is None:
+        raise HTTPException(status_code=404, detail="Reminder not found or not deleted")
+    session.exec(
+        update(Reminder).where(Reminder.id == reminder_id).values(deleted_at=None)
+    )
     session.commit()
     return Ok()
 

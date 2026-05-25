@@ -127,6 +127,29 @@ def restore_gift(
     session: SessionDep,
     gift_id: uuid.UUID,
 ) -> Any:
+    """Soft-delete a gift by setting deleted_at."""
+    gift = session.get(Gift, gift_id)
+    if gift is None:
+        raise HTTPException(status_code=404, detail="Gift not found")
+
+    if gift.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
+    _require_contact_visible(session, current_user, gift.contact_id)
+
+    from datetime import datetime, timezone
+
+    gift.deleted_at = datetime.now(timezone.utc)
+    session.add(gift)
+    session.commit()
+    return {"ok": True}
+
+
+@router.post("/{gift_id}/restore")
+def restore_gift(
+    session: SessionDep,
+    gift_id: uuid.UUID,
+) -> Any:
     """Restore a soft-deleted gift by clearing deleted_at."""
     from sqlalchemy import text, update
 
@@ -137,82 +160,6 @@ def restore_gift(
     if result is None:
         raise HTTPException(status_code=404, detail="Gift not found or not deleted")
     session.exec(update(Gift).where(Gift.id == gift_id).values(deleted_at=None))
-    session.commit()
-    return Ok()
-
-
-@router.get("/kanban", response_model=dict[str, GiftKanbanColumn])
-def get_kanban_board(
-    session: SessionDep,
-    current_user: CurrentUser,
-) -> dict[str, GiftKanbanColumn]:
-    """Get gifts grouped by status for Kanban board view."""
-    statement = (
-        select(Gift, Contact.birthday, Contact.first_name, Contact.last_name)
-        .join(Contact, Gift.contact_id == Contact.id)
-        .where(Gift.owner_id == current_user.id)
-        .where(Gift.deleted_at == None)  # noqa: E711
-    )
-    results = session.exec(statement).all()
-
-    kanban_data: dict[str, GiftKanbanColumn] = {
-        status.value: GiftKanbanColumn(gifts=[], count=0, total_value=0.0)
-        for status in GiftStatus
-    }
-
-    for gift, birthday, first_name, last_name in results:
-        days_until = None
-        if birthday:
-            days_until = (birthday - date.today()).days
-
-        is_overdue = (
-            days_until is not None
-            and days_until < 3
-            and gift.status in (GiftStatus.IDEA, GiftStatus.PURCHASED)
-        )
-
-        gift_data = GiftPublic(
-            **gift.model_dump(),
-            days_until_occasion=days_until,
-            contact_birthday=birthday,
-            contact_first_name=first_name,
-            contact_last_name=last_name,
-        )
-
-        column = kanban_data[gift.status.value]
-        column.gifts.append(
-            GiftKanbanCard(
-                gift=gift_data,
-                is_overdue=is_overdue,
-                days_until_occasion=days_until,
-            )
-        )
-        column.count += 1
-        if gift.value_amount:
-            column.total_value += gift.value_amount
-
-    return kanban_data
-
-
-@router.post("/{gift_id}/change-status", response_model=GiftPublic)
-def change_gift_status(
-    *,
-    session: SessionDep,
-    current_user: CurrentUser,
-    gift_id: uuid.UUID,
-    new_status: GiftStatus,
-) -> GiftPublic:
-    """Change gift status (for drag-and-drop)."""
-    gift = session.get(Gift, gift_id)
-    if gift is None:
-        raise HTTPException(status_code=404, detail="Gift not found")
-    _require_contact_visible(session, current_user, gift.contact_id)
-
-    gift.status = new_status
-    if new_status == GiftStatus.GIVEN and not gift.gift_date:
-        gift.gift_date = date.today()
-
-    session.add(gift)
     session.commit()
     return {"ok": True}
 

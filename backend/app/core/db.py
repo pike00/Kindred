@@ -1,3 +1,6 @@
+from sqlalchemy.orm import with_loader_criteria
+
+from sqlalchemy.orm import with_loader_criteria
 from sqlmodel import Session, create_engine, select
 
 from app import crud
@@ -7,10 +10,39 @@ from app.models import User, UserCreate
 
 engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
 
+# Session factory for creating database sessions
+SessionLocal = Session(engine)
+
+
+def get_session(include_deleted: bool = False) -> Session:
+    """Create a new session with soft-delete filtering applied."""
+    session = Session(engine)
+    configure_session(session, include_deleted=include_deleted)
+    return session
+
+
+def configure_session(session: Session, include_deleted: bool = False) -> None:
+    """Configure session with soft-delete filter.
+
+    By default, automatically filters out soft-deleted records
+    from all queries using SQLAlchemy's with_loader_criteria.
+    Set include_deleted=True to include deleted records.
+    """
+    from app.models import SoftDeleteMixin
+
+    if not include_deleted:
+        session.execute(
+            with_loader_criteria(
+                SoftDeleteMixin,
+                lambda cls: cls.deleted_at.is_(None),
+                include_aliases=True,
+            )
+        )
+
 
 # make sure all SQLModel models are imported (app.models) before initializing DB
 # otherwise, SQLModel might fail to initialize relationships properly
-# for more details: https://github.com/fastapi/full-stack-fastapi-template/issues/28
+# for more details: https://github.com/tiangolo/full-stack-fastapi-template/issues/28
 
 
 def init_db(session: Session) -> None:

@@ -128,6 +128,29 @@ def restore_debt(
     session: SessionDep,
     debt_id: uuid.UUID,
 ) -> Any:
+    """Soft-delete a debt by setting deleted_at."""
+    debt = session.get(Debt, debt_id)
+    if debt is None:
+        raise HTTPException(status_code=404, detail="Debt not found")
+    if debt.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
+        raise HTTPException(status_code=404, detail="Debt not found")
+    _require_contact_visible(session, current_user, debt.contact_id)
+
+    from datetime import datetime, timezone
+
+    debt.deleted_at = datetime.now(timezone.utc)
+    session.add(debt)
+    session.commit()
+    return {"ok": True}
+
+
+@router.post("/{debt_id}/restore")
+def restore_debt(
+    session: SessionDep,
+    debt_id: uuid.UUID,
+) -> Any:
     """Restore a soft-deleted debt by clearing deleted_at."""
     from sqlalchemy import text, update
 
@@ -138,108 +161,5 @@ def restore_debt(
     if result is None:
         raise HTTPException(status_code=404, detail="Debt not found or not deleted")
     session.exec(update(Debt).where(Debt.id == debt_id).values(deleted_at=None))
-    session.commit()
-    return Ok()
-
-
-# ─── Debt Payment endpoints ─────────────────────────────────────────────
-
-
-@router.get("/{debt_id}/payments", response_model=list[DebtPaymentPublic])
-def list_debt_payments(
-    session: SessionDep,
-    current_user: CurrentUser,
-    debt_id: uuid.UUID,
-) -> Any:
-    """List all payments for a specific debt."""
-    debt = session.get(Debt, debt_id)
-    if debt is None:
-        raise HTTPException(status_code=404, detail="Debt not found")
-    _require_contact_visible(session, current_user, debt.contact_id)
-    return debt.payments
-
-
-@router.post("/{debt_id}/payments", response_model=DebtPaymentPublic)
-def create_debt_payment(
-    *,
-    session: SessionDep,
-    current_user: CurrentUser,
-    debt_id: uuid.UUID,
-    payment_in: DebtPaymentCreate,
-) -> Any:
-    """Add a payment to a debt."""
-    debt = session.get(Debt, debt_id)
-    if debt is None:
-        raise HTTPException(status_code=404, detail="Debt not found")
-    _require_contact_visible(session, current_user, debt.contact_id)
-
-    payment = DebtPayment(
-        debt_id=debt_id,
-        **payment_in.model_dump(),
-    )
-    session.add(payment)
-    session.commit()
-    return {"ok": True}
-
-
-# ─── Debt Payment endpoints ─────────────────────────────────────────────
-
-
-@router.get("/{debt_id}/payments", response_model=list[DebtPaymentPublic])
-def list_debt_payments(
-    session: SessionDep,
-    current_user: CurrentUser,
-    debt_id: uuid.UUID,
-) -> Any:
-    """List all payments for a specific debt."""
-    debt = session.get(Debt, debt_id)
-    if debt is None:
-        raise HTTPException(status_code=404, detail="Debt not found")
-    _require_contact_visible(session, current_user, debt.contact_id)
-    return debt.payments
-
-
-@router.post("/{debt_id}/payments", response_model=DebtPaymentPublic)
-def create_debt_payment(
-    *,
-    session: SessionDep,
-    current_user: CurrentUser,
-    debt_id: uuid.UUID,
-    payment_in: DebtPaymentCreate,
-) -> Any:
-    """Add a payment to a debt."""
-    debt = session.get(Debt, debt_id)
-    if debt is None:
-        raise HTTPException(status_code=404, detail="Debt not found")
-    _require_contact_visible(session, current_user, debt.contact_id)
-
-    payment = DebtPayment(
-        debt_id=debt_id,
-        **payment_in.model_dump(),
-    )
-    session.add(payment)
-    session.commit()
-    session.refresh(payment)
-    return payment
-
-
-@router.delete("/payments/{payment_id}")
-def delete_debt_payment(
-    *,
-    session: SessionDep,
-    current_user: CurrentUser,
-    payment_id: uuid.UUID,
-) -> Any:
-    """Delete a payment."""
-    payment = session.get(DebtPayment, payment_id)
-    if payment is None:
-        raise HTTPException(status_code=404, detail="Payment not found")
-    # Check access via the parent debt's contact
-    debt = session.get(Debt, payment.debt_id)
-    if debt is None:
-        raise HTTPException(status_code=404, detail="Debt not found")
-    _require_contact_visible(session, current_user, debt.contact_id)
-
-    session.delete(payment)
     session.commit()
     return {"ok": True}

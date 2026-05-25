@@ -76,6 +76,10 @@ def update_life_event(
     event = session.get(LifeEvent, event_id)
     if event is None:
         raise HTTPException(status_code=404, detail="Life event not found")
+
+    if event.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
     _require_contact_visible(session, current_user, event.contact_id)
 
     update_data = event_in.model_dump(exclude_unset=True)
@@ -91,15 +95,40 @@ def delete_life_event(
     session: SessionDep,
     current_user: CurrentUser,
     event_id: uuid.UUID,
-) -> Ok:
+) -> Any:
     """Soft-delete a life event by setting deleted_at."""
     event = session.get(LifeEvent, event_id)
     if event is None:
         raise HTTPException(status_code=404, detail="Life event not found")
     _require_contact_visible(session, current_user, event.contact_id)
 
+    from datetime import datetime, timezone
+
     event.deleted_at = datetime.now(timezone.utc)
     session.add(event)
+    session.commit()
+    return {"ok": True}
+
+
+@router.post("/{event_id}/restore")
+def restore_life_event(
+    session: SessionDep,
+    event_id: uuid.UUID,
+) -> Any:
+    """Restore a soft-deleted life event by clearing deleted_at."""
+    from sqlalchemy import text, update
+
+    result = session.exec(
+        text("SELECT id FROM life_event WHERE id = :id AND deleted_at IS NOT NULL"),
+        params={"id": str(event_id)},
+    ).first()
+    if result is None:
+        raise HTTPException(
+            status_code=404, detail="Life event not found or not deleted"
+        )
+    session.exec(
+        update(LifeEvent).where(LifeEvent.id == event_id).values(deleted_at=None)
+    )
     session.commit()
     return Ok()
 
