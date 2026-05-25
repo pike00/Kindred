@@ -7,7 +7,6 @@
 export type { LucideIcon } from "lucide-react"
 // Additional icons for bulk operations
 export {
-  AlertCircle,
   AlertTriangle,
   Archive,
   AtSign,
@@ -21,7 +20,6 @@ export {
   Camera,
   Check,
   CheckCircle2,
-  CheckSquare,
   ChevronDown,
   // Pagination
   ChevronLeft,

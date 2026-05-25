@@ -3606,6 +3606,12 @@ export type TagSharesPreviewTagShareData = {
 
 export type TagSharesPreviewTagShareResponse = (TagSharePreview);
 
+export type TagSharesPreviewTagShareData = {
+    tagId: string;
+};
+
+export type TagSharesPreviewTagShareResponse = (TagSharePreview);
+
 export type TagSharesCreateTagShareData = {
     requestBody: _ShareIn;
 };
@@ -3635,12 +3641,6 @@ export type TagSharesLogTagShareAuditData = {
 export type TagSharesLogTagShareAuditResponse = ({
     [key: string]: (string);
 });
-
-export type TranscribeTranscribeAudioData = {
-    formData: Body_transcribe_transcribe_audio;
-};
-
-export type TranscribeTranscribeAudioResponse = (unknown);
 
 export type UsersReadUsersData = {
     limit?: number;
