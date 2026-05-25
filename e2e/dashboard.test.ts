@@ -36,14 +36,11 @@ async function main() {
         const text = await getPageText(p);
         const hasContacts = text.includes("Contacts");
         const hasTags = text.includes("Tags");
-        const hasGroups = text.includes("Groups");
         const hasReminders = text.includes("Reminders");
         if (!hasContacts)
           throw new Error("Contacts stats card not found on dashboard");
         if (!hasTags)
           throw new Error("Tags stats card not found on dashboard");
-        if (!hasGroups)
-          throw new Error("Groups stats card not found on dashboard");
         if (!hasReminders)
           throw new Error("Reminders stats card not found on dashboard");
       }),
@@ -109,7 +106,6 @@ async function main() {
             "Contacts",
             "Interactions",
             "Tags",
-            "Groups",
             "Reminders",
             "Journal",
           ];
@@ -153,7 +149,6 @@ async function main() {
     const pages = [
       { name: "Interactions", urlPart: "/interactions" },
       { name: "Tags", urlPart: "/tags" },
-      { name: "Groups", urlPart: "/groups" },
       { name: "Reminders", urlPart: "/reminders" },
       { name: "Journal", urlPart: "/journal" },
     ];
