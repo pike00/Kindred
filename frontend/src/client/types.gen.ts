@@ -203,34 +203,31 @@ export type CalendarMonthResponse = {
     };
 };
 
-export type CommunicationPreferencePublic = {
+export type CalendarTokenCreate = {
     /**
-     * Preferred contact channel (call, in_person, text, email, video, social, other).
+     * Optional expiration date; null means never expires.
      */
-    preferred_channel?: (string | null);
-    /**
-     * Preferred contact time window in HH:MM-HH:MM format, local to the contact.
-     */
-    best_time_local?: (string | null);
-    /**
-     * When True, suppress all outbound contact reminders.
-     */
-    do_not_contact?: boolean;
-    /**
-     * Reason for do-not-contact status (e.g. deceased, requested removal).
-     */
-    do_not_contact_reason?: (string | null);
-    id: string;
-    contact_id: string;
-    created_at: string;
-    updated_at: string;
+    expires_at?: (string | null);
 };
 
-export type CommunicationPreferenceUpdate = {
-    preferred_channel?: (string | null);
-    best_time_local?: (string | null);
-    do_not_contact?: (boolean | null);
-    do_not_contact_reason?: (string | null);
+export type CalendarTokenPublic = {
+    /**
+     * Optional expiration date; null means never expires.
+     */
+    expires_at?: (string | null);
+    id: string;
+    status: string;
+    last_used_at: (string | null);
+    created_at: string;
+};
+
+export type CalendarTokensPublic = {
+    data: Array<CalendarTokenPublic>;
+    count: number;
+    month: string;
+    days: {
+        [key: string]: Array<CalendarEntry>;
+    };
 };
 
 export type ContactCreate = {

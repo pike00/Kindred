@@ -792,128 +792,104 @@ export const CalendarMonthResponseSchema = {
     title: 'CalendarMonthResponse'
 } as const;
 
-export const CommunicationPreferencePublicSchema = {
+export const CalendarTokenCreateSchema = {
     properties: {
-        preferred_channel: {
+        expires_at: {
             anyOf: [
                 {
                     type: 'string',
-                    maxLength: 20
+                    format: 'date-time'
                 },
                 {
                     type: 'null'
                 }
             ],
-            title: 'Preferred Channel',
-            description: 'Preferred contact channel (call, in_person, text, email, video, social, other).'
-        },
-        best_time_local: {
+            title: 'Expires At',
+            description: 'Optional expiration date; null means never expires.'
+        }
+    },
+    type: 'object',
+    title: 'CalendarTokenCreate'
+} as const;
+
+export const CalendarTokenPublicSchema = {
+    properties: {
+        expires_at: {
             anyOf: [
                 {
                     type: 'string',
-                    maxLength: 11
+                    format: 'date-time'
                 },
                 {
                     type: 'null'
                 }
             ],
-            title: 'Best Time Local',
-            description: 'Preferred contact time window in HH:MM-HH:MM format, local to the contact.'
-        },
-        do_not_contact: {
-            type: 'boolean',
-            title: 'Do Not Contact',
-            description: 'When True, suppress all outbound contact reminders.',
-            default: false
-        },
-        do_not_contact_reason: {
-            anyOf: [
-                {
-                    type: 'string',
-                    maxLength: 500
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Do Not Contact Reason',
-            description: 'Reason for do-not-contact status (e.g. deceased, requested removal).'
+            title: 'Expires At',
+            description: 'Optional expiration date; null means never expires.'
         },
         id: {
             type: 'string',
             format: 'uuid',
             title: 'Id'
         },
-        contact_id: {
+        status: {
             type: 'string',
-            format: 'uuid',
-            title: 'Contact Id'
+            title: 'Status'
+        },
+        last_used_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Last Used At'
         },
         created_at: {
             type: 'string',
             format: 'date-time',
             title: 'Created At'
-        },
-        updated_at: {
-            type: 'string',
-            format: 'date-time',
-            title: 'Updated At'
         }
     },
     type: 'object',
-    required: ['id', 'contact_id', 'created_at', 'updated_at'],
-    title: 'CommunicationPreferencePublic'
+    required: ['id', 'status', 'last_used_at', 'created_at'],
+    title: 'CalendarTokenPublic'
 } as const;
 
-export const CommunicationPreferenceUpdateSchema = {
+export const CalendarTokensPublicSchema = {
     properties: {
-        preferred_channel: {
-            anyOf: [
-                {
-                    type: 'string'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Preferred Channel'
+        data: {
+            items: {
+                '$ref': '#/components/schemas/CalendarTokenPublic'
+            },
+            type: 'array',
+            title: 'Data'
         },
-        best_time_local: {
-            anyOf: [
-                {
-                    type: 'string'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Best Time Local'
+        count: {
+            type: 'integer',
+            title: 'Count'
         },
-        do_not_contact: {
-            anyOf: [
-                {
-                    type: 'boolean'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Do Not Contact'
+        month: {
+            type: 'string',
+            title: 'Month'
         },
-        do_not_contact_reason: {
-            anyOf: [
-                {
-                    type: 'string'
+        days: {
+            additionalProperties: {
+                items: {
+                    '$ref': '#/components/schemas/CalendarEntry'
                 },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Do Not Contact Reason'
+                type: 'array'
+            },
+            type: 'object',
+            title: 'Days'
         }
     },
     type: 'object',
-    title: 'CommunicationPreferenceUpdate'
+    required: ['data', 'count', 'month', 'days'],
+    title: 'CalendarTokensPublic'
 } as const;
 
 export const ContactCreateSchema = {

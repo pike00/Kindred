@@ -2691,56 +2691,82 @@ class CalendarMonthResponse(SQLModel):
     days: dict[str, list[CalendarEntry]]
 
 
-# ─── IcalImportLog ───────────────────────────────────────────────────────
+# ─── CalendarToken ───────────────────────────────────────────────
+
+# ─── CalendarToken ───────────────────────────────────────────────────────
 
 
-class IcalImportLog(SQLModel, table=True):
-    """Tracks imported iCal events for UID-based deduplication.
+class CalendarTokenBase(SQLModel):
+    expires_at: datetime | None = Field(
+        default=None,
+        description="Optional expiration date; null means never expires.",
+    )
 
-    When the same .ics file is re-uploaded, events with UIDs already in this
-    table are skipped to prevent duplicate imports.
-    """
 
-    __tablename__ = "ical_import_log"
+class CalendarTokenCreate(CalendarTokenBase):
+    pass
 
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+
+class CalendarTokenUpdate(SQLModel):
+    status: str | None = Field(
+        default=None,
+        max_length=20,
+        description="Token status: active or revoked.",
+    )
+
+
+class CalendarToken(CalendarTokenBase, table=True):
+    """Per-user bearer token for accessing /calendar.ics feed."""
+
+    __tablename__ = "calendar_token"
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
     owner_id: uuid.UUID = Field(
         foreign_key="user.id",
         nullable=False,
         ondelete="CASCADE",
-        index=True,
         description="Owner user; cascades on delete.",
     )
-    uid: str = Field(
-        max_length=2048,
+    token: str = Field(
+        max_length=255,
+        unique=True,
         index=True,
-        description="VEVENT.UID from the iCalendar file.",
+        description="The bearer token value (UUID or secure random string).",
     )
-    contact_id: uuid.UUID | None = Field(
+    status: str = Field(
+        default="active",
+        max_length=20,
+        description="Token status: active or revoked.",
+    )
+    last_used_at: datetime | None = Field(
         default=None,
-        foreign_key="contact.id",
-        ondelete="CASCADE",
-        description="Primary contact linked to this event (if any).",
+        description="When the token was last used to access the feed.",
     )
-    event_type: str = Field(
-        max_length=50,
-        description="Classification: interaction, birthday, anniversary, etc.",
+    revoked_at: datetime | None = Field(
+        default=None,
+        description="When the token was revoked.",
     )
-    imported_at: datetime = Field(
-        default_factory=get_datetime_utc,
-        sa_type=DateTime(timezone=True),
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
         nullable=False,
-        description="When this event was imported (UTC).",
-    )
-
-    __table_args__ = (
-        sa.UniqueConstraint("owner_id", "uid", name="uq_ical_import_owner_uid"),
+        description="When the token was created (UTC).",
     )
 
 
-class IcalImportLogPublic(SQLModel):
+class CalendarTokenPublic(CalendarTokenBase):
     id: uuid.UUID
-    uid: str
-    contact_id: uuid.UUID | None
-    event_type: str
-    imported_at: datetime
+    status: str
+    last_used_at: datetime | None
+    created_at: datetime
+
+
+class CalendarTokensPublic(SQLModel):
+    data: list[CalendarTokenPublic]
+    count: int
+
+    month: str
+    days: dict[str, list[CalendarEntry]]
