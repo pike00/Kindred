@@ -1,9 +1,9 @@
 """Journal entry management routes."""
 
 import uuid
-from typing import Any
 
 from fastapi import APIRouter, HTTPException
+from sqlmodel import delete as sql_delete
 from sqlmodel import func, select
 
 from app.api.deps import CurrentUser, SessionDep
@@ -11,12 +11,31 @@ from app.crud import create_journal_entry
 from app.models import (
     JournalEntriesPublic,
     JournalEntry,
+    JournalEntryContact,
     JournalEntryCreate,
     JournalEntryPublic,
     JournalEntryUpdate,
+    Ok,
 )
 
 router = APIRouter(prefix="/journal", tags=["journal"])
+
+
+def _to_public(session: SessionDep, entry: JournalEntry) -> JournalEntryPublic:
+    """Serialize a journal entry with its linked contact IDs.
+
+    ``contact_ids`` lives only on ``JournalEntryPublic`` (the table model has no
+    such column), so it is supplied at validation time rather than assigned onto
+    the ORM object.
+    """
+    contact_ids = list(
+        session.exec(
+            select(JournalEntryContact.contact_id).where(
+                JournalEntryContact.journal_entry_id == entry.id
+            )
+        ).all()
+    )
+    return JournalEntryPublic.model_validate(entry, update={"contact_ids": contact_ids})
 
 
 @router.get("/", response_model=JournalEntriesPublic)
@@ -25,7 +44,7 @@ def list_journal_entries(
     current_user: CurrentUser,
     skip: int = 0,
     limit: int = 100,
-) -> Any:
+) -> JournalEntriesPublic:
     """List journal entries for the current user."""
     statement = (
         select(JournalEntry)
@@ -42,7 +61,7 @@ def list_journal_entries(
     count = session.exec(count_statement).one()
 
     return JournalEntriesPublic(
-        data=[JournalEntryPublic.model_validate(e) for e in entries],
+        data=[_to_public(session, e) for e in entries],
         count=count,
     )
 
@@ -53,12 +72,12 @@ def create_journal_entry_route(
     session: SessionDep,
     current_user: CurrentUser,
     entry_in: JournalEntryCreate,
-) -> Any:
+) -> JournalEntryPublic:
     """Create a new journal entry."""
     entry = create_journal_entry(
         session=session, journal_in=entry_in, owner_id=current_user.id
     )
-    return JournalEntryPublic.model_validate(entry)
+    return _to_public(session, entry)
 
 
 @router.patch("/{entry_id}", response_model=JournalEntryPublic)
@@ -68,7 +87,7 @@ def update_journal_entry(
     current_user: CurrentUser,
     entry_id: uuid.UUID,
     entry_in: JournalEntryUpdate,
-) -> Any:
+) -> JournalEntryPublic:
     """Update a journal entry."""
     entry = session.get(JournalEntry, entry_id)
     if not entry:
@@ -77,19 +96,39 @@ def update_journal_entry(
         raise HTTPException(status_code=403, detail="Not enough permissions")
 
     update_data = entry_in.model_dump(exclude_unset=True)
+    # contact_ids is not a column on JournalEntry; handle it via the junction
+    # table separately and keep it out of the ORM update.
+    has_contact_ids = "contact_ids" in update_data
+    new_contact_ids = update_data.pop("contact_ids", None)
     entry.sqlmodel_update(update_data)
     session.add(entry)
     session.commit()
     session.refresh(entry)
-    return JournalEntryPublic.model_validate(entry)
+    # Sync contact associations if provided
+    if has_contact_ids:
+        # Remove existing associations
+        session.exec(
+            sql_delete(JournalEntryContact).where(
+                JournalEntryContact.journal_entry_id == entry.id
+            )
+        )
+        # Add new associations
+        if new_contact_ids:
+            for cid in set(new_contact_ids):
+                session.add(
+                    JournalEntryContact(journal_entry_id=entry.id, contact_id=cid)
+                )
+        session.commit()
+        session.refresh(entry)
+    return _to_public(session, entry)
 
 
-@router.delete("/{entry_id}")
+@router.delete("/{entry_id}", response_model=Ok)
 def delete_journal_entry(
     session: SessionDep,
     current_user: CurrentUser,
     entry_id: uuid.UUID,
-) -> Any:
+) -> Ok:
     """Delete a journal entry."""
     entry = session.get(JournalEntry, entry_id)
     if not entry:
@@ -99,4 +138,4 @@ def delete_journal_entry(
 
     session.delete(entry)
     session.commit()
-    return {"ok": True}
+    return Ok()

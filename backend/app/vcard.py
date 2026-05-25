@@ -430,4 +430,5 @@ def vcard_to_contact_data(vcard_text: str) -> dict:
         "addresses": addresses,
         "vcard_raw": vcard_text,
         "uid": uid,
+        "vcard_sha256": compute_vcard_hash(vcard_text),
     }

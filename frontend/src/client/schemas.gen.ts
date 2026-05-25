@@ -642,6 +642,98 @@ export const AddressUpdateSchema = {
     title: 'AddressUpdate'
 } as const;
 
+export const AddressesPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/AddressPublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'AddressesPublic'
+} as const;
+
+export const AvatarUploadResponseSchema = {
+    properties: {
+        avatar_url: {
+            type: 'string',
+            title: 'Avatar Url'
+        }
+    },
+    type: 'object',
+    required: ['avatar_url'],
+    title: 'AvatarUploadResponse',
+    description: 'Response model for avatar upload.'
+} as const;
+
+export const Body_contacts_upload_avatar_fileSchema = {
+    properties: {
+        file: {
+            type: 'string',
+            format: 'binary',
+            title: 'File'
+        }
+    },
+    type: 'object',
+    required: ['file'],
+    title: 'Body_contacts-upload_avatar_file'
+} as const;
+
+export const Body_ical_upload_icalSchema = {
+    properties: {
+        file: {
+            type: 'string',
+            format: 'binary',
+            title: 'File'
+        }
+    },
+    type: 'object',
+    required: ['file'],
+    title: 'Body_ical-upload_ical'
+} as const;
+
+export const Body_import_export_import_csvSchema = {
+    properties: {
+        file: {
+            type: 'string',
+            format: 'binary',
+            title: 'File'
+        },
+        column_mapping: {
+            anyOf: [
+                {
+                    additionalProperties: {
+                        anyOf: [
+                            {
+                                type: 'string'
+                            },
+                            {
+                                type: 'null'
+                            }
+                        ]
+                    },
+                    type: 'object'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Column Mapping'
+        }
+    },
+    type: 'object',
+    required: ['file'],
+    title: 'Body_import-export-import_csv'
+} as const;
+
 export const Body_import_export_import_vcardSchema = {
     properties: {
         file: {
@@ -653,6 +745,19 @@ export const Body_import_export_import_vcardSchema = {
     type: 'object',
     required: ['file'],
     title: 'Body_import-export-import_vcard'
+} as const;
+
+export const Body_import_export_preview_csv_importSchema = {
+    properties: {
+        file: {
+            type: 'string',
+            format: 'binary',
+            title: 'File'
+        }
+    },
+    type: 'object',
+    required: ['file'],
+    title: 'Body_import-export-preview_csv_import'
 } as const;
 
 export const Body_login_login_access_tokenSchema = {
@@ -712,6 +817,19 @@ export const Body_login_login_access_tokenSchema = {
     title: 'Body_login-login_access_token'
 } as const;
 
+export const Body_transcribe_transcribe_audioSchema = {
+    properties: {
+        file: {
+            type: 'string',
+            format: 'binary',
+            title: 'File'
+        }
+    },
+    type: 'object',
+    required: ['file'],
+    title: 'Body_transcribe-transcribe_audio'
+} as const;
+
 export const BulkContactFilterSchema = {
     properties: {
         search: {
@@ -736,18 +854,6 @@ export const BulkContactFilterSchema = {
                 }
             ],
             title: 'Tag Id'
-        },
-        group_id: {
-            anyOf: [
-                {
-                    type: 'string',
-                    format: 'uuid'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Group Id'
         },
         is_favorite: {
             anyOf: [
@@ -784,7 +890,8 @@ export const BulkContactFilterSchema = {
         }
     },
     type: 'object',
-    title: 'BulkContactFilter'
+    title: 'BulkContactFilter',
+    description: 'Filter criteria matching list_contacts parameters.'
 } as const;
 
 export const BulkContactOperationSchema = {
@@ -819,36 +926,6 @@ export const BulkContactOperationSchema = {
             ],
             title: 'Remove Tag Ids'
         },
-        add_group_ids: {
-            anyOf: [
-                {
-                    items: {
-                        type: 'string',
-                        format: 'uuid'
-                    },
-                    type: 'array'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Add Group Ids'
-        },
-        remove_group_ids: {
-            anyOf: [
-                {
-                    items: {
-                        type: 'string',
-                        format: 'uuid'
-                    },
-                    type: 'array'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Remove Group Ids'
-        },
         set_is_archived: {
             anyOf: [
                 {
@@ -873,7 +950,8 @@ export const BulkContactOperationSchema = {
         }
     },
     type: 'object',
-    title: 'BulkContactOperation'
+    title: 'BulkContactOperation',
+    description: 'A single operation to apply to matching contacts.'
 } as const;
 
 export const BulkContactRequestSchema = {
@@ -919,7 +997,8 @@ export const BulkContactRequestSchema = {
     },
     type: 'object',
     required: ['operations'],
-    title: 'BulkContactRequest'
+    title: 'BulkContactRequest',
+    description: 'Bulk operation request body.'
 } as const;
 
 export const BulkContactResultSchema = {
@@ -944,7 +1023,8 @@ export const BulkContactResultSchema = {
     },
     type: 'object',
     required: ['updated_count', 'skipped_count'],
-    title: 'BulkContactResult'
+    title: 'BulkContactResult',
+    description: 'Bulk operation result.'
 } as const;
 
 export const CalendarEntrySchema = {
@@ -999,6 +1079,130 @@ export const CalendarMonthResponseSchema = {
     type: 'object',
     required: ['month', 'days'],
     title: 'CalendarMonthResponse'
+} as const;
+
+export const CommunicationPreferencePublicSchema = {
+    properties: {
+        preferred_channel: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 20
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Preferred Channel',
+            description: 'Preferred contact channel (call, in_person, text, email, video, social, other).'
+        },
+        best_time_local: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 11
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Best Time Local',
+            description: 'Preferred contact time window in HH:MM-HH:MM format, local to the contact.'
+        },
+        do_not_contact: {
+            type: 'boolean',
+            title: 'Do Not Contact',
+            description: 'When True, suppress all outbound contact reminders.',
+            default: false
+        },
+        do_not_contact_reason: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 500
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Do Not Contact Reason',
+            description: 'Reason for do-not-contact status (e.g. deceased, requested removal).'
+        },
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        contact_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Contact Id'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        },
+        updated_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Updated At'
+        }
+    },
+    type: 'object',
+    required: ['id', 'contact_id', 'created_at', 'updated_at'],
+    title: 'CommunicationPreferencePublic'
+} as const;
+
+export const CommunicationPreferenceUpdateSchema = {
+    properties: {
+        preferred_channel: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Preferred Channel'
+        },
+        best_time_local: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Best Time Local'
+        },
+        do_not_contact: {
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Do Not Contact'
+        },
+        do_not_contact_reason: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Do Not Contact Reason'
+        }
+    },
+    type: 'object',
+    title: 'CommunicationPreferenceUpdate'
 } as const;
 
 export const ContactCreateSchema = {
@@ -1217,6 +1421,38 @@ export const ContactCreateSchema = {
             title: 'Stage',
             description: 'Kanban stage like Active, Dormant, Lost.'
         },
+        timezone: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Timezone',
+            description: 'IANA timezone string (e.g., America/New_York); nullable.'
+        },
+        pronouns: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 100
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Pronouns',
+            description: "Contact's pronouns (free text, max 100 chars); nullable."
+        },
+        auto_log_email: {
+            type: 'boolean',
+            title: 'Auto Log Email',
+            description: 'Enable automatic email log ingestion for this contact.',
+            default: false
+        },
         source: {
             '$ref': '#/components/schemas/ContactSource',
             description: 'Source system that created this contact.',
@@ -1249,21 +1485,6 @@ export const ContactCreateSchema = {
                 }
             ],
             title: 'Tag Ids'
-        },
-        group_ids: {
-            anyOf: [
-                {
-                    items: {
-                        type: 'string',
-                        format: 'uuid'
-                    },
-                    type: 'array'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Group Ids'
         }
     },
     type: 'object',
@@ -1425,6 +1646,115 @@ export const ContactFieldUpdateSchema = {
     },
     type: 'object',
     title: 'ContactFieldUpdate'
+} as const;
+
+export const ContactFieldsPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/ContactFieldPublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'ContactFieldsPublic'
+} as const;
+
+export const ContactGeoPointSchema = {
+    properties: {
+        contact_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Contact Id'
+        },
+        contact_name: {
+            type: 'string',
+            title: 'Contact Name'
+        },
+        avatar_url: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Avatar Url'
+        },
+        latitude: {
+            type: 'number',
+            title: 'Latitude'
+        },
+        longitude: {
+            type: 'number',
+            title: 'Longitude'
+        },
+        address_label: {
+            type: 'string',
+            title: 'Address Label'
+        },
+        city: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'City'
+        },
+        country: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Country'
+        },
+        street: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Street'
+        }
+    },
+    type: 'object',
+    required: ['contact_id', 'contact_name', 'latitude', 'longitude', 'address_label'],
+    title: 'ContactGeoPoint',
+    description: "A geo point representing a contact's address."
+} as const;
+
+export const ContactHeatmapSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/WeekBucket'
+            },
+            type: 'array',
+            title: 'Data'
+        }
+    },
+    type: 'object',
+    required: ['data'],
+    title: 'ContactHeatmap',
+    description: '52-week interaction heatmap for a contact.'
 } as const;
 
 export const ContactPublicSchema = {
@@ -1637,6 +1967,38 @@ export const ContactPublicSchema = {
             title: 'Stage',
             description: 'Kanban stage like Active, Dormant, Lost.'
         },
+        timezone: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Timezone',
+            description: 'IANA timezone string (e.g., America/New_York); nullable.'
+        },
+        pronouns: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 100
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Pronouns',
+            description: "Contact's pronouns (free text, max 100 chars); nullable."
+        },
+        auto_log_email: {
+            type: 'boolean',
+            title: 'Auto Log Email',
+            description: 'Enable automatic email log ingestion for this contact.',
+            default: false
+        },
         source: {
             '$ref': '#/components/schemas/ContactSource',
             description: 'Source system that created this contact.',
@@ -1712,13 +2074,58 @@ export const ContactPublicSchema = {
             title: 'Tags',
             default: []
         },
-        groups: {
+        imessage_id: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Imessage Id'
+        },
+        imessage_synced_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Imessage Synced At'
+        },
+        imessage_profile: {
+            anyOf: [
+                {
+                    additionalProperties: true,
+                    type: 'object'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Imessage Profile'
+        },
+        stage_events: {
             items: {
-                '$ref': '#/components/schemas/GroupPublic'
+                '$ref': '#/components/schemas/ContactStageEventPublic'
             },
             type: 'array',
-            title: 'Groups',
+            title: 'Stage Events',
             default: []
+        },
+        communication_preference: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/CommunicationPreferencePublic'
+                },
+                {
+                    type: 'null'
+                }
+            ]
         }
     },
     type: 'object',
@@ -1983,25 +2390,30 @@ export const ContactUpdateSchema = {
                 }
             ],
             title: 'Tag Ids'
-        },
-        group_ids: {
-            anyOf: [
-                {
-                    items: {
-                        type: 'string',
-                        format: 'uuid'
-                    },
-                    type: 'array'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Group Ids'
         }
     },
     type: 'object',
     title: 'ContactUpdate'
+} as const;
+
+export const ContactsGeoResponseSchema = {
+    properties: {
+        points: {
+            items: {
+                '$ref': '#/components/schemas/ContactGeoPoint'
+            },
+            type: 'array',
+            title: 'Points'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['points', 'count'],
+    title: 'ContactsGeoResponse',
+    description: 'Response model for geo endpoint.'
 } as const;
 
 export const ContactsPublicSchema = {
@@ -2217,6 +2629,25 @@ export const CustomFieldDefinitionUpdateSchema = {
     title: 'CustomFieldDefinitionUpdate'
 } as const;
 
+export const CustomFieldDefinitionsPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/CustomFieldDefinitionPublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'CustomFieldDefinitionsPublic'
+} as const;
+
 export const CustomFieldValueCreateSchema = {
     properties: {
         value: {
@@ -2299,6 +2730,25 @@ export const CustomFieldValueUpdateSchema = {
     title: 'CustomFieldValueUpdate'
 } as const;
 
+export const CustomFieldValuesPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/CustomFieldValuePublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'CustomFieldValuesPublic'
+} as const;
+
 export const DebtCreateSchema = {
     properties: {
         direction: {
@@ -2331,12 +2781,6 @@ export const DebtCreateSchema = {
             title: 'Reason',
             description: 'What the debt is for.'
         },
-        is_settled: {
-            type: 'boolean',
-            title: 'Is Settled',
-            description: 'Marked paid off.',
-            default: false
-        },
         settled_at: {
             anyOf: [
                 {
@@ -2349,6 +2793,12 @@ export const DebtCreateSchema = {
             ],
             title: 'Settled At',
             description: 'Date the debt was settled.'
+        },
+        is_settled: {
+            type: 'boolean',
+            title: 'Is Settled',
+            description: 'Marked paid off.',
+            default: false
         },
         contact_id: {
             type: 'string',
@@ -2365,6 +2815,80 @@ export const DebtDirectionSchema = {
     type: 'string',
     enum: ['i_owe', 'they_owe'],
     title: 'DebtDirection'
+} as const;
+
+export const DebtPaymentCreateSchema = {
+    properties: {
+        amount: {
+            type: 'number',
+            title: 'Amount',
+            description: 'Payment amount; must be greater than zero.'
+        },
+        paid_at: {
+            type: 'string',
+            format: 'date',
+            title: 'Paid At',
+            description: 'Date the payment was made.'
+        },
+        note: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 1000
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Note',
+            description: 'Optional note about the payment.'
+        }
+    },
+    type: 'object',
+    required: ['amount', 'paid_at'],
+    title: 'DebtPaymentCreate'
+} as const;
+
+export const DebtPaymentPublicSchema = {
+    properties: {
+        amount: {
+            type: 'number',
+            title: 'Amount',
+            description: 'Payment amount; must be greater than zero.'
+        },
+        paid_at: {
+            type: 'string',
+            format: 'date',
+            title: 'Paid At',
+            description: 'Date the payment was made.'
+        },
+        note: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 1000
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Note',
+            description: 'Optional note about the payment.'
+        },
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        }
+    },
+    type: 'object',
+    required: ['amount', 'paid_at', 'id', 'created_at'],
+    title: 'DebtPaymentPublic'
 } as const;
 
 export const DebtPublicSchema = {
@@ -2399,12 +2923,6 @@ export const DebtPublicSchema = {
             title: 'Reason',
             description: 'What the debt is for.'
         },
-        is_settled: {
-            type: 'boolean',
-            title: 'Is Settled',
-            description: 'Marked paid off.',
-            default: false
-        },
         settled_at: {
             anyOf: [
                 {
@@ -2417,6 +2935,12 @@ export const DebtPublicSchema = {
             ],
             title: 'Settled At',
             description: 'Date the debt was settled.'
+        },
+        is_settled: {
+            type: 'boolean',
+            title: 'Is Settled',
+            description: 'Marked paid off.',
+            default: false
         },
         id: {
             type: 'string',
@@ -2432,6 +2956,37 @@ export const DebtPublicSchema = {
             type: 'string',
             format: 'date-time',
             title: 'Created At'
+        },
+        deleted_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Deleted At'
+        },
+        payments: {
+            items: {
+                '$ref': '#/components/schemas/DebtPaymentPublic'
+            },
+            type: 'array',
+            title: 'Payments',
+            default: []
+        },
+        paid_amount: {
+            anyOf: [
+                {
+                    type: 'number'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Paid Amount'
         }
     },
     type: 'object',
@@ -2461,17 +3016,6 @@ export const DebtUpdateSchema = {
                 }
             ],
             title: 'Amount'
-        },
-        currency: {
-            anyOf: [
-                {
-                    type: 'string'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Currency'
         },
         reason: {
             anyOf: [
@@ -2529,6 +3073,108 @@ export const DebtsPublicSchema = {
     type: 'object',
     required: ['data', 'count'],
     title: 'DebtsPublic'
+} as const;
+
+export const EmailOAuthTokenPublicSchema = {
+    properties: {
+        provider: {
+            type: 'string',
+            maxLength: 50,
+            title: 'Provider',
+            description: "OAuth provider name (e.g. 'gmail').",
+            default: 'gmail'
+        },
+        email_address: {
+            type: 'string',
+            maxLength: 255,
+            title: 'Email Address',
+            description: 'The email address these tokens are for.'
+        },
+        encrypted_access_token: {
+            type: 'string',
+            title: 'Encrypted Access Token',
+            description: 'Encrypted access token for the Gmail API.'
+        },
+        encrypted_refresh_token: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Encrypted Refresh Token',
+            description: 'Encrypted refresh token for obtaining new access tokens.'
+        },
+        token_expires_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Token Expires At',
+            description: 'When the access token expires (UTC).'
+        },
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        contact_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Contact Id'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        },
+        updated_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Updated At'
+        }
+    },
+    type: 'object',
+    required: ['email_address', 'encrypted_access_token', 'id', 'contact_id', 'created_at', 'updated_at'],
+    title: 'EmailOAuthTokenPublic'
+} as const;
+
+export const EmailOAuthTokensPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/EmailOAuthTokenPublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'EmailOAuthTokensPublic'
+} as const;
+
+export const EnvironmentInfoSchema = {
+    properties: {
+        environment: {
+            type: 'string',
+            title: 'Environment'
+        }
+    },
+    type: 'object',
+    required: ['environment'],
+    title: 'EnvironmentInfo'
 } as const;
 
 export const GiftCreateSchema = {
@@ -2625,6 +3271,55 @@ export const GiftCreateSchema = {
     type: 'object',
     required: ['name', 'contact_id'],
     title: 'GiftCreate'
+} as const;
+
+export const GiftKanbanCardSchema = {
+    properties: {
+        gift: {
+            '$ref': '#/components/schemas/GiftPublic'
+        },
+        is_overdue: {
+            type: 'boolean',
+            title: 'Is Overdue'
+        },
+        days_until_occasion: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Days Until Occasion'
+        }
+    },
+    type: 'object',
+    required: ['gift', 'is_overdue'],
+    title: 'GiftKanbanCard'
+} as const;
+
+export const GiftKanbanColumnSchema = {
+    properties: {
+        gifts: {
+            items: {
+                '$ref': '#/components/schemas/GiftKanbanCard'
+            },
+            type: 'array',
+            title: 'Gifts'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        },
+        total_value: {
+            type: 'number',
+            title: 'Total Value'
+        }
+    },
+    type: 'object',
+    required: ['gifts', 'count', 'total_value'],
+    title: 'GiftKanbanColumn'
 } as const;
 
 export const GiftPublicSchema = {
@@ -2726,6 +3421,51 @@ export const GiftPublicSchema = {
             type: 'string',
             format: 'date-time',
             title: 'Created At'
+        },
+        days_until_occasion: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Days Until Occasion'
+        },
+        contact_birthday: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Contact Birthday'
+        },
+        contact_first_name: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Contact First Name'
+        },
+        contact_last_name: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Contact Last Name'
         }
     },
     type: 'object',
@@ -2735,7 +3475,7 @@ export const GiftPublicSchema = {
 
 export const GiftStatusSchema = {
     type: 'string',
-    enum: ['idea', 'given', 'received'],
+    enum: ['idea', 'purchased', 'wrapped', 'given', 'received'],
     title: 'GiftStatus'
 } as const;
 
@@ -2853,122 +3593,6 @@ export const GiftsPublicSchema = {
     title: 'GiftsPublic'
 } as const;
 
-export const GroupCreateSchema = {
-    properties: {
-        name: {
-            type: 'string',
-            maxLength: 255,
-            minLength: 1,
-            title: 'Name',
-            description: 'Group name, 1-255 chars.'
-        },
-        description: {
-            anyOf: [
-                {
-                    type: 'string',
-                    maxLength: 1000
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Description',
-            description: 'Optional group description.'
-        }
-    },
-    type: 'object',
-    required: ['name'],
-    title: 'GroupCreate'
-} as const;
-
-export const GroupPublicSchema = {
-    properties: {
-        name: {
-            type: 'string',
-            maxLength: 255,
-            minLength: 1,
-            title: 'Name',
-            description: 'Group name, 1-255 chars.'
-        },
-        description: {
-            anyOf: [
-                {
-                    type: 'string',
-                    maxLength: 1000
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Description',
-            description: 'Optional group description.'
-        },
-        id: {
-            type: 'string',
-            format: 'uuid',
-            title: 'Id'
-        },
-        created_at: {
-            type: 'string',
-            format: 'date-time',
-            title: 'Created At'
-        }
-    },
-    type: 'object',
-    required: ['name', 'id', 'created_at'],
-    title: 'GroupPublic'
-} as const;
-
-export const GroupUpdateSchema = {
-    properties: {
-        name: {
-            anyOf: [
-                {
-                    type: 'string',
-                    maxLength: 255,
-                    minLength: 1
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Name'
-        },
-        description: {
-            anyOf: [
-                {
-                    type: 'string'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Description'
-        }
-    },
-    type: 'object',
-    title: 'GroupUpdate'
-} as const;
-
-export const GroupsPublicSchema = {
-    properties: {
-        data: {
-            items: {
-                '$ref': '#/components/schemas/GroupPublic'
-            },
-            type: 'array',
-            title: 'Data'
-        },
-        count: {
-            type: 'integer',
-            title: 'Count'
-        }
-    },
-    type: 'object',
-    required: ['data', 'count'],
-    title: 'GroupsPublic'
-} as const;
-
 export const HTTPValidationErrorSchema = {
     properties: {
         detail: {
@@ -2981,6 +3605,335 @@ export const HTTPValidationErrorSchema = {
     },
     type: 'object',
     title: 'HTTPValidationError'
+} as const;
+
+export const HouseholdMemberSchema = {
+    properties: {
+        id: {
+            type: 'string',
+            title: 'Id'
+        },
+        first_name: {
+            type: 'string',
+            title: 'First Name'
+        },
+        last_name: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Last Name'
+        },
+        nickname: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Nickname'
+        },
+        birthday: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Birthday'
+        },
+        age: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Age'
+        },
+        avatar_url: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Avatar Url'
+        }
+    },
+    type: 'object',
+    required: ['id', 'first_name'],
+    title: 'HouseholdMember',
+    description: 'Single household member entry returned by /contacts/{id}/household.'
+} as const;
+
+export const HouseholdResponseSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/HouseholdMember'
+            },
+            type: 'array',
+            title: 'Data'
+        }
+    },
+    type: 'object',
+    required: ['data'],
+    title: 'HouseholdResponse',
+    description: 'Household membership wrapper.'
+} as const;
+
+export const IMessageProfilePayloadSchema = {
+    properties: {
+        imessage_id: {
+            type: 'string',
+            title: 'Imessage Id',
+            description: 'E.164 phone or email for stable iMessage identity.'
+        },
+        relationship_type: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Relationship Type',
+            description: 'iMessage relationship type (close_friend, family, etc.).'
+        },
+        key_events: {
+            anyOf: [
+                {
+                    items: {
+                        type: 'string'
+                    },
+                    type: 'array'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Key Events',
+            description: 'Key events from iMessage.'
+        },
+        topics: {
+            anyOf: [
+                {
+                    items: {
+                        type: 'string'
+                    },
+                    type: 'array'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Topics',
+            description: 'Topics discussed in messages.'
+        },
+        facts_about_other: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Facts About Other',
+            description: 'Facts about the contact from message analysis.'
+        },
+        pattern_notes: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Pattern Notes',
+            description: 'Pattern notes from iMessage analysis.'
+        },
+        last_ts: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Last Ts',
+            description: 'Last message timestamp (Unix epoch).'
+        },
+        message_count: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Message Count',
+            description: 'Total message count.'
+        },
+        profile_hash: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 64
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Profile Hash',
+            description: 'Hash of profile data for idempotent updates.'
+        }
+    },
+    type: 'object',
+    required: ['imessage_id'],
+    title: 'IMessageProfilePayload',
+    description: 'iMessage profile data from social.json.'
+} as const;
+
+export const IMessageProfileResponseSchema = {
+    properties: {
+        imessage_id: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Imessage Id'
+        },
+        imessage_synced_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Imessage Synced At'
+        },
+        imessage_profile: {
+            anyOf: [
+                {
+                    additionalProperties: true,
+                    type: 'object'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Imessage Profile'
+        },
+        profile_hash: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Profile Hash'
+        }
+    },
+    type: 'object',
+    title: 'IMessageProfileResponse',
+    description: 'Response model for iMessage profile endpoint.'
+} as const;
+
+export const IMessageSyncRequestSchema = {
+    properties: {
+        profiles: {
+            items: {
+                '$ref': '#/components/schemas/IMessageProfilePayload'
+            },
+            type: 'array',
+            title: 'Profiles',
+            description: 'List of iMessage profiles to sync.'
+        },
+        sync_co_mentions: {
+            type: 'boolean',
+            title: 'Sync Co Mentions',
+            description: 'Whether to also sync co-mention edges as relationships.',
+            default: false
+        },
+        co_mentions: {
+            anyOf: [
+                {
+                    items: {
+                        additionalProperties: true,
+                        type: 'object'
+                    },
+                    type: 'array'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Co Mentions',
+            description: 'Co-mention edges from social.json.'
+        }
+    },
+    type: 'object',
+    required: ['profiles'],
+    title: 'IMessageSyncRequest',
+    description: 'Request body for iMessage sync.'
+} as const;
+
+export const IMessageSyncResultSchema = {
+    properties: {
+        created_count: {
+            type: 'integer',
+            title: 'Created Count',
+            default: 0
+        },
+        updated_count: {
+            type: 'integer',
+            title: 'Updated Count',
+            default: 0
+        },
+        skipped_count: {
+            type: 'integer',
+            title: 'Skipped Count',
+            default: 0
+        },
+        failed_ids: {
+            items: {
+                type: 'string'
+            },
+            type: 'array',
+            title: 'Failed Ids',
+            default: []
+        }
+    },
+    type: 'object',
+    title: 'IMessageSyncResult',
+    description: 'Result of iMessage sync operation.'
 } as const;
 
 export const InteractionAttendeeSummarySchema = {
@@ -3079,6 +4032,121 @@ export const InteractionCreateSchema = {
             title: 'Duration Minutes',
             description: 'Length of the interaction in minutes.'
         },
+        location_label: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Location Label'
+        },
+        latitude: {
+            anyOf: [
+                {
+                    type: 'number'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Latitude'
+        },
+        longitude: {
+            anyOf: [
+                {
+                    type: 'number'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Longitude'
+        },
+        is_draft: {
+            type: 'boolean',
+            title: 'Is Draft',
+            description: 'If True, this interaction is a draft and excluded from engagement metrics.',
+            default: false
+        },
+        draft_source: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/InteractionDraftSource'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            description: 'Origin of the draft (voice_memo, email_suggestion, manual, import).'
+        },
+        message_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 998
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Message Id',
+            description: 'RFC 2822 Message-ID for deduplication (EMAIL channel only).'
+        },
+        email_subject: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 998
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Email Subject',
+            description: 'Email subject line (EMAIL channel only).'
+        },
+        email_from: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 2048
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Email From',
+            description: 'Email From header (EMAIL channel only).'
+        },
+        email_to: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 2048
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Email To',
+            description: 'Email To header (EMAIL channel only).'
+        },
+        email_date: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Email Date',
+            description: 'Email Date header (EMAIL channel only).'
+        },
         attendee_ids: {
             items: {
                 type: 'string',
@@ -3093,6 +4161,13 @@ export const InteractionCreateSchema = {
     type: 'object',
     required: ['channel', 'occurred_at', 'attendee_ids'],
     title: 'InteractionCreate'
+} as const;
+
+export const InteractionDraftSourceSchema = {
+    type: 'string',
+    enum: ['voice_memo', 'email_suggestion', 'manual', 'import'],
+    title: 'InteractionDraftSource',
+    description: 'Origin of a draft interaction.'
 } as const;
 
 export const InteractionPublicSchema = {
@@ -3146,6 +4221,123 @@ export const InteractionPublicSchema = {
             title: 'Duration Minutes',
             description: 'Length of the interaction in minutes.'
         },
+        location_label: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 500
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Location Label',
+            description: "Freeform location text like 'Starbucks on 5th', 'their home', 'the park'."
+        },
+        latitude: {
+            anyOf: [
+                {
+                    type: 'number'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Latitude',
+            description: 'Geocoded latitude; used for map visualization.'
+        },
+        longitude: {
+            anyOf: [
+                {
+                    type: 'number'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Longitude',
+            description: 'Geocoded longitude; used for map visualization.'
+        },
+        is_draft: {
+            type: 'boolean',
+            title: 'Is Draft',
+            default: false
+        },
+        draft_source: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/InteractionDraftSource'
+                },
+                {
+                    type: 'null'
+                }
+            ]
+        },
+        message_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 998
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Message Id',
+            description: 'RFC 2822 Message-ID for deduplication (EMAIL channel only).'
+        },
+        email_subject: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 998
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Email Subject',
+            description: 'Email subject line (EMAIL channel only).'
+        },
+        email_from: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 2048
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Email From',
+            description: 'Email From header (EMAIL channel only).'
+        },
+        email_to: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 2048
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Email To',
+            description: 'Email To header (EMAIL channel only).'
+        },
+        email_date: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Email Date',
+            description: 'Email Date header (EMAIL channel only).'
+        },
         id: {
             type: 'string',
             format: 'uuid',
@@ -3163,6 +4355,18 @@ export const InteractionPublicSchema = {
             type: 'string',
             format: 'date-time',
             title: 'Created At'
+        },
+        deleted_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Deleted At'
         }
     },
     type: 'object',
@@ -3227,6 +4431,39 @@ export const InteractionUpdateSchema = {
             ],
             title: 'Duration Minutes'
         },
+        location_label: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Location Label'
+        },
+        latitude: {
+            anyOf: [
+                {
+                    type: 'number'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Latitude'
+        },
+        longitude: {
+            anyOf: [
+                {
+                    type: 'number'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Longitude'
+        },
         attendee_ids: {
             anyOf: [
                 {
@@ -3266,6 +4503,120 @@ export const InteractionsPublicSchema = {
     type: 'object',
     required: ['data', 'count'],
     title: 'InteractionsPublic'
+} as const;
+
+export const InverseRelationshipMapCreateSchema = {
+    properties: {
+        relationship_type: {
+            type: 'string',
+            maxLength: 100,
+            title: 'Relationship Type',
+            description: "Forward relationship type (e.g. 'parent')."
+        },
+        inverse_type: {
+            type: 'string',
+            maxLength: 100,
+            title: 'Inverse Type',
+            description: "Inverse relationship type (e.g. 'child')."
+        },
+        is_symmetric: {
+            type: 'boolean',
+            title: 'Is Symmetric',
+            description: 'True when both sides use the same type (spouse<->spouse).',
+            default: false
+        }
+    },
+    type: 'object',
+    required: ['relationship_type', 'inverse_type'],
+    title: 'InverseRelationshipMapCreate',
+    description: 'Create schema for inverse relationship map.'
+} as const;
+
+export const InverseRelationshipMapPublicSchema = {
+    properties: {
+        relationship_type: {
+            type: 'string',
+            maxLength: 100,
+            title: 'Relationship Type',
+            description: "Forward relationship type (e.g. 'parent')."
+        },
+        inverse_type: {
+            type: 'string',
+            maxLength: 100,
+            title: 'Inverse Type',
+            description: "Inverse relationship type (e.g. 'child')."
+        },
+        is_symmetric: {
+            type: 'boolean',
+            title: 'Is Symmetric',
+            description: 'True when both sides use the same type (spouse<->spouse).',
+            default: false
+        },
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        }
+    },
+    type: 'object',
+    required: ['relationship_type', 'inverse_type', 'id', 'created_at'],
+    title: 'InverseRelationshipMapPublic'
+} as const;
+
+export const InverseRelationshipMapUpdateSchema = {
+    properties: {
+        inverse_type: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 100,
+                    minLength: 1
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Inverse Type'
+        },
+        is_symmetric: {
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Is Symmetric'
+        }
+    },
+    type: 'object',
+    title: 'InverseRelationshipMapUpdate',
+    description: 'Update schema - all fields optional.'
+} as const;
+
+export const InverseRelationshipMapsPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/InverseRelationshipMapPublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'InverseRelationshipMapsPublic'
 } as const;
 
 export const JournalEntriesPublicSchema = {
@@ -3314,6 +4665,21 @@ export const JournalEntryCreateSchema = {
             format: 'date',
             title: 'Entry Date',
             description: 'Date the entry is about (may differ from created_at).'
+        },
+        contact_ids: {
+            anyOf: [
+                {
+                    items: {
+                        type: 'string',
+                        format: 'uuid'
+                    },
+                    type: 'array'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Contact Ids'
         }
     },
     type: 'object',
@@ -3363,6 +4729,15 @@ export const JournalEntryPublicSchema = {
             type: 'string',
             format: 'date-time',
             title: 'Updated At'
+        },
+        contact_ids: {
+            items: {
+                type: 'string',
+                format: 'uuid'
+            },
+            type: 'array',
+            title: 'Contact Ids',
+            default: []
         }
     },
     type: 'object',
@@ -3405,10 +4780,42 @@ export const JournalEntryUpdateSchema = {
                 }
             ],
             title: 'Entry Date'
+        },
+        contact_ids: {
+            anyOf: [
+                {
+                    items: {
+                        type: 'string',
+                        format: 'uuid'
+                    },
+                    type: 'array'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Contact Ids'
         }
     },
     type: 'object',
     title: 'JournalEntryUpdate'
+} as const;
+
+export const JsonExportResponseSchema = {
+    properties: {
+        contacts: {
+            items: {
+                additionalProperties: true,
+                type: 'object'
+            },
+            type: 'array',
+            title: 'Contacts'
+        }
+    },
+    type: 'object',
+    required: ['contacts'],
+    title: 'JsonExportResponse',
+    description: 'JSON export of all contact rows (raw model_dump per contact).'
 } as const;
 
 export const LifeEventCreateSchema = {
@@ -3516,6 +4923,18 @@ export const LifeEventPublicSchema = {
             type: 'string',
             format: 'date-time',
             title: 'Created At'
+        },
+        deleted_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Deleted At'
         }
     },
     type: 'object',
@@ -3833,6 +5252,65 @@ export const MediaRecommendationsPublicSchema = {
     title: 'MediaRecommendationsPublic'
 } as const;
 
+export const MergeContactsRequestSchema = {
+    properties: {
+        surviving_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Surviving Id'
+        },
+        absorbed_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Absorbed Id'
+        },
+        notes: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Notes'
+        }
+    },
+    type: 'object',
+    required: ['surviving_id', 'absorbed_id'],
+    title: 'MergeContactsRequest',
+    description: 'Request body for merging two contacts.'
+} as const;
+
+export const MergeResponseSchema = {
+    properties: {
+        merge_log_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Merge Log Id'
+        },
+        surviving_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Surviving Id'
+        },
+        absorbed_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Absorbed Id'
+        },
+        merged_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Merged At'
+        }
+    },
+    type: 'object',
+    required: ['merge_log_id', 'surviving_id', 'absorbed_id', 'merged_at'],
+    title: 'MergeResponse',
+    description: 'Response after a merge operation.'
+} as const;
+
 export const MessageSchema = {
     properties: {
         message: {
@@ -3876,11 +5354,49 @@ export const NoteCreateSchema = {
             type: 'string',
             format: 'uuid',
             title: 'Contact Id'
+        },
+        client_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 36
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Client Id',
+            description: 'Client-generated UUID for idempotent POSTs; optional.'
         }
     },
     type: 'object',
     required: ['body', 'contact_id'],
     title: 'NoteCreate'
+} as const;
+
+export const NoteMentionPublicSchema = {
+    properties: {
+        note_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Note Id'
+        },
+        note_body: {
+            type: 'string',
+            title: 'Note Body'
+        },
+        note_created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Note Created At'
+        },
+        source_contact: {
+            '$ref': '#/components/schemas/_MentionSourceContact'
+        }
+    },
+    type: 'object',
+    required: ['note_id', 'note_body', 'note_created_at', 'source_contact'],
+    title: 'NoteMentionPublic'
 } as const;
 
 export const NotePublicSchema = {
@@ -3911,6 +5427,29 @@ export const NotePublicSchema = {
             type: 'string',
             format: 'date-time',
             title: 'Updated At'
+        },
+        deleted_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Deleted At'
+        },
+        client_id: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Client Id'
         }
     },
     type: 'object',
@@ -3953,6 +5492,537 @@ export const NotesPublicSchema = {
     type: 'object',
     required: ['data', 'count'],
     title: 'NotesPublic'
+} as const;
+
+export const OkSchema = {
+    properties: {
+        ok: {
+            type: 'boolean',
+            title: 'Ok',
+            default: true
+        }
+    },
+    type: 'object',
+    title: 'Ok'
+} as const;
+
+export const OrganizationCreateSchema = {
+    properties: {
+        name: {
+            type: 'string',
+            maxLength: 255,
+            title: 'Name',
+            description: 'Organization name; deduplicated via trimmed/lowercased value per owner.'
+        },
+        domain: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Domain',
+            description: "Domain for auto-linking (e.g., 'acme.com')."
+        },
+        industry: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Industry',
+            description: 'Industry sector.'
+        },
+        notes: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 2000
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Notes',
+            description: 'Freeform notes about the organization.'
+        },
+        address_label: {
+            type: 'string',
+            maxLength: 100,
+            title: 'Address Label',
+            description: "Label for the organization's address (e.g., 'main', 'hq').",
+            default: 'main'
+        },
+        address_street: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 500
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Street',
+            description: 'Street line 1.'
+        },
+        address_extended: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 500
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Extended',
+            description: 'Apartment, suite, floor, etc.'
+        },
+        address_city: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address City',
+            description: 'City.'
+        },
+        address_region: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Region',
+            description: 'State, province, or region.'
+        },
+        address_postal_code: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 50
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Postal Code',
+            description: 'ZIP or postal code.'
+        },
+        address_country: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Country',
+            description: 'Country.'
+        },
+        address_latitude: {
+            anyOf: [
+                {
+                    type: 'number'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Latitude',
+            description: 'Geocoded latitude.'
+        },
+        address_longitude: {
+            anyOf: [
+                {
+                    type: 'number'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Longitude',
+            description: 'Geocoded longitude.'
+        }
+    },
+    type: 'object',
+    required: ['name'],
+    title: 'OrganizationCreate'
+} as const;
+
+export const OrganizationPublicSchema = {
+    properties: {
+        name: {
+            type: 'string',
+            maxLength: 255,
+            title: 'Name',
+            description: 'Organization name; deduplicated via trimmed/lowercased value per owner.'
+        },
+        domain: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Domain',
+            description: "Domain for auto-linking (e.g., 'acme.com')."
+        },
+        industry: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Industry',
+            description: 'Industry sector.'
+        },
+        notes: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 2000
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Notes',
+            description: 'Freeform notes about the organization.'
+        },
+        address_label: {
+            type: 'string',
+            maxLength: 100,
+            title: 'Address Label',
+            description: "Label for the organization's address (e.g., 'main', 'hq').",
+            default: 'main'
+        },
+        address_street: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 500
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Street',
+            description: 'Street line 1.'
+        },
+        address_extended: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 500
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Extended',
+            description: 'Apartment, suite, floor, etc.'
+        },
+        address_city: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address City',
+            description: 'City.'
+        },
+        address_region: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Region',
+            description: 'State, province, or region.'
+        },
+        address_postal_code: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 50
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Postal Code',
+            description: 'ZIP or postal code.'
+        },
+        address_country: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Country',
+            description: 'Country.'
+        },
+        address_latitude: {
+            anyOf: [
+                {
+                    type: 'number'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Latitude',
+            description: 'Geocoded latitude.'
+        },
+        address_longitude: {
+            anyOf: [
+                {
+                    type: 'number'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Longitude',
+            description: 'Geocoded longitude.'
+        },
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        owner_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Owner Id'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        },
+        updated_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Updated At'
+        },
+        contact_count: {
+            type: 'integer',
+            title: 'Contact Count',
+            default: 0
+        }
+    },
+    type: 'object',
+    required: ['name', 'id', 'owner_id', 'created_at', 'updated_at'],
+    title: 'OrganizationPublic'
+} as const;
+
+export const OrganizationUpdateSchema = {
+    properties: {
+        name: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Name'
+        },
+        domain: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Domain'
+        },
+        industry: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Industry'
+        },
+        notes: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Notes'
+        },
+        address_label: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Label'
+        },
+        address_street: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Street'
+        },
+        address_extended: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Extended'
+        },
+        address_city: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address City'
+        },
+        address_region: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Region'
+        },
+        address_postal_code: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Postal Code'
+        },
+        address_country: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Country'
+        },
+        address_latitude: {
+            anyOf: [
+                {
+                    type: 'number'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Latitude'
+        },
+        address_longitude: {
+            anyOf: [
+                {
+                    type: 'number'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Address Longitude'
+        }
+    },
+    type: 'object',
+    title: 'OrganizationUpdate'
+} as const;
+
+export const OrganizationsPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/OrganizationPublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'OrganizationsPublic'
 } as const;
 
 export const OverdueContactPublicSchema = {
@@ -4165,6 +6235,38 @@ export const OverdueContactPublicSchema = {
             title: 'Stage',
             description: 'Kanban stage like Active, Dormant, Lost.'
         },
+        timezone: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Timezone',
+            description: 'IANA timezone string (e.g., America/New_York); nullable.'
+        },
+        pronouns: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 100
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Pronouns',
+            description: "Contact's pronouns (free text, max 100 chars); nullable."
+        },
+        auto_log_email: {
+            type: 'boolean',
+            title: 'Auto Log Email',
+            description: 'Enable automatic email log ingestion for this contact.',
+            default: false
+        },
         source: {
             '$ref': '#/components/schemas/ContactSource',
             description: 'Source system that created this contact.',
@@ -4240,13 +6342,58 @@ export const OverdueContactPublicSchema = {
             title: 'Tags',
             default: []
         },
-        groups: {
+        imessage_id: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Imessage Id'
+        },
+        imessage_synced_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Imessage Synced At'
+        },
+        imessage_profile: {
+            anyOf: [
+                {
+                    additionalProperties: true,
+                    type: 'object'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Imessage Profile'
+        },
+        stage_events: {
             items: {
-                '$ref': '#/components/schemas/GroupPublic'
+                '$ref': '#/components/schemas/ContactStageEventPublic'
             },
             type: 'array',
-            title: 'Groups',
+            title: 'Stage Events',
             default: []
+        },
+        communication_preference: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/CommunicationPreferencePublic'
+                },
+                {
+                    type: 'null'
+                }
+            ]
         },
         days_overdue: {
             anyOf: [
@@ -4460,6 +6607,25 @@ export const PetUpdateSchema = {
     title: 'PetUpdate'
 } as const;
 
+export const PetsPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/PetPublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'PetsPublic'
+} as const;
+
 export const PrivateUserCreateSchema = {
     properties: {
         email: {
@@ -4618,6 +6784,75 @@ export const RelationshipUpdateSchema = {
     title: 'RelationshipUpdate'
 } as const;
 
+export const RelationshipsPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/RelationshipPublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'RelationshipsPublic'
+} as const;
+
+export const ReminderContactSummarySchema = {
+    properties: {
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        first_name: {
+            type: 'string',
+            title: 'First Name'
+        },
+        last_name: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Last Name'
+        },
+        nickname: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Nickname'
+        },
+        avatar_url: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Avatar Url'
+        }
+    },
+    type: 'object',
+    required: ['id', 'first_name'],
+    title: 'ReminderContactSummary'
+} as const;
+
 export const ReminderCreateSchema = {
     properties: {
         title: {
@@ -4673,6 +6908,120 @@ export const ReminderCreateSchema = {
     type: 'object',
     required: ['title', 'remind_at'],
     title: 'ReminderCreate'
+} as const;
+
+export const ReminderDuePublicSchema = {
+    properties: {
+        title: {
+            type: 'string',
+            maxLength: 500,
+            minLength: 1,
+            title: 'Title',
+            description: 'Reminder title.'
+        },
+        description: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 2000
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Description',
+            description: 'Extra details shown with the reminder.'
+        },
+        remind_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Remind At',
+            description: 'When to fire the reminder.'
+        },
+        frequency: {
+            '$ref': '#/components/schemas/ReminderFrequency',
+            description: 'How often the reminder repeats.',
+            default: 'once'
+        },
+        is_active: {
+            type: 'boolean',
+            title: 'Is Active',
+            description: 'Enable or disable without deleting.',
+            default: true
+        },
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        contact_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'uuid'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Contact Id'
+        },
+        last_sent_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Last Sent At'
+        },
+        snoozed_until: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Snoozed Until'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        },
+        deleted_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Deleted At'
+        },
+        contact: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/ReminderContactSummary'
+                },
+                {
+                    type: 'null'
+                }
+            ]
+        }
+    },
+    type: 'object',
+    required: ['title', 'remind_at', 'id', 'contact_id', 'last_sent_at', 'snoozed_until', 'created_at'],
+    title: 'ReminderDuePublic',
+    description: 'Reminder enriched with the linked contact (if any) for the bell popover.'
 } as const;
 
 export const ReminderFrequencySchema = {
@@ -4765,11 +7114,104 @@ export const ReminderPublicSchema = {
             type: 'string',
             format: 'date-time',
             title: 'Created At'
+        },
+        deleted_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Deleted At'
         }
     },
     type: 'object',
     required: ['title', 'remind_at', 'id', 'contact_id', 'last_sent_at', 'snoozed_until', 'created_at'],
     title: 'ReminderPublic'
+} as const;
+
+export const ReminderSnoozeHistoryEntrySchema = {
+    properties: {
+        snoozed_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Snoozed At'
+        },
+        snoozed_until: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Snoozed Until'
+        },
+        reason: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Reason'
+        }
+    },
+    type: 'object',
+    required: ['snoozed_at', 'snoozed_until'],
+    title: 'ReminderSnoozeHistoryEntry',
+    description: 'Single snooze history row returned by GET /reminders/{id}/snooze-history.'
+} as const;
+
+export const ReminderSnoozeRequestSchema = {
+    properties: {
+        snoozed_until: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Snoozed Until',
+            description: 'Absolute time to snooze until (UTC). Mutually exclusive with minutes.'
+        },
+        minutes: {
+            anyOf: [
+                {
+                    type: 'integer',
+                    maximum: 43200,
+                    minimum: 1
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Minutes',
+            description: 'Minutes from now to snooze for. Mutually exclusive with snoozed_until.'
+        }
+    },
+    type: 'object',
+    title: 'ReminderSnoozeRequest'
+} as const;
+
+export const ReminderSnoozeStatSchema = {
+    properties: {
+        reminder_id: {
+            type: 'string',
+            title: 'Reminder Id'
+        },
+        snooze_count: {
+            type: 'integer',
+            title: 'Snooze Count'
+        }
+    },
+    type: 'object',
+    required: ['reminder_id', 'snooze_count'],
+    title: 'ReminderSnoozeStat',
+    description: 'Aggregate snooze count for a reminder.'
 } as const;
 
 export const ReminderUpdateSchema = {
@@ -4834,6 +7276,25 @@ export const ReminderUpdateSchema = {
     title: 'ReminderUpdate'
 } as const;
 
+export const RemindersDuePublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/ReminderDuePublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'RemindersDuePublic'
+} as const;
+
 export const RemindersPublicSchema = {
     properties: {
         data: {
@@ -4851,6 +7312,295 @@ export const RemindersPublicSchema = {
     type: 'object',
     required: ['data', 'count'],
     title: 'RemindersPublic'
+} as const;
+
+export const SavedFilterCreateSchema = {
+    properties: {
+        name: {
+            type: 'string',
+            maxLength: 255,
+            minLength: 1,
+            title: 'Name',
+            description: 'User-visible name for the smart list.'
+        },
+        filter_json: {
+            additionalProperties: true,
+            type: 'object',
+            title: 'Filter Json',
+            description: "Structured filter: {conditions: FilterCondition[], op: 'and'|'or'}."
+        },
+        tag_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'uuid'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Tag Id',
+            description: 'Optional tag; if set, filter is shared with users who have TagShare access.'
+        }
+    },
+    type: 'object',
+    required: ['name', 'filter_json'],
+    title: 'SavedFilterCreate'
+} as const;
+
+export const SavedFilterPublicSchema = {
+    properties: {
+        name: {
+            type: 'string',
+            maxLength: 255,
+            minLength: 1,
+            title: 'Name',
+            description: 'User-visible name for the smart list.'
+        },
+        filter_json: {
+            additionalProperties: true,
+            type: 'object',
+            title: 'Filter Json',
+            description: "Structured filter: {conditions: FilterCondition[], op: 'and'|'or'}."
+        },
+        tag_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'uuid'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Tag Id',
+            description: 'Optional tag; if set, filter is shared with users who have TagShare access.'
+        },
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        owner_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Owner Id'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        },
+        updated_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Updated At'
+        }
+    },
+    type: 'object',
+    required: ['name', 'filter_json', 'id', 'owner_id', 'created_at', 'updated_at'],
+    title: 'SavedFilterPublic'
+} as const;
+
+export const SavedFilterUpdateSchema = {
+    properties: {
+        name: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255,
+                    minLength: 1
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Name'
+        },
+        filter_json: {
+            anyOf: [
+                {
+                    additionalProperties: true,
+                    type: 'object'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Filter Json'
+        },
+        tag_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'uuid'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Tag Id'
+        }
+    },
+    type: 'object',
+    title: 'SavedFilterUpdate'
+} as const;
+
+export const SavedFiltersPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/SavedFilterPublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'SavedFiltersPublic'
+} as const;
+
+export const SearchResponseSchema = {
+    properties: {
+        results: {
+            items: {
+                '$ref': '#/components/schemas/SearchResultItem'
+            },
+            type: 'array',
+            title: 'Results'
+        },
+        total: {
+            type: 'integer',
+            title: 'Total'
+        },
+        query: {
+            type: 'string',
+            title: 'Query'
+        }
+    },
+    type: 'object',
+    required: ['results', 'total', 'query'],
+    title: 'SearchResponse',
+    description: 'Search results grouped by type with total counts.'
+} as const;
+
+export const SearchResultItemSchema = {
+    properties: {
+        id: {
+            type: 'string',
+            title: 'Id'
+        },
+        type: {
+            type: 'string',
+            title: 'Type'
+        },
+        title: {
+            type: 'string',
+            title: 'Title'
+        },
+        snippet: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Snippet'
+        },
+        rank: {
+            anyOf: [
+                {
+                    type: 'number'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Rank'
+        },
+        created_at: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Created At'
+        },
+        updated_at: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Updated At'
+        }
+    },
+    type: 'object',
+    required: ['id', 'type', 'title'],
+    title: 'SearchResultItem',
+    description: 'A single search result with type discriminator and ranking info.'
+} as const;
+
+export const SetupSubmitSchema = {
+    properties: {
+        token: {
+            type: 'string',
+            title: 'Token'
+        },
+        email: {
+            type: 'string',
+            format: 'email',
+            title: 'Email'
+        },
+        password: {
+            type: 'string',
+            title: 'Password'
+        },
+        full_name: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Full Name'
+        }
+    },
+    type: 'object',
+    required: ['token', 'email', 'password'],
+    title: 'SetupSubmit'
+} as const;
+
+export const SharePreviewEntitySchema = {
+    properties: {
+        entity_type: {
+            type: 'string',
+            title: 'Entity Type'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['entity_type', 'count'],
+    title: 'SharePreviewEntity',
+    description: 'Preview counts for a single entity type.'
 } as const;
 
 export const TagCreateSchema = {
@@ -4874,6 +7624,19 @@ export const TagCreateSchema = {
             ],
             title: 'Color',
             description: 'Optional hex color like #ff0000 for UI display.'
+        },
+        description: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 1000
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Description',
+            description: 'Optional tag description.'
         }
     },
     type: 'object',
@@ -4903,6 +7666,19 @@ export const TagPublicSchema = {
             title: 'Color',
             description: 'Optional hex color like #ff0000 for UI display.'
         },
+        description: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 1000
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Description',
+            description: 'Optional tag description.'
+        },
         id: {
             type: 'string',
             format: 'uuid',
@@ -4917,6 +7693,46 @@ export const TagPublicSchema = {
     type: 'object',
     required: ['name', 'id', 'created_at'],
     title: 'TagPublic'
+} as const;
+
+export const TagSharePreviewSchema = {
+    properties: {
+        tag_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Tag Id'
+        },
+        tag_name: {
+            type: 'string',
+            title: 'Tag Name'
+        },
+        contact_count: {
+            type: 'integer',
+            title: 'Contact Count'
+        },
+        sample_contacts: {
+            items: {
+                type: 'string'
+            },
+            type: 'array',
+            title: 'Sample Contacts'
+        },
+        entities: {
+            items: {
+                '$ref': '#/components/schemas/SharePreviewEntity'
+            },
+            type: 'array',
+            title: 'Entities'
+        },
+        total_related_rows: {
+            type: 'integer',
+            title: 'Total Related Rows'
+        }
+    },
+    type: 'object',
+    required: ['tag_id', 'tag_name', 'contact_count', 'sample_contacts', 'entities', 'total_related_rows'],
+    title: 'TagSharePreview',
+    description: 'Preview of what will be shared when granting access to a tag.'
 } as const;
 
 export const TagSharePublicSchema = {
@@ -4990,6 +7806,17 @@ export const TagUpdateSchema = {
                 }
             ],
             title: 'Color'
+        },
+        description: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Description'
         }
     },
     type: 'object',
@@ -5296,6 +8123,126 @@ export const UsersPublicSchema = {
     title: 'UsersPublic'
 } as const;
 
+export const VCardConflictPublicSchema = {
+    properties: {
+        contact_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Contact Id',
+            description: 'The contact that has a conflict.'
+        },
+        incoming_vcard_raw: {
+            type: 'string',
+            title: 'Incoming Vcard Raw'
+        },
+        incoming_hash: {
+            type: 'string',
+            maxLength: 64,
+            title: 'Incoming Hash',
+            description: 'SHA-256 hash of the incoming normalized vCard.'
+        },
+        local_hash: {
+            type: 'string',
+            maxLength: 64,
+            title: 'Local Hash',
+            description: 'SHA-256 hash of the locally-stored normalized vCard at time of conflict.'
+        },
+        resolved_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Resolved At',
+            description: 'When the conflict was resolved; None means pending.'
+        },
+        resolution_type: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 50
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Resolution Type',
+            description: "How the conflict was resolved: 'keep_local', 'accept_remote', 'manual_merge'."
+        },
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        },
+        local_vcard_raw: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Local Vcard Raw',
+            description: 'The locally-stored vCard at time of conflict.'
+        }
+    },
+    type: 'object',
+    required: ['contact_id', 'incoming_vcard_raw', 'incoming_hash', 'local_hash', 'id', 'created_at'],
+    title: 'VCardConflictPublic',
+    description: 'Public schema for returning conflict data to the API.'
+} as const;
+
+export const VCardConflictsPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/VCardConflictPublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'VCardConflictsPublic',
+    description: 'Paginated response for listing conflicts.'
+} as const;
+
+export const VCardImportResponseSchema = {
+    properties: {
+        imported: {
+            type: 'integer',
+            title: 'Imported'
+        },
+        errors: {
+            items: {
+                type: 'string'
+            },
+            type: 'array',
+            title: 'Errors',
+            default: []
+        }
+    },
+    type: 'object',
+    required: ['imported'],
+    title: 'VCardImportResponse',
+    description: 'Result of a vCard bulk import.'
+} as const;
+
 export const ValidationErrorSchema = {
     properties: {
         loc: {
@@ -5399,29 +8346,43 @@ export const WebhookEndpointBaseSchema = {
     title: 'WebhookEndpointBase'
 } as const;
 
-export const _MentionPublicSchema = {
+export const _MentionSourceContactSchema = {
     properties: {
-        note_id: {
+        id: {
             type: 'string',
             format: 'uuid',
-            title: 'Note Id'
+            title: 'Id'
         },
-        note_body: {
+        first_name: {
             type: 'string',
-            title: 'Note Body'
+            title: 'First Name'
         },
-        note_created_at: {
-            type: 'string',
-            format: 'date-time',
-            title: 'Note Created At'
+        last_name: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Last Name'
         },
-        source_contact: {
-            '$ref': '#/components/schemas/ContactPublic'
+        avatar_url: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Avatar Url'
         }
     },
     type: 'object',
-    required: ['note_id', 'note_body', 'note_created_at', 'source_contact'],
-    title: '_MentionPublic'
+    required: ['id', 'first_name'],
+    title: '_MentionSourceContact'
 } as const;
 
 export const _ShareInSchema = {
@@ -5432,12 +8393,30 @@ export const _ShareInSchema = {
             title: 'Tag Id'
         },
         grantee_id: {
-            type: 'string',
-            format: 'uuid',
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'uuid'
+                },
+                {
+                    type: 'null'
+                }
+            ],
             title: 'Grantee Id'
+        },
+        grantee_email: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Grantee Email'
         }
     },
     type: 'object',
-    required: ['tag_id', 'grantee_id'],
+    required: ['tag_id'],
     title: '_ShareIn'
 } as const;
