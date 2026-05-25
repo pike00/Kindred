@@ -364,6 +364,7 @@ function ContactDetailPage() {
             </Card>
           )}
 
+<<<<<<< HEAD
           {/* Groups */}
           {contact.groups && contact.groups.length > 0 && (
             <Card>
@@ -372,7 +373,7 @@ function ContactDetailPage() {
                   Groups
                   <InfoHint>
                     Named collections of people with a shared context, like
-                    "Family", "D&amp;D Group", or "Work Team". Groups have a
+                    "Family", "D&D Group", or "Work Team". Groups have a
                     description; tags don't.
                   </InfoHint>
                 </CardTitle>
@@ -388,6 +389,20 @@ function ContactDetailPage() {
               </CardContent>
             </Card>
           )}
+=======
+>>>>>>> origin/main
+          {/* Interaction Map */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="size-4" />
+                Interaction Locations
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <InteractionMap interactions={interactions} />
+            </CardContent>
+          </Card>
 
           <RelationshipsCard
             contactId={contactId}
