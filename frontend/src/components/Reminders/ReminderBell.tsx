@@ -1,11 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
-import { useMemo } from "react"
 
-import type { ReminderPublic } from "@/client"
+import type { ReminderDuePublic } from "@/client"
 import { RemindersService } from "@/client"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   Popover,
   PopoverContent,
@@ -14,20 +19,22 @@ import {
 import useCustomToast from "@/hooks/useCustomToast"
 import { Bell, Check, Clock } from "@/lib/icons"
 
-const FETCH_LIMIT = 100
 const REFETCH_INTERVAL_MS = 60_000
 const POPOVER_DISPLAY_LIMIT = 8
 
-function isReminderDue(reminder: ReminderPublic, now: number): boolean {
-  if (reminder.is_active === false) return false
-  const remindAt = new Date(reminder.remind_at).getTime()
-  if (Number.isNaN(remindAt) || remindAt > now) return false
-  if (reminder.snoozed_until) {
-    const snoozedUntil = new Date(reminder.snoozed_until).getTime()
-    if (!Number.isNaN(snoozedUntil) && snoozedUntil > now) return false
-  }
-  return true
+type SnoozeOption = {
+  label: string
+  /** Minutes from now. */
+  minutes: number
 }
+
+const SNOOZE_OPTIONS: SnoozeOption[] = [
+  { label: "15 minutes", minutes: 15 },
+  { label: "1 hour", minutes: 60 },
+  { label: "4 hours", minutes: 4 * 60 },
+  { label: "Tomorrow", minutes: 24 * 60 },
+  { label: "1 week", minutes: 7 * 24 * 60 },
+]
 
 function formatRelative(remindAt: string, now: number): string {
   const target = new Date(remindAt).getTime()
@@ -41,39 +48,48 @@ function formatRelative(remindAt: string, now: number): string {
   return `${diffDay}d overdue`
 }
 
+function contactDisplayName(
+  contact: ReminderDuePublic["contact"],
+): string | null {
+  if (!contact) return null
+  const parts = [contact.first_name, contact.last_name].filter(Boolean)
+  const full = parts.join(" ").trim()
+  return contact.nickname || full || null
+}
+
 export function ReminderBell() {
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
 
   const { data } = useQuery({
-    queryKey: ["reminders", { isActive: true, limit: FETCH_LIMIT }],
-    queryFn: () =>
-      RemindersService.listReminders({ isActive: true, limit: FETCH_LIMIT }),
+    queryKey: ["reminders", "due"],
+    queryFn: () => RemindersService.listDueReminders({}),
     refetchInterval: REFETCH_INTERVAL_MS,
     refetchOnWindowFocus: true,
   })
 
-  const { dueReminders, dueCount } = useMemo(() => {
-    const now = Date.now()
-    const all = data?.data ?? []
-    const due = all
-      .filter((r) => isReminderDue(r, now))
-      .sort(
-        (a, b) =>
-          new Date(a.remind_at).getTime() - new Date(b.remind_at).getTime(),
-      )
-    return { dueReminders: due, dueCount: due.length }
-  }, [data])
+  const dueReminders = data?.data ?? []
+  const dueCount = data?.count ?? 0
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["reminders"] })
   }
 
   const snoozeMutation = useMutation({
-    mutationFn: (reminderId: string) =>
-      RemindersService.snoozeReminder({ reminderId, minutes: 60 }),
-    onSuccess: () => {
-      showSuccessToast("Reminder snoozed for 1 hour")
+    mutationFn: ({
+      reminderId,
+      minutes,
+    }: {
+      reminderId: string
+      minutes: number
+      label: string
+    }) =>
+      RemindersService.snoozeReminder({
+        reminderId,
+        requestBody: { minutes },
+      }),
+    onSuccess: (_data, variables) => {
+      showSuccessToast(`Snoozed for ${variables.label.toLowerCase()}`)
       invalidate()
     },
     onError: () => showErrorToast("Failed to snooze reminder"),
@@ -81,10 +97,7 @@ export function ReminderBell() {
 
   const dismissMutation = useMutation({
     mutationFn: (reminderId: string) =>
-      RemindersService.updateReminder({
-        reminderId,
-        requestBody: { is_active: false },
-      }),
+      RemindersService.dismissReminder({ reminderId }),
     onSuccess: () => {
       showSuccessToast("Reminder dismissed")
       invalidate()
@@ -92,8 +105,7 @@ export function ReminderBell() {
     onError: () => showErrorToast("Failed to dismiss reminder"),
   })
 
-  const buttonLabel =
-    dueCount > 0 ? `Reminders (${dueCount} due)` : "Reminders (none due)"
+  const buttonLabel = `Reminders, ${dueCount} due`
 
   return (
     <Popover>
@@ -101,10 +113,15 @@ export function ReminderBell() {
         <Button
           variant="ghost"
           size="icon-sm"
-          className="relative"
+          className="relative size-11 sm:size-9"
           aria-label={buttonLabel}
         >
           <Bell className="size-4" />
+          <span className="sr-only" aria-live="polite">
+            {dueCount > 0
+              ? `${dueCount} reminder${dueCount === 1 ? "" : "s"} due`
+              : "No reminders due"}
+          </span>
           {dueCount > 0 ? (
             <Badge
               variant="destructive"
@@ -116,7 +133,7 @@ export function ReminderBell() {
           ) : null}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-80 p-0">
+      <PopoverContent align="end" className="w-96 p-0">
         <div className="border-b px-4 py-3">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold">Due reminders</h2>
@@ -130,41 +147,78 @@ export function ReminderBell() {
             You're all caught up.
           </div>
         ) : (
-          <ul className="max-h-80 divide-y overflow-y-auto">
-            {dueReminders.slice(0, POPOVER_DISPLAY_LIMIT).map((r) => (
-              <li key={r.id} className="px-4 py-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{r.title}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatRelative(r.remind_at, Date.now())}
-                    </p>
+          <ul className="max-h-96 divide-y overflow-y-auto">
+            {dueReminders.slice(0, POPOVER_DISPLAY_LIMIT).map((r) => {
+              const name = contactDisplayName(r.contact)
+              return (
+                <li key={r.id} className="min-h-[44px] px-4 py-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      {name ? (
+                        <p className="truncate text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          {name}
+                        </p>
+                      ) : null}
+                      <p className="truncate text-sm font-medium">{r.title}</p>
+                      {r.description ? (
+                        <p className="line-clamp-2 text-xs text-muted-foreground">
+                          {r.description}
+                        </p>
+                      ) : null}
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {formatRelative(r.remind_at, Date.now())}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 gap-1">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            className="size-11 sm:size-9"
+                            aria-label={`Snooze reminder: ${r.title}`}
+                            title="Snooze"
+                            disabled={snoozeMutation.isPending}
+                          >
+                            <Clock className="size-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {SNOOZE_OPTIONS.map((opt) => (
+                            <DropdownMenuItem
+                              key={opt.label}
+                              onSelect={() =>
+                                snoozeMutation.mutate({
+                                  reminderId: r.id,
+                                  minutes: opt.minutes,
+                                  label: opt.label,
+                                })
+                              }
+                            >
+                              {opt.label}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        className="size-11 sm:size-9"
+                        aria-label={`Dismiss reminder: ${r.title}`}
+                        title="Dismiss"
+                        onClick={() => dismissMutation.mutate(r.id)}
+                        disabled={dismissMutation.isPending}
+                      >
+                        <Check className="size-4" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex shrink-0 gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label="Snooze 1 hour"
-                      title="Snooze 1 hour"
-                      onClick={() => snoozeMutation.mutate(r.id)}
-                      disabled={snoozeMutation.isPending}
-                    >
-                      <Clock className="size-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label="Dismiss reminder"
-                      title="Dismiss"
-                      onClick={() => dismissMutation.mutate(r.id)}
-                      disabled={dismissMutation.isPending}
-                    >
-                      <Check className="size-4" />
-                    </Button>
-                  </div>
-                </div>
-              </li>
-            ))}
+                  {/* TODO: "Log as interaction" — open the FAB pre-populated
+                      with this contact_id. Deferred per project spec to keep
+                      this PR focused on the badge surface. */}
+                </li>
+              )
+            })}
           </ul>
         )}
         <div className="border-t px-4 py-2 text-right">
