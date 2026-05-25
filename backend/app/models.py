@@ -61,6 +61,8 @@ from app.models_vcard_conflict import (  # noqa: F401
     VCardConflictsPublic,
 )
 
+from app.models_vcard_conflict import VCardConflict  # noqa: F401
+
 
 def get_datetime_utc() -> datetime:
     return datetime.now(timezone.utc)
@@ -722,6 +724,11 @@ class Contact(SoftDeleteMixin, ContactBase, table=True):
         max_length=255,
         description="ETag from the CardDAV server for incremental sync.",
     )
+    vcard_sha256: str | None = Field(
+        default=None,
+        max_length=64,
+        description="SHA256 hash of normalized vcard_raw; used for round-trip integrity verification.",
+    )
     # Avatar stored as file path or URL
     avatar_url: str | None = Field(
         default=None,
@@ -767,6 +774,7 @@ class ContactPublic(ContactBase):
     do_not_contact_reason: str | None = None
     tags: list[TagPublic] = []
     groups: list[GroupPublic] = []
+    vcard_sha256: str | None = None
 
 
 class ContactsPublic(SQLModel):

@@ -43,18 +43,6 @@ from app.models import (
 )
 from app.vcard import compute_vcard_hash
 
-# Avatar upload configuration
-AVATAR_UPLOAD_DIR = Path("uploads/avatars")
-AVATAR_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
-
-# Max file size: 10MB
-MAX_AVATAR_SIZE = 10 * 1024 * 1024
-ALLOWED_AVATAR_TYPES = {"image/jpeg", "image/png", "image/webp"}
-
-logger = logging.getLogger(__name__)
-
-router = APIRouter(prefix="/contacts", tags=["contacts"])
-
 
 # ─── Bulk operations models ────────────────────────────────────────────────
 
@@ -347,8 +335,13 @@ def update_contact(
     if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
     update_data = contact_in.model_dump(exclude_unset=True)
-    for key, value in update_data.items():
-        setattr(contact, key, value)
+    tag_ids = update_data.pop("tag_ids", None)
+    group_ids = update_data.pop("group_ids", None)
+
+    contact.sqlmodel_update(update_data)
+    # Compute vcard_sha256 if vcard_raw was updated
+    if "vcard_raw" in update_data and contact.vcard_raw:
+        contact.vcard_sha256 = compute_vcard_hash(contact.vcard_raw)
     session.add(contact)
     session.commit()
     session.refresh(contact)

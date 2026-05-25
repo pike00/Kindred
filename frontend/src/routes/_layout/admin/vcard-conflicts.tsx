@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea"
 function getConflictsQueryOptions() {
   return {
     queryFn: () =>
-      VCardConflictsService.listVcardConflicts({ skip: 0, limit: 100 }),
+      VCardConflictsService.readVcardConflicts({ skip: 0, limit: 100 }),
     queryKey: ["vcard-conflicts"],
   }
 }
@@ -41,7 +41,7 @@ function VCardConflictsContent() {
     try {
       await VCardConflictsService.resolveVcardConflict({
         conflictId,
-        resolutionType,
+        requestBody: { resolution_type: resolutionType },
       })
       toast.success(
         `Conflict ${resolutionType === "keep_local" ? "kept local version" : "accepted remote version"}`,

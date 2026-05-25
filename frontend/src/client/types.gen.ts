@@ -481,15 +481,7 @@ export type ContactPublic = {
     deleted_at?: (string | null);
     tags?: Array<TagPublic>;
     groups?: Array<GroupPublic>;
-    stage_events?: Array<ContactStageEventPublic>;
-};
-
-/**
- * Response model for geo endpoint.
- */
-export type ContactsGeoResponse = {
-    points: Array<ContactGeoPoint>;
-    count: number;
+    vcard_sha256?: (string | null);
 };
 
 export type ContactSource = 'MANUAL' | 'VCARD_IMPORT' | 'CARDDAV' | 'GOOGLE' | 'WEBHOOK';
@@ -1488,6 +1480,99 @@ export type NoteUpdate = {
     body?: (string | null);
 };
 
+export type OverdueContactPublic = {
+    /**
+     * Given name; required.
+     */
+    first_name: string;
+    /**
+     * Family name.
+     */
+    last_name?: (string | null);
+    /**
+     * Middle name or initial.
+     */
+    middle_name?: (string | null);
+    /**
+     * Honorific like Dr., Mr., Ms.
+     */
+    prefix?: (string | null);
+    /**
+     * Suffix like Jr., PhD.
+     */
+    suffix?: (string | null);
+    /**
+     * Preferred or informal name.
+     */
+    nickname?: (string | null);
+    /**
+     * Organization name.
+     */
+    company?: (string | null);
+    /**
+     * Department within the company.
+     */
+    department?: (string | null);
+    /**
+     * Job title.
+     */
+    title?: (string | null);
+    /**
+     * Date of birth; used for milestone and birthday reminders.
+     */
+    birthday?: (string | null);
+    /**
+     * Short story of how the introduction happened.
+     */
+    how_we_met?: (string | null);
+    /**
+     * Pinned to the top of contact lists.
+     */
+    is_favorite?: boolean;
+    /**
+     * Soft-deleted; excluded from default lists.
+     */
+    is_archived?: boolean;
+    /**
+     * Marks the contact as deceased.
+     */
+    is_deceased?: boolean;
+    /**
+     * Date the contact passed away.
+     */
+    deceased_at?: (string | null);
+    contact_frequency_days?: (number | null);
+    do_not_contact?: boolean;
+    do_not_contact_reason?: (string | null);
+    /**
+     * Kanban stage like Active, Dormant, Lost.
+     */
+    stage?: (string | null);
+    /**
+     * Where this contact originated.
+     */
+    source?: ContactSource;
+    /**
+     * Opaque external ID for idempotent upserts from integrations.
+     */
+    source_external_id?: (string | null);
+    id: string;
+    avatar_url: (string | null);
+    last_contacted_at: (string | null);
+    created_at: string;
+    updated_at: string;
+    deleted_at?: (string | null);
+    tags?: Array<TagPublic>;
+    groups?: Array<GroupPublic>;
+    vcard_sha256?: (string | null);
+    days_overdue?: (number | null);
+};
+
+export type OverdueContactsPublic = {
+    data: Array<OverdueContactPublic>;
+    count: number;
+};
+
 export type PetCreate = {
     /**
      * Pet's name.
@@ -1952,14 +2037,6 @@ export type VCardConflictPublic = {
 export type VCardConflictsPublic = {
     data: Array<VCardConflictPublic>;
     count: number;
-};
-
-/**
- * Result of a vCard bulk import.
- */
-export type VCardImportResponse = {
-    imported: number;
-    errors?: Array<(string)>;
 };
 
 export type WebhookEndpointBase = {
@@ -3264,8 +3341,6 @@ export type UtilsTestEmailResponse = (Message);
 
 export type UtilsHealthCheckResponse = (boolean);
 
-export type UtilsEnvironmentResponse = (EnvironmentInfo);
-
 export type VCardConflictsListVcardConflictsData = {
     limit?: number;
     skip?: number;
@@ -3286,13 +3361,7 @@ export type VCardConflictsDeleteVcardConflictData = {
 
 export type VCardConflictsDeleteVcardConflictResponse = (void);
 
-export type WebhooksTwilioWebhookData = {
-    apiKey: string;
-};
-
-export type WebhooksTwilioWebhookResponse = (WebhookEventResponse);
-
-export type WebhooksListWebhooksResponse = (WebhookEndpointsPublic);
+export type WebhooksListWebhooksResponse = (unknown);
 
 export type WebhooksCreateWebhookData = {
     requestBody: WebhookEndpointBase;
