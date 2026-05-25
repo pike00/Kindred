@@ -1018,6 +1018,30 @@ export const ContactCreateSchema = {
             title: 'Stage',
             description: 'Kanban stage like Active, Dormant, Lost.'
         },
+        auto_log_email: {
+            type: 'boolean',
+            title: 'Auto Log Email',
+            description: 'Enable automatic email log ingestion for this contact.',
+            default: false
+        },
+        source: {
+            '$ref': '#/components/schemas/ContactSource',
+            description: 'Where this contact originated.',
+            default: 'MANUAL'
+        },
+        source_external_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 500
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Source External Id',
+            description: 'Opaque external ID for idempotent upserts from integrations.'
+        },
         tag_ids: {
             anyOf: [
                 {
@@ -1501,6 +1525,30 @@ export const ContactPublicSchema = {
             title: 'Stage',
             description: 'Kanban stage like Active, Dormant, Lost.'
         },
+        auto_log_email: {
+            type: 'boolean',
+            title: 'Auto Log Email',
+            description: 'Enable automatic email log ingestion for this contact.',
+            default: false
+        },
+        source: {
+            '$ref': '#/components/schemas/ContactSource',
+            description: 'Where this contact originated.',
+            default: 'MANUAL'
+        },
+        source_external_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 500
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Source External Id',
+            description: 'Opaque external ID for idempotent upserts from integrations.'
+        },
         id: {
             type: 'string',
             format: 'uuid',
@@ -1808,6 +1856,39 @@ export const ContactUpdateSchema = {
                 }
             ],
             title: 'Stage'
+        },
+        auto_log_email: {
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Auto Log Email'
+        },
+        do_not_contact: {
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Do Not Contact'
+        },
+        do_not_contact_reason: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Do Not Contact Reason'
         },
         tag_ids: {
             anyOf: [
@@ -3455,56 +3536,6 @@ export const InteractionCreateSchema = {
             title: 'Duration Minutes',
             description: 'Length of the interaction in minutes.'
         },
-        location_label: {
-            anyOf: [
-                {
-                    type: 'string'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Location Label'
-        },
-        latitude: {
-            anyOf: [
-                {
-                    type: 'number'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Latitude'
-        },
-        longitude: {
-            anyOf: [
-                {
-                    type: 'number'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Longitude'
-        },
-        is_draft: {
-            type: 'boolean',
-            title: 'Is Draft',
-            description: 'If True, this interaction is a draft and excluded from engagement metrics.',
-            default: false
-        },
-        draft_source: {
-            anyOf: [
-                {
-                    '$ref': '#/components/schemas/InteractionDraftSource'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            description: 'Origin of the draft (voice_memo, email_suggestion, manual, import).'
-        },
         message_id: {
             anyOf: [
                 {
@@ -3643,58 +3674,6 @@ export const InteractionPublicSchema = {
             ],
             title: 'Duration Minutes',
             description: 'Length of the interaction in minutes.'
-        },
-        location_label: {
-            anyOf: [
-                {
-                    type: 'string',
-                    maxLength: 500
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Location Label',
-            description: "Freeform location text like 'Starbucks on 5th', 'their home', 'the park'."
-        },
-        latitude: {
-            anyOf: [
-                {
-                    type: 'number'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Latitude',
-            description: 'Geocoded latitude; used for map visualization.'
-        },
-        longitude: {
-            anyOf: [
-                {
-                    type: 'number'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Longitude',
-            description: 'Geocoded longitude; used for map visualization.'
-        },
-        is_draft: {
-            type: 'boolean',
-            title: 'Is Draft',
-            default: false
-        },
-        draft_source: {
-            anyOf: [
-                {
-                    '$ref': '#/components/schemas/InteractionDraftSource'
-                },
-                {
-                    type: 'null'
-                }
-            ]
         },
         message_id: {
             anyOf: [
@@ -4917,6 +4896,334 @@ export const NotesPublicSchema = {
     title: 'NotesPublic'
 } as const;
 
+export const OverdueContactPublicSchema = {
+    properties: {
+        first_name: {
+            type: 'string',
+            maxLength: 255,
+            minLength: 1,
+            title: 'First Name',
+            description: 'Given name; required.'
+        },
+        last_name: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Last Name',
+            description: 'Family name.'
+        },
+        middle_name: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Middle Name',
+            description: 'Middle name or initial.'
+        },
+        prefix: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 50
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Prefix',
+            description: 'Honorific like Dr., Mr., Ms.'
+        },
+        suffix: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 50
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Suffix',
+            description: 'Suffix like Jr., PhD.'
+        },
+        nickname: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Nickname',
+            description: 'Preferred or informal name.'
+        },
+        company: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Company',
+            description: 'Organization name.'
+        },
+        department: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Department',
+            description: 'Department within the company.'
+        },
+        title: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Title',
+            description: 'Job title.'
+        },
+        birthday: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Birthday',
+            description: 'Date of birth; used for milestone and birthday reminders.'
+        },
+        how_we_met: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 2000
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'How We Met',
+            description: 'Short story of how the introduction happened.'
+        },
+        is_favorite: {
+            type: 'boolean',
+            title: 'Is Favorite',
+            description: 'Pinned to the top of contact lists.',
+            default: false
+        },
+        is_archived: {
+            type: 'boolean',
+            title: 'Is Archived',
+            description: 'Soft-deleted; excluded from default lists.',
+            default: false
+        },
+        is_deceased: {
+            type: 'boolean',
+            title: 'Is Deceased',
+            description: 'Marks the contact as deceased.',
+            default: false
+        },
+        deceased_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Deceased At',
+            description: 'Date the contact passed away.'
+        },
+        contact_frequency_days: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Contact Frequency Days'
+        },
+        do_not_contact: {
+            type: 'boolean',
+            title: 'Do Not Contact',
+            default: false
+        },
+        do_not_contact_reason: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Do Not Contact Reason'
+        },
+        stage: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 100
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Stage',
+            description: 'Kanban stage like Active, Dormant, Lost.'
+        },
+        auto_log_email: {
+            type: 'boolean',
+            title: 'Auto Log Email',
+            description: 'Enable automatic email log ingestion for this contact.',
+            default: false
+        },
+        source: {
+            '$ref': '#/components/schemas/ContactSource',
+            description: 'Where this contact originated.',
+            default: 'MANUAL'
+        },
+        source_external_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 500
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Source External Id',
+            description: 'Opaque external ID for idempotent upserts from integrations.'
+        },
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        avatar_url: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Avatar Url'
+        },
+        last_contacted_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Last Contacted At'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        },
+        updated_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Updated At'
+        },
+        deleted_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Deleted At'
+        },
+        tags: {
+            items: {
+                '$ref': '#/components/schemas/TagPublic'
+            },
+            type: 'array',
+            title: 'Tags',
+            default: []
+        },
+        days_overdue: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Days Overdue'
+        }
+    },
+    type: 'object',
+    required: ['first_name', 'id', 'avatar_url', 'last_contacted_at', 'created_at', 'updated_at'],
+    title: 'OverdueContactPublic'
+} as const;
+
+export const OverdueContactsPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/OverdueContactPublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'OverdueContactsPublic'
+} as const;
+
 export const PetCreateSchema = {
     properties: {
         name: {
@@ -5091,25 +5398,6 @@ export const PetUpdateSchema = {
     },
     type: 'object',
     title: 'PetUpdate'
-} as const;
-
-export const PetsPublicSchema = {
-    properties: {
-        data: {
-            items: {
-                '$ref': '#/components/schemas/PetPublic'
-            },
-            type: 'array',
-            title: 'Data'
-        },
-        count: {
-            type: 'integer',
-            title: 'Count'
-        }
-    },
-    type: 'object',
-    required: ['data', 'count'],
-    title: 'PetsPublic'
 } as const;
 
 export const PrivateUserCreateSchema = {

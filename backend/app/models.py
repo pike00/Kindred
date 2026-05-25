@@ -742,15 +742,9 @@ class ContactBase(SQLModel):
         max_length=100,
         description="Kanban stage like Active, Dormant, Lost.",
     )
-    timezone: str | None = Field(
-        default=None,
-        max_length=255,
-        description="IANA timezone string (e.g., America/New_York); nullable.",
-    )
-    pronouns: str | None = Field(
-        default=None,
-        max_length=100,
-        description="Contact's pronouns (free text, max 100 chars); nullable.",
+    auto_log_email: bool = Field(
+        default=False,
+        description="Enable automatic email log ingestion for this contact.",
     )
     source: ContactSource = Field(
         default=ContactSource.MANUAL,
@@ -785,8 +779,7 @@ class ContactUpdate(SQLModel):
     deceased_at: date | None = None
     contact_frequency_days: int | None = None
     stage: str | None = None
-    timezone: str | None = None
-    pronouns: str | None = None
+    auto_log_email: bool | None = None
     do_not_contact: bool | None = None
     do_not_contact_reason: str | None = None
     tag_ids: list[uuid.UUID] | None = None
@@ -1667,6 +1660,32 @@ class InteractionBase(SQLModel):
     draft_source: InteractionDraftSource | None = Field(
         default=None,
         description="Origin of the draft (voice_memo, email_suggestion, manual, import).",
+    )
+
+    # Email-specific fields (for EMAIL channel)
+    message_id: str | None = Field(
+        default=None,
+        max_length=998,
+        description="RFC 2822 Message-ID for deduplication (EMAIL channel only).",
+    )
+    email_subject: str | None = Field(
+        default=None,
+        max_length=998,
+        description="Email subject line (EMAIL channel only).",
+    )
+    email_from: str | None = Field(
+        default=None,
+        max_length=2048,
+        description="Email From header (EMAIL channel only).",
+    )
+    email_to: str | None = Field(
+        default=None,
+        max_length=2048,
+        description="Email To header (EMAIL channel only).",
+    )
+    email_date: datetime | None = Field(
+        default=None,
+        description="Email Date header (EMAIL channel only).",
     )
 
     # Email-specific fields (for EMAIL channel)

@@ -288,6 +288,18 @@ export type ContactCreate = {
      * Kanban stage like Active, Dormant, Lost.
      */
     stage?: (string | null);
+    /**
+     * Enable automatic email log ingestion for this contact.
+     */
+    auto_log_email?: boolean;
+    /**
+     * Where this contact originated.
+     */
+    source?: ContactSource;
+    /**
+     * Opaque external ID for idempotent upserts from integrations.
+     */
+    source_external_id?: (string | null);
     tag_ids?: (Array<(string)> | null);
 };
 
@@ -446,6 +458,18 @@ export type ContactPublic = {
      * Kanban stage like Active, Dormant, Lost.
      */
     stage?: (string | null);
+    /**
+     * Enable automatic email log ingestion for this contact.
+     */
+    auto_log_email?: boolean;
+    /**
+     * Where this contact originated.
+     */
+    source?: ContactSource;
+    /**
+     * Opaque external ID for idempotent upserts from integrations.
+     */
+    source_external_id?: (string | null);
     id: string;
     avatar_url: (string | null);
     last_contacted_at: (string | null);
@@ -504,6 +528,9 @@ export type ContactUpdate = {
     deceased_at?: (string | null);
     contact_frequency_days?: (number | null);
     stage?: (string | null);
+    auto_log_email?: (boolean | null);
+    do_not_contact?: (boolean | null);
+    do_not_contact_reason?: (string | null);
     tag_ids?: (Array<(string)> | null);
 };
 
@@ -1071,6 +1098,26 @@ export type InteractionCreate = {
      */
     email_date?: (string | null);
     /**
+     * RFC 2822 Message-ID for deduplication (EMAIL channel only).
+     */
+    message_id?: (string | null);
+    /**
+     * Email subject line (EMAIL channel only).
+     */
+    email_subject?: (string | null);
+    /**
+     * Email From header (EMAIL channel only).
+     */
+    email_from?: (string | null);
+    /**
+     * Email To header (EMAIL channel only).
+     */
+    email_to?: (string | null);
+    /**
+     * Email Date header (EMAIL channel only).
+     */
+    email_date?: (string | null);
+    /**
      * Contacts that attended; must have at least one.
      */
     attendee_ids: Array<(string)>;
@@ -1102,20 +1149,6 @@ export type InteractionPublic = {
      * Length of the interaction in minutes.
      */
     duration_minutes?: (number | null);
-    /**
-     * Freeform location text like 'Starbucks on 5th', 'their home', 'the park'.
-     */
-    location_label?: (string | null);
-    /**
-     * Geocoded latitude; used for map visualization.
-     */
-    latitude?: (number | null);
-    /**
-     * Geocoded longitude; used for map visualization.
-     */
-    longitude?: (number | null);
-    is_draft?: boolean;
-    draft_source?: (InteractionDraftSource | null);
     /**
      * RFC 2822 Message-ID for deduplication (EMAIL channel only).
      */
@@ -1484,6 +1517,101 @@ export type NotesPublic = {
 
 export type NoteUpdate = {
     body?: (string | null);
+};
+
+export type OverdueContactPublic = {
+    /**
+     * Given name; required.
+     */
+    first_name: string;
+    /**
+     * Family name.
+     */
+    last_name?: (string | null);
+    /**
+     * Middle name or initial.
+     */
+    middle_name?: (string | null);
+    /**
+     * Honorific like Dr., Mr., Ms.
+     */
+    prefix?: (string | null);
+    /**
+     * Suffix like Jr., PhD.
+     */
+    suffix?: (string | null);
+    /**
+     * Preferred or informal name.
+     */
+    nickname?: (string | null);
+    /**
+     * Organization name.
+     */
+    company?: (string | null);
+    /**
+     * Department within the company.
+     */
+    department?: (string | null);
+    /**
+     * Job title.
+     */
+    title?: (string | null);
+    /**
+     * Date of birth; used for milestone and birthday reminders.
+     */
+    birthday?: (string | null);
+    /**
+     * Short story of how the introduction happened.
+     */
+    how_we_met?: (string | null);
+    /**
+     * Pinned to the top of contact lists.
+     */
+    is_favorite?: boolean;
+    /**
+     * Soft-deleted; excluded from default lists.
+     */
+    is_archived?: boolean;
+    /**
+     * Marks the contact as deceased.
+     */
+    is_deceased?: boolean;
+    /**
+     * Date the contact passed away.
+     */
+    deceased_at?: (string | null);
+    contact_frequency_days?: (number | null);
+    do_not_contact?: boolean;
+    do_not_contact_reason?: (string | null);
+    /**
+     * Kanban stage like Active, Dormant, Lost.
+     */
+    stage?: (string | null);
+    /**
+     * Enable automatic email log ingestion for this contact.
+     */
+    auto_log_email?: boolean;
+    /**
+     * Where this contact originated.
+     */
+    source?: ContactSource;
+    /**
+     * Opaque external ID for idempotent upserts from integrations.
+     */
+    source_external_id?: (string | null);
+    id: string;
+    avatar_url: (string | null);
+    last_contacted_at: (string | null);
+    created_at: string;
+    updated_at: string;
+    deleted_at?: (string | null);
+    tags?: Array<TagPublic>;
+    days_overdue?: (number | null);
+};
+
+export type OverdueContactsPublic = {
+    data: Array<OverdueContactPublic>;
+    count: number;
 };
 
 export type PetCreate = {
@@ -2470,6 +2598,56 @@ export type DebtsDeleteDebtPaymentData = {
 
 export type DebtsDeleteDebtPaymentResponse = (unknown);
 
+export type EmailGmailAuthorizeData = {
+    /**
+     * Contact ID to associate with this email
+     */
+    contactId: string;
+    /**
+     * Email address being authorized
+     */
+    emailAddress: string;
+};
+
+export type EmailGmailAuthorizeResponse = ({
+    [key: string]: unknown;
+});
+
+export type EmailGmailCallbackData = {
+    code: string;
+    state: string;
+};
+
+export type EmailGmailCallbackResponse = ({
+    [key: string]: unknown;
+});
+
+export type EmailListEmailTokensData = {
+    contactId?: (string | null);
+};
+
+export type EmailListEmailTokensResponse = (EmailOAuthTokensPublic);
+
+export type EmailDeleteEmailTokenData = {
+    tokenId: string;
+};
+
+export type EmailDeleteEmailTokenResponse = ({
+    [key: string]: (string);
+});
+
+export type EmailPollContactEmailData = {
+    contactId: string;
+};
+
+export type EmailPollContactEmailResponse = ({
+    [key: string]: unknown;
+});
+
+export type EmailPollAllEmailsResponse = ({
+    [key: string]: unknown;
+});
+
 export type GiftsListGiftsData = {
     contactId: string;
 };
@@ -2909,6 +3087,12 @@ export type RelationshipInverseMapLookupInverseData = {
 };
 
 export type RelationshipInverseMapLookupInverseResponse = (unknown);
+
+export type PrivateCreateUserData = {
+    requestBody: PrivateUserCreate;
+};
+
+export type PrivateCreateUserResponse = (UserPublic);
 
 export type RelationshipsLookupInverseData = {
     type: string;

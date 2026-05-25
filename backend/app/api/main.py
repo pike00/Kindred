@@ -73,6 +73,8 @@ api_router.include_router(import_export.router)
 api_router.include_router(contact_pdf.router)
 api_router.include_router(webhooks.router)
 api_router.include_router(activity_logs.router)
+
+api_router.include_router(email.router)
 api_router.include_router(calendar.router)
 api_router.include_router(contacts_kanban.router)
 
