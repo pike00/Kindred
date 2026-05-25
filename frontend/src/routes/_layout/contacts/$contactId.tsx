@@ -1,9 +1,6 @@
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { useEffect, useState } from "react"
-
-import { formatLocalTime } from "@/components/Contacts/TimezoneInput"
-
 import type {
   DebtPublic,
   GiftPublic,
@@ -28,6 +25,7 @@ import { InteractionHeatmap } from "@/components/Contacts/InteractionHeatmap"
 import { LifeEventsCard } from "@/components/Contacts/LifeEventsCard"
 import { PetsCard } from "@/components/Contacts/PetsCard"
 import { RelationshipsCard } from "@/components/Contacts/RelationshipsCard"
+import { formatLocalTime } from "@/components/Contacts/TimezoneInput"
 import { AddDebt } from "@/components/Debts/AddDebt"
 import { AddGift } from "@/components/Gifts/AddGift"
 import { AddInteractionDialog } from "@/components/Interactions/AddInteractionDialog"
@@ -64,7 +62,10 @@ function ContactLocalTime({ timezone }: { timezone: string }) {
   const [localTime, setLocalTime] = useState(() => formatLocalTime(timezone))
 
   useEffect(() => {
-    const id = setInterval(() => setLocalTime(formatLocalTime(timezone)), 60_000)
+    const id = setInterval(
+      () => setLocalTime(formatLocalTime(timezone)),
+      60_000,
+    )
     return () => clearInterval(id)
   }, [timezone])
 

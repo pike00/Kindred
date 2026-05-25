@@ -32,7 +32,6 @@ function greeting(): string {
   return "Good evening"
 }
 
-
 function Dashboard() {
   const { user: currentUser } = useAuth()
   const { data: contacts } = useSuspenseQuery({
