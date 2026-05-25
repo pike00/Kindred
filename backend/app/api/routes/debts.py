@@ -39,9 +39,7 @@ def list_debts(
     _require_contact_visible(session, current_user, contact_id)
 
     statement = (
-        select(Debt)
-        .where(Debt.contact_id == contact_id)
-        .where(Debt.deleted_at == None)  # noqa: E711
+        select(Debt).where(Debt.contact_id == contact_id).where(Debt.deleted_at == None)  # noqa: E711
     )
     debts = session.exec(statement).all()
 

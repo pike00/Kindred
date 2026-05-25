@@ -1,9 +1,9 @@
 import re
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import union
+from sqlalchemy import func, union
 from sqlmodel import Session, select
 from sqlmodel import delete as sql_delete
 
@@ -492,11 +492,12 @@ def contact_visible(
     return session.exec(stmt).first() is not None
 
 
-
 # ─── ReminderSnooze helpers ──────────────────────────────────────────────
 
 
-def get_effective_snoozed_until(*, session: Session, reminder_id: uuid.UUID) -> datetime | None:
+def get_effective_snoozed_until(
+    *, session: Session, reminder_id: uuid.UUID
+) -> datetime | None:
     """Derive effective snoozed_until from latest reminder_snooze row."""
     from app.models import ReminderSnooze
 
@@ -510,7 +511,9 @@ def get_effective_snoozed_until(*, session: Session, reminder_id: uuid.UUID) -> 
     return latest.snoozed_until if latest else None
 
 
-def get_snooze_count(*, session: Session, reminder_id: uuid.UUID, days: int = 30) -> int:
+def get_snooze_count(
+    *, session: Session, reminder_id: uuid.UUID, days: int = 30
+) -> int:
     """Count snooze events for a reminder in the last N days."""
     from datetime import timedelta
 
@@ -782,7 +785,6 @@ def backfill_stage_events(
     return created
 
 
-
 def upsert_contact(
     *, session: Session, contact_in: ContactCreate, owner_id: uuid.UUID
 ) -> Contact:
@@ -804,9 +806,7 @@ def upsert_contact(
 
         if existing:
             # Update existing contact with new data
-            update_data = contact_in.model_dump(
-                exclude_unset=True, exclude={"tag_ids"}
-            )
+            update_data = contact_in.model_dump(exclude_unset=True, exclude={"tag_ids"})
             existing.sqlmodel_update(update_data)
             session.add(existing)
             session.commit()

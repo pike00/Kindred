@@ -345,6 +345,7 @@ def test_bulk_limit_enforced(
     user_id = get_superuser_id(db)
     # Create 10 contacts with a unique prefix
     import uuid as uuid_mod
+
     prefix = f"LimitTest{uuid_mod.uuid4().hex[:6]}"
     for i in range(10):
         create_test_contact(db, user_id, first_name=f"{prefix}{i}")
@@ -377,9 +378,7 @@ def test_bulk_other_user_contacts_not_affected(
 
     # Create another user with a unique email to avoid collision
     unique_email = f"other_{uuid_mod.uuid4().hex[:8]}@example.com"
-    other_user = User(
-        email=unique_email, hashed_password="fakehash", is_active=True
-    )
+    other_user = User(email=unique_email, hashed_password="fakehash", is_active=True)
     db.add(other_user)
     db.commit()
     db.refresh(other_user)

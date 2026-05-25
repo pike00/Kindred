@@ -7,7 +7,6 @@ See: https://operations.osmfoundation.org/policies/nominatim/
 
 import logging
 import time
-from typing import Optional, Tuple
 
 import httpx
 
@@ -33,12 +32,12 @@ def _rate_limit() -> None:
 
 
 def geocode_address(
-    street: Optional[str] = None,
-    city: Optional[str] = None,
-    region: Optional[str] = None,
-    postal_code: Optional[str] = None,
-    country: Optional[str] = None,
-) -> Optional[Tuple[float, float]]:
+    street: str | None = None,
+    city: str | None = None,
+    region: str | None = None,
+    postal_code: str | None = None,
+    country: str | None = None,
+) -> tuple[float, float] | None:
     """
     Geocode an address using Nominatim (OpenStreetMap).
 
@@ -97,7 +96,7 @@ def geocode_address(
         return None
 
 
-def reverse_geocode(lat: float, lon: float) -> Optional[dict]:
+def reverse_geocode(lat: float, lon: float) -> dict | None:
     """
     Reverse geocode coordinates to an address using Nominatim.
 

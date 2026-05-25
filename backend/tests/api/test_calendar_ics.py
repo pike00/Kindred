@@ -17,7 +17,11 @@ from app.models import (
     User,
     UserCreate,
 )
-from tests.utils.utils import get_superuser_token_headers, random_email, random_lower_string
+from tests.utils.utils import (
+    get_superuser_token_headers,
+    random_email,
+    random_lower_string,
+)
 
 
 @pytest.fixture(scope="module")

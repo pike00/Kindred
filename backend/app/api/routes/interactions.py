@@ -18,7 +18,6 @@ from app.models import (
     Interaction,
     InteractionAttendee,
     InteractionAttendeeSummary,
-    InteractionConfirm,
     InteractionCreate,
     InteractionPublic,
     InteractionsPublic,

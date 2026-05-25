@@ -329,7 +329,6 @@ def get_existing_tags(session: Session, owner_id: str) -> dict[str, Tag]:
     return {tag.name.lower(): tag for tag in tags}
 
 
-
 def get_existing_contacts_by_email(
     session: Session, owner_id: str
 ) -> dict[str, Contact]:

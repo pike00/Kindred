@@ -18,7 +18,7 @@ from typing import Any
 from sqlmodel import Session, select
 
 from app.core.db import engine
-from app.models import Contact, Organization, User
+from app.models import Contact, Organization
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -72,8 +72,7 @@ def dedupe_and_create_organizations(session: Session) -> dict[str, Any]:
                 existing = session.exec(
                     select(Organization).where(
                         Organization.owner_id == owner_id,  # type: ignore[attr-defined]
-                        Organization.name
-                        == original_name,  # type: ignore[attr-defined]
+                        Organization.name == original_name,  # type: ignore[attr-defined]
                     )
                 ).first()
                 if existing:
