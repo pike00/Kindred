@@ -1,0 +1,129 @@
+import { test, expect } from "@playwright/test";
+import {
+  getAuthToken,
+  createContact,
+  cleanupContacts,
+  loginViaUI,
+  testId,
+  clickDialogSave,
+  fillFieldByLabel,
+  clickRowAction,
+} from "./helpers";
+
+test.describe("RelationshipsCard", () => {
+  let token: string;
+  let contactId: string;
+  let relatedContactId: string;
+  const firstName = `E2ERel${testId()}`;
+  const lastName = "Test";
+  const relatedFirstName = `E2ERelated${testId()}`;
+  const relatedLastName = "Person";
+
+  test.beforeAll(async () => {
+    token = await getAuthToken();
+    await cleanupContacts(token);
+    // Create main contact
+    const contact = await createContact(token, firstName, lastName);
+    contactId = contact.id;
+    // Create a related contact
+    const relatedContact = await createContact(token, relatedFirstName, relatedLastName);
+    relatedContactId = relatedContact.id;
+  });
+
+  test.afterAll(async () => {
+    await cleanupContacts(token);
+  });
+
+  test.beforeEach(async ({ page }) => {
+    await loginViaUI(page);
+    await page.goto(`/contacts/${contactId}`);
+    await page.waitForLoadState("networkidle");
+  });
+
+  test("add relationship", async ({ page }) => {
+    // The RelationshipsCard uses an inline add UI with a popover
+    // Click the "Add relationship" button (triggers popover)
+    const addButton = page.getByRole("button", { name: /add relationship/i });
+    if (await addButton.isVisible()) {
+      await addButton.click();
+    } else {
+      // Try clicking the button with Plus icon in the Relationships card header
+      const relationshipsCard = page.locator('[data-slot="card"]').filter({
+        has: page.locator('[data-slot="card-title"]').filter({ hasText: /relationships/i }),
+      });
+      const addBtn = relationshipsCard.getByRole("button").first();
+      await addBtn.click();
+    }
+
+    // Wait for popover to appear
+    await page.waitForTimeout(500);
+
+    // Search for and select the related contact
+    const searchInput = page.getByPlaceholder("Search contacts...");
+    if (await searchInput.isVisible()) {
+      await searchInput.fill(relatedFirstName);
+      await page.waitForTimeout(500);
+      // Click on the matching contact
+      await page.getByText(new RegExp(relatedFirstName, "i")).first().click();
+    }
+
+    // Fill relationship type
+    const typeInput = page.getByPlaceholder(/spouse|brother|colleague/i);
+    if (await typeInput.isVisible()) {
+      await typeInput.fill("friend");
+    }
+
+    // Click Save
+    const saveButton = page.getByRole("button", { name: /save/i });
+    if (await saveButton.isVisible()) {
+      await saveButton.click();
+    }
+
+    // Wait for success
+    await page.waitForTimeout(2000);
+
+    // Verify relationship appears
+    await expect(page.getByText(relatedFirstName)).toBeVisible();
+    await expect(page.getByText("friend")).toBeVisible();
+  });
+
+  test("edit relationship", async ({ page }) => {
+    // Click edit on the relationship row
+    await clickRowAction(page, "Relationships", "Edit");
+
+    // Wait for dialog
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+
+    // Update relationship type
+    const typeInput = dialog.getByRole("textbox").first();
+    await typeInput.clear();
+    await typeInput.fill("best friend");
+
+    // Save
+    await clickDialogSave(page);
+
+    // Wait for success
+    await page.waitForTimeout(2000);
+
+    // Verify updated relationship appears
+    await expect(page.getByText("best friend")).toBeVisible();
+  });
+
+  test("delete relationship", async ({ page }) => {
+    // Click delete on the relationship row
+    await clickRowAction(page, "Relationships", "Delete");
+
+    // Handle confirmation
+    await page.waitForTimeout(500);
+    if (await page.getByText("Delete this relationship?").isVisible()) {
+      await page.getByRole("button", { name: /confirm|yes|delete/i }).click();
+    }
+
+    // Wait for deletion
+    await page.waitForTimeout(2000);
+
+    // Verify relationship is removed
+    await expect(page.getByText("best friend")).not.toBeVisible();
+  });
+});
