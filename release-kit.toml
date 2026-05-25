@@ -2,7 +2,7 @@
 project_name = "kindred"
 project_description = "Self-hosted personal CRM — contacts, interactions, reminders, gifts, debts, journal entries — with CardDAV sync, full-text search, and a React frontend."
 model = "deepseek-v4-pro-cloud"
-base_url = "https://litellm.lab.khanpikehome.com/v1"
+base_url = "https://litellm.khanpikehome.com/v1"
 reasoning_effort = "low"
 changelog_path = "CHANGELOG.md"
 branch = "main"
