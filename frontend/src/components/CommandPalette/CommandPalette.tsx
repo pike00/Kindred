@@ -182,10 +182,13 @@ export function CommandPalette() {
           </>
         )}
 
-        {/* Contact quick access */}
+        {/* Contact quick access — render all when searching so CMDK can filter them */}
         {contacts.length > 0 && (
           <CommandGroup heading="Contacts">
-            {contacts.slice(0, CONTACT_LIMIT).map((contact) => (
+            {(searchQuery.length >= 1
+              ? contacts
+              : contacts.slice(0, CONTACT_LIMIT)
+            ).map((contact) => (
               <CommandItem
                 key={contact.id}
                 value={`contact:${contact.id} ${contactHaystack(contact)}`}
