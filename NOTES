@@ -1,0 +1,80 @@
+# Voice-to-Text Interaction Capture - Implementation Notes
+
+## Completed Tasks
+
+### 1. Whisper Service (Docker)
+- Created `whisper-service/` directory with:
+  - `Dockerfile` - Python-based container with faster-whisper
+  - `requirements.txt` - Dependencies (fastapi, uvicorn, faster-whisper)
+  - `app.py` - FastAPI service that loads `base.en` model and exposes `/transcribe` endpoint
+- Added `whisper` service to `compose.yml` and `compose.worktree.yml`
+
+### 2. Backend Transcribe Endpoint
+- Created `backend/app/api/routes/transcribe.py` with:
+  - `POST /transcribe/` endpoint that accepts audio file uploads
+  - Proxies requests to Whisper service via internal Docker networking
+  - Returns transcribed text, detected language, and duration
+- Registered route in `backend/app/api/main.py`
+
+### 3. Frontend Voice Recorder Components
+- Created `frontend/src/components/VoiceRecorder/VoiceRecordButton.tsx`:
+  - Hold-to-record button using MediaRecorder API
+  - Visual feedback (pulsing red while recording, spinner while processing)
+  - Supports mouse and touch events for mobile compatibility
+  - Sends audio to backend `/api/v1/transcribe/` endpoint
+
+- Created `frontend/src/components/VoiceRecorder/VoiceReviewModal.tsx`:
+  - Modal for reviewing/editing transcribed text before saving
+  - Pre-populates form with transcribed text
+  - Allows selecting attendees, channel, date/time, mood, duration
+  - Creates Interaction on confirmation
+
+### 4. Integration
+- Added `VoiceRecordButton` to main layout (`frontend/src/routes/_layout.tsx`)
+- Added `Mic` and `MicOff` icons to `frontend/src/lib/icons.ts`
+- Regenerated API client to include new transcribe endpoint
+
+## Remaining Tasks
+
+### High Priority
+- [ ] **Test the full flow** - Need to start the whisper service and test end-to-end
+- [ ] **Test microphone permissions** - Verify getUserMedia works on iOS Safari + Android Chrome through Traefik TLS
+- [ ] **Add waveform visualization** - Visual feedback during recording (currently just pulse animation)
+
+### Medium Priority
+- [ ] **Add keyboard shortcut** - Alt/Option+R to start recording as alternative to hold-to-record
+- [ ] **Improve error handling** - Better user feedback for transcription failures
+- [ ] **Add audio level indicator** - Show microphone activity level during recording
+
+### Low Priority
+- [ ] **Add transcription confidence indicator** - Show confidence score from Whisper
+- [ ] **Support multiple languages** - Allow user to specify language before recording
+- [ ] **Add voice command "delete"** - Cancel recording by voice command
+
+## Testing Notes
+
+### Backend
+- Backend type checks pass
+- Transcribe route loads successfully
+- Need to test with actual audio file upload
+
+### Frontend
+- TypeScript compilation passes (`bunx tsc --noEmit`)
+- Biome lint checks pass
+- Component renders in layout with FAB (fixed position bottom-right)
+
+### Infrastructure
+- Whisper service uses `base.en` model for speed (142MB download on first run)
+- Service exposed on port 8000 internally within Docker network
+- No external ports exposed (security)
+
+## Known Issues
+- The `whisper-service` needs to be built and started (`just up` should handle this)
+- First transcription will be slow as model downloads (~142MB for base.en)
+- No audio format validation on frontend (relies on browser MediaRecorder support)
+
+## Next Session
+1. Run `just up` to start all services including whisper
+2. Test recording in browser (need HTTPS for getUserMedia)
+3. Verify transcription works end-to-end
+4. Test on mobile devices (iOS Safari, Android Chrome)
