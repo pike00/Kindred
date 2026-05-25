@@ -1,4 +1,5 @@
 """Relationship graph endpoints."""
+
 import uuid
 from typing import Any
 

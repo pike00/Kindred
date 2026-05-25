@@ -1,4 +1,5 @@
 """Reminder management routes."""
+
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any
@@ -235,7 +236,9 @@ def dismiss_reminder(
     return ReminderPublic.model_validate(reminder)
 
 
-@router.get("/{reminder_id}/snooze-history", response_model=list[ReminderSnoozeHistoryEntry])
+@router.get(
+    "/{reminder_id}/snooze-history", response_model=list[ReminderSnoozeHistoryEntry]
+)
 def get_snooze_history(
     session: SessionDep,
     current_user: CurrentUser,
@@ -286,7 +289,9 @@ def get_snooze_stats(
         .group_by(ReminderSnooze.reminder_id)
     )
     results = session.exec(stmt).all()
-    return [ReminderSnoozeStat(reminder_id=str(r[0]), snooze_count=r[1]) for r in results]
+    return [
+        ReminderSnoozeStat(reminder_id=str(r[0]), snooze_count=r[1]) for r in results
+    ]
 
 
 @router.get("/chronic-snoozers", response_model=list[ChronicSnoozer])

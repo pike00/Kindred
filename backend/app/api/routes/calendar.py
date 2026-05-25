@@ -97,6 +97,7 @@ def get_calendar_month(
 
 # ─── Calendar Token Management ─────────────────────────────────────────────
 
+
 @router.post("/token", response_model=CalendarTokenPublic)
 def create_calendar_token(
     session: SessionDep,

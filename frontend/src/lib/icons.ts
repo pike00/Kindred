@@ -41,9 +41,7 @@ export {
   EyeOff,
   FileSpreadsheet,
   Film,
-  Focus,
   Gift,
-  GripVertical,
   HeartHandshake,
   // Sidebar nav
   Home,

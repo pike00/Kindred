@@ -1,15 +1,21 @@
 import enum
 import uuid
-from decimal import Decimal
-
 from datetime import date, datetime, timezone
 
 import sqlalchemy as sa
 from pydantic import EmailStr
 from sqlalchemy import JSON, DateTime
 from sqlmodel import Field, Relationship, SQLModel
-from sqlmodel import Relationship as SQLMRelationship  # alias; avoids shadowing by the Relationship table model below
-from app.models_vcard_conflict import VCardConflict, VCardConflictBase, VCardConflictPublic, VCardConflictsPublic  # noqa: F401
+from sqlmodel import (
+    Relationship as SQLMRelationship,  # alias; avoids shadowing by the Relationship table model below
+)
+
+from app.models_vcard_conflict import (  # noqa: F401
+    VCardConflict,
+    VCardConflictBase,
+    VCardConflictPublic,
+    VCardConflictsPublic,
+)
 
 
 def get_datetime_utc() -> datetime:
@@ -1025,8 +1031,6 @@ class ContactsPublic(SQLModel):
     count: int
 
 
-
-
 class OverdueContactPublic(ContactPublic):
     days_overdue: int | None = None
 
@@ -1799,6 +1803,7 @@ class Reminder(SoftDeleteMixin, ReminderBase, table=True):
         description="When the reminder was created (UTC).",
     )
 
+
 class ReminderPublic(ReminderBase):
     id: uuid.UUID
     contact_id: uuid.UUID | None
@@ -1810,6 +1815,7 @@ class ReminderPublic(ReminderBase):
 
 class ReminderWithContactPublic(ReminderPublic):
     """Reminder with optional contact name for list views."""
+
     contact_name: str | None = None
 
 
@@ -1820,6 +1826,7 @@ class RemindersPublic(SQLModel):
 
 class RemindersWithContactPublic(SQLModel):
     """Response wrapper for reminders that include contact name."""
+
     data: list[ReminderWithContactPublic]
     count: int
 
@@ -2013,7 +2020,6 @@ class GiftPublic(GiftBase):
     id: uuid.UUID
     contact_id: uuid.UUID
     created_at: datetime
-    deleted_at: datetime | None = None
     days_until_occasion: int | None = None
     contact_birthday: date | None = None
     contact_first_name: str | None = None
@@ -2867,6 +2873,8 @@ class ContactMergesPublic(SQLModel):
 
     data: list[ContactMergePublic]
     count: int
+
+
 # ─── Calendar ─────────────────────────────────────────────────────────────────
 
 

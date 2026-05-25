@@ -176,7 +176,7 @@ def _classify_event(summary: str, description: str | None, attendee_count: int) 
     }
 
 
-def _infer_channel(summary: str, full_text: str) -> str | None:
+def _infer_channel(summary: str, full_text: str) -> str | None:  # noqa: ARG001
     """Infer interaction channel from event text."""
     if any(kw in full_text for kw in ["call", "phone", "audio"]):
         return "call"

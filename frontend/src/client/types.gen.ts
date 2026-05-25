@@ -1029,7 +1029,6 @@ export type GiftPublic = {
     id: string;
     contact_id: string;
     created_at: string;
-    deleted_at?: (string | null);
     days_until_occasion?: (number | null);
     contact_birthday?: (string | null);
     contact_first_name?: (string | null);

@@ -36,8 +36,7 @@ def test_contact_heatmap_missing_contact_404(
 ) -> None:
     """An unknown contact id returns 404, not a 500."""
     r = client.get(
-        f"{settings.API_V1_STR}/contacts/"
-        "00000000-0000-0000-0000-000000000000/heatmap",
+        f"{settings.API_V1_STR}/contacts/00000000-0000-0000-0000-000000000000/heatmap",
         headers=superuser_token_headers,
     )
     assert r.status_code == 404

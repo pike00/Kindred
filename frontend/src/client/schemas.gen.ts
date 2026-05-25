@@ -3699,18 +3699,6 @@ export const GiftPublicSchema = {
             format: 'date-time',
             title: 'Created At'
         },
-        deleted_at: {
-            anyOf: [
-                {
-                    type: 'string',
-                    format: 'date-time'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Deleted At'
-        },
         days_until_occasion: {
             anyOf: [
                 {
