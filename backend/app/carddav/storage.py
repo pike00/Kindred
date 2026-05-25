@@ -17,7 +17,8 @@ from radicale.storage import BaseCollection, BaseStorage
 from sqlmodel import Session, create_engine, select
 
 from app.core.config import settings
-from app.models import Contact, User
+from app.models import Contact, User, VCardConflict
+from app.vcard import compute_vcard_hash, normalize_vcard_for_hash
 
 
 def _http_datetime(dt: datetime) -> str:
@@ -137,24 +138,42 @@ class Collection(BaseCollection):
                     )
                 # Update fields from parsed vCard
                 contact_data = parsed["contact"]
+
+                # vCard hash verification for conflict detection
+                incoming_hash = compute_vcard_hash(vcard_text)
+                if existing.vcard_sha256 and existing.vcard_sha256 != incoming_hash:
+                    # Hash mismatch - potential conflict
+                    # Check if it's just whitespace/formatting drift
+                    if existing.vcard_raw:
+                        local_normalized = normalize_vcard_for_hash(existing.vcard_raw)
+                        incoming_normalized = normalize_vcard_for_hash(vcard_text)
+                        if local_normalized != incoming_normalized:
+                            # Real conflict - store for user review
+                            conflict = VCardConflict(
+                                contact_id=existing.id,
+                                incoming_vcard_raw=vcard_text,
+                                incoming_hash=incoming_hash,
+                                local_hash=existing.vcard_sha256,
+                                local_vcard_raw=existing.vcard_raw,
+                            )
+                            session.add(conflict)
+
                 for key, value in contact_data.items():
                     if hasattr(existing, key):
                         setattr(existing, key, value)
                 existing.vcard_raw = vcard_text
                 existing.vcard_etag = item.etag
-                session.add(existing)
+                existing.vcard_sha256 = incoming_hash
             else:
                 # Create new contact
                 contact_data = parsed["contact"]
-                new_contact = Contact(
+                Contact(
                     owner_id=user.id,
                     vcard_raw=vcard_text,
                     vcard_etag=item.etag,
+                    vcard_sha256=compute_vcard_hash(vcard_text),
                     **contact_data,
                 )
-                if parsed.get("uid"):
-                    new_contact.id = parsed["uid"]
-                session.add(new_contact)
 
             session.commit()
 

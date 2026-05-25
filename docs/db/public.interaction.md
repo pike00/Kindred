@@ -16,6 +16,18 @@ Logged touchpoint with one or more contacts (call, meeting, text, etc.). Attende
 | mood | varchar(50) |  | true |  |  | Emoji or keyword capturing the tone. |
 | duration_minutes | integer |  | true |  |  | Length of the interaction in minutes. |
 | created_at | timestamp with time zone |  | false |  |  | When the row was inserted (may be after occurred_at; UTC). |
+| deleted_at | timestamp without time zone |  | true |  |  |  |
+| search_vector | tsvector |  | true |  |  |  |
+| is_draft | boolean |  | false |  |  |  |
+| draft_source | varchar(32) |  | true |  |  |  |
+| location_label | varchar(500) |  | true |  |  |  |
+| latitude | double precision |  | true |  |  |  |
+| longitude | double precision |  | true |  |  |  |
+| message_id | varchar(998) |  | true |  |  |  |
+| email_subject | varchar(998) |  | true |  |  |  |
+| email_from | varchar(2048) |  | true |  |  |  |
+| email_to | varchar(2048) |  | true |  |  |  |
+| email_date | timestamp without time zone |  | true |  |  |  |
 
 ## Constraints
 
@@ -24,6 +36,7 @@ Logged touchpoint with one or more contacts (call, meeting, text, etc.). Attende
 | interaction_channel_not_null | n | NOT NULL channel |
 | interaction_created_at_not_null | n | NOT NULL created_at |
 | interaction_id_not_null | n | NOT NULL id |
+| interaction_is_draft_not_null | n | NOT NULL is_draft |
 | interaction_occurred_at_not_null | n | NOT NULL occurred_at |
 | interaction_owner_id_not_null | n | NOT NULL owner_id |
 | interaction_owner_id_fkey | FOREIGN KEY | FOREIGN KEY (owner_id) REFERENCES "user"(id) ON DELETE CASCADE |
@@ -37,6 +50,14 @@ Logged touchpoint with one or more contacts (call, meeting, text, etc.). Attende
 | ix_interaction_owner_id | CREATE INDEX ix_interaction_owner_id ON public.interaction USING btree (owner_id) |
 | ix_interaction_occurred_at | CREATE INDEX ix_interaction_occurred_at ON public.interaction USING btree (occurred_at) |
 | ix_interaction_channel | CREATE INDEX ix_interaction_channel ON public.interaction USING btree (channel) |
+| ix_interaction_deleted_at | CREATE INDEX ix_interaction_deleted_at ON public.interaction USING btree (deleted_at) |
+| ix_interaction_search_vector | CREATE INDEX ix_interaction_search_vector ON public.interaction USING gin (search_vector) |
+
+## Triggers
+
+| Name | Definition |
+| ---- | ---------- |
+| tsvectorupdate_interaction | CREATE TRIGGER tsvectorupdate_interaction BEFORE INSERT OR UPDATE ON public.interaction FOR EACH ROW EXECUTE FUNCTION update_interaction_search_vector() |
 
 ## Relations
 
@@ -55,6 +76,18 @@ erDiagram
   varchar_50_ mood
   integer duration_minutes
   timestamp_with_time_zone created_at
+  timestamp_without_time_zone deleted_at
+  tsvector search_vector
+  boolean is_draft
+  varchar_32_ draft_source
+  varchar_500_ location_label
+  double_precision latitude
+  double_precision longitude
+  varchar_998_ message_id
+  varchar_998_ email_subject
+  varchar_2048_ email_from
+  varchar_2048_ email_to
+  timestamp_without_time_zone email_date
 }
 "public.interaction_attendee" {
   uuid interaction_id FK
