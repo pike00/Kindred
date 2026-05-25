@@ -1,15 +1,11 @@
 """Tests for Twilio SMS/Call webhook endpoint."""
 
-from unittest.mock import MagicMock, patch
+from datetime import datetime, timezone
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session, select
-
-
-@pytest.fixture
-def api_key_headers(superuser_token_headers: dict[str, str]) -> dict[str, str]:
-    return superuser_token_headers
 
 
 @pytest.fixture
@@ -54,7 +50,7 @@ class TestTwilioWebhook:
     """Test Twilio webhook endpoint."""
 
     def test_sms_webhook_creates_interaction(
-        self, client: TestClient, db: Session, api_key_headers
+        self, client: TestClient, session: Session, api_key_headers
     ):
         """Test that SMS webhook creates an Interaction with TEXT channel."""
         # First, create a webhook endpoint
@@ -73,14 +69,13 @@ class TestTwilioWebhook:
         api_key = webhook_data["api_key"]
 
         # Create a contact with the phone number
-        from app.models import Contact, ContactField, ContactFieldType, WebhookEndpoint
+        from app.models import Contact, ContactField, ContactFieldType
 
-        webhook_obj = db.get(WebhookEndpoint, webhook_data["id"])
-        user_id = webhook_obj.owner_id
-        contact = Contact(first_name="John", last_name="Doe", owner_id=user_id)
-        db.add(contact)
-        db.commit()
-        db.refresh(contact)
+        contact = Contact(first_name="John", last_name="Doe", owner_id=webhook_data["id"])  # type: ignore
+        # Actually use the current user's ID
+        session.add(contact)
+        session.commit()
+        session.refresh(contact)
 
         phone_field = ContactField(
             contact_id=contact.id,
@@ -89,8 +84,8 @@ class TestTwilioWebhook:
             value="+14155552671",
             is_primary=True,
         )
-        db.add(phone_field)
-        db.commit()
+        session.add(phone_field)
+        session.commit()
 
         # Now send SMS webhook
         sms_data = {
@@ -119,7 +114,7 @@ class TestTwilioWebhook:
         assert data["channel"] == "text"
 
     def test_call_webhook_creates_interaction(
-        self, client: TestClient, db: Session, api_key_headers
+        self, client: TestClient, session: Session, api_key_headers
     ):
         """Test that Call webhook creates an Interaction with CALL channel."""
         # Create webhook endpoint
@@ -138,14 +133,12 @@ class TestTwilioWebhook:
         api_key = webhook_data["api_key"]
 
         # Create a contact with the phone number
-        from app.models import Contact, ContactField, ContactFieldType, WebhookEndpoint
+        from app.models import Contact, ContactField, ContactFieldType
 
-        webhook_obj = db.get(WebhookEndpoint, webhook_data["id"])
-        user_id = webhook_obj.owner_id
-        contact = Contact(first_name="Jane", last_name="Doe", owner_id=user_id)
-        db.add(contact)
-        db.commit()
-        db.refresh(contact)
+        contact = Contact(first_name="Jane", last_name="Doe")
+        session.add(contact)
+        session.commit()
+        session.refresh(contact)
 
         phone_field = ContactField(
             contact_id=contact.id,
@@ -154,8 +147,8 @@ class TestTwilioWebhook:
             value="+14155552671",
             is_primary=True,
         )
-        db.add(phone_field)
-        db.commit()
+        session.add(phone_field)
+        session.commit()
 
         # Send Call webhook
         call_data = {
@@ -183,7 +176,7 @@ class TestTwilioWebhook:
         assert data["channel"] == "call"
 
     def test_invalid_signature_rejected(
-        self, client: TestClient, db: Session, api_key_headers
+        self, client: TestClient, session: Session, api_key_headers
     ):
         """Test that invalid Twilio signature is rejected."""
         # Create webhook endpoint
@@ -218,7 +211,7 @@ class TestTwilioWebhook:
         assert "Invalid Twilio signature" in response.json()["detail"]
 
     def test_unknown_number_creates_placeholder_contact(
-        self, client: TestClient, db: Session, api_key_headers
+        self, client: TestClient, session: Session, api_key_headers
     ):
         """Test that unknown phone number creates a placeholder contact."""
         # Create webhook endpoint
@@ -239,7 +232,7 @@ class TestTwilioWebhook:
         # Send SMS from unknown number
         sms_data = {
             "MessageSid": "SM1234567890",
-            "From": "+12025550123",  # Unknown number (valid NANP format)
+            "From": "+19999999999",  # Unknown number
             "To": "+18005551234",
             "Body": "Hello from unknown",
         }
@@ -263,11 +256,11 @@ class TestTwilioWebhook:
         # Verify a contact was created
         from app.models import Contact
 
-        contacts = db.exec(select(Contact)).all()
+        contacts = session.exec(select(Contact)).all()
         assert len(contacts) > 0
 
     def test_phone_normalization(
-        self, client: TestClient, db: Session, api_key_headers
+        self, client: TestClient, session: Session, api_key_headers
     ):
         """Test that phone numbers are normalized to E.164 format."""
         from app.api.routes.webhooks import _normalize_phone
@@ -279,7 +272,9 @@ class TestTwilioWebhook:
         assert _normalize_phone("+14155552671") == "+14155552671"
         assert _normalize_phone("invalid") is None
 
-    def test_rate_limiting(self, client: TestClient, db: Session, api_key_headers):
+    def test_rate_limiting(
+        self, client: TestClient, session: Session, api_key_headers
+    ):
         """Test that rate limiting works for webhook endpoint."""
         # Create webhook endpoint
         webhook_data = {
@@ -301,12 +296,7 @@ class TestTwilioWebhook:
             mock_redis = MagicMock()
             mock_redis_class.from_url.return_value = mock_redis
             # Simulate rate limit exceeded (count >= limit)
-            mock_redis.pipeline.return_value.execute.return_value = [
-                None,
-                10,
-                None,
-                None,
-            ]
+            mock_redis.pipeline.return_value.execute.return_value = [None, 10, None, None]
 
             sms_data = {
                 "MessageSid": "SM1234567890",
