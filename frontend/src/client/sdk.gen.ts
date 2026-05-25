@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { ActivityLogsListActivityLogsData, ActivityLogsListActivityLogsResponse, AddressesListAddressesData, AddressesListAddressesResponse, AddressesCreateAddressRouteData, AddressesCreateAddressRouteResponse, AddressesUpdateAddressData, AddressesUpdateAddressResponse, AddressesDeleteAddressData, AddressesDeleteAddressResponse, ApiKeysListMyApiKeysResponse, ApiKeysCreateMyApiKeyData, ApiKeysCreateMyApiKeyResponse, ApiKeysRevokeMyApiKeyData, ApiKeysRevokeMyApiKeyResponse, CalendarGetCalendarMonthData, CalendarGetCalendarMonthResponse, CarddavWellKnownCarddavResponse, ContactFieldsListContactFieldsData, ContactFieldsListContactFieldsResponse, ContactFieldsCreateContactFieldRouteData, ContactFieldsCreateContactFieldRouteResponse, ContactFieldsUpdateContactFieldData, ContactFieldsUpdateContactFieldResponse, ContactFieldsDeleteContactFieldData, ContactFieldsDeleteContactFieldResponse, ContactsListContactsData, ContactsListContactsResponse, ContactsCreateContactData, ContactsCreateContactResponse, ContactsListLosingTouchData, ContactsListLosingTouchResponse, ContactsListOverdueContactsData, ContactsListOverdueContactsResponse, ContactsSkipContactData, ContactsSkipContactResponse, ContactsGetContactData, ContactsGetContactResponse, ContactsUpdateContactData, ContactsUpdateContactResponse, ContactsDeleteContactData, ContactsDeleteContactResponse, ContactsRestoreContactData, ContactsRestoreContactResponse, ContactsGetDistinctStagesResponse, ContactsGetKanbanBoardData, ContactsGetKanbanBoardResponse, ContactsGetContactStageEventsData, ContactsGetContactStageEventsResponse, CustomFieldsListFieldDefinitionsResponse, CustomFieldsCreateFieldDefinitionData, CustomFieldsCreateFieldDefinitionResponse, CustomFieldsUpdateFieldDefinitionData, CustomFieldsUpdateFieldDefinitionResponse, CustomFieldsDeleteFieldDefinitionData, CustomFieldsDeleteFieldDefinitionResponse, CustomFieldsListFieldValuesData, CustomFieldsListFieldValuesResponse, CustomFieldsCreateFieldValueData, CustomFieldsCreateFieldValueResponse, CustomFieldsUpdateFieldValueData, CustomFieldsUpdateFieldValueResponse, CustomFieldsDeleteFieldValueData, CustomFieldsDeleteFieldValueResponse, DebtsListDebtsData, DebtsListDebtsResponse, DebtsCreateDebtRouteData, DebtsCreateDebtRouteResponse, DebtsUpdateDebtData, DebtsUpdateDebtResponse, DebtsDeleteDebtData, DebtsDeleteDebtResponse, GiftsListGiftsData, GiftsListGiftsResponse, GiftsCreateGiftRouteData, GiftsCreateGiftRouteResponse, GiftsUpdateGiftData, GiftsUpdateGiftResponse, GiftsDeleteGiftData, GiftsDeleteGiftResponse, GiftsGetKanbanBoardResponse, GiftsChangeGiftStatusData, GiftsChangeGiftStatusResponse, GroupsListGroupsData, GroupsListGroupsResponse, GroupsCreateGroupRouteData, GroupsCreateGroupRouteResponse, GroupsUpdateGroupData, GroupsUpdateGroupResponse, GroupsDeleteGroupData, GroupsDeleteGroupResponse, ImportExportImportVcardData, ImportExportImportVcardResponse, ImportExportExportVcardResponse, ImportExportExportJsonResponse, InteractionsListInteractionsData, InteractionsListInteractionsResponse, InteractionsCreateInteractionRouteData, InteractionsCreateInteractionRouteResponse, InteractionsUpdateInteractionData, InteractionsUpdateInteractionResponse, InteractionsDeleteInteractionData, InteractionsDeleteInteractionResponse, JournalListJournalEntriesData, JournalListJournalEntriesResponse, JournalCreateJournalEntryRouteData, JournalCreateJournalEntryRouteResponse, JournalUpdateJournalEntryData, JournalUpdateJournalEntryResponse, JournalDeleteJournalEntryData, JournalDeleteJournalEntryResponse, LifeEventsListLifeEventsData, LifeEventsListLifeEventsResponse, LifeEventsCreateLifeEventRouteData, LifeEventsCreateLifeEventRouteResponse, LifeEventsUpdateLifeEventData, LifeEventsUpdateLifeEventResponse, LifeEventsDeleteLifeEventData, LifeEventsDeleteLifeEventResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, MediaRecommendationsListMediaRecommendationsData, MediaRecommendationsListMediaRecommendationsResponse, MediaRecommendationsCreateMediaRecommendationRouteData, MediaRecommendationsCreateMediaRecommendationRouteResponse, MediaRecommendationsUpdateMediaRecommendationData, MediaRecommendationsUpdateMediaRecommendationResponse, MediaRecommendationsDeleteMediaRecommendationData, MediaRecommendationsDeleteMediaRecommendationResponse, NotesListNotesData, NotesListNotesResponse, NotesCreateNoteRouteData, NotesCreateNoteRouteResponse, NotesUpdateNoteRouteData, NotesUpdateNoteRouteResponse, NotesDeleteNoteData, NotesDeleteNoteResponse, PetsListPetsData, PetsListPetsResponse, PetsCreatePetRouteData, PetsCreatePetRouteResponse, PetsUpdatePetData, PetsUpdatePetResponse, PetsDeletePetData, PetsDeletePetResponse, PrivateCreateUserData, PrivateCreateUserResponse, RelationshipsLookupInverseData, RelationshipsLookupInverseResponse, RelationshipsListRelationshipsData, RelationshipsListRelationshipsResponse, RelationshipsCreateRelationshipRouteData, RelationshipsCreateRelationshipRouteResponse, RelationshipsUpdateRelationshipData, RelationshipsUpdateRelationshipResponse, RelationshipsDeleteRelationshipData, RelationshipsDeleteRelationshipResponse, RemindersListRemindersData, RemindersListRemindersResponse, RemindersCreateReminderRouteData, RemindersCreateReminderRouteResponse, RemindersUpdateReminderData, RemindersUpdateReminderResponse, RemindersDeleteReminderData, RemindersDeleteReminderResponse, RemindersSnoozeReminderData, RemindersSnoozeReminderResponse, TagsListTagsData, TagsListTagsResponse, TagsCreateTagRouteData, TagsCreateTagRouteResponse, TagsUpdateTagData, TagsUpdateTagResponse, TagsDeleteTagData, TagsDeleteTagResponse, TagSharesCreateTagShareData, TagSharesCreateTagShareResponse, TagSharesListTagSharesData, TagSharesListTagSharesResponse, TagSharesDeleteTagShareData, TagSharesDeleteTagShareResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse, WebhooksListWebhooksResponse, WebhooksCreateWebhookData, WebhooksCreateWebhookResponse, WebhooksUpdateWebhookData, WebhooksUpdateWebhookResponse, WebhooksDeleteWebhookData, WebhooksDeleteWebhookResponse, WebhooksInboundWebhookData, WebhooksInboundWebhookResponse } from './types.gen';
+import type { ActivityLogsListActivityLogsData, ActivityLogsListActivityLogsResponse, AddressesListAddressesData, AddressesListAddressesResponse, AddressesCreateAddressRouteData, AddressesCreateAddressRouteResponse, AddressesUpdateAddressData, AddressesUpdateAddressResponse, AddressesDeleteAddressData, AddressesDeleteAddressResponse, CalendarGetCalendarMonthData, CalendarGetCalendarMonthResponse, CarddavWellKnownCarddavResponse, ContactFieldsListContactFieldsData, ContactFieldsListContactFieldsResponse, ContactFieldsCreateContactFieldRouteData, ContactFieldsCreateContactFieldRouteResponse, ContactFieldsUpdateContactFieldData, ContactFieldsUpdateContactFieldResponse, ContactFieldsDeleteContactFieldData, ContactFieldsDeleteContactFieldResponse, ContactsListContactsData, ContactsListContactsResponse, ContactsCreateContactData, ContactsCreateContactResponse, ContactsListLosingTouchData, ContactsListLosingTouchResponse, ContactsGetContactData, ContactsGetContactResponse, ContactsUpdateContactData, ContactsUpdateContactResponse, ContactsDeleteContactData, ContactsDeleteContactResponse, ContactsListContactMentionsData, ContactsListContactMentionsResponse, ContactsRestoreContactData, ContactsRestoreContactResponse, CustomFieldsListFieldDefinitionsResponse, CustomFieldsCreateFieldDefinitionData, CustomFieldsCreateFieldDefinitionResponse, CustomFieldsUpdateFieldDefinitionData, CustomFieldsUpdateFieldDefinitionResponse, CustomFieldsDeleteFieldDefinitionData, CustomFieldsDeleteFieldDefinitionResponse, CustomFieldsListFieldValuesData, CustomFieldsListFieldValuesResponse, CustomFieldsCreateFieldValueData, CustomFieldsCreateFieldValueResponse, CustomFieldsUpdateFieldValueData, CustomFieldsUpdateFieldValueResponse, CustomFieldsDeleteFieldValueData, CustomFieldsDeleteFieldValueResponse, DebtsListDebtsData, DebtsListDebtsResponse, DebtsCreateDebtRouteData, DebtsCreateDebtRouteResponse, DebtsUpdateDebtData, DebtsUpdateDebtResponse, DebtsDeleteDebtData, DebtsDeleteDebtResponse, GiftsListGiftsData, GiftsListGiftsResponse, GiftsCreateGiftRouteData, GiftsCreateGiftRouteResponse, GiftsUpdateGiftData, GiftsUpdateGiftResponse, GiftsDeleteGiftData, GiftsDeleteGiftResponse, GroupsListGroupsData, GroupsListGroupsResponse, GroupsCreateGroupRouteData, GroupsCreateGroupRouteResponse, GroupsUpdateGroupData, GroupsUpdateGroupResponse, GroupsDeleteGroupData, GroupsDeleteGroupResponse, ImportExportImportVcardData, ImportExportImportVcardResponse, ImportExportExportVcardResponse, ImportExportExportJsonResponse, ImportExportPreviewCsvImportData, ImportExportPreviewCsvImportResponse, ImportExportImportCsvData, ImportExportImportCsvResponse, ImportExportExportCsvData, ImportExportExportCsvResponse, InteractionsListInteractionsData, InteractionsListInteractionsResponse, InteractionsCreateInteractionRouteData, InteractionsCreateInteractionRouteResponse, InteractionsUpdateInteractionData, InteractionsUpdateInteractionResponse, InteractionsDeleteInteractionData, InteractionsDeleteInteractionResponse, JournalListJournalEntriesData, JournalListJournalEntriesResponse, JournalCreateJournalEntryRouteData, JournalCreateJournalEntryRouteResponse, JournalUpdateJournalEntryData, JournalUpdateJournalEntryResponse, JournalDeleteJournalEntryData, JournalDeleteJournalEntryResponse, LifeEventsListLifeEventsData, LifeEventsListLifeEventsResponse, LifeEventsCreateLifeEventRouteData, LifeEventsCreateLifeEventRouteResponse, LifeEventsUpdateLifeEventData, LifeEventsUpdateLifeEventResponse, LifeEventsDeleteLifeEventData, LifeEventsDeleteLifeEventResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, MediaRecommendationsListMediaRecommendationsData, MediaRecommendationsListMediaRecommendationsResponse, MediaRecommendationsCreateMediaRecommendationRouteData, MediaRecommendationsCreateMediaRecommendationRouteResponse, MediaRecommendationsUpdateMediaRecommendationData, MediaRecommendationsUpdateMediaRecommendationResponse, MediaRecommendationsDeleteMediaRecommendationData, MediaRecommendationsDeleteMediaRecommendationResponse, NotesListNotesData, NotesListNotesResponse, NotesCreateNoteRouteData, NotesCreateNoteRouteResponse, NotesUpdateNoteRouteData, NotesUpdateNoteRouteResponse, NotesDeleteNoteData, NotesDeleteNoteResponse, PetsListPetsData, PetsListPetsResponse, PetsCreatePetRouteData, PetsCreatePetRouteResponse, PetsUpdatePetData, PetsUpdatePetResponse, PetsDeletePetData, PetsDeletePetResponse, PrivateCreateUserData, PrivateCreateUserResponse, RelationshipsLookupInverseData, RelationshipsLookupInverseResponse, RelationshipsListRelationshipsData, RelationshipsListRelationshipsResponse, RelationshipsCreateRelationshipRouteData, RelationshipsCreateRelationshipRouteResponse, RelationshipsUpdateRelationshipData, RelationshipsUpdateRelationshipResponse, RelationshipsDeleteRelationshipData, RelationshipsDeleteRelationshipResponse, RemindersListRemindersData, RemindersListRemindersResponse, RemindersCreateReminderRouteData, RemindersCreateReminderRouteResponse, RemindersUpdateReminderData, RemindersUpdateReminderResponse, RemindersDeleteReminderData, RemindersDeleteReminderResponse, RemindersSnoozeReminderData, RemindersSnoozeReminderResponse, TagsListTagsData, TagsListTagsResponse, TagsCreateTagRouteData, TagsCreateTagRouteResponse, TagsUpdateTagData, TagsUpdateTagResponse, TagsDeleteTagData, TagsDeleteTagResponse, TagSharesCreateTagShareData, TagSharesCreateTagShareResponse, TagSharesListTagSharesData, TagSharesListTagSharesResponse, TagSharesDeleteTagShareData, TagSharesDeleteTagShareResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse, WebhooksListWebhooksResponse, WebhooksCreateWebhookData, WebhooksCreateWebhookResponse, WebhooksUpdateWebhookData, WebhooksUpdateWebhookResponse, WebhooksDeleteWebhookData, WebhooksDeleteWebhookResponse, WebhooksInboundWebhookData, WebhooksInboundWebhookResponse } from './types.gen';
 
 export class ActivityLogsService {
     /**
@@ -157,61 +157,6 @@ export class AddressesService {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/v1/addresses/geocode-missing'
-        });
-    }
-}
-
-export class ApiKeysService {
-    /**
-     * List My Api Keys
-     * @returns APIKeysPublic Successful Response
-     * @throws ApiError
-     */
-    public static listMyApiKeys(): CancelablePromise<ApiKeysListMyApiKeysResponse> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/users/me/api-keys/'
-        });
-    }
-    
-    /**
-     * Create My Api Key
-     * Create a new API key. Returns the plaintext token once — store it now.
-     * @param data The data for the request.
-     * @param data.requestBody
-     * @returns APIKeyCreated Successful Response
-     * @throws ApiError
-     */
-    public static createMyApiKey(data: ApiKeysCreateMyApiKeyData): CancelablePromise<ApiKeysCreateMyApiKeyResponse> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v1/users/me/api-keys/',
-            body: data.requestBody,
-            mediaType: 'application/json',
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
-    /**
-     * Revoke My Api Key
-     * Revoke a key. Idempotent: revoking an already-revoked key returns 200.
-     * @param data The data for the request.
-     * @param data.apiKeyId
-     * @returns Message Successful Response
-     * @throws ApiError
-     */
-    public static revokeMyApiKey(data: ApiKeysRevokeMyApiKeyData): CancelablePromise<ApiKeysRevokeMyApiKeyResponse> {
-        return __request(OpenAPI, {
-            method: 'DELETE',
-            url: '/api/v1/users/me/api-keys/{api_key_id}',
-            path: {
-                api_key_id: data.apiKeyId
-            },
-            errors: {
-                422: 'Validation Error'
-            }
         });
     }
 }
@@ -492,66 +437,6 @@ export class ContactFieldsService {
 
 export class ContactsService {
     /**
-     * Bulk Update Contacts
-     * Bulk-update contacts atomically.
-     *
-     * Provide either:
-     * - ``contact_ids`` for an explicit list, or
-     * - ``select_all_filtered=true`` with optional ``filters`` to target every
-     * contact matching the current filter/sort/search (server-side).
-     *
-     * All-or-nothing semantics: the entire operation runs in a transaction.
-     * @param data The data for the request.
-     * @param data.requestBody
-     * @returns BulkContactResult Successful Response
-     * @throws ApiError
-     */
-    public static bulkUpdateContacts(data: ContactsBulkUpdateContactsData): CancelablePromise<ContactsBulkUpdateContactsResponse> {
-        return __request(OpenAPI, {
-            method: 'PATCH',
-            url: '/api/v1/contacts/bulk',
-            body: data.requestBody,
-            mediaType: 'application/json',
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
-    /**
-     * Preview Bulk Contacts
-     * Preview contacts that would be affected by a bulk operation.
-     * @param data The data for the request.
-     * @param data.selectAllFiltered
-     * @param data.search
-     * @param data.tagId
-     * @param data.isFavorite
-     * @param data.isArchived
-     * @param data.stage
-     * @param data.limit
-     * @returns ContactsPublic Successful Response
-     * @throws ApiError
-     */
-    public static previewBulkContacts(data: ContactsPreviewBulkContactsData = {}): CancelablePromise<ContactsPreviewBulkContactsResponse> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/contacts/bulk/preview',
-            query: {
-                select_all_filtered: data.selectAllFiltered,
-                search: data.search,
-                tag_id: data.tagId,
-                is_favorite: data.isFavorite,
-                is_archived: data.isArchived,
-                stage: data.stage,
-                limit: data.limit
-            },
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
-    /**
      * List Contacts
      * List contacts with filtering.
      * @param data The data for the request.
@@ -629,55 +514,6 @@ export class ContactsService {
             url: '/api/v1/contacts/losing-touch',
             query: {
                 limit: data.limit
-            },
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
-    /**
-     * List Overdue Contacts
-     * Return contacts sorted by days_overdue descending.
-     *
-     * Days overdue = (now - last_contacted_at).days - contact_frequency_days.
-     * Contacts with no frequency set or no interactions are excluded.
-     * @param data The data for the request.
-     * @param data.limit
-     * @param data.offset
-     * @returns OverdueContactsPublic Successful Response
-     * @throws ApiError
-     */
-    public static listOverdueContacts(data: ContactsListOverdueContactsData = {}): CancelablePromise<ContactsListOverdueContactsResponse> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/contacts/overdue',
-            query: {
-                limit: data.limit,
-                offset: data.offset
-            },
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
-    /**
-     * Skip Contact
-     * Skip a contact for 7 days by creating a SKIP interaction.
-     *
-     * This advances the next due date without recording a user-facing interaction.
-     * @param data The data for the request.
-     * @param data.contactId
-     * @returns ContactPublic Successful Response
-     * @throws ApiError
-     */
-    public static skipContact(data: ContactsSkipContactData): CancelablePromise<ContactsSkipContactResponse> {
-        return __request(OpenAPI, {
-            method: 'PATCH',
-            url: '/api/v1/contacts/{contact_id}/skip',
-            path: {
-                contact_id: data.contactId
             },
             errors: {
                 422: 'Validation Error'
@@ -784,65 +620,6 @@ export class ContactsService {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/v1/contacts/{contact_id}/restore',
-            path: {
-                contact_id: data.contactId
-            },
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
-    /**
-     * Get Distinct Stages
-     * Return distinct stage values used by the current user's contacts.
-     * @returns string Successful Response
-     * @throws ApiError
-     */
-    public static getDistinctStages(): CancelablePromise<ContactsGetDistinctStagesResponse> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/contacts/stages/distinct'
-        });
-    }
-    
-    /**
-     * Get Kanban Board
-     * Return contacts grouped by stage for kanban board.
-     * @param data The data for the request.
-     * @param data.search
-     * @param data.tagId
-     * @param data.groupId
-     * @returns ContactsPublic Successful Response
-     * @throws ApiError
-     */
-    public static getKanbanBoard(data: ContactsGetKanbanBoardData = {}): CancelablePromise<ContactsGetKanbanBoardResponse> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/contacts/kanban',
-            query: {
-                search: data.search,
-                tag_id: data.tagId,
-                group_id: data.groupId
-            },
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
-    /**
-     * Get Contact Stage Events
-     * Get stage change history for a contact.
-     * @param data The data for the request.
-     * @param data.contactId
-     * @returns ContactStageEventsPublic Successful Response
-     * @throws ApiError
-     */
-    public static getContactStageEvents(data: ContactsGetContactStageEventsData): CancelablePromise<ContactsGetContactStageEventsResponse> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/contacts/{contact_id}/stage-events',
             path: {
                 contact_id: data.contactId
             },
@@ -1327,7 +1104,7 @@ export class EmailService {
 export class GiftsService {
     /**
      * List Gifts
-     * List gifts for a contact with days_until_occasion.
+     * List gifts for a contact.
      * @param data The data for the request.
      * @param data.contactId
      * @returns GiftsPublic Successful Response
@@ -1404,65 +1181,6 @@ export class GiftsService {
             url: '/api/v1/gifts/{gift_id}',
             path: {
                 gift_id: data.giftId
-            },
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
-    /**
-     * Restore Gift
-     * Restore a soft-deleted gift by clearing deleted_at.
-     * @param data The data for the request.
-     * @param data.giftId
-     * @returns unknown Successful Response
-     * @throws ApiError
-     */
-    public static restoreGift(data: GiftsRestoreGiftData): CancelablePromise<GiftsRestoreGiftResponse> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v1/gifts/{gift_id}/restore',
-            path: {
-                gift_id: data.giftId
-            },
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
-    /**
-     * Get Kanban Board
-     * Get gifts grouped by status for Kanban board view.
-     * @returns GiftKanbanColumn Successful Response
-     * @throws ApiError
-     */
-    public static getKanbanBoard(): CancelablePromise<GiftsGetKanbanBoardResponse> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/gifts/kanban'
-        });
-    }
-    
-    /**
-     * Change Gift Status
-     * Change gift status (for drag-and-drop).
-     * @param data The data for the request.
-     * @param data.giftId
-     * @param data.newStatus
-     * @returns GiftPublic Successful Response
-     * @throws ApiError
-     */
-    public static changeGiftStatus(data: GiftsChangeGiftStatusData): CancelablePromise<GiftsChangeGiftStatusResponse> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v1/gifts/{gift_id}/change-status',
-            path: {
-                gift_id: data.giftId
-            },
-            query: {
-                new_status: data.newStatus
             },
             errors: {
                 422: 'Validation Error'
@@ -1631,17 +1349,74 @@ export class ImportExportService {
     }
     
     /**
-     * Export Csv
-     * Export contacts as CSV file.
+     * Preview Csv Import
+     * Preview CSV import: detect columns and show sample rows.
+     *
+     * Returns the detected column mapping and first few rows for user confirmation.
      * @param data The data for the request.
-     * @param data.selectAllFiltered
-     * @param data.search
-     * @param data.tagId
-     * @param data.groupId
-     * @param data.isFavorite
-     * @param data.isArchived
-     * @param data.stage
-     * @param data.limit
+     * @param data.formData
+     * @returns CSVPreviewResponse Successful Response
+     * @throws ApiError
+     */
+    public static previewCsvImport(data: ImportExportPreviewCsvImportData): CancelablePromise<ImportExportPreviewCsvImportResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/import-export/import/csv/preview',
+            formData: data.formData,
+            mediaType: 'multipart/form-data',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Import Csv
+     * Import contacts from a CSV file.
+     *
+     * - **column_mapping**: Optional override for auto-detected column mapping.
+     * - **skip_duplicates**: Skip contacts with matching email (default: True).
+     * - **merge_duplicates**: Update existing contacts with matching email (default: False).
+     * - **create_missing_tags**: Auto-create tags that don't exist (default: True).
+     * - **create_missing_groups**: Auto-create groups that don't exist (default: True).
+     * @param data The data for the request.
+     * @param data.formData
+     * @param data.skipDuplicates
+     * @param data.mergeDuplicates
+     * @param data.createMissingTags
+     * @param data.createMissingGroups
+     * @returns CSVImportResponse Successful Response
+     * @throws ApiError
+     */
+    public static importCsv(data: ImportExportImportCsvData): CancelablePromise<ImportExportImportCsvResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/import-export/import/csv',
+            query: {
+                skip_duplicates: data.skipDuplicates,
+                merge_duplicates: data.mergeDuplicates,
+                create_missing_tags: data.createMissingTags,
+                create_missing_groups: data.createMissingGroups
+            },
+            formData: data.formData,
+            mediaType: 'multipart/form-data',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Export Csv
+     * Export all contacts as a CSV file with UTF-8 BOM for Excel compatibility.
+     *
+     * - **include_tags**: Include tag names column (default: True).
+     * - **include_groups**: Include group names column (default: True).
+     * - **include_fields**: Include emails and phones columns (default: True).
+     * @param data The data for the request.
+     * @param data.includeTags
+     * @param data.includeGroups
+     * @param data.includeFields
      * @returns unknown Successful Response
      * @throws ApiError
      */
@@ -1650,14 +1425,9 @@ export class ImportExportService {
             method: 'GET',
             url: '/api/v1/import-export/export/csv',
             query: {
-                select_all_filtered: data.selectAllFiltered,
-                search: data.search,
-                tag_id: data.tagId,
-                group_id: data.groupId,
-                is_favorite: data.isFavorite,
-                is_archived: data.isArchived,
-                stage: data.stage,
-                limit: data.limit
+                include_tags: data.includeTags,
+                include_groups: data.includeGroups,
+                include_fields: data.includeFields
             },
             errors: {
                 422: 'Validation Error'

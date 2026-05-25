@@ -1,21 +1,33 @@
 """Import and export routes for vCard and CSV files."""
 
-import uuid
+import logging
 from typing import Any
 
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 from fastapi.responses import Response
-from sqlalchemy.orm import selectinload
-from sqlmodel import col, select
+from sqlmodel import SQLModel, select
 
 from app.api.deps import CurrentUser, SessionDep
-from app.crud import upsert_contact
+from app.csv_utils import (
+    build_contact_from_row,
+    detect_column_mapping,
+    export_contacts_to_csv,
+    get_existing_contacts_by_email,
+    get_existing_groups,
+    get_existing_tags,
+    normalize_email,
+    parse_csv_content,
+)
 from app.models import (
     Address,
     Contact,
     ContactCreate,
     ContactField,
-    ContactSource,
+    ContactFieldType,
+    ContactGroup,
+    ContactTag,
+    Group,
+    Tag,
 )
 from app.vcard import contact_to_vcard, vcard_to_contact_data
 
@@ -342,7 +354,7 @@ class CSVPreviewResponse(SQLModel):
 async def preview_csv_import(
     *,
     file: UploadFile = File(...),
-) -> CSVPreviewResponse:
+) -> Any:
     """Preview CSV import: detect columns and show sample rows.
 
     Returns the detected column mapping and first few rows for user confirmation.
@@ -375,6 +387,7 @@ class CSVImportRequest(SQLModel):
     skip_duplicates: bool = True
     merge_duplicates: bool = False
     create_missing_tags: bool = True
+    create_missing_groups: bool = True
 
 
 class CSVImportResponse(SQLModel):
@@ -385,6 +398,7 @@ class CSVImportResponse(SQLModel):
     updated: int
     errors: list[str]
     tag_names_created: list[str] = []
+    group_names_created: list[str] = []
 
 
 @router.post("/import/csv", response_model=CSVImportResponse)
@@ -397,13 +411,15 @@ async def import_csv(
     skip_duplicates: bool = Query(True),
     merge_duplicates: bool = Query(False),
     create_missing_tags: bool = Query(True),
-) -> CSVImportResponse:
+    create_missing_groups: bool = Query(True),
+) -> Any:
     """Import contacts from a CSV file.
 
     - **column_mapping**: Optional override for auto-detected column mapping.
     - **skip_duplicates**: Skip contacts with matching email (default: True).
     - **merge_duplicates**: Update existing contacts with matching email (default: False).
     - **create_missing_tags**: Auto-create tags that don't exist (default: True).
+    - **create_missing_groups**: Auto-create groups that don't exist (default: True).
     """
     content = await file.read()
     headers, rows, _ = parse_csv_content(content)
@@ -435,6 +451,7 @@ async def import_csv(
             "postal_code",
             "country",
             "tag_names",
+            "group_names",
             "notes",
         ]
         for _h, field in column_mapping.items():
@@ -449,12 +466,14 @@ async def import_csv(
     # Get existing data for dedupe
     existing_contacts = get_existing_contacts_by_email(session, str(current_user.id))
     existing_tags = get_existing_tags(session, str(current_user.id))
+    existing_groups = get_existing_groups(session, str(current_user.id))
 
     imported = 0
     skipped = 0
     updated = 0
     errors: list[str] = []
     tags_created: list[str] = []
+    groups_created: list[str] = []
 
     for row_idx, row in enumerate(rows, start=2):  # Row 1 is header
         try:
@@ -463,6 +482,7 @@ async def import_csv(
             contact_data = parsed["contact_data"]
             fields = parsed["fields"]
             tag_names = parsed["tag_names"]
+            group_names = parsed["group_names"]
             addresses = parsed["addresses"]
 
             # Check for duplicates by email
@@ -559,6 +579,34 @@ async def import_csv(
                 if not existing_link:
                     session.add(ContactTag(contact_id=contact.id, tag_id=tag.id))
 
+            # Handle groups
+            for group_name in group_names:
+                group_name_lower = group_name.lower()
+                if group_name_lower in existing_groups:
+                    group = existing_groups[group_name_lower]
+                elif create_missing_groups:
+                    group = Group(
+                        name=group_name,
+                        owner_id=current_user.id,
+                    )
+                    session.add(group)
+                    session.commit()
+                    session.refresh(group)
+                    existing_groups[group_name_lower] = group
+                    groups_created.append(group_name)
+                else:
+                    continue
+
+                # Link group to contact
+                existing_link = session.exec(
+                    select(ContactGroup).where(
+                        (ContactGroup.contact_id == contact.id)
+                        & (ContactGroup.group_id == group.id)
+                    )
+                ).first()
+                if not existing_link:
+                    session.add(ContactGroup(contact_id=contact.id, group_id=group.id))
+
             session.commit()
             imported += 1
 
@@ -572,6 +620,7 @@ async def import_csv(
         updated=updated,
         errors=errors,
         tag_names_created=tags_created,
+        group_names_created=groups_created,
     )
 
 
@@ -583,17 +632,20 @@ def export_csv(
     session: SessionDep,
     current_user: CurrentUser,
     include_tags: bool = Query(True),
+    include_groups: bool = Query(True),
     include_fields: bool = Query(True),
-) -> Response:
+) -> Any:
     """Export all contacts as a CSV file with UTF-8 BOM for Excel compatibility.
 
     - **include_tags**: Include tag names column (default: True).
+    - **include_groups**: Include group names column (default: True).
     - **include_fields**: Include emails and phones columns (default: True).
     """
     filename, csv_bytes = export_contacts_to_csv(
         session=session,
         owner_id=str(current_user.id),
         include_tags=include_tags,
+        include_groups=include_groups,
         include_fields=include_fields,
     )
 
