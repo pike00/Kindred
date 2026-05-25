@@ -1,5 +1,4 @@
 """Reminder management routes."""
-
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any
@@ -25,6 +24,8 @@ from app.models import (
     ReminderSnoozeStat,
     RemindersPublic,
     ReminderUpdate,
+    ReminderWithContactPublic,
+    RemindersWithContactPublic,
 )
 
 router = APIRouter(prefix="/reminders", tags=["reminders"])
@@ -73,50 +74,96 @@ def list_reminders(
     )
 
 
-@router.get("/due", response_model=RemindersDuePublic)
+@router.get("/due", response_model=RemindersWithContactPublic)
 def list_due_reminders(
     session: SessionDep,
     current_user: CurrentUser,
+    skip: int = 0,
     limit: int = 100,
-) -> RemindersDuePublic:
-    """List reminders that are due now for the current user.
+) -> Any:
+    """List reminders due now or overdue for the current user.
 
-    A reminder is "due" when it is active, its `remind_at` is in the past,
-    and it is not currently snoozed (`snoozed_until` is null or in the past).
-    Results include the linked contact (when present) so the popover can
-    render contact name without N+1 fetches. Ordered oldest-due first.
+    Filters for reminders where:
+    - remind_at <= now (due or overdue)
+    - snoozed_until is NULL or snoozed_until <= now (not snoozed)
+    - is_active is True
+    - owned by current user or tied to visible contacts
+
+    Also joins with Contact to include contact_name.
     """
     now = datetime.now(timezone.utc)
 
     statement = (
-        select(Reminder, Contact)
-        .join(Contact, Reminder.contact_id == Contact.id, isouter=True)  # type: ignore[arg-type]
+        select(Reminder, Contact.first_name, Contact.last_name)
+        .outerjoin(Contact, Reminder.contact_id == Contact.id)
         .where(
-            Reminder.is_active.is_(True),  # type: ignore[union-attr]
             Reminder.remind_at <= now,
             or_(
-                Reminder.snoozed_until.is_(None),  # type: ignore[union-attr]
+                Reminder.snoozed_until.is_(None),
                 Reminder.snoozed_until <= now,
             ),
+            Reminder.is_active == True,
             or_(
                 Reminder.owner_id == current_user.id,
-                Reminder.contact_id.in_(visible_contact_ids(current_user)),  # type: ignore[union-attr]
+                Reminder.contact_id.in_(visible_contact_ids(current_user)),
             ),
         )
-        .order_by(Reminder.remind_at.asc())  # type: ignore[union-attr]
-        .limit(limit)
     )
 
-    rows = session.exec(statement).all()
+    count_statement = select(func.count()).select_from(
+        select(Reminder.id)
+        .outerjoin(Contact, Reminder.contact_id == Contact.id)
+        .where(
+            Reminder.remind_at <= now,
+            or_(
+                Reminder.snoozed_until.is_(None),
+                Reminder.snoozed_until <= now,
+            ),
+            Reminder.is_active == True,
+            or_(
+                Reminder.owner_id == current_user.id,
+                Reminder.contact_id.in_(visible_contact_ids(current_user)),
+            ),
+        )
+        .subquery()
+    )
+    count = session.exec(count_statement).one()
 
-    data: list[ReminderDuePublic] = []
-    for reminder, contact in rows:
-        public = ReminderDuePublic.model_validate(reminder)
-        if contact is not None:
-            public.contact = ReminderContactSummary.model_validate(contact)
-        data.append(public)
+    statement = statement.order_by(Reminder.remind_at.asc()).offset(skip).limit(limit)
+    results = session.exec(statement).all()
 
-    return RemindersDuePublic(data=data, count=len(data))
+    reminders_with_contact = []
+    for row in results:
+        reminder = row[0]
+        first_name = row[1]
+        last_name = row[2]
+        reminder_data = ReminderWithContactPublic.model_validate(reminder)
+        if first_name:
+            reminder_data.contact_name = f"{first_name} {last_name or ''}".strip()
+        reminders_with_contact.append(reminder_data)
+
+    return RemindersWithContactPublic(
+        data=reminders_with_contact,
+        count=count,
+    )
+
+
+@router.post("/{reminder_id}/dismiss")
+def dismiss_reminder(
+    session: SessionDep,
+    current_user: CurrentUser,
+    reminder_id: uuid.UUID,
+) -> Any:
+    """Dismiss a reminder by setting snoozed_until to now (soft-clear from badge)."""
+    reminder = session.get(Reminder, reminder_id)
+    if reminder is None or not _reminder_accessible(current_user, reminder, session):
+        raise HTTPException(status_code=404, detail="Reminder not found")
+
+    reminder.snoozed_until = datetime.now(timezone.utc)
+    session.add(reminder)
+    session.commit()
+    session.refresh(reminder)
+    return ReminderPublic.model_validate(reminder)
 
 
 @router.post("/", response_model=ReminderPublic)
@@ -164,72 +211,29 @@ def snooze_reminder(
     session: SessionDep,
     current_user: CurrentUser,
     reminder_id: uuid.UUID,
-    body: ReminderSnoozeRequest | None = None,
     minutes: int | None = None,
-    reason: str | None = None,
-) -> ReminderPublic:
+    snooze_until: datetime | None = None,
+) -> Any:
     """Snooze a reminder.
 
-    Accepts either a JSON body with ``snoozed_until`` (absolute UTC datetime) or
-    ``minutes`` (relative duration), or a legacy ``?minutes=`` query parameter.
-    Defaults to 30 minutes when nothing is provided. Writes a snooze history row.
+    Provide either:
+    - minutes: snooze for this many minutes from now
+    - snooze_until: snooze until this specific datetime
+    - neither: defaults to 1 hour
     """
     reminder = session.get(Reminder, reminder_id)
     if reminder is None or not _reminder_accessible(current_user, reminder, session):
         raise HTTPException(status_code=404, detail="Reminder not found")
 
-    target: datetime | None = None
-    if body is not None and body.snoozed_until is not None:
-        target = body.snoozed_until
-        if target.tzinfo is None:
-            target = target.replace(tzinfo=timezone.utc)
-    else:
-        body_minutes = body.minutes if body is not None else None
-        effective_minutes = body_minutes if body_minutes is not None else minutes
-        if effective_minutes is None:
-            effective_minutes = 30
-        target = datetime.now(timezone.utc) + timedelta(minutes=effective_minutes)
-
-    # Write snooze history log row
     now = datetime.now(timezone.utc)
-    snooze_log = ReminderSnooze(
-        reminder_id=reminder.id,
-        snoozed_at=now,
-        snoozed_until=target,
-        reason=reason,
-    )
-    session.add(snooze_log)
+    if snooze_until is not None:
+        reminder.snoozed_until = snooze_until
+    elif minutes is not None:
+        reminder.snoozed_until = now + timedelta(minutes=minutes)
+    else:
+        # Default: snooze for 1 hour
+        reminder.snoozed_until = now + timedelta(hours=1)
 
-    reminder.snoozed_until = target
-    session.add(reminder)
-
-    session.commit()
-    session.refresh(reminder)
-    return ReminderPublic.model_validate(reminder)
-
-
-_DISMISS_SENTINEL = datetime(9999, 12, 31, 23, 59, 59, tzinfo=timezone.utc)
-
-
-@router.post("/{reminder_id}/dismiss", response_model=ReminderPublic)
-def dismiss_reminder(
-    *,
-    session: SessionDep,
-    current_user: CurrentUser,
-    reminder_id: uuid.UUID,
-) -> ReminderPublic:
-    """Soft-clear a reminder from the badge.
-
-    Bumps ``snoozed_until`` to a far-future sentinel so the reminder
-    disappears from `/reminders/due` without being deleted. The reminder is
-    still listed by `GET /reminders/` and can be re-enabled by editing it
-    (clearing or shortening ``snoozed_until``).
-    """
-    reminder = session.get(Reminder, reminder_id)
-    if reminder is None or not _reminder_accessible(current_user, reminder, session):
-        raise HTTPException(status_code=404, detail="Reminder not found")
-
-    reminder.snoozed_until = _DISMISS_SENTINEL
     session.add(reminder)
     session.commit()
     session.refresh(reminder)

@@ -9,8 +9,7 @@ export type _MentionSourceContact = {
 
 export type _ShareIn = {
     tag_id: string;
-    grantee_id?: (string | null);
-    grantee_email?: (string | null);
+    grantee_id: string;
 };
 
 export type ActivityLogPublic = {
@@ -71,11 +70,6 @@ export type AddressCreate = {
     contact_id: string;
 };
 
-export type AddressesPublic = {
-    data: Array<AddressPublic>;
-    count: number;
-};
-
 export type AddressPublic = {
     /**
      * Label like "home", "work", "other".
@@ -129,54 +123,7 @@ export type AddressUpdate = {
     longitude?: (number | null);
 };
 
-export type APIKeyCreate = {
-    name: string;
-    can_impersonate?: Array<(string)>;
-    expires_at?: (string | null);
-};
-
-/**
- * Returned once at creation — plaintext_key is never stored.
- */
-export type APIKeyCreated = {
-    id: string;
-    name: string;
-    key_prefix: string;
-    owned_by_user_id: string;
-    can_impersonate: Array<(string)>;
-    created_at: string;
-    last_used_at: (string | null);
-    revoked_at: (string | null);
-    expires_at: (string | null);
-    plaintext_key: string;
-};
-
-export type APIKeyPublic = {
-    id: string;
-    name: string;
-    key_prefix: string;
-    owned_by_user_id: string;
-    can_impersonate: Array<(string)>;
-    created_at: string;
-    last_used_at: (string | null);
-    revoked_at: (string | null);
-    expires_at: (string | null);
-};
-
-export type APIKeysPublic = {
-    data: Array<APIKeyPublic>;
-    count: number;
-};
-
-export type Body_ical_upload_ical = {
-    file: (Blob | File);
-};
-
 export type Body_import_export_import_vcard = {
-    file: (Blob | File);
-};
-
-export type Body_import_export_preview_csv_import = {
     file: (Blob | File);
 };
 
@@ -197,33 +144,6 @@ export type CalendarEntry = {
 };
 
 export type CalendarMonthResponse = {
-    month: string;
-    days: {
-        [key: string]: Array<CalendarEntry>;
-    };
-};
-
-export type CalendarTokenCreate = {
-    /**
-     * Optional expiration date; null means never expires.
-     */
-    expires_at?: (string | null);
-};
-
-export type CalendarTokenPublic = {
-    /**
-     * Optional expiration date; null means never expires.
-     */
-    expires_at?: (string | null);
-    id: string;
-    status: string;
-    last_used_at: (string | null);
-    created_at: string;
-};
-
-export type CalendarTokensPublic = {
-    data: Array<CalendarTokenPublic>;
-    count: number;
     month: string;
     days: {
         [key: string]: Array<CalendarEntry>;
@@ -296,26 +216,11 @@ export type ContactCreate = {
      */
     contact_frequency_days?: (number | null);
     /**
-     * If True, suppress all contact reminders and actions for this contact.
-     */
-    do_not_contact?: boolean;
-    /**
-     * Optional reason why the contact was marked do-not-contact.
-     */
-    do_not_contact_reason?: (string | null);
-    /**
      * Kanban stage like Active, Dormant, Lost.
      */
     stage?: (string | null);
-    /**
-     * Where this contact originated.
-     */
-    source?: ContactSource;
-    /**
-     * Opaque external ID for idempotent upserts from integrations.
-     */
-    source_external_id?: (string | null);
     tag_ids?: (Array<(string)> | null);
+    group_ids?: (Array<(string)> | null);
 };
 
 export type ContactFieldCreate = {
@@ -367,11 +272,6 @@ export type ContactFieldPublic = {
     contact_id: string;
 };
 
-export type ContactFieldsPublic = {
-    data: Array<ContactFieldPublic>;
-    count: number;
-};
-
 export type ContactFieldType = 'email' | 'phone';
 
 export type ContactFieldUpdate = {
@@ -380,21 +280,6 @@ export type ContactFieldUpdate = {
     value?: (string | null);
     is_primary?: (boolean | null);
     sort_order?: (number | null);
-};
-
-/**
- * A geo point representing a contact's address.
- */
-export type ContactGeoPoint = {
-    contact_id: string;
-    contact_name: string;
-    avatar_url?: (string | null);
-    latitude: number;
-    longitude: number;
-    address_label: string;
-    city?: (string | null);
-    country?: (string | null);
-    street?: (string | null);
 };
 
 export type ContactPublic = {
@@ -458,21 +343,14 @@ export type ContactPublic = {
      * Date the contact passed away.
      */
     deceased_at?: (string | null);
+    /**
+     * Target days between interactions; drives losing-touch cadence.
+     */
     contact_frequency_days?: (number | null);
-    do_not_contact?: boolean;
-    do_not_contact_reason?: (string | null);
     /**
      * Kanban stage like Active, Dormant, Lost.
      */
     stage?: (string | null);
-    /**
-     * Where this contact originated.
-     */
-    source?: ContactSource;
-    /**
-     * Opaque external ID for idempotent upserts from integrations.
-     */
-    source_external_id?: (string | null);
     id: string;
     avatar_url: (string | null);
     last_contacted_at: (string | null);
@@ -481,45 +359,10 @@ export type ContactPublic = {
     deleted_at?: (string | null);
     tags?: Array<TagPublic>;
     groups?: Array<GroupPublic>;
-    stage_events?: Array<ContactStageEventPublic>;
 };
-
-/**
- * Response model for geo endpoint.
- */
-export type ContactsGeoResponse = {
-    points: Array<ContactGeoPoint>;
-    count: number;
-};
-
-export type ContactSource = 'MANUAL' | 'VCARD_IMPORT' | 'CARDDAV' | 'GOOGLE' | 'WEBHOOK';
 
 export type ContactsPublic = {
     data: Array<ContactPublic>;
-    count: number;
-};
-
-export type ContactStageEventPublic = {
-    /**
-     * Previous stage value; null when the contact is first assigned a stage.
-     */
-    old_stage?: (string | null);
-    /**
-     * New stage value; null when the contact is cleared.
-     */
-    new_stage?: (string | null);
-    /**
-     * When the stage change occurred (UTC).
-     */
-    changed_at?: string;
-    id: string;
-    contact_id: string;
-    owner_id: string;
-    changed_by_id: (string | null);
-};
-
-export type ContactStageEventsPublic = {
-    data: Array<ContactStageEventPublic>;
     count: number;
 };
 
@@ -541,62 +384,8 @@ export type ContactUpdate = {
     deceased_at?: (string | null);
     contact_frequency_days?: (number | null);
     stage?: (string | null);
-    do_not_contact?: (boolean | null);
-    do_not_contact_reason?: (string | null);
     tag_ids?: (Array<(string)> | null);
-};
-
-/**
- * Response for CSV import.
- */
-export type CSVImportResponse = {
-    imported: number;
-    skipped: number;
-    updated: number;
-    errors: Array<(string)>;
-    tag_names_created?: Array<(string)>;
-};
-
-/**
- * Preview of CSV import: column mapping and sample rows.
- */
-export type CSVPreviewResponse = {
-    headers: Array<(string)>;
-    detected_mapping: {
-        [key: string]: (string | null);
-    };
-    sample_rows: Array<{
-        [key: string]: (string);
-    }>;
-    total_rows: number;
-    encoding: string;
-};
-
-/**
- * Response for CSV import.
- */
-export type CSVImportResponse = {
-    imported: number;
-    skipped: number;
-    updated: number;
-    errors: Array<(string)>;
-    tag_names_created?: Array<(string)>;
-    group_names_created?: Array<(string)>;
-};
-
-/**
- * Preview of CSV import: column mapping and sample rows.
- */
-export type CSVPreviewResponse = {
-    headers: Array<(string)>;
-    detected_mapping: {
-        [key: string]: (string | null);
-    };
-    sample_rows: Array<{
-        [key: string]: (string);
-    }>;
-    total_rows: number;
-    encoding: string;
+    group_ids?: (Array<(string)> | null);
 };
 
 export type CustomFieldDefinitionCreate = {
@@ -647,11 +436,6 @@ export type CustomFieldDefinitionPublic = {
     created_at: string;
 };
 
-export type CustomFieldDefinitionsPublic = {
-    data: Array<CustomFieldDefinitionPublic>;
-    count: number;
-};
-
 export type CustomFieldDefinitionUpdate = {
     name?: (string | null);
     field_type?: (string | null);
@@ -680,11 +464,6 @@ export type CustomFieldValuePublic = {
     field_name?: (string | null);
 };
 
-export type CustomFieldValuesPublic = {
-    data: Array<CustomFieldValuePublic>;
-    count: number;
-};
-
 export type CustomFieldValueUpdate = {
     value?: (string | null);
 };
@@ -707,49 +486,17 @@ export type DebtCreate = {
      */
     reason?: (string | null);
     /**
-     * Date the debt was settled.
-     */
-    settled_at?: (string | null);
-    /**
      * Marked paid off.
      */
     is_settled?: boolean;
+    /**
+     * Date the debt was settled.
+     */
+    settled_at?: (string | null);
     contact_id: string;
 };
 
 export type DebtDirection = 'i_owe' | 'they_owe';
-
-export type DebtPaymentCreate = {
-    /**
-     * Payment amount; must be greater than zero.
-     */
-    amount: number;
-    /**
-     * Date the payment was made.
-     */
-    paid_at: string;
-    /**
-     * Optional note about the payment.
-     */
-    note?: (string | null);
-};
-
-export type DebtPaymentPublic = {
-    /**
-     * Payment amount; must be greater than zero.
-     */
-    amount: number;
-    /**
-     * Date the payment was made.
-     */
-    paid_at: string;
-    /**
-     * Optional note about the payment.
-     */
-    note?: (string | null);
-    id: string;
-    created_at: string;
-};
 
 export type DebtPublic = {
     /**
@@ -769,18 +516,16 @@ export type DebtPublic = {
      */
     reason?: (string | null);
     /**
-     * Date the debt was settled.
-     */
-    settled_at?: (string | null);
-    /**
      * Marked paid off.
      */
     is_settled?: boolean;
+    /**
+     * Date the debt was settled.
+     */
+    settled_at?: (string | null);
     id: string;
     contact_id: string;
     created_at: string;
-    payments?: Array<DebtPaymentPublic>;
-    paid_amount?: (number | null);
 };
 
 export type DebtsPublic = {
@@ -791,45 +536,10 @@ export type DebtsPublic = {
 export type DebtUpdate = {
     direction?: (DebtDirection | null);
     amount?: (number | null);
+    currency?: (string | null);
     reason?: (string | null);
     is_settled?: (boolean | null);
     settled_at?: (string | null);
-};
-
-export type EmailOAuthTokenPublic = {
-    /**
-     * OAuth provider name (e.g. 'gmail').
-     */
-    provider?: string;
-    /**
-     * The email address these tokens are for.
-     */
-    email_address: string;
-    /**
-     * Encrypted access token for the Gmail API.
-     */
-    encrypted_access_token: string;
-    /**
-     * Encrypted refresh token for obtaining new access tokens.
-     */
-    encrypted_refresh_token?: (string | null);
-    /**
-     * When the access token expires (UTC).
-     */
-    token_expires_at?: (string | null);
-    id: string;
-    contact_id: string;
-    created_at: string;
-    updated_at: string;
-};
-
-export type EmailOAuthTokensPublic = {
-    data: Array<EmailOAuthTokenPublic>;
-    count: number;
-};
-
-export type EnvironmentInfo = {
-    environment: string;
 };
 
 export type GiftCreate = {
@@ -868,18 +578,6 @@ export type GiftCreate = {
     contact_id: string;
 };
 
-export type GiftKanbanCard = {
-    gift: GiftPublic;
-    is_overdue: boolean;
-    days_until_occasion?: (number | null);
-};
-
-export type GiftKanbanColumn = {
-    gifts: Array<GiftKanbanCard>;
-    count: number;
-    total_value: number;
-};
-
 export type GiftPublic = {
     /**
      * Gift name.
@@ -916,10 +614,6 @@ export type GiftPublic = {
     id: string;
     contact_id: string;
     created_at: string;
-    days_until_occasion?: (number | null);
-    contact_birthday?: (string | null);
-    contact_first_name?: (string | null);
-    contact_last_name?: (string | null);
 };
 
 export type GiftsPublic = {
@@ -927,7 +621,7 @@ export type GiftsPublic = {
     count: number;
 };
 
-export type GiftStatus = 'idea' | 'purchased' | 'wrapped' | 'given' | 'received';
+export type GiftStatus = 'idea' | 'given' | 'received';
 
 export type GiftUpdate = {
     name?: (string | null);
@@ -940,112 +634,42 @@ export type GiftUpdate = {
     url?: (string | null);
 };
 
-/**
- * Single household member entry returned by /contacts/{id}/household.
- */
-export type HouseholdMember = {
-    id: string;
-    first_name: string;
-    last_name?: (string | null);
-    nickname?: (string | null);
-    birthday?: (string | null);
-    age?: (number | null);
-    avatar_url?: (string | null);
+export type GroupCreate = {
+    /**
+     * Group name, 1-255 chars.
+     */
+    name: string;
+    /**
+     * Optional group description.
+     */
+    description?: (string | null);
 };
 
-/**
- * Household membership wrapper.
- */
-export type HouseholdResponse = {
-    data: Array<HouseholdMember>;
+export type GroupPublic = {
+    /**
+     * Group name, 1-255 chars.
+     */
+    name: string;
+    /**
+     * Optional group description.
+     */
+    description?: (string | null);
+    id: string;
+    created_at: string;
+};
+
+export type GroupsPublic = {
+    data: Array<GroupPublic>;
+    count: number;
+};
+
+export type GroupUpdate = {
+    name?: (string | null);
+    description?: (string | null);
 };
 
 export type HTTPValidationError = {
     detail?: Array<ValidationError>;
-};
-
-/**
- * iMessage profile data from social.json.
- */
-export type IMessageProfilePayload = {
-    /**
-     * E.164 phone or email for stable iMessage identity.
-     */
-    imessage_id: string;
-    /**
-     * iMessage relationship type (close_friend, family, etc.).
-     */
-    relationship_type?: (string | null);
-    /**
-     * Key events from iMessage.
-     */
-    key_events?: (Array<(string)> | null);
-    /**
-     * Topics discussed in messages.
-     */
-    topics?: (Array<(string)> | null);
-    /**
-     * Facts about the contact from message analysis.
-     */
-    facts_about_other?: (string | null);
-    /**
-     * Pattern notes from iMessage analysis.
-     */
-    pattern_notes?: (string | null);
-    /**
-     * Last message timestamp (Unix epoch).
-     */
-    last_ts?: (number | null);
-    /**
-     * Total message count.
-     */
-    message_count?: (number | null);
-    /**
-     * Hash of profile data for idempotent updates.
-     */
-    profile_hash?: (string | null);
-};
-
-/**
- * Response model for iMessage profile endpoint.
- */
-export type IMessageProfileResponse = {
-    imessage_id?: (string | null);
-    imessage_synced_at?: (string | null);
-    imessage_profile?: ({
-    [key: string]: unknown;
-} | null);
-    profile_hash?: (string | null);
-};
-
-/**
- * Request body for iMessage sync.
- */
-export type IMessageSyncRequest = {
-    /**
-     * List of iMessage profiles to sync.
-     */
-    profiles: Array<IMessageProfilePayload>;
-    /**
-     * Whether to also sync co-mention edges as relationships.
-     */
-    sync_co_mentions?: boolean;
-    /**
-     * Co-mention edges from social.json.
-     */
-    co_mentions?: (Array<{
-    [key: string]: unknown;
-}> | null);
-};
-
-/**
- * Result of iMessage sync operation.
- */
-export type IMessageSyncResult = {
-    created_count?: number;
-    updated_count?: number;
-    skipped_count?: number;
-    failed_ids?: Array<(string)>;
 };
 
 export type InteractionAttendeeSummary = {
@@ -1055,7 +679,7 @@ export type InteractionAttendeeSummary = {
     avatar_url?: (string | null);
 };
 
-export type InteractionChannel = 'call' | 'in_person' | 'text' | 'email' | 'video' | 'social' | 'other' | 'skip';
+export type InteractionChannel = 'call' | 'in_person' | 'text' | 'email' | 'video' | 'social' | 'other';
 
 export type InteractionCreate = {
     /**
@@ -1078,75 +702,11 @@ export type InteractionCreate = {
      * Length of the interaction in minutes.
      */
     duration_minutes?: (number | null);
-    location_label?: (string | null);
-    latitude?: (number | null);
-    longitude?: (number | null);
-    /**
-     * If True, this interaction is a draft and excluded from engagement metrics.
-     */
-    is_draft?: boolean;
-    /**
-     * Origin of the draft (voice_memo, email_suggestion, manual, import).
-     */
-    draft_source?: (InteractionDraftSource | null);
-    /**
-     * RFC 2822 Message-ID for deduplication (EMAIL channel only).
-     */
-    message_id?: (string | null);
-    /**
-     * Email subject line (EMAIL channel only).
-     */
-    email_subject?: (string | null);
-    /**
-     * Email From header (EMAIL channel only).
-     */
-    email_from?: (string | null);
-    /**
-     * Email To header (EMAIL channel only).
-     */
-    email_to?: (string | null);
-    /**
-     * Email Date header (EMAIL channel only).
-     */
-    email_date?: (string | null);
-    /**
-     * RFC 2822 Message-ID for deduplication (EMAIL channel only).
-     */
-    message_id?: (string | null);
-    /**
-     * Email subject line (EMAIL channel only).
-     */
-    email_subject?: (string | null);
-    /**
-     * Email From header (EMAIL channel only).
-     */
-    email_from?: (string | null);
-    /**
-     * Email To header (EMAIL channel only).
-     */
-    email_to?: (string | null);
-    /**
-     * Email Date header (EMAIL channel only).
-     */
-    email_date?: (string | null);
-    /**
-     * If True, this interaction is a draft and excluded from engagement metrics.
-     */
-    is_draft?: boolean;
-    /**
-     * Origin of the draft (voice_memo, email_suggestion, manual, import).
-     */
-    draft_source?: (InteractionDraftSource | null);
     /**
      * Contacts that attended; must have at least one.
      */
     attendee_ids: Array<(string)>;
 };
-
-/**
- * Origin of a draft interaction.
- */
-export type InteractionDraftSource = 'voice_memo' | 'email_suggestion' | 'manual' | 'import';
 
 export type InteractionPublic = {
     /**
@@ -1169,12 +729,9 @@ export type InteractionPublic = {
      * Length of the interaction in minutes.
      */
     duration_minutes?: (number | null);
-    is_draft?: boolean;
-    draft_source?: (InteractionDraftSource | null);
     id: string;
     attendees?: Array<InteractionAttendeeSummary>;
     created_at: string;
-    deleted_at?: (string | null);
 };
 
 export type InteractionsPublic = {
@@ -1188,61 +745,10 @@ export type InteractionUpdate = {
     notes?: (string | null);
     mood?: (string | null);
     duration_minutes?: (number | null);
-    location_label?: (string | null);
-    latitude?: (number | null);
-    longitude?: (number | null);
     /**
      * Replace the attendee set; must have at least one if provided.
      */
     attendee_ids?: (Array<(string)> | null);
-};
-
-/**
- * Create schema for inverse relationship map.
- */
-export type InverseRelationshipMapCreate = {
-    /**
-     * Forward relationship type (e.g. 'parent').
-     */
-    relationship_type: string;
-    /**
-     * Inverse relationship type (e.g. 'child').
-     */
-    inverse_type: string;
-    /**
-     * True when both sides use the same type (spouse<->spouse).
-     */
-    is_symmetric?: boolean;
-};
-
-export type InverseRelationshipMapPublic = {
-    /**
-     * Forward relationship type (e.g. 'parent').
-     */
-    relationship_type: string;
-    /**
-     * Inverse relationship type (e.g. 'child').
-     */
-    inverse_type: string;
-    /**
-     * True when both sides use the same type (spouse<->spouse).
-     */
-    is_symmetric?: boolean;
-    id: string;
-    created_at: string;
-};
-
-export type InverseRelationshipMapsPublic = {
-    data: Array<InverseRelationshipMapPublic>;
-    count: number;
-};
-
-/**
- * Update schema - all fields optional.
- */
-export type InverseRelationshipMapUpdate = {
-    inverse_type?: (string | null);
-    is_symmetric?: (boolean | null);
 };
 
 export type JournalEntriesPublic = {
@@ -1263,7 +769,6 @@ export type JournalEntryCreate = {
      * Date the entry is about (may differ from created_at).
      */
     entry_date: string;
-    contact_ids?: (Array<(string)> | null);
 };
 
 export type JournalEntryPublic = {
@@ -1282,23 +787,12 @@ export type JournalEntryPublic = {
     id: string;
     created_at: string;
     updated_at: string;
-    contact_ids?: Array<(string)>;
 };
 
 export type JournalEntryUpdate = {
     body?: (string | null);
     mood?: (string | null);
     entry_date?: (string | null);
-    contact_ids?: (Array<(string)> | null);
-};
-
-/**
- * JSON export of all contact rows (raw model_dump per contact).
- */
-export type JsonExportResponse = {
-    contacts: Array<{
-        [key: string]: unknown;
-    }>;
 };
 
 export type LifeEventCreate = {
@@ -1349,7 +843,6 @@ export type LifeEventPublic = {
     id: string;
     contact_id: string;
     created_at: string;
-    deleted_at?: (string | null);
 };
 
 export type LifeEventsPublic = {
@@ -1431,25 +924,6 @@ export type MediaRecommendationUpdate = {
     recommended_at?: (string | null);
 };
 
-/**
- * Request body for merging two contacts.
- */
-export type MergeContactsRequest = {
-    surviving_id: string;
-    absorbed_id: string;
-    notes?: (string | null);
-};
-
-/**
- * Response after a merge operation.
- */
-export type MergeResponse = {
-    merge_log_id: string;
-    surviving_id: string;
-    absorbed_id: string;
-    merged_at: string;
-};
-
 export type Message = {
     message: string;
 };
@@ -1465,10 +939,13 @@ export type NoteCreate = {
      */
     body: string;
     contact_id: string;
-    /**
-     * Client-generated UUID for idempotent POSTs; optional.
-     */
-    client_id?: (string | null);
+};
+
+export type NoteMentionPublic = {
+    note_id: string;
+    note_body: string;
+    note_created_at: string;
+    source_contact: _MentionSourceContact;
 };
 
 export type NotePublic = {
@@ -1480,7 +957,6 @@ export type NotePublic = {
     contact_id: string;
     created_at: string;
     updated_at: string;
-    client_id?: (string | null);
 };
 
 export type NotesPublic = {
@@ -1533,23 +1009,11 @@ export type PetPublic = {
     contact_id: string;
 };
 
-export type PetsPublic = {
-    data: Array<PetPublic>;
-    count: number;
-};
-
 export type PetUpdate = {
     name?: (string | null);
     species?: (string | null);
     breed?: (string | null);
     notes?: (string | null);
-};
-
-export type PrivateUserCreate = {
-    email: string;
-    password: string;
-    full_name: string;
-    is_verified?: boolean;
 };
 
 export type RelationshipCreate = {
@@ -1563,6 +1027,10 @@ export type RelationshipCreate = {
     notes?: (string | null);
     contact_id: string;
     related_contact_id: string;
+    /**
+     * Type for the auto-generated inverse row. If omitted, the server infers it from a known map of symmetric/asymmetric types and returns 422 when it cannot.
+     */
+    inverse_relationship_type?: (string | null);
 };
 
 export type RelationshipPublic = {
@@ -1577,19 +1045,12 @@ export type RelationshipPublic = {
     id: string;
     contact_id: string;
     related_contact_id: string;
+    inverse_id?: (string | null);
 };
 
 export type RelationshipUpdate = {
     relationship_type?: (string | null);
     notes?: (string | null);
-};
-
-export type ReminderContactSummary = {
-    id: string;
-    first_name: string;
-    last_name?: (string | null);
-    nickname?: (string | null);
-    avatar_url?: (string | null);
 };
 
 export type ReminderCreate = {
@@ -1614,39 +1075,6 @@ export type ReminderCreate = {
      */
     is_active?: boolean;
     contact_id?: (string | null);
-};
-
-/**
- * Reminder enriched with the linked contact (if any) for the bell popover.
- */
-export type ReminderDuePublic = {
-    /**
-     * Reminder title.
-     */
-    title: string;
-    /**
-     * Extra details shown with the reminder.
-     */
-    description?: (string | null);
-    /**
-     * When to fire the reminder.
-     */
-    remind_at: string;
-    /**
-     * How often the reminder repeats.
-     */
-    frequency?: ReminderFrequency;
-    /**
-     * Enable or disable without deleting.
-     */
-    is_active?: boolean;
-    id: string;
-    contact_id: (string | null);
-    last_sent_at: (string | null);
-    snoozed_until: (string | null);
-    created_at: string;
-    deleted_at?: (string | null);
-    contact?: (ReminderContactSummary | null);
 };
 
 export type ReminderFrequency = 'once' | 'daily' | 'weekly' | 'monthly' | 'yearly';
@@ -1677,40 +1105,6 @@ export type ReminderPublic = {
     last_sent_at: (string | null);
     snoozed_until: (string | null);
     created_at: string;
-    deleted_at?: (string | null);
-};
-
-export type RemindersDuePublic = {
-    data: Array<ReminderDuePublic>;
-    count: number;
-};
-
-/**
- * Single snooze history row returned by GET /reminders/{id}/snooze-history.
- */
-export type ReminderSnoozeHistoryEntry = {
-    snoozed_at: string;
-    snoozed_until: string;
-    reason?: (string | null);
-};
-
-export type ReminderSnoozeRequest = {
-    /**
-     * Absolute time to snooze until (UTC). Mutually exclusive with minutes.
-     */
-    snoozed_until?: (string | null);
-    /**
-     * Minutes from now to snooze for. Mutually exclusive with snoozed_until.
-     */
-    minutes?: (number | null);
-};
-
-/**
- * Aggregate snooze count for a reminder.
- */
-export type ReminderSnoozeStat = {
-    reminder_id: string;
-    snooze_count: number;
 };
 
 export type RemindersPublic = {
@@ -1726,94 +1120,6 @@ export type ReminderUpdate = {
     is_active?: (boolean | null);
 };
 
-export type SavedFilterCreate = {
-    /**
-     * User-visible name for the smart list.
-     */
-    name: string;
-    /**
-     * Structured filter: {conditions: FilterCondition[], op: 'and'|'or'}.
-     */
-    filter_json: {
-        [key: string]: unknown;
-    };
-    /**
-     * Optional tag; if set, filter is shared with users who have TagShare access.
-     */
-    tag_id?: (string | null);
-};
-
-export type SavedFilterPublic = {
-    /**
-     * User-visible name for the smart list.
-     */
-    name: string;
-    /**
-     * Structured filter: {conditions: FilterCondition[], op: 'and'|'or'}.
-     */
-    filter_json: {
-        [key: string]: unknown;
-    };
-    /**
-     * Optional tag; if set, filter is shared with users who have TagShare access.
-     */
-    tag_id?: (string | null);
-    id: string;
-    owner_id: string;
-    created_at: string;
-    updated_at: string;
-};
-
-export type SavedFiltersPublic = {
-    data: Array<SavedFilterPublic>;
-    count: number;
-};
-
-export type SavedFilterUpdate = {
-    name?: (string | null);
-    filter_json?: ({
-    [key: string]: unknown;
-} | null);
-    tag_id?: (string | null);
-};
-
-/**
- * Search results grouped by type with total counts.
- */
-export type SearchResponse = {
-    results: Array<SearchResultItem>;
-    total: number;
-    query: string;
-};
-
-/**
- * A single search result with type discriminator and ranking info.
- */
-export type SearchResultItem = {
-    id: string;
-    type: string;
-    title: string;
-    snippet?: (string | null);
-    rank?: (number | null);
-    created_at?: (string | null);
-    updated_at?: (string | null);
-};
-
-export type SetupSubmit = {
-    token: string;
-    email: string;
-    password: string;
-    full_name?: (string | null);
-};
-
-/**
- * Preview counts for a single entity type.
- */
-export type SharePreviewEntity = {
-    entity_type: string;
-    count: number;
-};
-
 export type TagCreate = {
     /**
      * Tag name, 1-100 chars.
@@ -1823,10 +1129,6 @@ export type TagCreate = {
      * Optional hex color like #ff0000 for UI display.
      */
     color?: (string | null);
-    /**
-     * Optional tag description.
-     */
-    description?: (string | null);
 };
 
 export type TagPublic = {
@@ -1838,24 +1140,8 @@ export type TagPublic = {
      * Optional hex color like #ff0000 for UI display.
      */
     color?: (string | null);
-    /**
-     * Optional tag description.
-     */
-    description?: (string | null);
     id: string;
     created_at: string;
-};
-
-/**
- * Preview of what will be shared when granting access to a tag.
- */
-export type TagSharePreview = {
-    tag_id: string;
-    tag_name: string;
-    contact_count: number;
-    sample_contacts: Array<(string)>;
-    entities: Array<SharePreviewEntity>;
-    total_related_rows: number;
 };
 
 export type TagSharePublic = {
@@ -1878,7 +1164,6 @@ export type TagsPublic = {
 export type TagUpdate = {
     name?: (string | null);
     color?: (string | null);
-    description?: (string | null);
 };
 
 export type Token = {
@@ -1975,55 +1260,6 @@ export type ValidationError = {
     };
 };
 
-/**
- * Public schema for returning conflict data to the API.
- */
-export type VCardConflictPublic = {
-    /**
-     * The contact that has a conflict.
-     */
-    contact_id: string;
-    incoming_vcard_raw: string;
-    /**
-     * SHA-256 hash of the incoming normalized vCard.
-     */
-    incoming_hash: string;
-    /**
-     * SHA-256 hash of the locally-stored normalized vCard at time of conflict.
-     */
-    local_hash: string;
-    /**
-     * When the conflict was resolved; None means pending.
-     */
-    resolved_at?: (string | null);
-    /**
-     * How the conflict was resolved: 'keep_local', 'accept_remote', 'manual_merge'.
-     */
-    resolution_type?: (string | null);
-    id: string;
-    created_at: string;
-    /**
-     * The locally-stored vCard at time of conflict.
-     */
-    local_vcard_raw?: (string | null);
-};
-
-/**
- * Paginated response for listing conflicts.
- */
-export type VCardConflictsPublic = {
-    data: Array<VCardConflictPublic>;
-    count: number;
-};
-
-/**
- * Result of a vCard bulk import.
- */
-export type VCardImportResponse = {
-    imported: number;
-    errors?: Array<(string)>;
-};
-
 export type WebhookEndpointBase = {
     /**
      * Human-readable endpoint name.
@@ -2051,14 +1287,6 @@ export type WebhookEndpointBase = {
     secret?: (string | null);
 };
 
-/**
- * A single week bucket for the interaction heatmap.
- */
-export type WeekBucket = {
-    week_start: string;
-    count: number;
-};
-
 export type ActivityLogsListActivityLogsData = {
     entityId?: (string | null);
     entityType?: (string | null);
@@ -2073,7 +1301,7 @@ export type AddressesListAddressesData = {
     contactId: string;
 };
 
-export type AddressesListAddressesResponse = (AddressesPublic);
+export type AddressesListAddressesResponse = (unknown);
 
 export type AddressesCreateAddressRouteData = {
     requestBody: AddressCreate;
@@ -2092,31 +1320,7 @@ export type AddressesDeleteAddressData = {
     addressId: string;
 };
 
-export type AddressesDeleteAddressResponse = (Ok);
-
-export type AddressesGeocodeAddressManualData = {
-    addressId: string;
-};
-
-export type AddressesGeocodeAddressManualResponse = (AddressPublic);
-
-export type AddressesGeocodeMissingCoordinatesResponse = ({
-    [key: string]: unknown;
-});
-
-export type ApiKeysListMyApiKeysResponse = (APIKeysPublic);
-
-export type ApiKeysCreateMyApiKeyData = {
-    requestBody: APIKeyCreate;
-};
-
-export type ApiKeysCreateMyApiKeyResponse = (APIKeyCreated);
-
-export type ApiKeysRevokeMyApiKeyData = {
-    apiKeyId: string;
-};
-
-export type ApiKeysRevokeMyApiKeyResponse = (Message);
+export type AddressesDeleteAddressResponse = (unknown);
 
 export type CalendarGetCalendarMonthData = {
     yyyyMm: string;
@@ -2124,49 +1328,7 @@ export type CalendarGetCalendarMonthData = {
 
 export type CalendarGetCalendarMonthResponse = (CalendarMonthResponse);
 
-export type CalendarCreateCalendarTokenData = {
-    requestBody: CalendarTokenCreate;
-};
-
-export type CalendarCreateCalendarTokenResponse = (CalendarTokenPublic);
-
-export type CalendarListCalendarTokensResponse = (CalendarTokensPublic);
-
-export type CalendarRevokeCalendarTokenData = {
-    tokenId: string;
-};
-
-export type CalendarRevokeCalendarTokenResponse = (unknown);
-
-export type CalendarGetCalendarIcsData = {
-    /**
-     * Optional timezone for output (e.g., America/Chicago)
-     */
-    tz?: (string | null);
-};
-
-export type CalendarGetCalendarIcsResponse = (unknown);
-
 export type CarddavWellKnownCarddavResponse = (unknown);
-
-export type CommunicationPreferencesGetCommunicationPreferenceData = {
-    contactId: string;
-};
-
-export type CommunicationPreferencesGetCommunicationPreferenceResponse = ((CommunicationPreferencePublic | null));
-
-export type CommunicationPreferencesUpsertCommunicationPreferenceData = {
-    contactId: string;
-    requestBody: CommunicationPreferenceUpdate;
-};
-
-export type CommunicationPreferencesUpsertCommunicationPreferenceResponse = (CommunicationPreferencePublic);
-
-export type CommunicationPreferencesDeleteCommunicationPreferenceData = {
-    contactId: string;
-};
-
-export type CommunicationPreferencesDeleteCommunicationPreferenceResponse = (unknown);
 
 export type ContactFieldsListContactFieldsData = {
     contactId: string;
@@ -2174,7 +1336,7 @@ export type ContactFieldsListContactFieldsData = {
     skip?: number;
 };
 
-export type ContactFieldsListContactFieldsResponse = (ContactFieldsPublic);
+export type ContactFieldsListContactFieldsResponse = (unknown);
 
 export type ContactFieldsCreateContactFieldRouteData = {
     requestBody: ContactFieldCreate;
@@ -2196,13 +1358,13 @@ export type ContactFieldsDeleteContactFieldData = {
 export type ContactFieldsDeleteContactFieldResponse = (unknown);
 
 export type ContactsListContactsData = {
+    groupId?: (string | null);
     ids?: (Array<(string)> | null);
     includeDeleted?: boolean;
     isArchived?: (boolean | null);
     isFavorite?: (boolean | null);
     limit?: number;
     onlyDeleted?: boolean;
-    savedFilterId?: (string | null);
     search?: (string | null);
     skip?: number;
     stage?: (string | null);
@@ -2240,31 +1402,7 @@ export type ContactsDeleteContactData = {
     contactId: string;
 };
 
-export type ContactsDeleteContactResponse = (Ok);
-
-export type ContactsListContactMentionsData = {
-    contactId: string;
-};
-
-export type ContactsListContactMentionsResponse = (Array<NoteMentionPublic>);
-
-export type ContactsListContactMentionsData = {
-    contactId: string;
-};
-
-export type ContactsListContactMentionsResponse = (Array<NoteMentionPublic>);
-
-export type ContactsListContactMentionsData = {
-    contactId: string;
-};
-
-export type ContactsListContactMentionsResponse = (Array<NoteMentionPublic>);
-
-export type ContactsListContactMentionsData = {
-    contactId: string;
-};
-
-export type ContactsListContactMentionsResponse = (Array<NoteMentionPublic>);
+export type ContactsDeleteContactResponse = (unknown);
 
 export type ContactsListContactMentionsData = {
     contactId: string;
@@ -2277,39 +1415,6 @@ export type ContactsRestoreContactData = {
 };
 
 export type ContactsRestoreContactResponse = (ContactPublic);
-
-export type ContactsListContactsGeoData = {
-    /**
-     * Maximum latitude for bounding box filter
-     */
-    maxLat?: (number | null);
-    /**
-     * Maximum longitude for bounding box filter
-     */
-    maxLng?: (number | null);
-    /**
-     * Minimum latitude for bounding box filter
-     */
-    minLat?: (number | null);
-    /**
-     * Minimum longitude for bounding box filter
-     */
-    minLng?: (number | null);
-};
-
-export type ContactsListContactsGeoResponse = (ContactsGeoResponse);
-
-export type ContactsListContactMentionsData = {
-    contactId: string;
-};
-
-export type ContactsGetContactHeatmapResponse = (ContactHeatmap);
-
-export type ContactsGetContactPdfData = {
-    contactId: string;
-};
-
-export type ContactsGetContactPdfResponse = (unknown);
 
 export type CustomFieldsListFieldDefinitionsResponse = (unknown);
 
@@ -2330,13 +1435,13 @@ export type CustomFieldsDeleteFieldDefinitionData = {
     defId: string;
 };
 
-export type CustomFieldsDeleteFieldDefinitionResponse = (Ok);
+export type CustomFieldsDeleteFieldDefinitionResponse = (unknown);
 
 export type CustomFieldsListFieldValuesData = {
     contactId: string;
 };
 
-export type CustomFieldsListFieldValuesResponse = (CustomFieldValuesPublic);
+export type CustomFieldsListFieldValuesResponse = (unknown);
 
 export type CustomFieldsCreateFieldValueData = {
     requestBody: CustomFieldValueCreate;
@@ -2355,7 +1460,7 @@ export type CustomFieldsDeleteFieldValueData = {
     valueId: string;
 };
 
-export type CustomFieldsDeleteFieldValueResponse = (Ok);
+export type CustomFieldsDeleteFieldValueResponse = (unknown);
 
 export type DebtsListDebtsData = {
     contactId: string;
@@ -2380,151 +1485,7 @@ export type DebtsDeleteDebtData = {
     debtId: string;
 };
 
-export type DebtsDeleteDebtResponse = (Ok);
-
-export type DebtsRestoreDebtData = {
-    debtId: string;
-};
-
-export type DebtsRestoreDebtResponse = (unknown);
-
-export type DebtsListDebtPaymentsData = {
-    debtId: string;
-};
-
-export type DebtsListDebtPaymentsResponse = (Array<DebtPaymentPublic>);
-
-export type DebtsCreateDebtPaymentData = {
-    debtId: string;
-    requestBody: DebtPaymentCreate;
-};
-
-export type DebtsCreateDebtPaymentResponse = (DebtPaymentPublic);
-
-export type DebtsDeleteDebtPaymentData = {
-    paymentId: string;
-};
-
-export type DebtsDeleteDebtPaymentResponse = (unknown);
-
-export type EmailGmailAuthorizeData = {
-    /**
-     * Contact ID to associate with this email
-     */
-    contactId: string;
-    /**
-     * Email address being authorized
-     */
-    emailAddress: string;
-};
-
-export type EmailGmailAuthorizeResponse = ({
-    [key: string]: unknown;
-});
-
-export type EmailGmailCallbackData = {
-    code: string;
-    state: string;
-};
-
-export type EmailGmailCallbackResponse = ({
-    [key: string]: unknown;
-});
-
-export type EmailListEmailTokensData = {
-    contactId?: (string | null);
-};
-
-export type EmailListEmailTokensResponse = (EmailOAuthTokensPublic);
-
-export type EmailDeleteEmailTokenData = {
-    tokenId: string;
-};
-
-export type EmailDeleteEmailTokenResponse = ({
-    [key: string]: (string);
-});
-
-export type EmailPollContactEmailData = {
-    contactId: string;
-};
-
-export type EmailPollContactEmailResponse = ({
-    [key: string]: unknown;
-});
-
-export type EmailPollAllEmailsResponse = ({
-    [key: string]: unknown;
-});
-
-export type DebtsListDebtPaymentsData = {
-    debtId: string;
-};
-
-export type DebtsListDebtPaymentsResponse = (Array<DebtPaymentPublic>);
-
-export type DebtsCreateDebtPaymentData = {
-    debtId: string;
-    requestBody: DebtPaymentCreate;
-};
-
-export type DebtsCreateDebtPaymentResponse = (DebtPaymentPublic);
-
-export type DebtsDeleteDebtPaymentData = {
-    paymentId: string;
-};
-
-export type DebtsDeleteDebtPaymentResponse = (unknown);
-
-export type EmailGmailAuthorizeData = {
-    /**
-     * Contact ID to associate with this email
-     */
-    contactId: string;
-    /**
-     * Email address being authorized
-     */
-    emailAddress: string;
-};
-
-export type EmailGmailAuthorizeResponse = ({
-    [key: string]: unknown;
-});
-
-export type EmailGmailCallbackData = {
-    code: string;
-    state: string;
-};
-
-export type EmailGmailCallbackResponse = ({
-    [key: string]: unknown;
-});
-
-export type EmailListEmailTokensData = {
-    contactId?: (string | null);
-};
-
-export type EmailListEmailTokensResponse = (EmailOAuthTokensPublic);
-
-export type EmailDeleteEmailTokenData = {
-    tokenId: string;
-};
-
-export type EmailDeleteEmailTokenResponse = ({
-    [key: string]: (string);
-});
-
-export type EmailPollContactEmailData = {
-    contactId: string;
-};
-
-export type EmailPollContactEmailResponse = ({
-    [key: string]: unknown;
-});
-
-export type EmailPollAllEmailsResponse = ({
-    [key: string]: unknown;
-});
+export type DebtsDeleteDebtResponse = (unknown);
 
 export type GiftsListGiftsData = {
     contactId: string;
@@ -2549,146 +1510,46 @@ export type GiftsDeleteGiftData = {
     giftId: string;
 };
 
-export type GiftsDeleteGiftResponse = (Ok);
-
-export type GiftsRestoreGiftData = {
-    giftId: string;
-};
-
-export type GiftsRestoreGiftResponse = (unknown);
-
-export type GiftsGetKanbanBoardResponse = ({
-    [key: string]: unknown;
-});
-
-export type GiftsChangeGiftStatusData = {
-    giftId: string;
-    newStatus: GiftStatus;
-};
-
-export type GiftsChangeGiftStatusResponse = (GiftPublic);
+export type GiftsDeleteGiftResponse = (unknown);
 
 export type GroupsListGroupsData = {
     limit?: number;
     skip?: number;
 };
 
-export type GraphGetContactsGraphResponse = (unknown);
+export type GroupsListGroupsResponse = (GroupsPublic);
 
-export type GraphGetContactGraphData = {
-    contactId: string;
-    /**
-     * Hops from the contact (1-3)
-     */
-    depth?: number;
+export type GroupsCreateGroupRouteData = {
+    requestBody: GroupCreate;
 };
 
-export type GraphGetContactGraphResponse = (unknown);
+export type GroupsCreateGroupRouteResponse = (GroupPublic);
 
-export type HealthHealthResponse = ({
-    [key: string]: (string);
-});
-
-export type IcalUploadIcalData = {
-    formData: Body_ical_upload_ical;
+export type GroupsUpdateGroupData = {
+    groupId: string;
+    requestBody: GroupUpdate;
 };
 
-export type IcalUploadIcalResponse = (unknown);
+export type GroupsUpdateGroupResponse = (GroupPublic);
 
-export type IcalConfirmIcalImportData = {
-    requestBody: Array<{
-        [key: string]: unknown;
-    }>;
+export type GroupsDeleteGroupData = {
+    groupId: string;
 };
 
-export type IcalConfirmIcalImportResponse = (unknown);
-
-export type IcalUploadIcalData = {
-    formData: Body_ical_upload_ical;
-};
-
-export type IcalUploadIcalResponse = (unknown);
-
-export type IcalConfirmIcalImportData = {
-    requestBody: Array<{
-        [key: string]: unknown;
-    }>;
-};
-
-export type IcalConfirmIcalImportResponse = (unknown);
+export type GroupsDeleteGroupResponse = (unknown);
 
 export type ImportExportImportVcardData = {
     formData: Body_import_export_import_vcard;
 };
 
-export type ImportExportImportVcardResponse = (VCardImportResponse);
+export type ImportExportImportVcardResponse = (unknown);
 
 export type ImportExportExportVcardResponse = (unknown);
 
-export type ImportExportExportJsonResponse = (JsonExportResponse);
-
-export type ImportExportPreviewCsvImportData = {
-    formData: Body_import_export_preview_csv_import;
-};
-
-export type ImportExportPreviewCsvImportResponse = (CSVPreviewResponse);
-
-export type ImportExportImportCsvData = {
-    createMissingTags?: boolean;
-    formData: Body_import_export_import_csv;
-    mergeDuplicates?: boolean;
-    skipDuplicates?: boolean;
-};
-
-export type ImportExportImportCsvResponse = (CSVImportResponse);
-
-export type ImportExportExportCsvData = {
-    includeFields?: boolean;
-    includeTags?: boolean;
-};
-
-export type ImportExportExportCsvResponse = (unknown);
-
-export type ImportExportExportCsvData = {
-    groupId?: (string | null);
-    isArchived?: (boolean | null);
-    isFavorite?: (boolean | null);
-    limit?: number;
-    search?: (string | null);
-    selectAllFiltered?: boolean;
-    stage?: (string | null);
-    tagId?: (string | null);
-};
-
-export type ImportExportExportCsvResponse = (unknown);
-
-export type ImportExportPreviewCsvImportData = {
-    formData: Body_import_export_preview_csv_import;
-};
-
-export type ImportExportPreviewCsvImportResponse = (CSVPreviewResponse);
-
-export type ImportExportImportCsvData = {
-    createMissingGroups?: boolean;
-    createMissingTags?: boolean;
-    formData: Body_import_export_import_csv;
-    mergeDuplicates?: boolean;
-    skipDuplicates?: boolean;
-};
-
-export type ImportExportImportCsvResponse = (CSVImportResponse);
-
-export type ImportExportExportCsvData = {
-    includeFields?: boolean;
-    includeGroups?: boolean;
-    includeTags?: boolean;
-};
-
-export type ImportExportExportCsvResponse = (unknown);
+export type ImportExportExportJsonResponse = (unknown);
 
 export type InteractionsListInteractionsData = {
     contactId?: (string | null);
-    isDraft?: (boolean | null);
     limit?: number;
     skip?: number;
 };
@@ -2712,19 +1573,7 @@ export type InteractionsDeleteInteractionData = {
     interactionId: string;
 };
 
-export type InteractionsDeleteInteractionResponse = (Ok);
-
-export type InteractionsConfirmDraftData = {
-    interactionId: string;
-};
-
-export type InteractionsConfirmDraftResponse = (InteractionPublic);
-
-export type InteractionsConfirmDraftData = {
-    interactionId: string;
-};
-
-export type InteractionsConfirmDraftResponse = (InteractionPublic);
+export type InteractionsDeleteInteractionResponse = (unknown);
 
 export type JournalListJournalEntriesData = {
     limit?: number;
@@ -2750,7 +1599,7 @@ export type JournalDeleteJournalEntryData = {
     entryId: string;
 };
 
-export type JournalDeleteJournalEntryResponse = (Ok);
+export type JournalDeleteJournalEntryResponse = (unknown);
 
 export type LifeEventsListLifeEventsData = {
     contactId: string;
@@ -2775,13 +1624,7 @@ export type LifeEventsDeleteLifeEventData = {
     eventId: string;
 };
 
-export type LifeEventsDeleteLifeEventResponse = (Ok);
-
-export type LifeEventsRestoreLifeEventData = {
-    eventId: string;
-};
-
-export type LifeEventsRestoreLifeEventResponse = (unknown);
+export type LifeEventsDeleteLifeEventResponse = (unknown);
 
 export type LoginLoginAccessTokenData = {
     formData: Body_login_login_access_token;
@@ -2832,7 +1675,7 @@ export type MediaRecommendationsDeleteMediaRecommendationData = {
     recId: string;
 };
 
-export type MediaRecommendationsDeleteMediaRecommendationResponse = (Ok);
+export type MediaRecommendationsDeleteMediaRecommendationResponse = (unknown);
 
 export type NotesListNotesData = {
     contactId: string;
@@ -2859,59 +1702,13 @@ export type NotesDeleteNoteData = {
     noteId: string;
 };
 
-export type NotesDeleteNoteResponse = (Ok);
-
-export type NotesRestoreNoteData = {
-    noteId: string;
-};
-
-export type NotesRestoreNoteResponse = (unknown);
-
-export type OrganizationsListOrganizationsData = {
-    limit?: number;
-    skip?: number;
-};
-
-export type OrganizationsListOrganizationsResponse = (OrganizationsPublic);
-
-export type OrganizationsCreateOrganizationData = {
-    requestBody: OrganizationCreate;
-};
-
-export type OrganizationsCreateOrganizationResponse = (OrganizationPublic);
-
-export type OrganizationsGetOrganizationData = {
-    organizationId: string;
-};
-
-export type OrganizationsGetOrganizationResponse = (OrganizationPublic);
-
-export type OrganizationsUpdateOrganizationData = {
-    organizationId: string;
-    requestBody: OrganizationUpdate;
-};
-
-export type OrganizationsUpdateOrganizationResponse = (OrganizationPublic);
-
-export type OrganizationsDeleteOrganizationData = {
-    organizationId: string;
-};
-
-export type OrganizationsDeleteOrganizationResponse = (unknown);
-
-export type OrganizationsGetOrganizationWithContactsData = {
-    organizationId: string;
-};
-
-export type OrganizationsGetOrganizationWithContactsResponse = ({
-    [key: string]: unknown;
-});
+export type NotesDeleteNoteResponse = (unknown);
 
 export type PetsListPetsData = {
     contactId: string;
 };
 
-export type PetsListPetsResponse = (PetsPublic);
+export type PetsListPetsResponse = (unknown);
 
 export type PetsCreatePetRouteData = {
     requestBody: PetCreate;
@@ -2930,103 +1727,7 @@ export type PetsDeletePetData = {
     petId: string;
 };
 
-export type PetsDeletePetResponse = (Ok);
-
-export type PrivateCreateUserData = {
-    requestBody: PrivateUserCreate;
-};
-
-export type PrivateCreateUserResponse = (UserPublic);
-
-export type PrivateSeedDataData = {
-    /**
-     * Number of contacts to seed
-     */
-    count?: number;
-    /**
-     * Wipe existing data before seeding
-     */
-    reset?: boolean;
-    /**
-     * RNG seed for determinism
-     */
-    rngSeed?: (number | null);
-};
-
-export type PrivateSeedDataResponse = ({
-    [key: string]: unknown;
-});
-
-export type RelationshipInverseMapListInverseMapsData = {
-    limit?: number;
-    skip?: number;
-};
-
-export type RelationshipInverseMapListInverseMapsResponse = (InverseRelationshipMapsPublic);
-
-export type RelationshipInverseMapCreateInverseMapData = {
-    requestBody: InverseRelationshipMapCreate;
-};
-
-export type RelationshipInverseMapCreateInverseMapResponse = (InverseRelationshipMapPublic);
-
-export type RelationshipInverseMapGetInverseMapData = {
-    mapId: string;
-};
-
-export type RelationshipInverseMapGetInverseMapResponse = (InverseRelationshipMapPublic);
-
-export type RelationshipInverseMapUpdateInverseMapData = {
-    mapId: string;
-    requestBody: InverseRelationshipMapUpdate;
-};
-
-export type RelationshipInverseMapUpdateInverseMapResponse = (InverseRelationshipMapPublic);
-
-export type RelationshipInverseMapDeleteInverseMapData = {
-    mapId: string;
-};
-
-export type RelationshipInverseMapDeleteInverseMapResponse = (unknown);
-
-export type RelationshipInverseMapSeedInverseMapEndpointResponse = (unknown);
-
-export type RelationshipInverseMapLookupInverseData = {
-    relationshipType: string;
-};
-
-export type RelationshipInverseMapLookupInverseResponse = (unknown);
-
-export type PrivateCreateUserData = {
-    requestBody: PrivateUserCreate;
-};
-
-export type PrivateCreateUserResponse = (UserPublic);
-
-export type PrivateCreateUserData = {
-    requestBody: PrivateUserCreate;
-};
-
-export type PrivateCreateUserResponse = (UserPublic);
-
-export type PrivateSeedDataData = {
-    /**
-     * Number of contacts to seed
-     */
-    count?: number;
-    /**
-     * Wipe existing data before seeding
-     */
-    reset?: boolean;
-    /**
-     * RNG seed for determinism
-     */
-    rngSeed?: (number | null);
-};
-
-export type PrivateSeedDataResponse = ({
-    [key: string]: unknown;
-});
+export type PetsDeletePetResponse = (unknown);
 
 export type RelationshipsLookupInverseData = {
     type: string;
@@ -3040,7 +1741,7 @@ export type RelationshipsListRelationshipsData = {
     contactId: string;
 };
 
-export type RelationshipsListRelationshipsResponse = (RelationshipsPublic);
+export type RelationshipsListRelationshipsResponse = (unknown);
 
 export type RelationshipsCreateRelationshipRouteData = {
     requestBody: RelationshipCreate;
@@ -3059,7 +1760,7 @@ export type RelationshipsDeleteRelationshipData = {
     relId: string;
 };
 
-export type RelationshipsDeleteRelationshipResponse = (Ok);
+export type RelationshipsDeleteRelationshipResponse = (unknown);
 
 export type RemindersListRemindersData = {
     isActive?: (boolean | null);
@@ -3075,12 +1776,6 @@ export type RemindersCreateReminderRouteData = {
 
 export type RemindersCreateReminderRouteResponse = (ReminderPublic);
 
-export type RemindersListDueRemindersData = {
-    limit?: number;
-};
-
-export type RemindersListDueRemindersResponse = (RemindersDuePublic);
-
 export type RemindersUpdateReminderData = {
     reminderId: string;
     requestBody: ReminderUpdate;
@@ -3092,7 +1787,7 @@ export type RemindersDeleteReminderData = {
     reminderId: string;
 };
 
-export type RemindersDeleteReminderResponse = (Ok);
+export type RemindersDeleteReminderResponse = (unknown);
 
 export type RemindersListDueRemindersData = {
     skip?: number;
@@ -3112,15 +1807,7 @@ export type RemindersDismissReminderResponse = (ReminderPublic);
 
 
 export type RemindersSnoozeReminderData = {
-    minutes?: (number | null);
-    reason?: (string | null);
-    reminderId: string;
-    requestBody?: (ReminderSnoozeRequest | null);
-};
-
-export type RemindersSnoozeReminderResponse = (ReminderPublic);
-
-export type RemindersDismissReminderData = {
+    minutes?: number;
     reminderId: string;
 };
 
@@ -3158,19 +1845,7 @@ export type TagsDeleteTagData = {
     tagId: string;
 };
 
-export type TagsDeleteTagResponse = (Ok);
-
-export type TagSharesPreviewTagShareData = {
-    tagId: string;
-};
-
-export type TagSharesPreviewTagShareResponse = (TagSharePreview);
-
-export type TagSharesPreviewTagShareData = {
-    tagId: string;
-};
-
-export type TagSharesPreviewTagShareResponse = (TagSharePreview);
+export type TagsDeleteTagResponse = (unknown);
 
 export type TagSharesCreateTagShareData = {
     requestBody: _ShareIn;
@@ -3190,15 +1865,6 @@ export type TagSharesDeleteTagShareData = {
 };
 
 export type TagSharesDeleteTagShareResponse = ({
-    [key: string]: (string);
-});
-
-export type TagSharesLogTagShareAuditData = {
-    granteeId: string;
-    tagId: string;
-};
-
-export type TagSharesLogTagShareAuditResponse = ({
     [key: string]: (string);
 });
 
@@ -3264,54 +1930,26 @@ export type UtilsTestEmailResponse = (Message);
 
 export type UtilsHealthCheckResponse = (boolean);
 
-export type UtilsEnvironmentResponse = (EnvironmentInfo);
-
-export type VCardConflictsListVcardConflictsData = {
-    limit?: number;
-    skip?: number;
-};
-
-export type VCardConflictsListVcardConflictsResponse = (VCardConflictsPublic);
-
-export type VCardConflictsResolveVcardConflictData = {
-    conflictId: string;
-    resolutionType: string;
-};
-
-export type VCardConflictsResolveVcardConflictResponse = (VCardConflictPublic);
-
-export type VCardConflictsDeleteVcardConflictData = {
-    conflictId: string;
-};
-
-export type VCardConflictsDeleteVcardConflictResponse = (void);
-
-export type WebhooksTwilioWebhookData = {
-    apiKey: string;
-};
-
-export type WebhooksTwilioWebhookResponse = (WebhookEventResponse);
-
-export type WebhooksListWebhooksResponse = (WebhookEndpointsPublic);
+export type WebhooksListWebhooksResponse = (unknown);
 
 export type WebhooksCreateWebhookData = {
     requestBody: WebhookEndpointBase;
 };
 
-export type WebhooksCreateWebhookResponse = (WebhookEndpointCreated);
+export type WebhooksCreateWebhookResponse = (unknown);
 
 export type WebhooksUpdateWebhookData = {
     requestBody: WebhookEndpointBase;
     webhookId: string;
 };
 
-export type WebhooksUpdateWebhookResponse = (WebhookEndpointPublic);
+export type WebhooksUpdateWebhookResponse = (unknown);
 
 export type WebhooksDeleteWebhookData = {
     webhookId: string;
 };
 
-export type WebhooksDeleteWebhookResponse = (Ok);
+export type WebhooksDeleteWebhookResponse = (unknown);
 
 export type WebhooksInboundWebhookData = {
     apiKey: string;
@@ -3320,4 +1958,4 @@ export type WebhooksInboundWebhookData = {
     };
 };
 
-export type WebhooksInboundWebhookResponse = (WebhookEventResponse);
+export type WebhooksInboundWebhookResponse = (unknown);
