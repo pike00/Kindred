@@ -10,7 +10,6 @@ from app.api.routes import (
     custom_fields,
     debts,
     gifts,
-    groups,
     import_export,
     interactions,
     journal,
@@ -40,7 +39,6 @@ api_router.include_router(utils.router)
 api_router.include_router(contacts.router)
 api_router.include_router(tags.router)
 api_router.include_router(tag_shares.router)
-api_router.include_router(groups.router)
 api_router.include_router(contact_fields.router)
 api_router.include_router(addresses.router)
 api_router.include_router(relationships.router)

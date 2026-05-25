@@ -13,6 +13,7 @@ User-defined tag for grouping contacts.
 | name | varchar(100) |  | false |  |  | Tag name, 1-100 chars. |
 | color | varchar(7) |  | true |  |  | Optional hex color like #ff0000 for UI display. |
 | created_at | timestamp with time zone |  | false |  |  | When the tag was created (UTC). |
+| description | varchar(1000) |  | true |  |  |  |
 
 ## Constraints
 
@@ -47,6 +48,7 @@ erDiagram
   varchar_100_ name
   varchar_7_ color
   timestamp_with_time_zone created_at
+  varchar_1000_ description
 }
 "public.contact_tag" {
   uuid contact_id FK
