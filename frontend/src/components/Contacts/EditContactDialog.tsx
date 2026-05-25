@@ -1,10 +1,11 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useEffect, useState } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { z } from "zod"
 import type { ContactPublic, ContactUpdate } from "@/client"
 import { ContactsService } from "@/client"
+import { CommunicationPreferenceCard } from "@/components/Contacts/CommunicationPreferenceCard"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -25,7 +26,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import useCustomToast from "@/hooks/useCustomToast"
-import { Pencil } from "@/lib/icons"
+import { BellOff, Pencil } from "@/lib/icons"
 
 const contactUpdateSchema = z.object({
   first_name: z.string().min(1, "First name is required"),
@@ -63,6 +64,11 @@ export const EditContactDialog = ({ contact }: EditContactDialogProps) => {
       timezone: contact.timezone || "",
       pronouns: contact.pronouns || "",
     },
+  })
+
+  const doNotContact = useWatch({
+    control: form.control,
+    name: "do_not_contact",
   })
 
   useEffect(() => {
@@ -244,6 +250,36 @@ export const EditContactDialog = ({ contact }: EditContactDialogProps) => {
                 <span>Archived</span>
               </label>
             </div>
+            <div className="space-y-2 rounded-md border p-3">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  {...form.register("do_not_contact")}
+                  className="rounded border-input"
+                />
+                <BellOff className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">No contact reminders needed</span>
+              </label>
+              <p className="text-xs text-muted-foreground pl-6">
+                Hides this contact from "losing touch" lists. Use for people
+                you're always in contact with (e.g. spouse, housemates).
+              </p>
+              {doNotContact && (
+                <FormField
+                  control={form.control}
+                  name="do_not_contact_reason"
+                  render={({ field }) => (
+                    <FormItem className="pl-6">
+                      <FormLabel>Reason (optional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g. Live together" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+            </div>
             <Button
               type="submit"
               disabled={updateContactMutation.isPending}
@@ -253,6 +289,7 @@ export const EditContactDialog = ({ contact }: EditContactDialogProps) => {
                 ? "Updating..."
                 : "Update Contact"}
             </Button>
+            <CommunicationPreferenceCard contact={contact} />
           </form>
         </Form>
       </DialogContent>

@@ -23,9 +23,10 @@ def test_create_contact(
     assert content["last_name"] == "Smith"
     assert "id" in content
     assert "tags" in content
-    assert "groups" in content
     assert isinstance(content["tags"], list)
-    assert isinstance(content["groups"], list)
+    # Regression: Group was merged into Tag on 2026-05-06; the response
+    # must not carry a `groups` field — frontends call .map on it.
+    assert "groups" not in content
 
 
 def test_create_contact_with_optional_fields(
@@ -83,10 +84,11 @@ def test_list_contacts(
     assert "data" in content
     assert "count" in content
     assert content["count"] > 0
-    # Verify contacts have tags/groups fields
+    # Verify contacts have tags field
     for contact in content["data"]:
         assert "tags" in contact
-        assert "groups" in contact
+        # Regression: no legacy `groups` field after the 2026-05-06 merge.
+        assert "groups" not in contact
 
 
 def test_list_contacts_excludes_archived(
@@ -140,7 +142,6 @@ def test_get_contact(
     assert content["id"] == contact_id
     assert content["first_name"] == "GetTest"
     assert "tags" in content
-    assert "groups" in content
 
 
 def test_get_contact_not_found(

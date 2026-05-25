@@ -1,7 +1,6 @@
 """Read-only endpoint for the audit activity log."""
 
 import uuid
-from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
 
@@ -21,7 +20,7 @@ def list_activity_logs(
     tag_id: uuid.UUID | None = Query(default=None),
     limit: int = Query(default=50, le=500),
     offset: int = Query(default=0, ge=0),
-) -> Any:
+) -> ActivityLogsPublic:
     """Return activity log entries for entities visible to the current user.
 
     Owned logs (any entity type) are always included.  Contact-entity logs are

@@ -1,12 +1,15 @@
 import re
 import uuid
+from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import union
+from sqlalchemy import func, union
 from sqlmodel import Session, select
 from sqlmodel import delete as sql_delete
 
 from app.core.security import get_password_hash, verify_password
+
+# Import relationship-specific CRUD functions
 from app.models import (
     Address,
     AddressCreate,
@@ -17,7 +20,8 @@ from app.models import (
     ContactCreate,
     ContactField,
     ContactFieldCreate,
-    ContactGroup,
+    ContactStageEvent,
+    ContactStageEventCreate,
     ContactTag,
     CustomFieldDefinition,
     CustomFieldDefinitionCreate,
@@ -25,14 +29,16 @@ from app.models import (
     CustomFieldValueCreate,
     Debt,
     DebtCreate,
+    EmailOAuthToken,
+    EmailOAuthTokenCreate,
     Gift,
     GiftCreate,
-    Group,
-    GroupCreate,
+    IcalImportLog,
     Interaction,
     InteractionAttendee,
     InteractionCreate,
     JournalEntry,
+    JournalEntryContact,
     JournalEntryCreate,
     LifeEvent,
     LifeEventCreate,
@@ -48,6 +54,9 @@ from app.models import (
     RelationshipCreate,
     Reminder,
     ReminderCreate,
+    SavedFilter,
+    SavedFilterCreate,
+    SavedFilterUpdate,
     Tag,
     TagCreate,
     TagShare,
@@ -55,6 +64,7 @@ from app.models import (
     UserCreate,
     UserUpdate,
 )
+from app.vcard import compute_vcard_hash
 
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
@@ -117,6 +127,9 @@ def create_contact(
     *, session: Session, contact_in: ContactCreate, owner_id: uuid.UUID
 ) -> Contact:
     db_obj = Contact.model_validate(contact_in, update={"owner_id": owner_id})
+    # Compute vcard_sha256 if vcard_raw is present
+    if db_obj.vcard_raw:
+        db_obj.vcard_sha256 = compute_vcard_hash(db_obj.vcard_raw)
     session.add(db_obj)
     session.commit()
     session.refresh(db_obj)
@@ -124,11 +137,6 @@ def create_contact(
     if contact_in.tag_ids:
         for tag_id in contact_in.tag_ids:
             session.add(ContactTag(contact_id=db_obj.id, tag_id=tag_id))
-        session.commit()
-    # Handle group associations
-    if contact_in.group_ids:
-        for group_id in contact_in.group_ids:
-            session.add(ContactGroup(contact_id=db_obj.id, group_id=group_id))
         session.commit()
     session.refresh(db_obj)
     return db_obj
@@ -139,19 +147,6 @@ def create_contact(
 
 def create_tag(*, session: Session, tag_in: TagCreate, owner_id: uuid.UUID) -> Tag:
     db_obj = Tag.model_validate(tag_in, update={"owner_id": owner_id})
-    session.add(db_obj)
-    session.commit()
-    session.refresh(db_obj)
-    return db_obj
-
-
-# ─── Group CRUD ────────────────────────────────────────────────────────────────
-
-
-def create_group(
-    *, session: Session, group_in: GroupCreate, owner_id: uuid.UUID
-) -> Group:
-    db_obj = Group.model_validate(group_in, update={"owner_id": owner_id})
     session.add(db_obj)
     session.commit()
     session.refresh(db_obj)
@@ -194,13 +189,16 @@ def create_relationship(
     db_obj = Relationship.model_validate(relationship_in)
     session.add(db_obj)
     if inverse_type:
-        inverse_in = RelationshipCreate(
+        inverse = Relationship(
             contact_id=relationship_in.related_contact_id,
             related_contact_id=relationship_in.contact_id,
             relationship_type=inverse_type,
             notes=relationship_in.notes,
         )
-        session.add(Relationship.model_validate(inverse_in))
+        session.add(inverse)
+        session.flush()  # materialise IDs before cross-linking
+        db_obj.inverse_id = inverse.id
+        inverse.inverse_id = db_obj.id
     session.commit()
     session.refresh(db_obj)
     return db_obj
@@ -260,6 +258,8 @@ def recompute_last_contacted_at(*, session: Session, contact_id: uuid.UUID) -> N
             InteractionAttendee.interaction_id == Interaction.id,  # type: ignore[arg-type]
         )
         .where(InteractionAttendee.contact_id == contact_id)
+        .where(Interaction.is_draft == False)  # noqa: E712
+        .where(Interaction.deleted_at == None)  # noqa: E711
         .order_by(Interaction.occurred_at.desc())
         .limit(1)
     )
@@ -283,13 +283,15 @@ def create_interaction(
         session.add(
             InteractionAttendee(interaction_id=db_obj.id, contact_id=attendee_id)
         )
-        contact = session.get(Contact, attendee_id)
-        if contact and (
-            contact.last_contacted_at is None
-            or db_obj.occurred_at > contact.last_contacted_at
-        ):
-            contact.last_contacted_at = db_obj.occurred_at
-            session.add(contact)
+        # Drafts do not affect last_contacted_at; only confirmed interactions do.
+        if not db_obj.is_draft:
+            contact = session.get(Contact, attendee_id)
+            if contact and (
+                contact.last_contacted_at is None
+                or db_obj.occurred_at > contact.last_contacted_at
+            ):
+                contact.last_contacted_at = db_obj.occurred_at
+                session.add(contact)
     session.commit()
     session.refresh(db_obj)
     return db_obj
@@ -381,6 +383,13 @@ def _sync_note_mentions(*, session: Session, note: Note) -> None:
 
 
 def create_note(*, session: Session, note_in: NoteCreate, owner_id: uuid.UUID) -> Note:
+    # Check for idempotent POST: if client_id is provided, check for existing note
+    if note_in.client_id:
+        existing = session.exec(
+            select(Note).where(Note.client_id == note_in.client_id)
+        ).first()
+        if existing:
+            return existing
     db_obj = Note.model_validate(note_in, update={"owner_id": owner_id})
     session.add(db_obj)
     session.flush()
@@ -410,9 +419,40 @@ def create_journal_entry(
 ) -> JournalEntry:
     db_obj = JournalEntry.model_validate(journal_in, update={"owner_id": owner_id})
     session.add(db_obj)
+    session.flush()
+    # Sync contact associations
+    if journal_in.contact_ids:
+        for cid in set(journal_in.contact_ids):
+            session.add(JournalEntryContact(journal_entry_id=db_obj.id, contact_id=cid))
     session.commit()
     session.refresh(db_obj)
     return db_obj
+
+
+# ─── SavedFilter CRUD ─────────────────────────────────────────────
+
+
+def create_saved_filter(
+    *, session: Session, filter_in: SavedFilterCreate, owner_id: uuid.UUID
+) -> SavedFilter:
+    """Create a new saved filter / smart list."""
+    db_obj = SavedFilter.model_validate(filter_in, update={"owner_id": owner_id})
+    session.add(db_obj)
+    session.commit()
+    session.refresh(db_obj)
+    return db_obj
+
+
+def update_saved_filter(
+    *, session: Session, db_filter: SavedFilter, filter_in: SavedFilterUpdate
+) -> SavedFilter:
+    """Update an existing saved filter."""
+    update_data = filter_in.model_dump(exclude_unset=True)
+    db_filter.sqlmodel_update(update_data)
+    session.add(db_filter)
+    session.commit()
+    session.refresh(db_filter)
+    return db_filter
 
 
 # ─── Visibility helpers ───────────────────────────────────────────────────────
@@ -450,6 +490,93 @@ def contact_visible(
         Contact.id.in_(visible_contact_ids(user, include_deleted=include_deleted)),
     )
     return session.exec(stmt).first() is not None
+
+
+# ─── ReminderSnooze helpers ──────────────────────────────────────────────
+
+
+def get_effective_snoozed_until(
+    *, session: Session, reminder_id: uuid.UUID
+) -> datetime | None:
+    """Derive effective snoozed_until from latest reminder_snooze row."""
+    from app.models import ReminderSnooze
+
+    stmt = (
+        select(ReminderSnooze)
+        .where(ReminderSnooze.reminder_id == reminder_id)
+        .order_by(ReminderSnooze.snoozed_at.desc())
+        .limit(1)
+    )
+    latest = session.exec(stmt).first()
+    return latest.snoozed_until if latest else None
+
+
+def get_snooze_count(
+    *, session: Session, reminder_id: uuid.UUID, days: int = 30
+) -> int:
+    """Count snooze events for a reminder in the last N days."""
+    from datetime import timedelta
+
+    from app.models import ReminderSnooze
+
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    stmt = (
+        select(func.count())
+        .select_from(ReminderSnooze)
+        .where(
+            ReminderSnooze.reminder_id == reminder_id,
+            ReminderSnooze.snoozed_at >= cutoff,
+        )
+    )
+    return session.exec(stmt).one()
+
+
+def get_chronic_snooze_contacts(
+    *, session: Session, owner_id: uuid.UUID, days: int = 7, threshold: int = 3
+) -> list[dict]:
+    """Find contacts with >threshold snoozed reminders in the past N days.
+
+    Returns list of dicts with contact_id, contact_name, snooze_count.
+    """
+    from datetime import timedelta
+
+    from app.models import Contact, Reminder, ReminderSnooze
+
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    # Subquery: count snoozes per reminder in the time window
+    snooze_subq = (
+        select(
+            ReminderSnooze.reminder_id,
+            func.count().label("snooze_count"),
+        )
+        .where(ReminderSnooze.snoozed_at >= cutoff)
+        .group_by(ReminderSnooze.reminder_id)
+        .subquery()
+    )
+    # Join to reminders and contacts, filter by owner and threshold
+    stmt = (
+        select(
+            Contact.id.label("contact_id"),
+            Contact.first_name,
+            Contact.last_name,
+            func.sum(snooze_subq.c.snooze_count).label("total_snoozes"),
+        )
+        .join(Reminder, Reminder.contact_id == Contact.id)
+        .join(snooze_subq, snooze_subq.c.reminder_id == Reminder.id)
+        .where(Reminder.owner_id == owner_id)
+        .group_by(Contact.id, Contact.first_name, Contact.last_name)
+        .having(func.sum(snooze_subq.c.snooze_count) > threshold)
+        .order_by(func.sum(snooze_subq.c.snooze_count).desc())
+    )
+    results = session.exec(stmt).all()
+    return [
+        {
+            "contact_id": r.contact_id,
+            "contact_name": f"{r.first_name} {r.last_name or ''}".strip(),
+            "snooze_count": r.total_snoozes,
+        }
+        for r in results
+    ]
 
 
 def get_or_create_user_from_claims(
@@ -496,6 +623,68 @@ def get_or_create_user_from_claims(
     session.commit()
     session.refresh(new_user)
     return new_user
+
+
+def upsert_contact(
+    *, session: Session, contact_in: ContactCreate, owner_id: uuid.UUID
+) -> Contact:
+    """Create or update a contact based on (owner_id, source, source_external_id) match.
+
+    If a contact with the same (owner_id, source, source_external_id) exists,
+    update it with the new data. Otherwise, create a new contact.
+    Only applies when source_external_id is not None.
+    """
+    # Only attempt upsert if source_external_id is provided
+    if contact_in.source_external_id is not None:
+        existing = session.exec(
+            select(Contact).where(
+                Contact.owner_id == owner_id,
+                Contact.source == contact_in.source,
+                Contact.source_external_id == contact_in.source_external_id,
+            )
+        ).first()
+
+        if existing:
+            # Update existing contact with new data
+            update_data = contact_in.model_dump(
+                exclude_unset=True, exclude={"tag_ids", "group_ids"}
+            )
+            existing.sqlmodel_update(update_data)
+            session.add(existing)
+            session.commit()
+            session.refresh(existing)
+
+            # Handle tag associations if provided
+            if contact_in.tag_ids is not None:
+                # Remove existing tags
+                existing_tags = session.exec(
+                    select(ContactTag).where(ContactTag.contact_id == existing.id)
+                ).all()
+                for ct in existing_tags:
+                    session.delete(ct)
+                # Add new tags
+                for tag_id in contact_in.tag_ids:
+                    session.add(ContactTag(contact_id=existing.id, tag_id=tag_id))
+                session.commit()
+
+            # Handle group associations if provided
+            if contact_in.group_ids is not None:
+                # Remove existing groups
+                existing_groups = session.exec(
+                    select(ContactGroup).where(ContactGroup.contact_id == existing.id)
+                ).all()
+                for cg in existing_groups:
+                    session.delete(cg)
+                # Add new groups
+                for group_id in contact_in.group_ids:
+                    session.add(ContactGroup(contact_id=existing.id, group_id=group_id))
+                session.commit()
+
+            session.refresh(existing)
+            return existing
+
+    # Fall through to normal create
+    return create_contact(session=session, contact_in=contact_in, owner_id=owner_id)
 
 
 # ─── API Keys ─────────────────────────────────────────────────────────────────
@@ -568,3 +757,103 @@ def get_api_key_by_plaintext(*, session: Session, plaintext: str) -> APIKey | No
     ):
         return None
     return api_key
+
+
+def create_ical_import_log(*, session: Session, log_in: IcalImportLog) -> IcalImportLog:
+    """Create an IcalImportLog entry for UID-based dedup."""
+    session.add(log_in)
+    session.commit()
+    session.refresh(log_in)
+    return log_in
+
+
+def get_ical_import_log_by_owner_and_uid(
+    *, session: Session, owner_id: uuid.UUID, uid: str
+) -> IcalImportLog | None:
+    """Fetch a single IcalImportLog by (owner_id, uid)."""
+    return session.exec(
+        select(IcalImportLog).where(
+            (IcalImportLog.owner_id == owner_id) & (IcalImportLog.uid == uid)
+        )
+    ).first()
+
+
+# ─── EmailOAuthToken CRUD ───────────────────────────────────────────────
+
+
+def create_email_oauth_token(
+    *,
+    session: Session,
+    token_in: EmailOAuthTokenCreate,
+    owner_id: uuid.UUID,
+    contact_id: uuid.UUID,
+) -> EmailOAuthToken:
+    """Create a new EmailOAuthToken record."""
+    from app.core.encryption import encrypt_refresh_token, encrypt_token
+
+    db_obj = EmailOAuthToken(
+        owner_id=owner_id,
+        contact_id=contact_id,
+        provider=token_in.provider,
+        email_address=token_in.email_address,
+        encrypted_access_token=encrypt_token(token_in.encrypted_access_token),
+        encrypted_refresh_token=encrypt_refresh_token(token_in.encrypted_refresh_token),
+        token_expires_at=token_in.token_expires_at,
+    )
+    session.add(db_obj)
+    session.commit()
+    session.refresh(db_obj)
+    return db_obj
+
+
+def get_email_oauth_token(
+    *, session: Session, token_id: uuid.UUID
+) -> EmailOAuthToken | None:
+    """Get an EmailOAuthToken by ID."""
+    return session.get(EmailOAuthToken, token_id)
+
+
+def list_email_oauth_tokens(
+    *, session: Session, owner_id: uuid.UUID, contact_id: uuid.UUID | None = None
+) -> list[EmailOAuthToken]:
+    """List EmailOAuthToken records for a user, optionally filtered by contact."""
+    stmt = select(EmailOAuthToken).where(EmailOAuthToken.owner_id == owner_id)
+    if contact_id:
+        stmt = stmt.where(EmailOAuthToken.contact_id == contact_id)
+    return list(session.exec(stmt).all())
+
+
+def update_email_oauth_token(
+    *,
+    session: Session,
+    token_id: uuid.UUID,
+    access_token: str | None = None,
+    refresh_token: str | None = None,
+    expires_at: datetime | None = None,
+) -> EmailOAuthToken | None:
+    """Update an EmailOAuthToken with new token data (encrypted)."""
+    from app.core.encryption import encrypt_refresh_token, encrypt_token
+
+    token_row = session.get(EmailOAuthToken, token_id)
+    if not token_row:
+        return None
+    if access_token is not None:
+        token_row.encrypted_access_token = encrypt_token(access_token)
+    if refresh_token is not None:
+        token_row.encrypted_refresh_token = encrypt_refresh_token(refresh_token)
+    if expires_at is not None:
+        token_row.token_expires_at = expires_at
+    session.add(token_row)
+    session.commit()
+    session.refresh(token_row)
+    return token_row
+
+
+def delete_email_oauth_token(*, session: Session, token_id: uuid.UUID) -> bool:
+    """Delete an EmailOAuthToken. Returns True if deleted."""
+    token_row = session.get(EmailOAuthToken, token_id)
+    if not token_row:
+        return False
+    session.delete(token_row)
+    session.commit()
+    return True
