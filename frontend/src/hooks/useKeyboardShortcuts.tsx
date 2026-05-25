@@ -5,9 +5,9 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from "react"
+// @ts-expect-error: tinykeys has types but they're not resolved correctly due to package.json exports
 import { tinykeys } from "tinykeys"
 
 export type ShortcutGroup =
@@ -107,26 +107,17 @@ export function ShortcutRegistryProvider({
     setOverlayOpen((v) => !v)
   }, [])
 
-  // Global keybinding for Cmd+/ or ? to open overlay.
-  //
-  // tinykeys' `"?"` binding does NOT match when shiftKey is true, but on a US
-  // keyboard typing `?` always sets shiftKey. So we listen for `?` directly
-  // via event.key and let tinykeys handle the modifier-key combos.
-  useEffect(() => {
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key !== "?") return
-      if (shouldSuppress(event)) return
-      event.preventDefault()
-      toggleOverlay()
-    }
-    window.addEventListener("keydown", onKeyDown)
-    return () => window.removeEventListener("keydown", onKeyDown)
-  }, [toggleOverlay])
-
+  // Global keybinding for Cmd+/ or ? to open overlay
   useEffect(() => {
     const unsubscribe = tinykeys(
       window,
       {
+        "?": (event: KeyboardEvent) => {
+          // Only trigger if not in input/textarea/contenteditable
+          if (shouldSuppress(event)) return
+          event.preventDefault()
+          toggleOverlay()
+        },
         "Meta+/": (event: KeyboardEvent) => {
           if (shouldSuppress(event)) return
           event.preventDefault()
@@ -217,43 +208,19 @@ export function useRegisterShortcuts(
     )
   }
 
-  const { register, unregister } = ctx
   const shortcuts = Array.isArray(arg) ? arg : [arg]
 
-  // IMPORTANT: callers MUST pass a stable reference (useMemo or a
-  // module-level const). Passing a fresh array literal every render causes
-  // the effect to cleanup + re-register every render, which cascades into a
-  // "Maximum update depth exceeded" loop and crashes the layout.
-  //
-  // We route callbacks through a ref so they stay fresh even when the
-  // shortcuts reference itself is stable across renders.
-  const shortcutsRef = useRef(shortcuts)
-  shortcutsRef.current = shortcuts
-
   useEffect(() => {
-    const snapshot = shortcutsRef.current.map((s) => ({
-      keys: s.keys,
-      description: s.description,
-      group: s.group,
-      enabled: s.enabled,
-      callback: s.callback
-        ? () => {
-            const current = shortcutsRef.current.find(
-              (x) => x.keys === s.keys && x.description === s.description,
-            )
-            current?.callback?.()
-          }
-        : undefined,
-    }))
-    for (const shortcut of snapshot) {
-      register(shortcut)
+    for (const shortcut of shortcuts) {
+      ctx.register(shortcut)
     }
+
     return () => {
-      for (const shortcut of snapshot) {
-        unregister(shortcut.keys, shortcut.description)
+      for (const shortcut of shortcuts) {
+        ctx.unregister(shortcut.keys, shortcut.description)
       }
     }
-  }, [register, unregister])
+  }, [shortcuts, ctx])
 }
 
 /**

@@ -109,8 +109,6 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           <RouterProvider router={router} />
           <Toaster richColors closeButton />
           <KeyboardShortcutOverlay />
-          <PwaInstallPrompt />
-          <ServiceWorkerUpdatePrompt />
         </QueryClientProvider>
       </ThemeProvider>
     </ShortcutRegistryProvider>

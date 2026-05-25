@@ -1,14 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
-import { useEffect, useMemo, useState } from "react"
-
-import {
-  type ContactPublic,
-  ContactsService,
-  type SearchResponse,
-  type SearchResultItem,
-  SearchService,
-} from "@/client"
+import { useMemo } from "react"
+import { type ContactPublic, ContactsService } from "@/client"
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
 import {
   CommandDialog,
@@ -58,6 +51,21 @@ function contactHaystack(contact: ContactPublic): string {
 }
 
 export function CommandPalette() {
+  // Register the Cmd+K / Ctrl+K shortcut in the global registry
+  useRegisterShortcuts([
+    {
+      keys: "Meta+k",
+      description: "Open command palette",
+      group: "Search",
+      callback: () => toggle(),
+    },
+    {
+      keys: "Control+k",
+      description: "Open command palette",
+      group: "Search",
+      callback: () => toggle(),
+    },
+  ])
   const { open, setOpen, toggle } = useCommandPalette()
   // Memoize so useRegisterShortcuts sees a stable reference — an inline
   // literal previously triggered an infinite render loop.
@@ -84,32 +92,6 @@ export function CommandPalette() {
   const queryClient = useQueryClient()
   const [searchQuery, setSearchQuery] = useState("")
 
-  useEffect(() => {
-    function onKeyDown(e: KeyboardEvent) {
-      if ((e.key === "k" || e.key === "K") && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault()
-        toggle()
-      }
-    }
-    window.addEventListener("keydown", onKeyDown)
-    return () => window.removeEventListener("keydown", onKeyDown)
-  }, [toggle])
-
-  // Full-text search
-  const { data: searchData, isFetching: searchLoading } =
-    useQuery<SearchResponse>({
-      queryKey: ["search", searchQuery],
-      queryFn: async () => {
-        if (searchQuery.length < 1) {
-          return { results: [], total: 0, query: searchQuery }
-        }
-        return SearchService.search({ q: searchQuery, limit: SEARCH_LIMIT })
-      },
-      enabled: open && searchQuery.length >= 1,
-      staleTime: 30_000,
-    })
-
-  const searchResults: SearchResultItem[] = searchData?.results ?? []
   const { data: contactsData } = useQuery({
     queryKey: ["contacts"],
     queryFn: () => ContactsService.listContacts(),
