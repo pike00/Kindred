@@ -1,11 +1,11 @@
 ---
 title: Feature Backlog Merge Train
-status: active
+status: completed
 repos: [personal-crm]
 started: 2026-05-15
-last_updated: 2026-05-24
-next_step: Begin Wave 4 -- worktree-stay-in-touch-dashboard is first up
-progress: 42/46
+last_updated: 2026-05-25
+next_step: Human QA of all 29 merged features -- see docs/projects/merge-train-v0270-qa/README.md
+progress: 46/46
 ---
 
 # Feature Backlog Merge Train
