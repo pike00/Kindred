@@ -1,6 +1,6 @@
 ---
 title: Frontend Test Coverage ≥90%
-status: completed
+status: to_review
 repos: [kindred]
 started: 2026-05-15
 last_updated: 2026-05-16

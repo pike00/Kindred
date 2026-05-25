@@ -1,6 +1,6 @@
 ---
 title: Feature Backlog Merge Train
-status: completed
+status: to_review
 repos: [personal-crm]
 started: 2026-05-15
 last_updated: 2026-05-25

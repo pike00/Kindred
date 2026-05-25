@@ -1,6 +1,6 @@
 ---
 title: Automated Release Notes in GitHub
-status: completed
+status: to_review
 repos: [personal-crm]
 started: 2026-04-28
 last_updated: 2026-05-15
