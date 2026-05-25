@@ -19,6 +19,7 @@ Scheduled reminder; contact-specific or standalone.
 | last_sent_at | timestamp with time zone |  | true |  |  | When the ARQ worker last fired this reminder. |
 | snoozed_until | timestamp with time zone |  | true |  |  | If set, suppress firing until this time. |
 | created_at | timestamp with time zone |  | false |  |  | When the reminder was created (UTC). |
+| deleted_at | timestamp without time zone |  | true |  |  |  |
 
 ## Constraints
 
@@ -44,6 +45,7 @@ Scheduled reminder; contact-specific or standalone.
 | ix_reminder_contact_id | CREATE INDEX ix_reminder_contact_id ON public.reminder USING btree (contact_id) |
 | ix_reminder_remind_at | CREATE INDEX ix_reminder_remind_at ON public.reminder USING btree (remind_at) |
 | ix_reminder_is_active | CREATE INDEX ix_reminder_is_active ON public.reminder USING btree (is_active) |
+| ix_reminder_deleted_at | CREATE INDEX ix_reminder_deleted_at ON public.reminder USING btree (deleted_at) |
 
 ## Relations
 
@@ -66,6 +68,7 @@ erDiagram
   timestamp_with_time_zone last_sent_at
   timestamp_with_time_zone snoozed_until
   timestamp_with_time_zone created_at
+  timestamp_without_time_zone deleted_at
 }
 "public.reminder_snooze" {
   uuid id
@@ -113,11 +116,22 @@ erDiagram
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
   timestamp_with_time_zone deleted_at
+  uuid organization_id FK
   contactsource source
   varchar_500_ source_external_id
-  uuid organization_id FK
   boolean do_not_contact
   varchar_500_ do_not_contact_reason
+  varchar_500_ imessage_id
+  timestamp_with_time_zone imessage_synced_at
+  varchar_64_ imessage_profile_hash
+  jsonb imessage_profile
+  tsvector search_vector
+  boolean is_merged
+  uuid merged_into_id FK
+  varchar_64_ vcard_sha256
+  varchar_255_ timezone
+  text pronouns
+  boolean auto_log_email
 }
 ```
 

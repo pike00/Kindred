@@ -12,6 +12,7 @@ from sqlmodel import Session, create_engine, select
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
+from app.email_service import poll_all_email_accounts  # noqa: E402
 from app.models import Contact, Reminder, ReminderFrequency  # noqa: E402
 
 
@@ -90,6 +91,16 @@ async def check_cadences(ctx: dict) -> None:
     """Check for contacts whose cadence has been exceeded and notify."""
     engine = ctx["engine"]
     now = datetime.now(timezone.utc)
+    from zoneinfo import ZoneInfo
+
+    def _contact_now(contact_tz: str | None) -> datetime:
+        """Return current time in the contact's timezone, or UTC."""
+        if contact_tz:
+            try:
+                return datetime.now(ZoneInfo(contact_tz))
+            except Exception:
+                pass
+        return datetime.now(timezone.utc)
 
     with Session(engine) as session:
         contacts = session.exec(
@@ -105,22 +116,35 @@ async def check_cadences(ctx: dict) -> None:
             if contact.last_contacted_at is None:
                 overdue = True
             else:
+                # Compute deadline in UTC
                 deadline = contact.last_contacted_at + timedelta(
                     days=contact.contact_frequency_days
                 )
-                overdue = now > deadline
-
-            if overdue:
-                name = f"{contact.first_name} {contact.last_name or ''}".strip()
+                # Get current time in contact's timezone
+                contact_now = _contact_now(contact.timezone)
+                # 9am in contact's local time, converted to UTC
                 try:
-                    apobj.notify(
-                        title=f"Losing touch: {name}",
-                        body=f"You haven't contacted {name} in over {contact.contact_frequency_days} days.",
+                    local_tz = (
+                        ZoneInfo(contact.timezone) if contact.timezone else timezone.utc
                     )
-                except Exception as e:
-                    logger.error(
-                        f"Failed to send cadence notification for contact {contact.id}: {e}"
-                    )
+                except Exception:
+                    local_tz = timezone.utc
+                nine_am_local = contact_now.astimezone(local_tz).replace(
+                    hour=9, minute=0, second=0, microsecond=0
+                )
+                nine_am_utc = nine_am_local.astimezone(timezone.utc)
+                overdue = (now > deadline) and (now > nine_am_utc)
+        if overdue:
+            name = f"{contact.first_name} {contact.last_name or ''}".strip()
+            try:
+                apobj.notify(
+                    title=f"Losing touch: {name}",
+                    body=f"You haven't contacted {name} in over {contact.contact_frequency_days} days.",
+                )
+            except Exception as e:
+                logger.error(
+                    f"Failed to send cadence notification for contact {contact.id}: {e}"
+                )
 
 
 async def index_contact_in_search(
@@ -152,6 +176,21 @@ async def remove_contact_from_search(
         logger.warning(f"Failed to remove contact {contact_id} from search: {e}")
 
 
+async def poll_email_accounts(ctx: dict) -> None:
+    """Poll all configured email accounts and create interactions."""
+    from sqlmodel import Session
+
+    engine = ctx["engine"]
+    with Session(engine) as session:
+        try:
+            results = poll_all_email_accounts(session=session)
+            total = sum(results.values())
+            if total > 0:
+                logger.info(f"Email poll created {total} new interaction(s)")
+        except Exception as e:
+            logger.error(f"Email poll failed: {e}")
+
+
 class WorkerSettings:
     """ARQ worker settings."""
 
@@ -160,10 +199,12 @@ class WorkerSettings:
         check_cadences,
         index_contact_in_search,
         remove_contact_from_search,
+        poll_email_accounts,
     ]
     cron_jobs = [
         cron(check_reminders, minute={0, 30}),  # Every 30 minutes
         cron(check_cadences, hour={9}, minute={0}),  # Daily at 9 AM UTC
+        cron(poll_email_accounts, hour={6, 12, 18}, minute={0}),  # 6AM, noon, 6PM UTC
     ]
     redis_settings = RedisSettings.from_dsn(settings.REDIS_URL)
 

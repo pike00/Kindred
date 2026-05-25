@@ -26,6 +26,7 @@ import {
   Trash2,
   Video,
 } from "@/lib/icons"
+import { useSeedDemo } from "@/lib/seed"
 import { cn } from "@/lib/utils"
 import { AddInteractionDialog } from "./AddInteractionDialog"
 
@@ -89,6 +90,8 @@ function groupByDate(
 }
 
 export const InteractionTimeline = () => {
+  const seedMutation = useSeedDemo()
+
   const { data } = useSuspenseQuery({
     queryKey: ["interactions"],
     queryFn: () => InteractionsService.listInteractions({ limit: 200 }),
@@ -112,7 +115,26 @@ export const InteractionTimeline = () => {
           icon={MessagesSquare}
           title="No interactions logged yet"
           description="Log a call, meeting, or message to start your timeline."
-          action={<AddInteractionDialog />}
+          action={
+            import.meta.env.DEV ? (
+              <div className="flex flex-col items-center gap-2">
+                <AddInteractionDialog />
+                <p className="text-xs text-muted-foreground">or</p>
+                <button
+                  type="button"
+                  className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3"
+                  disabled={seedMutation.isPending}
+                  onClick={() => seedMutation.mutate({ count: 8 })}
+                >
+                  {seedMutation.isPending
+                    ? "Seeding..."
+                    : "Seed demo interactions"}
+                </button>
+              </div>
+            ) : (
+              <AddInteractionDialog />
+            )
+          }
         />
       ) : (
         <div className="space-y-6">

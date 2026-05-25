@@ -142,7 +142,7 @@ DOCKER / INFRASTRUCTURE — DO NOT TOUCH:
   - \`docker compose up\`, \`docker compose down\`, \`docker compose restart\`, \`docker compose pull\`, \`docker compose build\`
   - \`docker rm\`, \`docker stop\`, \`docker kill\` against the project's containers (crm-db, personal-crm-backend-1, personal-crm-frontend-1, personal-crm-worker-1, personal-crm-redis-1, personal-crm-meilisearch-1)
   - \`docker volume rm\`, \`docker volume prune\`, \`docker system prune\`, \`docker network rm\`
-  - \`just up\`, \`just down\`, \`just down-clean\`, \`just rebuild\`
+  - \`just dev\`, \`just down\`, \`just down-clean\`, \`just rebuild\`
 - ALLOWED for testing/inspection:
   - \`docker compose exec backend …\` (run inside the running backend), \`docker compose exec db psql …\`
   - \`docker compose ps\`, \`docker compose logs\`, \`docker exec\`, \`docker logs\`, \`docker ps\`

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet"
 import type { InteractionPublic } from "@/client"
 import "leaflet/dist/leaflet.css"

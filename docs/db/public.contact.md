@@ -8,7 +8,7 @@ Core contact entity — the subject of everything else in the CRM.
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | uuid |  | false | [public.contact_tag](public.contact_tag.md) [public.contact_group](public.contact_group.md) [public.contact_field](public.contact_field.md) [public.address](public.address.md) [public.relationship](public.relationship.md) [public.pet](public.pet.md) [public.custom_field_value](public.custom_field_value.md) [public.reminder](public.reminder.md) [public.gift](public.gift.md) [public.debt](public.debt.md) [public.life_event](public.life_event.md) [public.note](public.note.md) [public.media_recommendation](public.media_recommendation.md) [public.interaction_attendee](public.interaction_attendee.md) [public.note_mention](public.note_mention.md) [public.communication_preference](public.communication_preference.md) |  | Primary key. |
+| id | uuid |  | false | [public.contact](public.contact.md) [public.contact_tag](public.contact_tag.md) [public.contact_field](public.contact_field.md) [public.address](public.address.md) [public.relationship](public.relationship.md) [public.pet](public.pet.md) [public.custom_field_value](public.custom_field_value.md) [public.reminder](public.reminder.md) [public.gift](public.gift.md) [public.debt](public.debt.md) [public.life_event](public.life_event.md) [public.note](public.note.md) [public.media_recommendation](public.media_recommendation.md) [public.interaction_attendee](public.interaction_attendee.md) [public.note_mention](public.note_mention.md) [public.journal_entry_contact](public.journal_entry_contact.md) [public.contact_stage_event](public.contact_stage_event.md) [public.contact_merge](public.contact_merge.md) [public.ical_import_log](public.ical_import_log.md) [public.email_oauth_token](public.email_oauth_token.md) |  | Primary key. |
 | owner_id | uuid |  | false |  | [public.user](public.user.md) | Owner user; cascades on delete. |
 | first_name | varchar(255) |  | false |  |  | Given name; required. |
 | last_name | varchar(255) |  | true |  |  | Family name. |
@@ -34,16 +34,28 @@ Core contact entity — the subject of everything else in the CRM.
 | created_at | timestamp with time zone |  | false |  |  | When the contact was created (UTC). |
 | updated_at | timestamp with time zone |  | false |  |  | Auto-bumped on any column change (UTC). |
 | deleted_at | timestamp with time zone |  | true |  |  |  |
+| organization_id | uuid |  | true |  | [public.organization](public.organization.md) |  |
 | source | contactsource | 'MANUAL'::contactsource | false |  |  |  |
 | source_external_id | varchar(500) |  | true |  |  |  |
-| organization_id | uuid |  | true |  | [public.organization](public.organization.md) |  |
 | do_not_contact | boolean | false | false |  |  |  |
 | do_not_contact_reason | varchar(500) |  | true |  |  |  |
+| imessage_id | varchar(500) |  | true |  |  |  |
+| imessage_synced_at | timestamp with time zone |  | true |  |  |  |
+| imessage_profile_hash | varchar(64) |  | true |  |  |  |
+| imessage_profile | jsonb |  | true |  |  |  |
+| search_vector | tsvector |  | true |  |  |  |
+| is_merged | boolean | false | false |  |  |  |
+| merged_into_id | uuid |  | true |  | [public.contact](public.contact.md) |  |
+| vcard_sha256 | varchar(64) |  | true |  |  |  |
+| timezone | varchar(255) |  | true |  |  |  |
+| pronouns | text |  | true |  |  |  |
+| auto_log_email | boolean | false | false |  |  |  |
 
 ## Constraints
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
+| contact_auto_log_email_not_null | n | NOT NULL auto_log_email |
 | contact_created_at_not_null | n | NOT NULL created_at |
 | contact_do_not_contact_not_null | n | NOT NULL do_not_contact |
 | contact_first_name_not_null | n | NOT NULL first_name |
@@ -51,13 +63,15 @@ Core contact entity — the subject of everything else in the CRM.
 | contact_is_archived_not_null | n | NOT NULL is_archived |
 | contact_is_deceased_not_null | n | NOT NULL is_deceased |
 | contact_is_favorite_not_null | n | NOT NULL is_favorite |
+| contact_is_merged_not_null | n | NOT NULL is_merged |
 | contact_owner_id_not_null | n | NOT NULL owner_id |
 | contact_source_not_null | n | NOT NULL source |
 | contact_updated_at_not_null | n | NOT NULL updated_at |
 | contact_owner_id_fkey | FOREIGN KEY | FOREIGN KEY (owner_id) REFERENCES "user"(id) ON DELETE CASCADE |
+| contact_merged_into_id_fkey | FOREIGN KEY | FOREIGN KEY (merged_into_id) REFERENCES contact(id) ON DELETE SET NULL |
 | contact_pkey | PRIMARY KEY | PRIMARY KEY (id) |
-| uq_contact_owner_source_external_id | UNIQUE | UNIQUE (owner_id, source, source_external_id) |
 | fk_contact_organization_id | FOREIGN KEY | FOREIGN KEY (organization_id) REFERENCES organization(id) ON DELETE SET NULL |
+| uq_contact_owner_source_external_id | UNIQUE | UNIQUE (owner_id, source, source_external_id) |
 
 ## Indexes
 
@@ -70,14 +84,24 @@ Core contact entity — the subject of everything else in the CRM.
 | ix_contact_contact_frequency_days | CREATE INDEX ix_contact_contact_frequency_days ON public.contact USING btree (contact_frequency_days) |
 | ix_contact_deleted_at | CREATE INDEX ix_contact_deleted_at ON public.contact USING btree (deleted_at) |
 | uq_contact_owner_source_external_id | CREATE UNIQUE INDEX uq_contact_owner_source_external_id ON public.contact USING btree (owner_id, source, source_external_id) |
+| ix_contact_imessage_id | CREATE INDEX ix_contact_imessage_id ON public.contact USING btree (imessage_id) |
+| ix_contact_search_vector | CREATE INDEX ix_contact_search_vector ON public.contact USING gin (search_vector) |
+| ix_contact_is_merged | CREATE INDEX ix_contact_is_merged ON public.contact USING btree (is_merged) |
+| ix_contact_vcard_sha256 | CREATE INDEX ix_contact_vcard_sha256 ON public.contact USING btree (vcard_sha256) |
+
+## Triggers
+
+| Name | Definition |
+| ---- | ---------- |
+| tsvectorupdate_contact | CREATE TRIGGER tsvectorupdate_contact BEFORE INSERT OR UPDATE ON public.contact FOR EACH ROW EXECUTE FUNCTION update_contact_search_vector() |
 
 ## Relations
 
 ```mermaid
 erDiagram
 
+"public.contact" }o--o| "public.contact" : "FOREIGN KEY (merged_into_id) REFERENCES contact(id) ON DELETE SET NULL"
 "public.contact_tag" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
-"public.contact_group" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.contact_field" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.address" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.relationship" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
@@ -92,7 +116,12 @@ erDiagram
 "public.media_recommendation" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.interaction_attendee" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.note_mention" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
-"public.communication_preference" |o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
+"public.journal_entry_contact" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
+"public.contact_stage_event" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
+"public.contact_merge" }o--|| "public.contact" : "FOREIGN KEY (absorbed_id) REFERENCES contact(id) ON DELETE CASCADE"
+"public.contact_merge" }o--|| "public.contact" : "FOREIGN KEY (surviving_id) REFERENCES contact(id) ON DELETE CASCADE"
+"public.ical_import_log" }o--o| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
+"public.email_oauth_token" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.contact" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.contact" }o--o| "public.organization" : "FOREIGN KEY (organization_id) REFERENCES organization(id) ON DELETE SET NULL"
 
@@ -123,19 +152,26 @@ erDiagram
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
   timestamp_with_time_zone deleted_at
+  uuid organization_id FK
   contactsource source
   varchar_500_ source_external_id
-  uuid organization_id FK
   boolean do_not_contact
   varchar_500_ do_not_contact_reason
+  varchar_500_ imessage_id
+  timestamp_with_time_zone imessage_synced_at
+  varchar_64_ imessage_profile_hash
+  jsonb imessage_profile
+  tsvector search_vector
+  boolean is_merged
+  uuid merged_into_id FK
+  varchar_64_ vcard_sha256
+  varchar_255_ timezone
+  text pronouns
+  boolean auto_log_email
 }
 "public.contact_tag" {
   uuid contact_id FK
   uuid tag_id FK
-}
-"public.contact_group" {
-  uuid contact_id FK
-  uuid group_id FK
 }
 "public.contact_field" {
   uuid id
@@ -193,6 +229,7 @@ erDiagram
   timestamp_with_time_zone last_sent_at
   timestamp_with_time_zone snoozed_until
   timestamp_with_time_zone created_at
+  timestamp_without_time_zone deleted_at
 }
 "public.gift" {
   uuid id
@@ -207,6 +244,7 @@ erDiagram
   varchar_3_ value_currency
   varchar_2048_ url
   timestamp_with_time_zone created_at
+  timestamp_without_time_zone deleted_at
 }
 "public.debt" {
   uuid id
@@ -219,6 +257,7 @@ erDiagram
   boolean is_settled
   date settled_at
   timestamp_with_time_zone created_at
+  timestamp_without_time_zone deleted_at
 }
 "public.life_event" {
   uuid id
@@ -230,6 +269,7 @@ erDiagram
   date occurred_at
   boolean create_annual_reminder
   timestamp_with_time_zone created_at
+  timestamp_without_time_zone deleted_at
 }
 "public.note" {
   uuid id
@@ -238,6 +278,9 @@ erDiagram
   varchar_50000_ body
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
+  timestamp_without_time_zone deleted_at
+  tsvector search_vector
+  varchar_36_ client_id
 }
 "public.media_recommendation" {
   uuid id
@@ -259,13 +302,45 @@ erDiagram
   uuid note_id FK
   uuid contact_id FK
 }
-"public.communication_preference" {
+"public.journal_entry_contact" {
+  uuid journal_entry_id FK
+  uuid contact_id FK
+}
+"public.contact_stage_event" {
   uuid id
   uuid contact_id FK
-  varchar_20_ preferred_channel
-  varchar_11_ best_time_local
-  boolean do_not_contact
-  varchar_500_ do_not_contact_reason
+  uuid owner_id FK
+  varchar_100_ from_stage
+  varchar_100_ to_stage
+  timestamp_with_time_zone occurred_at
+  varchar_2000_ note
+  timestamp_with_time_zone created_at
+}
+"public.contact_merge" {
+  uuid id
+  uuid surviving_id FK
+  uuid absorbed_id FK
+  uuid merged_by FK
+  timestamp_with_time_zone merged_at
+  varchar_1000_ notes
+}
+"public.ical_import_log" {
+  uuid id
+  uuid owner_id FK
+  varchar_2048_ uid
+  uuid contact_id FK
+  varchar_50_ event_type
+  timestamp_with_time_zone imported_at
+}
+"public.email_oauth_token" {
+  uuid id
+  uuid owner_id FK
+  uuid contact_id FK
+  varchar_50_ provider
+  varchar_255_ email_address
+  text encrypted_access_token
+  text encrypted_refresh_token
+  timestamp_with_time_zone token_expires_at
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
 }

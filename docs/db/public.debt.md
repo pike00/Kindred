@@ -8,7 +8,7 @@ Money owed to or from a contact.
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | uuid |  | false |  |  | Primary key. |
+| id | uuid |  | false | [public.debt_payment](public.debt_payment.md) |  | Primary key. |
 | owner_id | uuid |  | false |  | [public.user](public.user.md) | Owner user; cascades on delete. |
 | contact_id | uuid |  | false |  | [public.contact](public.contact.md) | Contact on the other side of the debt; cascades on delete. |
 | direction | debtdirection |  | false |  |  | Who owes whom: i_owe (you owe them) or they_owe (they owe you). |
@@ -18,6 +18,7 @@ Money owed to or from a contact.
 | is_settled | boolean |  | false |  |  | Marked paid off. |
 | settled_at | date |  | true |  |  | Date the debt was settled. |
 | created_at | timestamp with time zone |  | false |  |  | When the debt was recorded (UTC). |
+| deleted_at | timestamp without time zone |  | true |  |  |  |
 
 ## Constraints
 
@@ -43,12 +44,14 @@ Money owed to or from a contact.
 | ix_debt_contact_id | CREATE INDEX ix_debt_contact_id ON public.debt USING btree (contact_id) |
 | ix_debt_owner_id | CREATE INDEX ix_debt_owner_id ON public.debt USING btree (owner_id) |
 | ix_debt_is_settled | CREATE INDEX ix_debt_is_settled ON public.debt USING btree (is_settled) |
+| ix_debt_deleted_at | CREATE INDEX ix_debt_deleted_at ON public.debt USING btree (deleted_at) |
 
 ## Relations
 
 ```mermaid
 erDiagram
 
+"public.debt_payment" }o--|| "public.debt" : "FOREIGN KEY (debt_id) REFERENCES debt(id) ON DELETE CASCADE"
 "public.debt" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.debt" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 
@@ -62,6 +65,15 @@ erDiagram
   varchar_1000_ reason
   boolean is_settled
   date settled_at
+  timestamp_with_time_zone created_at
+  timestamp_without_time_zone deleted_at
+}
+"public.debt_payment" {
+  uuid id
+  uuid debt_id FK
+  numeric_12_2_ amount
+  date paid_at
+  text note
   timestamp_with_time_zone created_at
 }
 "public.user" {
@@ -102,11 +114,22 @@ erDiagram
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
   timestamp_with_time_zone deleted_at
+  uuid organization_id FK
   contactsource source
   varchar_500_ source_external_id
-  uuid organization_id FK
   boolean do_not_contact
   varchar_500_ do_not_contact_reason
+  varchar_500_ imessage_id
+  timestamp_with_time_zone imessage_synced_at
+  varchar_64_ imessage_profile_hash
+  jsonb imessage_profile
+  tsvector search_vector
+  boolean is_merged
+  uuid merged_into_id FK
+  varchar_64_ vcard_sha256
+  varchar_255_ timezone
+  text pronouns
+  boolean auto_log_email
 }
 ```
 
