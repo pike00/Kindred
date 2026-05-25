@@ -642,38 +642,48 @@ export const AddressUpdateSchema = {
     title: 'AddressUpdate'
 } as const;
 
-export const Body_import_export_import_csvSchema = {
+export const AvatarUploadResponseSchema = {
+    properties: {
+        avatar_url: {
+            type: 'string',
+            title: 'Avatar Url'
+        },
+        message: {
+            type: 'string',
+            title: 'Message',
+            default: 'Avatar uploaded successfully'
+        }
+    },
+    type: 'object',
+    required: ['avatar_url'],
+    title: 'AvatarUploadResponse',
+    description: 'Response model for avatar upload.'
+} as const;
+
+export const Body_contacts_upload_avatarSchema = {
     properties: {
         file: {
             type: 'string',
             format: 'binary',
             title: 'File'
-        },
-        column_mapping: {
-            anyOf: [
-                {
-                    additionalProperties: {
-                        anyOf: [
-                            {
-                                type: 'string'
-                            },
-                            {
-                                type: 'null'
-                            }
-                        ]
-                    },
-                    type: 'object'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Column Mapping'
         }
     },
     type: 'object',
     required: ['file'],
-    title: 'Body_import-export-import_csv'
+    title: 'Body_contacts-upload_avatar'
+} as const;
+
+export const Body_contacts_upload_avatar_fileSchema = {
+    properties: {
+        file: {
+            type: 'string',
+            format: 'binary',
+            title: 'File'
+        }
+    },
+    type: 'object',
+    required: ['file'],
+    title: 'Body_contacts-upload_avatar_file'
 } as const;
 
 export const Body_import_export_import_vcardSchema = {

@@ -9,7 +9,15 @@ from pathlib import Path
 from typing import Any
 
 from arq.connections import RedisSettings
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    File,
+    HTTPException,
+    Query,
+    UploadFile,
+)
+from pydantic import BaseModel
 from sqlalchemy.orm import selectinload
 from sqlmodel import col, func, select
 
@@ -47,6 +55,21 @@ router = APIRouter(prefix="/contacts", tags=["contacts"])
 
 
 # ─── Bulk operations models ────────────────────────────────────────────────
+
+# Avatar upload configuration
+AVATAR_UPLOAD_DIR = Path("uploads/avatars")
+AVATAR_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+# Max file size: 10MB
+MAX_AVATAR_SIZE = 10 * 1024 * 1024
+ALLOWED_AVATAR_TYPES = {"image/jpeg", "image/png", "image/webp"}
+
+
+class AvatarUploadResponse(SQLModel):
+    """Response model for avatar upload."""
+
+    avatar_url: str
+    message: str = "Avatar uploaded successfully"
 
 
 class BulkContactFilter(BaseModel):
@@ -937,26 +960,92 @@ def restore_contact(
 # ─── Merge / Unmerge ──────────────────────────────────────────────────
 
 
-class MergeContactsRequest(BaseModel):
-    """Request body for merging two contacts."""
+@router.get("/{contact_id}/mentions", response_model=list[_MentionPublic])
+@router.post(
+    "/{contact_id}/avatar",
+    response_model=AvatarUploadResponse,
+    name="upload_avatar_file",
+)
+async def upload_avatar(
+    session: SessionDep,
+    current_user: CurrentUser,
+    contact_id: uuid.UUID,
+    file: UploadFile = File(...),
+) -> Any:
+    """Upload a contact's avatar image with automatic face detection crop.
 
-    surviving_id: uuid.UUID
-    absorbed_id: uuid.UUID
-    notes: str | None = None
+    The client is responsible for cropping the image before upload.
+    This endpoint stores the cropped image and updates the contact's avatar_url.
+    """
+    contact = session.get(Contact, contact_id)
+    if not contact or contact.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="Contact not found")
+    if contact.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
+    # Validate file type
+    if file.content_type not in ALLOWED_AVATAR_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid file type. Allowed: {', '.join(ALLOWED_AVATAR_TYPES)}",
+        )
+
+    # Read file content
+    content = await file.read()
+
+    # Check file size
+    if len(content) > MAX_AVATAR_SIZE:
+        raise HTTPException(
+            status_code=400,
+            detail=f"File too large. Max size: {MAX_AVATAR_SIZE // (1024 * 1024)}MB",
+        )
+
+    # Generate unique filename
+    file_ext = Path(file.filename).suffix or ".jpg"
+    avatar_filename = f"{contact_id}_{uuid.uuid4().hex}{file_ext}"
+    avatar_path = AVATAR_UPLOAD_DIR / avatar_filename
+
+    # Save file
+    avatar_path.write_bytes(content)
+
+    # Update contact's avatar_url
+    avatar_url = f"/uploads/avatars/{avatar_filename}"
+    contact.avatar_url = avatar_url
+    session.add(contact)
+    session.commit()
+
+    return AvatarUploadResponse(avatar_url=avatar_url)
 
 
-class MergeResponse(SQLModel):
-    """Response after a merge operation."""
+@router.delete("/{contact_id}/avatar")
+async def delete_avatar(
+    session: SessionDep,
+    current_user: CurrentUser,
+    contact_id: uuid.UUID,
+) -> Any:
+    """Delete a contact's avatar image."""
+    contact = session.get(Contact, contact_id)
+    if not contact or contact.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="Contact not found")
+    if contact.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
 
-    merge_log_id: uuid.UUID
-    surviving_id: uuid.UUID
-    absorbed_id: uuid.UUID
-    merged_at: datetime
+    if contact.avatar_url:
+        # Extract filename and delete file
+        avatar_filename = Path(contact.avatar_url).name
+        avatar_path = AVATAR_UPLOAD_DIR / avatar_filename
+        if avatar_path.exists():
+            avatar_path.unlink()
+
+        # Clear avatar_url
+        contact.avatar_url = None
+        session.add(contact)
+        session.commit()
+
+    return {"ok": True, "message": "Avatar deleted successfully"}
 
 
-@router.post("/merge", response_model=MergeResponse, status_code=201)
-def merge_contacts_endpoint(
-    *,
+def list_contact_mentions(
     session: SessionDep,
     current_user: CurrentUser,  # noqa: ARG001
     background_tasks: BackgroundTasks,

@@ -381,7 +381,7 @@ function ContactDetailPage() {
                   Groups
                   <InfoHint>
                     Named collections of people with a shared context, like
-                    "Family", "D and D Group", or "Work Team". Groups have a
+                    "Family", "D&amp;D Group", or "Work Team". Groups have a
                     description; tags don't.
                   </InfoHint>
                 </CardTitle>
