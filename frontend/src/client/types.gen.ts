@@ -178,7 +178,6 @@ export type Body_login_login_access_token = {
 export type BulkContactFilter = {
     search?: (string | null);
     tag_id?: (string | null);
-    group_id?: (string | null);
     is_favorite?: (boolean | null);
     is_archived?: (boolean | null);
     stage?: (string | null);
@@ -187,8 +186,6 @@ export type BulkContactFilter = {
 export type BulkContactOperation = {
     add_tag_ids?: (Array<(string)> | null);
     remove_tag_ids?: (Array<(string)> | null);
-    add_group_ids?: (Array<(string)> | null);
-    remove_group_ids?: (Array<(string)> | null);
     set_is_archived?: (boolean | null);
     set_is_favorite?: (boolean | null);
 };
@@ -307,7 +304,6 @@ export type ContactCreate = {
      */
     source_external_id?: (string | null);
     tag_ids?: (Array<(string)> | null);
-    group_ids?: (Array<(string)> | null);
 };
 
 export type ContactFieldCreate = {
@@ -452,7 +448,6 @@ export type ContactPublic = {
     updated_at: string;
     deleted_at?: (string | null);
     tags?: Array<TagPublic>;
-    groups?: Array<GroupPublic>;
 };
 
 export type ContactSource = 'MANUAL' | 'VCARD_IMPORT' | 'CARDDAV' | 'GOOGLE' | 'WEBHOOK';
@@ -483,7 +478,6 @@ export type ContactUpdate = {
     do_not_contact?: (boolean | null);
     do_not_contact_reason?: (string | null);
     tag_ids?: (Array<(string)> | null);
-    group_ids?: (Array<(string)> | null);
 };
 
 export type CustomFieldDefinitionCreate = {
@@ -641,6 +635,10 @@ export type DebtUpdate = {
     settled_at?: (string | null);
 };
 
+export type EnvironmentInfo = {
+    environment: string;
+};
+
 export type GiftCreate = {
     /**
      * Gift name.
@@ -732,40 +730,6 @@ export type GiftUpdate = {
     value_amount?: (number | null);
     value_currency?: (string | null);
     url?: (string | null);
-};
-
-export type GroupCreate = {
-    /**
-     * Group name, 1-255 chars.
-     */
-    name: string;
-    /**
-     * Optional group description.
-     */
-    description?: (string | null);
-};
-
-export type GroupPublic = {
-    /**
-     * Group name, 1-255 chars.
-     */
-    name: string;
-    /**
-     * Optional group description.
-     */
-    description?: (string | null);
-    id: string;
-    created_at: string;
-};
-
-export type GroupsPublic = {
-    data: Array<GroupPublic>;
-    count: number;
-};
-
-export type GroupUpdate = {
-    name?: (string | null);
-    description?: (string | null);
 };
 
 export type HTTPValidationError = {
@@ -1147,7 +1111,6 @@ export type OverdueContactPublic = {
     updated_at: string;
     deleted_at?: (string | null);
     tags?: Array<TagPublic>;
-    groups?: Array<GroupPublic>;
     days_overdue?: (number | null);
 };
 
@@ -1204,13 +1167,6 @@ export type PetUpdate = {
     notes?: (string | null);
 };
 
-export type PrivateUserCreate = {
-    email: string;
-    password: string;
-    full_name: string;
-    is_verified?: boolean;
-};
-
 export type RelationshipCreate = {
     /**
      * Kind of relationship: spouse, child, parent, sibling, friend, colleague, etc.
@@ -1248,6 +1204,14 @@ export type RelationshipUpdate = {
     notes?: (string | null);
 };
 
+export type ReminderContactSummary = {
+    id: string;
+    first_name: string;
+    last_name?: (string | null);
+    nickname?: (string | null);
+    avatar_url?: (string | null);
+};
+
 export type ReminderCreate = {
     /**
      * Reminder title.
@@ -1270,6 +1234,38 @@ export type ReminderCreate = {
      */
     is_active?: boolean;
     contact_id?: (string | null);
+};
+
+/**
+ * Reminder enriched with the linked contact (if any) for the bell popover.
+ */
+export type ReminderDuePublic = {
+    /**
+     * Reminder title.
+     */
+    title: string;
+    /**
+     * Extra details shown with the reminder.
+     */
+    description?: (string | null);
+    /**
+     * When to fire the reminder.
+     */
+    remind_at: string;
+    /**
+     * How often the reminder repeats.
+     */
+    frequency?: ReminderFrequency;
+    /**
+     * Enable or disable without deleting.
+     */
+    is_active?: boolean;
+    id: string;
+    contact_id: (string | null);
+    last_sent_at: (string | null);
+    snoozed_until: (string | null);
+    created_at: string;
+    contact?: (ReminderContactSummary | null);
 };
 
 export type ReminderFrequency = 'once' | 'daily' | 'weekly' | 'monthly' | 'yearly';
@@ -1303,6 +1299,22 @@ export type ReminderPublic = {
     deleted_at?: (string | null);
 };
 
+export type RemindersDuePublic = {
+    data: Array<ReminderDuePublic>;
+    count: number;
+};
+
+export type ReminderSnoozeRequest = {
+    /**
+     * Absolute time to snooze until (UTC). Mutually exclusive with minutes.
+     */
+    snoozed_until?: (string | null);
+    /**
+     * Minutes from now to snooze for. Mutually exclusive with snoozed_until.
+     */
+    minutes?: (number | null);
+};
+
 export type RemindersPublic = {
     data: Array<ReminderPublic>;
     count: number;
@@ -1316,6 +1328,13 @@ export type ReminderUpdate = {
     is_active?: (boolean | null);
 };
 
+export type SetupSubmit = {
+    token: string;
+    email: string;
+    password: string;
+    full_name?: (string | null);
+};
+
 export type TagCreate = {
     /**
      * Tag name, 1-100 chars.
@@ -1325,6 +1344,10 @@ export type TagCreate = {
      * Optional hex color like #ff0000 for UI display.
      */
     color?: (string | null);
+    /**
+     * Optional tag description.
+     */
+    description?: (string | null);
 };
 
 export type TagPublic = {
@@ -1336,6 +1359,10 @@ export type TagPublic = {
      * Optional hex color like #ff0000 for UI display.
      */
     color?: (string | null);
+    /**
+     * Optional tag description.
+     */
+    description?: (string | null);
     id: string;
     created_at: string;
 };
@@ -1360,6 +1387,7 @@ export type TagsPublic = {
 export type TagUpdate = {
     name?: (string | null);
     color?: (string | null);
+    description?: (string | null);
 };
 
 export type Token = {
@@ -1574,7 +1602,6 @@ export type ContactsBulkUpdateContactsData = {
 export type ContactsBulkUpdateContactsResponse = (BulkContactResult);
 
 export type ContactsPreviewBulkContactsData = {
-    groupId?: (string | null);
     isArchived?: (boolean | null);
     isFavorite?: (boolean | null);
     limit?: number;
@@ -1587,7 +1614,6 @@ export type ContactsPreviewBulkContactsData = {
 export type ContactsPreviewBulkContactsResponse = (ContactsPublic);
 
 export type ContactsListContactsData = {
-    groupId?: (string | null);
     ids?: (Array<(string)> | null);
     includeDeleted?: boolean;
     isArchived?: (boolean | null);
@@ -1777,31 +1803,9 @@ export type GiftsChangeGiftStatusData = {
 
 export type GiftsChangeGiftStatusResponse = (GiftPublic);
 
-export type GroupsListGroupsData = {
-    limit?: number;
-    skip?: number;
-};
-
-export type GroupsListGroupsResponse = (GroupsPublic);
-
-export type GroupsCreateGroupRouteData = {
-    requestBody: GroupCreate;
-};
-
-export type GroupsCreateGroupRouteResponse = (GroupPublic);
-
-export type GroupsUpdateGroupData = {
-    groupId: string;
-    requestBody: GroupUpdate;
-};
-
-export type GroupsUpdateGroupResponse = (GroupPublic);
-
-export type GroupsDeleteGroupData = {
-    groupId: string;
-};
-
-export type GroupsDeleteGroupResponse = (unknown);
+export type HealthHealthResponse = ({
+    [key: string]: (string);
+});
 
 export type ImportExportImportVcardData = {
     formData: Body_import_export_import_vcard;
@@ -2012,12 +2016,6 @@ export type PetsDeletePetData = {
 
 export type PetsDeletePetResponse = (unknown);
 
-export type PrivateCreateUserData = {
-    requestBody: PrivateUserCreate;
-};
-
-export type PrivateCreateUserResponse = (UserPublic);
-
 export type RelationshipsLookupInverseData = {
     type: string;
 };
@@ -2065,6 +2063,12 @@ export type RemindersCreateReminderRouteData = {
 
 export type RemindersCreateReminderRouteResponse = (ReminderPublic);
 
+export type RemindersListDueRemindersData = {
+    limit?: number;
+};
+
+export type RemindersListDueRemindersResponse = (RemindersDuePublic);
+
 export type RemindersUpdateReminderData = {
     reminderId: string;
     requestBody: ReminderUpdate;
@@ -2079,11 +2083,30 @@ export type RemindersDeleteReminderData = {
 export type RemindersDeleteReminderResponse = (unknown);
 
 export type RemindersSnoozeReminderData = {
-    minutes?: number;
+    minutes?: (number | null);
+    reminderId: string;
+    requestBody?: (ReminderSnoozeRequest | null);
+};
+
+export type RemindersSnoozeReminderResponse = (ReminderPublic);
+
+export type RemindersDismissReminderData = {
     reminderId: string;
 };
 
-export type RemindersSnoozeReminderResponse = (unknown);
+export type RemindersDismissReminderResponse = (ReminderPublic);
+
+export type SetupSetupPageData = {
+    token: string;
+};
+
+export type SetupSetupPageResponse = (string);
+
+export type SetupSetupSubmitData = {
+    requestBody: SetupSubmit;
+};
+
+export type SetupSetupSubmitResponse = (UserPublic);
 
 export type RemindersRestoreReminderData = {
     reminderId: string;
@@ -2199,6 +2222,8 @@ export type UtilsTestEmailData = {
 export type UtilsTestEmailResponse = (Message);
 
 export type UtilsHealthCheckResponse = (boolean);
+
+export type UtilsEnvironmentResponse = (EnvironmentInfo);
 
 export type WebhooksListWebhooksResponse = (unknown);
 

@@ -1,19 +1,75 @@
+import type { Page } from "puppeteer";
 import {
+  BASE_URL,
+  TEST_USER,
+  fillInputByLabel,
+  getPageText,
   launchBrowser,
   login,
-  BASE_URL,
-  API_URL,
-  TEST_USER,
-  waitForText,
-  sleep,
-  runTest,
-  TestResult,
-  getPageText,
   navigateTo,
-  clickButton,
-  fillInput,
-  fillInputByLabel,
+  runTest,
+  sleep,
+  type TestResult,
+  waitForText,
 } from "./helpers.js";
+
+// Click a button by its visible text using a real PointerEvent (Radix-friendly).
+async function mouseClickButton(
+  page: Page,
+  text: string,
+): Promise<boolean> {
+  const tag = `__btn_${Math.random().toString(36).slice(2)}`;
+  const tagged = await page.evaluate(
+    (needle: string, t: string) => {
+      const buttons = Array.from(document.querySelectorAll("button"));
+      const btn = buttons.find(
+        (b) => (b.textContent || "").trim() === needle,
+      ) as HTMLButtonElement | undefined;
+      if (!btn) return false;
+      btn.setAttribute("data-e2e-tag", t);
+      btn.scrollIntoView({
+        block: "center",
+        behavior: "instant" as ScrollBehavior,
+      });
+      return true;
+    },
+    text,
+    tag,
+  );
+  if (!tagged) return false;
+  await sleep(150);
+  const handle = await page.$(`[data-e2e-tag="${tag}"]`);
+  if (!handle) return false;
+  await handle.click();
+  await sleep(300);
+  return true;
+}
+
+async function clickTabByText(page: Page, label: string): Promise<void> {
+  const box = await page.evaluate((t: string) => {
+    const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
+    const tab = tabs.find((el) =>
+      (el.textContent || "").trim().includes(t),
+    ) as HTMLElement | undefined;
+    if (!tab) return null;
+    tab.scrollIntoView({
+      block: "center",
+      behavior: "instant" as ScrollBehavior,
+    });
+    const r = tab.getBoundingClientRect();
+    return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+  }, label);
+  if (!box) throw new Error(`Tab "${label}" not found`);
+  await sleep(150);
+  await page.mouse.click(box.x, box.y);
+  await sleep(400);
+}
+
+async function dialogOpen(page: Page): Promise<boolean> {
+  return page.evaluate(
+    () => !!document.querySelector('[role="dialog"][data-state="open"]'),
+  );
+}
 
 async function main() {
   const browser = await launchBrowser();
@@ -21,257 +77,205 @@ async function main() {
 
   try {
     const page = await browser.newPage();
-    await page.setViewport({ width: 1280, height: 720 });
+    await page.setViewport({ width: 1280, height: 900 });
     await login(page);
 
-    // === SETTINGS TESTS ===
-    // Navigate to settings
-    const foundSettings = await page.evaluate(() => {
-      const links = Array.from(document.querySelectorAll("a"));
-      const link = links.find(
-        (l) =>
-          l.textContent?.trim() === "Settings" ||
-          l.getAttribute("href")?.includes("/settings"),
-      );
-      if (link) {
-        (link as HTMLAnchorElement).click();
-        return true;
-      }
-      return false;
-    });
-    if (foundSettings) {
-      await sleep(1500);
-    } else {
-      // Try navigating directly
-      await page.goto(`${BASE_URL}/settings`, {
-        waitUntil: "networkidle2",
-      });
-      await sleep(1000);
-    }
+    // === SETTINGS ===
+    await page.goto(`${BASE_URL}/settings`, { waitUntil: "networkidle2" });
+    await page
+      .waitForFunction(
+        () => document.body.innerText.includes("User Settings"),
+        { timeout: 10000 },
+      )
+      .catch(() => {});
 
-    // Test 1: Settings page renders
     results.push(
       await runTest(page, "Settings page renders", async (p) => {
         const text = await getPageText(p);
-        if (
-          !text.includes("Settings") &&
-          !text.includes("User Settings")
-        )
-          throw new Error("Settings page title not found");
+        if (!text.includes("User Settings"))
+          throw new Error("'User Settings' header not on page");
       }),
     );
 
-    // Test 2: Settings shows profile tab
     results.push(
-      await runTest(page, "Settings shows profile tab", async (p) => {
+      await runTest(page, "Settings shows tab strip", async (p) => {
+        const labels = await p.evaluate(() =>
+          Array.from(document.querySelectorAll('[role="tab"]')).map((t) =>
+            (t.textContent || "").trim(),
+          ),
+        );
+        for (const expected of ["My profile", "Password"]) {
+          if (!labels.some((l) => l.includes(expected))) {
+            throw new Error(
+              `Tab "${expected}" not found (got: ${labels.join(" | ")})`,
+            );
+          }
+        }
+      }),
+    );
+
+    results.push(
+      await runTest(page, "My profile tab shows current user", async (p) => {
+        // Default tab is "my-profile" — should already be active.
         const text = await getPageText(p);
-        if (
-          !text.includes("My profile") &&
-          !text.includes("Profile") &&
-          !text.includes("User Information")
-        )
-          throw new Error("Profile tab/section not found");
+        if (!text.includes(TEST_USER.email)) {
+          throw new Error(
+            `Email ${TEST_USER.email} not in profile tab`,
+          );
+        }
+        if (!text.includes("Edit")) {
+          throw new Error("Edit button missing from profile");
+        }
       }),
     );
 
-    // Test 3: Settings shows user info
+    results.push(
+      await runTest(page, "Password tab opens change form", async (p) => {
+        await clickTabByText(p, "Password");
+        await p
+          .waitForSelector('[data-testid="current-password-input"]', {
+            timeout: 5000,
+          })
+          .catch(() => null);
+        const current = await p.$(
+          '[data-testid="current-password-input"]',
+        );
+        const next = await p.$('[data-testid="new-password-input"]');
+        const confirm = await p.$(
+          '[data-testid="confirm-password-input"]',
+        );
+        if (!current) throw new Error("Current password input missing");
+        if (!next) throw new Error("New password input missing");
+        if (!confirm) throw new Error("Confirm password input missing");
+      }),
+    );
+
+    // Superusers get all 5 tabs *except* the Danger zone (the route filters
+    // it out with `slice(0, -1)`); a non-superuser session would see it.
+    // Assert the role-aware behavior is correct for the admin@example.com test
+    // user, which is configured as a superuser.
     results.push(
       await runTest(
         page,
-        "Settings shows current user info",
+        "Superuser does NOT see Danger zone tab",
         async (p) => {
-          const text = await getPageText(p);
-          if (
-            !text.includes(TEST_USER.email) &&
-            !text.includes("admin")
-          )
-            throw new Error("Current user email not displayed");
-        },
-      ),
-    );
-
-    // Test 4: Settings profile edit button
-    results.push(
-      await runTest(
-        page,
-        "Settings profile has Edit button",
-        async (p) => {
-          const text = await getPageText(p);
-          if (!text.includes("Edit"))
-            throw new Error("Edit button not found on settings profile");
-        },
-      ),
-    );
-
-    // Test 5: Password tab exists
-    results.push(
-      await runTest(page, "Settings has Password tab", async (p) => {
-        const tab = await p.evaluate(() => {
-          const tabs = Array.from(
-            document.querySelectorAll(
-              '[role="tab"], button[data-state]',
+          const labels = await p.evaluate(() =>
+            Array.from(document.querySelectorAll('[role="tab"]')).map((t) =>
+              (t.textContent || "").trim(),
             ),
           );
-          return tabs.some((t) => t.textContent?.includes("Password"));
-        });
-        if (!tab) throw new Error("Password tab not found");
-      }),
-    );
-
-    // Test 6: Click Password tab
-    results.push(
-      await runTest(page, "Password tab shows change form", async (p) => {
-        // Use Puppeteer's click which dispatches proper pointer/mouse events (needed for Radix UI tabs)
-        const tabHandle = await p.evaluateHandle(() => {
-          const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
-          return tabs.find((t) => t.textContent?.includes("Password")) || null;
-        });
-        if (!tabHandle) throw new Error("Could not find Password tab");
-        await (tabHandle as any).click();
-        await sleep(1000);
-        const text = await getPageText(p);
-        if (
-          !text.includes("Change Password") &&
-          !text.includes("Current Password") &&
-          !text.includes("Update Password")
-        )
-          throw new Error("Change password form not shown");
-      }),
-    );
-
-    // Test 7: Password form has required fields
-    results.push(
-      await runTest(
-        page,
-        "Password form has required fields",
-        async (p) => {
-          const currentPw = await p.$(
-            '[data-testid="current-password-input"]',
-          );
-          const newPw = await p.$(
-            '[data-testid="new-password-input"]',
-          );
-          const confirmPw = await p.$(
-            '[data-testid="confirm-password-input"]',
-          );
-          if (!currentPw)
-            throw new Error("Current password input not found");
-          if (!newPw) throw new Error("New password input not found");
-          if (!confirmPw)
-            throw new Error("Confirm password input not found");
+          if (labels.some((l) => l.includes("Danger zone"))) {
+            throw new Error(
+              "Danger zone tab is visible to a superuser — settings.tsx slice(0,-1) regression?",
+            );
+          }
         },
       ),
     );
 
-    // Test 8: Danger zone tab exists
     results.push(
-      await runTest(page, "Settings has Danger zone tab", async (p) => {
-        const tab = await p.evaluate(() => {
-          const tabs = Array.from(
-            document.querySelectorAll(
-              '[role="tab"], button[data-state]',
-            ),
-          );
-          return tabs.some((t) =>
-            t.textContent?.includes("Danger zone"),
-          );
-        });
-        if (!tab) throw new Error("Danger zone tab not found");
+      await runTest(page, "Custom fields tab present", async (p) => {
+        const labels = await p.evaluate(() =>
+          Array.from(document.querySelectorAll('[role="tab"]')).map((t) =>
+            (t.textContent || "").trim(),
+          ),
+        );
+        if (!labels.some((l) => l.includes("Custom fields"))) {
+          throw new Error("Custom fields tab missing");
+        }
       }),
     );
 
-    // === ADMIN TESTS ===
-    // Navigate to admin
+    results.push(
+      await runTest(page, "API keys tab present", async (p) => {
+        const labels = await p.evaluate(() =>
+          Array.from(document.querySelectorAll('[role="tab"]')).map((t) =>
+            (t.textContent || "").trim(),
+          ),
+        );
+        if (!labels.some((l) => l.includes("API keys"))) {
+          throw new Error("API keys tab missing");
+        }
+      }),
+    );
+
+    // === ADMIN ===
     await navigateTo(page, "Admin");
-    await sleep(1000);
+    await sleep(800);
 
-    // Test 9: Admin page renders
     results.push(
       await runTest(page, "Admin page renders", async (p) => {
         const text = await getPageText(p);
         if (!text.includes("Users"))
-          throw new Error("Admin page 'Users' title not found");
+          throw new Error("'Users' not on admin page");
       }),
     );
 
-    // Test 10: Admin shows Add User button
     results.push(
-      await runTest(
-        page,
-        "Admin shows Add User button",
-        async (p) => {
-          const text = await getPageText(p);
-          if (!text.includes("Add User"))
-            throw new Error("Add User button not found");
-        },
-      ),
+      await runTest(page, "Admin shows Add User button", async (p) => {
+        const text = await getPageText(p);
+        if (!text.includes("Add User"))
+          throw new Error("Add User button missing");
+      }),
     );
 
-    // Test 11: Admin Add User dialog opens
     results.push(
-      await runTest(
-        page,
-        "Admin Add User dialog opens",
-        async (p) => {
-          await clickButton(p, "Add User");
-          await sleep(500);
-          const found = await waitForText(p, "Add User");
-          if (!found)
-            throw new Error("Add User dialog did not open");
-        },
-      ),
+      await runTest(page, "Admin Add User dialog opens", async (p) => {
+        const clicked = await mouseClickButton(p, "Add User");
+        if (!clicked) throw new Error("Add User button not clickable");
+        const opened = await waitForText(p, "Add User");
+        if (!opened) throw new Error("Add User dialog did not open");
+        // Verify essential fields exist
+        const text = await getPageText(p);
+        if (!text.includes("Email")) {
+          throw new Error("Email field missing from dialog");
+        }
+        if (!text.includes("Password")) {
+          throw new Error("Password field missing from dialog");
+        }
+      }),
     );
 
-    // Test 12: Admin create user form has fields
     results.push(
-      await runTest(
-        page,
-        "Admin create user form has fields",
-        async (p) => {
-          const text = await getPageText(p);
-          if (!text.includes("Email"))
-            throw new Error("Email field not in form");
-          if (!text.includes("Password"))
-            throw new Error("Password field not in form");
-        },
-      ),
+      await runTest(page, "Admin creates a user", async (p) => {
+        const ts = Date.now();
+        const email = `testadmin${ts}@example.com`;
+        await fillInputByLabel(p, "Email", email);
+        await fillInputByLabel(p, "Full Name", `Test Admin ${ts}`);
+        await fillInputByLabel(p, "Set Password", `TestPass${ts}!`);
+        await fillInputByLabel(p, "Confirm Password", `TestPass${ts}!`);
+        const saved = await mouseClickButton(p, "Save");
+        if (!saved) throw new Error("Save button not clickable");
+        // Wait for dialog to close
+        await p
+          .waitForFunction(
+            () =>
+              !document.querySelector('[role="dialog"][data-state="open"]'),
+            { timeout: 5000 },
+          )
+          .catch(() => null);
+        if (await dialogOpen(p))
+          throw new Error("Add User dialog did not close after save");
+        // The new user should appear in the list
+        await p
+          .waitForFunction(
+            (e: string) => document.body.innerText.includes(e),
+            { timeout: 5000 },
+            email,
+          )
+          .catch(() => null);
+        const text = await getPageText(p);
+        if (!text.includes(email)) {
+          throw new Error(`Newly created user ${email} not in list`);
+        }
+      }),
     );
 
-    // Test 13: Create a new user via admin
     results.push(
-      await runTest(
-        page,
-        "Admin creates a new user",
-        async (p) => {
-          const ts = Date.now();
-          await fillInputByLabel(p, "Email", `testadmin${ts}@example.com`);
-          await fillInputByLabel(p, "Full Name", `Test Admin ${ts}`);
-          await fillInputByLabel(p, "Set Password", `TestPass${ts}!`);
-          await fillInputByLabel(p, "Confirm Password", `TestPass${ts}!`);
-
-          await clickButton(p, "Save");
-          await sleep(2000);
-
-          // Verify dialog closed or user appears
-          const text = await getPageText(p);
-          // Either the dialog closed or the user appeared in the list
-          console.log(
-            `  [info] After creating user, page contains: ${text.substring(0, 200)}`,
-          );
-        },
-      ),
-    );
-
-    // Test 14: Admin shows user list
-    results.push(
-      await runTest(page, "Admin shows user list", async (p) => {
-        await navigateTo(p, "Admin");
-        await sleep(1500);
+      await runTest(page, "Admin shows current admin in user list", async (p) => {
         const text = await getPageText(p);
         if (!text.includes(TEST_USER.email))
-          throw new Error(
-            "Admin user not found in user list",
-          );
+          throw new Error("Current admin not in user list");
       }),
     );
 
