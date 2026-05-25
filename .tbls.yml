@@ -78,11 +78,6 @@ comments:
     sort_order: Display order within the same field_type.
     id: Primary key.
     contact_id: Parent contact; cascades on delete.
-- table: contact_group
-  tableComment: Many-to-many link between contacts and groups.
-  columnComments:
-    contact_id: Contact side of the link; cascades on delete.
-    group_id: Group side of the link; cascades on delete.
 - table: contact_tag
   tableComment: Many-to-many link between contacts and tags.
   columnComments:
@@ -134,14 +129,6 @@ comments:
     owner_id: Owner user; cascades on delete.
     date: When the gift was given or received (stored in the `date` column).
     created_at: When the gift record was created (UTC).
-- table: group
-  tableComment: Named collection of contacts (e.g. 'Family', 'Work Team').
-  columnComments:
-    name: Group name, 1-255 chars.
-    description: Optional group description.
-    id: Primary key.
-    owner_id: Owner user; cascades on delete.
-    created_at: When the group was created (UTC).
 - table: interaction
   tableComment: Logged touchpoint with one or more contacts (call, meeting, text, etc.). Attendees are attached via interaction_attendee.
   columnComments:
