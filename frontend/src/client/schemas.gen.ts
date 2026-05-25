@@ -1303,99 +1303,6 @@ export const ContactFieldUpdateSchema = {
     title: 'ContactFieldUpdate'
 } as const;
 
-export const ContactFieldsPublicSchema = {
-    properties: {
-        data: {
-            items: {
-                '$ref': '#/components/schemas/ContactFieldPublic'
-            },
-            type: 'array',
-            title: 'Data'
-        },
-        count: {
-            type: 'integer',
-            title: 'Count'
-        }
-    },
-    type: 'object',
-    required: ['data', 'count'],
-    title: 'ContactFieldsPublic'
-} as const;
-
-export const ContactGeoPointSchema = {
-    properties: {
-        contact_id: {
-            type: 'string',
-            format: 'uuid',
-            title: 'Contact Id'
-        },
-        contact_name: {
-            type: 'string',
-            title: 'Contact Name'
-        },
-        avatar_url: {
-            anyOf: [
-                {
-                    type: 'string'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Avatar Url'
-        },
-        latitude: {
-            type: 'number',
-            title: 'Latitude'
-        },
-        longitude: {
-            type: 'number',
-            title: 'Longitude'
-        },
-        address_label: {
-            type: 'string',
-            title: 'Address Label'
-        },
-        city: {
-            anyOf: [
-                {
-                    type: 'string'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'City'
-        },
-        country: {
-            anyOf: [
-                {
-                    type: 'string'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Country'
-        },
-        street: {
-            anyOf: [
-                {
-                    type: 'string'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Street'
-        }
-    },
-    type: 'object',
-    required: ['contact_id', 'contact_name', 'latitude', 'longitude', 'address_label'],
-    title: 'ContactGeoPoint',
-    description: "A geo point representing a contact's address."
-} as const;
-
 export const ContactHeatmapSchema = {
     properties: {
         data: {
@@ -6753,6 +6660,24 @@ export const WebhookEndpointBaseSchema = {
     type: 'object',
     required: ['name', 'direction'],
     title: 'WebhookEndpointBase'
+} as const;
+
+export const WeekBucketSchema = {
+    properties: {
+        week_start: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Week Start'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['week_start', 'count'],
+    title: 'WeekBucket',
+    description: 'A single week bucket for the interaction heatmap.'
 } as const;
 
 export const _MentionSourceContactSchema = {

@@ -383,21 +383,6 @@ export type ContactFieldUpdate = {
 };
 
 /**
- * A geo point representing a contact's address.
- */
-export type ContactGeoPoint = {
-    contact_id: string;
-    contact_name: string;
-    avatar_url?: (string | null);
-    latitude: number;
-    longitude: number;
-    address_label: string;
-    city?: (string | null);
-    country?: (string | null);
-    street?: (string | null);
-};
-
-/**
  * 52-week interaction heatmap for a contact.
  */
 export type ContactHeatmap = {
@@ -1498,6 +1483,13 @@ export type NoteMentionPublic = {
     source_contact: _MentionSourceContact;
 };
 
+export type NoteMentionPublic = {
+    note_id: string;
+    note_body: string;
+    note_created_at: string;
+    source_contact: _MentionSourceContact;
+};
+
 export type NotePublic = {
     /**
      * Note body, 1-50000 chars.
@@ -2080,54 +2072,6 @@ export type WebhookEndpointBase = {
 };
 
 /**
- * Returned once on creation; includes the plaintext api_key.
- */
-export type WebhookEndpointCreated = {
-    id: string;
-    name: string;
-    url?: (string | null);
-    direction: string;
-    event_types?: (string | null);
-    is_active: boolean;
-    created_at: string;
-    api_key: string;
-};
-
-/**
- * Public representation of a webhook endpoint (without api_key).
- */
-export type WebhookEndpointPublic = {
-    id: string;
-    name: string;
-    url?: (string | null);
-    direction: string;
-    event_types?: (string | null);
-    is_active: boolean;
-    created_at: string;
-};
-
-export type WebhookEndpointsPublic = {
-    data: Array<WebhookEndpointPublic>;
-    count: number;
-};
-
-/**
- * Generic response shape for inbound/twilio webhook handlers.
- *
- * Fields are optional because different code paths return different subsets
- * (e.g. unmatched contact vs successful interaction).
- */
-export type WebhookEventResponse = {
-    received?: boolean;
-    matched?: (boolean | null);
-    channel?: (string | null);
-    call_status?: (string | null);
-    contact_id?: (string | null);
-    interaction_id?: (string | null);
-    error?: (string | null);
-};
-
-/**
  * A single week bucket for the interaction heatmap.
  */
 export type WeekBucket = {
@@ -2342,17 +2286,23 @@ export type ContactsListContactMentionsData = {
 
 export type ContactsListContactMentionsResponse = (Array<NoteMentionPublic>);
 
+export type ContactsListContactMentionsData = {
+    contactId: string;
+};
+
+export type ContactsListContactMentionsResponse = (Array<NoteMentionPublic>);
+
 export type ContactsRestoreContactData = {
     contactId: string;
 };
 
 export type ContactsRestoreContactResponse = (ContactPublic);
 
-export type ContactsGetContactHouseholdData = {
+export type ContactsGetContactHeatmapData = {
     contactId: string;
 };
 
-export type ContactsGetContactHouseholdResponse = (unknown);
+export type ContactsGetContactHeatmapResponse = (ContactHeatmap);
 
 export type CustomFieldsListFieldDefinitionsResponse = (unknown);
 

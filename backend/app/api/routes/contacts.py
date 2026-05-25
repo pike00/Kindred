@@ -35,6 +35,8 @@ from app.models import (
     ContactStageEvent,
     ContactTag,
     ContactUpdate,
+    Interaction,
+    InteractionAttendee,
     Note,
     NoteMention,
 )
@@ -74,50 +76,10 @@ logger = logging.getLogger(__name__)
 
 # ─── Bulk operations models ────────────────────────────────────────────────
 
+logger = logging.getLogger(__name__)
 
-class BulkContactFilter(BaseModel):
-    """Filter criteria matching list_contacts parameters."""
+router = APIRouter(prefix="/contacts", tags=["contacts"])
 
-    search: str | None = None
-    tag_id: uuid.UUID | None = None
-    is_favorite: bool | None = None
-    is_archived: bool | None = None
-    stage: str | None = None
-
-
-class BulkContactOperation(BaseModel):
-    """A single operation to apply to matching contacts."""
-
-    # Tag operations
-    add_tag_ids: list[uuid.UUID] | None = None
-    remove_tag_ids: list[uuid.UUID] | None = None
-    set_is_archived: bool | None = None
-    set_is_favorite: bool | None = None
-
-
-class BulkContactRequest(BaseModel):
-    """Bulk operation request body."""
-
-    # Either provide explicit contact_ids...
-    contact_ids: list[uuid.UUID] | None = None
-    # ...or use select_all_filtered with optional filters
-    select_all_filtered: bool = False
-    filters: BulkContactFilter | None = None
-    # Max contacts per request (safety limit)
-    limit: int = 500
-    # Operations to apply
-    operations: BulkContactOperation
-
-
-class BulkContactResult(BaseModel):
-    """Bulk operation result."""
-
-    updated_count: int
-    skipped_count: int
-    failed_ids: list[uuid.UUID] = []
-
-
-# ─── Helper functions ──────────────────────────────────────────────────────
 
 _arq_pool = None
 
@@ -614,6 +576,65 @@ def list_contact_mentions(
     ]
 
 
+class _MentionSourceContact(BaseModel):
+    id: uuid.UUID
+    first_name: str
+    last_name: str | None = None
+    avatar_url: str | None = None
+
+
+class NoteMentionPublic(BaseModel):
+    note_id: uuid.UUID
+    note_body: str
+    note_created_at: datetime
+    source_contact: _MentionSourceContact
+
+
+@router.get("/{contact_id}/mentions", response_model=list[NoteMentionPublic])
+def list_contact_mentions(
+    session: SessionDep,
+    current_user: CurrentUser,
+    contact_id: uuid.UUID,
+) -> Any:
+    """List notes that @-mention this contact, with the source (authoring) contact."""
+    contact = session.exec(
+        select(Contact).where(
+            Contact.id == contact_id,
+            Contact.id.in_(visible_contact_ids(current_user)),
+        )
+    ).first()
+    if not contact:
+        raise HTTPException(status_code=404, detail="Contact not found")
+
+    # Note's contact (its "page") is the source contact for the mention.
+    rows = session.exec(
+        select(Note, Contact)
+        .join(NoteMention, NoteMention.note_id == Note.id)
+        .join(Contact, Contact.id == Note.contact_id)
+        .where(
+            NoteMention.contact_id == contact_id,
+            Note.owner_id == current_user.id,
+            Note.contact_id != contact_id,
+        )
+        .order_by(Note.created_at.desc())
+    ).all()
+
+    return [
+        NoteMentionPublic(
+            note_id=note.id,
+            note_body=note.body,
+            note_created_at=note.created_at,
+            source_contact=_MentionSourceContact(
+                id=src.id,
+                first_name=src.first_name,
+                last_name=src.last_name,
+                avatar_url=src.avatar_url,
+            ),
+        )
+        for note, src in rows
+    ]
+
+
 @router.post("/{contact_id}/restore", response_model=ContactPublic)
 def restore_contact(
     session: SessionDep,
@@ -646,20 +667,90 @@ def restore_contact(
     return ContactPublic.model_validate(contact)
 
 
-@router.get("/{contact_id}/household")
-def get_contact_household(
+class WeekBucket(BaseModel):
+    """A single week bucket for the interaction heatmap."""
+
+    week_start: datetime  # Monday 00:00 UTC
+    count: int
+
+
+class ContactHeatmap(BaseModel):
+    """52-week interaction heatmap for a contact."""
+
+    data: list[WeekBucket]
+
+
+@router.get("/{contact_id}/heatmap", response_model=ContactHeatmap)
+def get_contact_heatmap(
     session: SessionDep,
     current_user: CurrentUser,
     contact_id: uuid.UUID,
 ) -> Any:
-    """Get household members for a contact.
+    """Return 52 weekly interaction counts for the GitHub-style heatmap.
 
-    Derives household/family members via BFS walk of relationships
-    (spouse, child, parent, sibling, etc.). Returns names and ages.
+    Uses ISO weeks (Monday–Sunday). Each bucket contains the week start date
+    (Monday) and the number of interactions that week.
     """
-    members = get_household_members(
-        session=session,
-        contact_id=str(contact_id),
-        current_user=current_user,
+    # Verify contact exists and is visible to the user
+    contact = session.exec(
+        select(Contact).where(
+            Contact.id == contact_id,
+            Contact.id.in_(visible_contact_ids(current_user)),
+            Contact.deleted_at.is_(None),
+        )
+    ).first()
+    if not contact:
+        raise HTTPException(status_code=404, detail="Contact not found")
+
+    # Calculate the 52-week window (ending today)
+    from datetime import timedelta
+
+    today = datetime.now(timezone.utc).date()
+    # ISO week starts on Monday; find the Monday of the current week
+    days_since_monday = today.isoweekday() - 1  # Monday=0
+    week_end = (
+        today - timedelta(days=days_since_monday) + timedelta(days=7)
+    )  # Next Monday
+    week_start = week_end - timedelta(weeks=52)
+
+    # Query: count interactions per ISO week for this contact
+    # date_trunc('week', ...) in Postgres truncates to Monday (ISO week)
+    week_start_dt = datetime.combine(week_start, datetime.min.time()).replace(
+        tzinfo=timezone.utc
     )
-    return {"data": members}
+    week_end_dt = datetime.combine(week_end, datetime.min.time()).replace(
+        tzinfo=timezone.utc
+    )
+
+    rows = session.exec(
+        select(
+            func.date_trunc("week", Interaction.occurred_at).label("week"),
+            func.count(Interaction.id).label("cnt"),
+        )
+        .join(
+            InteractionAttendee,
+            InteractionAttendee.interaction_id == Interaction.id,  # type: ignore[arg-type]
+        )
+        .where(
+            InteractionAttendee.contact_id == contact_id,
+            Interaction.occurred_at >= week_start_dt,
+            Interaction.occurred_at < week_end_dt,
+        )
+        .group_by("week")
+        .order_by("week")
+    ).all()
+
+    # Build a dict of week_start -> count
+    week_counts: dict[datetime, int] = {}
+    for row in rows:
+        week_counts[row.week] = row.cnt
+
+    # Generate all 52 weeks, filling in zeros
+    buckets = []
+    current = week_start_dt
+    for _ in range(52):
+        count = week_counts.get(current, 0)
+        buckets.append(WeekBucket(week_start=current, count=count))
+        current = current + timedelta(weeks=1)
+
+    return ContactHeatmap(data=buckets)

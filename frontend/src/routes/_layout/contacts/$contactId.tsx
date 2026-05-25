@@ -22,7 +22,7 @@ import { AvatarUploadDialog } from "@/components/Contacts/AvatarUploadDialog"
 import { ContactFieldsCard } from "@/components/Contacts/ContactFieldsCard"
 import { CustomFieldsCard } from "@/components/Contacts/CustomFieldsCard"
 import { EditContactDialog } from "@/components/Contacts/EditContactDialog"
-import { HouseholdCard } from "@/components/Contacts/HouseholdCard"
+import { InteractionHeatmap } from "@/components/Contacts/InteractionHeatmap"
 import { LifeEventsCard } from "@/components/Contacts/LifeEventsCard"
 import { PetsCard } from "@/components/Contacts/PetsCard"
 import { RelationshipsCard } from "@/components/Contacts/RelationshipsCard"
@@ -111,11 +111,7 @@ function ContactDetailPage() {
     endDate: string
   } | null>(null)
 
-  const handleWeekClick = (
-    weekStart: string,
-    weekEnd: string,
-    count: number,
-  ) => {
+  const handleWeekClick = (weekStart: string, weekEnd: string, count: number) => {
     if (count === 0) return
     setHeatmapFilter({ startDate: weekStart, endDate: weekEnd })
   }
@@ -190,11 +186,7 @@ function ContactDetailPage() {
           {heatmapFilter && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span>
-                Filtered to week of{" "}
-                {new Date(heatmapFilter.startDate).toLocaleDateString(
-                  undefined,
-                  { month: "short", day: "numeric" },
-                )}
+                Filtered to week of {new Date(heatmapFilter.startDate).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
               </span>
               <button
                 type="button"
