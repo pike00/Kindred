@@ -3,8 +3,6 @@ from __future__ import annotations
 import enum
 import re
 import uuid
-from decimal import Decimal
-
 from datetime import date, datetime, timezone
 
 import sqlalchemy as sa
