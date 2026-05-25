@@ -26,6 +26,7 @@ const tabs = [
   { to: "/admin", label: "Users", exact: true },
   { to: "/admin/webhooks", label: "Webhooks", exact: false },
   { to: "/admin/import-export", label: "Import / export", exact: false },
+  { to: "/admin/vcard-conflicts", label: "vCard Conflicts", exact: false },
 ] as const
 
 function AdminLayout() {

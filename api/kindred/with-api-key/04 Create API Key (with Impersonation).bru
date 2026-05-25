@@ -4,6 +4,9 @@ meta {
   seq: 4
 }
 
+// Creates a key that can impersonate another user.
+// Populate target_user_id in the body before running.
+// The plaintext key is auto-saved to {{api_key}}.
 
 post {
   url: {{base_url}}/api/v1/users/me/api-keys/

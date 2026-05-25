@@ -1,7 +1,7 @@
 # Personal CRM — TODOs & Planned Improvements
 
 Status: draft — review & edit freely.
-Last updated: 2026-04-21
+Last updated: 2026-05-16
 
 ## How to use this file
 
@@ -20,6 +20,10 @@ Tags in brackets on each item indicate the primary layer affected:
 ## TODOs
 
 - [ ] **E2E coverage for contact-scoped CRUD flows** `[ui]` — Add Playwright / Bun-runner tests under `frontend/e2e/` covering the add/edit/delete dialogs for each contact card (ContactFields, Addresses, Pets, Relationships, LifeEvents, CustomFields). Dev stack (`docker compose up`) must be running; tests should seed via the fake-data script (`just seed`) and assert both UI state and API round-trip. Originally surfaced in the 2026-04-13 post-card-refactor handoff — nothing has been verified end-to-end since; only the TypeScript build.
+
+- [ ] **Entity card edit/delete completion** `[ui]` — Seven entity types have fully-implemented backend CRUD but the frontend only wires create. Add edit + delete actions for: `InteractionsService.updateInteraction`, `JournalService.updateJournalEntry`, `DebtsService.updateDebt`/`deleteDebt`, `GiftsService.updateGift`/`deleteGift`, `MediaRecommendationsService.updateMediaRecommendation`/`deleteMediaRecommendation`, `RemindersService.updateReminder`, `TagsService.updateTag`. Each is an SDK method with no frontend caller. Pattern: follow the existing AddressesCard / PetsCard edit pattern (inline popover or sheet, optimistic mutation, invalidate query).
+
+- [ ] **Export UI wiring** `[ui]` — `ImportExport.tsx` handles import but none of the three export endpoints are called: `ImportExportService.exportCsv`, `exportJson`, `exportVcard`. Wire download buttons in the same settings panel; the backend routes are complete. (Import: `previewCsvImport`, `importCsv`, `importVcard` are all used.)
 
 ---
 
@@ -75,7 +79,7 @@ Grounded in the current schema ([backend/app/models.py](backend/app/models.py)) 
 
 23. **vCard round-trip hash verification** `[api]` — On every `vcard_raw` write, store `sha256(vcard_raw)`. On CardDAV PUTs compare; if drift exceeds tolerance, flag for user review instead of blindly overwriting.
 
-24. **CSV import/export** `[api][ui]` — Import: column-mapping UI (first_name → First Name, etc.), dedupe-by-email check. Export: one-click, includes related tag/group names.
+24. **CSV import/export** `[ui]` — Import UI is done (column-mapping preview + confirm flow in `CsvImportDialog.tsx`). Remaining: export download buttons in `ImportExport.tsx` (`exportCsv`, `exportJson`, `exportVcard` SDK methods exist but aren't called). Promoted to TODO above.
 
 
 27. **iCal importer (backfill)** `[api][ui]` — One-shot: upload an `.ics`, heuristically extract past events with people's names, propose as `LifeEvent` or historical `Interaction` rows. Manual confirmation before insert.
@@ -125,5 +129,15 @@ Grounded in the current schema ([backend/app/models.py](backend/app/models.py)) 
 48. **Avatar cropper with face-aware crop** `[ui]` — When uploading an avatar, run a face detector in-browser (MediaPipe / face-api.js), default the crop square to the face. Matches the `ContactAvatar` display-face aesthetic that commit `d148625` introduced.
 
 49. **PWA installability + offline note drafting** `[infra][ui]` — Service worker, manifest, cache-first for the app shell. Notes composed offline are queued and synced on reconnect. iOS A2HS + Android install banner.
+
+50. **Activity log view** `[ui]` — `ActivityLogsService.listActivityLogs` is fully implemented (supports filtering by `entity_type`, `entity_id`, `tag_id`) but has no frontend consumer. Add to the contact detail page as a collapsible "History" section, or as a global activity feed accessible from the sidebar. The backend already scopes shared-tag visibility correctly.
+
+51. **Tag share management UI** `[ui]` — All three tag share SDK methods (`TagSharesService.createTagShare`, `listTagShares`, `deleteTagShare`) are unused. Users can't manage who they've shared tags with. Add a panel to the Tags settings or tag detail view listing active grants with a revoke button. Item 46 (scope-warning modal on the grant) builds on top of this.
+
+52. **Reminder snooze analytics** `[ui]` — Three backend endpoints surface snooze patterns but are uncalled: `RemindersService.getSnoozeHistory` (per-reminder log), `getSnoozeStats` (aggregate counts), `getChronicSnoozers` (contacts you keep deferring). Surface on the reminders list or contact detail page — "you've snoozed calling Mom 4 times" is a meaningful signal for the stay-in-touch workflow.
+
+53. **iMessage sync UI** `[ui]` — `ContactsService.syncImessageContacts` and `getImessageProfile` exist but have no UI entry point. Add an import flow in user settings (similar to vCard/CSV import) and an iMessage profile section on the contact detail page for contacts that have been synced.
+
+54. **Migrate ApiKeys.tsx to SDK** `[ui]` — `UserSettings/ApiKeys.tsx` uses raw `apiRequest` calls instead of `ApiKeysService.listMyApiKeys`, `createMyApiKey`, `revokeMyApiKey`. All three SDK methods exist and are unused. Migrating removes the only component that bypasses the generated client and brings API key management into the standard TanStack Query + SDK pattern.
 
 ---
