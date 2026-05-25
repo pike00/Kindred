@@ -168,19 +168,7 @@ export type APIKeysPublic = {
     count: number;
 };
 
-/**
- * Response model for avatar upload.
- */
-export type AvatarUploadResponse = {
-    avatar_url: string;
-    message?: string;
-};
-
-export type Body_contacts_upload_avatar = {
-    file: (Blob | File);
-};
-
-export type Body_contacts_upload_avatar_file = {
+export type Body_ical_upload_ical = {
     file: (Blob | File);
 };
 
@@ -2656,6 +2644,20 @@ export type GraphGetContactGraphResponse = (unknown);
 export type HealthHealthResponse = ({
     [key: string]: (string);
 });
+
+export type IcalUploadIcalData = {
+    formData: Body_ical_upload_ical;
+};
+
+export type IcalUploadIcalResponse = (unknown);
+
+export type IcalConfirmIcalImportData = {
+    requestBody: Array<{
+        [key: string]: unknown;
+    }>;
+};
+
+export type IcalConfirmIcalImportResponse = (unknown);
 
 export type IcalUploadIcalData = {
     formData: Body_ical_upload_ical;

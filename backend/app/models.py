@@ -2691,84 +2691,6 @@ class CalendarMonthResponse(SQLModel):
     days: dict[str, list[CalendarEntry]]
 
 
-# ─── CalendarToken ───────────────────────────────────────────────────────
-
-
-class CalendarTokenBase(SQLModel):
-    expires_at: datetime | None = Field(
-        default=None,
-        description="Optional expiration date; null means never expires.",
-    )
-
-
-class CalendarTokenCreate(CalendarTokenBase):
-    pass
-
-
-class CalendarTokenUpdate(SQLModel):
-    status: str | None = Field(
-        default=None,
-        max_length=20,
-        description="Token status: active or revoked.",
-    )
-
-
-class CalendarToken(CalendarTokenBase, table=True):
-    """Per-user bearer token for accessing /calendar.ics feed."""
-
-    __tablename__ = "calendar_token"
-
-    id: uuid.UUID = Field(
-        default_factory=uuid.uuid4,
-        primary_key=True,
-        description="Primary key.",
-    )
-    owner_id: uuid.UUID = Field(
-        foreign_key="user.id",
-        nullable=False,
-        ondelete="CASCADE",
-        description="Owner user; cascades on delete.",
-    )
-    token: str = Field(
-        max_length=255,
-        unique=True,
-        index=True,
-        description="The bearer token value (UUID or secure random string).",
-    )
-    status: str = Field(
-        default="active",
-        max_length=20,
-        description="Token status: active or revoked.",
-    )
-    last_used_at: datetime | None = Field(
-        default=None,
-        description="When the token was last used to access the feed.",
-    )
-    revoked_at: datetime | None = Field(
-        default=None,
-        description="When the token was revoked.",
-    )
-    created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
-        nullable=False,
-        description="When the token was created (UTC).",
-    )
-
-
-class CalendarTokenPublic(CalendarTokenBase):
-    id: uuid.UUID
-    owner_id: uuid.UUID
-    token: str
-    status: str
-    last_used_at: datetime | None
-    created_at: datetime
-
-
-class CalendarTokensPublic(SQLModel):
-    data: list[CalendarTokenPublic]
-    count: int
-
-
 # ─── IcalImportLog ───────────────────────────────────────────────────────
 
 
@@ -2822,8 +2744,3 @@ class IcalImportLogPublic(SQLModel):
     contact_id: uuid.UUID | None
     event_type: str
     imported_at: datetime
-
-
-# Register the SetupState table with SQLModel.metadata so Alembic and the
-# test bootstrap (alembic upgrade head) see it.
-from app.core.setup_state import SetupState  # noqa: E402,F401
