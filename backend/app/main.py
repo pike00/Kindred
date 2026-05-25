@@ -2,6 +2,7 @@ import logging
 import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 import sentry_sdk
 from fastapi import FastAPI, HTTPException
@@ -9,6 +10,7 @@ from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.routing import APIRoute
 from fastapi.staticfiles import StaticFiles
 from radicale import Application as RadicaleApp
+from radicale.config import DEFAULT_CONFIG_SCHEMA  # noqa: E402
 from radicale.config import Configuration as RadicaleConfig
 from sqlmodel import Session
 from starlette.middleware.cors import CORSMiddleware
@@ -84,16 +86,14 @@ if settings.all_cors_origins:
         allow_headers=["*"],
     )
 
-# Configure Radicale CardDAV server with PostgreSQL storage backend
-from radicale.config import DEFAULT_CONFIG_SCHEMA  # noqa: E402
-
+# Configure Radicale with custom auth and storage backends
 radicale_configuration = RadicaleConfig(DEFAULT_CONFIG_SCHEMA)
 radicale_configuration.update(
     {
-        "auth": {"type": "http_x_remote_user"},
+        "auth": {"type": "app.carddav.auth"},
         "storage": {"type": "app.carddav.storage"},
-    },
-    "app",
+        "rights": {"type": "app.carddav.rights"},
+    }
 )
 radicale_app = RadicaleApp(radicale_configuration)
 app.mount("/dav", WSGIMiddleware(radicale_app))
@@ -114,6 +114,13 @@ def health() -> dict[str, str]:
 
 # /setup is not under /api/v1 — see app/api/setup.py for the rationale.
 app.include_router(setup_router)
+
+# Serve uploaded files (avatars, etc.)
+uploads_dir = Path("uploads")
+if uploads_dir.exists():
+    app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
+
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
 # SPA mount. In prod (Dockerfile.prod) STATIC_DIR=/app/static contains the

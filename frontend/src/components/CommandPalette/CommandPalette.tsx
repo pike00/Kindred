@@ -1,7 +1,6 @@
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
-import { useEffect, useMemo } from "react"
-
+import { useMemo } from "react"
 import { type ContactPublic, ContactsService } from "@/client"
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
 import {
@@ -14,6 +13,7 @@ import {
   CommandSeparator,
 } from "@/components/ui/command"
 import useAuth from "@/hooks/useAuth"
+import { useRegisterShortcuts } from "@/hooks/useKeyboardShortcuts"
 import {
   Bell,
   Home,
@@ -26,8 +26,10 @@ import {
   Users,
 } from "@/lib/icons"
 import { useCommandPalette } from "./CommandPaletteContext"
+import { SearchBadge } from "./SearchBadge"
 
 const CONTACT_LIMIT = 8
+const SEARCH_LIMIT = 20
 
 function contactLabel(contact: ContactPublic): string {
   const parts = [contact.first_name, contact.last_name].filter(Boolean)
@@ -49,20 +51,46 @@ function contactHaystack(contact: ContactPublic): string {
 }
 
 export function CommandPalette() {
+  // Register the Cmd+K / Ctrl+K shortcut in the global registry
+  useRegisterShortcuts([
+    {
+      keys: "Meta+k",
+      description: "Open command palette",
+      group: "Search",
+      callback: () => toggle(),
+    },
+    {
+      keys: "Control+k",
+      description: "Open command palette",
+      group: "Search",
+      callback: () => toggle(),
+    },
+  ])
   const { open, setOpen, toggle } = useCommandPalette()
+  // Memoize so useRegisterShortcuts sees a stable reference — an inline
+  // literal previously triggered an infinite render loop.
+  const shortcuts = useMemo(
+    () => [
+      {
+        keys: "Meta+k",
+        description: "Open command palette",
+        group: "Search",
+        callback: () => toggle(),
+      },
+      {
+        keys: "Control+k",
+        description: "Open command palette",
+        group: "Search",
+        callback: () => toggle(),
+      },
+    ],
+    [toggle],
+  )
+  useRegisterShortcuts(shortcuts)
   const navigate = useNavigate()
   const { user } = useAuth()
-
-  useEffect(() => {
-    function onKeyDown(e: KeyboardEvent) {
-      if ((e.key === "k" || e.key === "K") && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault()
-        toggle()
-      }
-    }
-    window.addEventListener("keydown", onKeyDown)
-    return () => window.removeEventListener("keydown", onKeyDown)
-  }, [toggle])
+  const queryClient = useQueryClient()
+  const [searchQuery, setSearchQuery] = useState("")
 
   const { data: contactsData } = useQuery({
     queryKey: ["contacts"],
@@ -74,15 +102,80 @@ export function CommandPalette() {
 
   const runCommand = (action: () => void) => {
     setOpen(false)
+    // Clear search state
+    setSearchQuery("")
+    queryClient.removeQueries({ queryKey: ["search"] })
     action()
   }
 
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
-      <CommandInput placeholder="Type a command or search contacts..." />
+      <CommandInput
+        placeholder="Type a command or search..."
+        onChangeCapture={(e) => {
+          const target = e.target as HTMLInputElement
+          setSearchQuery(target.value)
+        }}
+      />
       <CommandList>
         <CommandEmpty>No results.</CommandEmpty>
 
+        {/* Full-text search results */}
+        {searchQuery.length >= 1 && (
+          <>
+            <CommandGroup heading="Search Results">
+              {searchLoading && (
+                <CommandItem disabled>
+                  <span className="text-muted-foreground">Searching...</span>
+                </CommandItem>
+              )}
+              {!searchLoading && searchResults.length === 0 && (
+                <CommandItem disabled>
+                  <span className="text-muted-foreground">
+                    No results found.
+                  </span>
+                </CommandItem>
+              )}
+              {searchResults.slice(0, 10).map((result) => (
+                <CommandItem
+                  key={`${result.type}:${result.id}`}
+                  value={`search:${result.type}:${result.id} ${result.title} ${result.snippet ?? ""}`}
+                  onSelect={() =>
+                    runCommand(() => {
+                      if (result.type === "contact") {
+                        navigate({
+                          to: "/contacts/$contactId",
+                          params: { contactId: result.id },
+                        })
+                      } else if (result.type === "note") {
+                        // Notes are displayed on contact page
+                        navigate({
+                          to: "/contacts/$contactId",
+                          params: { contactId: result.id },
+                        })
+                      } else if (result.type === "interaction") {
+                        navigate({ to: "/interactions" })
+                      } else if (result.type === "journal_entry") {
+                        navigate({ to: "/journal" })
+                      }
+                    })
+                  }
+                >
+                  <SearchBadge type={result.type} />
+                  <span className="truncate">{result.title}</span>
+                  {result.snippet && (
+                    <span className="ml-2 truncate text-xs text-muted-foreground">
+                      {result.snippet}
+                    </span>
+                  )}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+            <CommandSeparator />
+          </>
+        )}
+
+        {/* Contact quick access */}
         {contacts.length > 0 && (
           <CommandGroup heading="Contacts">
             {contacts.slice(0, CONTACT_LIMIT).map((contact) => (

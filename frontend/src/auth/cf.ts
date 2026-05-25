@@ -7,13 +7,14 @@
 // from the Cf-Access-Jwt-Assertion header the edge injects. No frontend
 // JWT handling.
 
-const authMode = import.meta.env.VITE_AUTH_MODE as string | undefined
-const cfLogoutUrl = import.meta.env.VITE_CF_LOGOUT_URL as string | undefined
-
-export const cfEnabled = (): boolean =>
-  (authMode === "oidc" || authMode === "both") && !!cfLogoutUrl
+export const cfEnabled = (): boolean => {
+  const authMode = import.meta.env.VITE_AUTH_MODE as string | undefined
+  const cfLogoutUrl = import.meta.env.VITE_CF_LOGOUT_URL as string | undefined
+  return (authMode === "oidc" || authMode === "both") && !!cfLogoutUrl
+}
 
 export const logout = (): void => {
+  const cfLogoutUrl = import.meta.env.VITE_CF_LOGOUT_URL as string | undefined
   if (cfEnabled() && cfLogoutUrl) {
     const returnTo = encodeURIComponent(window.location.origin)
     window.location.href = `${cfLogoutUrl}?returnTo=${returnTo}`

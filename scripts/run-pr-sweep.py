@@ -48,6 +48,8 @@ MM_WEBHOOK_FILE = STATE_DIR / "mm-webhook"
 
 LITELLM_BASE_URL = os.environ.get("LITELLM_BASE_URL", "http://127.0.0.1:4000")
 LITELLM_MODEL = os.environ.get("LITELLM_MODEL", "deepseek-v4-pro-cloud")
+REVIEW_MODEL = os.environ.get("LITELLM_REVIEW_MODEL", "deepseek-v4-pro-cloud")
+FIX_MODEL = os.environ.get("LITELLM_FIX_MODEL", "kimi-k2.6-cloud")
 LITELLM_CHAT_URL = LITELLM_BASE_URL.rstrip("/") + "/v1/chat/completions"
 
 DEFAULT_BRANCH = "main"
@@ -239,10 +241,10 @@ def ensure_worktree(pr: PR) -> Path:
 
 
 def bring_stack_up(wt: Path) -> None:
-    """Use the worktree's `just up` to bring its compose stack online."""
+    """Use the worktree's `just dev` to bring its compose stack online."""
     log(f"Bringing stack up at {wt}")
     proc = subprocess.run(
-        ["just", "up"],
+        ["just", "dev"],
         cwd=wt,
         text=True,
         capture_output=True,
@@ -250,7 +252,7 @@ def bring_stack_up(wt: Path) -> None:
         timeout=300,
     )
     if proc.returncode != 0:
-        log(f"WARN: just up failed in {wt}:\n{proc.stderr[-2000:]}")
+        log(f"WARN: just dev failed in {wt}:\n{proc.stderr[-2000:]}")
         raise RuntimeError("stack failed to come up")
 
 
@@ -413,6 +415,105 @@ def _try_merge_commit(wt: Path, pr: PR, context: str) -> bool:
     return False
 
 
+def check_python_syntax(wt: Path) -> list[tuple[Path, str]]:
+    """Return list of (file, error) for any .py files with syntax errors in the worktree."""
+    errors = []
+    proc = subprocess.run(
+        ["git", "-C", str(wt), "diff", "--name-only", "--diff-filter=AM", "HEAD"],
+        capture_output=True,
+        text=True,
+    )
+    for rel in proc.stdout.splitlines():
+        if not rel.endswith(".py"):
+            continue
+        f = wt / rel
+        if not f.exists():
+            continue
+        chk = subprocess.run(
+            [
+                "python3",
+                "-c",
+                f"compile(open({repr(str(f))}).read(), {repr(rel)}, 'exec')",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if chk.returncode != 0:
+            errors.append((f, chk.stderr.strip()))
+    return errors
+
+
+def llm_fix_syntax_errors(wt: Path, pr: PR, errors: list[tuple[Path, str]]) -> bool:
+    """Ask LLM to fix syntax errors in files that a prior patch left broken.
+
+    Sends the full current file content and asks the LLM to return the corrected
+    file verbatim (not a diff) — avoids line-number skew from applying two
+    sequential diffs to a moving target.
+    """
+    fixed_any = False
+    for f, err in errors[:5]:
+        content = f.read_text(errors="replace")
+        if len(content) > 12000:
+            content = content[:12000] + "\n... [truncated]"
+        sys_prompt = (
+            "You are a Python syntax fixer. You will be given a Python file that has "
+            "a syntax error introduced by a merge-conflict resolution patch. "
+            "Return the COMPLETE corrected file — every line — with ONLY the syntax "
+            "error fixed. Do not change any logic, imports, or formatting beyond what "
+            "is necessary to make the file parse. "
+            "Output the file inside a ```python ... ``` fenced block and nothing else."
+        )
+        user = (
+            f"File: {f.relative_to(wt)}\n"
+            f"SyntaxError: {err}\n\n"
+            f"```python\n{content}\n```"
+        )
+        save_prompt(pr, f"syntax-fix-{f.name}", user)
+        try:
+            reply = litellm_chat(sys_prompt, user)
+        except Exception as e:
+            log(f"PR #{pr.number}: litellm syntax-fix call failed for {f.name}: {e}")
+            continue
+
+        # Extract content from ```python ... ``` block
+        import re
+
+        m = re.search(r"```python\s*\n(.*?)```", reply, re.DOTALL)
+        if not m:
+            # fall back: strip any single leading/trailing fence line
+            lines = reply.strip().splitlines()
+            if lines and lines[0].startswith("```"):
+                lines = lines[1:]
+            if lines and lines[-1].startswith("```"):
+                lines = lines[:-1]
+            fixed = "\n".join(lines)
+        else:
+            fixed = m.group(1)
+
+        # Verify the fix actually compiles before writing
+        chk = subprocess.run(
+            [
+                "python3",
+                "-c",
+                f"compile({repr(fixed)}, {repr(str(f.relative_to(wt)))}, 'exec')",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if chk.returncode != 0:
+            log(
+                f"PR #{pr.number}: LLM syntax fix for {f.name} still has errors: "
+                f"{chk.stderr.strip()[-200:]}"
+            )
+            continue
+
+        f.write_text(fixed)
+        log(f"PR #{pr.number}: syntax fixed in {f.relative_to(wt)}")
+        fixed_any = True
+
+    return fixed_any
+
+
 def handle_update_branch(wt: Path, pr: PR) -> bool:
     """Bring the PR branch up to date with main via merge. Return True on success."""
     success, msg = merge_main_into_pr(wt)
@@ -434,6 +535,18 @@ def handle_update_branch(wt: Path, pr: PR) -> bool:
     blob = gather_conflict_context(wt)
     if llm_repair_conflicts(wt, pr, blob):
         run(["git", "-C", str(wt), "add", "-A"], check=True)
+
+        # Pass 2a: verify Python syntax before committing — the LLM sometimes
+        # leaves unbalanced parens when resolving conflicts in contacts.py.
+        syntax_errors = check_python_syntax(wt)
+        if syntax_errors:
+            log(
+                f"PR #{pr.number}: LLM repair left {len(syntax_errors)} syntax error(s); "
+                "attempting syntax fix pass"
+            )
+            if llm_fix_syntax_errors(wt, pr, syntax_errors):
+                run(["git", "-C", str(wt), "add", "-A"], check=True)
+
         if _try_merge_commit(wt, pr, "LLM repair"):
             return True
     abort_merge(wt)
@@ -478,7 +591,10 @@ def _run_gate(wt: Path, name: str, cmd: list[str], timeout: int) -> GateResult:
 
 
 def gate_precommit(wt: Path) -> GateResult:
-    result = _run_gate(wt, "precommit", ["prek", "run", "--all-files"], timeout=600)
+    # prek lives in each worktree's .venv, not in system PATH
+    prek_bin = wt / ".venv" / "bin" / "prek"
+    prek_cmd = str(prek_bin) if prek_bin.exists() else "prek"
+    result = _run_gate(wt, "precommit", [prek_cmd, "run", "--all-files"], timeout=600)
     if result.passed:
         return result
     # Pre-commit hooks often auto-fix files (ruff format, biome, trailing-whitespace)
@@ -493,7 +609,9 @@ def gate_precommit(wt: Path) -> GateResult:
     if dirty.stdout.strip():
         log("  ↻ gate `precommit`: hooks auto-fixed files, staging + re-running")
         subprocess.run(["git", "add", "-A"], cwd=wt, check=True)
-        result = _run_gate(wt, "precommit", ["prek", "run", "--all-files"], timeout=600)
+        result = _run_gate(
+            wt, "precommit", [prek_cmd, "run", "--all-files"], timeout=600
+        )
     return result
 
 
@@ -527,7 +645,9 @@ def run_gauntlet(wt: Path) -> tuple[list[GateResult], GateResult | None]:
     return passed, None
 
 
-def litellm_chat(system: str, user: str, *, timeout_s: int = 300) -> str:
+def litellm_chat(
+    system: str, user: str, *, model: str | None = None, timeout_s: int = 300
+) -> str:
     """Single-shot chat completion against the homelab LiteLLM proxy.
     Returns assistant message text. Uses OpenAI-compatible /v1/chat/completions."""
     api_key = os.environ.get("LITELLM_API_KEY")
@@ -536,7 +656,7 @@ def litellm_chat(system: str, user: str, *, timeout_s: int = 300) -> str:
             "LITELLM_API_KEY not set; ensure .env has it and run via `just sweep`"
         )
     payload = {
-        "model": LITELLM_MODEL,
+        "model": model or LITELLM_MODEL,
         "messages": [
             {"role": "system", "content": system},
             {"role": "user", "content": user},
@@ -858,6 +978,206 @@ def commit_repair_chain(wt: Path, pr: PR, attempts: list[GateResult]) -> int:
     return 1
 
 
+# ── Review pass ──────────────────────────────────────────────────────────────
+
+REVIEW_SYSTEM = """\
+You are a principal engineer reviewing a feature branch for Kindred, a personal CRM.
+
+Stack: FastAPI + SQLModel backend, React + Bun frontend (Vite + TypeScript), Postgres, Alembic.
+
+Your job: identify STRUCTURAL issues only. Style and formatting are handled by ruff/biome; test \
+failures are caught by pytest/e2e. Focus on:
+- Design: wrong abstraction, missing layer (e.g. business logic leaking into routes), wrong ownership
+- Correctness: logic bugs, missing null checks, wrong HTTP status codes, off-by-one errors
+- Completeness: missing migrations, missing auth checks, missing error handling at API boundaries
+- Consistency: naming conventions vs existing code, response shape, model field conventions
+- Security: unvalidated inputs at API boundaries, missing auth enforcement
+
+Output EXACTLY this format — no prose outside these sections:
+
+MUST-FIX:
+- [path/to/file.py] One-line description
+
+SHOULD-FIX:
+- [path/to/file.tsx] One-line description
+
+CONSIDER:
+- [path/to/file.py] Optional improvement (not required for merge)
+
+ASSESSMENT: <one sentence summary of overall quality>
+
+If the PR is structurally sound with no required changes:
+MUST-FIX: none
+SHOULD-FIX: none
+CONSIDER: none
+ASSESSMENT: <summary>
+"""
+
+APPLY_REVIEW_SYSTEM = """\
+You are a senior engineer implementing code review feedback for a PR in the Kindred personal CRM.
+
+Stack: FastAPI + SQLModel backend, React + Bun frontend (Vite + TypeScript), Postgres, Alembic.
+
+You will be given a structured code review and the PR diff. Apply all MUST-FIX and SHOULD-FIX items.
+
+Output rules — STRICT:
+- Reply with EXACTLY one fenced code block tagged `diff` with a unified diff applicable via `git apply -p1`.
+- If there are no MUST-FIX or SHOULD-FIX items, or the fixes are too risky to apply automatically, \
+reply with the single line `DECLINE: <one-sentence reason>`.
+- No prose outside the diff or the DECLINE line.
+- Only touch files explicitly mentioned in MUST-FIX / SHOULD-FIX items.
+- Do NOT add new dependencies. Do NOT reformat unrelated code.
+"""
+
+
+def build_review_prompt(pr: PR, wt: Path) -> str:
+    diff_proc = run(["git", "-C", str(wt), "diff", f"origin/{DEFAULT_BRANCH}...HEAD"])
+    diff_text = diff_proc.stdout
+    if len(diff_text) > 40000:
+        diff_text = diff_text[:40000] + "\n... [diff truncated at 40KB]"
+
+    files_proc = run(
+        ["git", "-C", str(wt), "diff", "--name-only", f"origin/{DEFAULT_BRANCH}...HEAD"]
+    )
+    changed_files = [f.strip() for f in files_proc.stdout.splitlines() if f.strip()]
+
+    file_blocks = ""
+    for rel in changed_files[:6]:
+        full = wt / rel
+        if not full.exists():
+            continue
+        content = full.read_text(errors="replace")
+        if len(content) > 8000:
+            content = content[:8000] + "\n... [truncated]"
+        file_blocks += f"\n### {rel}\n```\n{content}\n```\n"
+
+    return f"""\
+# PR #{pr.number}: {pr.title}
+Branch: {pr.head_ref}
+
+## Diff vs origin/main
+```diff
+{diff_text}
+```
+
+## Current file contents
+{file_blocks}
+
+Review this PR for structural issues. Output in the required MUST-FIX / SHOULD-FIX / CONSIDER / ASSESSMENT format.
+"""
+
+
+def build_apply_review_prompt(pr: PR, review_text: str, wt: Path) -> str:
+    diff_proc = run(["git", "-C", str(wt), "diff", f"origin/{DEFAULT_BRANCH}...HEAD"])
+    diff_text = diff_proc.stdout
+    if len(diff_text) > 30000:
+        diff_text = diff_text[:30000] + "\n... [diff truncated at 30KB]"
+
+    # Extract file paths mentioned in MUST-FIX / SHOULD-FIX lines
+    mentioned = re.findall(r"\[([^\]]+)\]", review_text)
+    file_blocks = ""
+    for rel in dict.fromkeys(mentioned):  # deduplicate, preserve order
+        full = wt / rel
+        if not full.is_file():
+            continue
+        content = full.read_text(errors="replace")
+        if len(content) > 8000:
+            content = content[:8000] + "\n... [truncated]"
+        file_blocks += f"\n### {rel}\n```\n{content}\n```\n"
+
+    return f"""\
+# PR #{pr.number}: {pr.title}
+
+## Code review
+{review_text}
+
+## Diff vs origin/main
+```diff
+{diff_text}
+```
+
+## Current file contents (files mentioned in review)
+{file_blocks}
+
+Apply all MUST-FIX and SHOULD-FIX items as a single unified diff.
+"""
+
+
+def review_and_fix(pr: PR, wt: Path) -> str:
+    """
+    Run a deepseek-v4-pro-cloud review then kimi-k2.6-cloud fix pass.
+    Returns: "fixed" | "no-issues" | "declined" | "broke-gauntlet" | "error"
+    Non-fatal — caller logs but does not skip the PR on failure.
+    """
+    log(f"PR #{pr.number}: starting review pass ({REVIEW_MODEL})")
+    review_prompt = build_review_prompt(pr, wt)
+    save_prompt(pr, "review", review_prompt)
+    try:
+        review_text = litellm_chat(
+            REVIEW_SYSTEM, review_prompt, model=REVIEW_MODEL, timeout_s=600
+        )
+    except Exception as e:
+        log(f"PR #{pr.number}: review LLM call failed: {e}")
+        return "error"
+    save_reply(pr, "review", review_text)
+    log(f"PR #{pr.number}: review received ({len(review_text)} chars)")
+
+    has_must = "MUST-FIX:" in review_text and "MUST-FIX: none" not in review_text
+    has_should = "SHOULD-FIX:" in review_text and "SHOULD-FIX: none" not in review_text
+    if not has_must and not has_should:
+        log(f"PR #{pr.number}: review found no actionable items")
+        return "no-issues"
+
+    log(f"PR #{pr.number}: sending review fixes to {FIX_MODEL}")
+    fix_prompt = build_apply_review_prompt(pr, review_text, wt)
+    save_prompt(pr, "review-fix", fix_prompt)
+    try:
+        fix_reply = litellm_chat(
+            APPLY_REVIEW_SYSTEM, fix_prompt, model=FIX_MODEL, timeout_s=600
+        )
+    except Exception as e:
+        log(f"PR #{pr.number}: fix LLM call failed: {e}")
+        return "error"
+    save_reply(pr, "review-fix", fix_reply)
+
+    diff = extract_diff(fix_reply)
+    if diff is None:
+        log(f"PR #{pr.number}: fix model declined or returned no diff")
+        return "declined"
+
+    if not apply_patch(wt, pr, "review-fix", diff):
+        return "declined"
+
+    # Stage fixes and re-run full gauntlet to verify nothing broke
+    run(["git", "-C", str(wt), "add", "-A"], check=True)
+    passed, failure = run_gauntlet(wt)
+    if failure is not None:
+        log(f"PR #{pr.number}: review fixes broke gauntlet ({failure.name}), reverting")
+        run(["git", "-C", str(wt), "reset", "--hard", "HEAD"], check=True)
+        return "broke-gauntlet"
+
+    proc = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(wt),
+            "commit",
+            "--no-verify",
+            "-m",
+            f"chore(pr-sweep): review-driven fixes\n\nReviewed by {REVIEW_MODEL}, fixes applied by {FIX_MODEL}.",
+        ],
+        text=True,
+        capture_output=True,
+        stdin=subprocess.DEVNULL,
+    )
+    if proc.returncode != 0:
+        log(f"PR #{pr.number}: review fix commit failed:\n{proc.stderr[-500:]}")
+        return "error"
+
+    log(f"PR #{pr.number}: review fixes committed and gauntlet green")
+    return "fixed"
+
+
 # ── Task 8: Disposition ──────────────────────────────────────────────────────
 
 
@@ -988,6 +1308,9 @@ def process_pr(pr: PR, state: dict, dry_run: bool) -> str:
             post_failure_comment(pr, reason)
             return f"skipped:{reason}"
 
+        review_outcome = review_and_fix(pr, wt)
+        log(f"PR #{pr.number}: review pass = {review_outcome}")
+
         if not push_branch(wt, pr):
             reason = "push --force-with-lease failed"
             log(f"PR #{pr.number}: {reason}")
@@ -1090,6 +1413,136 @@ def run_sweep() -> None:
     print_summary(prs, state, results)
 
 
+# ── Retrospective review pass ─────────────────────────────────────────────────
+
+REVIEW_STATE_FILE = STATE_DIR / "review-state.json"
+
+
+def load_review_state() -> dict:
+    if REVIEW_STATE_FILE.exists():
+        return json.loads(REVIEW_STATE_FILE.read_text())
+    return {}
+
+
+def save_review_state(state: dict) -> None:
+    REVIEW_STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    REVIEW_STATE_FILE.write_text(json.dumps(state, indent=2))
+
+
+def fetch_pr_info(pr_num: int) -> PR | None:
+    proc = run(
+        [
+            "gh",
+            "pr",
+            "view",
+            str(pr_num),
+            "--json",
+            "number,title,headRefName,isDraft,mergeable",
+        ]
+    )
+    if proc.returncode != 0:
+        log(f"PR #{pr_num}: gh pr view failed: {proc.stderr.strip()}")
+        return None
+    r = json.loads(proc.stdout)
+    return PR(
+        number=r["number"],
+        title=r["title"],
+        head_ref=r["headRefName"],
+        mergeable=r["mergeable"],
+        is_draft=r["isDraft"],
+    )
+
+
+def run_review() -> None:
+    """Retrospective review pass: apply Opus-equivalent review + Sonnet-equivalent fixes
+    to all PRs that the sweep already marked ready."""
+    sweep_state = load_state()
+    review_state = load_review_state()
+
+    ready = [
+        int(num) for num, info in sweep_state.items() if info.get("status") == "ready"
+    ]
+    log(f"Review pass: {len(ready)} ready PR(s) to check")
+
+    reviewed = skipped = fixed = errors = 0
+    for pr_num in sorted(ready):
+        pr_key = str(pr_num)
+        prior = review_state.get(pr_key, {}).get("status")
+        if prior in ("fixed", "no-issues", "declined"):
+            log(f"PR #{pr_num}: already reviewed ({prior}), skipping")
+            skipped += 1
+            continue
+
+        pr = fetch_pr_info(pr_num)
+        if pr is None:
+            review_state[pr_key] = {"status": "error", "updated_at": now_iso()}
+            save_review_state(review_state)
+            errors += 1
+            continue
+
+        log(f"PR #{pr_num}: {pr.title}")
+        try:
+            wt = ensure_worktree(pr)
+        except Exception as e:
+            log(f"PR #{pr_num}: worktree failed: {e}")
+            review_state[pr_key] = {
+                "status": "error",
+                "outcome": str(e),
+                "updated_at": now_iso(),
+            }
+            save_review_state(review_state)
+            errors += 1
+            continue
+
+        outcome = review_and_fix(pr, wt)
+        log(f"PR #{pr_num}: review outcome = {outcome}")
+
+        if outcome == "fixed":
+            if push_branch(wt, pr):
+                run(
+                    [
+                        "gh",
+                        "pr",
+                        "comment",
+                        str(pr_num),
+                        "--body",
+                        f"🔍 **pr-sweep review pass** applied structural fixes via {REVIEW_MODEL} + {FIX_MODEL}. "
+                        f"See `.pr-sweep-runner/replies/{pr_num}/review.txt` for the full review.",
+                    ]
+                )
+                fixed += 1
+            else:
+                outcome = "push-failed"
+                errors += 1
+        elif outcome == "no-issues":
+            reviewed += 1
+        else:
+            errors += 1
+
+        review_state[pr_key] = {
+            "status": outcome,
+            "updated_at": now_iso(),
+            "title": pr.title,
+        }
+        save_review_state(review_state)
+
+        if pr_num != ready[-1]:
+            log(f"Cooling down {COOLDOWN_S}s...")
+            time.sleep(COOLDOWN_S)
+
+    sep = "=" * 60
+    log(sep)
+    log(f"REVIEW PASS COMPLETE — {len(ready)} PR(s)")
+    log(f"  ✅ fixed:        {fixed}")
+    log(f"  ✓  no-issues:   {reviewed}")
+    log(f"  ⚠️  skipped:     {skipped}")
+    log(f"  ❌ errors:       {errors}")
+    log(sep)
+    notify_mattermost(
+        f"🔍 Review pass done: {fixed} fixed, {reviewed} clean, {skipped} skipped, {errors} errors"
+    )
+
+
 if __name__ == "__main__":
     if len(sys.argv) >= 2 and sys.argv[1] == "discover":
         _smoketest_discover()
@@ -1148,8 +1601,10 @@ if __name__ == "__main__":
             tear_stack_down(wt)
     elif len(sys.argv) >= 2 and sys.argv[1] == "run":
         run_sweep()
+    elif len(sys.argv) >= 2 and sys.argv[1] == "review":
+        run_review()
     else:
         log(
-            "usage: run-pr-sweep.py {run|discover|worktree <pr>|update-branch <pr>|gauntlet <pr>|repair <pr>|chat-test}"
+            "usage: run-pr-sweep.py {run|review|discover|worktree <pr>|update-branch <pr>|gauntlet <pr>|repair <pr>|chat-test}"
         )
         sys.exit(2)
