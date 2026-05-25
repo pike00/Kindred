@@ -903,28 +903,6 @@ class Contact(SoftDeleteMixin, ContactBase, table=True):
             name="uq_contact_owner_source_external_id",
         ),
     )
-    # Relationships for merge tracking
-    merged_into: "Contact | None" = Relationship(
-        back_populates="merged_contacts",
-        sa_relationship_kwargs={
-            "foreign_keys": "[Contact.merged_into_id]",
-            "remote_side": "[Contact.id]",
-        },
-    )
-    merged_contacts: list["Contact"] = Relationship(
-        back_populates="merged_into",
-        sa_relationship_kwargs={"foreign_keys": "[Contact.merged_into_id]"},
-    )
-    # Merge log entries where this contact is the survivor
-    merge_logs_survivor: list["ContactMerge"] = Relationship(
-        back_populates="surviving_contact",
-        sa_relationship_kwargs={"foreign_keys": "ContactMerge.surviving_id"},
-    )
-    # Merge log entries where this contact was absorbed
-    merge_logs_absorbed: list["ContactMerge"] = Relationship(
-        back_populates="absorbed_contact",
-        sa_relationship_kwargs={"foreign_keys": "ContactMerge.absorbed_id"},
-    )
 
 
 class ContactPublic(ContactBase):

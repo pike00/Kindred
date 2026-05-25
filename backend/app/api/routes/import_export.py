@@ -9,15 +9,13 @@ from sqlalchemy.orm import selectinload
 from sqlmodel import col, select
 
 from app.api.deps import CurrentUser, SessionDep
-from app.crud import visible_contact_ids
+from app.crud import upsert_contact
 from app.models import (
     Address,
     Contact,
     ContactCreate,
     ContactField,
-    ContactFieldType,
-    ContactGroup,
-    ContactTag,
+    ContactSource,
 )
 from app.vcard import contact_to_vcard, vcard_to_contact_data
 
@@ -56,26 +54,42 @@ async def import_vcard(
             parsed = vcard_to_contact_data(card_text)
             contact_data = parsed["contact"]
 
-            contact = Contact(
-                owner_id=current_user.id,
-                vcard_raw=parsed["vcard_raw"],
-                **contact_data,
-            )
-            if parsed.get("uid"):
-                # Check if contact with this UID already exists
-                existing = session.get(Contact, parsed["uid"])
-                if existing and existing.owner_id == current_user.id:
-                    errors.append(
-                        f"Skipped duplicate: {contact_data.get('first_name', '')} {contact_data.get('last_name', '')}"
-                    )
-                    continue
-                contact.id = parsed["uid"]
+            # Get vCard UID for source_external_id
+            vcard_uid = parsed.get("uid")
+            source_external_id = str(vcard_uid) if vcard_uid else None
 
-            session.add(contact)
+            # Create ContactCreate with provenance fields
+            contact_in = ContactCreate(
+                **contact_data,
+                source=ContactSource.VCARD_IMPORT,
+                source_external_id=source_external_id,
+                tag_ids=[],
+                group_ids=[],
+            )
+
+            # Use upsert_contact for idempotent import
+            contact = upsert_contact(
+                session=session, contact_in=contact_in, owner_id=current_user.id
+            )
+
+            # Update vcard_raw if available
+            if parsed.get("vcard_raw"):
+                contact.vcard_raw = parsed["vcard_raw"]
+                session.add(contact)
+
             session.commit()
             session.refresh(contact)
 
-            # Create contact fields
+            # Handle contact fields (idempotent: delete existing, create new)
+            from app.models import ContactField, ContactFieldType
+
+            # Delete existing fields for this contact
+            existing_fields = session.exec(
+                select(ContactField).where(ContactField.contact_id == contact.id)
+            ).all()
+            for field in existing_fields:
+                session.delete(field)
+
             for field_data in parsed["fields"]:
                 cf = ContactField(
                     contact_id=contact.id,
@@ -86,7 +100,16 @@ async def import_vcard(
                 )
                 session.add(cf)
 
-            # Create addresses
+            # Handle addresses (idempotent: delete existing, create new)
+            from app.models import Address
+
+            # Delete existing addresses for this contact
+            existing_addresses = session.exec(
+                select(Address).where(Address.contact_id == contact.id)
+            ).all()
+            for addr in existing_addresses:
+                session.delete(addr)
+
             for addr_data in parsed["addresses"]:
                 addr = Address(contact_id=contact.id, **addr_data)
                 session.add(addr)
