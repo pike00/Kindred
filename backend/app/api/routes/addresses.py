@@ -4,26 +4,14 @@ import logging
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+import httpx
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
 from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.crud import contact_visible, create_address
-from app.models import (
-    Address,
-    AddressCreate,
-    AddressesPublic,
-    AddressPublic,
-    AddressUpdate,
-    Ok,
-)
-
-try:
-    from app.services import geocoding
-
-    _geocoding_available = True
-except ImportError:
-    _geocoding_available = False
+from app.models import Address, AddressCreate, AddressPublic, AddressUpdate
+from app.services import geocoding
 
 logger = logging.getLogger(__name__)
 
@@ -114,13 +102,11 @@ def delete_address(
 
     session.delete(address)
     session.commit()
-    return Ok()
+    return {"ok": True}
 
 
 def _geocode_address(session: Any, address: Address) -> None:
     """Attempt to geocode an address and update its coordinates."""
-    if not _geocoding_available:
-        return
     try:
         result = geocoding.geocode_address(
             street=address.street,
@@ -155,9 +141,7 @@ def geocode_address_manual(
     session.refresh(address)
 
     if address.latitude is None or address.longitude is None:
-        raise HTTPException(
-            status_code=400, detail="Geocoding failed - could not find coordinates"
-        )
+        raise HTTPException(status_code=400, detail="Geocoding failed - could not find coordinates")
 
     return AddressPublic.model_validate(address)
 
@@ -166,6 +150,7 @@ def geocode_address_manual(
 def geocode_missing_coordinates(
     session: SessionDep,
     current_user: CurrentUser,
+    background_tasks: BackgroundTasks,
 ) -> Any:
     """Trigger geocoding for all addresses missing coordinates (owned by user)."""
     from app.models import Contact
@@ -175,6 +160,7 @@ def geocode_missing_coordinates(
     ).all()
     contact_ids = [c.id for c in contacts]
 
+    # Get addresses without coordinates
     addresses = session.exec(
         select(Address).where(
             Address.contact_id.in_(contact_ids),
@@ -185,19 +171,18 @@ def geocode_missing_coordinates(
     count = 0
     for address in addresses:
         try:
-            if _geocoding_available:
-                result = geocoding.geocode_address(
-                    street=address.street,
-                    city=address.city,
-                    region=address.region,
-                    postal_code=address.postal_code,
-                    country=address.country,
-                )
-                if result:
-                    address.latitude = result[0]
-                    address.longitude = result[1]
-                    session.add(address)
-                    count += 1
+            result = geocoding.geocode_address(
+                street=address.street,
+                city=address.city,
+                region=address.region,
+                postal_code=address.postal_code,
+                country=address.country,
+            )
+            if result:
+                address.latitude = result[0]
+                address.longitude = result[1]
+                session.add(address)
+                count += 1
         except Exception as e:
             logger.warning(f"Failed to geocode address {address.id}: {e}")
 

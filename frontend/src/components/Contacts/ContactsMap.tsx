@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useSuspenseQuery } from "@tanstack/react-query"
 import L from "leaflet"
 import { useEffect, useMemo, useRef, useState } from "react"
@@ -11,11 +10,13 @@ import {
   useMapEvent,
 } from "react-leaflet"
 import supercluster, { type Cluster } from "supercluster"
-import { ContactsService } from "@/client/sdk.gen"
-import type { ContactGeoPoint } from "@/client/types.gen"
+import {
+  type ContactGeoPoint,
+  CustomContactsService,
+} from "@/client/custom"
 import "leaflet/dist/leaflet.css"
-import { MapIcon } from "lucide-react"
 import { ContactMapCard } from "@/components/Contacts/ContactMapCard"
+import { MapIcon, UserIcon } from "lucide-react"
 
 // @ts-expect-error: No type declarations for leaflet
 delete (L.Icon.Default.prototype as Record<string, unknown>)._getIconUrl
@@ -61,23 +62,20 @@ function createClusterIcon(count: number): L.DivIcon {
 
 // Component to handle cluster click - zooms to cluster bounds
 function ClusterMarker({ cluster, map }: ClusterMarkerProps) {
-  const [_isHovered, setIsHovered] = useState(false)
+  const [isHovered, setIsHovered] = useState(false)
 
   const handleClick = () => {
-    const [_west, _south, _east, _north] = cluster.properties.cluster
+    const [west, south, east, north] = cluster.properties.cluster
       ? (cluster as any).geometry.coordinates
       : [0, 0, 0, 0]
     // For actual clusters, we need to get the bounding box from cluster properties
     const clusterId = (cluster as any).id
     if (clusterId) {
-      const _mapBounds = map.getBounds()
+      const mapBounds = map.getBounds()
       // Zoom in one level on cluster click
       const currentZoom = map.getZoom()
       map.setZoom(currentZoom + 2)
-      map.panTo([
-        cluster.geometry.coordinates[1],
-        cluster.geometry.coordinates[0],
-      ])
+      map.panTo([cluster.geometry.coordinates[1], cluster.geometry.coordinates[0]])
     }
   }
 
@@ -171,7 +169,7 @@ export function ContactsMap({ bounds: initialBounds }: ContactsMapProps) {
   const { data } = useSuspenseQuery({
     queryKey: ["contactsGeo", bounds],
     queryFn: () =>
-      ContactsService.listContactsGeo({
+      CustomContactsService.listContactsGeo({
         minLat: bounds?.minLat,
         maxLat: bounds?.maxLat,
         minLng: bounds?.minLng,
@@ -226,7 +224,7 @@ export function ContactsMap({ bounds: initialBounds }: ContactsMapProps) {
     ]
 
     return clusterIndex.getClusters(bbox, Math.round(zoom))
-  }, [clusterIndex])
+  }, [clusterIndex, bounds])
 
   // Default center (US center) if no points
   const defaultCenter: [number, number] = [39.8283, -98.5795]
@@ -275,27 +273,26 @@ export function ContactsMap({ bounds: initialBounds }: ContactsMapProps) {
                 points={points}
               />
             )
+          } else {
+            // It's a point - find the corresponding ContactGeoPoint
+            const coords = (cluster as any).geometry.coordinates
+            const props = (cluster as any).properties
+            const point = points.find(
+              (p) =>
+                p.longitude === coords[0] &&
+                p.latitude === coords[1] &&
+                p.contact_id === props.contact_id
+            )
+            if (!point) return null
+            return <ContactMarker key={point.contact_id} point={point} />
           }
-          // It's a point - find the corresponding ContactGeoPoint
-          const coords = (cluster as any).geometry.coordinates
-          const props = (cluster as any).properties
-          const point = points.find(
-            (p) =>
-              p.longitude === coords[0] &&
-              p.latitude === coords[1] &&
-              p.contact_id === props.contact_id,
-          )
-          if (!point) return null
-          return <ContactMarker key={point.contact_id} point={point} />
         })}
       </MapContainer>
       {points.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-[1000]">
           <div className="text-center">
             <MapIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold">
-              No contacts with locations
-            </h3>
+            <h3 className="text-lg font-semibold">No contacts with locations</h3>
             <p className="text-muted-foreground text-sm mt-1">
               Add addresses with coordinates to see contacts on the map.
             </p>

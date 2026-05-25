@@ -383,10 +383,18 @@ export type ContactFieldUpdate = {
 };
 
 /**
- * 52-week interaction heatmap for a contact.
+ * A geo point representing a contact's address.
  */
-export type ContactHeatmap = {
-    data: Array<WeekBucket>;
+export type ContactGeoPoint = {
+    contact_id: string;
+    contact_name: string;
+    avatar_url?: (string | null);
+    latitude: number;
+    longitude: number;
+    address_label: string;
+    city?: (string | null);
+    country?: (string | null);
+    street?: (string | null);
 };
 
 export type ContactPublic = {
@@ -474,6 +482,14 @@ export type ContactPublic = {
     tags?: Array<TagPublic>;
     groups?: Array<GroupPublic>;
     stage_events?: Array<ContactStageEventPublic>;
+};
+
+/**
+ * Response model for geo endpoint.
+ */
+export type ContactsGeoResponse = {
+    points: Array<ContactGeoPoint>;
+    count: number;
 };
 
 export type ContactSource = 'MANUAL' | 'VCARD_IMPORT' | 'CARDDAV' | 'GOOGLE' | 'WEBHOOK';
@@ -2298,7 +2314,28 @@ export type ContactsRestoreContactData = {
 
 export type ContactsRestoreContactResponse = (ContactPublic);
 
-export type ContactsGetContactHeatmapData = {
+export type ContactsListContactsGeoData = {
+    /**
+     * Maximum latitude for bounding box filter
+     */
+    maxLat?: (number | null);
+    /**
+     * Maximum longitude for bounding box filter
+     */
+    maxLng?: (number | null);
+    /**
+     * Minimum latitude for bounding box filter
+     */
+    minLat?: (number | null);
+    /**
+     * Minimum longitude for bounding box filter
+     */
+    minLng?: (number | null);
+};
+
+export type ContactsListContactsGeoResponse = (ContactsGeoResponse);
+
+export type ContactsListContactMentionsData = {
     contactId: string;
 };
 

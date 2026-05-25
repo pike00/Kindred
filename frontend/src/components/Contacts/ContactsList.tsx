@@ -25,7 +25,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
-  Download,
+  Map as MapIcon,
   Search,
   Star,
   Trash2,
@@ -36,46 +36,7 @@ import { cn } from "@/lib/utils"
 
 const PAGE_SIZE = 25
 
-// Bulk action types
-const BULK_ACTIONS = [
-  { id: "archive", label: "Archive", icon: Archive, color: "text-orange-600" },
-  {
-    id: "unarchive",
-    label: "Unarchive",
-    icon: Archive,
-    color: "text-green-600",
-  },
-  {
-    id: "favorite",
-    label: "Add to Favorites",
-    icon: Star,
-    color: "text-yellow-600",
-  },
-  {
-    id: "unfavorite",
-    label: "Remove from Favorites",
-    icon: Star,
-    color: "text-gray-600",
-  },
-  { id: "delete", label: "Delete", icon: Trash2, color: "text-red-600" },
-  { id: "export", label: "Export CSV", icon: Download, color: "text-blue-600" },
-]
-
-type BulkActionId =
-  | "archive"
-  | "unarchive"
-  | "favorite"
-  | "unfavorite"
-  | "delete"
-  | "export"
-
-// Preview modal state
-interface PreviewModalState {
-  open: boolean
-  action: BulkActionId | null
-  count: number
-  contacts: ContactPublic[]
-}
+import { AddContactDialog } from "./AddContactDialog"
 
 function fullName(contact: ContactPublic): string {
   return (

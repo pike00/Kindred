@@ -1303,20 +1303,78 @@ export const ContactFieldUpdateSchema = {
     title: 'ContactFieldUpdate'
 } as const;
 
-export const ContactHeatmapSchema = {
+export const ContactGeoPointSchema = {
     properties: {
-        data: {
-            items: {
-                '$ref': '#/components/schemas/WeekBucket'
-            },
-            type: 'array',
-            title: 'Data'
+        contact_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Contact Id'
+        },
+        contact_name: {
+            type: 'string',
+            title: 'Contact Name'
+        },
+        avatar_url: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Avatar Url'
+        },
+        latitude: {
+            type: 'number',
+            title: 'Latitude'
+        },
+        longitude: {
+            type: 'number',
+            title: 'Longitude'
+        },
+        address_label: {
+            type: 'string',
+            title: 'Address Label'
+        },
+        city: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'City'
+        },
+        country: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Country'
+        },
+        street: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Street'
         }
     },
     type: 'object',
-    required: ['data'],
-    title: 'ContactHeatmap',
-    description: '52-week interaction heatmap for a contact.'
+    required: ['contact_id', 'contact_name', 'latitude', 'longitude', 'address_label'],
+    title: 'ContactGeoPoint',
+    description: "A geo point representing a contact's address."
 } as const;
 
 export const ContactPublicSchema = {

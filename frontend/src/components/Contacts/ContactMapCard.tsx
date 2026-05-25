@@ -1,5 +1,5 @@
-import { MapIcon } from "lucide-react"
-import type { ContactGeoPoint } from "@/client/types.gen"
+import { MapIcon, UserIcon, MailIcon, PhoneIcon, BuildingIcon } from "lucide-react"
+import type { ContactGeoPoint } from "@/client/custom"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { getInitials } from "@/utils"
@@ -15,10 +15,7 @@ export function ContactMapCard({ point }: ContactMapCardProps) {
     <div className="w-[260px] text-sm">
       <div className="flex items-start gap-3 mb-3">
         <Avatar className="h-10 w-10 shrink-0">
-          <AvatarImage
-            src={point.avatar_url || undefined}
-            alt={point.contact_name}
-          />
+          <AvatarImage src={point.avatar_url || undefined} alt={point.contact_name} />
           <AvatarFallback className="text-xs">{initials}</AvatarFallback>
         </Avatar>
         <div className="min-w-0 flex-1">
@@ -36,7 +33,9 @@ export function ContactMapCard({ point }: ContactMapCardProps) {
           <MapIcon className="h-3.5 w-3.5 mt-0.5 shrink-0" />
           <div className="text-xs">
             {point.street && <div>{point.street}</div>}
-            <div>{[point.city, point.country].filter(Boolean).join(", ")}</div>
+            <div>
+              {[point.city, point.country].filter(Boolean).join(", ")}
+            </div>
           </div>
         </div>
       )}
