@@ -1,3 +1,5 @@
+import { execSync } from "node:child_process"
+import { readFileSync } from "node:fs"
 import path from "node:path"
 import tailwindcss from "@tailwindcss/vite"
 import { tanstackRouter } from "@tanstack/router-plugin/vite"
@@ -7,6 +9,10 @@ import { VitePWA } from "vite-plugin-pwa"
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(appVersion()),
+    __APP_HASH__: JSON.stringify(gitHash()),
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

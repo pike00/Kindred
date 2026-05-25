@@ -1,14 +1,13 @@
 """Tag management routes."""
 
 import uuid
-from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from sqlmodel import func, select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.crud import create_tag
-from app.models import Tag, TagCreate, TagPublic, TagsPublic, TagUpdate
+from app.models import Ok, Tag, TagCreate, TagPublic, TagsPublic, TagUpdate
 
 router = APIRouter(prefix="/tags", tags=["tags"])
 
@@ -19,7 +18,7 @@ def list_tags(
     current_user: CurrentUser,
     skip: int = 0,
     limit: int = 100,
-) -> Any:
+) -> TagsPublic:
     """List all tags for the current user."""
     statement = (
         select(Tag).where(Tag.owner_id == current_user.id).offset(skip).limit(limit)
@@ -41,7 +40,7 @@ def create_tag_route(
     session: SessionDep,
     current_user: CurrentUser,
     tag_in: TagCreate,
-) -> Any:
+) -> TagPublic:
     """Create a new tag."""
     tag = create_tag(session=session, tag_in=tag_in, owner_id=current_user.id)
     return TagPublic.model_validate(tag)
@@ -54,7 +53,7 @@ def update_tag(
     current_user: CurrentUser,
     tag_id: uuid.UUID,
     tag_in: TagUpdate,
-) -> Any:
+) -> TagPublic:
     """Update a tag."""
     tag = session.get(Tag, tag_id)
     if not tag:
@@ -70,12 +69,12 @@ def update_tag(
     return TagPublic.model_validate(tag)
 
 
-@router.delete("/{tag_id}")
+@router.delete("/{tag_id}", response_model=Ok)
 def delete_tag(
     session: SessionDep,
     current_user: CurrentUser,
     tag_id: uuid.UUID,
-) -> Any:
+) -> Ok:
     """Delete a tag."""
     tag = session.get(Tag, tag_id)
     if not tag:
@@ -85,4 +84,4 @@ def delete_tag(
 
     session.delete(tag)
     session.commit()
-    return {"ok": True}
+    return Ok()

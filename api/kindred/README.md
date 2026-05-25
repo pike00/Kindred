@@ -44,7 +44,7 @@ curl -k https://kindred.localhost/api/v1/utils/health-check/
 
 ## Per-worktree stacks
 
-`just up` from a worktree boots an isolated stack at
+`just dev` from a worktree boots an isolated stack at
 `https://<slug>.kindred.<domain>/`. To hit one of those from Bruno, duplicate
 `local.bru`, set `base_url` to that worktree's URL, and add the matching
 `/etc/hosts` entry.
