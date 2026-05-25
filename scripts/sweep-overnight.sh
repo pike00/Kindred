@@ -55,7 +55,8 @@ _skipped_count() {
 import json, sys
 try:
     s = json.load(open('.pr-sweep-runner/state.json'))
-    print(sum(1 for v in s.values() if v.get('status') == 'skipped'))
+    # Count anything that isn't 'ready' — includes 'skipped', 'dry-run', 'error', etc.
+    print(sum(1 for v in s.values() if v.get('status') not in ('ready',)))
 except FileNotFoundError:
     print(0)
 "

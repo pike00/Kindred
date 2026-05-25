@@ -26,7 +26,7 @@ sweep-overnight:
     set -euo pipefail
     tmux kill-session -t pr-overnight 2>/dev/null || true
     tmux new-session -d -s pr-overnight -c "$(pwd)" \
-        'bash scripts/sweep-overnight.sh 2>&1 | tee -a .pr-sweep-runner/overnight.log'
+        'bash scripts/sweep-overnight.sh'
     echo "Started in tmux session 'pr-overnight'."
     echo "Attach:  tmux attach -t pr-overnight"
     echo "Tail:    tail -f .pr-sweep-runner/overnight.log"
