@@ -479,12 +479,11 @@ def contact_visible(
     return session.exec(stmt).first() is not None
 
 
+
 # ─── ReminderSnooze helpers ──────────────────────────────────────────────
 
 
-def get_effective_snoozed_until(
-    *, session: Session, reminder_id: uuid.UUID
-) -> datetime | None:
+def get_effective_snoozed_until(*, session: Session, reminder_id: uuid.UUID) -> datetime | None:
     """Derive effective snoozed_until from latest reminder_snooze row."""
     from app.models import ReminderSnooze
 
@@ -498,9 +497,7 @@ def get_effective_snoozed_until(
     return latest.snoozed_until if latest else None
 
 
-def get_snooze_count(
-    *, session: Session, reminder_id: uuid.UUID, days: int = 30
-) -> int:
+def get_snooze_count(*, session: Session, reminder_id: uuid.UUID, days: int = 30) -> int:
     """Count snooze events for a reminder in the last N days."""
     from datetime import timedelta
 

@@ -1311,6 +1311,8 @@ class Reminder(ReminderBase, table=True):
         description="When the reminder was created (UTC).",
     )
 
+    snoozes: list["ReminderSnooze"] = Relationship(back_populates="reminder")
+
 
 class ReminderPublic(ReminderBase):
     id: uuid.UUID
@@ -1333,6 +1335,45 @@ class RemindersWithContactPublic(SQLModel):
     """Response wrapper for reminders that include contact name."""
     data: list[ReminderWithContactPublic]
     count: int
+
+
+
+# ─── ReminderSnooze ──────────────────────────────────────────────────────
+
+
+class ReminderSnooze(SQLModel, table=True):
+    """Append-only log of snooze actions on reminders."""
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
+    reminder_id: uuid.UUID = Field(
+        foreign_key="reminder.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description="Reminder being snoozed.",
+    )
+    reminder: "Reminder" = Relationship(back_populates="snoozes")
+    snoozed_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        description="When the user clicked snooze.",
+    )
+    snoozed_until: datetime = Field(
+        nullable=False,
+        description="New snooze deadline.",
+    )
+    reason: str | None = Field(
+        default=None,
+        description="Optional user-entered reason for snoozing.",
+    )
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        description="Row creation time (may equal snoozed_at).",
+    )
 
 
 # ─── Gift ─────────────────────────────────────────────────────────────────────

@@ -1677,40 +1677,10 @@ export type ReminderPublic = {
     last_sent_at: (string | null);
     snoozed_until: (string | null);
     created_at: string;
-    deleted_at?: (string | null);
-};
-
-export type RemindersDuePublic = {
-    data: Array<ReminderDuePublic>;
-    count: number;
-};
-
-/**
- * Single snooze history row returned by GET /reminders/{id}/snooze-history.
- */
-export type ReminderSnoozeHistoryEntry = {
-    snoozed_at: string;
-    snoozed_until: string;
-    reason?: (string | null);
-};
-
-export type ReminderSnoozeRequest = {
     /**
-     * Absolute time to snooze until (UTC). Mutually exclusive with minutes.
+     * Number of times this reminder has been snoozed in the last 30 days.
      */
-    snoozed_until?: (string | null);
-    /**
-     * Minutes from now to snooze for. Mutually exclusive with snoozed_until.
-     */
-    minutes?: (number | null);
-};
-
-/**
- * Aggregate snooze count for a reminder.
- */
-export type ReminderSnoozeStat = {
-    reminder_id: string;
-    snooze_count: number;
+    snooze_count_30d?: number;
 };
 
 export type RemindersPublic = {
@@ -3134,6 +3104,66 @@ export type RemindersSnoozeReminderResponse = (ReminderPublic);
 
 export type RemindersSnoozeReminderResponse = (unknown);
 
+/**
+ * Snooze history entry for a reminder.
+ */
+export type SnoozeHistoryEntry = {
+    snoozed_at: string;
+    snoozed_until: string;
+    reason?: (string | null);
+};
+
+/**
+ * Snooze stats per reminder.
+ */
+export type SnoozeStatsEntry = {
+    reminder_id: string;
+    snooze_count: number;
+};
+
+/**
+ * Chronic snoozer entry.
+ */
+export type ChronicSnoozerEntry = {
+    contact_id: (string | null);
+    reminder_id: string;
+    snooze_count: number;
+};
+
+/**
+ * Snooze history response.
+ */
+export type RemindersGetSnoozeHistoryResponse = Array<SnoozeHistoryEntry>;
+
+/**
+ * Snooze stats response.
+ */
+export type RemindersGetSnoozeStatsResponse = Array<SnoozeStatsEntry>;
+
+/**
+ * Chronic snoozers response.
+ */
+export type RemindersGetChronicSnoozersResponse = Array<ChronicSnoozerEntry>;
+
+
+
+/**
+ * Snooze history response.
+ */
+export type RemindersGetSnoozeHistoryResponse = Array<SnoozeHistoryEntry>;
+
+/**
+ * Snooze stats response.
+ */
+export type RemindersGetSnoozeStatsResponse = Array<SnoozeStatsEntry>;
+
+/**
+ * Chronic snoozers response.
+ */
+export type RemindersGetChronicSnoozersResponse = Array<ChronicSnoozerEntry>;
+
+
+
 export type TagsListTagsData = {
     limit?: number;
     skip?: number;
@@ -3320,4 +3350,4 @@ export type WebhooksInboundWebhookData = {
     };
 };
 
-export type WebhooksInboundWebhookResponse = (WebhookEventResponse);
+export type WebhooksInboundWebhookResponse = (unknown);
