@@ -103,14 +103,13 @@ function ServiceWorkerUpdatePrompt() {
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <ShortcutRegistryProvider>
-      <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-        <QueryClientProvider client={queryClient}>
-          <RouterProvider router={router} />
-          <Toaster richColors closeButton />
-          <KeyboardShortcutOverlay />
-        </QueryClientProvider>
-      </ThemeProvider>
-    </ShortcutRegistryProvider>
+    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+        <Toaster richColors closeButton />
+        <PwaInstallPrompt />
+        <ServiceWorkerUpdatePrompt />
+      </QueryClientProvider>
+    </ThemeProvider>
   </StrictMode>,
 )

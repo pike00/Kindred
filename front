@@ -1,182 +1,112 @@
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { useEffect, useState } from "react"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
+/**
+ * PWA Install Prompt component
+ * Shows install button for Android (install banner)
+ * Shows passive A2HS instructions for iOS
+ */
 
-import type { OrganizationPublic, OrganizationUpdate } from "@/client"
-import { OrganizationsService } from "@/client"
-import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import useCustomToast from "@/hooks/useCustomToast"
+import { useState, useEffect, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Download, X, Share, Plus } from "@/lib/icons";
 
-const organizationUpdateSchema = z.object({
-  name: z.string().min(1, "Organization name is required"),
-  domain: z.string().optional(),
-  industry: z.string().optional(),
-  notes: z.string().optional(),
-})
-
-type OrganizationUpdateFormData = z.infer<typeof organizationUpdateSchema>
-
-interface EditOrganizationDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  organization: OrganizationPublic
+interface BeforeInstallPromptEvent extends Event {
+  prompt(): Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
-export function EditOrganizationDialog({
-  open,
-  onOpenChange,
-  organization,
-}: EditOrganizationDialogProps) {
-  const { showSuccessToast, showErrorToast } = useCustomToast()
-  const queryClient = useQueryClient()
-
-  const form = useForm<OrganizationUpdateFormData>({
-    resolver: zodResolver(organizationUpdateSchema),
-    defaultValues: {
-      name: organization.name || "",
-      domain: (organization as any).domain || "",
-      industry: (organization as any).industry || "",
-      notes: (organization as any).notes || "",
-    },
-  })
+export function PWAInstallPrompt() {
+  const [deferredPrompt, setDeferredPrompt] =
+    useState<BeforeInstallPromptEvent | null>(null);
+  const [showPrompt, setShowPrompt] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
 
   useEffect(() => {
-    if (open) {
-      form.reset({
-        name: organization.name || "",
-        domain: (organization as any).domain || "",
-        industry: (organization as any).industry || "",
-        notes: (organization as any).notes || "",
-      })
-    }
-  }, [open, organization, form])
+    // Check if already installed
+    const standalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as Record<string, unknown>).standalone === true;
+    setIsStandalone(standalone);
 
-  const updateOrgMutation = useMutation({
-    mutationFn: (data: OrganizationUpdate) =>
-      OrganizationsService.updateOrganization({
-        organizationId: organization.id,
-        requestBody: data,
-      }),
-    onSuccess: () => {
-      showSuccessToast("Organization updated successfully")
-      onOpenChange(false)
-      queryClient.invalidateQueries({ queryKey: ["organizations"] })
-      queryClient.invalidateQueries({
-        queryKey: ["organizations", organization.id],
-      })
-    },
-    onError: () => {
-      showErrorToast("Failed to update organization")
-    },
-  })
+    // Detect iOS
+    const iOS =
+      /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as unknown as Record<string, unknown>).MSStream;
+    setIsIOS(iOS);
 
-  const onSubmit = (data: OrganizationUpdateFormData) => {
-    const payload: OrganizationUpdate = {
-      name: data.name,
-      domain: data.domain || null,
-      industry: data.industry || null,
-      notes: data.notes || null,
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
+      setShowPrompt(true);
+    };
+
+    window.addEventListener("beforeinstallprompt", handler);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handler);
+    };
+  }, []);
+
+  const handleInstall = useCallback(async () => {
+    if (!deferredPrompt) return;
+
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+
+    if (outcome === "accepted") {
+      setShowPrompt(false);
     }
-    updateOrgMutation.mutate(payload)
+    setDeferredPrompt(null);
+  }, [deferredPrompt]);
+
+  const handleDismiss = () => {
+    setShowPrompt(false);
+    setDeferredPrompt(null);
+  };
+
+  // Don't show if already installed
+  if (isStandalone || !showPrompt) return null;
+
+  // iOS: Show passive A2HS instructions
+  if (isIOS) {
+    return (
+      <Card className="fixed bottom-4 left-4 right-4 z-50 mx-auto max-w-md shadow-lg">
+        <CardContent className="flex items-center gap-3 p-4">
+          <Share className="size-5 text-muted-foreground shrink-0" />
+          <div className="flex-1 text-sm">
+            <p className="font-medium">Install Kindred</p>
+            <p className="text-muted-foreground">
+              Tap the share button <Share className="inline size-3" /> then "Add to
+              Home Screen" <Plus className="inline size-3" />
+            </p>
+          </div>
+          <Button variant="ghost" size="sm" onClick={handleDismiss}>
+            <X className="size-4" />
+          </Button>
+        </CardContent>
+      </Card>
+    );
   }
 
+  // Android: Show install button
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Edit Organization</DialogTitle>
-          <DialogDescription>
-            Update the organization information.
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Organization Name *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Acme Corp" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="domain"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Domain</FormLabel>
-                  <FormControl>
-                    <Input placeholder="acme.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="industry"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Industry</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Technology" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Notes</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Notes about the organization..."
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button
-              type="submit"
-              disabled={updateOrgMutation.isPending}
-              className="w-full"
-            >
-              {updateOrgMutation.isPending
-                ? "Updating..."
-                : "Update Organization"}
-            </Button>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
-  )
+    <Card className="fixed bottom-4 left-4 right-4 z-50 mx-auto max-w-md shadow-lg">
+      <CardContent className="flex items-center gap-3 p-4">
+        <Download className="size-5 text-primary shrink-0" />
+        <div className="flex-1 text-sm">
+          <p className="font-medium">Install Kindred</p>
+          <p className="text-muted-foreground">
+            Install this app for a better experience
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="ghost" size="sm" onClick={handleDismiss}>
+            Not now
+          </Button>
+          <Button size="sm" onClick={handleInstall}>
+            Install
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
 }

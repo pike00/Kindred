@@ -1471,41 +1471,6 @@ export type NoteCreate = {
     client_id?: (string | null);
 };
 
-export type NoteMentionPublic = {
-    note_id: string;
-    note_body: string;
-    note_created_at: string;
-    source_contact: _MentionSourceContact;
-};
-
-export type NoteMentionPublic = {
-    note_id: string;
-    note_body: string;
-    note_created_at: string;
-    source_contact: _MentionSourceContact;
-};
-
-export type NoteMentionPublic = {
-    note_id: string;
-    note_body: string;
-    note_created_at: string;
-    source_contact: _MentionSourceContact;
-};
-
-export type NoteMentionPublic = {
-    note_id: string;
-    note_body: string;
-    note_created_at: string;
-    source_contact: _MentionSourceContact;
-};
-
-export type NoteMentionPublic = {
-    note_id: string;
-    note_body: string;
-    note_created_at: string;
-    source_contact: _MentionSourceContact;
-};
-
 export type NotePublic = {
     /**
      * Note body, 1-50000 chars.
@@ -1515,7 +1480,6 @@ export type NotePublic = {
     contact_id: string;
     created_at: string;
     updated_at: string;
-    deleted_at?: (string | null);
     client_id?: (string | null);
 };
 

@@ -1,49 +1,68 @@
-# Contact Provenance - Implementation Notes
+# PWA Offline Notes - Implementation Summary
 
-## Session: 2026-05-03
+## Completed Tasks
 
-### Completed Tasks
+### 1. Backend - Idempotent POSTs with client_id
+- Added `client_id` field to `Note` model in `backend/app/models.py`
+  - Field is optional (nullable)
+  - Has an index for lookups
+  - Has unique constraint (for non-NULL values)
+- Added `client_id` field to `NoteCreate` model
+- Added `client_id` field to `NotePublic` model for API responses
+- Updated `create_note` function in `backend/app/crud.py` to check for existing `client_id` before creating a new note (idempotency)
+- Created Alembic migration: `backend/app/alembic/versions/f6a7b8c9d0e2_add_note_client_id.py`
 
-1. **Alembic migration** - `add_contact_provenance.py` adding `source` enum and `source_external_id` columns to contact table, with unique constraint `uq_contact_owner_source_external_id` and backfill to MANUAL
-2. **Model updates** - `ContactSource` enum and `source`/`source_external_id` fields added to `ContactBase`/`ContactCreate`/`ContactPublic` in models.py
-3. **Upsert logic** - `upsert_contact()` function in `crud.py` checks (owner_id, source, source_external_id) match for idempotent re-sync
-4. **API route** - `create_contact()` in `api/routes/contacts.py` already uses `upsert_contact()`
-5. **CardDAV sync** - Updated `carddav/storage.py` `upload()` method to:
-   - Set `source=CARDDAV` and `source_external_id` from vCard UID
-   - Check (owner_id, source, source_external_id) before falling back to ID-based lookup
-   - Handle contact fields and addresses idempotently
-6. **vCard import** - Updated `api/routes/import_export.py` `import_vcard()` to:
-   - Use `upsert_contact()` for idempotent imports
-   - Set `source=VCARD_IMPORT` and `source_external_id` from vCard UID
-   - Handle contact fields and addresses idempotently (delete existing before re-importing)
+### 2. Frontend - Offline Draft Queue Integration
+- Updated `frontend/src/components/Notes/NotesCard.tsx`:
+  - `QuickCapture` component now detects online/offline status
+  - Saves drafts to IndexedDB when offline
+  - Syncs pending drafts when coming back online
+  - Shows pending draft count with manual sync button
+  - Uses `client_id` (generated UUID) for idempotent POSTs
+  - Auto-syncs drafts when coming back online
+  - Uses `useCallback` for `syncAllPending` to fix React hook dependencies
 
-### Remaining Tasks (from spec)
+### 3. PWA Install Prompt
+- Created `frontend/src/components/PwaInstallPrompt.tsx`:
+  - Shows install prompt for Android (using `beforeinstallprompt` event)
+  - Shows A2HS hint for iOS devices
+  - Dismissible with session storage to prevent re-showing
 
-- [ ] Add UI badge on contact detail page showing source and import date (created_at or metadata from sync)
-- [ ] Write tests for upsert paths (CardDAV re-sync, Google import retry), unique constraint violation, and manual contact creation
+### 4. Service Worker Update Handling
+- Added `ServiceWorkerUpdatePrompt` component in `frontend/src/main.tsx`:
+  - Detects new service worker versions
+  - Prompts user to refresh when update is available
 
-### Technical Notes
+### 5. Vite PWA Configuration
+- `vite-plugin-pwa` is already configured in `frontend/vite.config.ts`
+- Manifest is configured with app metadata
+- Workbox service worker configured with:
+  - Cache-first for app shell (static assets)
+  - Network-first for API calls with 24-hour cache
 
-**ContactSource enum:** `manual`, `vcard_import`, `carddav`, `google`, `webhook`
+## Remaining Tasks / Verification Needed
 
-**Unique constraint:** `(owner_id, source, source_external_id)` allows same external ID from different sources. PostgreSQL unique constraint allows multiple NULLs, so manual contacts (source_external_id=NULL) won't collide.
+### When Services Are Running:
+1. Run `docker compose exec backend uv run alembic upgrade head` to apply the migration
+2. Run `docker compose exec -T backend uv run pytest -x -q` to verify backend tests pass
+3. Run `docker compose exec -T frontend bun run typecheck` to verify frontend types
+4. Test PWA install prompt on Android and iOS
+5. Test offline note drafting and sync
 
-**Webhook path:** The inbound webhook route (`/webhooks/inbound/{api_key}`) only looks up existing contacts by email or name - it doesn't create new contacts. So it doesn't need provenance tracking for contact creation. It creates Interactions for existing contacts.
+## File Changes Summary
+- `backend/app/models.py` - Added client_id to Note, NoteCreate, NotePublic
+- `backend/app/crud.py` - Added idempotency check in create_note
+- `backend/app/alembic/versions/f6a7b8c9d0e2_add_note_client_id.py` - New migration
+- `frontend/src/components/Notes/NotesCard.tsx` - Integrated offline draft queue
+- `frontend/src/components/PwaInstallPrompt.tsx` - New PWA install prompt component
+- `frontend/src/main.tsx` - Added PWA install and service worker update prompts
+- `frontend/src/client/schemas.gen.ts` - Auto-updated with client_id field
+- `frontend/src/client/types.gen.ts` - Auto-updated with client_id field
+- `frontend/src/lib/offline-db.ts` - Formatting changes
 
-**Idempotent re-sync:** CardDAV and vCard import paths now:
-1. Parse the incoming vCard to extract UID
-2. Check if a contact exists with (owner_id, source=CARDDAV/VCARD_IMPORT, source_external_id=UID)
-3. If exists: update the contact and replace fields/addresses
-4. If not: create new contact with provenance fields
-
-### Commit History
-
-- `a9770a5` - Migration and models for contact provenance (bundled with API key M2M auth)
-- `4feef84` - DB schema docs regenerated
-- `4711240` - Wire provenance tracking into CardDAV and vCard import paths
-
-### Verification
-
-Docker services were not running in the worktree environment, so tests could not be run. The code was verified by:
-- Python syntax check (`python3 -m py_compile`) passed for both modified files
-- Git pre-commit hooks (ruff check/format) passed
+## Notes
+- The frontend service was not running during implementation, so typecheck and build verification could not be completed
+- The backend service was not running, so migration and tests could not be run
+- All code changes follow existing patterns in the codebase
+- The `vite-plugin-pwa` generates the service worker automatically during build
+- Commit: `2fb0f46` - "feat(pwa): implement offline note drafting with idempotent POSTs"

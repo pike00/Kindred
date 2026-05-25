@@ -1,50 +1,62 @@
-# Journal to Contact Join - Implementation Notes
+# PWA Offline Notes - Implementation Notes
 
 ## Completed Tasks
 
-### 1. Created Alembic Migration
-- Created `backend/app/alembic/versions/f6a7b8c9d0e1_add_journal_entry_contact_junction.py`
-- Migration creates `journal_entry_contact` junction table with:
-  - `journal_entry_id` (FK to journal_entry, CASCADE delete)
-  - `contact_id` (FK to contact, CASCADE delete)
-  - Primary key on both columns
-  - Indexes on both columns for query performance
+### 1. Backend - Idempotent POSTs with client_id
+- Added `client_id` field to `Note` model in `backend/app/models.py`
+  - Field is optional (nullable)
+  - Has an index for lookups
+  - Has unique constraint (for non-NULL values)
+- Added `client_id` field to `NoteCreate` model
+- Added `client_id` field to `NotePublic` model for API responses
+- Updated `create_note` function in `backend/app/crud.py` to check for existing `client_id` before creating a new note (idempotency)
+- Created Alembic migration: `backend/app/alembic/versions/f6a7b8c9d0e2_add_note_client_id.py`
 
-### 2. Updated Models (`backend/app/models.py`)
-- Added `JournalEntryContact` junction table model
-- Updated `JournalEntryCreate` to include `contact_ids: list[uuid.UUID] | None = None`
-- Updated `JournalEntryUpdate` to include `contact_ids: list[uuid.UUID] | None = None`
-- Updated `JournalEntryPublic` to include `contact_ids: list[uuid.UUID] = []`
+### 2. Frontend - Offline Draft Queue Integration
+- Updated `frontend/src/components/Notes/NotesCard.tsx`:
+  - `QuickCapture` component now detects online/offline status
+  - Saves drafts to IndexedDB when offline
+  - Syncs pending drafts when coming back online
+  - Shows pending draft count with manual sync button
+  - Uses `client_id` (generated UUID) for idempotent POSTs
 
-### 3. Updated CRUD (`backend/app/crud.py`)
-- Added `JournalEntryContact` to imports
-- Updated `create_journal_entry` to handle `contact_ids` and sync junction table entries
+### 3. PWA Install Prompt
+- Created `frontend/src/components/PwaInstallPrompt.tsx`:
+  - Shows install prompt for Android (using `beforeinstallprompt` event)
+  - Shows A2HS hint for iOS devices
+  - Dismissible with session storage to prevent re-showing
 
-### 4. Updated Journal API (`backend/app/api/routes/journal.py`)
-- Added `JournalEntryContact` to imports
-- Added `sql_delete` import from sqlmodel
-- Updated `create_journal_entry_route` to load `contact_ids` in response
-- Updated `update_journal_entry` to sync `contact_ids` when provided
-- Updated `list_journal_entries` to load `contact_ids` for each entry
+### 4. Service Worker Update Handling
+- Added `ServiceWorkerUpdatePrompt` component in `frontend/src/main.tsx`:
+  - Detects new service worker versions
+  - Prompts user to refresh when update is available
 
-### 5. Updated Contacts API (`backend/app/api/routes/contacts.py`)
-- Added `JournalEntry`, `JournalEntryContact`, `JournalEntryPublic` to imports
-- Added `GET /{contact_id}/reflections` endpoint to list journal entries referencing a contact
+### 5. Vite PWA Configuration
+- `vite-plugin-pwa` is already configured in `frontend/vite.config.ts`
+- Manifest is configured with app metadata
+- Workbox service worker configured with:
+  - Cache-first for app shell (static assets)
+  - Network-first for API calls with 24-hour cache
 
-## Committed
-- Commit: `82fa306` - `feat(journal): add journal_entry_contact junction table and API`
+## Remaining Tasks / Verification Needed
 
-## Remaining Tasks
-- [ ] Apply migration (needs running backend service)
-- [ ] Test cascade behavior on contact/journal entry deletion
-- [ ] Implement journal entry editor person picker UI component (frontend)
-- [ ] Add "reflections" section to contact detail page (frontend)
+### When Services Are Running:
+1. Run `docker compose exec backend uv run alembic upgrade head` to apply the migration
+2. Run `docker compose exec -T backend uv run pytest -x -q` to verify backend tests pass
+3. Run `docker compose exec -T frontend bun run typecheck` to verify frontend types
+4. Test PWA install prompt on Android and iOS
+5. Test offline note drafting and sync
 
-## Privacy Model
-- Journal entries remain private to owner even when linked to contacts
-- Contact's `visible_contact_ids` query does NOT grant access to linked journal entries
-- The `/{contact_id}/reflections` endpoint only returns journal entries owned by the requesting user
+### Notes:
+- The frontend service was not running during implementation, so typecheck and build verification could not be completed
+- The backend service was not running, so migration and tests could not be run
+- All code changes follow existing patterns in the codebase
+- The `vite-plugin-pwa` generates the service worker automatically during build
 
-## Cascade Behavior
-- Deleting a contact: Removes junction table rows (CASCADE), journal entry remains intact
-- Deleting a journal entry: Removes junction table rows (CASCADE), contact remains intact
+## File Changes Summary
+- `backend/app/models.py` - Added client_id to Note, NoteCreate, NotePublic
+- `backend/app/crud.py` - Added idempotency check in create_note
+- `backend/app/alembic/versions/f6a7b8c9d0e2_add_note_client_id.py` - New migration
+- `frontend/src/components/Notes/NotesCard.tsx` - Integrated offline draft queue
+- `frontend/src/components/PwaInstallPrompt.tsx` - New PWA install prompt component
+- `frontend/src/main.tsx` - Added PWA install and service worker update prompts

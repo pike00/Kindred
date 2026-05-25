@@ -10,7 +10,7 @@ from alembic import op
 
 # Revision identifiers
 revision = "f6a7b8c9d0e2"
-down_revision = "add_timezone_pronouns"
+down_revision = "bbe18621bcef"
 branch_labels = None
 depends_on = None
 

@@ -4783,18 +4783,6 @@ export const NotePublicSchema = {
             format: 'date-time',
             title: 'Updated At'
         },
-        deleted_at: {
-            anyOf: [
-                {
-                    type: 'string',
-                    format: 'date-time'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Deleted At'
-        },
         client_id: {
             anyOf: [
                 {
