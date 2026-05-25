@@ -50,33 +50,12 @@ if ! stack_up; then
     fi
 fi
 
-echo "e2e: stack ready, running puppeteer specs..."
+echo "e2e: stack ready, running Playwright specs..."
 
-# Stable specs that gate the push. Order matters only for log readability;
-# each script self-cleans its test data.
-specs=(
-    e2e/auth.test.ts
-    e2e/tags.test.ts
-    e2e/dashboard.test.ts
-    e2e/journal.test.ts
-    e2e/reminders.test.ts
-    e2e/contacts.test.ts
-    e2e/contact-cards.test.ts
-    e2e/interactions.test.ts
-    e2e/settings-admin.test.ts
-)
-
-failed=()
-for spec in "${specs[@]}"; do
-    if ! bun run "$spec"; then
-        failed+=("$spec")
-    fi
-done
-
-if (( ${#failed[@]} > 0 )); then
+if ! bunx playwright test --reporter=list; then
     echo
-    echo "ERROR: ${#failed[@]} e2e spec(s) failed:" >&2
-    printf '  - %s\n' "${failed[@]}" >&2
+    echo "ERROR: Playwright e2e specs failed." >&2
+    echo "Run 'bunx playwright show-report e2e/report' to view the HTML report." >&2
     echo "Bypass intentionally with: PERSONAL_CRM_SKIP_E2E=1 git push" >&2
     exit 1
 fi

@@ -1,39 +1,115 @@
 name: Release
 
-# Triggered by `vX.Y.Z` (and pre-release `vX.Y.Z-rc.N`) tag pushes.
-# Builds the combined image from Dockerfile.prod and pushes to GHCR.
-# Deploy is manual: `just bump <tag>` on host.
 on:
   push:
     tags:
-      - "v*.*.*"
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version tag (e.g., v1.2.3). Leave empty to auto-increment from latest tag."
+        required: false
+        type: string
+      dry_run:
+        description: "Dry run - generate notes without publishing"
+        required: false
+        type: boolean
+        default: false
 
 permissions:
-  contents: read
-  packages: write
+  contents: write
 
 jobs:
-  build:
-    runs-on: [self-hosted, linux]
+  release:
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - name: Login to GHCR
-        run: |
-          mkdir -p "$RUNNER_TEMP/docker-config"
-          token=$(printf '%s:%s' "${{ github.actor }}" "${{ secrets.GITHUB_TOKEN }}" | base64 -w0)
-          printf '{"auths":{"ghcr.io":{"auth":"%s"}}}' "$token" \
-            > "$RUNNER_TEMP/docker-config/config.json"
-          echo "DOCKER_CONFIG=$RUNNER_TEMP/docker-config" >> "$GITHUB_ENV"
-      - uses: docker/build-push-action@v5
+      - name: Checkout
+        uses: actions/checkout@v6
         with:
-          context: .
-          file: Dockerfile.prod
-          push: true
-          # Always tag with the version + immutable sha; a "latest" floats
-          # to whichever production-deployable tag last shipped (skips -rc).
-          tags: |
-            ghcr.io/pike00/kindred:${{ github.ref_name }}
-            ghcr.io/pike00/kindred:sha-${{ github.sha }}
-          cache-from: type=local,src=/tmp/buildx-cache
-          cache-to: type=local,dest=/tmp/buildx-cache,mode=max
+          fetch-depth: 0
+
+      - name: Generate version tag
+        id: version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          if [ -n "$INPUT_VERSION" ]; then
+            VERSION="$INPUT_VERSION"
+          else
+            LATEST=$(git tag --sort=-v:refname | head -1)
+            if [ -z "$LATEST" ]; then
+              VERSION="v0.1.0"
+            else
+              # Auto-increment patch version
+              BASE="${LATEST#v}"
+              MAJOR=$(echo "$BASE" | cut -d. -f1)
+              MINOR=$(echo "$BASE" | cut -d. -f2)
+              PATCH=$(echo "$BASE" | cut -d. -f3)
+              PATCH=$((PATCH + 1))
+              VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+            fi
+          fi
+          # Ensure version starts with 'v'
+          if [[ "$VERSION" != v* ]]; then
+            VERSION="v$VERSION"
+          fi
+          echo "tag=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Generated version: $VERSION"
+
+      - name: Generate release notes
+        id: notes
+        env:
+          VERSION_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          # Get the previous tag for the --since-tag argument
+          PREV_TAG=$(git tag --sort=-v:refname | head -1)
+          if [ -z "$PREV_TAG" ]; then
+            echo "No previous tag found, using all commits"
+            python3 scripts/generate-release-notes.py \
+              --version "$VERSION_TAG" \
+              --since-tag "" \
+              > /tmp/release_notes.md
+          else
+            echo "Previous tag: $PREV_TAG"
+            python3 scripts/generate-release-notes.py \
+              --version "$VERSION_TAG" \
+              --since-tag "$PREV_TAG" \
+              > /tmp/release_notes.md
+          fi
+          # Set multi-line output for GitHub Actions
+          {
+            echo 'notes<<EOF'
+            cat /tmp/release_notes.md
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Display release notes
+        run: |
+          echo "=== Release Notes for ${{ steps.version.outputs.tag }} ==="
+          cat /tmp/release_notes.md
+
+      - name: Create tag
+        if: inputs.dry_run != true
+        env:
+          VERSION_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          git tag "$VERSION_TAG"
+          git push origin "$VERSION_TAG"
+
+      - name: Publish release
+        if: inputs.dry_run != true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          gh release create "$VERSION_TAG" \
+            --title "$VERSION_TAG" \
+            --notes-file /tmp/release_notes.md
+
+      - name: Dry run summary
+        if: inputs.dry_run == true
+        run: |
+          echo "::notice::DRY RUN - No release published"
+          echo "Would have created tag: ${{ steps.version.outputs.tag }}"
+          echo "With notes:"
+          cat /tmp/release_notes.md

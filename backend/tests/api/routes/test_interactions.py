@@ -380,3 +380,233 @@ def test_shared_tag_exposes_interaction(client: TestClient, db: Session) -> None
     # Bob sees only the shared attendee; private contact is filtered out.
     bob_view = next(i for i in data if i["id"] == ix["id"])
     assert [a["id"] for a in bob_view["attendees"]] == [shared["id"]]
+
+
+def test_create_draft_interaction(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
+    """Test creating a draft interaction."""
+    contact_id = _create_contact(client, superuser_token_headers)
+    data = {
+        "attendee_ids": [contact_id],
+        "channel": "call",
+        "occurred_at": datetime.now(timezone.utc).isoformat(),
+        "notes": "Draft interaction",
+        "is_draft": True,
+        "draft_source": "manual",
+    }
+    r = client.post(
+        f"{settings.API_V1_STR}/interactions/",
+        headers=superuser_token_headers,
+        json=data,
+    )
+    assert r.status_code == 200
+    content = r.json()
+    assert content["is_draft"] is True
+    assert content["draft_source"] == "manual"
+
+
+def test_list_draft_interactions(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
+    """Test listing draft interactions with is_draft filter."""
+    contact_id = _create_contact(client, superuser_token_headers)
+    # Create a draft
+    client.post(
+        f"{settings.API_V1_STR}/interactions/",
+        headers=superuser_token_headers,
+        json={
+            "attendee_ids": [contact_id],
+            "channel": "call",
+            "occurred_at": datetime.now(timezone.utc).isoformat(),
+            "is_draft": True,
+            "draft_source": "voice_memo",
+        },
+    )
+    # Create a confirmed interaction
+    client.post(
+        f"{settings.API_V1_STR}/interactions/",
+        headers=superuser_token_headers,
+        json={
+            "attendee_ids": [contact_id],
+            "channel": "email",
+            "occurred_at": datetime.now(timezone.utc).isoformat(),
+        },
+    )
+    # List only drafts
+    r = client.get(
+        f"{settings.API_V1_STR}/interactions/",
+        headers=superuser_token_headers,
+        params={"is_draft": True},
+    )
+    assert r.status_code == 200
+    data = r.json()["data"]
+    assert len(data) >= 1
+    for ix in data:
+        assert ix["is_draft"] is True
+
+
+def test_list_confirmed_interactions_exclude_drafts(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
+    """Test that confirmed interactions exclude drafts by default."""
+    contact_id = _create_contact(client, superuser_token_headers)
+    # Create a draft
+    client.post(
+        f"{settings.API_V1_STR}/interactions/",
+        headers=superuser_token_headers,
+        json={
+            "attendee_ids": [contact_id],
+            "channel": "call",
+            "occurred_at": datetime.now(timezone.utc).isoformat(),
+            "is_draft": True,
+        },
+    )
+    # List confirmed only (default)
+    r = client.get(
+        f"{settings.API_V1_STR}/interactions/",
+        headers=superuser_token_headers,
+    )
+    data = r.json()["data"]
+    for ix in data:
+        assert ix["is_draft"] is False
+
+
+def test_confirm_draft(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
+    """Test confirming (promoting) a draft interaction."""
+    contact_id = _create_contact(client, superuser_token_headers)
+    # Create a draft
+    r = client.post(
+        f"{settings.API_V1_STR}/interactions/",
+        headers=superuser_token_headers,
+        json={
+            "attendee_ids": [contact_id],
+            "channel": "call",
+            "occurred_at": datetime.now(timezone.utc).isoformat(),
+            "notes": "Draft to confirm",
+            "is_draft": True,
+            "draft_source": "email_suggestion",
+        },
+    )
+    assert r.status_code == 200
+    ix_id = r.json()["id"]
+    assert r.json()["is_draft"] is True
+
+    # Confirm the draft
+    r = client.post(
+        f"{settings.API_V1_STR}/interactions/{ix_id}/confirm",
+        headers=superuser_token_headers,
+    )
+    assert r.status_code == 200
+    content = r.json()
+    assert content["is_draft"] is False
+    assert content["draft_source"] is None
+    assert content["notes"] == "Draft to confirm"
+
+    # Verify last_contacted_at was updated
+    c = client.get(
+        f"{settings.API_V1_STR}/contacts/{contact_id}",
+        headers=superuser_token_headers,
+    ).json()
+    assert c["last_contacted_at"] is not None
+
+
+def test_confirm_non_draft_fails(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
+    """Test that confirming an already-confirmed interaction fails."""
+    contact_id = _create_contact(client, superuser_token_headers)
+    r = client.post(
+        f"{settings.API_V1_STR}/interactions/",
+        headers=superuser_token_headers,
+        json={
+            "attendee_ids": [contact_id],
+            "channel": "call",
+            "occurred_at": datetime.now(timezone.utc).isoformat(),
+        },
+    )
+    ix_id = r.json()["id"]
+
+    r = client.post(
+        f"{settings.API_V1_STR}/interactions/{ix_id}/confirm",
+        headers=superuser_token_headers,
+    )
+    assert r.status_code == 400
+    assert "already confirmed" in r.json()["detail"].lower()
+
+
+def test_delete_draft(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
+    """Test deleting a draft interaction."""
+    contact_id = _create_contact(client, superuser_token_headers)
+    r = client.post(
+        f"{settings.API_V1_STR}/interactions/",
+        headers=superuser_token_headers,
+        json={
+            "attendee_ids": [contact_id],
+            "channel": "call",
+            "occurred_at": datetime.now(timezone.utc).isoformat(),
+            "is_draft": True,
+        },
+    )
+    ix_id = r.json()["id"]
+
+    # Delete the draft
+    r = client.delete(
+        f"{settings.API_V1_STR}/interactions/{ix_id}",
+        headers=superuser_token_headers,
+    )
+    assert r.status_code == 200
+
+    # Verify it's gone
+    r = client.get(
+        f"{settings.API_V1_STR}/interactions/",
+        headers=superuser_token_headers,
+        params={"is_draft": True},
+    )
+    ids = [i["id"] for i in r.json()["data"]]
+    assert ix_id not in ids
+
+
+def test_draft_excludes_last_contacted_at(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
+    """Test that draft interactions do not affect last_contacted_at."""
+    contact_id = _create_contact(client, superuser_token_headers)
+    # Create a draft with an old date
+    old_date = datetime.now(timezone.utc) - timedelta(days=30)
+    client.post(
+        f"{settings.API_V1_STR}/interactions/",
+        headers=superuser_token_headers,
+        json={
+            "attendee_ids": [contact_id],
+            "channel": "call",
+            "occurred_at": old_date.isoformat(),
+            "is_draft": True,
+        },
+    )
+    # Contact's last_contacted_at should still be None (no confirmed interactions)
+    c = client.get(
+        f"{settings.API_V1_STR}/contacts/{contact_id}",
+        headers=superuser_token_headers,
+    ).json()
+    assert c["last_contacted_at"] is None
+
+    # Now create a confirmed interaction
+    client.post(
+        f"{settings.API_V1_STR}/interactions/",
+        headers=superuser_token_headers,
+        json={
+            "attendee_ids": [contact_id],
+            "channel": "email",
+            "occurred_at": datetime.now(timezone.utc).isoformat(),
+        },
+    )
+    c = client.get(
+        f"{settings.API_V1_STR}/contacts/{contact_id}",
+        headers=superuser_token_headers,
+    ).json()
+    assert c["last_contacted_at"] is not None

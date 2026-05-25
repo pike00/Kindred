@@ -3,9 +3,9 @@ title: PR Sweep Orchestrator
 status: active
 repos: [personal-crm]
 started: 2026-05-07
-last_updated: 2026-05-07
-next_step: Smoke-test against one mergeable PR (Task 10) — run: ONLY_PR=36 just sweep
-progress: 9/12
+last_updated: 2026-05-10
+next_step: Task 12 in progress — 7 PRs ready (#36, #48, #26, #40, #54, #62, #37); ~25+ unprocessed; PRs #63/#66/#72 fast-fail in <0.2s (import errors, LLM declined repair) — need manual fix like #37
+progress: 11/12
 ---
 
 # PR Sweep Orchestrator
@@ -32,13 +32,28 @@ Land the 50 open `[dirac]` draft PRs on this repo by iterating through them sequ
 - [x] Repair loop — apply patch, re-run cheapest-first, cap iterations (Task 7) — `5c88de2`
 - [x] Disposition — push, mark ready, comment on failure (Task 8) — `cea16a7`
 - [x] Top-level driver + Mattermost integration + summary (Task 9) — `cea16a7`
-- [ ] Smoke-test against one mergeable PR (Task 10)
-- [ ] First batch run against 5 PRs, observe, tune prompts (Task 11)
+- [x] Smoke-test against one mergeable PR (Task 10)
+- [x] First batch run against 5 PRs, observe, tune prompts (Task 11)
 - [ ] Run against the remaining queue (Task 12)
 
 See [plan.md](plan.md) for the full implementation steps.
 
 ## Session Log
+
+### 2026-05-10
+- Housekeeping (autonomous): bumped `last_updated` to reflect 3 sweep-script commits landed after the 2026-05-08 save — `59e5c4e` (review pass via deepseek-v4-pro-cloud + kimi-k2.6-cloud fixes), `804cc95` (prek PATH + LLM syntax-error repair after conflict resolution), `c4c7313` (syntax-fix writes corrected file directly). Task 12 (run remaining queue) status unchanged — no evidence in repo of additional PRs flipped to ready since session 5.
+
+### 2026-05-08 (session 5)
+- Manually fixed PR #37 (email-log-ingestion): 5 concatenated docstrings in crud.py, missing `import uuid` in email_service.py, removed unused `BackgroundTasks`, fixed `SessionDep` used as context manager in `gmail_authorize`, resolved E402 mid-file import, added three google packages to pyproject.toml, added `SERVER_HOST`/`GMAIL_CLIENT_ID`/`GMAIL_CLIENT_SECRET` to config.py, created Alembic merge migration resolving two-head conflict; pushed and marked PR #37 ready for review
+- Sweep script improvements committed to main: auto-resolve generated-file conflicts (types.gen.ts) before LLM repair (`9eb7a6e`), fix corrupt LLM patches by recounting hunk line counts (`f7ca04e`), include actual file content in repair prompt to fix context mismatch (`f9cb145`)
+- Batch 5 ran: PR #62 (tagshare-scope-warning) marked ready; PRs #63, #66, #72 fast-fail in <0.2s with import errors; LLM declined repair on all three
+- 7 PRs now ready: #36, #48, #26, #40, #54, #62, #37
+
+### 2026-05-07 (session 4)
+- Fixed precommit gate: prek exits 1 after auto-fixing files (ruff format, biome, trailing-whitespace) — added dirty-state detection + re-run loop before invoking LLM repair
+- Fixed typecheck gate: was calling `docker compose -f compose.worktree.yml exec` directly without `SLUG`/`COMPOSE_PROJECT_NAME` env vars; added `just typecheck` recipe (uses `just env`) + `typecheck` script to `frontend/package.json` (`tsc --noEmit -p tsconfig.build.json`)
+- Fixed `push_branch`: `--force-with-lease` triggered pre-push hooks from the worktree (db-docs-check + e2e re-run, ~4 min); added `--no-verify` + `PERSONAL_CRM_SKIP_E2E=1` since the sweep already ran the full gauntlet
+- Task 10 complete: PR #36 (e2e-contact-crud-tests) smoke-test passed — all 4 gates green (precommit 4.7s, typecheck 7.4s, pytest 40.8s, e2e 227.1s); pushed; marked ready for review
 
 ### 2026-05-07 (session 3)
 - Diagnosed and fixed frontend container stuck on `bun install`: root cause was `dns: 172.20.2.253` (AdGuard Home on `pikenet-private`) unreachable from dev container networks. Changed to `1.1.1.1` in `compose.dev.yml` (`f1cc775`).
@@ -67,6 +82,22 @@ See [plan.md](plan.md) for the full implementation steps.
 - **Paused at Task 8.** Subagent dispatch rejected by user — Task 8's `--push` step would force-push to a public PR + flip its draft status, needs explicit authorization.
 
 ## Notes
+
+### 2026-05-08 (session 5)
+- **Decisions:** Manual fix on PR #37 — LLM could not repair it; concatenated docstrings (`"""Docstring.    actual_code`) caused parse errors preventing any linting, so patches had no valid context to anchor to
+- **Gotchas:** `SessionDep` is a type alias (`Annotated[Session, Depends(get_db)]`), not a callable context manager — `with SessionDep() as session:` is a runtime error; alembic must be run from worktree `backend/` dir to pick up `pyproject.toml`; LLM-generated crud.py had 5 unclosed docstring literals and a duplicate empty function definition
+- **Issues:** PRs #63/#66/#72 fail pytest in <0.2s (import errors); LLM declined repair on all three; ~25+ PRs still unprocessed
+- **Accomplished:** PR #37 ready for review; 3 sweep script bugs fixed on main; `.pr-sweep-runner/mm-webhook` discrepancy resolved (file exists, was created earlier)
+
+### 2026-05-08
+- **State sync:** Task 11 flipped to [x] (batch ran overnight — 1 ready, 5 skipped); progress bumped to 11/12
+- **Discrepancies:** `.pr-sweep-runner/mm-webhook` MISSING despite Mattermost integration being wired; PRs 25-29 skipped due to unresolvable `frontend/src/client/types.gen.ts` generated-code conflicts
+- **Verified clean:** 20+ claims matched reality (tasks, commits, docker stack, state.json, worktree)
+
+### 2026-05-07 (session 4)
+- **Decisions:** `push_branch` uses `--no-verify` — sweep already ran the gauntlet; pre-push hooks are redundant and add ~4min overhead per PR.
+- **Gotchas:** `prek` exit=1 after auto-fix is normal behavior (not a broken PR); `just typecheck` is required to get `SLUG`/`COMPOSE_PROJECT_NAME` env vars into the docker exec call; git push in a worktree context runs pre-push hooks from that worktree (db-docs-check needs live DB on correct network, e2e re-runs full puppeteer).
+- **Accomplished:** Tasks 1-10 complete. Three bug fixes committed (`fec4e71`, `d39e583`, `be1b817`). PR #36 smoke-test successful — pipeline end-to-end validated.
 
 ### 2026-05-07 (session 3)
 - **Decisions:** Changed `dns: 172.20.2.253` → `1.1.1.1` in compose.dev.yml. AdGuard Home lives on `pikenet-private` (172.20.2.0/24), unreachable from `kindred-private`/`kindred-internal-crm`. Public 1.1.1.1 resolves both external hostnames AND the unproxied homelab A record (`kindred.dev.khanpikehome.com`).
