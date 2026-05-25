@@ -92,7 +92,7 @@ erDiagram
   varchar_500_ imessage_id
   timestamp_with_time_zone imessage_synced_at
   varchar_64_ imessage_profile_hash
-  json imessage_profile
+  jsonb imessage_profile
   tsvector search_vector
   boolean is_merged
   uuid merged_into_id FK

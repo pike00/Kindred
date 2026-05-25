@@ -42,7 +42,7 @@ Core contact entity — the subject of everything else in the CRM.
 | imessage_id | varchar(500) |  | true |  |  |  |
 | imessage_synced_at | timestamp with time zone |  | true |  |  |  |
 | imessage_profile_hash | varchar(64) |  | true |  |  |  |
-| imessage_profile | json |  | true |  |  |  |
+| imessage_profile | jsonb |  | true |  |  |  |
 | search_vector | tsvector |  | true |  |  |  |
 | is_merged | boolean | false | false |  |  |  |
 | merged_into_id | uuid |  | true |  | [public.contact](public.contact.md) |  |
@@ -160,7 +160,7 @@ erDiagram
   varchar_500_ imessage_id
   timestamp_with_time_zone imessage_synced_at
   varchar_64_ imessage_profile_hash
-  json imessage_profile
+  jsonb imessage_profile
   tsvector search_vector
   boolean is_merged
   uuid merged_into_id FK

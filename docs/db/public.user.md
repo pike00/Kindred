@@ -123,7 +123,7 @@ erDiagram
   varchar_500_ imessage_id
   timestamp_with_time_zone imessage_synced_at
   varchar_64_ imessage_profile_hash
-  json imessage_profile
+  jsonb imessage_profile
   tsvector search_vector
   boolean is_merged
   uuid merged_into_id FK
@@ -275,7 +275,7 @@ erDiagram
   varchar_64_ entity_type
   uuid entity_id
   varchar_32_ action
-  json changes_json
+  jsonb changes_json
   timestamp_with_time_zone occurred_at
   uuid acting_api_key_id FK
 }
@@ -344,7 +344,7 @@ erDiagram
 "public.saved_filter" {
   uuid id
   varchar_255_ name
-  json filter_json
+  jsonb filter_json
   uuid tag_id FK
   uuid owner_id FK
   timestamp_with_time_zone created_at

@@ -6,7 +6,7 @@
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
 | id | uuid |  | false |  |  |  |
 | name | varchar(255) |  | false |  |  |  |
-| filter_json | json |  | false |  |  |  |
+| filter_json | jsonb |  | false |  |  |  |
 | tag_id | uuid |  | true |  | [public.tag](public.tag.md) |  |
 | owner_id | uuid |  | false |  | [public.user](public.user.md) |  |
 | created_at | timestamp with time zone |  | false |  |  |  |
@@ -44,7 +44,7 @@ erDiagram
 "public.saved_filter" {
   uuid id
   varchar_255_ name
-  json filter_json
+  jsonb filter_json
   uuid tag_id FK
   uuid owner_id FK
   timestamp_with_time_zone created_at

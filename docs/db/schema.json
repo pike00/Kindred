@@ -540,7 +540,7 @@
         },
         {
           "name": "imessage_profile",
-          "type": "json",
+          "type": "jsonb",
           "nullable": true
         },
         {
@@ -4061,7 +4061,7 @@
         },
         {
           "name": "changes_json",
-          "type": "json",
+          "type": "jsonb",
           "nullable": true
         },
         {
@@ -5862,7 +5862,7 @@
         },
         {
           "name": "filter_json",
-          "type": "json",
+          "type": "jsonb",
           "nullable": false
         },
         {
