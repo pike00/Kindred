@@ -1,0 +1,73 @@
+set shell := ["bash", "-uc"]
+
+default:
+    @just --list
+
+# Substitute __APP_VERSION__ and __APP_HASH__ placeholders into a temp dir.
+# Echoes the temp dir path; caller is responsible for cleanup.
+[private]
+_build:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    APP_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "dev")
+    APP_HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+    DEPLOY_DIR=$(mktemp -d)
+    cp -r "{{justfile_directory()}}/." "$DEPLOY_DIR/"
+    sed -i "s/__APP_VERSION__/${APP_VERSION#v}/g; s/__APP_HASH__/${APP_HASH}/g" "$DEPLOY_DIR/index.html"
+    echo "$DEPLOY_DIR"
+
+# Serve the marketing site locally on the tailnet (no build step needed).
+# URL is printed at startup (resolved from local tailscale daemon).
+[group('Dev')]
+dev port="8080":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    DEPLOY_DIR=$(just _build)
+    trap 'rm -rf "$DEPLOY_DIR"' EXIT
+    if ! command -v tailscale &>/dev/null; then
+        echo "tailscale not found — serving on localhost instead"
+        python3 -m http.server {{port}} --directory "$DEPLOY_DIR"
+        exit 0
+    fi
+    IP=$(tailscale ip -4)
+    HOST=$(tailscale status --json | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['Self']['DNSName'].rstrip('.'))")
+    echo "Serving at http://${HOST}:{{port}}"
+    python3 -m http.server {{port}} --bind "$IP" --directory "$DEPLOY_DIR"
+
+# Open index.html directly in the default browser (no server needed).
+[group('Dev')]
+render:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    DEPLOY_DIR=$(just _build)
+    trap 'rm -rf "$DEPLOY_DIR"' EXIT
+    open "$DEPLOY_DIR/index.html"
+    # keep the temp dir alive until the browser has loaded the file
+    sleep 3
+
+# Validate the HTML with tidy (warnings only, non-blocking).
+[group('Dev')]
+lint:
+    tidy -q -e "{{justfile_directory()}}/index.html" || true
+
+# Deploy to Cloudflare Pages (withkindred.app).
+# Credentials auto-decrypted from deploy.env.sops.
+[group('Deploy')]
+deploy:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    SOPS_CONFIG="{{justfile_directory()}}/../.sops.yaml"
+    while IFS='=' read -r key value; do
+        [[ -z "$key" || "$key" == \#* ]] && continue
+        export "$key=$value"
+    done < <(sops --config "$SOPS_CONFIG" --input-type=dotenv --output-type=dotenv -d "{{justfile_directory()}}/deploy.env.sops")
+    CF_COMMIT_SHA=$(git rev-parse HEAD)
+    CF_COMMIT_MSG=$(git log -1 --pretty=%s)
+    CF_BRANCH=$(git branch --show-current)
+    DEPLOY_DIR=$(just _build)
+    trap 'rm -rf "$DEPLOY_DIR"' EXIT
+    bunx wrangler@latest pages deploy "$DEPLOY_DIR" \
+        --project-name=kindred-web \
+        --branch="$CF_BRANCH" \
+        --commit-hash="$CF_COMMIT_SHA" \
+        --commit-message="$CF_COMMIT_MSG"

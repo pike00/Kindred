@@ -7,9 +7,9 @@
   "scripts": {
     "dev": "bun run --filter frontend dev",
     "lint": "bun run --filter frontend lint",
-    "e2e": "for f in e2e/*.test.ts; do bun run \"$f\" || exit 1; done"
+    "e2e": "bunx playwright test"
   },
   "devDependencies": {
-    "puppeteer": "^24.40.0"
+    "@playwright/test": "^1.60.0"
   }
 }

@@ -1,0 +1,83 @@
+# syntax=docker/dockerfile:1
+#
+# Production image for Kindred. Single combined artifact: FastAPI backend
+# serves the built React SPA from /app/static/. Used by web + worker modes
+# (worker overrides CMD to run arq). Built and pushed by .github/workflows/
+# release.yml on every v*.*.* tag.
+
+# ---- Stage 1: build the frontend with bun ----------------------------------
+FROM oven/bun:1 AS frontend-builder
+WORKDIR /build
+
+# Bun workspace files first for layer caching
+COPY package.json bun.lock ./
+COPY frontend/package.json frontend/
+
+RUN bun install --frozen-lockfile
+
+# Source + build
+COPY frontend/ frontend/
+
+# Vite build args. The prod stack runs at https://kindred.example.com
+# so the SPA fetches the API from that same origin.
+ARG VITE_API_URL=https://kindred.example.com
+ARG VITE_AUTH_MODE=local
+ARG VITE_CF_LOGOUT_URL=
+ARG APP_VERSION=
+ARG GIT_HASH=
+ENV VITE_API_URL=${VITE_API_URL} \
+    VITE_AUTH_MODE=${VITE_AUTH_MODE} \
+    VITE_CF_LOGOUT_URL=${VITE_CF_LOGOUT_URL} \
+    APP_VERSION=${APP_VERSION} \
+    GIT_HASH=${GIT_HASH} \
+    NODE_ENV=production
+
+RUN bun run --cwd frontend build
+# produces /build/frontend/dist
+
+# ---- Stage 2: python runtime -----------------------------------------------
+FROM python:3.13-slim AS runtime
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    UV_LINK_MODE=copy \
+    UV_COMPILE_BYTECODE=1 \
+    PATH="/app/.venv/bin:$PATH" \
+    STATIC_DIR=/app/static
+
+# System deps: libpq for psycopg, curl for healthchecks, build-essential for
+# any sdist that needs compiling. Cleaned up to keep the image lean.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      build-essential libpq-dev curl ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+# uv via the official multi-arch image
+COPY --from=ghcr.io/astral-sh/uv:0.9.26 /uv /uvx /bin/
+
+WORKDIR /app
+
+# Workspace metadata first (cached by uv layer)
+COPY pyproject.toml uv.lock ./
+
+# Install only the `app` workspace member (skips dev deps)
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-install-workspace --package app --no-dev
+
+# Copy backend source after deps so code edits don't bust the dep cache
+COPY backend/scripts /app/backend/scripts
+COPY backend/pyproject.toml backend/alembic.ini /app/backend/
+COPY backend/app /app/backend/app
+
+# Materialize the workspace member install
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --package app --no-dev
+
+# Built SPA → /app/static (served by FastAPI's StaticFiles when STATIC_DIR is set)
+COPY --from=frontend-builder /build/frontend/dist /app/static
+
+WORKDIR /app/backend
+EXPOSE 8000
+
+# Default to web mode. compose.yml's worker service overrides this with arq.
+CMD ["bash", "-c", "bash scripts/prestart.sh && fastapi run --workers 4 app/main.py --host 0.0.0.0 --port 8000"]
