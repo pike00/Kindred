@@ -10,7 +10,6 @@ from typing import Any
 
 from arq.connections import RedisSettings
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
-from pydantic import BaseModel
 from sqlalchemy.orm import selectinload
 from sqlmodel import col, func, select
 
@@ -29,21 +28,8 @@ from app.models import (
     ContactStageEvent,
     ContactTag,
     ContactUpdate,
-    HouseholdMember,
-    HouseholdResponse,
-    Interaction,
-    InteractionAttendee,
-    JournalEntry,
-    JournalEntryContact,
-    JournalEntryPublic,
-    Note,
-    NoteMention,
-    Ok,
     OverdueContactPublic,
     OverdueContactsPublic,
-    Relationship,
-    SavedFilter,
-    User,
 )
 from app.vcard import compute_vcard_hash
 
@@ -589,7 +575,7 @@ def list_overdue_contacts(
     current_user: CurrentUser,
     limit: int = 50,
     offset: int = 0,
-) -> OverdueContactsPublic:
+) -> Any:
     """Return contacts sorted by days_overdue descending.
 
     Days overdue = (now - last_contacted_at).days - contact_frequency_days.
@@ -606,6 +592,7 @@ def list_overdue_contacts(
         )
         .options(
             selectinload(Contact.tags),
+            selectinload(Contact.groups),
         )
     )
     contacts = session.exec(statement).all()
@@ -649,7 +636,7 @@ def skip_contact(
     session: SessionDep,
     current_user: CurrentUser,
     contact_id: uuid.UUID,
-) -> ContactPublic:
+) -> Any:
     """Skip a contact for 7 days by creating a SKIP interaction.
 
     This advances the next due date without recording a user-facing interaction.
@@ -895,123 +882,6 @@ def list_contact_mentions(
             Note.owner_id == current_user.id,
             Note.contact_id != contact_id,
             Note.deleted_at == None,  # noqa: E711
-        )
-        .order_by(Note.created_at.desc())
-    ).all()
-
-    return [
-        NoteMentionPublic(
-            note_id=note.id,
-            note_body=note.body,
-            note_created_at=note.created_at,
-            source_contact=_MentionSourceContact(
-                id=src.id,
-                first_name=src.first_name,
-                last_name=src.last_name,
-                avatar_url=src.avatar_url,
-            ),
-        )
-        for note, src in rows
-    ]
-
-
-class _MentionSourceContact(BaseModel):
-    id: uuid.UUID
-    first_name: str
-    last_name: str | None = None
-    avatar_url: str | None = None
-
-
-class NoteMentionPublic(BaseModel):
-    note_id: uuid.UUID
-    note_body: str
-    note_created_at: datetime
-    source_contact: _MentionSourceContact
-
-
-@router.get("/{contact_id}/mentions", response_model=list[NoteMentionPublic])
-def list_contact_mentions(
-    session: SessionDep,
-    current_user: CurrentUser,
-    contact_id: uuid.UUID,
-) -> Any:
-    """List notes that @-mention this contact."""
-    contact = session.exec(
-        select(Contact).where(
-            Contact.id == contact_id,
-            Contact.id.in_(visible_contact_ids(current_user)),
-        )
-    ).first()
-    if not contact:
-        raise HTTPException(status_code=404, detail="Contact not found")
-
-    rows = session.exec(
-        select(Note, Contact)
-        .join(NoteMention, NoteMention.note_id == Note.id)
-        .join(Contact, Contact.id == Note.contact_id)
-        .where(
-            NoteMention.contact_id == contact_id,
-            Note.owner_id == current_user.id,
-            Note.contact_id != contact_id,
-        )
-        .order_by(Note.created_at.desc())
-    ).all()
-
-    return [
-        NoteMentionPublic(
-            note_id=note.id,
-            note_body=note.body,
-            note_created_at=note.created_at,
-            source_contact=_MentionSourceContact(
-                id=src.id,
-                first_name=src.first_name,
-                last_name=src.last_name,
-                avatar_url=src.avatar_url,
-            ),
-        )
-        for note, src in rows
-    ]
-
-
-class _MentionSourceContact(BaseModel):
-    id: uuid.UUID
-    first_name: str
-    last_name: str | None = None
-    avatar_url: str | None = None
-
-
-class NoteMentionPublic(BaseModel):
-    note_id: uuid.UUID
-    note_body: str
-    note_created_at: datetime
-    source_contact: _MentionSourceContact
-
-
-@router.get("/{contact_id}/mentions", response_model=list[NoteMentionPublic])
-def list_contact_mentions(
-    session: SessionDep,
-    current_user: CurrentUser,  # noqa: ARG001
-    contact_id: uuid.UUID,
-) -> Any:
-    """List notes that @-mention this contact, with the source (authoring) contact."""
-    contact = session.exec(
-        select(Contact).where(
-            Contact.id == contact_id,
-            Contact.id.in_(visible_contact_ids(current_user)),
-        )
-    ).first()
-    if not contact:
-        raise HTTPException(status_code=404, detail="Contact not found")
-
-    # Note's contact (its "page") is the source contact for the mention.
-    rows = session.exec(
-        select(Note, Contact)
-        .join(NoteMention, NoteMention.note_id == Note.id)
-        .join(Contact, Contact.id == Note.contact_id)
-        .where(
-            NoteMention.contact_id == contact_id,
-            Note.owner_id == current_user.id,
-            Note.contact_id != contact_id,
         )
         .order_by(Note.created_at.desc())
     ).all()

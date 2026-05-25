@@ -181,24 +181,10 @@ def create_address(*, session: Session, address_in: AddressCreate) -> Address:
 
 
 def create_relationship(
-    *,
-    session: Session,
-    relationship_in: RelationshipCreate,
-    inverse_type: str | None = None,
+    *, session: Session, relationship_in: RelationshipCreate
 ) -> Relationship:
     db_obj = Relationship.model_validate(relationship_in)
     session.add(db_obj)
-    if inverse_type:
-        inverse = Relationship(
-            contact_id=relationship_in.related_contact_id,
-            related_contact_id=relationship_in.contact_id,
-            relationship_type=inverse_type,
-            notes=relationship_in.notes,
-        )
-        session.add(inverse)
-        session.flush()  # materialise IDs before cross-linking
-        db_obj.inverse_id = inverse.id
-        inverse.inverse_id = db_obj.id
     session.commit()
     session.refresh(db_obj)
     return db_obj
@@ -625,68 +611,6 @@ def get_or_create_user_from_claims(
     return new_user
 
 
-def upsert_contact(
-    *, session: Session, contact_in: ContactCreate, owner_id: uuid.UUID
-) -> Contact:
-    """Create or update a contact based on (owner_id, source, source_external_id) match.
-
-    If a contact with the same (owner_id, source, source_external_id) exists,
-    update it with the new data. Otherwise, create a new contact.
-    Only applies when source_external_id is not None.
-    """
-    # Only attempt upsert if source_external_id is provided
-    if contact_in.source_external_id is not None:
-        existing = session.exec(
-            select(Contact).where(
-                Contact.owner_id == owner_id,
-                Contact.source == contact_in.source,
-                Contact.source_external_id == contact_in.source_external_id,
-            )
-        ).first()
-
-        if existing:
-            # Update existing contact with new data
-            update_data = contact_in.model_dump(
-                exclude_unset=True, exclude={"tag_ids", "group_ids"}
-            )
-            existing.sqlmodel_update(update_data)
-            session.add(existing)
-            session.commit()
-            session.refresh(existing)
-
-            # Handle tag associations if provided
-            if contact_in.tag_ids is not None:
-                # Remove existing tags
-                existing_tags = session.exec(
-                    select(ContactTag).where(ContactTag.contact_id == existing.id)
-                ).all()
-                for ct in existing_tags:
-                    session.delete(ct)
-                # Add new tags
-                for tag_id in contact_in.tag_ids:
-                    session.add(ContactTag(contact_id=existing.id, tag_id=tag_id))
-                session.commit()
-
-            # Handle group associations if provided
-            if contact_in.group_ids is not None:
-                # Remove existing groups
-                existing_groups = session.exec(
-                    select(ContactGroup).where(ContactGroup.contact_id == existing.id)
-                ).all()
-                for cg in existing_groups:
-                    session.delete(cg)
-                # Add new groups
-                for group_id in contact_in.group_ids:
-                    session.add(ContactGroup(contact_id=existing.id, group_id=group_id))
-                session.commit()
-
-            session.refresh(existing)
-            return existing
-
-    # Fall through to normal create
-    return create_contact(session=session, contact_in=contact_in, owner_id=owner_id)
-
-
 # ─── API Keys ─────────────────────────────────────────────────────────────────
 
 
@@ -757,84 +681,3 @@ def get_api_key_by_plaintext(*, session: Session, plaintext: str) -> APIKey | No
     ):
         return None
     return api_key
-
-
-# ─── EmailOAuthToken CRUD ───────────────────────────────────────────────
-
-
-def create_email_oauth_token(
-    *,
-    session: Session,
-    token_in: EmailOAuthTokenCreate,
-    owner_id: uuid.UUID,
-    contact_id: uuid.UUID,
-) -> EmailOAuthToken:
-    """Create a new EmailOAuthToken record."""
-    from app.core.encryption import encrypt_refresh_token, encrypt_token
-
-    db_obj = EmailOAuthToken(
-        owner_id=owner_id,
-        contact_id=contact_id,
-        provider=token_in.provider,
-        email_address=token_in.email_address,
-        encrypted_access_token=encrypt_token(token_in.encrypted_access_token),
-        encrypted_refresh_token=encrypt_refresh_token(token_in.encrypted_refresh_token),
-        token_expires_at=token_in.token_expires_at,
-    )
-    session.add(db_obj)
-    session.commit()
-    session.refresh(db_obj)
-    return db_obj
-
-
-def get_email_oauth_token(
-    *, session: Session, token_id: uuid.UUID
-) -> EmailOAuthToken | None:
-    """Get an EmailOAuthToken by ID."""
-    return session.get(EmailOAuthToken, token_id)
-
-
-def list_email_oauth_tokens(
-    *, session: Session, owner_id: uuid.UUID, contact_id: uuid.UUID | None = None
-) -> list[EmailOAuthToken]:
-    """List EmailOAuthToken records for a user, optionally filtered by contact."""
-    stmt = select(EmailOAuthToken).where(EmailOAuthToken.owner_id == owner_id)
-    if contact_id:
-        stmt = stmt.where(EmailOAuthToken.contact_id == contact_id)
-    return list(session.exec(stmt).all())
-
-
-def update_email_oauth_token(
-    *,
-    session: Session,
-    token_id: uuid.UUID,
-    access_token: str | None = None,
-    refresh_token: str | None = None,
-    expires_at: datetime | None = None,
-) -> EmailOAuthToken | None:
-    """Update an EmailOAuthToken with new token data (encrypted)."""
-    from app.core.encryption import encrypt_refresh_token, encrypt_token
-
-    token_row = session.get(EmailOAuthToken, token_id)
-    if not token_row:
-        return None
-    if access_token is not None:
-        token_row.encrypted_access_token = encrypt_token(access_token)
-    if refresh_token is not None:
-        token_row.encrypted_refresh_token = encrypt_refresh_token(refresh_token)
-    if expires_at is not None:
-        token_row.token_expires_at = expires_at
-    session.add(token_row)
-    session.commit()
-    session.refresh(token_row)
-    return token_row
-
-
-def delete_email_oauth_token(*, session: Session, token_id: uuid.UUID) -> bool:
-    """Delete an EmailOAuthToken. Returns True if deleted."""
-    token_row = session.get(EmailOAuthToken, token_id)
-    if not token_row:
-        return False
-    session.delete(token_row)
-    session.commit()
-    return True

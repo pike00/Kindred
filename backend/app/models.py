@@ -155,97 +155,6 @@ class UsersPublic(SQLModel):
     count: int
 
 
-# ─── SavedFilter ─────────────────────────────────────────────────────────────
-
-
-class FilterCondition(SQLModel):
-    """Pydantic schema for a single filter condition (validated, not injected)."""
-
-    field: str = Field(
-        description="Contact column name, must be in the allowed fields list."
-    )
-    operator: str = Field(
-        description="One of: equals, contains, in, gt, gte, lt, lte, before, after, is"
-    )
-    value: str | int | float | bool | date | list[str | int] | None = Field(
-        description="Value to compare against; type depends on field and operator."
-    )
-
-
-class SavedFilterBase(SQLModel):
-    name: str = Field(
-        min_length=1,
-        max_length=255,
-        description="User-visible name for the smart list.",
-    )
-    filter_json: dict = Field(
-        description="Structured filter: {conditions: FilterCondition[], op: 'and'|'or'}.",
-        sa_column=sa.Column("filter_json", JSON, nullable=False),
-    )
-    tag_id: uuid.UUID | None = Field(
-        default=None,
-        description="Optional tag; if set, filter is shared with users who have TagShare access.",
-    )
-
-
-class SavedFilterCreate(SavedFilterBase):
-    pass
-
-
-class SavedFilterUpdate(SQLModel):
-    name: str | None = Field(default=None, min_length=1, max_length=255)
-    filter_json: dict | None = None
-    tag_id: uuid.UUID | None = None
-
-
-class SavedFilter(SavedFilterBase, table=True):
-    """Saved filter / smart list owned by a user."""
-
-    __tablename__ = "saved_filter"
-
-    id: uuid.UUID = Field(
-        default_factory=uuid.uuid4,
-        primary_key=True,
-        description="Primary key.",
-    )
-    owner_id: uuid.UUID = Field(
-        foreign_key="user.id",
-        nullable=False,
-        ondelete="CASCADE",
-        description="Owner user; cascades on delete.",
-    )
-    tag_id: uuid.UUID | None = Field(
-        default=None,
-        foreign_key="tag.id",
-        nullable=True,
-        ondelete="SET NULL",
-        description="Optional tag for sharing; nulled when the tag is deleted.",
-    )
-    created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
-        nullable=False,
-        description="When the filter was created (UTC).",
-    )
-    updated_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
-        sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
-        nullable=False,
-        description="Auto-bumped on edit (UTC).",
-    )
-
-
-class SavedFilterPublic(SavedFilterBase):
-    id: uuid.UUID
-    owner_id: uuid.UUID
-    created_at: datetime
-    updated_at: datetime
-
-
-class SavedFiltersPublic(SQLModel):
-    data: list[SavedFilterPublic]
-    count: int
-
-
 # ─── API Keys ─────────────────────────────────────────────────────────────────
 
 
@@ -326,12 +235,19 @@ class APIKeysPublic(SQLModel):
 
 
 # ─── Enums ────────────────────────────────────────────────────────────────────
-# ─── Enums ────────────────────────────────────────────────────────────────────
 
 
 class ContactFieldType(str, enum.Enum):
     EMAIL = "email"
     PHONE = "phone"
+
+
+class ContactSource(str, enum.Enum):
+    MANUAL = "MANUAL"
+    VCARD_IMPORT = "VCARD_IMPORT"
+    CARDDAV = "CARDDAV"
+    GOOGLE = "GOOGLE"
+    WEBHOOK = "WEBHOOK"
 
 
 class GiftStatus(str, enum.Enum):
@@ -351,15 +267,6 @@ class InteractionChannel(str, enum.Enum):
     SOCIAL = "social"
     OTHER = "other"
     SKIP = "skip"
-
-
-class InteractionDraftSource(str, enum.Enum):
-    """Origin of a draft interaction."""
-
-    VOICE_MEMO = "voice_memo"
-    EMAIL_SUGGESTION = "email_suggestion"
-    MANUAL = "manual"
-    IMPORT = "import"
 
 
 class ReminderFrequency(str, enum.Enum):
@@ -742,18 +649,14 @@ class ContactBase(SQLModel):
         max_length=100,
         description="Kanban stage like Active, Dormant, Lost.",
     )
-    auto_log_email: bool = Field(
-        default=False,
-        description="Enable automatic email log ingestion for this contact.",
-    )
     source: ContactSource = Field(
         default=ContactSource.MANUAL,
-        description="Source system that created this contact.",
+        description="Where this contact originated.",
     )
     source_external_id: str | None = Field(
         default=None,
         max_length=500,
-        description="External ID from the source system (e.g. Google contact ID, CardDAV UID).",
+        description="Opaque external ID for idempotent upserts from integrations.",
     )
 
 
@@ -779,7 +682,6 @@ class ContactUpdate(SQLModel):
     deceased_at: date | None = None
     contact_frequency_days: int | None = None
     stage: str | None = None
-    auto_log_email: bool | None = None
     do_not_contact: bool | None = None
     do_not_contact_reason: str | None = None
     tag_ids: list[uuid.UUID] | None = None
@@ -1007,92 +909,6 @@ class ContactsPublic(SQLModel):
     count: int
 
 
-# ─── CommunicationPreference ───────────────────────────────────────────────
-
-
-class CommunicationPreferenceBase(SQLModel):
-    preferred_channel: str | None = Field(
-        default=None,
-        max_length=20,
-        description="Preferred contact channel (call, in_person, text, email, video, social, other).",
-    )
-    best_time_local: str | None = Field(
-        default=None,
-        max_length=11,
-        description="Preferred contact time window in HH:MM-HH:MM format, local to the contact.",
-    )
-    do_not_contact: bool = Field(
-        default=False,
-        description="When True, suppress all outbound contact reminders.",
-    )
-    do_not_contact_reason: str | None = Field(
-        default=None,
-        max_length=500,
-        description="Reason for do-not-contact status (e.g. deceased, requested removal).",
-    )
-
-    @field_validator("best_time_local")
-    @classmethod
-    def validate_best_time_local(cls, v: str | None) -> str | None:
-        if v is None:
-            return v
-        # Validate HH:MM-HH:MM format
-        pattern = r"^([01]\d|2[0-3]):([0-5]\d)-([01]\d|2[0-3]):([0-5]\d)$"
-        if not re.match(pattern, v):
-            raise ValueError(
-                "best_time_local must be in HH:MM-HH:MM format (e.g. 09:00-17:00)"
-            )
-        return v
-
-
-class CommunicationPreferenceCreate(CommunicationPreferenceBase):
-    pass
-
-
-class CommunicationPreferenceUpdate(SQLModel):
-    preferred_channel: str | None = None
-    best_time_local: str | None = None
-    do_not_contact: bool | None = None
-    do_not_contact_reason: str | None = None
-
-
-class CommunicationPreference(CommunicationPreferenceBase, table=True):
-    """Per-contact communication preferences (channel, time window, DNC flag)."""
-
-    __tablename__ = "communication_preference"
-
-    id: uuid.UUID = Field(
-        default_factory=uuid.uuid4,
-        primary_key=True,
-        description="Primary key.",
-    )
-    contact_id: uuid.UUID = Field(
-        foreign_key="contact.id",
-        nullable=False,
-        ondelete="CASCADE",
-        unique=True,
-        description="Contact these preferences belong to; cascades on delete.",
-    )
-    created_at: datetime = Field(
-        default_factory=get_datetime_utc,
-        nullable=False,
-        description="When the preferences were created (UTC).",
-    )
-    updated_at: datetime = Field(
-        default_factory=get_datetime_utc,
-        sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
-        nullable=False,
-        description="Auto-bumped on edit (UTC).",
-    )
-
-
-class CommunicationPreferencePublic(CommunicationPreferenceBase):
-    id: uuid.UUID
-    contact_id: uuid.UUID
-    created_at: datetime
-    updated_at: datetime
-
-
 class OverdueContactPublic(ContactPublic):
     days_overdue: int | None = None
 
@@ -1100,24 +916,6 @@ class OverdueContactPublic(ContactPublic):
 class OverdueContactsPublic(SQLModel):
     data: list[OverdueContactPublic]
     count: int
-
-
-class HouseholdMember(SQLModel):
-    """Single household member entry returned by /contacts/{id}/household."""
-
-    id: str
-    first_name: str
-    last_name: str | None = None
-    nickname: str | None = None
-    birthday: str | None = None
-    age: int | None = None
-    avatar_url: str | None = None
-
-
-class HouseholdResponse(SQLModel):
-    """Household membership wrapper."""
-
-    data: list[HouseholdMember]
 
 
 # ─── ContactField ────────────────────────────────────────────────────────────
@@ -1360,11 +1158,6 @@ class RelationshipBase(SQLModel):
 class RelationshipCreate(RelationshipBase):
     contact_id: uuid.UUID  # "from" contact
     related_contact_id: uuid.UUID  # "to" contact
-    inverse_relationship_type: str | None = Field(
-        default=None,
-        max_length=100,
-        description="Type for the auto-created inverse row (e.g. 'parent' for 'child'). Inferred when omitted.",
-    )
 
 
 class RelationshipUpdate(SQLModel):
@@ -1395,20 +1188,12 @@ class Relationship(RelationshipBase, table=True):
         ondelete="CASCADE",
         description='"To" contact in the directional relationship.',
     )
-    inverse_id: uuid.UUID | None = Field(
-        default=None,
-        foreign_key="relationship.id",
-        nullable=True,
-        ondelete="SET NULL",
-        description="ID of the paired inverse row; NULL for one-way links.",
-    )
 
 
 class RelationshipPublic(RelationshipBase):
     id: uuid.UUID
     contact_id: uuid.UUID
     related_contact_id: uuid.UUID
-    inverse_id: uuid.UUID | None = None
 
 
 class RelationshipsPublic(SQLModel):
@@ -2892,78 +2677,6 @@ class EmailOAuthTokensPublic(SQLModel):
 class NewPassword(SQLModel):
     token: str
     new_password: str = Field(min_length=8, max_length=128)
-
-
-# ─── ContactMerge ───────────────────────────────────────────────────
-
-
-class ContactMerge(SQLModel, table=True):
-    """Audit log for contact merge operations.
-
-    Records which contact absorbed which, when, and who did it.
-    Used to drive unmerge operations.
-    """
-
-    __tablename__ = "contact_merge"
-
-    id: uuid.UUID = Field(
-        default_factory=uuid.uuid4,
-        primary_key=True,
-        description="Primary key.",
-    )
-    surviving_id: uuid.UUID = Field(
-        foreign_key="contact.id",
-        nullable=False,
-        index=True,
-        description="The contact that survives the merge.",
-    )
-    absorbed_id: uuid.UUID = Field(
-        foreign_key="contact.id",
-        nullable=False,
-        index=True,
-        unique=True,
-        description="The contact that was absorbed (can only be merged once).",
-    )
-    merged_by: uuid.UUID | None = Field(
-        foreign_key="user.id",
-        nullable=True,
-        ondelete="SET NULL",
-        description="User who performed the merge.",
-    )
-    merged_at: datetime = Field(
-        default_factory=get_datetime_utc,
-        nullable=False,
-        sa_type=DateTime(timezone=True),
-        description="When the merge happened (UTC).",
-    )
-    notes: str | None = Field(
-        default=None,
-        max_length=1000,
-        description="Optional notes about why the merge was performed.",
-    )
-
-
-class ContactMergePublic(SQLModel):
-    """Public schema for contact merge log entries."""
-
-    id: uuid.UUID
-    surviving_id: uuid.UUID
-    absorbed_id: uuid.UUID
-    merged_by: uuid.UUID | None
-    merged_at: datetime
-    notes: str | None
-    surviving_name: str | None = None  # populated from join
-    absorbed_name: str | None = None  # populated from join
-
-
-class ContactMergesPublic(SQLModel):
-    """Paginated response for contact merge log."""
-
-    data: list[ContactMergePublic]
-    count: int
-
-
-# ─── Calendar ─────────────────────────────────────────────────────────────────
 
 
 class CalendarEntry(SQLModel):

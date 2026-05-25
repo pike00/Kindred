@@ -31,34 +31,7 @@ import {
   Trash2,
   Users,
 } from "@/lib/icons"
-
-const CHANNELS = [
-  { value: "call", label: "Call", icon: Phone },
-  { value: "in_person", label: "In Person", icon: Users },
-  { value: "text", label: "Text", icon: MessageSquare },
-  { value: "email", label: "Email", icon: Mail },
-  { value: "video", label: "Video", icon: Video },
-  { value: "social", label: "Social", icon: Users },
-  { value: "other", label: "Other", icon: Pencil },
-] as const
-
-const CHANNEL_OPTIONS = [
-  { value: "", label: "All Channels" },
-  ...CHANNELS.map((c) => ({ value: c.value, label: c.label })),
-]
-
-const CHANNEL_ICON_MAP: Record<string, React.ReactNode> = Object.fromEntries(
-  CHANNELS.map((c) => [c.value, <c.icon key={c.value} className="size-3" />]),
-)
-
-import { Badge } from "@/components/ui/badge"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { useSeedDemo } from "@/lib/seed"
 import { cn } from "@/lib/utils"
 
 const PAGE_SIZE = 25

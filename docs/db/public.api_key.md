@@ -64,7 +64,7 @@ erDiagram
   varchar_64_ entity_type
   uuid entity_id
   varchar_32_ action
-  jsonb changes_json
+  json changes_json
   timestamp_with_time_zone occurred_at
   uuid acting_api_key_id FK
 }
