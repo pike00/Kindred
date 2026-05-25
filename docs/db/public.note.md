@@ -8,7 +8,7 @@ Timestamped freeform note attached to a specific contact.
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | uuid |  | false |  |  | Primary key. |
+| id | uuid |  | false | [public.note_mention](public.note_mention.md) |  | Primary key. |
 | owner_id | uuid |  | false |  | [public.user](public.user.md) | Owner user; cascades on delete. |
 | contact_id | uuid |  | false |  | [public.contact](public.contact.md) | Contact the note is attached to; cascades on delete. |
 | body | varchar(50000) |  | false |  |  | Note body, 1-50000 chars. |
@@ -55,6 +55,7 @@ Timestamped freeform note attached to a specific contact.
 ```mermaid
 erDiagram
 
+"public.note_mention" }o--|| "public.note" : "FOREIGN KEY (note_id) REFERENCES note(id) ON DELETE CASCADE"
 "public.note" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.note" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 
@@ -68,6 +69,10 @@ erDiagram
   timestamp_without_time_zone deleted_at
   tsvector search_vector
   varchar_36_ client_id
+}
+"public.note_mention" {
+  uuid note_id FK
+  uuid contact_id FK
 }
 "public.user" {
   varchar_255_ email
@@ -107,11 +112,22 @@ erDiagram
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
   timestamp_with_time_zone deleted_at
+  uuid organization_id FK
   contactsource source
   varchar_500_ source_external_id
-  uuid organization_id FK
   boolean do_not_contact
   varchar_500_ do_not_contact_reason
+  varchar_500_ imessage_id
+  timestamp_with_time_zone imessage_synced_at
+  varchar_64_ imessage_profile_hash
+  jsonb imessage_profile
+  tsvector search_vector
+  boolean is_merged
+  uuid merged_into_id FK
+  varchar_64_ vcard_sha256
+  varchar_255_ timezone
+  text pronouns
+  boolean auto_log_email
 }
 ```
 
