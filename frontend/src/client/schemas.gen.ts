@@ -1165,104 +1165,82 @@ export const CalendarMonthResponseSchema = {
     title: 'CalendarMonthResponse'
 } as const;
 
-export const CalendarTokenCreateSchema = {
+export const CommunicationPreferencePublicSchema = {
     properties: {
-        expires_at: {
+        preferred_channel: {
             anyOf: [
                 {
                     type: 'string',
-                    format: 'date-time'
+                    maxLength: 20
                 },
                 {
                     type: 'null'
                 }
             ],
-            title: 'Expires At',
-            description: 'Optional expiration date; null means never expires.'
-        }
-    },
-    type: 'object',
-    title: 'CalendarTokenCreate'
-} as const;
-
-export const CalendarTokenPublicSchema = {
-    properties: {
-        expires_at: {
+            title: 'Preferred Channel',
+            description: 'Preferred contact channel (call, in_person, text, email, video, social, other).'
+        },
+        best_time_local: {
             anyOf: [
                 {
                     type: 'string',
-                    format: 'date-time'
+                    maxLength: 11
                 },
                 {
                     type: 'null'
                 }
             ],
-            title: 'Expires At',
-            description: 'Optional expiration date; null means never expires.'
+            title: 'Best Time Local',
+            description: 'Preferred contact time window in HH:MM-HH:MM format, local to the contact.'
+        },
+        do_not_contact: {
+            type: 'boolean',
+            title: 'Do Not Contact',
+            description: 'When True, suppress all outbound contact reminders.',
+            default: false
+        },
+        do_not_contact_reason: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 500
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Do Not Contact Reason',
+            description: 'Reason for do-not-contact status (e.g. deceased, requested removal).'
         },
         id: {
             type: 'string',
             format: 'uuid',
             title: 'Id'
         },
-        owner_id: {
+        contact_id: {
             type: 'string',
             format: 'uuid',
-            title: 'Owner Id'
-        },
-        token: {
-            type: 'string',
-            title: 'Token'
-        },
-        status: {
-            type: 'string',
-            title: 'Status'
-        },
-        last_used_at: {
-            anyOf: [
-                {
-                    type: 'string',
-                    format: 'date-time'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Last Used At'
+            title: 'Contact Id'
         },
         created_at: {
             type: 'string',
             format: 'date-time',
             title: 'Created At'
-        }
-    },
-    type: 'object',
-    required: ['id', 'owner_id', 'token', 'status', 'last_used_at', 'created_at'],
-    title: 'CalendarTokenPublic'
-} as const;
-
-export const CalendarTokensPublicSchema = {
-    properties: {
-        data: {
-            items: {
-                '$ref': '#/components/schemas/CalendarTokenPublic'
-            },
-            type: 'array',
-            title: 'Data'
         },
-        count: {
-            type: 'integer',
-            title: 'Count'
+        updated_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Updated At'
         }
     },
     type: 'object',
-    required: ['data', 'count'],
-    title: 'CalendarTokensPublic'
+    required: ['id', 'contact_id', 'created_at', 'updated_at'],
+    title: 'CommunicationPreferencePublic'
 } as const;
 
-export const ChronicSnoozerSchema = {
+export const CommunicationPreferenceUpdateSchema = {
     properties: {
-        contact_id: {
+        preferred_channel: {
             anyOf: [
                 {
                     type: 'string'
@@ -1271,21 +1249,44 @@ export const ChronicSnoozerSchema = {
                     type: 'null'
                 }
             ],
-            title: 'Contact Id'
+            title: 'Preferred Channel'
         },
-        reminder_id: {
-            type: 'string',
-            title: 'Reminder Id'
+        best_time_local: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Best Time Local'
         },
-        snooze_count: {
-            type: 'integer',
-            title: 'Snooze Count'
+        do_not_contact: {
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Do Not Contact'
+        },
+        do_not_contact_reason: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Do Not Contact Reason'
         }
     },
     type: 'object',
-    required: ['reminder_id', 'snooze_count'],
-    title: 'ChronicSnoozer',
-    description: 'Aggregate snooze stats for a (contact, reminder) pair.'
+    title: 'CommunicationPreferenceUpdate'
 } as const;
 
 export const ContactCreateSchema = {
@@ -2200,26 +2201,15 @@ export const ContactPublicSchema = {
             title: 'Stage Events',
             default: []
         },
-        organization: {
+        communication_preference: {
             anyOf: [
                 {
-                    '$ref': '#/components/schemas/OrganizationPublic'
+                    '$ref': '#/components/schemas/CommunicationPreferencePublic'
                 },
                 {
                     type: 'null'
                 }
             ]
-        },
-        vcard_sha256: {
-            anyOf: [
-                {
-                    type: 'string'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Vcard Sha256'
         }
     },
     type: 'object',
@@ -6662,26 +6652,15 @@ export const OverdueContactPublicSchema = {
             title: 'Stage Events',
             default: []
         },
-        organization: {
+        communication_preference: {
             anyOf: [
                 {
-                    '$ref': '#/components/schemas/OrganizationPublic'
+                    '$ref': '#/components/schemas/CommunicationPreferencePublic'
                 },
                 {
                     type: 'null'
                 }
             ]
-        },
-        vcard_sha256: {
-            anyOf: [
-                {
-                    type: 'string'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Vcard Sha256'
         },
         days_overdue: {
             anyOf: [

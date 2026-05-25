@@ -5,6 +5,7 @@ from app.api.routes import (
     addresses,
     api_keys,
     calendar,
+    communication_preferences,
     contact_fields,
     contact_pdf,
     contact_stage_events,
@@ -42,6 +43,7 @@ from app.api.routes import (
 from app.core.config import settings
 
 api_router = APIRouter()
+api_router.include_router(communication_preferences.router)
 api_router.include_router(login.router)
 api_router.include_router(users.router)
 api_router.include_router(api_keys.router)
@@ -81,7 +83,6 @@ api_router.include_router(graph.router)
 api_router.include_router(ical.router)
 api_router.include_router(search.router)
 api_router.include_router(contacts_kanban.router)
-
 
 if settings.ENVIRONMENT == "local":
     api_router.include_router(private.router)

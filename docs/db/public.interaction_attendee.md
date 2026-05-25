@@ -89,22 +89,8 @@ erDiagram
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
   timestamp_with_time_zone deleted_at
-  uuid organization_id FK
-  contactsource source
-  varchar_500_ source_external_id
-  boolean do_not_contact
-  varchar_500_ do_not_contact_reason
-  varchar_500_ imessage_id
-  timestamp_with_time_zone imessage_synced_at
-  varchar_64_ imessage_profile_hash
-  jsonb imessage_profile
-  tsvector search_vector
-  boolean is_merged
-  uuid merged_into_id FK
-  varchar_64_ vcard_sha256
-  varchar_255_ timezone
-  text pronouns
-  boolean auto_log_email
+  contactsource source_provider
+  varchar_255_ source_external_id
 }
 ```
 

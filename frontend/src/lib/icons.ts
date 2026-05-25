@@ -39,7 +39,7 @@ export {
   EyeOff,
   FileSpreadsheet,
   Film,
-  Gift,
+  Globe,
   HeartHandshake,
   // Sidebar nav
   Home,

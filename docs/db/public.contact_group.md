@@ -1,43 +1,43 @@
-# public.contact_tag
+# public.contact_group
 
 ## Description
 
-Many-to-many link between contacts and tags.
+Many-to-many link between contacts and groups.
 
 ## Columns
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
 | contact_id | uuid |  | false |  | [public.contact](public.contact.md) | Contact side of the link; cascades on delete. |
-| tag_id | uuid |  | false |  | [public.tag](public.tag.md) | Tag side of the link; cascades on delete. |
+| group_id | uuid |  | false |  | [public.group](public.group.md) | Group side of the link; cascades on delete. |
 
 ## Constraints
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
-| contact_tag_contact_id_not_null | n | NOT NULL contact_id |
-| contact_tag_tag_id_not_null | n | NOT NULL tag_id |
-| contact_tag_tag_id_fkey | FOREIGN KEY | FOREIGN KEY (tag_id) REFERENCES tag(id) ON DELETE CASCADE |
-| contact_tag_contact_id_fkey | FOREIGN KEY | FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE |
-| contact_tag_pkey | PRIMARY KEY | PRIMARY KEY (contact_id, tag_id) |
+| contact_group_contact_id_not_null | n | NOT NULL contact_id |
+| contact_group_group_id_not_null | n | NOT NULL group_id |
+| contact_group_group_id_fkey | FOREIGN KEY | FOREIGN KEY (group_id) REFERENCES "group"(id) ON DELETE CASCADE |
+| contact_group_contact_id_fkey | FOREIGN KEY | FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE |
+| contact_group_pkey | PRIMARY KEY | PRIMARY KEY (contact_id, group_id) |
 
 ## Indexes
 
 | Name | Definition |
 | ---- | ---------- |
-| contact_tag_pkey | CREATE UNIQUE INDEX contact_tag_pkey ON public.contact_tag USING btree (contact_id, tag_id) |
+| contact_group_pkey | CREATE UNIQUE INDEX contact_group_pkey ON public.contact_group USING btree (contact_id, group_id) |
 
 ## Relations
 
 ```mermaid
 erDiagram
 
-"public.contact_tag" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
-"public.contact_tag" }o--|| "public.tag" : "FOREIGN KEY (tag_id) REFERENCES tag(id) ON DELETE CASCADE"
+"public.contact_group" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
+"public.contact_group" }o--|| "public.group" : "FOREIGN KEY (group_id) REFERENCES #quot;group#quot;(id) ON DELETE CASCADE"
 
-"public.contact_tag" {
+"public.contact_group" {
   uuid contact_id FK
-  uuid tag_id FK
+  uuid group_id FK
 }
 "public.contact" {
   uuid id
@@ -69,13 +69,12 @@ erDiagram
   contactsource source_provider
   varchar_255_ source_external_id
 }
-"public.tag" {
+"public.group" {
   uuid id
   uuid owner_id FK
-  varchar_100_ name
-  varchar_7_ color
-  timestamp_with_time_zone created_at
+  varchar_255_ name
   varchar_1000_ description
+  timestamp_with_time_zone created_at
 }
 ```
 

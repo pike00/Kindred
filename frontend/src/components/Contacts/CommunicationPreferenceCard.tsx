@@ -1,17 +1,17 @@
+import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useEffect, useState } from "react"
-import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import type { ContactPublic, CommunicationPreferencePublic, CommunicationPreferenceUpdate } from "@/client"
+import type {
+  CommunicationPreferencePublic,
+  CommunicationPreferenceUpdate,
+  ContactPublic,
+} from "@/client"
 import { CommunicationPreferencesService } from "@/client"
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Form,
   FormControl,
@@ -21,8 +21,6 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Switch } from "@/components/ui/switch"
 import {
   Select,
   SelectContent,
@@ -30,9 +28,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
 import useCustomToast from "@/hooks/useCustomToast"
-import { Loader2, MessageSquare, Phone, Mail, Video, Users, Globe, Pencil } from "@/lib/icons"
-import { Label } from "@/components/ui/label"
+import {
+  Loader2,
+  Mail,
+  MessageSquare,
+  Pencil,
+  Phone,
+  Users,
+  Video,
+} from "@/lib/icons"
 
 const CHANNELS = [
   { value: "call", label: "Call", icon: Phone },
@@ -40,19 +46,22 @@ const CHANNELS = [
   { value: "text", label: "Text", icon: MessageSquare },
   { value: "email", label: "Email", icon: Mail },
   { value: "video", label: "Video", icon: Video },
-  { value: "social", label: "Social", icon: Globe },
+  { value: "social", label: "Social", icon: Users },
   { value: "other", label: "Other", icon: Pencil },
 ] as const
 
 const channelIconMap: Record<string, React.ReactNode> = Object.fromEntries(
-  CHANNELS.map((c) => [c.value, <c.icon key={c.value} className="size-4" />])
+  CHANNELS.map((c) => [c.value, <c.icon key={c.value} className="size-4" />]),
 )
 
 const schema = z.object({
   preferred_channel: z.string().nullable().optional(),
   best_time_local: z
     .string()
-    .regex(/^([01]\d|2[0-3]):([0-5]\d)-([01]\d|2[0-3]):([0-5]\d)$/, "Must be HH:MM-HH:MM")
+    .regex(
+      /^([01]\d|2[0-3]):([0-5]\d)-([01]\d|2[0-3]):([0-5]\d)$/,
+      "Must be HH:MM-HH:MM",
+    )
     .nullable()
     .optional(),
   do_not_contact: z.boolean().optional(),
@@ -65,7 +74,9 @@ interface CommunicationPreferenceCardProps {
   contact: ContactPublic
 }
 
-export function CommunicationPreferenceCard({ contact }: CommunicationPreferenceCardProps) {
+export function CommunicationPreferenceCard({
+  contact,
+}: CommunicationPreferenceCardProps) {
   const [isEditing, setIsEditing] = useState(false)
   const { showSuccessToast, showErrorToast } = useCustomToast()
   const queryClient = useQueryClient()
@@ -108,7 +119,9 @@ export function CommunicationPreferenceCard({ contact }: CommunicationPreference
     onSuccess: () => {
       showSuccessToast("Communication preferences updated")
       setIsEditing(false)
-      queryClient.invalidateQueries({ queryKey: ["communication-preference", contact.id] })
+      queryClient.invalidateQueries({
+        queryKey: ["communication-preference", contact.id],
+      })
       queryClient.invalidateQueries({ queryKey: ["contacts", contact.id] })
     },
     onError: (error: Error) => {
@@ -124,7 +137,9 @@ export function CommunicationPreferenceCard({ contact }: CommunicationPreference
     onSuccess: () => {
       showSuccessToast("Communication preferences removed")
       setIsEditing(false)
-      queryClient.invalidateQueries({ queryKey: ["communication-preference", contact.id] })
+      queryClient.invalidateQueries({
+        queryKey: ["communication-preference", contact.id],
+      })
       queryClient.invalidateQueries({ queryKey: ["contacts", contact.id] })
     },
     onError: (error: Error) => {
@@ -163,7 +178,11 @@ export function CommunicationPreferenceCard({ contact }: CommunicationPreference
         <CardTitle className="flex items-center justify-between">
           <span>Communication Preferences</span>
           {!isEditing && (
-            <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsEditing(true)}
+            >
               {pref ? "Edit" : "Add"}
             </Button>
           )}
@@ -212,9 +231,7 @@ export function CommunicationPreferenceCard({ contact }: CommunicationPreference
                         placeholder="09:00-17:00"
                         {...field}
                         value={field.value ?? ""}
-                        onChange={(e) =>
-                          field.onChange(e.target.value || null)
-                        }
+                        onChange={(e) => field.onChange(e.target.value || null)}
                       />
                     </FormControl>
                     <FormMessage />
@@ -227,12 +244,12 @@ export function CommunicationPreferenceCard({ contact }: CommunicationPreference
                 render={({ field }) => (
                   <FormItem className="flex items-center gap-2">
                     <FormControl>
-                      <Switch
+                      <Checkbox
                         checked={field.value ?? false}
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>
-                    <FormLabel className="!mt-0">Do Not Contact</FormLabel>
+                    <FormLabel>Do Not Contact</FormLabel>
                   </FormItem>
                 )}
               />
@@ -289,10 +306,13 @@ export function CommunicationPreferenceCard({ contact }: CommunicationPreference
           <div className="space-y-2 text-sm">
             {pref?.preferred_channel && (
               <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">Preferred channel:</span>
+                <span className="text-muted-foreground">
+                  Preferred channel:
+                </span>
                 <span className="flex items-center gap-1">
                   {channelIconMap[pref.preferred_channel]}
-                  {CHANNELS.find((c) => c.value === pref.preferred_channel)?.label ?? pref.preferred_channel}
+                  {CHANNELS.find((c) => c.value === pref.preferred_channel)
+                    ?.label ?? pref.preferred_channel}
                 </span>
               </div>
             )}
@@ -313,7 +333,9 @@ export function CommunicationPreferenceCard({ contact }: CommunicationPreference
               </div>
             )}
             {!pref && (
-              <p className="text-muted-foreground">No communication preferences set.</p>
+              <p className="text-muted-foreground">
+                No communication preferences set.
+              </p>
             )}
           </div>
         )}

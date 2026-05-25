@@ -266,38 +266,34 @@ export type CalendarMonthResponse = {
     };
 };
 
-export type CalendarTokenCreate = {
+export type CommunicationPreferencePublic = {
     /**
-     * Optional expiration date; null means never expires.
+     * Preferred contact channel (call, in_person, text, email, video, social, other).
      */
-    expires_at?: (string | null);
-};
-
-export type CalendarTokenPublic = {
+    preferred_channel?: (string | null);
     /**
-     * Optional expiration date; null means never expires.
+     * Preferred contact time window in HH:MM-HH:MM format, local to the contact.
      */
-    expires_at?: (string | null);
+    best_time_local?: (string | null);
+    /**
+     * When True, suppress all outbound contact reminders.
+     */
+    do_not_contact?: boolean;
+    /**
+     * Reason for do-not-contact status (e.g. deceased, requested removal).
+     */
+    do_not_contact_reason?: (string | null);
     id: string;
-    owner_id: string;
-    token: string;
-    status: string;
-    last_used_at: (string | null);
+    contact_id: string;
     created_at: string;
+    updated_at: string;
 };
 
-export type CalendarTokensPublic = {
-    data: Array<CalendarTokenPublic>;
-    count: number;
-};
-
-/**
- * Aggregate snooze stats for a (contact, reminder) pair.
- */
-export type ChronicSnoozer = {
-    contact_id?: (string | null);
-    reminder_id: string;
-    snooze_count: number;
+export type CommunicationPreferenceUpdate = {
+    preferred_channel?: (string | null);
+    best_time_local?: (string | null);
+    do_not_contact?: (boolean | null);
+    do_not_contact_reason?: (string | null);
 };
 
 export type ContactCreate = {
@@ -581,14 +577,8 @@ export type ContactPublic = {
     updated_at: string;
     deleted_at?: (string | null);
     tags?: Array<TagPublic>;
-    imessage_id?: (string | null);
-    imessage_synced_at?: (string | null);
-    imessage_profile?: ({
-    [key: string]: unknown;
-} | null);
-    stage_events?: Array<ContactStageEventPublic>;
-    organization?: (OrganizationPublic | null);
-    vcard_sha256?: (string | null);
+    groups?: Array<GroupPublic>;
+    communication_preference?: (CommunicationPreferencePublic | null);
 };
 
 /**
@@ -1852,14 +1842,8 @@ export type OverdueContactPublic = {
     updated_at: string;
     deleted_at?: (string | null);
     tags?: Array<TagPublic>;
-    imessage_id?: (string | null);
-    imessage_synced_at?: (string | null);
-    imessage_profile?: ({
-    [key: string]: unknown;
-} | null);
-    stage_events?: Array<ContactStageEventPublic>;
-    organization?: (OrganizationPublic | null);
-    vcard_sha256?: (string | null);
+    groups?: Array<GroupPublic>;
+    communication_preference?: (CommunicationPreferencePublic | null);
     days_overdue?: (number | null);
 };
 
@@ -2582,6 +2566,25 @@ export type CalendarGetCalendarIcsData = {
 export type CalendarGetCalendarIcsResponse = (unknown);
 
 export type CarddavWellKnownCarddavResponse = (unknown);
+
+export type CommunicationPreferencesGetCommunicationPreferenceData = {
+    contactId: string;
+};
+
+export type CommunicationPreferencesGetCommunicationPreferenceResponse = ((CommunicationPreferencePublic | null));
+
+export type CommunicationPreferencesUpsertCommunicationPreferenceData = {
+    contactId: string;
+    requestBody: CommunicationPreferenceUpdate;
+};
+
+export type CommunicationPreferencesUpsertCommunicationPreferenceResponse = (CommunicationPreferencePublic);
+
+export type CommunicationPreferencesDeleteCommunicationPreferenceData = {
+    contactId: string;
+};
+
+export type CommunicationPreferencesDeleteCommunicationPreferenceResponse = (unknown);
 
 export type ContactFieldsListContactFieldsData = {
     contactId: string;

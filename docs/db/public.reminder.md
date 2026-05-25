@@ -8,7 +8,7 @@ Scheduled reminder; contact-specific or standalone.
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | uuid |  | false | [public.reminder_snooze](public.reminder_snooze.md) |  | Primary key. |
+| id | uuid |  | false |  |  | Primary key. |
 | owner_id | uuid |  | false |  | [public.user](public.user.md) | Owner user; cascades on delete. |
 | contact_id | uuid |  | true |  | [public.contact](public.contact.md) | Optional contact; null for standalone reminders. |
 | title | varchar(500) |  | false |  |  | Reminder title. |
@@ -52,7 +52,6 @@ Scheduled reminder; contact-specific or standalone.
 ```mermaid
 erDiagram
 
-"public.reminder_snooze" }o--|| "public.reminder" : "FOREIGN KEY (reminder_id) REFERENCES reminder(id) ON DELETE CASCADE"
 "public.reminder" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.reminder" }o--o| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 
@@ -69,14 +68,6 @@ erDiagram
   timestamp_with_time_zone snoozed_until
   timestamp_with_time_zone created_at
   timestamp_without_time_zone deleted_at
-}
-"public.reminder_snooze" {
-  uuid id
-  uuid reminder_id FK
-  timestamp_with_time_zone snoozed_at
-  timestamp_with_time_zone snoozed_until
-  text reason
-  timestamp_with_time_zone created_at
 }
 "public.user" {
   varchar_255_ email
@@ -116,22 +107,8 @@ erDiagram
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
   timestamp_with_time_zone deleted_at
-  uuid organization_id FK
-  contactsource source
-  varchar_500_ source_external_id
-  boolean do_not_contact
-  varchar_500_ do_not_contact_reason
-  varchar_500_ imessage_id
-  timestamp_with_time_zone imessage_synced_at
-  varchar_64_ imessage_profile_hash
-  jsonb imessage_profile
-  tsvector search_vector
-  boolean is_merged
-  uuid merged_into_id FK
-  varchar_64_ vcard_sha256
-  varchar_255_ timezone
-  text pronouns
-  boolean auto_log_email
+  contactsource source_provider
+  varchar_255_ source_external_id
 }
 ```
 

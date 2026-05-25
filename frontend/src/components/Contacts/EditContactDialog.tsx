@@ -5,6 +5,7 @@ import { useForm, useWatch } from "react-hook-form"
 import { z } from "zod"
 import type { ContactPublic, ContactUpdate } from "@/client"
 import { ContactsService } from "@/client"
+import { CommunicationPreferenceCard } from "@/components/Contacts/CommunicationPreferenceCard"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -298,6 +299,7 @@ export const EditContactDialog = ({ contact }: EditContactDialogProps) => {
                 ? "Updating..."
                 : "Update Contact"}
             </Button>
+            <CommunicationPreferenceCard contact={contact} />
           </form>
         </Form>
       </DialogContent>
