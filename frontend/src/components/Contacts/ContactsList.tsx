@@ -22,14 +22,12 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import {
-  Archive,
   ChevronLeft,
   ChevronRight,
   Clock,
   Map as MapIcon,
   Search,
   Star,
-  Trash2,
   Users,
 } from "@/lib/icons"
 import { useSeedDemo } from "@/lib/seed"
@@ -127,16 +125,12 @@ function ContactRow({
             <span className="text-xs text-muted-foreground truncate hidden sm:inline">
               · {titleLine(contact)}
             </span>
-            {titleLine(contact) && (
-              <span className="text-xs text-muted-foreground truncate hidden sm:inline">
-                · {titleLine(contact)}
-              </span>
-            )}
-            {contact.is_favorite && (
-              <Star className="size-3.5 shrink-0 fill-amber-400 text-amber-400" />
-            )}
-          </div>
-          <div className="mt-1 flex items-center gap-2 text-xs">
+          )}
+          {contact.is_favorite && (
+            <Star className="size-3.5 shrink-0 fill-amber-400 text-amber-400" />
+          )}
+        </div>
+        <div className="mt-1 flex items-center gap-2 text-xs">
             <span
               className={cn(
                 "inline-flex items-center gap-1",
@@ -163,7 +157,7 @@ function ContactRow({
           )}
         </div>
       </Link>
-    </div>
+  </div>
   )
 }
 

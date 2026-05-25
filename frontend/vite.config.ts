@@ -1,5 +1,3 @@
-import { execSync } from "node:child_process"
-import { readFileSync } from "node:fs"
 import path from "node:path"
 import tailwindcss from "@tailwindcss/vite"
 import { tanstackRouter } from "@tanstack/router-plugin/vite"
@@ -100,5 +98,6 @@ export default defineConfig({
           },
         ],
       },
+    }),
   ],
 })

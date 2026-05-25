@@ -377,7 +377,6 @@ function ContactDetailPage() {
             </Card>
           )}
 
-<<<<<<< HEAD
           {/* Groups */}
           {contact.groups && contact.groups.length > 0 && (
             <Card>
@@ -402,8 +401,6 @@ function ContactDetailPage() {
               </CardContent>
             </Card>
           )}
-=======
->>>>>>> origin/main
           {/* Interaction Map */}
           <Card>
             <CardHeader>
