@@ -2117,15 +2117,13 @@ export const ContactPublicSchema = {
             title: 'Stage Events',
             default: []
         },
-        communication_preference: {
-            anyOf: [
-                {
-                    '$ref': '#/components/schemas/CommunicationPreferencePublic'
-                },
-                {
-                    type: 'null'
-                }
-            ]
+        stage_events: {
+            items: {
+                '$ref': '#/components/schemas/ContactStageEventPublic'
+            },
+            type: 'array',
+            title: 'Stage Events',
+            default: []
         }
     },
     type: 'object',
@@ -2138,6 +2136,92 @@ export const ContactSourceSchema = {
     enum: ['manual', 'vcard_import', 'carddav', 'google', 'webhook'],
     title: 'ContactSource',
     description: 'Source system that created a contact.'
+} as const;
+
+export const ContactStageEventPublicSchema = {
+    properties: {
+        old_stage: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 100
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Old Stage',
+            description: 'Previous stage value; null when the contact is first assigned a stage.'
+        },
+        new_stage: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 100
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'New Stage',
+            description: 'New stage value; null when the contact is cleared.'
+        },
+        changed_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Changed At',
+            description: 'When the stage change occurred (UTC).'
+        },
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        contact_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Contact Id'
+        },
+        owner_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Owner Id'
+        },
+        changed_by_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'uuid'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Changed By Id'
+        }
+    },
+    type: 'object',
+    required: ['id', 'contact_id', 'owner_id', 'changed_by_id'],
+    title: 'ContactStageEventPublic'
+} as const;
+
+export const ContactStageEventsPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/ContactStageEventPublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'ContactStageEventsPublic'
 } as const;
 
 export const ContactUpdateSchema = {
@@ -6385,15 +6469,13 @@ export const OverdueContactPublicSchema = {
             title: 'Stage Events',
             default: []
         },
-        communication_preference: {
-            anyOf: [
-                {
-                    '$ref': '#/components/schemas/CommunicationPreferencePublic'
-                },
-                {
-                    type: 'null'
-                }
-            ]
+        stage_events: {
+            items: {
+                '$ref': '#/components/schemas/ContactStageEventPublic'
+            },
+            type: 'array',
+            title: 'Stage Events',
+            default: []
         },
         days_overdue: {
             anyOf: [

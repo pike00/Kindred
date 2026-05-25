@@ -26,7 +26,7 @@ from app.models import (
     ContactPublic,
     ContactSource,
     ContactsPublic,
-    ContactStageEventCreate,
+    ContactStageEvent,
     ContactTag,
     ContactUpdate,
     HouseholdMember,
@@ -759,6 +759,9 @@ def update_contact(
     if contact.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not enough permissions")
 
+    # Capture old stage before any changes
+    old_stage = contact.stage
+
     update_data = contact_in.model_dump(exclude_unset=True)
     tag_ids = update_data.pop("tag_ids", None)
 
@@ -786,6 +789,19 @@ def update_contact(
         contact.vcard_sha256 = compute_vcard_hash(contact.vcard_raw)
     session.add(contact)
 
+    # Log stage change if stage was updated
+    new_stage = update_data.get("stage", old_stage)
+    if new_stage != old_stage:
+        stage_event = ContactStageEvent(
+            contact_id=contact.id,
+            owner_id=current_user.id,
+            changed_by_id=current_user.id,
+            old_stage=old_stage,
+            new_stage=new_stage,
+        )
+        session.add(stage_event)
+
+    # Update tag associations if provided
     if tag_ids is not None:
         existing = session.exec(
             select(ContactTag).where(ContactTag.contact_id == contact.id)

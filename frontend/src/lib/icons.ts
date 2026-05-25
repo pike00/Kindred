@@ -38,7 +38,7 @@ export {
   EyeOff,
   FileSpreadsheet,
   Film,
-  Globe,
+  GripVertical,
   HeartHandshake,
   // Sidebar nav
   Home,

@@ -550,7 +550,7 @@ export type ContactPublic = {
     deleted_at?: (string | null);
     tags?: Array<TagPublic>;
     groups?: Array<GroupPublic>;
-    communication_preference?: (CommunicationPreferencePublic | null);
+    stage_events?: Array<ContactStageEventPublic>;
 };
 
 /**
@@ -563,47 +563,23 @@ export type ContactsPublic = {
     count: number;
 };
 
-export type ContactStageEventCreate = {
-    /**
-     * Previous stage value; null when the contact is first assigned a stage.
-     */
-    from_stage?: (string | null);
-    /**
-     * New stage value; null when the contact is cleared.
-     */
-    to_stage?: (string | null);
-    /**
-     * When the stage change occurred (UTC).
-     */
-    occurred_at?: string;
-    /**
-     * Optional context about the stage change.
-     */
-    note?: (string | null);
-    contact_id: string;
-};
-
 export type ContactStageEventPublic = {
     /**
      * Previous stage value; null when the contact is first assigned a stage.
      */
-    from_stage?: (string | null);
+    old_stage?: (string | null);
     /**
      * New stage value; null when the contact is cleared.
      */
-    to_stage?: (string | null);
+    new_stage?: (string | null);
     /**
      * When the stage change occurred (UTC).
      */
-    occurred_at?: string;
-    /**
-     * Optional context about the stage change.
-     */
-    note?: (string | null);
+    changed_at?: string;
     id: string;
     contact_id: string;
     owner_id: string;
-    created_at: string;
+    changed_by_id: (string | null);
 };
 
 export type ContactStageEventsPublic = {
@@ -1806,7 +1782,7 @@ export type OverdueContactPublic = {
     deleted_at?: (string | null);
     tags?: Array<TagPublic>;
     groups?: Array<GroupPublic>;
-    communication_preference?: (CommunicationPreferencePublic | null);
+    stage_events?: Array<ContactStageEventPublic>;
     days_overdue?: (number | null);
 };
 
@@ -2678,27 +2654,23 @@ export type ContactsRestoreContactData = {
 
 export type ContactsRestoreContactResponse = (ContactPublic);
 
-export type ContactsMergeContactsEndpointData = {
-    requestBody: MergeContactsRequest;
+export type ContactsGetDistinctStagesResponse = (Array<(string)>);
+
+export type ContactsGetKanbanBoardData = {
+    groupId?: (string | null);
+    search?: (string | null);
+    tagId?: (string | null);
 };
 
-export type ContactsMergeContactsEndpointResponse = (MergeResponse);
+export type ContactsGetKanbanBoardResponse = ({
+    [key: string]: ContactsPublic;
+});
 
-export type ContactsUnmergeContactEndpointData = {
+export type ContactsGetContactStageEventsData = {
     contactId: string;
 };
 
-export type ContactsUnmergeContactEndpointResponse = (ContactPublic);
-
-export type ContactsListMergeLogsData = {
-    contactId?: (string | null);
-    limit?: number;
-    skip?: number;
-};
-
-export type ContactsListMergeLogsResponse = ({
-    [key: string]: unknown;
-});
+export type ContactsGetContactStageEventsResponse = (ContactStageEventsPublic);
 
 export type CustomFieldsListFieldDefinitionsResponse = (unknown);
 
