@@ -1,11 +1,17 @@
-import { useCallback, useEffect, useRef, useState, useMemo } from "react"
-import { select, drag, zoom, zoomIdentity } from "d3-selection"
-import { forceSimulation, forceLink, forceManyBody, forceCenter, forceCollide } from "d3-force"
-import type { GraphEdge, GraphNode } from "./types"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  forceCenter,
+  forceCollide,
+  forceLink,
+  forceManyBody,
+  forceSimulation,
+} from "d3-force"
+import { drag, select, zoom, zoomIdentity } from "d3-selection"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ZoomIn, ZoomOut, RotateCcw, Focus } from "@/lib/icons"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Focus, RotateCcw, ZoomIn, ZoomOut } from "@/lib/icons"
+import type { GraphEdge, GraphNode } from "./types"
 
 interface GraphVisualizationProps {
   nodes: GraphNode[]
@@ -32,7 +38,12 @@ function getEdgeColor(type: string): string {
   return typeColors[type] || "#94a3b8"
 }
 
-export function GraphVisualization({ nodes, edges, onNodeClick, rootContactId }: GraphVisualizationProps) {
+export function GraphVisualization({
+  nodes,
+  edges,
+  onNodeClick,
+  rootContactId,
+}: GraphVisualizationProps) {
   const svgRef = useRef<SVGSVGElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const simulationRef = useRef<any>(null)
@@ -71,7 +82,7 @@ export function GraphVisualization({ nodes, edges, onNodeClick, rootContactId }:
     svg.call(zoomBehavior)
 
     // Prepare nodes with initial positions
-    const simNodes: any[] = nodes.map((n, i) => ({
+    const simNodes: any[] = nodes.map((n, _i) => ({
       ...n,
       x: width / 2 + (Math.random() - 0.5) * 100,
       y: height / 2 + (Math.random() - 0.5) * 100,
@@ -91,13 +102,13 @@ export function GraphVisualization({ nodes, edges, onNodeClick, rootContactId }:
         forceLink(simEdges)
           .id((d: any) => d.id)
           .distance(100)
-          .strength(0.5)
+          .strength(0.5),
       )
       .force("charge", forceManyBody().strength(-300).distanceMax(500))
       .force("center", forceCenter(width / 2, height / 2))
       .force(
         "collide",
-        forceCollide().radius((d: any) => d.radius + 5)
+        forceCollide().radius((d: any) => d.radius + 5),
       )
       .alphaDecay(0.02)
       .on("tick", ticked)
@@ -139,7 +150,7 @@ export function GraphVisualization({ nodes, edges, onNodeClick, rootContactId }:
         drag()
           .on("start", dragstarted)
           .on("drag", dragged)
-          .on("end", dragended)
+          .on("end", dragended),
       )
       .on("click", (event, d) => {
         event.stopPropagation()
@@ -153,10 +164,10 @@ export function GraphVisualization({ nodes, edges, onNodeClick, rootContactId }:
       .attr("r", (d: any) => d.radius)
       .attr("fill", (d: any) => (d.is_favorite ? "#f59e0b" : "#3b82f6"))
       .attr("stroke", (d: any) =>
-        d.id === selectedNode || d.id === rootContactId ? "#ef4444" : "#1e293b"
+        d.id === selectedNode || d.id === rootContactId ? "#ef4444" : "#1e293b",
       )
       .attr("stroke-width", (d: any) =>
-        d.id === selectedNode || d.id === rootContactId ? 3 : 2
+        d.id === selectedNode || d.id === rootContactId ? 3 : 2,
       )
 
     // Node labels
@@ -208,10 +219,13 @@ export function GraphVisualization({ nodes, edges, onNodeClick, rootContactId }:
         const scale = 1.5
         const x = width / 2 - rootNode.x * scale
         const y = height / 2 - rootNode.y * scale
-        svg.transition().duration(750).call(
-          zoomBehavior.transform,
-          zoomIdentity.translate(x, y).scale(scale)
-        )
+        svg
+          .transition()
+          .duration(750)
+          .call(
+            zoomBehavior.transform,
+            zoomIdentity.translate(x, y).scale(scale),
+          )
       }
     }
 
@@ -222,26 +236,17 @@ export function GraphVisualization({ nodes, edges, onNodeClick, rootContactId }:
 
   const handleZoomIn = () => {
     if (!svgRef.current) return
-    select(svgRef.current).transition().call(
-      zoom().scaleBy,
-      1.3
-    )
+    select(svgRef.current).transition().call(zoom().scaleBy, 1.3)
   }
 
   const handleZoomOut = () => {
     if (!svgRef.current) return
-    select(svgRef.current).transition().call(
-      zoom().scaleBy,
-      0.7
-    )
+    select(svgRef.current).transition().call(zoom().scaleBy, 0.7)
   }
 
   const handleReset = () => {
     if (!svgRef.current) return
-    select(svgRef.current).transition().call(
-      zoom().transform,
-      zoomIdentity
-    )
+    select(svgRef.current).transition().call(zoom().transform, zoomIdentity)
   }
 
   const handleFocusNode = (nodeId: string) => {
@@ -256,10 +261,10 @@ export function GraphVisualization({ nodes, edges, onNodeClick, rootContactId }:
     const scale = 1.5
     const x = width / 2 - node.x * scale
     const y = height / 2 - node.y * scale
-    svg.transition().duration(750).call(
-      zoom().transform,
-      zoomIdentity.translate(x, y).scale(scale)
-    )
+    svg
+      .transition()
+      .duration(750)
+      .call(zoom().transform, zoomIdentity.translate(x, y).scale(scale))
     setSelectedNode(nodeId)
   }
 
@@ -267,17 +272,36 @@ export function GraphVisualization({ nodes, edges, onNodeClick, rootContactId }:
     <div className="space-y-4">
       {/* Controls */}
       <div className="flex items-center gap-2">
-        <Button variant="outline" size="icon" onClick={handleZoomIn} title="Zoom In">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={handleZoomIn}
+          title="Zoom In"
+        >
           <ZoomIn className="size-4" />
         </Button>
-        <Button variant="outline" size="icon" onClick={handleZoomOut} title="Zoom Out">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={handleZoomOut}
+          title="Zoom Out"
+        >
           <ZoomOut className="size-4" />
         </Button>
-        <Button variant="outline" size="icon" onClick={handleReset} title="Reset View">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={handleReset}
+          title="Reset View"
+        >
           <RotateCcw className="size-4" />
         </Button>
         {selectedNode && (
-          <Button variant="outline" size="sm" onClick={() => handleFocusNode(selectedNode)}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleFocusNode(selectedNode)}
+          >
             <Focus className="size-4 mr-2" />
             Focus: {nodes.find((n) => n.id === selectedNode)?.label}
           </Button>
@@ -285,7 +309,10 @@ export function GraphVisualization({ nodes, edges, onNodeClick, rootContactId }:
       </div>
 
       {/* Graph Visualization */}
-      <div ref={containerRef} className="w-full h-[600px] relative border rounded-lg overflow-hidden bg-slate-50">
+      <div
+        ref={containerRef}
+        className="w-full h-[600px] relative border rounded-lg overflow-hidden bg-slate-50"
+      >
         {nodes.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <p className="text-muted-foreground">No data to display</p>

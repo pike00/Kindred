@@ -136,7 +136,7 @@ function RelationshipGraphPage() {
               <span>Favorite</span>
             </div>
             <div className="flex items-center gap-2">
-              <svg width="24" height="12">
+              <svg width="24" height="12" aria-hidden="true">
                 <line
                   x1="0"
                   y1="6"

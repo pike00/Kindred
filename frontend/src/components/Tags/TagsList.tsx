@@ -8,7 +8,6 @@ import { Tag } from "@/lib/icons"
 import { useSeedDemo } from "@/lib/seed"
 import { AddTagDialog } from "./AddTagDialog"
 import { columns } from "./columns"
-import { TagShareDialog } from "./TagShareDialog"
 
 export const TagsList = () => {
   const seedMutation = useSeedDemo()
@@ -17,7 +16,7 @@ export const TagsList = () => {
     queryKey: ["tags"],
     queryFn: () => TagsService.listTags(),
   })
-  const [selectedTag, setSelectedTag] = useState<TagPublic | null>(null)
+  const [_selectedTag, _setSelectedTag] = useState<TagPublic | null>(null)
 
   const tags = data?.data || []
 

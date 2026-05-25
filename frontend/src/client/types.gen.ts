@@ -3205,6 +3205,29 @@ export type SavedFiltersDeleteSavedFilterRouteData = {
 
 export type SavedFiltersDeleteSavedFilterRouteResponse = (unknown);
 
+export type SearchResultItem = {
+    id: string;
+    type: string;
+    title: string;
+    snippet?: string | null;
+    rank?: number | null;
+    created_at?: string | null;
+    updated_at?: string | null;
+};
+
+export type SearchResponse = {
+    results: SearchResultItem[];
+    total: number;
+    query: string;
+};
+
+export type SearchSearchData = {
+    q: string;
+    limit?: number;
+};
+
+export type SearchSearchResponse = SearchResponse;
+
 export type RemindersRestoreReminderData = {
     reminderId: string;
 };

@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 import type { ContactCreate } from "@/client"
 import { ContactsService } from "@/client"
+import { TimezoneInput } from "@/components/Contacts/TimezoneInput"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -136,7 +137,10 @@ export const AddContactDialog = () => {
                 <FormItem>
                   <FormLabel>Timezone</FormLabel>
                   <FormControl>
-                    <Input placeholder="America/New_York" {...field} />
+                    <TimezoneInput
+                      value={field.value ?? ""}
+                      onChange={field.onChange}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

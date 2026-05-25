@@ -1,9 +1,26 @@
+import { execSync } from "node:child_process"
+import { readFileSync } from "node:fs"
 import path from "node:path"
 import tailwindcss from "@tailwindcss/vite"
 import { tanstackRouter } from "@tanstack/router-plugin/vite"
 import react from "@vitejs/plugin-react-swc"
 import { defineConfig } from "vite"
 import { VitePWA } from "vite-plugin-pwa"
+
+function gitHash(): string {
+  try {
+    return execSync("git rev-parse --short HEAD", { encoding: "utf8" }).trim()
+  } catch {
+    return process.env.GIT_HASH ?? "unknown"
+  }
+}
+
+function appVersion(): string {
+  const pkg = JSON.parse(
+    readFileSync(new URL("./package.json", import.meta.url), "utf-8"),
+  )
+  return pkg.version as string
+}
 
 // https://vitejs.dev/config/
 export default defineConfig({

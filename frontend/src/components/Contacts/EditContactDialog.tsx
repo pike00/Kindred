@@ -6,6 +6,7 @@ import { z } from "zod"
 import type { ContactPublic, ContactUpdate } from "@/client"
 import { ContactsService } from "@/client"
 import { CommunicationPreferenceCard } from "@/components/Contacts/CommunicationPreferenceCard"
+import { TimezoneInput } from "@/components/Contacts/TimezoneInput"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -193,7 +194,10 @@ export const EditContactDialog = ({ contact }: EditContactDialogProps) => {
                 <FormItem>
                   <FormLabel>Timezone</FormLabel>
                   <FormControl>
-                    <Input placeholder="America/New_York" {...field} />
+                    <TimezoneInput
+                      value={field.value ?? ""}
+                      onChange={field.onChange}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

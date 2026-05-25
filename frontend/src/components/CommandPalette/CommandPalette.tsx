@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
-import { useMemo } from "react"
-import { type ContactPublic, ContactsService } from "@/client"
+import { useMemo, useState } from "react"
+import { type ContactPublic, ContactsService, SearchService } from "@/client"
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
 import {
   CommandDialog,
@@ -29,7 +29,7 @@ import { useCommandPalette } from "./CommandPaletteContext"
 import { SearchBadge } from "./SearchBadge"
 
 const CONTACT_LIMIT = 8
-const SEARCH_LIMIT = 20
+const _SEARCH_LIMIT = 20
 
 function contactLabel(contact: ContactPublic): string {
   const parts = [contact.first_name, contact.last_name].filter(Boolean)
@@ -94,9 +94,16 @@ export function CommandPalette() {
 
   const { data: contactsData } = useQuery({
     queryKey: ["contacts"],
-    queryFn: () => ContactsService.listContacts(),
+    queryFn: () => ContactsService.listContacts({ limit: 500 }),
     enabled: open,
   })
+
+  const { data: searchData, isLoading: searchLoading } = useQuery({
+    queryKey: ["palette-search", searchQuery],
+    queryFn: () => SearchService.search({ q: searchQuery, limit: 10 }),
+    enabled: open && searchQuery.length >= 2,
+  })
+  const searchResults = searchData?.results ?? []
 
   const contacts = useMemo(() => contactsData?.data ?? [], [contactsData])
 

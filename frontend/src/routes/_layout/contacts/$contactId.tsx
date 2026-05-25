@@ -1,6 +1,8 @@
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute, Link } from "@tanstack/react-router"
-import { useState } from "react"
+import { useEffect, useState } from "react"
+
+import { formatLocalTime } from "@/components/Contacts/TimezoneInput"
 
 import type {
   DebtPublic,
@@ -58,6 +60,25 @@ import {
   UserRoundSearch,
 } from "@/lib/icons"
 
+function ContactLocalTime({ timezone }: { timezone: string }) {
+  const [localTime, setLocalTime] = useState(() => formatLocalTime(timezone))
+
+  useEffect(() => {
+    const id = setInterval(() => setLocalTime(formatLocalTime(timezone)), 60_000)
+    return () => clearInterval(id)
+  }, [timezone])
+
+  if (!localTime) return null
+
+  return (
+    <span className="flex items-center gap-1">
+      <Clock className="size-3.5" />
+      {localTime} their time
+      <span className="text-muted-foreground text-xs">({timezone})</span>
+    </span>
+  )
+}
+
 function InfoHint({ children }: { children: React.ReactNode }) {
   return (
     <Tooltip>
@@ -111,7 +132,11 @@ function ContactDetailPage() {
     endDate: string
   } | null>(null)
 
-  const handleWeekClick = (weekStart: string, weekEnd: string, count: number) => {
+  const handleWeekClick = (
+    weekStart: string,
+    weekEnd: string,
+    count: number,
+  ) => {
     if (count === 0) return
     setHeatmapFilter({ startDate: weekStart, endDate: weekEnd })
   }
@@ -186,7 +211,11 @@ function ContactDetailPage() {
           {heatmapFilter && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span>
-                Filtered to week of {new Date(heatmapFilter.startDate).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                Filtered to week of{" "}
+                {new Date(heatmapFilter.startDate).toLocaleDateString(
+                  undefined,
+                  { month: "short", day: "numeric" },
+                )}
               </span>
               <button
                 type="button"
@@ -299,9 +328,7 @@ function ContactDetailPage() {
             )}
 
             {contact.timezone && (
-              <span className="flex items-center gap-1">
-                <Clock className="size-3.5" /> Timezone: {contact.timezone}
-              </span>
+              <ContactLocalTime timezone={contact.timezone} />
             )}
             {contact.last_contacted_at && (
               <span className="flex items-center gap-1">

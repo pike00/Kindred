@@ -389,6 +389,7 @@ export function AvatarUploadDialog({
           {/* Image Preview with Crop Overlay */}
           {previewUrl && (
             <div className="space-y-4">
+              {/* biome-ignore lint/a11y/noStaticElementInteractions: drag container requires mouse events */}
               <div
                 ref={containerRef}
                 className="relative inline-block max-w-full overflow-hidden rounded-lg border bg-muted"
@@ -405,6 +406,7 @@ export function AvatarUploadDialog({
                 />
 
                 {/* Crop Overlay */}
+                {/* biome-ignore lint/a11y/noStaticElementInteractions: draggable crop handle */}
                 <div
                   className="absolute border-2 border-primary bg-primary/10 cursor-move"
                   style={{
@@ -430,6 +432,8 @@ export function AvatarUploadDialog({
                   const scaleY = imgEl.height / imgEl.naturalHeight
 
                   return (
+                    // biome-ignore lint/a11y/noStaticElementInteractions: face selection is mouse-only UI
+                    // biome-ignore lint/a11y/useKeyWithClickEvents: face selection is mouse-only UI
                     <div
                       key={index}
                       className={`absolute border-2 ${

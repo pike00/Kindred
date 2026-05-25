@@ -92,8 +92,8 @@ function lastContactTone(days: number | null): string {
 
 function ContactRow({
   contact,
-  selected,
-  onToggle,
+  selected: _selected,
+  onToggle: _onToggle,
 }: {
   contact: ContactPublic
   selected: boolean
@@ -131,33 +131,32 @@ function ContactRow({
           )}
         </div>
         <div className="mt-1 flex items-center gap-2 text-xs">
-            <span
-              className={cn(
-                "inline-flex items-center gap-1",
-                lastContactTone(days),
-              )}
-            >
-              <Clock className="size-3" />
-              {days == null
-                ? "No interactions yet"
-                : `${days}d since last contact`}
-            </span>
-          </div>
+          <span
+            className={cn(
+              "inline-flex items-center gap-1",
+              lastContactTone(days),
+            )}
+          >
+            <Clock className="size-3" />
+            {days == null
+              ? "No interactions yet"
+              : `${days}d since last contact`}
+          </span>
         </div>
-        <div className="hidden md:flex shrink-0 items-center gap-1.5">
-          {visibleTags.map((tag) => (
-            <Badge key={tag.id} variant="secondary" className="text-xs">
-              {tag.name}
-            </Badge>
-          ))}
-          {extraTags > 0 && (
-            <Badge variant="outline" className="text-xs">
-              +{extraTags}
-            </Badge>
-          )}
-        </div>
-      </Link>
-  </div>
+      </div>
+      <div className="hidden md:flex shrink-0 items-center gap-1.5">
+        {visibleTags.map((tag) => (
+          <Badge key={tag.id} variant="secondary" className="text-xs">
+            {tag.name}
+          </Badge>
+        ))}
+        {extraTags > 0 && (
+          <Badge variant="outline" className="text-xs">
+            +{extraTags}
+          </Badge>
+        )}
+      </div>
+    </Link>
   )
 }
 
