@@ -17,7 +17,6 @@ from app.models import (
     ContactCreate,
     ContactField,
     ContactFieldCreate,
-    ContactGroup,
     ContactTag,
     CustomFieldDefinition,
     CustomFieldDefinitionCreate,
@@ -27,8 +26,6 @@ from app.models import (
     DebtCreate,
     Gift,
     GiftCreate,
-    Group,
-    GroupCreate,
     Interaction,
     InteractionAttendee,
     InteractionCreate,
@@ -125,11 +122,6 @@ def create_contact(
         for tag_id in contact_in.tag_ids:
             session.add(ContactTag(contact_id=db_obj.id, tag_id=tag_id))
         session.commit()
-    # Handle group associations
-    if contact_in.group_ids:
-        for group_id in contact_in.group_ids:
-            session.add(ContactGroup(contact_id=db_obj.id, group_id=group_id))
-        session.commit()
     session.refresh(db_obj)
     return db_obj
 
@@ -139,19 +131,6 @@ def create_contact(
 
 def create_tag(*, session: Session, tag_in: TagCreate, owner_id: uuid.UUID) -> Tag:
     db_obj = Tag.model_validate(tag_in, update={"owner_id": owner_id})
-    session.add(db_obj)
-    session.commit()
-    session.refresh(db_obj)
-    return db_obj
-
-
-# ─── Group CRUD ────────────────────────────────────────────────────────────────
-
-
-def create_group(
-    *, session: Session, group_in: GroupCreate, owner_id: uuid.UUID
-) -> Group:
-    db_obj = Group.model_validate(group_in, update={"owner_id": owner_id})
     session.add(db_obj)
     session.commit()
     session.refresh(db_obj)
@@ -186,10 +165,24 @@ def create_address(*, session: Session, address_in: AddressCreate) -> Address:
 
 
 def create_relationship(
-    *, session: Session, relationship_in: RelationshipCreate
+    *,
+    session: Session,
+    relationship_in: RelationshipCreate,
+    inverse_type: str | None = None,
 ) -> Relationship:
     db_obj = Relationship.model_validate(relationship_in)
     session.add(db_obj)
+    if inverse_type:
+        inverse = Relationship(
+            contact_id=relationship_in.related_contact_id,
+            related_contact_id=relationship_in.contact_id,
+            relationship_type=inverse_type,
+            notes=relationship_in.notes,
+        )
+        session.add(inverse)
+        session.flush()  # materialise IDs before cross-linking
+        db_obj.inverse_id = inverse.id
+        inverse.inverse_id = db_obj.id
     session.commit()
     session.refresh(db_obj)
     return db_obj

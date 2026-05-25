@@ -54,7 +54,6 @@ function matchesSearch(contact: ContactPublic, q: string): boolean {
     contact.company,
     contact.title,
     ...(contact.tags?.map((t) => t.name) ?? []),
-    ...(contact.groups?.map((g) => g.name) ?? []),
   ]
     .filter(Boolean)
     .join(" ")

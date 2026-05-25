@@ -7,8 +7,9 @@ from typing import Any
 
 from arq.connections import RedisSettings
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
+from pydantic import BaseModel
 from sqlalchemy.orm import selectinload
-from sqlmodel import col, func, select
+from sqlmodel import SQLModel, col, func, select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.core.config import settings as app_settings
@@ -16,14 +17,46 @@ from app.crud import visible_contact_ids
 from app.models import (
     Contact,
     ContactCreate,
-    ContactGroup,
     ContactPublic,
     ContactsPublic,
     ContactTag,
     ContactUpdate,
+    Note,
+    NoteMention,
     OverdueContactPublic,
     OverdueContactsPublic,
+    User,
 )
+
+
+class BulkContactFilter(BaseModel):
+    search: str | None = None
+    tag_id: uuid.UUID | None = None
+    is_favorite: bool | None = None
+    is_archived: bool | None = None
+    stage: str | None = None
+
+
+class BulkContactOperation(BaseModel):
+    add_tag_ids: list[uuid.UUID] | None = None
+    remove_tag_ids: list[uuid.UUID] | None = None
+    set_is_archived: bool | None = None
+    set_is_favorite: bool | None = None
+
+
+class BulkContactRequest(BaseModel):
+    contact_ids: list[uuid.UUID] | None = None
+    select_all_filtered: bool = False
+    filters: BulkContactFilter | None = None
+    limit: int = 500
+    operations: BulkContactOperation
+
+
+class BulkContactResult(BaseModel):
+    updated_count: int
+    skipped_count: int
+    failed_ids: list[uuid.UUID] = []
+
 
 logger = logging.getLogger(__name__)
 
@@ -93,6 +126,147 @@ def _remove_contact_safe(contact_id: str) -> None:
         logger.warning(f"Meilisearch removal failed: {e}")
 
 
+def _build_filtered_contact_stmt(
+    user: User,
+    filters: BulkContactFilter | None,
+    include_deleted: bool = False,
+) -> Any:
+    stmt = select(Contact).where(
+        Contact.id.in_(visible_contact_ids(user, include_deleted=include_deleted))
+    )
+    if filters is None:
+        return stmt.where(Contact.is_archived.is_(False))
+    if filters.is_archived is not None:
+        stmt = stmt.where(Contact.is_archived == filters.is_archived)
+    elif not include_deleted:
+        stmt = stmt.where(Contact.is_archived.is_(False))
+    if filters.is_favorite is not None:
+        stmt = stmt.where(Contact.is_favorite == filters.is_favorite)
+    if filters.stage is not None:
+        stmt = stmt.where(Contact.stage == filters.stage)
+    if filters.search:
+        search_filter = f"%{filters.search}%"
+        stmt = stmt.where(
+            col(Contact.first_name).ilike(search_filter)
+            | col(Contact.last_name).ilike(search_filter)
+            | col(Contact.nickname).ilike(search_filter)
+            | col(Contact.company).ilike(search_filter)
+        )
+    if filters.tag_id:
+        stmt = stmt.join(ContactTag).where(ContactTag.tag_id == filters.tag_id)
+    return stmt
+
+
+@router.patch("/bulk", response_model=BulkContactResult)
+def bulk_update_contacts(
+    session: SessionDep,
+    current_user: CurrentUser,
+    body: BulkContactRequest,
+) -> Any:
+    """Bulk-update contacts atomically."""
+    limit = min(max(1, body.limit), 500)
+    if body.select_all_filtered:
+        stmt = _build_filtered_contact_stmt(current_user, body.filters)
+        contacts = session.exec(stmt.limit(limit)).all()
+    elif body.contact_ids:
+        stmt = select(Contact).where(
+            Contact.id.in_(visible_contact_ids(current_user, include_deleted=False)),
+            Contact.id.in_(body.contact_ids),
+        )
+        contacts = session.exec(stmt).all()
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="Provide either contact_ids or set select_all_filtered=true",
+        )
+    if not contacts:
+        return BulkContactResult(updated_count=0, skipped_count=0)
+
+    ops = body.operations
+    failed_ids: list[uuid.UUID] = []
+    updated_count = 0
+    try:
+        for contact in contacts:
+            try:
+                if ops.add_tag_ids is not None:
+                    existing_tag_ids = {
+                        ct.tag_id
+                        for ct in session.exec(
+                            select(ContactTag).where(
+                                ContactTag.contact_id == contact.id
+                            )
+                        ).all()
+                    }
+                    for tag_id in ops.add_tag_ids:
+                        if tag_id not in existing_tag_ids:
+                            session.add(
+                                ContactTag(contact_id=contact.id, tag_id=tag_id)
+                            )
+                if ops.remove_tag_ids is not None:
+                    for tag_id in ops.remove_tag_ids:
+                        ct = session.exec(
+                            select(ContactTag).where(
+                                ContactTag.contact_id == contact.id,
+                                ContactTag.tag_id == tag_id,
+                            )
+                        ).first()
+                        if ct:
+                            session.delete(ct)
+                if ops.set_is_archived is not None:
+                    contact.is_archived = ops.set_is_archived
+                    session.add(contact)
+                if ops.set_is_favorite is not None:
+                    contact.is_favorite = ops.set_is_favorite
+                    session.add(contact)
+                updated_count += 1
+            except Exception as exc:
+                failed_ids.append(contact.id)
+                logger.warning(f"Failed to update contact {contact.id}: {exc}")
+        session.commit()
+    except Exception as exc:
+        session.rollback()
+        raise HTTPException(status_code=500, detail="Bulk update failed") from exc
+
+    skipped_count = len(contacts) - updated_count - len(failed_ids)
+    return BulkContactResult(
+        updated_count=updated_count,
+        skipped_count=skipped_count,
+        failed_ids=failed_ids,
+    )
+
+
+@router.get("/bulk/preview", response_model=ContactsPublic)
+def preview_bulk_contacts(
+    session: SessionDep,
+    current_user: CurrentUser,
+    select_all_filtered: bool = False,
+    search: str | None = None,
+    tag_id: uuid.UUID | None = None,
+    is_favorite: bool | None = None,
+    is_archived: bool | None = None,
+    stage: str | None = None,
+    limit: int = 500,
+) -> Any:
+    """Preview contacts that would be affected by a bulk operation."""
+    limit = min(max(1, limit), 500)
+    if select_all_filtered:
+        filters = BulkContactFilter(
+            search=search,
+            tag_id=tag_id,
+            is_favorite=is_favorite,
+            is_archived=is_archived,
+            stage=stage,
+        )
+        stmt = _build_filtered_contact_stmt(current_user, filters)
+    else:
+        stmt = select(Contact).where(
+            Contact.id.in_(visible_contact_ids(current_user, include_deleted=False)),
+            Contact.is_archived.is_(False),
+        )
+    contacts = session.exec(stmt.limit(limit)).all()
+    return ContactsPublic(data=contacts, count=len(contacts))
+
+
 @router.get("/", response_model=ContactsPublic)
 def list_contacts(
     session: SessionDep,
@@ -101,7 +275,6 @@ def list_contacts(
     limit: int = 100,
     search: str | None = None,
     tag_id: uuid.UUID | None = None,
-    group_id: uuid.UUID | None = None,
     is_favorite: bool | None = None,
     is_archived: bool | None = None,
     stage: str | None = None,
@@ -163,11 +336,6 @@ def list_contacts(
     if tag_id:
         statement = statement.join(ContactTag).where(ContactTag.tag_id == tag_id)
 
-    if group_id:
-        statement = statement.join(ContactGroup).where(
-            ContactGroup.group_id == group_id
-        )
-
     # Count (before pagination)
     count_statement = select(func.count()).select_from(statement.subquery())
     count = session.exec(count_statement).one()
@@ -175,7 +343,6 @@ def list_contacts(
     # Apply eager loading for relationships
     statement = statement.options(
         selectinload(Contact.tags),
-        selectinload(Contact.groups),
     )
 
     # Apply ordering and pagination
@@ -214,7 +381,6 @@ def list_losing_touch(
         )
         .options(
             selectinload(Contact.tags),
-            selectinload(Contact.groups),
         )
     )
     contacts = session.exec(statement).all()
@@ -264,7 +430,6 @@ def list_overdue_contacts(
         )
         .options(
             selectinload(Contact.tags),
-            selectinload(Contact.groups),
         )
     )
     contacts = session.exec(statement).all()
@@ -355,7 +520,6 @@ def get_contact(
         )
         .options(
             selectinload(Contact.tags),
-            selectinload(Contact.groups),
         )
     )
     contact = session.exec(statement).first()
@@ -383,11 +547,6 @@ def create_contact(
         for tag_id in contact_in.tag_ids:
             session.add(ContactTag(contact_id=contact.id, tag_id=tag_id))
 
-    # Handle group associations
-    if contact_in.group_ids:
-        for group_id in contact_in.group_ids:
-            session.add(ContactGroup(contact_id=contact.id, group_id=group_id))
-
     session.commit()
 
     # Reload contact with eager-loaded relationships
@@ -396,7 +555,6 @@ def create_contact(
         .where(Contact.id == contact.id)
         .options(
             selectinload(Contact.tags),
-            selectinload(Contact.groups),
         )
     )
     contact = session.exec(statement).first()
@@ -421,7 +579,6 @@ def update_contact(
         .where(Contact.id == contact_id)
         .options(
             selectinload(Contact.tags),
-            selectinload(Contact.groups),
         )
     )
     contact = session.exec(statement).first()
@@ -432,7 +589,6 @@ def update_contact(
 
     update_data = contact_in.model_dump(exclude_unset=True)
     tag_ids = update_data.pop("tag_ids", None)
-    group_ids = update_data.pop("group_ids", None)
 
     contact.sqlmodel_update(update_data)
     session.add(contact)
@@ -449,16 +605,6 @@ def update_contact(
         for tag_id in tag_ids:
             session.add(ContactTag(contact_id=contact.id, tag_id=tag_id))
 
-    # Update group associations if provided
-    if group_ids is not None:
-        existing = session.exec(
-            select(ContactGroup).where(ContactGroup.contact_id == contact.id)
-        ).all()
-        for cg in existing:
-            session.delete(cg)
-        for group_id in group_ids:
-            session.add(ContactGroup(contact_id=contact.id, group_id=group_id))
-
     session.commit()
 
     # Reload with eager loading
@@ -467,7 +613,6 @@ def update_contact(
         .where(Contact.id == contact.id)
         .options(
             selectinload(Contact.tags),
-            selectinload(Contact.groups),
         )
     )
     contact = session.exec(statement).first()
@@ -526,15 +671,52 @@ def restore_contact(
     session.add(contact)
     session.commit()
 
-    # Reload with eager loading so the response carries tags/groups.
+    # Reload with eager loading so the response carries tags.
     statement = (
         select(Contact)
         .where(Contact.id == contact.id)
         .options(
             selectinload(Contact.tags),
-            selectinload(Contact.groups),
         )
     )
     contact = session.exec(statement).first()
     background_tasks.add_task(_enqueue_contact_index, contact)
     return ContactPublic.model_validate(contact)
+
+
+class _MentionPublic(SQLModel):
+    note_id: uuid.UUID
+    note_body: str
+    note_created_at: datetime
+    source_contact: ContactPublic
+
+
+@router.get("/{contact_id}/mentions", response_model=list[_MentionPublic])
+def list_contact_mentions(
+    session: SessionDep,
+    current_user: CurrentUser,
+    contact_id: uuid.UUID,
+) -> Any:
+    """Return notes that @-mention this contact, grouped with the source contact."""
+    contact = session.get(Contact, contact_id)
+    if not contact or contact.owner_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Contact not found")
+
+    stmt = (
+        select(NoteMention, Note, Contact)
+        .join(Note, Note.id == NoteMention.note_id)
+        .join(Contact, Contact.id == Note.contact_id)
+        .where(NoteMention.contact_id == contact_id)
+        .where(Contact.owner_id == current_user.id)
+        .options(selectinload(Contact.tags))
+    )
+    rows = session.exec(stmt).all()
+    return [
+        _MentionPublic(
+            note_id=note_mention.note_id,
+            note_body=note.body,
+            note_created_at=note.created_at,
+            source_contact=ContactPublic.model_validate(source),
+        )
+        for note_mention, note, source in rows
+    ]
