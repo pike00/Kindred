@@ -75,6 +75,7 @@ erDiagram
   varchar_100_ name
   varchar_7_ color
   timestamp_with_time_zone created_at
+  varchar_1000_ description
 }
 ```
 

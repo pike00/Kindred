@@ -1,10 +1,10 @@
 ---
 title: Reminder Snooze History
-status: active
+status: completed
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-04-21
-next_step: Create Alembic migration for reminder_snooze table
+last_updated: 2026-05-15
+next_step: Released as v0.1.5. UI badges + dashboard chronic-snooze widget remain for a follow-up.
 ---
 
 # Reminder Snooze History
@@ -13,19 +13,29 @@ next_step: Create Alembic migration for reminder_snooze table
 Transform reminder snoozing from a single overwrite (`snoozed_until` on Reminder) into an append-only log. This reveals usage patterns like "I've snoozed calling Mom four times in two weeks" and enables UI features like snooze-count badges and chronic-snooze alerts on the dashboard.
 
 ## Tasks
-- [ ] Create Alembic migration: add `reminder_snooze` table with (reminder_id, snoozed_at, snoozed_until, reason)
-- [ ] Implement snooze API endpoint: POST /reminders/{id}/snooze writes a log row and updates denormalized Reminder.snoozed_until
-- [ ] Add compute function: derive effective snoozed_until from latest reminder_snooze row
+- [x] Create Alembic migration: add `reminder_snooze` table with (reminder_id, snoozed_at, snoozed_until, reason)
+- [x] Implement snooze API endpoint: POST /reminders/{id}/snooze writes a log row and updates denormalized Reminder.snoozed_until
+- [x] Add compute function: derive effective snoozed_until from latest reminder_snooze row
 - [ ] UI: Add snooze count badge to reminder cards (query max count per reminder in last 30 days)
 - [ ] Dashboard: Surface chronic-snooze signal (contacts with >3 snoozed reminders in 7 days)
 - [ ] Data retention: Document and enforce policy (e.g. keep 90 days of snooze history, archive older rows)
 
 ## Session Log
 
+### 2026-05-15
+- Squash-merged `dirac/reminder-snooze-history` into main as commit `7cea062`; tagged and released **v0.1.5**.
+- Landed: `reminder_snooze` table (Alembic migration), `ReminderSnooze` SQLModel (with explicit `__tablename__ = "reminder_snooze"` because SQLModel maps `ReminderSnooze` → `remindersnooze` by default), append-only snooze log row inside the existing `POST /reminders/{id}/snooze` handler, new endpoints `GET /reminders/{id}/snooze-history`, `GET /reminders/snooze-stats`, `GET /reminders/chronic-snoozers`, and `get_effective_snoozed_until()` helper in `crud.py`.
+- Discovered: `snoozes: list["ReminderSnooze"] = Relationship(back_populates="reminder")` on the `Reminder` table model crashes with SQLModel 0.0.31 — `ValueError: <class 'list'> has no matching SQLAlchemy type`. Fixed by removing the back-populates list entirely; lookups go via direct query on `ReminderSnooze.reminder_id`.
+
 ### 2026-04-21
 - Project created.
 
 ## Notes
+
+### 2026-05-15
+- **Decisions:** SQLModel back_populates list relationship was dropped on the `Reminder` parent side because SQLModel 0.0.31's type system rejects `list[ForwardRef]` on `table=True` without a `link_model`. Use direct queries on `ReminderSnooze.reminder_id` instead.
+- **Gotchas:** SQLModel infers `__tablename__` as lowercase-no-separator (`reminder_snooze` class → `remindersnooze` table), but the Alembic migration creates `reminder_snooze`. Explicit `__tablename__ = "reminder_snooze"` is required.
+- **Accomplished:** v0.1.5 shipped, 262 backend tests green, GH release published.
 
 - **Denormalization strategy**: Keep `Reminder.snoozed_until` as a cached view of the latest `reminder_snooze.snoozed_until`. On snooze, write to `reminder_snooze` first, then update the cache. Query either the log (for patterns) or the cache (for "is this reminder active?"). This avoids a JOIN on every active-reminder check.
 

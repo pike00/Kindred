@@ -17,6 +17,7 @@ Milestone on a contact's timeline (job change, wedding, move, etc.).
 | occurred_at | date |  | false |  |  | Date the event happened. |
 | create_annual_reminder | boolean |  | false |  |  | If true, auto-create a yearly recurring reminder on this date. |
 | created_at | timestamp with time zone |  | false |  |  | When the event was logged (UTC). |
+| deleted_at | timestamp without time zone |  | true |  |  |  |
 
 ## Constraints
 
@@ -42,6 +43,7 @@ Milestone on a contact's timeline (job change, wedding, move, etc.).
 | ix_life_event_contact_id | CREATE INDEX ix_life_event_contact_id ON public.life_event USING btree (contact_id) |
 | ix_life_event_owner_id | CREATE INDEX ix_life_event_owner_id ON public.life_event USING btree (owner_id) |
 | ix_life_event_occurred_at | CREATE INDEX ix_life_event_occurred_at ON public.life_event USING btree (occurred_at) |
+| ix_life_event_deleted_at | CREATE INDEX ix_life_event_deleted_at ON public.life_event USING btree (deleted_at) |
 
 ## Relations
 
@@ -61,6 +63,7 @@ erDiagram
   date occurred_at
   boolean create_annual_reminder
   timestamp_with_time_zone created_at
+  timestamp_without_time_zone deleted_at
 }
 "public.user" {
   varchar_255_ email

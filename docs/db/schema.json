@@ -245,6 +245,11 @@
           "type": "timestamp with time zone",
           "nullable": false,
           "comment": "When the tag was created (UTC)."
+        },
+        {
+          "name": "description",
+          "type": "varchar(1000)",
+          "nullable": true
         }
       ],
       "indexes": [
@@ -324,126 +329,6 @@
           "type": "PRIMARY KEY",
           "def": "PRIMARY KEY (id)",
           "table": "public.tag",
-          "referenced_table": "",
-          "columns": [
-            "id"
-          ]
-        }
-      ]
-    },
-    {
-      "name": "public.group",
-      "type": "BASE TABLE",
-      "comment": "Named collection of contacts (e.g. 'Family', 'Work Team').",
-      "columns": [
-        {
-          "name": "id",
-          "type": "uuid",
-          "nullable": false,
-          "comment": "Primary key."
-        },
-        {
-          "name": "owner_id",
-          "type": "uuid",
-          "nullable": false,
-          "comment": "Owner user; cascades on delete."
-        },
-        {
-          "name": "name",
-          "type": "varchar(255)",
-          "nullable": false,
-          "comment": "Group name, 1-255 chars."
-        },
-        {
-          "name": "description",
-          "type": "varchar(1000)",
-          "nullable": true,
-          "comment": "Optional group description."
-        },
-        {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "nullable": false,
-          "comment": "When the group was created (UTC)."
-        }
-      ],
-      "indexes": [
-        {
-          "name": "group_pkey",
-          "def": "CREATE UNIQUE INDEX group_pkey ON public.\"group\" USING btree (id)",
-          "table": "public.group",
-          "columns": [
-            "id"
-          ]
-        },
-        {
-          "name": "ix_group_owner_id",
-          "def": "CREATE INDEX ix_group_owner_id ON public.\"group\" USING btree (owner_id)",
-          "table": "public.group",
-          "columns": [
-            "owner_id"
-          ]
-        }
-      ],
-      "constraints": [
-        {
-          "name": "group_created_at_not_null",
-          "type": "n",
-          "def": "NOT NULL created_at",
-          "table": "public.group",
-          "referenced_table": "",
-          "columns": [
-            "created_at"
-          ]
-        },
-        {
-          "name": "group_id_not_null",
-          "type": "n",
-          "def": "NOT NULL id",
-          "table": "public.group",
-          "referenced_table": "",
-          "columns": [
-            "id"
-          ]
-        },
-        {
-          "name": "group_name_not_null",
-          "type": "n",
-          "def": "NOT NULL name",
-          "table": "public.group",
-          "referenced_table": "",
-          "columns": [
-            "name"
-          ]
-        },
-        {
-          "name": "group_owner_id_not_null",
-          "type": "n",
-          "def": "NOT NULL owner_id",
-          "table": "public.group",
-          "referenced_table": "",
-          "columns": [
-            "owner_id"
-          ]
-        },
-        {
-          "name": "group_owner_id_fkey",
-          "type": "FOREIGN KEY",
-          "def": "FOREIGN KEY (owner_id) REFERENCES \"user\"(id) ON DELETE CASCADE",
-          "table": "public.group",
-          "referenced_table": "public.user",
-          "columns": [
-            "owner_id"
-          ],
-          "referenced_columns": [
-            "id"
-          ]
-        },
-        {
-          "name": "group_pkey",
-          "type": "PRIMARY KEY",
-          "def": "PRIMARY KEY (id)",
-          "table": "public.group",
           "referenced_table": "",
           "columns": [
             "id"
@@ -621,6 +506,63 @@
           "name": "source_external_id",
           "type": "varchar(255)",
           "nullable": true
+        },
+        {
+          "name": "imessage_id",
+          "type": "varchar(500)",
+          "nullable": true
+        },
+        {
+          "name": "imessage_synced_at",
+          "type": "timestamp with time zone",
+          "nullable": true
+        },
+        {
+          "name": "imessage_profile_hash",
+          "type": "varchar(64)",
+          "nullable": true
+        },
+        {
+          "name": "imessage_profile",
+          "type": "jsonb",
+          "nullable": true
+        },
+        {
+          "name": "search_vector",
+          "type": "tsvector",
+          "nullable": true
+        },
+        {
+          "name": "is_merged",
+          "type": "boolean",
+          "nullable": false,
+          "default": "false"
+        },
+        {
+          "name": "merged_into_id",
+          "type": "uuid",
+          "nullable": true
+        },
+        {
+          "name": "vcard_sha256",
+          "type": "varchar(64)",
+          "nullable": true
+        },
+        {
+          "name": "timezone",
+          "type": "varchar(255)",
+          "nullable": true
+        },
+        {
+          "name": "pronouns",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "auto_log_email",
+          "type": "boolean",
+          "nullable": false,
+          "default": "false"
         }
       ],
       "indexes": [
@@ -697,9 +639,51 @@
             "source_provider",
             "source_external_id"
           ]
+        },
+        {
+          "name": "ix_contact_imessage_id",
+          "def": "CREATE INDEX ix_contact_imessage_id ON public.contact USING btree (imessage_id)",
+          "table": "public.contact",
+          "columns": [
+            "imessage_id"
+          ]
+        },
+        {
+          "name": "ix_contact_search_vector",
+          "def": "CREATE INDEX ix_contact_search_vector ON public.contact USING gin (search_vector)",
+          "table": "public.contact",
+          "columns": [
+            "search_vector"
+          ]
+        },
+        {
+          "name": "ix_contact_is_merged",
+          "def": "CREATE INDEX ix_contact_is_merged ON public.contact USING btree (is_merged)",
+          "table": "public.contact",
+          "columns": [
+            "is_merged"
+          ]
+        },
+        {
+          "name": "ix_contact_vcard_sha256",
+          "def": "CREATE INDEX ix_contact_vcard_sha256 ON public.contact USING btree (vcard_sha256)",
+          "table": "public.contact",
+          "columns": [
+            "vcard_sha256"
+          ]
         }
       ],
       "constraints": [
+        {
+          "name": "contact_auto_log_email_not_null",
+          "type": "n",
+          "def": "NOT NULL auto_log_email",
+          "table": "public.contact",
+          "referenced_table": "",
+          "columns": [
+            "auto_log_email"
+          ]
+        },
         {
           "name": "contact_created_at_not_null",
           "type": "n",
@@ -761,6 +745,16 @@
           ]
         },
         {
+          "name": "contact_is_merged_not_null",
+          "type": "n",
+          "def": "NOT NULL is_merged",
+          "table": "public.contact",
+          "referenced_table": "",
+          "columns": [
+            "is_merged"
+          ]
+        },
+        {
           "name": "contact_owner_id_not_null",
           "type": "n",
           "def": "NOT NULL owner_id",
@@ -798,6 +792,19 @@
           "referenced_table": "public.user",
           "columns": [
             "owner_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "contact_merged_into_id_fkey",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (merged_into_id) REFERENCES contact(id) ON DELETE SET NULL",
+          "table": "public.contact",
+          "referenced_table": "public.contact",
+          "columns": [
+            "merged_into_id"
           ],
           "referenced_columns": [
             "id"
@@ -905,95 +912,6 @@
       ]
     },
     {
-      "name": "public.contact_group",
-      "type": "BASE TABLE",
-      "comment": "Many-to-many link between contacts and groups.",
-      "columns": [
-        {
-          "name": "contact_id",
-          "type": "uuid",
-          "nullable": false,
-          "comment": "Contact side of the link; cascades on delete."
-        },
-        {
-          "name": "group_id",
-          "type": "uuid",
-          "nullable": false,
-          "comment": "Group side of the link; cascades on delete."
-        }
-      ],
-      "indexes": [
-        {
-          "name": "contact_group_pkey",
-          "def": "CREATE UNIQUE INDEX contact_group_pkey ON public.contact_group USING btree (contact_id, group_id)",
-          "table": "public.contact_group",
-          "columns": [
-            "contact_id",
-            "group_id"
-          ]
-        }
-      ],
-      "constraints": [
-        {
-          "name": "contact_group_contact_id_not_null",
-          "type": "n",
-          "def": "NOT NULL contact_id",
-          "table": "public.contact_group",
-          "referenced_table": "",
-          "columns": [
-            "contact_id"
-          ]
-        },
-        {
-          "name": "contact_group_group_id_not_null",
-          "type": "n",
-          "def": "NOT NULL group_id",
-          "table": "public.contact_group",
-          "referenced_table": "",
-          "columns": [
-            "group_id"
-          ]
-        },
-        {
-          "name": "contact_group_group_id_fkey",
-          "type": "FOREIGN KEY",
-          "def": "FOREIGN KEY (group_id) REFERENCES \"group\"(id) ON DELETE CASCADE",
-          "table": "public.contact_group",
-          "referenced_table": "public.group",
-          "columns": [
-            "group_id"
-          ],
-          "referenced_columns": [
-            "id"
-          ]
-        },
-        {
-          "name": "contact_group_contact_id_fkey",
-          "type": "FOREIGN KEY",
-          "def": "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE",
-          "table": "public.contact_group",
-          "referenced_table": "public.contact",
-          "columns": [
-            "contact_id"
-          ],
-          "referenced_columns": [
-            "id"
-          ]
-        },
-        {
-          "name": "contact_group_pkey",
-          "type": "PRIMARY KEY",
-          "def": "PRIMARY KEY (contact_id, group_id)",
-          "table": "public.contact_group",
-          "referenced_table": "",
-          "columns": [
-            "contact_id",
-            "group_id"
-          ]
-        }
-      ]
-    },
-    {
       "name": "public.contact_field",
       "type": "BASE TABLE",
       "comment": "Flexible contact info (emails, phones) attached to a contact.",
@@ -1064,6 +982,14 @@
           "table": "public.contact_field",
           "columns": [
             "field_type"
+          ]
+        },
+        {
+          "name": "ix_contact_field_value",
+          "def": "CREATE INDEX ix_contact_field_value ON public.contact_field USING btree (value)",
+          "table": "public.contact_field",
+          "columns": [
+            "value"
           ]
         }
       ],
@@ -1901,6 +1827,66 @@
           "type": "timestamp with time zone",
           "nullable": false,
           "comment": "When the row was inserted (may be after occurred_at; UTC)."
+        },
+        {
+          "name": "deleted_at",
+          "type": "timestamp without time zone",
+          "nullable": true
+        },
+        {
+          "name": "search_vector",
+          "type": "tsvector",
+          "nullable": true
+        },
+        {
+          "name": "is_draft",
+          "type": "boolean",
+          "nullable": false
+        },
+        {
+          "name": "draft_source",
+          "type": "varchar(32)",
+          "nullable": true
+        },
+        {
+          "name": "location_label",
+          "type": "varchar(500)",
+          "nullable": true
+        },
+        {
+          "name": "latitude",
+          "type": "double precision",
+          "nullable": true
+        },
+        {
+          "name": "longitude",
+          "type": "double precision",
+          "nullable": true
+        },
+        {
+          "name": "message_id",
+          "type": "varchar(998)",
+          "nullable": true
+        },
+        {
+          "name": "email_subject",
+          "type": "varchar(998)",
+          "nullable": true
+        },
+        {
+          "name": "email_from",
+          "type": "varchar(2048)",
+          "nullable": true
+        },
+        {
+          "name": "email_to",
+          "type": "varchar(2048)",
+          "nullable": true
+        },
+        {
+          "name": "email_date",
+          "type": "timestamp without time zone",
+          "nullable": true
         }
       ],
       "indexes": [
@@ -1935,6 +1921,22 @@
           "columns": [
             "channel"
           ]
+        },
+        {
+          "name": "ix_interaction_deleted_at",
+          "def": "CREATE INDEX ix_interaction_deleted_at ON public.interaction USING btree (deleted_at)",
+          "table": "public.interaction",
+          "columns": [
+            "deleted_at"
+          ]
+        },
+        {
+          "name": "ix_interaction_search_vector",
+          "def": "CREATE INDEX ix_interaction_search_vector ON public.interaction USING gin (search_vector)",
+          "table": "public.interaction",
+          "columns": [
+            "search_vector"
+          ]
         }
       ],
       "constraints": [
@@ -1966,6 +1968,16 @@
           "referenced_table": "",
           "columns": [
             "id"
+          ]
+        },
+        {
+          "name": "interaction_is_draft_not_null",
+          "type": "n",
+          "def": "NOT NULL is_draft",
+          "table": "public.interaction",
+          "referenced_table": "",
+          "columns": [
+            "is_draft"
           ]
         },
         {
@@ -2010,6 +2022,12 @@
           "columns": [
             "id"
           ]
+        }
+      ],
+      "triggers": [
+        {
+          "name": "tsvectorupdate_interaction",
+          "def": "CREATE TRIGGER tsvectorupdate_interaction BEFORE INSERT OR UPDATE ON public.interaction FOR EACH ROW EXECUTE FUNCTION update_interaction_search_vector()"
         }
       ]
     },
@@ -2083,6 +2101,11 @@
           "type": "timestamp with time zone",
           "nullable": false,
           "comment": "When the reminder was created (UTC)."
+        },
+        {
+          "name": "deleted_at",
+          "type": "timestamp without time zone",
+          "nullable": true
         }
       ],
       "indexes": [
@@ -2124,6 +2147,14 @@
           "table": "public.reminder",
           "columns": [
             "is_active"
+          ]
+        },
+        {
+          "name": "ix_reminder_deleted_at",
+          "def": "CREATE INDEX ix_reminder_deleted_at ON public.reminder USING btree (deleted_at)",
+          "table": "public.reminder",
+          "columns": [
+            "deleted_at"
           ]
         }
       ],
@@ -2312,6 +2343,11 @@
           "type": "timestamp with time zone",
           "nullable": false,
           "comment": "When the gift record was created (UTC)."
+        },
+        {
+          "name": "deleted_at",
+          "type": "timestamp without time zone",
+          "nullable": true
         }
       ],
       "indexes": [
@@ -2345,6 +2381,14 @@
           "table": "public.gift",
           "columns": [
             "status"
+          ]
+        },
+        {
+          "name": "ix_gift_deleted_at",
+          "def": "CREATE INDEX ix_gift_deleted_at ON public.gift USING btree (deleted_at)",
+          "table": "public.gift",
+          "columns": [
+            "deleted_at"
           ]
         }
       ],
@@ -2521,6 +2565,11 @@
           "type": "timestamp with time zone",
           "nullable": false,
           "comment": "When the debt was recorded (UTC)."
+        },
+        {
+          "name": "deleted_at",
+          "type": "timestamp without time zone",
+          "nullable": true
         }
       ],
       "indexes": [
@@ -2554,6 +2603,14 @@
           "table": "public.debt",
           "columns": [
             "is_settled"
+          ]
+        },
+        {
+          "name": "ix_debt_deleted_at",
+          "def": "CREATE INDEX ix_debt_deleted_at ON public.debt USING btree (deleted_at)",
+          "table": "public.debt",
+          "columns": [
+            "deleted_at"
           ]
         }
       ],
@@ -2734,6 +2791,11 @@
           "type": "timestamp with time zone",
           "nullable": false,
           "comment": "When the event was logged (UTC)."
+        },
+        {
+          "name": "deleted_at",
+          "type": "timestamp without time zone",
+          "nullable": true
         }
       ],
       "indexes": [
@@ -2767,6 +2829,14 @@
           "table": "public.life_event",
           "columns": [
             "occurred_at"
+          ]
+        },
+        {
+          "name": "ix_life_event_deleted_at",
+          "def": "CREATE INDEX ix_life_event_deleted_at ON public.life_event USING btree (deleted_at)",
+          "table": "public.life_event",
+          "columns": [
+            "deleted_at"
           ]
         }
       ],
@@ -2929,6 +2999,21 @@
           "type": "timestamp with time zone",
           "nullable": false,
           "comment": "Auto-bumped on edit (UTC)."
+        },
+        {
+          "name": "deleted_at",
+          "type": "timestamp without time zone",
+          "nullable": true
+        },
+        {
+          "name": "search_vector",
+          "type": "tsvector",
+          "nullable": true
+        },
+        {
+          "name": "client_id",
+          "type": "varchar(36)",
+          "nullable": true
         }
       ],
       "indexes": [
@@ -2962,6 +3047,30 @@
           "table": "public.note",
           "columns": [
             "created_at"
+          ]
+        },
+        {
+          "name": "ix_note_deleted_at",
+          "def": "CREATE INDEX ix_note_deleted_at ON public.note USING btree (deleted_at)",
+          "table": "public.note",
+          "columns": [
+            "deleted_at"
+          ]
+        },
+        {
+          "name": "ix_note_search_vector",
+          "def": "CREATE INDEX ix_note_search_vector ON public.note USING gin (search_vector)",
+          "table": "public.note",
+          "columns": [
+            "search_vector"
+          ]
+        },
+        {
+          "name": "ix_note_client_id",
+          "def": "CREATE INDEX ix_note_client_id ON public.note USING btree (client_id)",
+          "table": "public.note",
+          "columns": [
+            "client_id"
           ]
         }
       ],
@@ -3062,6 +3171,12 @@
             "id"
           ]
         }
+      ],
+      "triggers": [
+        {
+          "name": "tsvectorupdate_note",
+          "def": "CREATE TRIGGER tsvectorupdate_note BEFORE INSERT OR UPDATE ON public.note FOR EACH ROW EXECUTE FUNCTION update_note_search_vector()"
+        }
       ]
     },
     {
@@ -3110,6 +3225,11 @@
           "type": "timestamp with time zone",
           "nullable": false,
           "comment": "Auto-bumped on edit (UTC)."
+        },
+        {
+          "name": "search_vector",
+          "type": "tsvector",
+          "nullable": true
         }
       ],
       "indexes": [
@@ -3135,6 +3255,14 @@
           "table": "public.journal_entry",
           "columns": [
             "entry_date"
+          ]
+        },
+        {
+          "name": "ix_journal_entry_search_vector",
+          "def": "CREATE INDEX ix_journal_entry_search_vector ON public.journal_entry USING gin (search_vector)",
+          "table": "public.journal_entry",
+          "columns": [
+            "search_vector"
           ]
         }
       ],
@@ -3221,6 +3349,12 @@
           "columns": [
             "id"
           ]
+        }
+      ],
+      "triggers": [
+        {
+          "name": "tsvectorupdate_journal_entry",
+          "def": "CREATE TRIGGER tsvectorupdate_journal_entry BEFORE INSERT OR UPDATE ON public.journal_entry FOR EACH ROW EXECUTE FUNCTION update_journal_entry_search_vector()"
         }
       ]
     },
@@ -3860,7 +3994,7 @@
         },
         {
           "name": "changes_json",
-          "type": "json",
+          "type": "jsonb",
           "nullable": true
         },
         {
@@ -4221,7 +4355,7 @@
       "def": "FOREIGN KEY (owner_id) REFERENCES \"user\"(id) ON DELETE CASCADE"
     },
     {
-      "table": "public.group",
+      "table": "public.contact",
       "columns": [
         "owner_id"
       ],
@@ -4236,15 +4370,15 @@
     {
       "table": "public.contact",
       "columns": [
-        "owner_id"
+        "merged_into_id"
       ],
       "cardinality": "zero_or_more",
-      "parent_table": "public.user",
+      "parent_table": "public.contact",
       "parent_columns": [
         "id"
       ],
-      "parent_cardinality": "exactly_one",
-      "def": "FOREIGN KEY (owner_id) REFERENCES \"user\"(id) ON DELETE CASCADE"
+      "parent_cardinality": "zero_or_one",
+      "def": "FOREIGN KEY (merged_into_id) REFERENCES contact(id) ON DELETE SET NULL"
     },
     {
       "table": "public.contact_tag",
@@ -4261,32 +4395,6 @@
     },
     {
       "table": "public.contact_tag",
-      "columns": [
-        "contact_id"
-      ],
-      "cardinality": "zero_or_more",
-      "parent_table": "public.contact",
-      "parent_columns": [
-        "id"
-      ],
-      "parent_cardinality": "exactly_one",
-      "def": "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
-    },
-    {
-      "table": "public.contact_group",
-      "columns": [
-        "group_id"
-      ],
-      "cardinality": "zero_or_more",
-      "parent_table": "public.group",
-      "parent_columns": [
-        "id"
-      ],
-      "parent_cardinality": "exactly_one",
-      "def": "FOREIGN KEY (group_id) REFERENCES \"group\"(id) ON DELETE CASCADE"
-    },
-    {
-      "table": "public.contact_group",
       "columns": [
         "contact_id"
       ],
@@ -4749,6 +4857,30 @@
       "return_type": "uuid",
       "arguments": "namespace uuid, name text",
       "type": "FUNCTION"
+    },
+    {
+      "name": "public.update_contact_search_vector",
+      "return_type": "trigger",
+      "arguments": "",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.update_note_search_vector",
+      "return_type": "trigger",
+      "arguments": "",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.update_interaction_search_vector",
+      "return_type": "trigger",
+      "arguments": "",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.update_journal_entry_search_vector",
+      "return_type": "trigger",
+      "arguments": "",
+      "type": "FUNCTION"
     }
   ],
   "enums": [
@@ -4789,6 +4921,7 @@
         "EMAIL",
         "IN_PERSON",
         "OTHER",
+        "SKIP",
         "SOCIAL",
         "TEXT",
         "VIDEO"
@@ -4806,12 +4939,6 @@
       ]
     },
     {
-      "name": "public.oauthprovider",
-      "values": [
-        "GOOGLE"
-      ]
-    },
-    {
       "name": "public.reminderfrequency",
       "values": [
         "DAILY",
@@ -4824,7 +4951,7 @@
   ],
   "driver": {
     "name": "postgres",
-    "database_version": "PostgreSQL 18.3 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
+    "database_version": "PostgreSQL 18.4 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
     "meta": {
       "current_schema": "public",
       "search_paths": [
