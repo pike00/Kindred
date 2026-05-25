@@ -15,7 +15,7 @@ from app.api.routes import (
     email,
     gifts,
     graph,
-    ical,
+    groups,
     import_export,
     interactions,
     journal,
@@ -73,22 +73,7 @@ api_router.include_router(contact_pdf.router)
 api_router.include_router(webhooks.router)
 api_router.include_router(activity_logs.router)
 api_router.include_router(calendar.router)
-api_router.include_router(ical.router)
-
-api_router.include_router(email.router)
-api_router.include_router(calendar.router)
-api_router.include_router(contacts_kanban.router)
-
-api_router.include_router(transcribe.router)
-api_router.include_router(activity_logs.router)
-api_router.include_router(organizations.router)
-api_router.include_router(vcard_conflicts.router)
-api_router.include_router(email.router)
-api_router.include_router(calendar.router)
 api_router.include_router(graph.router)
-api_router.include_router(ical.router)
-api_router.include_router(search.router)
-api_router.include_router(contacts_kanban.router)
 
 if settings.ENVIRONMENT == "local":
     api_router.include_router(private.router)
