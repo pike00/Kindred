@@ -26,12 +26,7 @@ dependencies = [
     "arq>=0.26",
     "apprise>=1.9.0",
     "meilisearch>=0.31.0",
-    "phonenumbers>=9.0.29",
-    "weasyprint>=61.0,<62.0",
     "icalendar>=6.0.0",
-    "google-auth>=2.0.0",
-    "google-auth-oauthlib>=1.0.0",
-    "google-api-python-client>=2.0.0",
 ]
 
 [dependency-groups]

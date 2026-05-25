@@ -130,8 +130,7 @@ def group_commits(commits: List[str]) -> Dict[str, List[str]]:
 
         if is_breaking:
             breaking_changes.append(entry)
-
-        if commit_type == "other":
+        elif commit_type == "other":
             groups["other"].append(entry)
         else:
             groups[commit_type].append(entry)
@@ -230,7 +229,7 @@ def main():
     args = parser.parse_args()
 
     # Determine the starting tag
-    since_tag = args.since_tag or get_latest_tag()
+    since_tag = args.since_tag if args.since_tag is not None else get_latest_tag()
 
     # Determine version
     version = args.version

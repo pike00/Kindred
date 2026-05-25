@@ -168,34 +168,16 @@ export type APIKeysPublic = {
     count: number;
 };
 
-/**
- * Response model for avatar upload.
- */
-export type AvatarUploadResponse = {
-    avatar_url: string;
-};
-
-export type Body_contacts_upload_avatar_file = {
-    file: string;
-};
-
 export type Body_ical_upload_ical = {
-    file: string;
-};
-
-export type Body_import_export_import_csv = {
-    file: string;
-    column_mapping?: ({
-    [key: string]: (string | null);
-} | null);
+    file: (Blob | File);
 };
 
 export type Body_import_export_import_vcard = {
-    file: string;
+    file: (Blob | File);
 };
 
 export type Body_import_export_preview_csv_import = {
-    file: string;
+    file: (Blob | File);
 };
 
 export type Body_login_login_access_token = {
@@ -205,51 +187,6 @@ export type Body_login_login_access_token = {
     scope?: string;
     client_id?: (string | null);
     client_secret?: (string | null);
-};
-
-export type Body_transcribe_transcribe_audio = {
-    file: string;
-};
-
-/**
- * Filter criteria matching list_contacts parameters.
- */
-export type BulkContactFilter = {
-    search?: (string | null);
-    tag_id?: (string | null);
-    is_favorite?: (boolean | null);
-    is_archived?: (boolean | null);
-    stage?: (string | null);
-};
-
-/**
- * A single operation to apply to matching contacts.
- */
-export type BulkContactOperation = {
-    add_tag_ids?: (Array<(string)> | null);
-    remove_tag_ids?: (Array<(string)> | null);
-    set_is_archived?: (boolean | null);
-    set_is_favorite?: (boolean | null);
-};
-
-/**
- * Bulk operation request body.
- */
-export type BulkContactRequest = {
-    contact_ids?: (Array<(string)> | null);
-    select_all_filtered?: boolean;
-    filters?: (BulkContactFilter | null);
-    limit?: number;
-    operations: BulkContactOperation;
-};
-
-/**
- * Bulk operation result.
- */
-export type BulkContactResult = {
-    updated_count: number;
-    skipped_count: number;
-    failed_ids?: Array<(string)>;
 };
 
 export type CalendarEntry = {
@@ -279,8 +216,6 @@ export type CalendarTokenPublic = {
      */
     expires_at?: (string | null);
     id: string;
-    owner_id: string;
-    token: string;
     status: string;
     last_used_at: (string | null);
     created_at: string;
@@ -289,15 +224,10 @@ export type CalendarTokenPublic = {
 export type CalendarTokensPublic = {
     data: Array<CalendarTokenPublic>;
     count: number;
-};
-
-/**
- * Aggregate snooze stats for a (contact, reminder) pair.
- */
-export type ChronicSnoozer = {
-    contact_id?: (string | null);
-    reminder_id: string;
-    snooze_count: number;
+    month: string;
+    days: {
+        [key: string]: Array<CalendarEntry>;
+    };
 };
 
 export type ContactCreate = {
@@ -378,23 +308,11 @@ export type ContactCreate = {
      */
     stage?: (string | null);
     /**
-     * IANA timezone string (e.g., America/New_York); nullable.
-     */
-    timezone?: (string | null);
-    /**
-     * Contact's pronouns (free text, max 100 chars); nullable.
-     */
-    pronouns?: (string | null);
-    /**
-     * Enable automatic email log ingestion for this contact.
-     */
-    auto_log_email?: boolean;
-    /**
-     * Source system that created this contact.
+     * Where this contact originated.
      */
     source?: ContactSource;
     /**
-     * External ID from the source system (e.g. Google contact ID, CardDAV UID).
+     * Opaque external ID for idempotent upserts from integrations.
      */
     source_external_id?: (string | null);
     tag_ids?: (Array<(string)> | null);
@@ -479,13 +397,6 @@ export type ContactGeoPoint = {
     street?: (string | null);
 };
 
-/**
- * 52-week interaction heatmap for a contact.
- */
-export type ContactHeatmap = {
-    data: Array<WeekBucket>;
-};
-
 export type ContactPublic = {
     /**
      * Given name; required.
@@ -555,23 +466,11 @@ export type ContactPublic = {
      */
     stage?: (string | null);
     /**
-     * IANA timezone string (e.g., America/New_York); nullable.
-     */
-    timezone?: (string | null);
-    /**
-     * Contact's pronouns (free text, max 100 chars); nullable.
-     */
-    pronouns?: (string | null);
-    /**
-     * Enable automatic email log ingestion for this contact.
-     */
-    auto_log_email?: boolean;
-    /**
-     * Source system that created this contact.
+     * Where this contact originated.
      */
     source?: ContactSource;
     /**
-     * External ID from the source system.
+     * Opaque external ID for idempotent upserts from integrations.
      */
     source_external_id?: (string | null);
     id: string;
@@ -581,14 +480,8 @@ export type ContactPublic = {
     updated_at: string;
     deleted_at?: (string | null);
     tags?: Array<TagPublic>;
-    imessage_id?: (string | null);
-    imessage_synced_at?: (string | null);
-    imessage_profile?: ({
-    [key: string]: unknown;
-} | null);
+    groups?: Array<GroupPublic>;
     stage_events?: Array<ContactStageEventPublic>;
-    organization?: (OrganizationPublic | null);
-    vcard_sha256?: (string | null);
 };
 
 /**
@@ -599,57 +492,30 @@ export type ContactsGeoResponse = {
     count: number;
 };
 
-/**
- * Source system that created a contact.
- */
-export type ContactSource = 'manual' | 'vcard_import' | 'carddav' | 'google' | 'webhook';
+export type ContactSource = 'MANUAL' | 'VCARD_IMPORT' | 'CARDDAV' | 'GOOGLE' | 'WEBHOOK';
 
 export type ContactsPublic = {
     data: Array<ContactPublic>;
     count: number;
 };
 
-export type ContactStageEventCreate = {
-    /**
-     * Previous stage value; null when the contact is first assigned a stage.
-     */
-    from_stage?: (string | null);
-    /**
-     * New stage value; null when the contact is cleared.
-     */
-    to_stage?: (string | null);
-    /**
-     * When the stage change occurred (UTC).
-     */
-    occurred_at?: string;
-    /**
-     * Optional context about the stage change.
-     */
-    note?: (string | null);
-    contact_id: string;
-};
-
 export type ContactStageEventPublic = {
     /**
      * Previous stage value; null when the contact is first assigned a stage.
      */
-    from_stage?: (string | null);
+    old_stage?: (string | null);
     /**
      * New stage value; null when the contact is cleared.
      */
-    to_stage?: (string | null);
+    new_stage?: (string | null);
     /**
      * When the stage change occurred (UTC).
      */
-    occurred_at?: string;
-    /**
-     * Optional context about the stage change.
-     */
-    note?: (string | null);
+    changed_at?: string;
     id: string;
     contact_id: string;
     owner_id: string;
-    created_at: string;
+    changed_by_id: (string | null);
 };
 
 export type ContactStageEventsPublic = {
@@ -675,11 +541,6 @@ export type ContactUpdate = {
     deceased_at?: (string | null);
     contact_frequency_days?: (number | null);
     stage?: (string | null);
-    source?: (ContactSource | null);
-    source_external_id?: (string | null);
-    timezone?: (string | null);
-    pronouns?: (string | null);
-    auto_log_email?: (boolean | null);
     do_not_contact?: (boolean | null);
     do_not_contact_reason?: (string | null);
     tag_ids?: (Array<(string)> | null);
@@ -694,6 +555,33 @@ export type CSVImportResponse = {
     updated: number;
     errors: Array<(string)>;
     tag_names_created?: Array<(string)>;
+};
+
+/**
+ * Preview of CSV import: column mapping and sample rows.
+ */
+export type CSVPreviewResponse = {
+    headers: Array<(string)>;
+    detected_mapping: {
+        [key: string]: (string | null);
+    };
+    sample_rows: Array<{
+        [key: string]: (string);
+    }>;
+    total_rows: number;
+    encoding: string;
+};
+
+/**
+ * Response for CSV import.
+ */
+export type CSVImportResponse = {
+    imported: number;
+    skipped: number;
+    updated: number;
+    errors: Array<(string)>;
+    tag_names_created?: Array<(string)>;
+    group_names_created?: Array<(string)>;
 };
 
 /**
@@ -891,7 +779,6 @@ export type DebtPublic = {
     id: string;
     contact_id: string;
     created_at: string;
-    deleted_at?: (string | null);
     payments?: Array<DebtPaymentPublic>;
     paid_amount?: (number | null);
 };
@@ -1029,7 +916,6 @@ export type GiftPublic = {
     id: string;
     contact_id: string;
     created_at: string;
-    deleted_at?: (string | null);
     days_until_occasion?: (number | null);
     contact_birthday?: (string | null);
     contact_first_name?: (string | null);
@@ -1224,6 +1110,34 @@ export type InteractionCreate = {
      */
     email_date?: (string | null);
     /**
+     * RFC 2822 Message-ID for deduplication (EMAIL channel only).
+     */
+    message_id?: (string | null);
+    /**
+     * Email subject line (EMAIL channel only).
+     */
+    email_subject?: (string | null);
+    /**
+     * Email From header (EMAIL channel only).
+     */
+    email_from?: (string | null);
+    /**
+     * Email To header (EMAIL channel only).
+     */
+    email_to?: (string | null);
+    /**
+     * Email Date header (EMAIL channel only).
+     */
+    email_date?: (string | null);
+    /**
+     * If True, this interaction is a draft and excluded from engagement metrics.
+     */
+    is_draft?: boolean;
+    /**
+     * Origin of the draft (voice_memo, email_suggestion, manual, import).
+     */
+    draft_source?: (InteractionDraftSource | null);
+    /**
      * Contacts that attended; must have at least one.
      */
     attendee_ids: Array<(string)>;
@@ -1255,40 +1169,8 @@ export type InteractionPublic = {
      * Length of the interaction in minutes.
      */
     duration_minutes?: (number | null);
-    /**
-     * Freeform location text like 'Starbucks on 5th', 'their home', 'the park'.
-     */
-    location_label?: (string | null);
-    /**
-     * Geocoded latitude; used for map visualization.
-     */
-    latitude?: (number | null);
-    /**
-     * Geocoded longitude; used for map visualization.
-     */
-    longitude?: (number | null);
     is_draft?: boolean;
     draft_source?: (InteractionDraftSource | null);
-    /**
-     * RFC 2822 Message-ID for deduplication (EMAIL channel only).
-     */
-    message_id?: (string | null);
-    /**
-     * Email subject line (EMAIL channel only).
-     */
-    email_subject?: (string | null);
-    /**
-     * Email From header (EMAIL channel only).
-     */
-    email_from?: (string | null);
-    /**
-     * Email To header (EMAIL channel only).
-     */
-    email_to?: (string | null);
-    /**
-     * Email Date header (EMAIL channel only).
-     */
-    email_date?: (string | null);
     id: string;
     attendees?: Array<InteractionAttendeeSummary>;
     created_at: string;
@@ -1596,6 +1478,34 @@ export type NoteMentionPublic = {
     source_contact: _MentionSourceContact;
 };
 
+export type NoteMentionPublic = {
+    note_id: string;
+    note_body: string;
+    note_created_at: string;
+    source_contact: _MentionSourceContact;
+};
+
+export type NoteMentionPublic = {
+    note_id: string;
+    note_body: string;
+    note_created_at: string;
+    source_contact: _MentionSourceContact;
+};
+
+export type NoteMentionPublic = {
+    note_id: string;
+    note_body: string;
+    note_created_at: string;
+    source_contact: _MentionSourceContact;
+};
+
+export type NoteMentionPublic = {
+    note_id: string;
+    note_body: string;
+    note_created_at: string;
+    source_contact: _MentionSourceContact;
+};
+
 export type NotePublic = {
     /**
      * Note body, 1-50000 chars.
@@ -1616,257 +1526,6 @@ export type NotesPublic = {
 
 export type NoteUpdate = {
     body?: (string | null);
-};
-
-export type Ok = {
-    ok?: boolean;
-};
-
-export type OrganizationCreate = {
-    /**
-     * Organization name; deduplicated via trimmed/lowercased value per owner.
-     */
-    name: string;
-    /**
-     * Domain for auto-linking (e.g., 'acme.com').
-     */
-    domain?: (string | null);
-    /**
-     * Industry sector.
-     */
-    industry?: (string | null);
-    /**
-     * Freeform notes about the organization.
-     */
-    notes?: (string | null);
-    /**
-     * Label for the organization's address (e.g., 'main', 'hq').
-     */
-    address_label?: string;
-    /**
-     * Street line 1.
-     */
-    address_street?: (string | null);
-    /**
-     * Apartment, suite, floor, etc.
-     */
-    address_extended?: (string | null);
-    /**
-     * City.
-     */
-    address_city?: (string | null);
-    /**
-     * State, province, or region.
-     */
-    address_region?: (string | null);
-    /**
-     * ZIP or postal code.
-     */
-    address_postal_code?: (string | null);
-    /**
-     * Country.
-     */
-    address_country?: (string | null);
-    /**
-     * Geocoded latitude.
-     */
-    address_latitude?: (number | null);
-    /**
-     * Geocoded longitude.
-     */
-    address_longitude?: (number | null);
-};
-
-export type OrganizationPublic = {
-    /**
-     * Organization name; deduplicated via trimmed/lowercased value per owner.
-     */
-    name: string;
-    /**
-     * Domain for auto-linking (e.g., 'acme.com').
-     */
-    domain?: (string | null);
-    /**
-     * Industry sector.
-     */
-    industry?: (string | null);
-    /**
-     * Freeform notes about the organization.
-     */
-    notes?: (string | null);
-    /**
-     * Label for the organization's address (e.g., 'main', 'hq').
-     */
-    address_label?: string;
-    /**
-     * Street line 1.
-     */
-    address_street?: (string | null);
-    /**
-     * Apartment, suite, floor, etc.
-     */
-    address_extended?: (string | null);
-    /**
-     * City.
-     */
-    address_city?: (string | null);
-    /**
-     * State, province, or region.
-     */
-    address_region?: (string | null);
-    /**
-     * ZIP or postal code.
-     */
-    address_postal_code?: (string | null);
-    /**
-     * Country.
-     */
-    address_country?: (string | null);
-    /**
-     * Geocoded latitude.
-     */
-    address_latitude?: (number | null);
-    /**
-     * Geocoded longitude.
-     */
-    address_longitude?: (number | null);
-    id: string;
-    owner_id: string;
-    created_at: string;
-    updated_at: string;
-    contact_count?: number;
-};
-
-export type OrganizationsPublic = {
-    data: Array<OrganizationPublic>;
-    count: number;
-};
-
-export type OrganizationUpdate = {
-    name?: (string | null);
-    domain?: (string | null);
-    industry?: (string | null);
-    notes?: (string | null);
-    address_label?: (string | null);
-    address_street?: (string | null);
-    address_extended?: (string | null);
-    address_city?: (string | null);
-    address_region?: (string | null);
-    address_postal_code?: (string | null);
-    address_country?: (string | null);
-    address_latitude?: (number | null);
-    address_longitude?: (number | null);
-};
-
-export type OverdueContactPublic = {
-    /**
-     * Given name; required.
-     */
-    first_name: string;
-    /**
-     * Family name.
-     */
-    last_name?: (string | null);
-    /**
-     * Middle name or initial.
-     */
-    middle_name?: (string | null);
-    /**
-     * Honorific like Dr., Mr., Ms.
-     */
-    prefix?: (string | null);
-    /**
-     * Suffix like Jr., PhD.
-     */
-    suffix?: (string | null);
-    /**
-     * Preferred or informal name.
-     */
-    nickname?: (string | null);
-    /**
-     * Organization name.
-     */
-    company?: (string | null);
-    /**
-     * Department within the company.
-     */
-    department?: (string | null);
-    /**
-     * Job title.
-     */
-    title?: (string | null);
-    /**
-     * Date of birth; used for milestone and birthday reminders.
-     */
-    birthday?: (string | null);
-    /**
-     * Short story of how the introduction happened.
-     */
-    how_we_met?: (string | null);
-    /**
-     * Pinned to the top of contact lists.
-     */
-    is_favorite?: boolean;
-    /**
-     * Soft-deleted; excluded from default lists.
-     */
-    is_archived?: boolean;
-    /**
-     * Marks the contact as deceased.
-     */
-    is_deceased?: boolean;
-    /**
-     * Date the contact passed away.
-     */
-    deceased_at?: (string | null);
-    contact_frequency_days?: (number | null);
-    do_not_contact?: boolean;
-    do_not_contact_reason?: (string | null);
-    /**
-     * Kanban stage like Active, Dormant, Lost.
-     */
-    stage?: (string | null);
-    /**
-     * IANA timezone string (e.g., America/New_York); nullable.
-     */
-    timezone?: (string | null);
-    /**
-     * Contact's pronouns (free text, max 100 chars); nullable.
-     */
-    pronouns?: (string | null);
-    /**
-     * Enable automatic email log ingestion for this contact.
-     */
-    auto_log_email?: boolean;
-    /**
-     * Source system that created this contact.
-     */
-    source?: ContactSource;
-    /**
-     * External ID from the source system.
-     */
-    source_external_id?: (string | null);
-    id: string;
-    avatar_url: (string | null);
-    last_contacted_at: (string | null);
-    created_at: string;
-    updated_at: string;
-    deleted_at?: (string | null);
-    tags?: Array<TagPublic>;
-    imessage_id?: (string | null);
-    imessage_synced_at?: (string | null);
-    imessage_profile?: ({
-    [key: string]: unknown;
-} | null);
-    stage_events?: Array<ContactStageEventPublic>;
-    organization?: (OrganizationPublic | null);
-    vcard_sha256?: (string | null);
-    days_overdue?: (number | null);
-};
-
-export type OverdueContactsPublic = {
-    data: Array<OverdueContactPublic>;
-    count: number;
 };
 
 export type PetCreate = {
@@ -1940,10 +1599,6 @@ export type RelationshipCreate = {
     notes?: (string | null);
     contact_id: string;
     related_contact_id: string;
-    /**
-     * Type for the auto-created inverse row (e.g. 'parent' for 'child'). Inferred when omitted.
-     */
-    inverse_relationship_type?: (string | null);
 };
 
 export type RelationshipPublic = {
@@ -1958,12 +1613,6 @@ export type RelationshipPublic = {
     id: string;
     contact_id: string;
     related_contact_id: string;
-    inverse_id?: (string | null);
-};
-
-export type RelationshipsPublic = {
-    data: Array<RelationshipPublic>;
-    count: number;
 };
 
 export type RelationshipUpdate = {
@@ -2439,54 +2088,6 @@ export type WebhookEndpointBase = {
 };
 
 /**
- * Returned once on creation; includes the plaintext api_key.
- */
-export type WebhookEndpointCreated = {
-    id: string;
-    name: string;
-    url?: (string | null);
-    direction: string;
-    event_types?: (string | null);
-    is_active: boolean;
-    created_at: string;
-    api_key: string;
-};
-
-/**
- * Public representation of a webhook endpoint (without api_key).
- */
-export type WebhookEndpointPublic = {
-    id: string;
-    name: string;
-    url?: (string | null);
-    direction: string;
-    event_types?: (string | null);
-    is_active: boolean;
-    created_at: string;
-};
-
-export type WebhookEndpointsPublic = {
-    data: Array<WebhookEndpointPublic>;
-    count: number;
-};
-
-/**
- * Generic response shape for inbound/twilio webhook handlers.
- *
- * Fields are optional because different code paths return different subsets
- * (e.g. unmatched contact vs successful interaction).
- */
-export type WebhookEventResponse = {
-    received?: boolean;
-    matched?: (boolean | null);
-    channel?: (string | null);
-    call_status?: (string | null);
-    contact_id?: (string | null);
-    interaction_id?: (string | null);
-    error?: (string | null);
-};
-
-/**
  * A single week bucket for the interaction heatmap.
  */
 export type WeekBucket = {
@@ -2584,6 +2185,25 @@ export type CalendarGetCalendarIcsResponse = (unknown);
 
 export type CarddavWellKnownCarddavResponse = (unknown);
 
+export type CommunicationPreferencesGetCommunicationPreferenceData = {
+    contactId: string;
+};
+
+export type CommunicationPreferencesGetCommunicationPreferenceResponse = ((CommunicationPreferencePublic | null));
+
+export type CommunicationPreferencesUpsertCommunicationPreferenceData = {
+    contactId: string;
+    requestBody: CommunicationPreferenceUpdate;
+};
+
+export type CommunicationPreferencesUpsertCommunicationPreferenceResponse = (CommunicationPreferencePublic);
+
+export type CommunicationPreferencesDeleteCommunicationPreferenceData = {
+    contactId: string;
+};
+
+export type CommunicationPreferencesDeleteCommunicationPreferenceResponse = (unknown);
+
 export type ContactFieldsListContactFieldsData = {
     contactId: string;
     limit?: number;
@@ -2609,25 +2229,7 @@ export type ContactFieldsDeleteContactFieldData = {
     fieldId: string;
 };
 
-export type ContactFieldsDeleteContactFieldResponse = (Ok);
-
-export type ContactsBulkUpdateContactsData = {
-    requestBody: BulkContactRequest;
-};
-
-export type ContactsBulkUpdateContactsResponse = (BulkContactResult);
-
-export type ContactsPreviewBulkContactsData = {
-    isArchived?: (boolean | null);
-    isFavorite?: (boolean | null);
-    limit?: number;
-    search?: (string | null);
-    selectAllFiltered?: boolean;
-    stage?: (string | null);
-    tagId?: (string | null);
-};
-
-export type ContactsPreviewBulkContactsResponse = (ContactsPublic);
+export type ContactFieldsDeleteContactFieldResponse = (unknown);
 
 export type ContactsListContactsData = {
     ids?: (Array<(string)> | null);
@@ -2657,19 +2259,6 @@ export type ContactsListLosingTouchData = {
 
 export type ContactsListLosingTouchResponse = (ContactsPublic);
 
-export type ContactsListOverdueContactsData = {
-    limit?: number;
-    offset?: number;
-};
-
-export type ContactsListOverdueContactsResponse = (OverdueContactsPublic);
-
-export type ContactsSkipContactData = {
-    contactId: string;
-};
-
-export type ContactsSkipContactResponse = (ContactPublic);
-
 export type ContactsGetContactData = {
     contactId: string;
 };
@@ -2688,6 +2277,30 @@ export type ContactsDeleteContactData = {
 };
 
 export type ContactsDeleteContactResponse = (Ok);
+
+export type ContactsListContactMentionsData = {
+    contactId: string;
+};
+
+export type ContactsListContactMentionsResponse = (Array<NoteMentionPublic>);
+
+export type ContactsListContactMentionsData = {
+    contactId: string;
+};
+
+export type ContactsListContactMentionsResponse = (Array<NoteMentionPublic>);
+
+export type ContactsListContactMentionsData = {
+    contactId: string;
+};
+
+export type ContactsListContactMentionsResponse = (Array<NoteMentionPublic>);
+
+export type ContactsListContactMentionsData = {
+    contactId: string;
+};
+
+export type ContactsListContactMentionsResponse = (Array<NoteMentionPublic>);
 
 export type ContactsListContactMentionsData = {
     contactId: string;
@@ -2722,137 +2335,13 @@ export type ContactsListContactsGeoData = {
 
 export type ContactsListContactsGeoResponse = (ContactsGeoResponse);
 
-export type ContactsMergeContactsEndpointData = {
-    requestBody: MergeContactsRequest;
-};
-
-export type ContactsMergeContactsEndpointResponse = (MergeResponse);
-
-export type ContactsUnmergeContactEndpointData = {
-    contactId: string;
-};
-
-export type ContactsUnmergeContactEndpointResponse = (ContactPublic);
-
-export type ContactsSyncImessageContactsData = {
-    requestBody: IMessageSyncRequest;
-};
-
-export type ContactsSyncImessageContactsResponse = (IMessageSyncResult);
-
-export type ContactsGetImessageProfileData = {
-    contactId: string;
-};
-
-export type ContactsGetImessageProfileResponse = (IMessageProfileResponse);
-
-export type ContactsGetContactHouseholdData = {
-    contactId: string;
-};
-
-export type ContactsGetContactHouseholdResponse = (HouseholdResponse);
-
-export type ContactsListContactReflectionsData = {
-    contactId: string;
-};
-
-export type ContactsListContactReflectionsResponse = (Array<JournalEntryPublic>);
-
-export type ContactsGetContactHeatmapData = {
+export type ContactsListContactMentionsData = {
     contactId: string;
 };
 
 export type ContactsGetContactHeatmapResponse = (ContactHeatmap);
 
-export type ContactsListMergeLogsData = {
-    contactId?: (string | null);
-    limit?: number;
-    skip?: number;
-};
-
-export type ContactsListMergeLogsResponse = ({
-    [key: string]: unknown;
-});
-
-export type ContactsUploadAvatarFileData = {
-    contactId: string;
-    formData: Body_contacts_upload_avatar_file;
-};
-
-export type ContactsUploadAvatarFileResponse = (AvatarUploadResponse);
-
-export type ContactsDeleteAvatarData = {
-    contactId: string;
-};
-
-export type ContactsDeleteAvatarResponse = (unknown);
-
-export type ContactsGetContactStageEventsData = {
-    contactId: string;
-};
-
-export type ContactsGetContactStageEventsResponse = (ContactStageEventsPublic);
-
-export type ContactsGetContactPdfData = {
-    contactId: string;
-};
-
-export type ContactsGetContactPdfResponse = (unknown);
-
-export type ContactsGetDistinctStagesResponse = (Array<(string)>);
-
-export type ContactsGetKanbanBoardData = {
-    search?: (string | null);
-    tagId?: (string | null);
-};
-
-export type ContactsGetKanbanBoardResponse = ({
-    [key: string]: ContactsPublic;
-});
-
-export type ContactStageEventsListContactStageHistoryData = {
-    contactId: string;
-};
-
-export type ContactStageEventsListContactStageHistoryResponse = (ContactStageEventsPublic);
-
-export type ContactStageEventsGetLatestStageData = {
-    contactId: string;
-};
-
-export type ContactStageEventsGetLatestStageResponse = (ContactStageEventPublic);
-
-export type ContactStageEventsCreateContactStageEventData = {
-    contactId: string;
-    requestBody: ContactStageEventCreate;
-};
-
-export type ContactStageEventsCreateContactStageEventResponse = (ContactStageEventPublic);
-
-export type ContactStageEventsGetStageDurationRouteData = {
-    contactId: string;
-    stage: string;
-};
-
-export type ContactStageEventsGetStageDurationRouteResponse = (Array<[
-    string,
-    (string | null),
-    (number | null)
-]>);
-
-export type ContactStageEventsBackfillStageEventsRouteResponse = ({
-    [key: string]: (number);
-});
-
-export type ContactStageEventsGetStageAnalyticsData = {
-    contactId: string;
-};
-
-export type ContactStageEventsGetStageAnalyticsResponse = ({
-    [key: string]: Array<Array<unknown>>;
-});
-
-export type CustomFieldsListFieldDefinitionsResponse = (CustomFieldDefinitionsPublic);
+export type CustomFieldsListFieldDefinitionsResponse = (unknown);
 
 export type CustomFieldsCreateFieldDefinitionData = {
     requestBody: CustomFieldDefinitionCreate;
@@ -2998,6 +2487,75 @@ export type EmailPollAllEmailsResponse = ({
     [key: string]: unknown;
 });
 
+export type DebtsListDebtPaymentsData = {
+    debtId: string;
+};
+
+export type DebtsListDebtPaymentsResponse = (Array<DebtPaymentPublic>);
+
+export type DebtsCreateDebtPaymentData = {
+    debtId: string;
+    requestBody: DebtPaymentCreate;
+};
+
+export type DebtsCreateDebtPaymentResponse = (DebtPaymentPublic);
+
+export type DebtsDeleteDebtPaymentData = {
+    paymentId: string;
+};
+
+export type DebtsDeleteDebtPaymentResponse = (unknown);
+
+export type EmailGmailAuthorizeData = {
+    /**
+     * Contact ID to associate with this email
+     */
+    contactId: string;
+    /**
+     * Email address being authorized
+     */
+    emailAddress: string;
+};
+
+export type EmailGmailAuthorizeResponse = ({
+    [key: string]: unknown;
+});
+
+export type EmailGmailCallbackData = {
+    code: string;
+    state: string;
+};
+
+export type EmailGmailCallbackResponse = ({
+    [key: string]: unknown;
+});
+
+export type EmailListEmailTokensData = {
+    contactId?: (string | null);
+};
+
+export type EmailListEmailTokensResponse = (EmailOAuthTokensPublic);
+
+export type EmailDeleteEmailTokenData = {
+    tokenId: string;
+};
+
+export type EmailDeleteEmailTokenResponse = ({
+    [key: string]: (string);
+});
+
+export type EmailPollContactEmailData = {
+    contactId: string;
+};
+
+export type EmailPollContactEmailResponse = ({
+    [key: string]: unknown;
+});
+
+export type EmailPollAllEmailsResponse = ({
+    [key: string]: unknown;
+});
+
 export type GiftsListGiftsData = {
     contactId: string;
 };
@@ -3030,7 +2588,7 @@ export type GiftsRestoreGiftData = {
 export type GiftsRestoreGiftResponse = (unknown);
 
 export type GiftsGetKanbanBoardResponse = ({
-    [key: string]: GiftKanbanColumn;
+    [key: string]: unknown;
 });
 
 export type GiftsChangeGiftStatusData = {
@@ -3040,15 +2598,9 @@ export type GiftsChangeGiftStatusData = {
 
 export type GiftsChangeGiftStatusResponse = (GiftPublic);
 
-export type GraphGetContactsGraphData = {
-    /**
-     * Hops from seed contacts (1-3)
-     */
-    depth?: number;
-    /**
-     * Optional root contact to focus on
-     */
-    rootContactId?: (string | null);
+export type GroupsListGroupsData = {
+    limit?: number;
+    skip?: number;
 };
 
 export type GraphGetContactsGraphResponse = (unknown);
@@ -3066,6 +2618,20 @@ export type GraphGetContactGraphResponse = (unknown);
 export type HealthHealthResponse = ({
     [key: string]: (string);
 });
+
+export type IcalUploadIcalData = {
+    formData: Body_ical_upload_ical;
+};
+
+export type IcalUploadIcalResponse = (unknown);
+
+export type IcalConfirmIcalImportData = {
+    requestBody: Array<{
+        [key: string]: unknown;
+    }>;
+};
+
+export type IcalConfirmIcalImportResponse = (unknown);
 
 export type IcalUploadIcalData = {
     formData: Body_ical_upload_ical;
@@ -3113,6 +2679,43 @@ export type ImportExportExportCsvData = {
 
 export type ImportExportExportCsvResponse = (unknown);
 
+export type ImportExportExportCsvData = {
+    groupId?: (string | null);
+    isArchived?: (boolean | null);
+    isFavorite?: (boolean | null);
+    limit?: number;
+    search?: (string | null);
+    selectAllFiltered?: boolean;
+    stage?: (string | null);
+    tagId?: (string | null);
+};
+
+export type ImportExportExportCsvResponse = (unknown);
+
+export type ImportExportPreviewCsvImportData = {
+    formData: Body_import_export_preview_csv_import;
+};
+
+export type ImportExportPreviewCsvImportResponse = (CSVPreviewResponse);
+
+export type ImportExportImportCsvData = {
+    createMissingGroups?: boolean;
+    createMissingTags?: boolean;
+    formData: Body_import_export_import_csv;
+    mergeDuplicates?: boolean;
+    skipDuplicates?: boolean;
+};
+
+export type ImportExportImportCsvResponse = (CSVImportResponse);
+
+export type ImportExportExportCsvData = {
+    includeFields?: boolean;
+    includeGroups?: boolean;
+    includeTags?: boolean;
+};
+
+export type ImportExportExportCsvResponse = (unknown);
+
 export type InteractionsListInteractionsData = {
     contactId?: (string | null);
     isDraft?: (boolean | null);
@@ -3140,6 +2743,12 @@ export type InteractionsDeleteInteractionData = {
 };
 
 export type InteractionsDeleteInteractionResponse = (Ok);
+
+export type InteractionsConfirmDraftData = {
+    interactionId: string;
+};
+
+export type InteractionsConfirmDraftResponse = (InteractionPublic);
 
 export type InteractionsConfirmDraftData = {
     interactionId: string;
@@ -3418,6 +3027,37 @@ export type RelationshipInverseMapLookupInverseData = {
 
 export type RelationshipInverseMapLookupInverseResponse = (unknown);
 
+export type PrivateCreateUserData = {
+    requestBody: PrivateUserCreate;
+};
+
+export type PrivateCreateUserResponse = (UserPublic);
+
+export type PrivateCreateUserData = {
+    requestBody: PrivateUserCreate;
+};
+
+export type PrivateCreateUserResponse = (UserPublic);
+
+export type PrivateSeedDataData = {
+    /**
+     * Number of contacts to seed
+     */
+    count?: number;
+    /**
+     * Wipe existing data before seeding
+     */
+    reset?: boolean;
+    /**
+     * RNG seed for determinism
+     */
+    rngSeed?: (number | null);
+};
+
+export type PrivateSeedDataResponse = ({
+    [key: string]: unknown;
+});
+
 export type RelationshipsLookupInverseData = {
     type: string;
 };
@@ -3607,6 +3247,12 @@ export type TagSharesPreviewTagShareData = {
 
 export type TagSharesPreviewTagShareResponse = (TagSharePreview);
 
+export type TagSharesPreviewTagShareData = {
+    tagId: string;
+};
+
+export type TagSharesPreviewTagShareResponse = (TagSharePreview);
+
 export type TagSharesCreateTagShareData = {
     requestBody: _ShareIn;
 };
@@ -3636,12 +3282,6 @@ export type TagSharesLogTagShareAuditData = {
 export type TagSharesLogTagShareAuditResponse = ({
     [key: string]: (string);
 });
-
-export type TranscribeTranscribeAudioData = {
-    formData: Body_transcribe_transcribe_audio;
-};
-
-export type TranscribeTranscribeAudioResponse = (unknown);
 
 export type UsersReadUsersData = {
     limit?: number;

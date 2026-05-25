@@ -1,4 +1,5 @@
 import { useMutation } from "@tanstack/react-query"
+import { useNavigate } from "@tanstack/react-router"
 import { format } from "date-fns"
 import { CalendarIcon, CheckIcon, InfoIcon, UploadIcon } from "lucide-react"
 import { useRef, useState } from "react"
@@ -26,12 +27,10 @@ import {
 import useCustomToast from "@/hooks/useCustomToast"
 
 interface Proposal {
-  [key: string]: unknown
   uid: string | null
   summary: string
   description: string | null
   occurred_at: string | null
-  already_imported?: boolean
   attendees: Array<{
     attendee: { email: string | null; cn: string | null; role: string | null }
     matches: Array<{
@@ -72,10 +71,10 @@ export default function IcalImport() {
     null,
   )
   const { showSuccessToast, showErrorToast } = useCustomToast()
+  const _navigate = useNavigate()
 
   const uploadMutation = useMutation({
-    mutationFn: (file: File) =>
-      IcalService.uploadIcal({ formData: { file: file as unknown as string } }),
+    mutationFn: (file: File) => IcalService.uploadIcal({ formData: { file } }),
     onSuccess: (data) => {
       const result = data as unknown as UploadResponse
       setUploadResult(result)
@@ -106,7 +105,7 @@ export default function IcalImport() {
   })
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] ?? null
+    const file = e.target.files && e.target.files[0] ?? null
     setSelectedFile(file)
     setProposals([])
     setUploadResult(null)
@@ -160,14 +159,13 @@ export default function IcalImport() {
     )
   }
 
-  const _formatDate = (dateStr: string | null) => {
+  const formatDate = (dateStr: string | null) => {
     if (!dateStr) return "Unknown"
     try {
       return format(new Date(dateStr), "yyyy-MM-dd HH:mm")
     } catch {
       return dateStr
     }
-  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -194,13 +192,13 @@ export default function IcalImport() {
               role="button"
               tabIndex={0}
               className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:bg-muted/50 transition-colors"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => fileInputRef.current && fileInputRef.current.click()}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
-                  fileInputRef.current?.click();
+                  fileInputRef.current && fileInputRef.current.click();
                 }
-              }}
+              }
               onDragOver={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -208,13 +206,13 @@ export default function IcalImport() {
               onDrop={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                const file = e.dataTransfer.files?.[0];
+                const file = e.dataTransfer.files && e.dataTransfer.files[0];
                 if (file) {
                   setSelectedFile(file);
                   setProposals([]);
                   setUploadResult(null);
                 }
-              }}
+              }
             >
               <UploadIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
               <p className="text-sm text-muted-foreground mb-2">
@@ -364,7 +362,7 @@ export default function IcalImport() {
                         </div>
                       </TableCell>
                       <TableCell className="text-sm">
-                        {_formatDate(prop.occurred_at)}
+                        {formatDate(prop.occurred_at)}
                       </TableCell>
                       <TableCell>
                         {prop.already_imported && (

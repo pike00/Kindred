@@ -52,16 +52,7 @@ export const TagsList = () => {
           }
         />
       ) : (
-        <>
-          <DataTable columns={columns} data={tags} />
-          {selectedTag && (
-            <TagShareDialog
-              tag={selectedTag}
-              open={!!selectedTag}
-              onOpenChange={(open) => !open && setSelectedTag(null)}
-            />
-          )}
-        </>
+        <DataTable columns={columns} data={tags} />
       )}
     </div>
   )

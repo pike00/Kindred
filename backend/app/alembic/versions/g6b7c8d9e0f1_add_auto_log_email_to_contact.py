@@ -9,7 +9,7 @@ from alembic import op
 import sqlalchemy as sa
 
 revision = "g6b7c8d9e0f1"
-down_revision = "f6a7b8c9d0e2"
+down_revision = "add_do_not_contact_fields"
 branch_labels = None
 depends_on = None
 

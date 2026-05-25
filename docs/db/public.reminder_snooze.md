@@ -58,7 +58,6 @@ erDiagram
   timestamp_with_time_zone last_sent_at
   timestamp_with_time_zone snoozed_until
   timestamp_with_time_zone created_at
-  timestamp_without_time_zone deleted_at
 }
 ```
 

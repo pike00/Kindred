@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import logging
+from typing import Any
 
 from fastapi import APIRouter, Query
 from pydantic import BaseModel
@@ -36,7 +39,7 @@ def create_user(user_in: PrivateUserCreate, session: SessionDep) -> UserPublic:
     session.commit()
     session.refresh(user)
 
-    return UserPublic.model_validate(user)
+    return user
 
 
 @router.post("/seed", response_model=dict)

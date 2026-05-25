@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
-import type { APIKeyCreated, APIKeyPublic, UserPublic } from "@/client"
-import { ApiKeysService, UsersService } from "@/client"
+import type { UserPublic } from "@/client"
+import { OpenAPI, UsersService } from "@/client"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -27,6 +27,63 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import { Skeleton } from "@/components/ui/skeleton"
 import useCustomToast from "@/hooks/useCustomToast"
 import { MoreHorizontal, Plus } from "@/lib/icons"
+
+// ─── types ────────────────────────────────────────────────────────────────────
+
+type ApiKey = {
+  id: string
+  name: string
+  key_prefix: string
+  created_at: string
+  last_used_at: string | null
+  revoked_at: string | null
+  expires_at: string | null
+  can_impersonate: string[]
+}
+
+type ApiKeyCreated = ApiKey & { plaintext_key: string }
+
+// ─── API helpers ──────────────────────────────────────────────────────────────
+
+async function bearerToken(): Promise<string> {
+  const t = OpenAPI.TOKEN
+  if (typeof t === "function") return (await t({} as any)) ?? ""
+  return t ?? ""
+}
+
+async function apiRequest<T>(
+  method: string,
+  path: string,
+  body?: unknown,
+): Promise<T> {
+  const token = await bearerToken()
+  const base = OpenAPI.BASE || ""
+  const res = await fetch(`${base}${path}`, {
+    method,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.detail || `HTTP ${res.status}`)
+  }
+  return res.json()
+}
+
+const listApiKeys = () =>
+  apiRequest<{ data: ApiKey[]; count: number }>(
+    "GET",
+    "/api/v1/users/me/api-keys/",
+  )
+
+const createApiKey = (payload: { name: string; can_impersonate: string[] }) =>
+  apiRequest<ApiKeyCreated>("POST", "/api/v1/users/me/api-keys/", payload)
+
+const revokeApiKey = (id: string) =>
+  apiRequest<ApiKey>("DELETE", `/api/v1/users/me/api-keys/${id}`)
 
 // ─── CopyField ────────────────────────────────────────────────────────────────
 
@@ -65,7 +122,7 @@ function CreatedKeyDialog({
   created,
   onClose,
 }: {
-  created: APIKeyCreated | null
+  created: ApiKeyCreated | null
   onClose: () => void
 }) {
   return (
@@ -103,7 +160,7 @@ function CreatedKeyDialog({
 
 function AddApiKeyDialog() {
   const [open, setOpen] = useState(false)
-  const [created, setCreated] = useState<APIKeyCreated | null>(null)
+  const [created, setCreated] = useState<ApiKeyCreated | null>(null)
   const [name, setName] = useState("")
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const queryClient = useQueryClient()
@@ -114,16 +171,11 @@ function AddApiKeyDialog() {
     queryFn: () => UsersService.readUsers({ limit: 200 }),
     enabled: open,
   })
-  const users: UserPublic[] = usersData?.data ?? []
+  const users: UserPublic[] = (usersData as any)?.data ?? []
 
   const mutation = useMutation({
     mutationFn: () =>
-      ApiKeysService.createMyApiKey({
-        requestBody: {
-          name: name.trim(),
-          can_impersonate: [...selected],
-        },
-      }),
+      createApiKey({ name: name.trim(), can_impersonate: [...selected] }),
     onSuccess: (res) => {
       setCreated(res)
       setName("")
@@ -236,12 +288,12 @@ function AddApiKeyDialog() {
 
 // ─── Key row ──────────────────────────────────────────────────────────────────
 
-function ApiKeyRow({ apiKey }: { apiKey: APIKeyPublic }) {
+function ApiKeyRow({ apiKey }: { apiKey: ApiKey }) {
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
 
   const revokeMutation = useMutation({
-    mutationFn: () => ApiKeysService.revokeMyApiKey({ apiKeyId: apiKey.id }),
+    mutationFn: () => revokeApiKey(apiKey.id),
     onSuccess: () => {
       showSuccessToast("API key revoked")
       queryClient.invalidateQueries({ queryKey: ["api-keys"] })
@@ -258,7 +310,7 @@ function ApiKeyRow({ apiKey }: { apiKey: APIKeyPublic }) {
     !!apiKey.expires_at &&
     new Date(apiKey.expires_at) < new Date()
 
-  const formatDate = (iso: string | null | undefined) => {
+  const formatDate = (iso: string | null) => {
     if (!iso) return null
     return new Date(iso).toLocaleDateString(undefined, {
       year: "numeric",
@@ -327,9 +379,9 @@ function ApiKeyRow({ apiKey }: { apiKey: APIKeyPublic }) {
 export default function ApiKeys() {
   const { data, isLoading } = useQuery({
     queryKey: ["api-keys"],
-    queryFn: () => ApiKeysService.listMyApiKeys(),
+    queryFn: listApiKeys,
   })
-  const keys: APIKeyPublic[] = data?.data ?? []
+  const keys: ApiKey[] = data?.data ?? []
 
   return (
     <div className="flex flex-col gap-4">
