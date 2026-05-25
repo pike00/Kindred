@@ -1,9 +1,5 @@
-import {
-  createFileRoute,
-  Outlet,
-  redirect,
-  useNavigate,
-} from "@tanstack/react-router"
+import { useQueryClient } from "@tanstack/react-query"
+import { createFileRoute, Outlet, redirect } from "@tanstack/react-router"
 import { CommandPalette } from "@/components/CommandPalette/CommandPalette"
 import {
   CommandPaletteProvider,
