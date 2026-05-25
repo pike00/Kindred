@@ -1,7 +1,7 @@
 """Add Organization model and link to Contact
 
 Revision ID: d5e6f7a8b9c0
-Revises: e5f6a7b8c9d0
+Revises: d98dd8ec85a3
 Create Date: 2026-04-21 12:00:00.000000
 
 """
@@ -13,7 +13,7 @@ from sqlmodel import SQLModel
 
 # revision identifiers, used by Alembic.
 revision: str = "d5e6f7a8b9c0"
-down_revision: Union[str, None] = "e5f6a7b8c9d0"
+down_revision: Union[str, None] = "d98dd8ec85a3"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
