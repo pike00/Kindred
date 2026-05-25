@@ -39,16 +39,64 @@ class SoftDeleteMixin:
 
 import enum
 import uuid
+from decimal import Decimal
+
+import enum
+import re
+import uuid
 from datetime import date, datetime, timezone
 
 import sqlalchemy as sa
 from pydantic import EmailStr
-from sqlalchemy import DateTime
+from sqlalchemy import JSON, DateTime
 from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import (
+    Relationship as SQLMRelationship,  # alias; avoids shadowing by the Relationship table model below
+)
+
+from app.models_vcard_conflict import (  # noqa: F401
+    VCardConflict,
+    VCardConflictBase,
+    VCardConflictPublic,
+    VCardConflictsPublic,
+)
 
 
 def get_datetime_utc() -> datetime:
     return datetime.now(timezone.utc)
+
+
+class SoftDeleteMixin:
+    """Mixin that adds ``deleted_at`` for soft-delete support.
+
+    Apply to SQLModel table classes to get:
+    * ``deleted_at`` nullable datetime column (indexed)
+    * ``is_deleted`` property for readability
+    * ``mark_deleted()`` / ``restore()`` convenience helpers
+    """
+
+    deleted_at: datetime | None = Field(
+        default=None,
+        index=True,
+        sa_type=DateTime(timezone=True),
+        description=(
+            "Soft-delete marker. When non-null, the row is hidden from the "
+            "default query filter; restore by clearing this column."
+        ),
+    )
+
+    @property
+    def is_deleted(self) -> bool:
+        """Return True if the row has been soft-deleted."""
+        return self.deleted_at is not None
+
+    def mark_deleted(self) -> None:
+        """Set deleted_at to now (UTC)."""
+        self.deleted_at = datetime.now(timezone.utc)
+
+    def restore(self) -> None:
+        """Clear deleted_at to un-delete the row."""
+        self.deleted_at = None
 
 
 # Shared properties
@@ -148,6 +196,97 @@ class UsersPublic(SQLModel):
     count: int
 
 
+# ─── SavedFilter ─────────────────────────────────────────────────────────────
+
+
+class FilterCondition(SQLModel):
+    """Pydantic schema for a single filter condition (validated, not injected)."""
+
+    field: str = Field(
+        description="Contact column name, must be in the allowed fields list."
+    )
+    operator: str = Field(
+        description="One of: equals, contains, in, gt, gte, lt, lte, before, after, is"
+    )
+    value: str | int | float | bool | date | list[str | int] | None = Field(
+        description="Value to compare against; type depends on field and operator."
+    )
+
+
+class SavedFilterBase(SQLModel):
+    name: str = Field(
+        min_length=1,
+        max_length=255,
+        description="User-visible name for the smart list.",
+    )
+    filter_json: dict = Field(
+        description="Structured filter: {conditions: FilterCondition[], op: 'and'|'or'}.",
+        sa_column=sa.Column("filter_json", JSON, nullable=False),
+    )
+    tag_id: uuid.UUID | None = Field(
+        default=None,
+        description="Optional tag; if set, filter is shared with users who have TagShare access.",
+    )
+
+
+class SavedFilterCreate(SavedFilterBase):
+    pass
+
+
+class SavedFilterUpdate(SQLModel):
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    filter_json: dict | None = None
+    tag_id: uuid.UUID | None = None
+
+
+class SavedFilter(SavedFilterBase, table=True):
+    """Saved filter / smart list owned by a user."""
+
+    __tablename__ = "saved_filter"
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description="Owner user; cascades on delete.",
+    )
+    tag_id: uuid.UUID | None = Field(
+        default=None,
+        foreign_key="tag.id",
+        nullable=True,
+        ondelete="SET NULL",
+        description="Optional tag for sharing; nulled when the tag is deleted.",
+    )
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        description="When the filter was created (UTC).",
+    )
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
+        nullable=False,
+        description="Auto-bumped on edit (UTC).",
+    )
+
+
+class SavedFilterPublic(SavedFilterBase):
+    id: uuid.UUID
+    owner_id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
+
+
+class SavedFiltersPublic(SQLModel):
+    data: list[SavedFilterPublic]
+    count: int
+
+
 # ─── API Keys ─────────────────────────────────────────────────────────────────
 
 
@@ -228,6 +367,7 @@ class APIKeysPublic(SQLModel):
 
 
 # ─── Enums ────────────────────────────────────────────────────────────────────
+# ─── Enums ────────────────────────────────────────────────────────────────────
 
 
 class ContactFieldType(str, enum.Enum):
@@ -245,6 +385,8 @@ class ContactSource(str, enum.Enum):
 
 class GiftStatus(str, enum.Enum):
     IDEA = "idea"
+    PURCHASED = "purchased"
+    WRAPPED = "wrapped"
     GIVEN = "given"
     RECEIVED = "received"
 
@@ -258,6 +400,15 @@ class InteractionChannel(str, enum.Enum):
     SOCIAL = "social"
     OTHER = "other"
     SKIP = "skip"
+
+
+class InteractionDraftSource(str, enum.Enum):
+    """Origin of a draft interaction."""
+
+    VOICE_MEMO = "voice_memo"
+    EMAIL_SUGGESTION = "email_suggestion"
+    MANUAL = "manual"
+    IMPORT = "import"
 
 
 class ReminderFrequency(str, enum.Enum):
@@ -280,6 +431,16 @@ class MediaCategory(str, enum.Enum):
     MUSICIAN = "musician"
     BOOK = "book"
     OTHER = "other"
+
+
+class ContactSource(str, enum.Enum):
+    """Source system that created a contact."""
+
+    MANUAL = "manual"
+    VCARD_IMPORT = "vcard_import"
+    CARDDAV = "carddav"
+    GOOGLE = "google"
+    WEBHOOK = "webhook"
 
 
 # ─── Tag ──────────────────────────────────────────────────────────────────────
@@ -341,66 +502,64 @@ class TagPublic(TagBase):
 
 class TagsPublic(SQLModel):
     data: list[TagPublic]
+    pass
+
+
+class GroupUpdate(SQLModel):
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    description: str | None = None
+
+
+class Group(GroupBase, table=True):
+    """Named collection of contacts (e.g. 'Family', 'Work Team')."""
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description="Owner user; cascades on delete.",
+    )
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        description="When the group was created (UTC).",
+    )
+
+
+class GroupPublic(GroupBase):
+    id: uuid.UUID
+    created_at: datetime
+
+
+class GroupsPublic(SQLModel):
+    data: list[GroupPublic]
     count: int
 
 
-# ─── ContactTag (junction) ───────────────────────────────────────────────────
+# ─── ContactGroup (junction) ─────────────────────────────────────────────────
 
 
-class ContactTag(SQLModel, table=True):
-    """Many-to-many link between contacts and tags."""
+class ContactGroup(SQLModel, table=True):
+    """Many-to-many link between contacts and groups."""
 
-    __tablename__ = "contact_tag"
+    __tablename__ = "contact_group"
     contact_id: uuid.UUID = Field(
         foreign_key="contact.id",
         primary_key=True,
         ondelete="CASCADE",
         description="Contact side of the link; cascades on delete.",
     )
-    tag_id: uuid.UUID = Field(
-        foreign_key="tag.id",
+    group_id: uuid.UUID = Field(
+        foreign_key="group.id",
         primary_key=True,
         ondelete="CASCADE",
-        description="Tag side of the link; cascades on delete.",
+        description="Group side of the link; cascades on delete.",
     )
-
-
-# ─── TagShare (grant access to rows bearing a tag) ───────────────────────────────
-
-
-class TagShare(SQLModel, table=True):
-    """Grants another user read access to all rows bearing a given tag."""
-
-    __tablename__ = "tag_share"
-    tag_id: uuid.UUID = Field(
-        foreign_key="tag.id",
-        primary_key=True,
-        ondelete="CASCADE",
-        description="Tag whose rows are being shared; cascades on delete.",
-    )
-    grantee_id: uuid.UUID = Field(
-        foreign_key="user.id",
-        primary_key=True,
-        ondelete="CASCADE",
-        description="User granted access; cascades on delete.",
-    )
-    created_at: datetime = Field(
-        default_factory=get_datetime_utc,
-        sa_type=DateTime(timezone=True),  # type: ignore
-        description="When the share was granted (UTC).",
-    )
-
-
-class TagSharePublic(SQLModel):
-    tag_id: uuid.UUID
-    grantee_id: uuid.UUID
-    grantee_email: str
-    created_at: datetime
-
-
-class TagSharesPublic(SQLModel):
-    data: list[TagSharePublic]
-    count: int
 
 
 # ─── Contact ─────────────────────────────────────────────────────────────────
@@ -512,6 +671,7 @@ class ContactBase(SQLModel):
 
 class ContactCreate(ContactBase):
     tag_ids: list[uuid.UUID] | None = None
+    group_ids: list[uuid.UUID] | None = None
 
 
 class ContactUpdate(SQLModel):
@@ -535,6 +695,7 @@ class ContactUpdate(SQLModel):
     do_not_contact: bool | None = None
     do_not_contact_reason: str | None = None
     tag_ids: list[uuid.UUID] | None = None
+    group_ids: list[uuid.UUID] | None = None
 
 
 class Contact(SoftDeleteMixin, ContactBase, table=True):
@@ -584,9 +745,13 @@ class Contact(SoftDeleteMixin, ContactBase, table=True):
         description="Auto-bumped on any column change (UTC).",
     )
     # Relationships
-    tags: list["Tag"] = Relationship(
+    tags: list[Tag] = Relationship(
         back_populates=None,
         link_model=ContactTag,
+    )
+    groups: list[Group] = Relationship(
+        back_populates=None,
+        link_model=ContactGroup,
     )
 
 
@@ -601,6 +766,7 @@ class ContactPublic(ContactBase):
     do_not_contact: bool = False
     do_not_contact_reason: str | None = None
     tags: list[TagPublic] = []
+    groups: list[GroupPublic] = []
 
 
 class ContactsPublic(SQLModel):
@@ -766,6 +932,72 @@ class AddressPublic(AddressBase):
 # ─── Relationship ────────────────────────────────────────────────────────────
 
 
+class InverseRelationshipMapBase(SQLModel):
+    relationship_type: str = Field(
+        max_length=100,
+        description="Forward relationship type (e.g. 'parent').",
+    )
+    inverse_type: str = Field(
+        max_length=100,
+        description="Inverse relationship type (e.g. 'child').",
+    )
+    is_symmetric: bool = Field(
+        default=False,
+        description="True when both sides use the same type (spouse<->spouse).",
+    )
+
+
+class InverseRelationshipMap(InverseRelationshipMapBase, table=True):
+    """Seed table mapping relationship types to their inverses.
+
+    This replaces the Python-only mapping in ``relationship_inverses.py``
+    so the database is the single source of truth and can be updated
+    at runtime without a code deploy.
+    """
+
+    __tablename__ = "inverse_relationship_map"
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
+    )
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        description="When the mapping row was inserted (UTC).",
+    )
+
+    __table_args__ = (
+        sa.UniqueConstraint(
+            "relationship_type", name="uq_inverse_map_relationship_type"
+        ),
+    )
+
+
+class InverseRelationshipMapPublic(InverseRelationshipMapBase):
+    id: uuid.UUID
+    created_at: datetime
+
+
+class InverseRelationshipMapsPublic(SQLModel):
+    data: list[InverseRelationshipMapPublic]
+    count: int
+
+
+class InverseRelationshipMapCreate(InverseRelationshipMapBase):
+    """Create schema for inverse relationship map."""
+
+    pass
+
+
+class InverseRelationshipMapUpdate(SQLModel):
+    """Update schema - all fields optional."""
+
+    inverse_type: str | None = Field(default=None, min_length=1, max_length=100)
+    is_symmetric: bool | None = None
+
+
 class RelationshipBase(SQLModel):
     relationship_type: str = Field(
         max_length=100,
@@ -830,6 +1062,10 @@ class RelationshipPublic(RelationshipBase):
     contact_id: uuid.UUID
     related_contact_id: uuid.UUID
     inverse_id: uuid.UUID | None = None
+
+
+# ─── InverseRelationshipMap API routes ─────────────────────────────────────
+# (imported by app/api/routes/relationship_inverse_map.py)
 
 
 # ─── Pet ──────────────────────────────────────────────────────────────────────
@@ -1197,6 +1433,8 @@ class Reminder(SoftDeleteMixin, ReminderBase, table=True):
         description="When the reminder was created (UTC).",
     )
 
+    snoozes: list["ReminderSnooze"] = Relationship(back_populates="reminder")
+
 
 class ReminderPublic(ReminderBase):
     id: uuid.UUID
@@ -1207,40 +1445,57 @@ class ReminderPublic(ReminderBase):
     deleted_at: datetime | None = None
 
 
+class ReminderWithContactPublic(ReminderPublic):
+    """Reminder with optional contact name for list views."""
+    contact_name: str | None = None
+
+
 class RemindersPublic(SQLModel):
     data: list[ReminderPublic]
+
+
+class RemindersWithContactPublic(SQLModel):
+    """Response wrapper for reminders that include contact name."""
+    data: list[ReminderWithContactPublic]
     count: int
 
 
-class ReminderContactSummary(SQLModel):
-    id: uuid.UUID
-    first_name: str
-    last_name: str | None = None
-    nickname: str | None = None
-    avatar_url: str | None = None
+
+# ─── ReminderSnooze ──────────────────────────────────────────────────────
 
 
-class ReminderDuePublic(ReminderPublic):
-    """Reminder enriched with the linked contact (if any) for the bell popover."""
+class ReminderSnooze(SQLModel, table=True):
+    """Append-only log of snooze actions on reminders."""
 
-    contact: ReminderContactSummary | None = None
-
-
-class RemindersDuePublic(SQLModel):
-    data: list[ReminderDuePublic]
-    count: int
-
-
-class ReminderSnoozeRequest(SQLModel):
-    snoozed_until: datetime | None = Field(
-        default=None,
-        description="Absolute time to snooze until (UTC). Mutually exclusive with minutes.",
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        description="Primary key.",
     )
-    minutes: int | None = Field(
+    reminder_id: uuid.UUID = Field(
+        foreign_key="reminder.id",
+        nullable=False,
+        ondelete="CASCADE",
+        description="Reminder being snoozed.",
+    )
+    reminder: "Reminder" = Relationship(back_populates="snoozes")
+    snoozed_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        description="When the user clicked snooze.",
+    )
+    snoozed_until: datetime = Field(
+        nullable=False,
+        description="New snooze deadline.",
+    )
+    reason: str | None = Field(
         default=None,
-        ge=1,
-        le=60 * 24 * 30,
-        description="Minutes from now to snooze for. Mutually exclusive with snoozed_until.",
+        description="Optional user-entered reason for snoozing.",
+    )
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        description="Row creation time (may equal snoozed_at).",
     )
 
 
@@ -1521,6 +1776,11 @@ class NoteBase(SQLModel):
 
 class NoteCreate(NoteBase):
     contact_id: uuid.UUID
+    client_id: str | None = Field(
+        default=None,
+        max_length=36,
+        description="Client-generated UUID for idempotent POSTs; optional.",
+    )
 
 
 class NoteUpdate(SQLModel):
@@ -1552,6 +1812,12 @@ class Note(SoftDeleteMixin, NoteBase, table=True):
         default_factory=uuid.uuid4,
         primary_key=True,
         description="Primary key.",
+    )
+    client_id: str | None = Field(
+        default=None,
+        index=True,
+        unique=True,
+        description="Client-generated UUID for idempotent POSTs; unique if set.",
     )
     contact_id: uuid.UUID = Field(
         foreign_key="contact.id",
@@ -1891,8 +2157,3 @@ class CalendarEntry(SQLModel):
 class CalendarMonthResponse(SQLModel):
     month: str
     days: dict[str, list[CalendarEntry]]
-
-
-# Register the SetupState table with SQLModel.metadata so Alembic and the
-# test bootstrap (alembic upgrade head) see it.
-from app.core.setup_state import SetupState  # noqa: E402,F401

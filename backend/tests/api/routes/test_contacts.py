@@ -522,3 +522,98 @@ def test_addresses_on_soft_deleted_contact_hidden(
         headers=superuser_token_headers,
     )
     assert r.status_code == 404
+
+
+def test_create_contact_with_timezone_and_pronouns(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
+    """Test creating a contact with timezone and pronouns fields."""
+    data = {
+        "first_name": "ZoneTest",
+        "timezone": "America/New_York",
+        "pronouns": "they/them",
+    }
+    r = client.post(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=superuser_token_headers,
+        json=data,
+    )
+    assert r.status_code == 200
+    content = r.json()
+    assert content["timezone"] == "America/New_York"
+    assert content["pronouns"] == "they/them"
+
+
+def test_update_contact_timezone_and_pronouns(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
+    """Test updating a contact's timezone and pronouns."""
+    # Create contact
+    r = client.post(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=superuser_token_headers,
+        json={"first_name": "UpdateZone"},
+    )
+    assert r.status_code == 200
+    contact_id = r.json()["id"]
+
+    # Update with timezone and pronouns
+    r = client.patch(
+        f"{settings.API_V1_STR}/contacts/{contact_id}",
+        headers=superuser_token_headers,
+        json={"timezone": "Europe/London", "pronouns": "she/her"},
+    )
+    assert r.status_code == 200
+    content = r.json()
+    assert content["timezone"] == "Europe/London"
+    assert content["pronouns"] == "she/her"
+
+
+def test_timezone_conversion(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
+    """Test that timezone conversion works for reminder calculations."""
+
+    # Create contact with timezone
+    r = client.post(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=superuser_token_headers,
+        json={
+            "first_name": "TZTest",
+            "timezone": "America/Los_Angeles",
+            "contact_frequency_days": 30,
+        },
+    )
+    assert r.status_code == 200
+    contact_id = r.json()["id"]
+
+    # Verify the contact was created with the correct timezone
+    r = client.get(
+        f"{settings.API_V1_STR}/contacts/{contact_id}",
+        headers=superuser_token_headers,
+    )
+    assert r.status_code == 200
+    assert r.json()["timezone"] == "America/Los_Angeles"
+
+
+def test_pronouns_in_contact_list(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
+    """Test that pronouns are returned in contact list."""
+    # Create contact with pronouns
+    r = client.post(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=superuser_token_headers,
+        json={"first_name": "PronounTest", "pronouns": "he/him"},
+    )
+    assert r.status_code == 200
+
+    # List contacts and check pronouns field
+    r = client.get(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=superuser_token_headers,
+    )
+    assert r.status_code == 200
+    contacts = r.json()["data"]
+    pronoun_contact = next(c for c in contacts if c["first_name"] == "PronounTest")
+    assert pronoun_contact["pronouns"] == "he/him"

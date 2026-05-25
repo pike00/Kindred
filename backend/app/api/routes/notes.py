@@ -1,6 +1,7 @@
 """Note management routes."""
 
 import uuid
+from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
@@ -16,6 +17,7 @@ from app.models import (
     NotePublic,
     NotesPublic,
     NoteUpdate,
+    Ok,
 )
 
 router = APIRouter(prefix="/notes", tags=["notes"])
@@ -28,7 +30,7 @@ def list_notes(
     contact_id: uuid.UUID,
     skip: int = 0,
     limit: int = 100,
-) -> Any:
+) -> NotesPublic:
     """List notes for a contact."""
     contact = session.get(Contact, contact_id)
     if not contact:
@@ -50,13 +52,18 @@ def list_notes(
     statement = (
         select(Note)
         .where(where_clause)
+        .where(Note.deleted_at == None)  # noqa: E711
         .order_by(Note.created_at.desc())
         .offset(skip)
         .limit(limit)
     )
     notes = session.exec(statement).all()
 
-    count_statement = select(func.count(Note.id.distinct())).where(where_clause)
+    count_statement = (
+        select(func.count(Note.id.distinct()))
+        .where(where_clause)
+        .where(Note.deleted_at == None)  # noqa: E711
+    )
     count = session.exec(count_statement).one()
 
     return NotesPublic(
@@ -71,7 +78,7 @@ def create_note_route(
     session: SessionDep,
     current_user: CurrentUser,
     note_in: NoteCreate,
-) -> Any:
+) -> NotePublic:
     """Create a new note."""
     contact = session.get(Contact, note_in.contact_id)
     if not contact:
@@ -90,7 +97,7 @@ def update_note_route(
     current_user: CurrentUser,
     note_id: uuid.UUID,
     note_in: NoteUpdate,
-) -> Any:
+) -> NotePublic:
     """Update a note."""
     note = session.get(Note, note_id)
     if not note:
@@ -102,7 +109,7 @@ def update_note_route(
     return NotePublic.model_validate(note)
 
 
-@router.delete("/{note_id}")
+@router.delete("/{note_id}", response_model=Ok)
 def delete_note(
     session: SessionDep,
     current_user: CurrentUser,
@@ -139,4 +146,23 @@ def restore_note(
         raise HTTPException(status_code=404, detail="Note not found or not deleted")
     session.exec(update(Note).where(Note.id == note_id).values(deleted_at=None))
     session.commit()
-    return {"ok": True}
+    return Ok()
+
+
+@router.post("/{note_id}/restore")
+def restore_note(
+    session: SessionDep,
+    note_id: uuid.UUID,
+) -> Any:
+    """Restore a soft-deleted note by clearing deleted_at."""
+    from sqlalchemy import text, update
+
+    result = session.exec(
+        text("SELECT id FROM note WHERE id = :id AND deleted_at IS NOT NULL"),
+        params={"id": str(note_id)},
+    ).first()
+    if result is None:
+        raise HTTPException(status_code=404, detail="Note not found or not deleted")
+    session.exec(update(Note).where(Note.id == note_id).values(deleted_at=None))
+    session.commit()
+    return Ok()

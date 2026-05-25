@@ -1,6 +1,7 @@
 """Debt management routes."""
 
 import uuid
+from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
@@ -8,7 +9,16 @@ from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.crud import contact_visible, create_debt
-from app.models import Debt, DebtCreate, DebtPublic, DebtsPublic, DebtUpdate
+from app.models import (
+    Debt,
+    DebtCreate,
+    DebtPayment,
+    DebtPaymentCreate,
+    DebtPaymentPublic,
+    DebtPublic,
+    DebtsPublic,
+    DebtUpdate,
+)
 
 router = APIRouter(prefix="/debts", tags=["debts"])
 
@@ -23,15 +33,29 @@ def list_debts(
     session: SessionDep,
     current_user: CurrentUser,
     contact_id: uuid.UUID,
-) -> Any:
+) -> DebtsPublic:
     """List debts for a contact."""
     _require_contact_visible(session, current_user, contact_id)
 
-    statement = select(Debt).where(Debt.contact_id == contact_id)
+    statement = (
+        select(Debt).where(Debt.contact_id == contact_id).where(Debt.deleted_at == None)  # noqa: E711
+    )
     debts = session.exec(statement).all()
 
+    # Compute paid_amount and is_settled for each debt
+    debt_publics = []
+    for debt in debts:
+        debt_public = DebtPublic.model_validate(debt)
+        # Query payments for this debt
+        payments_stmt = select(DebtPayment).where(DebtPayment.debt_id == debt.id)
+        payments = session.exec(payments_stmt).all()
+        debt_public.payments = [DebtPaymentPublic.model_validate(p) for p in payments]
+        debt_public.paid_amount = sum(p.amount for p in payments)
+        debt_public.is_settled = debt_public.paid_amount >= debt.amount
+        debt_publics.append(debt_public)
+
     return DebtsPublic(
-        data=[DebtPublic.model_validate(d) for d in debts],
+        data=debt_publics,
         count=len(debts),
     )
 
@@ -42,7 +66,7 @@ def create_debt_route(
     session: SessionDep,
     current_user: CurrentUser,
     debt_in: DebtCreate,
-) -> Any:
+) -> DebtPublic:
     """Create a new debt."""
     _require_contact_visible(session, current_user, debt_in.contact_id)
 
@@ -57,7 +81,7 @@ def update_debt(
     current_user: CurrentUser,
     debt_id: uuid.UUID,
     debt_in: DebtUpdate,
-) -> Any:
+) -> DebtPublic:
     """Update a debt."""
     debt = session.get(Debt, debt_id)
     if debt is None:
@@ -69,13 +93,39 @@ def update_debt(
     session.add(debt)
     session.commit()
     session.refresh(debt)
-    return DebtPublic.model_validate(debt)
+    # Compute paid_amount and is_settled
+    debt_public = DebtPublic.model_validate(debt)
+    # Query payments for this debt
+    payments_stmt = select(DebtPayment).where(DebtPayment.debt_id == debt.id)
+    payments = session.exec(payments_stmt).all()
+    debt_public.payments = [DebtPaymentPublic.model_validate(p) for p in payments]
+
+    return debt_public
 
 
-@router.delete("/{debt_id}")
+@router.delete("/{debt_id}", response_model=Ok)
 def delete_debt(
     session: SessionDep,
     current_user: CurrentUser,
+    debt_id: uuid.UUID,
+) -> Ok:
+    """Soft-delete a debt by setting deleted_at."""
+    debt = session.get(Debt, debt_id)
+    if debt is None:
+        raise HTTPException(status_code=404, detail="Debt not found")
+    if debt.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    _require_contact_visible(session, current_user, debt.contact_id)
+
+    debt.deleted_at = datetime.now(timezone.utc)
+    session.add(debt)
+    session.commit()
+    return Ok()
+
+
+@router.post("/{debt_id}/restore")
+def restore_debt(
+    session: SessionDep,
     debt_id: uuid.UUID,
 ) -> Any:
     """Soft-delete a debt by setting deleted_at."""
