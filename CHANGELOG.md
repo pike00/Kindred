@@ -5,6 +5,49 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.71] - 2026-05-25
+
+### Added
+- Feat: add timezone picker component for contact forms (6c62b39)
+
+### Documentation
+- Docs: regenerate db schema docs for merge-train features (86bdf64)
+
+### Fixed
+- Fix: search all contacts in command palette when query is active; add extensions doc (88499ba)
+- Fix: resolve biome a11y violations and format frontend for prek 0.4.1 (9f76808)
+- Fix: repair pre-existing JSX parse errors in ContactsList and vite.config (c43b545)
+
+### Other
+- Chore: remove kanban route from generated routeTree (7d0577e)
+- Chore: update uv.lock from prek and dependency updates (096472c)
+- Chore: merge dependabot/docker_compose/getmeili/meilisearch-v1.44 (11618ec)
+- ⬆ Bump getmeili/meilisearch from v1.42.1 to v1.44.0 (79932ae)
+- Chore: merge dependabot/bun/vite-8.0.14 (c40b789)
+- ⬆ Bump vite from 8.0.7 to 8.0.14 (39c2771)
+- Chore: merge dependabot/bun/tanstack/react-query-devtools-5.100.14 (f8b8a4c)
+- ⬆ Bump @tanstack/react-query-devtools from 5.95.2 to 5.100.14 (1608d62)
+- Chore: merge dependabot/bun/react-hook-form-7.76.0 (c6b36bd)
+- ⬆ Bump react-hook-form from 7.72.0 to 7.76.0 (7d815d8)
+- Chore: regenerate bun.lock with correct axios 1.16.1 resolution (b9510d2)
+- Projects: mark 26 merged-feature projects as to_review (f97dc7c)
+- Projects: mark 6 completed projects as to_review (de9410b)
+- Chore: merge dependabot/bun/axios-1.16.1 (3dc8bb2)
+- ⬆ Bump axios from 1.13.5 to 1.16.1 (1cf51c8)
+- Projects: create merge-train-v0270-qa QA checklist; mark feature-backlog-merge-train completed (b5d5533)
+- Chore: merge dependabot/bun/date-fns-4.3.0 (767434d)
+- ⬆ Bump date-fns from 4.1.0 to 4.3.0 (edea214)
+- Chore: merge dependabot/uv/prek-0.4.1 (3e7d558)
+- ⬆ Bump prek from 0.2.30 to 0.4.1 (d8c95fe)
+- Chore: merge dependabot/uv/pytest-9.0.3 (db0e226)
+- ⬆ Bump pytest from 7.4.4 to 9.0.3 (f295081)
+- Chore: merge dependabot/uv/weasyprint-68.0 (44390a2)
+- ⬆ Bump weasyprint from 61.2 to 68.0 (b75416d)
+- Chore: merge dependabot/uv/pyjwt-2.13.0 (0c56973)
+- ⬆ Bump pyjwt from 2.12.1 to 2.13.0 (e3cde31)
+- Chore: merge dependabot/uv/idna-3.15 (7dfa69c)
+- ⬆ Bump idna from 3.11 to 3.15 (a66f1f6)
+
 ## [0.2.70] - 2026-05-25
 
 ### Added
