@@ -1078,7 +1078,7 @@ def build_apply_review_prompt(pr: PR, review_text: str, wt: Path) -> str:
     file_blocks = ""
     for rel in dict.fromkeys(mentioned):  # deduplicate, preserve order
         full = wt / rel
-        if not full.exists():
+        if not full.is_file():
             continue
         content = full.read_text(errors="replace")
         if len(content) > 8000:
