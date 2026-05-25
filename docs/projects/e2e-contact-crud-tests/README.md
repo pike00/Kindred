@@ -32,5 +32,5 @@ Add end-to-end test coverage for all contact card add/edit/delete dialogs using 
 - **Seeding:** `just seed [count] [email]` runs [seed_fake_data.py](../../../backend/app/seed_fake_data.py) to populate Contact, Address, Pet, Relationship, LifeEvent, and CustomField entities; seed tracks are available via separate functions (seed_contact_children, seed_relationships, etc.)
 - **Dev stack:** `docker compose -f compose.dev.yml up` (or `compose.dev.yml` default in justfile) brings up FastAPI backend at :8000, React frontend at :5173, Postgres, Redis, and Meilisearch; backend auto-reloads on file changes
 - **API endpoints:** Backend defines CRUD routes for contacts and child resources (/api/v1/contacts, /api/v1/contacts/{id}/addresses, etc.); test fixtures must navigate both UI and verify POST/PATCH/DELETE responses
-- **Auth:** Dev stack uses local auth mode (VITE_AUTH_MODE=local); FIRST_SUPERUSER email configurable via .env (removed@example.com default)
+- **Auth:** Dev stack uses local auth mode (VITE_AUTH_MODE=local); FIRST_SUPERUSER email configurable via .env
 - **Post-2026-04-13 refactor:** Contact-specific components (ContactFieldsCard, AddressesCard, etc.) were refactored and have not yet been verified end-to-end; TypeScript build passes but runtime UI correctness unconfirmed

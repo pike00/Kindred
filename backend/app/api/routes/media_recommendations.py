@@ -1,7 +1,6 @@
 """Media recommendation management routes."""
 
 import uuid
-from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from sqlmodel import select
@@ -15,6 +14,7 @@ from app.models import (
     MediaRecommendationPublic,
     MediaRecommendationsPublic,
     MediaRecommendationUpdate,
+    Ok,
 )
 
 router = APIRouter(prefix="/media-recommendations", tags=["media-recommendations"])
@@ -25,7 +25,7 @@ def list_media_recommendations(
     session: SessionDep,
     current_user: CurrentUser,
     contact_id: uuid.UUID,
-) -> Any:
+) -> MediaRecommendationsPublic:
     """List media recommendations for a contact."""
     contact = session.get(Contact, contact_id)
     if not contact:
@@ -52,7 +52,7 @@ def create_media_recommendation_route(
     session: SessionDep,
     current_user: CurrentUser,
     rec_in: MediaRecommendationCreate,
-) -> Any:
+) -> MediaRecommendationPublic:
     """Create a new media recommendation."""
     contact = session.get(Contact, rec_in.contact_id)
     if not contact:
@@ -73,7 +73,7 @@ def update_media_recommendation(
     current_user: CurrentUser,
     rec_id: uuid.UUID,
     rec_in: MediaRecommendationUpdate,
-) -> Any:
+) -> MediaRecommendationPublic:
     """Update a media recommendation."""
     rec = session.get(MediaRecommendation, rec_id)
     if not rec:
@@ -89,12 +89,12 @@ def update_media_recommendation(
     return MediaRecommendationPublic.model_validate(rec)
 
 
-@router.delete("/{rec_id}")
+@router.delete("/{rec_id}", response_model=Ok)
 def delete_media_recommendation(
     session: SessionDep,
     current_user: CurrentUser,
     rec_id: uuid.UUID,
-) -> Any:
+) -> Ok:
     """Delete a media recommendation."""
     rec = session.get(MediaRecommendation, rec_id)
     if not rec:
@@ -104,4 +104,4 @@ def delete_media_recommendation(
 
     session.delete(rec)
     session.commit()
-    return {"ok": True}
+    return Ok()

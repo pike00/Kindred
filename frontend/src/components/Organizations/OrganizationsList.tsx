@@ -1,5 +1,5 @@
 import { useSuspenseQuery } from "@tanstack/react-query"
-import { Link, useNavigate } from "@tanstack/react-router"
+import { Link } from "@tanstack/react-router"
 import { useState } from "react"
 
 import { type OrganizationPublic, OrganizationsService } from "@/client"
@@ -23,7 +23,6 @@ function matchesSearch(org: OrganizationPublic, q: string): boolean {
 }
 
 export function OrganizationsList() {
-  const _navigate = useNavigate()
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(0)
   const [addOpen, setAddOpen] = useState(false)
@@ -34,7 +33,6 @@ export function OrganizationsList() {
       limit: PAGE_SIZE,
     }),
   )
-
   const orgs = (data?.data ?? []).filter((o) => matchesSearch(o, search))
   const total = data?.count ?? 0
   const totalPages = Math.ceil(total / PAGE_SIZE)
