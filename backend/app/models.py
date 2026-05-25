@@ -1374,6 +1374,14 @@ class Interaction(SoftDeleteMixin, InteractionBase, table=True):
         nullable=False,
         description="When the row was inserted (may be after occurred_at; UTC).",
     )
+    deleted_at: datetime | None = Field(
+        default=None,
+        index=True,
+        description=(
+            "Soft-delete marker. When non-null, the row is hidden from "
+            "default queries; restore by clearing this column."
+        ),
+    )
 
 
 class InteractionAttendeeSummary(SQLModel):
@@ -1467,6 +1475,14 @@ class Reminder(SoftDeleteMixin, ReminderBase, table=True):
         nullable=False,
         description="When the reminder was created (UTC).",
     )
+    deleted_at: datetime | None = Field(
+        default=None,
+        index=True,
+        description=(
+            "Soft-delete marker. When non-null, the row is hidden from "
+            "default queries; restore by clearing this column."
+        ),
+    )
 
     snoozes: list["ReminderSnooze"] = Relationship(back_populates="reminder")
 
@@ -1478,11 +1494,6 @@ class ReminderPublic(ReminderBase):
     snoozed_until: datetime | None
     created_at: datetime
     deleted_at: datetime | None = None
-
-
-class ReminderWithContactPublic(ReminderPublic):
-    """Reminder with optional contact name for list views."""
-    contact_name: str | None = None
 
 
 class RemindersPublic(SQLModel):
@@ -1622,6 +1633,14 @@ class Gift(SoftDeleteMixin, GiftBase, table=True):
         nullable=False,
         description="When the gift record was created (UTC).",
     )
+    deleted_at: datetime | None = Field(
+        default=None,
+        index=True,
+        description=(
+            "Soft-delete marker. When non-null, the row is hidden from "
+            "default queries; restore by clearing this column."
+        ),
+    )
 
 
 class GiftPublic(GiftBase):
@@ -1705,6 +1724,14 @@ class Debt(SoftDeleteMixin, DebtBase, table=True):
         nullable=False,
         description="When the debt was recorded (UTC).",
     )
+    deleted_at: datetime | None = Field(
+        default=None,
+        index=True,
+        description=(
+            "Soft-delete marker. When non-null, the row is hidden from "
+            "default queries; restore by clearing this column."
+        ),
+    )
 
 
 class DebtPublic(DebtBase):
@@ -1783,6 +1810,14 @@ class LifeEvent(SoftDeleteMixin, LifeEventBase, table=True):
         default_factory=lambda: datetime.now(timezone.utc),
         nullable=False,
         description="When the event was logged (UTC).",
+    )
+    deleted_at: datetime | None = Field(
+        default=None,
+        index=True,
+        description=(
+            "Soft-delete marker. When non-null, the row is hidden from "
+            "default queries; restore by clearing this column."
+        ),
     )
 
 
@@ -1870,6 +1905,14 @@ class Note(SoftDeleteMixin, NoteBase, table=True):
         default_factory=lambda: datetime.now(timezone.utc),
         nullable=False,
         description="When the note was created (UTC).",
+    )
+    deleted_at: datetime | None = Field(
+        default=None,
+        index=True,
+        description=(
+            "Soft-delete marker. When non-null, the row is hidden from "
+            "default queries; restore by clearing this column."
+        ),
     )
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
