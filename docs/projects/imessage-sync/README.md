@@ -1,6 +1,6 @@
 ---
 title: Kindred — iMessage Social Graph Integration
-status: active
+status: to_review
 repos: [personal-crm, message_metadata_extraction]
 started: 2026-05-03
 last_updated: 2026-05-03

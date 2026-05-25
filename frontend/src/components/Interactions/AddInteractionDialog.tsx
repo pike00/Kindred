@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { useMemo, useState } from "react"
+import { useMemo, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import type { ContactPublic, InteractionCreate } from "@/client"
@@ -61,13 +61,18 @@ const interactionCreateSchema = z.object({
   channel: z.string().min(1, "Select a channel"),
   occurred_at: z.string().min(1, "Date is required"),
   notes: z.string().optional(),
-  mood: z.string().optional(),
   duration_minutes: z.string().optional(),
   location_label: z.string().max(500).optional(),
-  latitude: z.string().optional(),
-  longitude: z.string().optional(),
 })
 type InteractionCreateFormData = z.infer<typeof interactionCreateSchema>
+
+interface OsmResult {
+  lat: string
+  lon: string
+  display_name: string
+}
+
+type OsmStatus = "idle" | "searching" | "found" | "not_found"
 
 interface AddInteractionDialogProps {
   seedContact?: ContactPublic
@@ -84,6 +89,11 @@ export const AddInteractionDialog = ({
   seedContact,
 }: AddInteractionDialogProps) => {
   const [open, setOpen] = useState(false)
+  const [osmStatus, setOsmStatus] = useState<OsmStatus>("idle")
+  const [resolvedLat, setResolvedLat] = useState<number | null>(null)
+  const [resolvedLng, setResolvedLng] = useState<number | null>(null)
+  const [resolvedName, setResolvedName] = useState<string | null>(null)
+  const osmAbortRef = useRef<AbortController | null>(null)
   const { showSuccessToast, showErrorToast } = useCustomToast()
   const queryClient = useQueryClient()
 
@@ -94,10 +104,55 @@ export const AddInteractionDialog = ({
       channel: "",
       occurred_at: toLocalDateTimeInput(new Date()),
       notes: "",
-      mood: "",
       duration_minutes: "",
     },
   })
+
+  const resetOsm = () => {
+    setOsmStatus("idle")
+    setResolvedLat(null)
+    setResolvedLng(null)
+    setResolvedName(null)
+  }
+
+  const handleLocationBlur = async (value: string) => {
+    const trimmed = value.trim()
+    if (!trimmed) {
+      resetOsm()
+      return
+    }
+    osmAbortRef.current?.abort()
+    const controller = new AbortController()
+    osmAbortRef.current = controller
+    setOsmStatus("searching")
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(trimmed)}&limit=1`,
+        {
+          signal: controller.signal,
+          headers: {
+            "Accept-Language": "en",
+            "User-Agent": "Kindred-PersonalCRM/1.0 (personal use)",
+          },
+        },
+      )
+      const results: OsmResult[] = await res.json()
+      if (results.length > 0) {
+        setResolvedLat(parseFloat(results[0].lat))
+        setResolvedLng(parseFloat(results[0].lon))
+        setResolvedName(results[0].display_name)
+        setOsmStatus("found")
+      } else {
+        resetOsm()
+        setOsmStatus("not_found")
+      }
+    } catch (err) {
+      if ((err as Error).name !== "AbortError") {
+        resetOsm()
+        setOsmStatus("not_found")
+      }
+    }
+  }
 
   const addMutation = useMutation({
     mutationFn: (data: InteractionCreate) =>
@@ -105,6 +160,7 @@ export const AddInteractionDialog = ({
     onSuccess: (_, variables) => {
       showSuccessToast("Interaction logged")
       form.reset()
+      resetOsm()
       setOpen(false)
       queryClient.invalidateQueries({ queryKey: ["interactions"] })
       for (const attendeeId of variables.attendee_ids) {
@@ -126,13 +182,13 @@ export const AddInteractionDialog = ({
       channel: data.channel as InteractionCreate["channel"],
       occurred_at: new Date(data.occurred_at).toISOString(),
       notes: data.notes || null,
-      mood: data.mood || null,
+      mood: null,
       duration_minutes: data.duration_minutes
         ? parseInt(data.duration_minutes, 10)
         : null,
       location_label: data.location_label || null,
-      latitude: data.latitude ? parseFloat(data.latitude) : null,
-      longitude: data.longitude ? parseFloat(data.longitude) : null,
+      latitude: resolvedLat,
+      longitude: resolvedLng,
     })
   }
 
@@ -207,19 +263,6 @@ export const AddInteractionDialog = ({
             />
             <FormField
               control={form.control}
-              name="mood"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Mood</FormLabel>
-                  <FormControl>
-                    <Input placeholder="How did it go?" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
               name="notes"
               render={({ field }) => (
                 <FormItem>
@@ -248,40 +291,35 @@ export const AddInteractionDialog = ({
                     <Input
                       placeholder="Starbucks on 5th, their home, the park..."
                       {...field}
+                      onBlur={(e) => {
+                        field.onBlur()
+                        handleLocationBlur(e.target.value)
+                      }}
+                      onChange={(e) => {
+                        field.onChange(e)
+                        if (osmStatus !== "idle") resetOsm()
+                      }}
                     />
                   </FormControl>
+                  {osmStatus === "searching" && (
+                    <p className="text-xs text-muted-foreground">
+                      Searching...
+                    </p>
+                  )}
+                  {osmStatus === "found" && resolvedName && (
+                    <p className="truncate text-xs text-green-600 dark:text-green-400">
+                      Found: {resolvedName}
+                    </p>
+                  )}
+                  {osmStatus === "not_found" && (
+                    <p className="text-xs text-amber-600 dark:text-amber-400">
+                      Location not found — saved as text, won't appear on map
+                    </p>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <div className="grid grid-cols-2 gap-2">
-              <FormField
-                control={form.control}
-                name="latitude"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Latitude</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Optional" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="longitude"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Longitude</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Optional" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
             <Button
               type="submit"
               disabled={addMutation.isPending}

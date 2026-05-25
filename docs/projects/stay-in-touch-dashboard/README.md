@@ -1,6 +1,6 @@
 ---
 title: Stay in Touch Dashboard Widget
-status: blocked
+status: to_review
 repos: [personal-crm]
 started: 2026-04-23
 last_updated: 2026-04-28

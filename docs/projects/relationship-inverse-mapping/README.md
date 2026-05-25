@@ -1,6 +1,6 @@
 ---
 title: Relationship Inverse Mapping
-status: active
+status: to_review
 repos: [personal-crm]
 started: 2026-04-21
 last_updated: 2026-04-21
