@@ -13,7 +13,7 @@ Authenticated user; tenant-scope owner of every row below.
 | is_superuser | boolean |  | false |  |  | Grants admin-only endpoints. |
 | full_name | varchar(255) |  | true |  |  | Display name; optional. |
 | hashed_password | varchar |  | true |  |  | Argon2id hash; null for OIDC-only users. |
-| id | uuid |  | false | [public.tag](public.tag.md) [public.contact](public.contact.md) [public.custom_field_definition](public.custom_field_definition.md) [public.interaction](public.interaction.md) [public.reminder](public.reminder.md) [public.gift](public.gift.md) [public.debt](public.debt.md) [public.life_event](public.life_event.md) [public.note](public.note.md) [public.journal_entry](public.journal_entry.md) [public.webhook_endpoint](public.webhook_endpoint.md) [public.tag_share](public.tag_share.md) [public.media_recommendation](public.media_recommendation.md) [public.activity_log](public.activity_log.md) [public.organization](public.organization.md) [public.api_key](public.api_key.md) [public.api_key_impersonate](public.api_key_impersonate.md) |  | Primary key. |
+| id | uuid |  | false | [public.tag](public.tag.md) [public.group](public.group.md) [public.contact](public.contact.md) [public.custom_field_definition](public.custom_field_definition.md) [public.interaction](public.interaction.md) [public.reminder](public.reminder.md) [public.gift](public.gift.md) [public.debt](public.debt.md) [public.life_event](public.life_event.md) [public.note](public.note.md) [public.journal_entry](public.journal_entry.md) [public.webhook_endpoint](public.webhook_endpoint.md) [public.tag_share](public.tag_share.md) [public.media_recommendation](public.media_recommendation.md) [public.activity_log](public.activity_log.md) [public.oauth_credential](public.oauth_credential.md) [public.api_key](public.api_key.md) [public.api_key_impersonate](public.api_key_impersonate.md) [public.organization](public.organization.md) |  | Primary key. |
 | created_at | timestamp with time zone |  | true |  |  | When the account was created (UTC). |
 | oidc_iss | varchar(512) |  | true |  |  | OIDC issuer URL; paired with oidc_sub forms the unique external identity. |
 | oidc_sub | varchar(255) |  | true |  |  | OIDC subject; paired with oidc_iss forms the unique external identity. |
@@ -59,9 +59,10 @@ erDiagram
 "public.media_recommendation" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.activity_log" }o--o| "public.user" : "FOREIGN KEY (actor_id) REFERENCES #quot;user#quot;(id) ON DELETE SET NULL"
 "public.activity_log" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
-"public.organization" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
+"public.oauth_credential" }o--|| "public.user" : "FOREIGN KEY (user_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.api_key" }o--|| "public.user" : "FOREIGN KEY (owned_by_user_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.api_key_impersonate" }o--|| "public.user" : "FOREIGN KEY (user_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
+"public.organization" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 
 "public.user" {
   varchar_255_ email
@@ -109,9 +110,9 @@ erDiagram
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
   timestamp_with_time_zone deleted_at
-  uuid organization_id FK
   contactsource source
   varchar_500_ source_external_id
+  uuid organization_id FK
   boolean do_not_contact
   varchar_500_ do_not_contact_reason
 }
@@ -134,6 +135,18 @@ erDiagram
   varchar_50_ mood
   integer duration_minutes
   timestamp_with_time_zone created_at
+  timestamp_without_time_zone deleted_at
+  tsvector search_vector
+  boolean is_draft
+  varchar_32_ draft_source
+  varchar_500_ location_label
+  double_precision latitude
+  double_precision longitude
+  varchar_998_ message_id
+  varchar_998_ email_subject
+  varchar_2048_ email_from
+  varchar_2048_ email_to
+  timestamp_without_time_zone email_date
 }
 "public.reminder" {
   uuid id
@@ -147,6 +160,7 @@ erDiagram
   timestamp_with_time_zone last_sent_at
   timestamp_with_time_zone snoozed_until
   timestamp_with_time_zone created_at
+  timestamp_without_time_zone deleted_at
 }
 "public.gift" {
   uuid id
@@ -161,6 +175,7 @@ erDiagram
   varchar_3_ value_currency
   varchar_2048_ url
   timestamp_with_time_zone created_at
+  timestamp_without_time_zone deleted_at
 }
 "public.debt" {
   uuid id
@@ -173,6 +188,7 @@ erDiagram
   boolean is_settled
   date settled_at
   timestamp_with_time_zone created_at
+  timestamp_without_time_zone deleted_at
 }
 "public.life_event" {
   uuid id
@@ -184,6 +200,7 @@ erDiagram
   date occurred_at
   boolean create_annual_reminder
   timestamp_with_time_zone created_at
+  timestamp_without_time_zone deleted_at
 }
 "public.note" {
   uuid id
@@ -192,6 +209,9 @@ erDiagram
   varchar_50000_ body
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
+  timestamp_without_time_zone deleted_at
+  tsvector search_vector
+  varchar_36_ client_id
 }
 "public.journal_entry" {
   uuid id
@@ -201,6 +221,7 @@ erDiagram
   date entry_date
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
+  tsvector search_vector
 }
 "public.webhook_endpoint" {
   uuid id
@@ -238,9 +259,37 @@ erDiagram
   varchar_64_ entity_type
   uuid entity_id
   varchar_32_ action
-  json changes_json
+  jsonb changes_json
   timestamp_with_time_zone occurred_at
   uuid acting_api_key_id FK
+}
+"public.oauth_credential" {
+  uuid id
+  uuid user_id FK
+  oauthprovider provider
+  varchar encrypted_refresh_token
+  varchar encrypted_access_token
+  timestamp_with_time_zone access_token_expires_at
+  varchar_2000_ scopes
+  varchar_4000_ sync_token
+  timestamp_with_time_zone last_synced_at
+  timestamp_with_time_zone created_at
+  timestamp_with_time_zone updated_at
+}
+"public.api_key" {
+  uuid id
+  varchar_255_ name
+  varchar_64_ key_hash
+  varchar_16_ key_prefix
+  uuid owned_by_user_id FK
+  timestamp_with_time_zone created_at
+  timestamp_with_time_zone last_used_at
+  timestamp_with_time_zone revoked_at
+  timestamp_with_time_zone expires_at
+}
+"public.api_key_impersonate" {
+  uuid api_key_id FK
+  uuid user_id FK
 }
 "public.organization" {
   varchar_255_ name
@@ -260,21 +309,6 @@ erDiagram
   uuid owner_id FK
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
-}
-"public.api_key" {
-  uuid id
-  varchar_255_ name
-  varchar_64_ key_hash
-  varchar_16_ key_prefix
-  uuid owned_by_user_id FK
-  timestamp_with_time_zone created_at
-  timestamp_with_time_zone last_used_at
-  timestamp_with_time_zone revoked_at
-  timestamp_with_time_zone expires_at
-}
-"public.api_key_impersonate" {
-  uuid api_key_id FK
-  uuid user_id FK
 }
 ```
 

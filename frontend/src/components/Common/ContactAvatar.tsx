@@ -1,9 +1,11 @@
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 
 type ContactForAvatar = {
   id: string
   first_name?: string | null
   last_name?: string | null
+  avatar_url?: string | null
 }
 
 interface ContactAvatarProps {
@@ -45,18 +47,21 @@ export function ContactAvatar({
   const initials = initialsFor(contact)
 
   return (
-    <div
-      className={cn(
-        "font-display inline-flex shrink-0 items-center justify-center rounded-full font-semibold tracking-tight text-white",
-        sizeClasses[size],
-        className,
+    <Avatar className={cn(sizeClasses[size], className)}>
+      {contact.avatar_url && (
+        <AvatarImage
+          src={contact.avatar_url}
+          alt={`${contact.first_name} ${contact.last_name || ""}`}
+        />
       )}
-      style={{
-        backgroundImage: `linear-gradient(135deg, var(--avatar-${slot}-from), var(--avatar-${slot}-to))`,
-      }}
-      aria-hidden="true"
-    >
-      {initials}
-    </div>
+      <AvatarFallback
+        className="font-display font-semibold tracking-tight text-white"
+        style={{
+          backgroundImage: `linear-gradient(135deg, var(--avatar-${slot}-from), var(--avatar-${slot}-to))`,
+        }}
+      >
+        {initials}
+      </AvatarFallback>
+    </Avatar>
   )
 }

@@ -3,8 +3,8 @@ title: PR Sweep Orchestrator
 status: active
 repos: [personal-crm]
 started: 2026-05-07
-last_updated: 2026-05-08
-next_step: Batch 1 ran (1 ready, 5 skipped on merge conflicts in types.gen.ts); decide conflict strategy (regen client SDK on branch vs. manual rebase), then run Batch 2 (Task 12)
+last_updated: 2026-05-10
+next_step: Task 12 in progress — 7 PRs ready (#36, #48, #26, #40, #54, #62, #37); ~25+ unprocessed; PRs #63/#66/#72 fast-fail in <0.2s (import errors, LLM declined repair) — need manual fix like #37
 progress: 11/12
 ---
 
@@ -40,6 +40,15 @@ See [plan.md](plan.md) for the full implementation steps.
 
 ## Session Log
 
+### 2026-05-10
+- Housekeeping (autonomous): bumped `last_updated` to reflect 3 sweep-script commits landed after the 2026-05-08 save — `59e5c4e` (review pass via deepseek-v4-pro-cloud + kimi-k2.6-cloud fixes), `804cc95` (prek PATH + LLM syntax-error repair after conflict resolution), `c4c7313` (syntax-fix writes corrected file directly). Task 12 (run remaining queue) status unchanged — no evidence in repo of additional PRs flipped to ready since session 5.
+
+### 2026-05-08 (session 5)
+- Manually fixed PR #37 (email-log-ingestion): 5 concatenated docstrings in crud.py, missing `import uuid` in email_service.py, removed unused `BackgroundTasks`, fixed `SessionDep` used as context manager in `gmail_authorize`, resolved E402 mid-file import, added three google packages to pyproject.toml, added `SERVER_HOST`/`GMAIL_CLIENT_ID`/`GMAIL_CLIENT_SECRET` to config.py, created Alembic merge migration resolving two-head conflict; pushed and marked PR #37 ready for review
+- Sweep script improvements committed to main: auto-resolve generated-file conflicts (types.gen.ts) before LLM repair (`9eb7a6e`), fix corrupt LLM patches by recounting hunk line counts (`f7ca04e`), include actual file content in repair prompt to fix context mismatch (`f9cb145`)
+- Batch 5 ran: PR #62 (tagshare-scope-warning) marked ready; PRs #63, #66, #72 fast-fail in <0.2s with import errors; LLM declined repair on all three
+- 7 PRs now ready: #36, #48, #26, #40, #54, #62, #37
+
 ### 2026-05-07 (session 4)
 - Fixed precommit gate: prek exits 1 after auto-fixing files (ruff format, biome, trailing-whitespace) — added dirty-state detection + re-run loop before invoking LLM repair
 - Fixed typecheck gate: was calling `docker compose -f compose.worktree.yml exec` directly without `SLUG`/`COMPOSE_PROJECT_NAME` env vars; added `just typecheck` recipe (uses `just env`) + `typecheck` script to `frontend/package.json` (`tsc --noEmit -p tsconfig.build.json`)
@@ -73,6 +82,12 @@ See [plan.md](plan.md) for the full implementation steps.
 - **Paused at Task 8.** Subagent dispatch rejected by user — Task 8's `--push` step would force-push to a public PR + flip its draft status, needs explicit authorization.
 
 ## Notes
+
+### 2026-05-08 (session 5)
+- **Decisions:** Manual fix on PR #37 — LLM could not repair it; concatenated docstrings (`"""Docstring.    actual_code`) caused parse errors preventing any linting, so patches had no valid context to anchor to
+- **Gotchas:** `SessionDep` is a type alias (`Annotated[Session, Depends(get_db)]`), not a callable context manager — `with SessionDep() as session:` is a runtime error; alembic must be run from worktree `backend/` dir to pick up `pyproject.toml`; LLM-generated crud.py had 5 unclosed docstring literals and a duplicate empty function definition
+- **Issues:** PRs #63/#66/#72 fail pytest in <0.2s (import errors); LLM declined repair on all three; ~25+ PRs still unprocessed
+- **Accomplished:** PR #37 ready for review; 3 sweep script bugs fixed on main; `.pr-sweep-runner/mm-webhook` discrepancy resolved (file exists, was created earlier)
 
 ### 2026-05-08
 - **State sync:** Task 11 flipped to [x] (batch ran overnight — 1 ready, 5 skipped); progress bumped to 11/12

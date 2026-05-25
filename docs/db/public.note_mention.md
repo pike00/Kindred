@@ -43,6 +43,9 @@ erDiagram
   varchar_50000_ body
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
+  timestamp_without_time_zone deleted_at
+  tsvector search_vector
+  varchar_36_ client_id
 }
 "public.contact" {
   uuid id
@@ -71,9 +74,9 @@ erDiagram
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
   timestamp_with_time_zone deleted_at
-  uuid organization_id FK
   contactsource source
   varchar_500_ source_external_id
+  uuid organization_id FK
   boolean do_not_contact
   varchar_500_ do_not_contact_reason
 }
