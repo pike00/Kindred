@@ -12,7 +12,9 @@ from app.models import (
     ContactField,
     ContactFieldCreate,
     ContactFieldPublic,
+    ContactFieldsPublic,
     ContactFieldUpdate,
+    Ok,
 )
 
 router = APIRouter(prefix="/contact-fields", tags=["contact-fields"])
@@ -23,14 +25,14 @@ def _require_contact_visible(session: Any, user: Any, contact_id: uuid.UUID) -> 
         raise HTTPException(status_code=404, detail="Contact not found")
 
 
-@router.get("/contact/{contact_id}")
+@router.get("/contact/{contact_id}", response_model=ContactFieldsPublic)
 def list_contact_fields(
     session: SessionDep,
     current_user: CurrentUser,
     contact_id: uuid.UUID,
     skip: int = 0,
     limit: int = 100,
-) -> Any:
+) -> ContactFieldsPublic:
     """List all fields for a contact."""
     _require_contact_visible(session, current_user, contact_id)
 
@@ -48,10 +50,10 @@ def list_contact_fields(
     )
     count = session.exec(count_statement).one()
 
-    return {
-        "data": [ContactFieldPublic.model_validate(f) for f in fields],
-        "count": count,
-    }
+    return ContactFieldsPublic(
+        data=[ContactFieldPublic.model_validate(f) for f in fields],
+        count=count,
+    )
 
 
 @router.post("/", response_model=ContactFieldPublic)
@@ -60,7 +62,7 @@ def create_contact_field_route(
     session: SessionDep,
     current_user: CurrentUser,
     field_in: ContactFieldCreate,
-) -> Any:
+) -> ContactFieldPublic:
     """Create a new contact field."""
     _require_contact_visible(session, current_user, field_in.contact_id)
 
@@ -75,7 +77,7 @@ def update_contact_field(
     current_user: CurrentUser,
     field_id: uuid.UUID,
     field_in: ContactFieldUpdate,
-) -> Any:
+) -> ContactFieldPublic:
     """Update a contact field."""
     field = session.get(ContactField, field_id)
     if field is None:
@@ -90,12 +92,12 @@ def update_contact_field(
     return ContactFieldPublic.model_validate(field)
 
 
-@router.delete("/{field_id}")
+@router.delete("/{field_id}", response_model=Ok)
 def delete_contact_field(
     session: SessionDep,
     current_user: CurrentUser,
     field_id: uuid.UUID,
-) -> Any:
+) -> Ok:
     """Delete a contact field."""
     field = session.get(ContactField, field_id)
     if field is None:
@@ -104,4 +106,4 @@ def delete_contact_field(
 
     session.delete(field)
     session.commit()
-    return {"ok": True}
+    return Ok()

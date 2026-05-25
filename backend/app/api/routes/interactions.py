@@ -1,6 +1,7 @@
 """Interaction management routes."""
 
 import uuid
+from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
@@ -21,6 +22,7 @@ from app.models import (
     InteractionPublic,
     InteractionsPublic,
     InteractionUpdate,
+    Ok,
 )
 
 router = APIRouter(prefix="/interactions", tags=["interactions"])
@@ -80,9 +82,14 @@ def list_interactions(
     current_user: CurrentUser,
     contact_id: uuid.UUID | None = None,
     skip: int = 0,
+    is_draft: bool | None = None,
     limit: int = 100,
-) -> Any:
-    """List interactions. Pass ``contact_id`` to filter by attendee."""
+) -> InteractionsPublic:
+    """List interactions. Pass ``contact_id`` to filter by attendee.
+
+    By default, drafts are excluded. Pass ``is_draft=true`` to list only
+    drafts, or ``is_draft=false`` to explicitly exclude them.
+    """
     visible_ids = _resolve_visible_contact_ids(session, current_user)
 
     if contact_id is not None and contact_id not in visible_ids:
@@ -96,7 +103,13 @@ def list_interactions(
             InteractionAttendee.interaction_id == Interaction.id,  # type: ignore[arg-type]
         )
         .where(InteractionAttendee.contact_id.in_(visible_ids))  # type: ignore[union-attr]
+        .where(Interaction.deleted_at == None)  # noqa: E711  # soft-delete filter
     )
+    # Default: exclude drafts; caller can override by passing is_draft=true or is_draft=false
+    if is_draft is None:
+        base = base.where(Interaction.is_draft == False)  # noqa: E712
+    else:
+        base = base.where(Interaction.is_draft == is_draft)
     if contact_id is not None:
         base = base.where(InteractionAttendee.contact_id == contact_id)
 
@@ -121,7 +134,7 @@ def create_interaction_route(
     session: SessionDep,
     current_user: CurrentUser,
     interaction_in: InteractionCreate,
-) -> Any:
+) -> InteractionPublic:
     """Create a new interaction with one or more attendees."""
     visible_ids = _resolve_visible_contact_ids(session, current_user)
     for attendee_id in interaction_in.attendee_ids:
@@ -141,7 +154,7 @@ def update_interaction(
     current_user: CurrentUser,
     interaction_id: uuid.UUID,
     interaction_in: InteractionUpdate,
-) -> Any:
+) -> InteractionPublic:
     """Update an interaction; ``attendee_ids`` replaces the attendee set."""
     interaction = session.get(Interaction, interaction_id)
     if interaction is None:
@@ -201,13 +214,13 @@ def update_interaction(
     return _interaction_to_public(session, interaction, visible_ids)
 
 
-@router.delete("/{interaction_id}")
+@router.delete("/{interaction_id}", response_model=Ok)
 def delete_interaction(
     session: SessionDep,
     current_user: CurrentUser,
     interaction_id: uuid.UUID,
-) -> Any:
-    """Delete an interaction and recompute each attendee's last_contacted_at."""
+) -> Ok:
+    """Soft-delete an interaction by setting deleted_at."""
     interaction = session.get(Interaction, interaction_id)
     if interaction is None:
         raise HTTPException(status_code=404, detail="Interaction not found")
@@ -223,9 +236,54 @@ def delete_interaction(
     if not (attendee_ids & visible_ids):
         raise HTTPException(status_code=404, detail="Interaction not found")
 
-    session.delete(interaction)
+    interaction.deleted_at = datetime.now(timezone.utc)
+    session.add(interaction)
     session.flush()
     for aid in attendee_ids:
         recompute_last_contacted_at(session=session, contact_id=aid)
     session.commit()
-    return {"ok": True}
+    return Ok()
+
+
+@router.post("/{interaction_id}/confirm", response_model=InteractionPublic)
+def confirm_draft(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    interaction_id: uuid.UUID,
+) -> Any:
+    """Confirm (promote) a draft interaction to a real interaction.
+
+    Sets is_draft=False and recomputes last_contacted_at for attendees.
+    """
+    interaction = session.get(Interaction, interaction_id)
+    if interaction is None:
+        raise HTTPException(status_code=404, detail="Interaction not found")
+
+    visible_ids = _resolve_visible_contact_ids(session, current_user)
+    attendee_ids = set(
+        session.exec(
+            select(InteractionAttendee.contact_id).where(
+                InteractionAttendee.interaction_id == interaction_id
+            )
+        ).all()
+    )
+    if not (attendee_ids & visible_ids):
+        raise HTTPException(status_code=404, detail="Interaction not found")
+
+    if not interaction.is_draft:
+        raise HTTPException(status_code=400, detail="Interaction is already confirmed")
+
+    # Promote the draft
+    interaction.is_draft = False
+    interaction.draft_source = None
+    session.add(interaction)
+    session.flush()
+
+    # Recompute last_contacted_at for all attendees
+    for aid in attendee_ids:
+        recompute_last_contacted_at(session=session, contact_id=aid)
+
+    session.commit()
+    session.refresh(interaction)
+    return _interaction_to_public(session, interaction, visible_ids)
