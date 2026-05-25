@@ -1,33 +1,40 @@
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute, Link } from "@tanstack/react-router"
+import { useState } from "react"
 
 import type {
   DebtPublic,
   GiftPublic,
+  InteractionPublic,
   MediaRecommendationPublic,
 } from "@/client"
 import {
   ContactsService,
   DebtsService,
   GiftsService,
+  InteractionsService,
   MediaRecommendationsService,
 } from "@/client"
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
 import { EmptyState } from "@/components/Common/EmptyState"
 import { AddressesCard } from "@/components/Contacts/AddressesCard"
+import { AvatarUploadDialog } from "@/components/Contacts/AvatarUploadDialog"
 import { ContactFieldsCard } from "@/components/Contacts/ContactFieldsCard"
 import { CustomFieldsCard } from "@/components/Contacts/CustomFieldsCard"
 import { EditContactDialog } from "@/components/Contacts/EditContactDialog"
+import { HouseholdCard } from "@/components/Contacts/HouseholdCard"
 import { LifeEventsCard } from "@/components/Contacts/LifeEventsCard"
 import { PetsCard } from "@/components/Contacts/PetsCard"
 import { RelationshipsCard } from "@/components/Contacts/RelationshipsCard"
 import { AddDebt } from "@/components/Debts/AddDebt"
 import { AddGift } from "@/components/Gifts/AddGift"
 import { AddInteractionDialog } from "@/components/Interactions/AddInteractionDialog"
+import { InteractionMap } from "@/components/Interactions/InteractionMap"
 import { AddMediaRecommendation } from "@/components/MediaRecommendations/AddMediaRecommendation"
 import { NotesCard } from "@/components/Notes/NotesCard"
 import { UnifiedTimeline } from "@/components/Timeline/UnifiedTimeline"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -38,10 +45,14 @@ import {
 } from "@/components/ui/tooltip"
 import {
   Archive,
+  BellOff,
   Cake,
+  Camera,
   Clock,
+  Download,
   Film,
   Info,
+  MapPin,
   MessagesSquare,
   Star,
   UserRoundSearch,
@@ -95,6 +106,21 @@ function SectionSkeleton() {
 }
 
 function ContactDetailPage() {
+  const [heatmapFilter, setHeatmapFilter] = useState<{
+    startDate: string
+    endDate: string
+  } | null>(null)
+
+  const handleWeekClick = (
+    weekStart: string,
+    weekEnd: string,
+    count: number,
+  ) => {
+    if (count === 0) return
+    setHeatmapFilter({ startDate: weekStart, endDate: weekEnd })
+  }
+
+  const clearHeatmapFilter = () => setHeatmapFilter(null)
   const { contactId } = Route.useParams()
   const { data: contact } = useSuspenseQuery({
     queryKey: ["contacts", contactId],
@@ -117,6 +143,12 @@ function ContactDetailPage() {
       MediaRecommendationsService.listMediaRecommendations({ contactId }),
   })
 
+  const { data: interactionsData } = useQuery({
+    queryKey: ["interactions", contactId],
+    queryFn: () =>
+      InteractionsService.listInteractions({ contactId, limit: 500 }),
+  })
+
   const fullName = [
     contact.prefix,
     contact.first_name,
@@ -130,13 +162,49 @@ function ContactDetailPage() {
   const gifts = giftsData?.data ?? []
   const debts = debtsData?.data ?? []
   const mediaRecs = mediaData?.data ?? []
+  const interactions: InteractionPublic[] = interactionsData?.data ?? []
 
   return (
     <div className="space-y-6 max-w-5xl">
       {/* Header */}
       <div className="flex items-start gap-5">
-        <ContactAvatar contact={contact} size="lg" />
+        <div className="relative group">
+          <ContactAvatar contact={contact} size="lg" />
+          <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+            <AvatarUploadDialog
+              contact={contact}
+              trigger={
+                <button
+                  type="button"
+                  className="text-white hover:text-white/80"
+                >
+                  <Camera className="size-6" />
+                </button>
+              }
+            />
+          </div>
+        </div>
         <div className="flex-1 min-w-0 space-y-2">
+          {/* Heatmap */}
+          <InteractionHeatmap onWeekClick={handleWeekClick} />
+          {heatmapFilter && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span>
+                Filtered to week of{" "}
+                {new Date(heatmapFilter.startDate).toLocaleDateString(
+                  undefined,
+                  { month: "short", day: "numeric" },
+                )}
+              </span>
+              <button
+                type="button"
+                onClick={clearHeatmapFilter}
+                className="underline hover:text-foreground"
+              >
+                Clear filter
+              </button>
+            </div>
+          )}
           <div className="flex items-start justify-between gap-3">
             <div className="flex flex-wrap items-center gap-3 min-w-0">
               <h1 className="font-display text-4xl font-bold tracking-tight">
@@ -147,13 +215,55 @@ function ContactDetailPage() {
                   <Star className="size-3" /> Favorite
                 </Badge>
               )}
+              {contact.source && (
+                <Badge variant="outline" className="gap-1">
+                  <Clock className="size-3" />
+                  {contact.source === "manual"
+                    ? "Manual"
+                    : contact.source === "vcard_import"
+                      ? "vCard Import"
+                      : contact.source === "carddav"
+                        ? "CardDAV"
+                        : contact.source === "google"
+                          ? "Google"
+                          : contact.source === "webhook"
+                            ? "Webhook"
+                            : contact.source}
+                  {contact.source_external_id && (
+                    <span className="text-muted-foreground text-xs">
+                      {" "}
+                      ({contact.source_external_id})
+                    </span>
+                  )}
+                </Badge>
+              )}
               {contact.is_archived && (
                 <Badge variant="outline">
                   <Archive className="size-3" /> Archived
                 </Badge>
               )}
+              {contact.do_not_contact && (
+                <Badge
+                  variant="outline"
+                  title={contact.do_not_contact_reason || undefined}
+                >
+                  <BellOff className="size-3" /> No reminders
+                </Badge>
+              )}
             </div>
-            <EditContactDialog contact={contact} />
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  window.open(`/api/v1/contacts/${contactId}.pdf`, "_blank")
+                }}
+              >
+                <Download className="size-4 mr-2" />
+                Download PDF
+              </Button>
+              <EditContactDialog contact={contact} />
+            </div>
           </div>
           {contact.company && (
             <p className="text-lg text-muted-foreground">
@@ -176,6 +286,18 @@ function ContactDetailPage() {
                 {contact.how_we_met}
               </span>
             )}
+            {contact.pronouns && (
+              <span className="flex items-center gap-1">
+                <UserRoundSearch className="size-3.5" /> Pronouns:{" "}
+                {contact.pronouns}
+              </span>
+            )}
+
+            {contact.timezone && (
+              <span className="flex items-center gap-1">
+                <Clock className="size-3.5" /> Timezone: {contact.timezone}
+              </span>
+            )}
             {contact.last_contacted_at && (
               <span className="flex items-center gap-1">
                 <Clock className="size-3.5" /> Last contacted:{" "}
@@ -190,7 +312,11 @@ function ContactDetailPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Left column (2/3 width) */}
         <div className="md:col-span-2 space-y-6">
-          <UnifiedTimeline contactId={contactId} />
+          <UnifiedTimeline
+            contactId={contactId}
+            startDate={heatmapFilter?.startDate ?? null}
+            endDate={heatmapFilter?.endDate ?? null}
+          />
           <NotesCard contactId={contactId} />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <ContactFieldsCard contactId={contactId} />
@@ -199,6 +325,10 @@ function ContactDetailPage() {
           <PetsCard contactId={contactId} />
           <LifeEventsCard contactId={contactId} />
           <CustomFieldsCard contactId={contactId} />
+          <HouseholdCard
+            contactId={contactId}
+            contactName={contact.first_name ?? ""}
+          />
         </div>
 
         {/* Right column (1/3 width) */}
@@ -250,7 +380,7 @@ function ContactDetailPage() {
                   Groups
                   <InfoHint>
                     Named collections of people with a shared context, like
-                    "Family", "D&D Group", or "Work Team". Groups have a
+                    "Family", "D&amp;D Group", or "Work Team". Groups have a
                     description; tags don't.
                   </InfoHint>
                 </CardTitle>
