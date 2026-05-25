@@ -10,15 +10,16 @@ import useAuth from "@/hooks/useAuth"
 import {
   Bell,
   CalendarHeart,
+  Gift,
   Home,
   MessagesSquare,
   NotebookPen,
   ShieldCheck,
   Tag,
   Users,
-  UsersRound,
 } from "@/lib/icons"
 import { type Item, Main } from "./Main"
+import { SmartLists } from "./SmartLists"
 import { User } from "./User"
 
 const baseItems: Item[] = [
@@ -30,6 +31,7 @@ const baseItems: Item[] = [
   { icon: Users, title: "Graph", path: "/graph" },
   { icon: Bell, title: "Reminders", path: "/reminders" },
   { icon: CalendarHeart, title: "Calendar", path: "/calendar" },
+  { icon: Gift, title: "Gift Kanban", path: "/gifts/kanban" },
   { icon: NotebookPen, title: "Journal", path: "/journal" },
 ]
 
@@ -47,6 +49,7 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <Main items={items} />
+        <SmartLists />
       </SidebarContent>
       <SidebarFooter>
         <SidebarAppearance />

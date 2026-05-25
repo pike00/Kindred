@@ -1,23 +1,89 @@
-# Personal CRM — dev recipes.
-# Run `just --list` to see them all.
+set shell := ["bash", "-uc"]
 
+# `release` / `version` / changelog recipes come from release.just (shared).
+# `dev` / `down` / `down-clean` / `logs` / `ps` / `shell` / `pytest` /
+# `worktree` / `worktree-rm` / `pr` come from preview.just. preview-kit
+# threads GIT_HASH + APP_VERSION as build args.
+
+import 'release.just'
+import 'preview.just'
+
+default:
+    @just --list
+
+# ── Repo-specific settings ──────────────────────────────────────────────
+# Image brand is "kindred" (running container); the repo is "personal-crm".
 # Which compose file to target. Override per-invocation:
 #   just compose=compose.yml seed
 compose := "compose.dev.yml"
-
 _dc := "docker compose -f " + compose
+
+# Exhaustive overnight sweep — loops sweep+review until all PRs are resolved or stuck.
+# Set DRY_RUN=1 for a dry-run first pass. Set ONLY_PR=<n> to test a single PR.
+# Runs in a tmux session named 'pr-overnight'; logs to .pr-sweep-runner/overnight.log.
+sweep-overnight:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    tmux kill-session -t pr-overnight 2>/dev/null || true
+    tmux new-session -d -s pr-overnight -c "$(pwd)" \
+        'bash scripts/sweep-overnight.sh'
+    echo "Started in tmux session 'pr-overnight'."
+    echo "Attach:  tmux attach -t pr-overnight"
+    echo "Tail:    tail -f .pr-sweep-runner/overnight.log"
+
+# Run the PR sweep orchestrator (Task 8+9). Loads .env, then runs the full pipeline.
+# Set DRY_RUN=1 to print the plan without pushing anything.
+# Set ONLY_PR=<n> to process a single PR for smoke-testing.
+sweep *args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ ! -f .env ]; then
+        echo "ERROR: .env not found — run: sops -d .env.sops > .env" >&2
+        exit 1
+    fi
+    set -a; source .env; set +a
+    exec uv run --script --quiet scripts/run-pr-sweep.py run {{args}}
+
+# Review all already-ready PRs with deepseek-v4-pro-cloud (review) + kimi-k2.6-cloud (fixes).
+# Idempotent — skips PRs already reviewed. Run after `just sweep` completes.
+sweep-review:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ ! -f .env ]; then
+        echo "ERROR: .env not found — run: sops -d .env.sops > .env" >&2
+        exit 1
+    fi
+    set -a; source .env; set +a
+    exec uv run --script --quiet scripts/run-pr-sweep.py review
 
 # Seed fake data for the FIRST_SUPERUSER. Safe to run repeatedly; adds more on top.
 seed count="500" email="":
-    {{_dc}} exec -T backend python app/seed_fake_data.py --count {{count}} {{ if email == "" { "" } else { "--email " + email } }}
+    #!/usr/bin/env bash
+    eval "$(just env | sed 's/^/export /')"
+    docker compose -f "$PREVIEW_COMPOSE_FILE" exec -T backend python app/seed_fake_data.py --count {{count}} {{ if email == "" { "" } else { "--email " + email } }}
 
 # Wipe this user's existing contacts/tags/groups/reminders, then reseed.
 seed-reset count="500" email="":
-    {{_dc}} exec -T backend python app/seed_fake_data.py --count {{count}} --reset {{ if email == "" { "" } else { "--email " + email } }}
+    #!/usr/bin/env bash
+    eval "$(just env | sed 's/^/export /')"
+    docker compose -f "$PREVIEW_COMPOSE_FILE" exec -T backend python app/seed_fake_data.py --count {{count}} --reset {{ if email == "" { "" } else { "--email " + email } }}
 
 # Deterministic seed — same data every run (good for screenshots/demos).
 seed-fixed count="500" rng="42" email="":
-    {{_dc}} exec -T backend python app/seed_fake_data.py --count {{count}} --reset --seed {{rng}} {{ if email == "" { "" } else { "--email " + email } }}
+    #!/usr/bin/env bash
+    eval "$(just env | sed 's/^/export /')"
+    docker compose -f "$PREVIEW_COMPOSE_FILE" exec -T backend python app/seed_fake_data.py --count {{count}} --reset --seed {{rng}} {{ if email == "" { "" } else { "--email " + email } }}
+
+# Regenerate the frontend OpenAPI client AND restart the frontend container
+# so Vite drops its cached SDK from node_modules/.vite/deps. Without the
+# restart, the dev server keeps serving the stale client even though the
+# source files on disk are current.
+regen-client:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    eval "$(just env | sed 's/^/export /')"
+    bash scripts/generate-client.sh
+    docker compose -f "$PREVIEW_COMPOSE_FILE" restart frontend
 
 # Regenerate docs/db/ from the live Postgres schema using tbls, then render
 # each .md to a standalone .html via pandoc. Open docs/db/index.html in a
@@ -25,19 +91,20 @@ seed-fixed count="500" rng="42" email="":
 db-docs:
     #!/usr/bin/env bash
     set -euo pipefail
+    eval "$(just env | sed 's/^/export /')"
     set -a; source .env; set +a
     DSN="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable"
     # 1) Live DB schema → Markdown (tbls).
     docker run --rm \
         --user "$(id -u):$(id -g)" \
-        --network kindred-internal-crm \
+        --network "${COMPOSE_PROJECT_NAME}_default" \
         -v "$(pwd)":/work -w /work \
         -e TBLS_DSN="$DSN" \
         ghcr.io/k1low/tbls \
         doc -c /work/.tbls.yml "$DSN" docs/db --force --rm-dist
     # 2) Live DB schema → DBML (@dbml/cli). npm needs registry.npmjs.org
-    # (default bridge), the DB only answers on kindred-internal-crm (no
-    # internet). Create on bridge, attach kindrednet, then start.
+    # (default bridge), the DB only answers on the project network (no internet).
+    # Create on bridge, attach project network, then start.
     DBML_CID=$(docker create \
         --user "$(id -u):$(id -g)" \
         -v "$(pwd)":/work -w /work \
@@ -45,7 +112,7 @@ db-docs:
         node:22-alpine \
         npx -y -p @dbml/cli@7.1.1 db2dbml postgres "$DSN" -o docs/db/schema.dbml)
     trap 'docker rm -f "$DBML_CID" >/dev/null 2>&1 || true' EXIT
-    docker network connect kindred-internal-crm "$DBML_CID"
+    docker network connect "${COMPOSE_PROJECT_NAME}_default" "$DBML_CID"
     docker start -a "$DBML_CID"
     docker rm -f "$DBML_CID" >/dev/null
     trap - EXIT
@@ -74,11 +141,12 @@ db-docs:
 db-docs-check:
     #!/usr/bin/env bash
     set -euo pipefail
+    eval "$(just env | sed 's/^/export /')"
     set -a; source .env; set +a
     DSN="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable"
     if ! docker run --rm \
         --user "$(id -u):$(id -g)" \
-        --network kindred-internal-crm \
+        --network "${COMPOSE_PROJECT_NAME}_default" \
         -v "$(pwd)":/work -w /work \
         -e TBLS_DSN="$DSN" \
         ghcr.io/k1low/tbls \
@@ -97,170 +165,122 @@ db-docs-check:
 install-hooks:
     uv run --project backend prek install
 
-# ---------------------------------------------------------------------------
-# Per-worktree dev stack (compose.worktree.yml).
+# Run frontend TypeScript typecheck inside the worktree's frontend container.
+typecheck:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    eval "$(just env | sed 's/^/export /')"
+    docker compose -f "$PREVIEW_COMPOSE_FILE" exec -T frontend bun run typecheck
+
+# Run frontend Vitest suite. Forwards extra args to vitest.
+frontend-test *args:
+    cd frontend && bun run test -- {{args}}
+
+# Run frontend Vitest with v8 coverage. Writes report to frontend/coverage/.
+frontend-coverage *args:
+    cd frontend && bun run test -- --coverage {{args}}
+
+# Run every test suite: backend pytest, frontend Vitest, SDK pytest.
+# Fails fast on the first failing suite.
+test-all:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    just pytest
+    just frontend-test
+    just sdk-test
+
+# ─── Marketing site (website/) → Cloudflare Pages ───────────────────────
+# Full set of website recipes lives in website/justfile:
+#   just -f website/justfile dev       # local preview server on tailnet
+#   just -f website/justfile render    # open index.html in browser
+#   just -f website/justfile deploy    # push to Cloudflare Pages
+
+[group('Deploy')]
+web-deploy:
+    just -f website/justfile deploy
+
+# ─── Release / build / deploy ────────────────────────────────────────────
 #
-# `just up` from any worktree boots an isolated stack: own COMPOSE_PROJECT_NAME,
-# own DB / Redis / Meili volumes, host ports offset deterministically from the
-# worktree's directory name. Run from the main repo dir and you get the
-# "personal-crm" project on the default offset.
-# ---------------------------------------------------------------------------
+# `release` comes from release.just (release-kit cut: preflight, git-cliff
+# CHANGELOG, LLM notes, tag, push, GH release). `build` and `deploy` are
+# inline because they reference repo-specific paths.
 
-# Print the env vars this worktree resolves to (project name, hostname, ports).
-# Useful for sanity checks and for `eval "$(just env)"` in subshells.
-env:
+# Build Dockerfile.prod and push to GHCR as :<tag> and :sha-<short>.
+# Image name is "kindred" (the container brand), repo is "personal-crm".
+[group('Deploy')]
+build tag:
     #!/usr/bin/env bash
     set -euo pipefail
-    slug="$(basename "$(git rev-parse --show-toplevel)")"
-    offset=$((16#$(printf %s "$slug" | sha1sum | head -c 4) % 1000))
-    # Resolve DOMAIN from .env (symlinked from main if needed) for WORKTREE_HOST.
-    main_repo="$(dirname "$(git rev-parse --git-common-dir | xargs -I{} readlink -f {})")"
-    domain="$(grep -E '^DOMAIN=' "$main_repo/.env" | cut -d= -f2- | tr -d '"')"
-    echo "SLUG=$slug"
-    echo "COMPOSE_PROJECT_NAME=crm-$slug"
-    echo "WORKTREE_HOST=$slug.kindred.$domain"
-    echo "BACKEND_PORT=$((8000 + offset))"
-    echo "FRONTEND_PORT=$((5173 + offset))"
-    echo "DB_PORT=$((15432 + offset))"
-    echo "REDIS_PORT=$((16379 + offset))"
-    echo "MEILI_PORT=$((17700 + offset))"
-
-# Bring the worktree stack up. Symlinks .env from the main repo if missing.
-up:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    toplevel="$(git rev-parse --show-toplevel)"
-    main_repo="$(dirname "$(git rev-parse --git-common-dir | xargs -I{} readlink -f {})")"
-    [ -f .env ] || ln -s "$main_repo/.env" .env
-    # Source .env to pick up POSTGRES_USER/DB for the banner.
-    set -a; . ./.env; set +a
-    eval "$(just env | sed 's/^/export /')"
-    slug="${COMPOSE_PROJECT_NAME#crm-}"
-    offset=$((BACKEND_PORT - 8000))
-    branch="$(git symbolic-ref --short HEAD 2>/dev/null || echo 'detached')"
-    head_line="$(git log -1 --format='%h %s' 2>/dev/null || echo 'unknown')"
-    dirty="$(git status --porcelain 2>/dev/null | wc -l | tr -d ' ')"
-    echo "▶ project:  $COMPOSE_PROJECT_NAME  (port offset $offset)"
-    echo "  branch:   $branch"
-    echo "  HEAD:     $head_line"
-    if [ "$dirty" -gt 0 ]; then
-        echo "  dirty:    $dirty file(s) uncommitted"
+    if ! [[ "{{tag}}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$ ]]; then
+        echo "ERROR: tag must match v<MAJOR>.<MINOR>.<PATCH>[-prerelease], got: {{tag}}" >&2
+        exit 1
     fi
-    echo "  worktree: $toplevel"
-    if [ -L .env ]; then
-        echo "  .env:     symlink → $(readlink .env)"
-    else
-        echo "  .env:     local file"
+    if ! git rev-parse --verify "refs/tags/{{tag}}" >/dev/null 2>&1; then
+        echo "ERROR: git tag {{tag}} doesn't exist locally — run 'just release patch' first" >&2
+        exit 1
     fi
-    echo
-    echo "  app:      https://$WORKTREE_HOST           ← open this"
-    echo "  api:      https://$WORKTREE_HOST/api/v1"
-    echo "  docs:     https://$WORKTREE_HOST/docs"
-    echo
-    echo "  direct host-port access (offline / CLI use):"
-    echo "    backend:  http://localhost:$BACKEND_PORT"
-    echo "    frontend: http://localhost:$FRONTEND_PORT"
-    echo "    db:       postgres://${POSTGRES_USER:-postgres}@localhost:$DB_PORT/${POSTGRES_DB:-crm}"
-    echo "    redis:    redis://localhost:$REDIS_PORT"
-    echo "    meili:    http://localhost:$MEILI_PORT"
-    echo
-    echo "▶ building images and starting containers..."
-    docker compose -f compose.worktree.yml up -d --build
-    echo
-    echo "✓ stack up. Tail logs with 'just logs' or 'just logs backend'."
+    # Deref annotated tag to its underlying commit; bare `git rev-parse <tag>`
+    # returns the tag-object SHA for annotated tags, not the commit it points to.
+    SHA=$(git rev-parse "{{tag}}^{}")
+    SHORT=${SHA:0:7}
+    IMAGE=ghcr.io/pike00/kindred
+    echo "▶ Building $IMAGE for tag {{tag}} (commit $SHORT)..."
+    docker buildx build \
+        --platform linux/amd64 \
+        --tag "$IMAGE:{{tag}}" \
+        --tag "$IMAGE:sha-$SHORT" \
+        --build-arg "APP_VERSION={{tag}}" \
+        --build-arg "GIT_HASH=$SHORT" \
+        --build-arg "VITE_API_URL=${VITE_API_URL:-}" \
+        --file Dockerfile.prod \
+        --cache-from type=local,src=/tmp/buildx-cache-kindred \
+        --cache-to   type=local,dest=/tmp/buildx-cache-kindred,mode=max \
+        --push \
+        .
+    echo "✓ Built $IMAGE:{{tag}} and :sha-$SHORT"
+    echo "  Deploy:  just deploy {{tag}}"
 
-# Stop and remove containers but keep volumes (DB data survives).
-down:
+# Deploy: delegates to the homelab apps/kindred/justfile, which handles
+# the mandatory pg-dump-before-bump + post-deploy healthcheck. Run on ares.
+[group('Deploy')]
+deploy tag:
+    just -f ~/Documents/Homelab/apps/kindred/justfile bump {{tag}}
+
+# End-to-end: cut a release AND build AND deploy.
+[group('Deploy')]
+ship level:
     #!/usr/bin/env bash
     set -euo pipefail
-    eval "$(just env | sed 's/^/export /')"
-    docker compose -f compose.worktree.yml down
+    just release {{level}}
+    tag=$(git describe --tags --abbrev=0)
+    just build "$tag"
+    just deploy "$tag"
 
-# Stop and remove containers AND volumes (fresh DB on next up).
-down-clean:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    eval "$(just env | sed 's/^/export /')"
-    docker compose -f compose.worktree.yml down -v
+# ─── Python SDK (sdk/) ───────────────────────────────────────────────────
 
-# Tail logs across all services. Pass a service name to scope: just logs backend
-logs *args:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    eval "$(just env | sed 's/^/export /')"
-    docker compose -f compose.worktree.yml logs -f {{args}}
+# Regenerate sdk/src/kindred/_generated/ from frontend/openapi.json.
+# Run after any backend schema change; commit the result.
+[group('SDK')]
+sdk-regen:
+    cd sdk && ./scripts/regen.sh
 
-# Show worktree stack status.
-ps:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    eval "$(just env | sed 's/^/export /')"
-    docker compose -f compose.worktree.yml ps
+# Run the SDK's pytest suite.
+[group('SDK')]
+sdk-test *args:
+    cd sdk && uv sync --frozen --quiet && uv run pytest {{args}}
 
-# Run pytest inside the worktree's backend container. Pass extra args after --.
-pytest *args:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    eval "$(just env | sed 's/^/export /')"
-    docker compose -f compose.worktree.yml exec -T backend pytest {{args}}
+# Build a wheel + sdist into sdk/dist/.
+[group('SDK')]
+sdk-build:
+    cd sdk && uv build
 
-# Open a bash shell inside the worktree's backend container.
-shell:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    eval "$(just env | sed 's/^/export /')"
-    docker compose -f compose.worktree.yml exec backend bash
+# Install the SDK as a global uv tool from this checkout (editable).
+# After: `kindred --help` from anywhere.
+[group('SDK')]
+sdk-install-local:
+    uv tool install --force --editable ./sdk
 
-# Create-if-missing a worktree at .worktrees/<slug> on a new branch named
-# <slug> (or resume if it already exists), then bring its stack up. Run from
-# anywhere in the repo — main, another worktree, doesn't matter.
-worktree slug:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    main_repo="$(dirname "$(git rev-parse --git-common-dir | xargs -I{} readlink -f {})")"
-    wt_path="$main_repo/.worktrees/{{slug}}"
-    base_branch="$(git -C "$main_repo" symbolic-ref --short HEAD 2>/dev/null || echo 'main')"
-    if [ ! -d "$wt_path" ]; then
-        echo "▶ Creating new worktree"
-        echo "  path:   $wt_path"
-        echo "  base:   $base_branch ($(git -C "$main_repo" log -1 --format='%h %s'))"
-        echo "  branch: {{slug}}  (new)"
-        echo
-        git -C "$main_repo" worktree add "$wt_path" -b "{{slug}}"
-    else
-        echo "▶ Reusing existing worktree"
-        echo "  path:   $wt_path"
-        wt_branch="$(git -C "$wt_path" symbolic-ref --short HEAD 2>/dev/null || echo 'detached')"
-        wt_head="$(git -C "$wt_path" log -1 --format='%h %s' 2>/dev/null || echo 'unknown')"
-        ahead="$(git -C "$wt_path" rev-list --count "${base_branch}..HEAD" 2>/dev/null || echo '?')"
-        behind="$(git -C "$wt_path" rev-list --count "HEAD..${base_branch}" 2>/dev/null || echo '?')"
-        dirty="$(git -C "$wt_path" status --porcelain 2>/dev/null | wc -l | tr -d ' ')"
-        echo "  branch: $wt_branch  (ahead $ahead, behind $behind vs $base_branch)"
-        echo "  HEAD:   $wt_head"
-        if [ "$dirty" -gt 0 ]; then
-            echo "  dirty:  $dirty uncommitted file(s):"
-            git -C "$wt_path" status --short | sed 's/^/            /'
-        else
-            echo "  dirty:  clean"
-        fi
-        echo
-    fi
-    cd "$wt_path"
-    just up
-    eval "$(just env | sed 's/^/export /')"
-    echo
-    echo "▶ Starting on https://$WORKTREE_HOST"
-
-# Tear down a worktree's stack (with volumes) and remove the worktree itself.
-worktree-rm slug:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    main_repo="$(dirname "$(git rev-parse --git-common-dir | xargs -I{} readlink -f {})")"
-    wt_path="$main_repo/.worktrees/{{slug}}"
-    if [ ! -d "$wt_path" ]; then
-        echo "no worktree at $wt_path — nothing to do"
-        exit 0
-    fi
-    (cd "$wt_path" && just down-clean) || true
-    git -C "$main_repo" worktree remove "$wt_path" --force
-    echo "✓ removed worktree '{{slug}}' (branch left intact — delete with 'git branch -D {{slug}}')"
+# Print the CLI help — sanity-check the install.
+[group('SDK')]
+sdk-help:
+    cd sdk && uv run kindred --help

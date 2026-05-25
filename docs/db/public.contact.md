@@ -44,6 +44,7 @@ Core contact entity — the subject of everything else in the CRM.
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
+| contact_auto_log_email_not_null | n | NOT NULL auto_log_email |
 | contact_created_at_not_null | n | NOT NULL created_at |
 | contact_do_not_contact_not_null | n | NOT NULL do_not_contact |
 | contact_first_name_not_null | n | NOT NULL first_name |
@@ -51,10 +52,12 @@ Core contact entity — the subject of everything else in the CRM.
 | contact_is_archived_not_null | n | NOT NULL is_archived |
 | contact_is_deceased_not_null | n | NOT NULL is_deceased |
 | contact_is_favorite_not_null | n | NOT NULL is_favorite |
+| contact_is_merged_not_null | n | NOT NULL is_merged |
 | contact_owner_id_not_null | n | NOT NULL owner_id |
 | contact_source_not_null | n | NOT NULL source |
 | contact_updated_at_not_null | n | NOT NULL updated_at |
 | contact_owner_id_fkey | FOREIGN KEY | FOREIGN KEY (owner_id) REFERENCES "user"(id) ON DELETE CASCADE |
+| contact_merged_into_id_fkey | FOREIGN KEY | FOREIGN KEY (merged_into_id) REFERENCES contact(id) ON DELETE SET NULL |
 | contact_pkey | PRIMARY KEY | PRIMARY KEY (id) |
 | uq_contact_owner_source_external_id | UNIQUE | UNIQUE (owner_id, source, source_external_id) |
 | fk_contact_organization_id | FOREIGN KEY | FOREIGN KEY (organization_id) REFERENCES organization(id) ON DELETE SET NULL |
@@ -76,8 +79,8 @@ Core contact entity — the subject of everything else in the CRM.
 ```mermaid
 erDiagram
 
+"public.contact" }o--o| "public.contact" : "FOREIGN KEY (merged_into_id) REFERENCES contact(id) ON DELETE SET NULL"
 "public.contact_tag" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
-"public.contact_group" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.contact_field" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.address" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.relationship" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
@@ -133,10 +136,6 @@ erDiagram
   uuid contact_id FK
   uuid tag_id FK
 }
-"public.contact_group" {
-  uuid contact_id FK
-  uuid group_id FK
-}
 "public.contact_field" {
   uuid id
   uuid contact_id FK
@@ -165,7 +164,6 @@ erDiagram
   uuid related_contact_id FK
   varchar_100_ relationship_type
   varchar_1000_ notes
-  uuid inverse_id FK
 }
 "public.pet" {
   uuid id
@@ -193,6 +191,7 @@ erDiagram
   timestamp_with_time_zone last_sent_at
   timestamp_with_time_zone snoozed_until
   timestamp_with_time_zone created_at
+  timestamp_without_time_zone deleted_at
 }
 "public.gift" {
   uuid id
@@ -207,6 +206,7 @@ erDiagram
   varchar_3_ value_currency
   varchar_2048_ url
   timestamp_with_time_zone created_at
+  timestamp_without_time_zone deleted_at
 }
 "public.debt" {
   uuid id
@@ -219,6 +219,7 @@ erDiagram
   boolean is_settled
   date settled_at
   timestamp_with_time_zone created_at
+  timestamp_without_time_zone deleted_at
 }
 "public.life_event" {
   uuid id
@@ -230,6 +231,7 @@ erDiagram
   date occurred_at
   boolean create_annual_reminder
   timestamp_with_time_zone created_at
+  timestamp_without_time_zone deleted_at
 }
 "public.note" {
   uuid id
@@ -238,6 +240,9 @@ erDiagram
   varchar_50000_ body
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
+  timestamp_without_time_zone deleted_at
+  tsvector search_vector
+  varchar_36_ client_id
 }
 "public.media_recommendation" {
   uuid id

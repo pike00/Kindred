@@ -1,0 +1,653 @@
+import { describe, it, expect, beforeEach, vi } from "vitest"
+import { screen, waitFor } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
+import { renderWithProviders } from "@/test/helpers"
+import ImportExport from "@/components/UserSettings/ImportExport"
+
+vi.mock("sonner", () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}))
+
+vi.mock("@/client", () => ({
+  ImportExportService: {
+    importVcard: vi.fn(),
+  },
+  OpenAPI: {
+    BASE: "http://localhost",
+    TOKEN: "test-token",
+  },
+}))
+
+describe("ImportExport", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it("renders import section heading", () => {
+    renderWithProviders(<ImportExport />)
+
+    expect(screen.getByText("Import contacts")).toBeInTheDocument()
+  })
+
+  it("renders export section heading", () => {
+    renderWithProviders(<ImportExport />)
+
+    expect(screen.getByText("Export contacts")).toBeInTheDocument()
+  })
+
+  it("renders file input with correct accept types", () => {
+    const { container } = renderWithProviders(<ImportExport />)
+
+    const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement
+
+    expect(fileInput).toBeInTheDocument()
+    expect(fileInput.accept).toContain(".vcf")
+  })
+
+  it("renders import button initially disabled", () => {
+    renderWithProviders(<ImportExport />)
+
+    const importButton = screen.getByRole("button", { name: "Import" })
+    expect(importButton).toBeDisabled()
+  })
+
+  it("enables import button when file is selected", async () => {
+    const user = userEvent.setup()
+    const { container } = renderWithProviders(<ImportExport />)
+
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+
+    const file = new File(["contact data"], "contacts.vcf", { type: "text/vcard" })
+    await user.upload(input, file)
+
+    const importButton = screen.getByRole("button", { name: "Import" })
+
+    await waitFor(() => {
+      expect(importButton).not.toBeDisabled()
+    })
+  })
+
+  it("displays selected filename and size", async () => {
+    const user = userEvent.setup()
+    const { container } = renderWithProviders(<ImportExport />)
+
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+
+    const file = new File(["contact data"], "contacts.vcf", { type: "text/vcard" })
+    await user.upload(input, file)
+
+    await waitFor(() => {
+      expect(screen.getByText(/contacts\.vcf/)).toBeInTheDocument()
+    })
+  })
+
+  it("displays 'No file selected' initially", () => {
+    renderWithProviders(<ImportExport />)
+
+    expect(screen.getByText("No file selected")).toBeInTheDocument()
+  })
+
+  it("calls importVcard when import button is clicked", async () => {
+    const { ImportExportService } = await import("@/client")
+    const mockImportVcard = vi.mocked(ImportExportService.importVcard)
+    mockImportVcard.mockResolvedValueOnce({ imported: 3, errors: [] })
+
+    const user = userEvent.setup()
+    const { container } = renderWithProviders(<ImportExport />)
+
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+
+    const file = new File(["contact data"], "contacts.vcf", { type: "text/vcard" })
+    await user.upload(input, file)
+
+    const importButton = screen.getByRole("button", { name: "Import" })
+
+    await waitFor(() => {
+      expect(importButton).not.toBeDisabled()
+    })
+
+    await user.click(importButton)
+
+    await waitFor(
+      () => {
+        expect(mockImportVcard).toHaveBeenCalled()
+      },
+      { timeout: 3000 }
+    )
+  })
+
+  it("shows success toast after import", async () => {
+    const { ImportExportService } = await import("@/client")
+    vi.mocked(ImportExportService.importVcard).mockResolvedValueOnce({
+      imported: 3,
+      errors: [],
+    })
+
+    const user = userEvent.setup()
+    const { container } = renderWithProviders(<ImportExport />)
+
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+
+    const file = new File(["contact data"], "contacts.vcf", { type: "text/vcard" })
+    await user.upload(input, file)
+
+    const importButton = screen.getByRole("button", { name: "Import" })
+    await user.click(importButton)
+
+    // The success toast is called with the message
+    await waitFor(
+      () => {
+        const importedElements = screen.queryAllByText(/Imported/i)
+        expect(importedElements.length).toBeGreaterThan(0)
+      },
+      { timeout: 3000 }
+    )
+  })
+
+  it("displays import result summary", async () => {
+    const { ImportExportService } = await import("@/client")
+    vi.mocked(ImportExportService.importVcard).mockResolvedValueOnce({
+      imported: 3,
+      errors: [],
+    })
+
+    const user = userEvent.setup()
+    const { container } = renderWithProviders(<ImportExport />)
+
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+
+    const file = new File(["contact data"], "contacts.vcf", { type: "text/vcard" })
+    await user.upload(input, file)
+
+    const importButton = screen.getByRole("button", { name: "Import" })
+    await user.click(importButton)
+
+    // The result summary shows imported count - look for the number 3 and "contact" text
+    await waitFor(
+      () => {
+        const container = screen.getByText(/Imported/).closest("div")
+        expect(container).toBeInTheDocument()
+        expect(container?.textContent).toMatch(/3/)
+        expect(container?.textContent).toMatch(/contact/)
+      },
+      { timeout: 3000 }
+    )
+  })
+
+  it("displays import errors when present", async () => {
+    const { ImportExportService } = await import("@/client")
+    vi.mocked(ImportExportService.importVcard).mockResolvedValueOnce({
+      imported: 2,
+      errors: ["Invalid UID format", "Missing required field"],
+    })
+
+    const user = userEvent.setup()
+    const { container } = renderWithProviders(<ImportExport />)
+
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+
+    const file = new File(["contact data"], "contacts.vcf", { type: "text/vcard" })
+    await user.upload(input, file)
+
+    const importButton = screen.getByRole("button", { name: "Import" })
+    await user.click(importButton)
+
+    await waitFor(() => {
+      expect(screen.getByText(/2 issues/)).toBeInTheDocument()
+    })
+  })
+
+  it("clears file after successful import", async () => {
+    const { ImportExportService } = await import("@/client")
+    vi.mocked(ImportExportService.importVcard).mockResolvedValueOnce({
+      imported: 3,
+      errors: [],
+    })
+
+    const user = userEvent.setup()
+    const { container } = renderWithProviders(<ImportExport />)
+
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+
+    const file = new File(["contact data"], "contacts.vcf", { type: "text/vcard" })
+    await user.upload(input, file)
+
+    const importButton = screen.getByRole("button", { name: "Import" })
+    await user.click(importButton)
+
+    await waitFor(() => {
+      expect(screen.getByText("No file selected")).toBeInTheDocument()
+    })
+  })
+
+  it("shows error toast on import failure", async () => {
+    const { ImportExportService } = await import("@/client")
+    const mockError = new Error("Import failed")
+    vi.mocked(ImportExportService.importVcard).mockRejectedValueOnce(mockError)
+
+    const { toast } = await import("sonner")
+    const mockErrorToast = vi.mocked(toast.error)
+
+    const user = userEvent.setup()
+    const { container } = renderWithProviders(<ImportExport />)
+
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+
+    const file = new File(["contact data"], "contacts.vcf", { type: "text/vcard" })
+    await user.upload(input, file)
+
+    const importButton = screen.getByRole("button", { name: "Import" })
+    await user.click(importButton)
+
+    await waitFor(() => {
+      expect(mockErrorToast).toHaveBeenCalled()
+    })
+  })
+
+  it("renders vCard export button", () => {
+    renderWithProviders(<ImportExport />)
+
+    expect(screen.getByRole("button", { name: /Download vCard/ })).toBeInTheDocument()
+  })
+
+  it("renders JSON export button", () => {
+    renderWithProviders(<ImportExport />)
+
+    expect(screen.getByRole("button", { name: /Download JSON/ })).toBeInTheDocument()
+  })
+
+  it("triggers download when vCard export is clicked", async () => {
+    const user = userEvent.setup()
+
+    const mockBlob = new Blob(["vcard data"], { type: "text/vcard" })
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      blob: vi.fn().mockResolvedValueOnce(mockBlob),
+    })
+
+    renderWithProviders(<ImportExport />)
+
+    const vcardButton = screen.getByRole("button", { name: /Download vCard/ })
+    await user.click(vcardButton)
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/api/v1/import-export/export/vcard"),
+        expect.any(Object)
+      )
+    })
+  })
+
+  it("triggers download when JSON export is clicked", async () => {
+    const user = userEvent.setup()
+
+    const mockBlob = new Blob(["json data"], { type: "application/json" })
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      blob: vi.fn().mockResolvedValueOnce(mockBlob),
+    })
+
+    renderWithProviders(<ImportExport />)
+
+    const jsonButton = screen.getByRole("button", { name: /Download JSON/ })
+    await user.click(jsonButton)
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/api/v1/import-export/export/json"),
+        expect.any(Object)
+      )
+    })
+  })
+
+  it("shows success toast for vCard export", async () => {
+    const user = userEvent.setup()
+
+    const mockBlob = new Blob(["vcard data"], { type: "text/vcard" })
+    const mockFetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      blob: vi.fn().mockResolvedValueOnce(mockBlob),
+    })
+    global.fetch = mockFetch
+
+    renderWithProviders(<ImportExport />)
+
+    const vcardButton = screen.getByRole("button", { name: /Download vCard/ })
+    await user.click(vcardButton)
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalled()
+    }, { timeout: 3000 })
+  })
+
+  it("shows success toast for JSON export", async () => {
+    const user = userEvent.setup()
+
+    const mockBlob = new Blob(["json data"], { type: "application/json" })
+    const mockFetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      blob: vi.fn().mockResolvedValueOnce(mockBlob),
+    })
+    global.fetch = mockFetch
+
+    renderWithProviders(<ImportExport />)
+
+    const jsonButton = screen.getByRole("button", { name: /Download JSON/ })
+    await user.click(jsonButton)
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalled()
+    }, { timeout: 3000 })
+  })
+
+  it("shows error toast when export fails", async () => {
+    const user = userEvent.setup()
+
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      text: vi.fn().mockResolvedValueOnce("Error"),
+    })
+
+    const { toast } = await import("sonner")
+    const mockErrorToast = vi.mocked(toast.error)
+
+    renderWithProviders(<ImportExport />)
+
+    const vcardButton = screen.getByRole("button", { name: /Download vCard/ })
+    await user.click(vcardButton)
+
+    await waitFor(() => {
+      expect(mockErrorToast).toHaveBeenCalled()
+    })
+  })
+
+  it("includes vCard format description text", () => {
+    renderWithProviders(<ImportExport />)
+
+    expect(
+      screen.getByText(/vCard is suitable for importing into phones/, {
+        exact: false,
+      })
+    ).toBeInTheDocument()
+  })
+
+  it("includes JSON format description text", () => {
+    renderWithProviders(<ImportExport />)
+
+    expect(
+      screen.getByText(/JSON is a lossless dump/, {
+        exact: false,
+      })
+    ).toBeInTheDocument()
+  })
+
+  it("shows error toast when vCard export fails with error response", async () => {
+    const user = userEvent.setup()
+
+    const mockFetch = vi.fn().mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      blob: vi.fn().mockResolvedValueOnce(new Blob()),
+    })
+    global.fetch = mockFetch
+
+    const { toast } = await import("sonner")
+    const mockErrorToast = vi.mocked(toast.error)
+
+    renderWithProviders(<ImportExport />)
+
+    const vcardButton = screen.getByRole("button", { name: /Download vCard/ })
+    await user.click(vcardButton)
+
+    await waitFor(() => {
+      expect(mockErrorToast).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          description: expect.stringMatching(/Export failed \(\d+\)$/),
+        })
+      )
+    })
+  })
+
+  it("shows error toast when JSON export fails with error response", async () => {
+    const user = userEvent.setup()
+
+    const mockFetch = vi.fn().mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      blob: vi.fn().mockResolvedValueOnce(new Blob()),
+    })
+    global.fetch = mockFetch
+
+    const { toast } = await import("sonner")
+    const mockErrorToast = vi.mocked(toast.error)
+
+    renderWithProviders(<ImportExport />)
+
+    const jsonButton = screen.getByRole("button", { name: /Download JSON/ })
+    await user.click(jsonButton)
+
+    await waitFor(() => {
+      expect(mockErrorToast).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          description: expect.stringMatching(/Export failed \(\d+\)$/),
+        })
+      )
+    })
+  })
+
+  it("uses token from function when OpenAPI.TOKEN is a function", async () => {
+    const { OpenAPI } = await import("@/client")
+    const tokenFn = vi.fn().mockResolvedValue("function-token")
+    ;(OpenAPI as any).TOKEN = tokenFn
+
+    const mockBlob = new Blob(["vcard data"], { type: "text/vcard" })
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      blob: vi.fn().mockResolvedValueOnce(mockBlob),
+    })
+
+    const user = userEvent.setup()
+    renderWithProviders(<ImportExport />)
+
+    const vcardButton = screen.getByRole("button", { name: /Download vCard/ })
+    await user.click(vcardButton)
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/api/v1/import-export/export/vcard"),
+        expect.objectContaining({
+          headers: expect.objectContaining({ Authorization: "Bearer function-token" }),
+        }),
+      )
+    })
+
+    // Restore string token for other tests
+    ;(OpenAPI as any).TOKEN = "test-token"
+  })
+
+  it("sends empty Authorization when OpenAPI.TOKEN is empty string", async () => {
+    const { OpenAPI } = await import("@/client")
+    ;(OpenAPI as any).TOKEN = ""
+
+    const mockBlob = new Blob(["vcard data"], { type: "text/vcard" })
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      blob: vi.fn().mockResolvedValueOnce(mockBlob),
+    })
+
+    const user = userEvent.setup()
+    renderWithProviders(<ImportExport />)
+
+    const vcardButton = screen.getByRole("button", { name: /Download vCard/ })
+    await user.click(vcardButton)
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/api/v1/import-export/export/vcard"),
+        expect.objectContaining({
+          headers: expect.not.objectContaining({ Authorization: expect.anything() }),
+        }),
+      )
+    })
+
+    // Restore
+    ;(OpenAPI as any).TOKEN = "test-token"
+  })
+
+  it("displays error list when import result contains errors", async () => {
+    const { ImportExportService } = await import("@/client")
+    vi.mocked(ImportExportService.importVcard).mockResolvedValueOnce({
+      imported: 1,
+      errors: ["Contact missing email address", "Invalid phone format"],
+    })
+
+    const user = userEvent.setup()
+    const { container } = renderWithProviders(<ImportExport />)
+
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+
+    const file = new File(["contact data"], "contacts.vcf", { type: "text/vcard" })
+    await user.upload(input, file)
+
+    const importButton = screen.getByRole("button", { name: "Import" })
+    await user.click(importButton)
+
+    await waitFor(() => {
+      expect(screen.getByText(/2 issues/)).toBeInTheDocument()
+      expect(screen.getByText("Contact missing email address")).toBeInTheDocument()
+      expect(screen.getByText("Invalid phone format")).toBeInTheDocument()
+    })
+  })
+
+  it("displays single error message in singular form", async () => {
+    const { ImportExportService } = await import("@/client")
+    vi.mocked(ImportExportService.importVcard).mockResolvedValueOnce({
+      imported: 2,
+      errors: ["One error occurred"],
+    })
+
+    const user = userEvent.setup()
+    const { container } = renderWithProviders(<ImportExport />)
+
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+
+    const file = new File(["contact data"], "contacts.vcf", { type: "text/vcard" })
+    await user.upload(input, file)
+
+    const importButton = screen.getByRole("button", { name: "Import" })
+    await user.click(importButton)
+
+    await waitFor(() => {
+      expect(screen.getByText(/1 issue/)).toBeInTheDocument()
+    })
+  })
+
+  it("displays import result without error list when no errors", async () => {
+    const { ImportExportService } = await import("@/client")
+    vi.mocked(ImportExportService.importVcard).mockResolvedValueOnce({
+      imported: 5,
+      errors: [],
+    })
+
+    const user = userEvent.setup()
+    const { container } = renderWithProviders(<ImportExport />)
+
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+
+    const file = new File(["contact data"], "contacts.vcf", { type: "text/vcard" })
+    await user.upload(input, file)
+
+    const importButton = screen.getByRole("button", { name: "Import" })
+    await user.click(importButton)
+
+    await waitFor(() => {
+      const resultDiv = screen.getByText(/Imported/).closest("div")
+      expect(resultDiv?.textContent).toMatch(/5 contacts/)
+      // Ensure error details section is not present
+      expect(screen.queryByText(/issues/)).not.toBeInTheDocument()
+    })
+  })
+
+  it("uses fallback message when import rejects with non-Error value", async () => {
+    const { ImportExportService } = await import("@/client")
+    vi.mocked(ImportExportService.importVcard).mockRejectedValueOnce(
+      "string-error",
+    )
+
+    const { toast } = await import("sonner")
+    const mockErrorToast = vi.mocked(toast.error)
+
+    const user = userEvent.setup()
+    const { container } = renderWithProviders(<ImportExport />)
+
+    const input = container.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement
+    const file = new File(["contact data"], "contacts.vcf", {
+      type: "text/vcard",
+    })
+    await user.upload(input, file)
+
+    const importButton = screen.getByRole("button", { name: "Import" })
+    await user.click(importButton)
+
+    await waitFor(() => {
+      expect(mockErrorToast).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          description: "Import failed",
+        }),
+      )
+    })
+  })
+
+  it("uses fallback message when vCard export rejects with non-Error value", async () => {
+    global.fetch = vi.fn().mockRejectedValueOnce("plain-string-error")
+
+    const { toast } = await import("sonner")
+    const mockErrorToast = vi.mocked(toast.error)
+
+    const user = userEvent.setup()
+    renderWithProviders(<ImportExport />)
+
+    const vcardButton = screen.getByRole("button", { name: /Download vCard/ })
+    await user.click(vcardButton)
+
+    await waitFor(() => {
+      expect(mockErrorToast).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          description: "Export failed",
+        }),
+      )
+    })
+  })
+
+  it("uses fallback message when JSON export rejects with non-Error value", async () => {
+    global.fetch = vi.fn().mockRejectedValueOnce("plain-string-error")
+
+    const { toast } = await import("sonner")
+    const mockErrorToast = vi.mocked(toast.error)
+
+    const user = userEvent.setup()
+    renderWithProviders(<ImportExport />)
+
+    const jsonButton = screen.getByRole("button", { name: /Download JSON/ })
+    await user.click(jsonButton)
+
+    await waitFor(() => {
+      expect(mockErrorToast).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          description: "Export failed",
+        }),
+      )
+    })
+  })
+})

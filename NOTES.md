@@ -1,0 +1,62 @@
+# PWA Offline Notes - Implementation Notes
+
+## Completed Tasks
+
+### 1. Backend - Idempotent POSTs with client_id
+- Added `client_id` field to `Note` model in `backend/app/models.py`
+  - Field is optional (nullable)
+  - Has an index for lookups
+  - Has unique constraint (for non-NULL values)
+- Added `client_id` field to `NoteCreate` model
+- Added `client_id` field to `NotePublic` model for API responses
+- Updated `create_note` function in `backend/app/crud.py` to check for existing `client_id` before creating a new note (idempotency)
+- Created Alembic migration: `backend/app/alembic/versions/f6a7b8c9d0e2_add_note_client_id.py`
+
+### 2. Frontend - Offline Draft Queue Integration
+- Updated `frontend/src/components/Notes/NotesCard.tsx`:
+  - `QuickCapture` component now detects online/offline status
+  - Saves drafts to IndexedDB when offline
+  - Syncs pending drafts when coming back online
+  - Shows pending draft count with manual sync button
+  - Uses `client_id` (generated UUID) for idempotent POSTs
+
+### 3. PWA Install Prompt
+- Created `frontend/src/components/PwaInstallPrompt.tsx`:
+  - Shows install prompt for Android (using `beforeinstallprompt` event)
+  - Shows A2HS hint for iOS devices
+  - Dismissible with session storage to prevent re-showing
+
+### 4. Service Worker Update Handling
+- Added `ServiceWorkerUpdatePrompt` component in `frontend/src/main.tsx`:
+  - Detects new service worker versions
+  - Prompts user to refresh when update is available
+
+### 5. Vite PWA Configuration
+- `vite-plugin-pwa` is already configured in `frontend/vite.config.ts`
+- Manifest is configured with app metadata
+- Workbox service worker configured with:
+  - Cache-first for app shell (static assets)
+  - Network-first for API calls with 24-hour cache
+
+## Remaining Tasks / Verification Needed
+
+### When Services Are Running:
+1. Run `docker compose exec backend uv run alembic upgrade head` to apply the migration
+2. Run `docker compose exec -T backend uv run pytest -x -q` to verify backend tests pass
+3. Run `docker compose exec -T frontend bun run typecheck` to verify frontend types
+4. Test PWA install prompt on Android and iOS
+5. Test offline note drafting and sync
+
+### Notes:
+- The frontend service was not running during implementation, so typecheck and build verification could not be completed
+- The backend service was not running, so migration and tests could not be run
+- All code changes follow existing patterns in the codebase
+- The `vite-plugin-pwa` generates the service worker automatically during build
+
+## File Changes Summary
+- `backend/app/models.py` - Added client_id to Note, NoteCreate, NotePublic
+- `backend/app/crud.py` - Added idempotency check in create_note
+- `backend/app/alembic/versions/f6a7b8c9d0e2_add_note_client_id.py` - New migration
+- `frontend/src/components/Notes/NotesCard.tsx` - Integrated offline draft queue
+- `frontend/src/components/PwaInstallPrompt.tsx` - New PWA install prompt component
+- `frontend/src/main.tsx` - Added PWA install and service worker update prompts
