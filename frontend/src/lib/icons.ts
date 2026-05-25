@@ -7,12 +7,17 @@
 export type { LucideIcon } from "lucide-react"
 // Additional icons for bulk operations
 export {
+  AlertTriangle,
   Archive,
   AtSign,
   Bell,
+  BellOff,
+  Building2,
   // Contact meta
   Cake,
+  Calendar,
   CalendarHeart,
+  Camera,
   Check,
   CheckSquare,
   ChevronDown,
@@ -31,38 +36,51 @@ export {
   // Forms / inputs
   Eye,
   EyeOff,
+  FileSpreadsheet,
   Film,
+  Globe,
   HeartHandshake,
   // Sidebar nav
   Home,
   Info,
   Link,
+  ListFilter,
   ListPlus,
   Loader2,
   // Misc
   LogOut,
   // Contact field types
   Mail,
+  Map,
   // Card section icons
   MapPin,
-  // Interaction channels
   MessageSquare,
+  // Interaction channels
+
+  // FAB / Quick actions
+  MessageSquarePlus,
   MessageSquareText,
   MessagesSquare,
+  Mic,
+  MicOff,
   Monitor,
   Moon,
   // Action icons (monochrome, inherit text color)
   MoreHorizontal,
   NotebookPen,
   OctagonX,
+  Package,
   PanelLeft,
   PawPrint,
   Pencil,
   Phone,
   Plus,
+  RefreshCw,
+  RotateCcw,
   Search,
   Send,
   Settings,
+  Share2,
   ShieldCheck,
   Square,
   Star,
@@ -71,9 +89,13 @@ export {
   Tag,
   Trash2,
   TriangleAlert,
+  Upload,
   UserRoundSearch,
   Users,
   UsersRound,
   Video,
+  WifiOff,
   X,
+  ZoomIn,
+  ZoomOut,
 } from "lucide-react"

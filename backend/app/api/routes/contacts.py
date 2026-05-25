@@ -5,31 +5,55 @@ from __future__ import annotations
 import logging
 import uuid
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Any
 
 from arq.connections import RedisSettings
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, File, HTTPException, Query, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import selectinload
 from sqlmodel import col, func, select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.core.config import settings as app_settings
-from app.crud import visible_contact_ids
+from app.crud import create_stage_event, visible_contact_ids
+from app.filter_compiler import apply_filter_json
+from app.household import get_household_members
 from app.models import (
+    Address,
     Contact,
     ContactCreate,
-    ContactGroup,
     ContactPublic,
+    ContactSource,
     ContactsPublic,
+    ContactStageEventCreate,
     ContactTag,
     ContactUpdate,
+    HouseholdMember,
+    HouseholdResponse,
+    Interaction,
+    InteractionAttendee,
+    JournalEntry,
+    JournalEntryContact,
+    JournalEntryPublic,
     Note,
     NoteMention,
+    Ok,
     OverdueContactPublic,
     OverdueContactsPublic,
+    Relationship,
+    SavedFilter,
     User,
 )
+from app.vcard import compute_vcard_hash
+
+# Avatar upload configuration
+AVATAR_UPLOAD_DIR = Path("uploads/avatars")
+AVATAR_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+# Max file size: 10MB
+MAX_AVATAR_SIZE = 10 * 1024 * 1024
+ALLOWED_AVATAR_TYPES = {"image/jpeg", "image/png", "image/webp"}
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +84,53 @@ class BulkContactOperation(BaseModel):
     add_group_ids: list[uuid.UUID] | None = None
     remove_group_ids: list[uuid.UUID] | None = None
     # Field updates
+    set_is_archived: bool | None = None
+    set_is_favorite: bool | None = None
+
+
+class BulkContactRequest(BaseModel):
+    """Bulk operation request body."""
+
+    # Either provide explicit contact_ids...
+    contact_ids: list[uuid.UUID] | None = None
+    # ...or use select_all_filtered with optional filters
+    select_all_filtered: bool = False
+    filters: BulkContactFilter | None = None
+    # Max contacts per request (safety limit)
+    limit: int = 500
+    # Operations to apply
+    operations: BulkContactOperation
+
+
+class BulkContactResult(BaseModel):
+    """Bulk operation result."""
+
+    updated_count: int
+    skipped_count: int
+    failed_ids: list[uuid.UUID] = []
+
+
+# ─── Helper functions ──────────────────────────────────────────────────────
+
+# ─── Bulk operations models ────────────────────────────────────────────────
+
+
+class BulkContactFilter(BaseModel):
+    """Filter criteria matching list_contacts parameters."""
+
+    search: str | None = None
+    tag_id: uuid.UUID | None = None
+    is_favorite: bool | None = None
+    is_archived: bool | None = None
+    stage: str | None = None
+
+
+class BulkContactOperation(BaseModel):
+    """A single operation to apply to matching contacts."""
+
+    # Tag operations
+    add_tag_ids: list[uuid.UUID] | None = None
+    remove_tag_ids: list[uuid.UUID] | None = None
     set_is_archived: bool | None = None
     set_is_favorite: bool | None = None
 
@@ -337,12 +408,11 @@ def preview_bulk_contacts(
     select_all_filtered: bool = False,
     search: str | None = None,
     tag_id: uuid.UUID | None = None,
-    group_id: uuid.UUID | None = None,
     is_favorite: bool | None = None,
     is_archived: bool | None = None,
     stage: str | None = None,
     limit: int = 500,
-) -> Any:
+) -> ContactsPublic:
     """Preview contacts that would be affected by a bulk operation."""
 
     limit = min(max(1, limit), 500)
@@ -377,12 +447,11 @@ def preview_bulk_contacts(
 @router.get("/", response_model=ContactsPublic)
 def list_contacts(
     session: SessionDep,
-    current_user: CurrentUser,
+    current_user: CurrentUser,  # noqa: ARG001
     skip: int = 0,
     limit: int = 100,
     search: str | None = None,
     tag_id: uuid.UUID | None = None,
-    group_id: uuid.UUID | None = None,
     is_favorite: bool | None = None,
     is_archived: bool | None = None,
     stage: str | None = None,
@@ -431,17 +500,36 @@ def list_contacts(
     if tag_id:
         statement = statement.join(ContactTag).where(ContactTag.tag_id == tag_id)
 
-    if group_id:
-        statement = statement.join(ContactGroup).where(
-            ContactGroup.group_id == group_id
-        )
+    # Apply saved filter if requested
+    if saved_filter_id is not None:
+        saved_filter = session.get(SavedFilter, saved_filter_id)
+        if not saved_filter:
+            raise HTTPException(status_code=404, detail="Saved filter not found")
+        # Check permissions: owner or shared via tag
+        if saved_filter.owner_id != current_user.id:
+            if saved_filter.tag_id is None:
+                raise HTTPException(status_code=403, detail="Not enough permissions")
+            # Check TagShare access
+            from sqlmodel import select as sql_select
+
+            from app.models import TagShare
+
+            share = session.exec(
+                sql_select(TagShare).where(
+                    TagShare.tag_id == saved_filter.tag_id,
+                    TagShare.grantee_id == current_user.id,
+                )
+            ).first()
+            if not share:
+                raise HTTPException(status_code=403, detail="Not enough permissions")
+        # Apply the filter_json to the statement
+        statement = apply_filter_json(statement, saved_filter.filter_json)
 
     count_statement = select(func.count()).select_from(statement.subquery())
     count = session.exec(count_statement).one()
 
     statement = statement.options(
         selectinload(Contact.tags),
-        selectinload(Contact.groups),
     )
 
     statement = (
@@ -458,7 +546,7 @@ def list_contacts(
 @router.get("/losing-touch", response_model=ContactsPublic)
 def list_losing_touch(
     session: SessionDep,
-    current_user: CurrentUser,
+    current_user: CurrentUser,  # noqa: ARG001
     limit: int = 20,
 ) -> Any:
     """Return contacts whose cadence has been exceeded."""
@@ -472,7 +560,6 @@ def list_losing_touch(
         )
         .options(
             selectinload(Contact.tags),
-            selectinload(Contact.groups),
         )
     )
     contacts = session.exec(statement).all()
@@ -502,7 +589,7 @@ def list_overdue_contacts(
     current_user: CurrentUser,
     limit: int = 50,
     offset: int = 0,
-) -> Any:
+) -> OverdueContactsPublic:
     """Return contacts sorted by days_overdue descending.
 
     Days overdue = (now - last_contacted_at).days - contact_frequency_days.
@@ -519,7 +606,6 @@ def list_overdue_contacts(
         )
         .options(
             selectinload(Contact.tags),
-            selectinload(Contact.groups),
         )
     )
     contacts = session.exec(statement).all()
@@ -563,7 +649,7 @@ def skip_contact(
     session: SessionDep,
     current_user: CurrentUser,
     contact_id: uuid.UUID,
-) -> Any:
+) -> ContactPublic:
     """Skip a contact for 7 days by creating a SKIP interaction.
 
     This advances the next due date without recording a user-facing interaction.
@@ -598,9 +684,9 @@ def skip_contact(
 @router.get("/{contact_id}", response_model=ContactPublic)
 def get_contact(
     session: SessionDep,
-    current_user: CurrentUser,
+    current_user: CurrentUser,  # noqa: ARG001
     contact_id: uuid.UUID,
-) -> Any:
+) -> ContactPublic:
     """Get a single contact by ID."""
     statement = (
         select(Contact)
@@ -610,7 +696,6 @@ def get_contact(
         )
         .options(
             selectinload(Contact.tags),
-            selectinload(Contact.groups),
         )
     )
     contact = session.exec(statement).first()
@@ -623,7 +708,7 @@ def get_contact(
 def create_contact(
     *,
     session: SessionDep,
-    current_user: CurrentUser,
+    current_user: CurrentUser,  # noqa: ARG001
     contact_in: ContactCreate,
     background_tasks: BackgroundTasks,
 ) -> Any:
@@ -640,6 +725,9 @@ def create_contact(
         for group_id in contact_in.group_ids:
             session.add(ContactGroup(contact_id=contact.id, group_id=group_id))
 
+    contact = upsert_contact(
+        session=session, contact_in=contact_in, owner_id=current_user.id
+    )
     session.commit()
 
     statement = (
@@ -647,7 +735,6 @@ def create_contact(
         .where(Contact.id == contact.id)
         .options(
             selectinload(Contact.tags),
-            selectinload(Contact.groups),
         )
     )
     contact = session.exec(statement).first()
@@ -659,18 +746,17 @@ def create_contact(
 def update_contact(
     *,
     session: SessionDep,
-    current_user: CurrentUser,
+    current_user: CurrentUser,  # noqa: ARG001
     contact_id: uuid.UUID,
     contact_in: ContactUpdate,
     background_tasks: BackgroundTasks,
-) -> Any:
+) -> ContactPublic:
     """Update a contact."""
     statement = (
         select(Contact)
         .where(Contact.id == contact_id)
         .options(
             selectinload(Contact.tags),
-            selectinload(Contact.groups),
         )
     )
     contact = session.exec(statement).first()
@@ -681,9 +767,29 @@ def update_contact(
 
     update_data = contact_in.model_dump(exclude_unset=True)
     tag_ids = update_data.pop("tag_ids", None)
-    group_ids = update_data.pop("group_ids", None)
+
+    # Track stage changes via the service layer
+    new_stage = update_data.get("stage", None)
+    if new_stage is not None and new_stage != contact.stage:
+        event_in = ContactStageEventCreate(
+            contact_id=contact.id,
+            from_stage=contact.stage,
+            to_stage=new_stage,
+            occurred_at=datetime.now(timezone.utc),
+            note="Stage change via contact update",
+        )
+        try:
+            create_stage_event(
+                session=session, event_in=event_in, owner_id=current_user.id
+            )
+        except Exception:
+            # Don't fail the whole update if event creation fails
+            pass
 
     contact.sqlmodel_update(update_data)
+    # Compute vcard_sha256 if vcard_raw was updated
+    if "vcard_raw" in update_data and contact.vcard_raw:
+        contact.vcard_sha256 = compute_vcard_hash(contact.vcard_raw)
     session.add(contact)
 
     if tag_ids is not None:
@@ -711,7 +817,6 @@ def update_contact(
         .where(Contact.id == contact.id)
         .options(
             selectinload(Contact.tags),
-            selectinload(Contact.groups),
         )
     )
     contact = session.exec(statement).first()
@@ -719,10 +824,10 @@ def update_contact(
     return ContactPublic.model_validate(contact)
 
 
-@router.delete("/{contact_id}")
+@router.delete("/{contact_id}", response_model=Ok)
 def delete_contact(
     session: SessionDep,
-    current_user: CurrentUser,
+    current_user: CurrentUser,  # noqa: ARG001
     contact_id: uuid.UUID,
     background_tasks: BackgroundTasks,
 ) -> Any:
@@ -737,7 +842,67 @@ def delete_contact(
     session.add(contact)
     session.commit()
     background_tasks.add_task(_enqueue_contact_removal, str(contact_id))
-    return {"ok": True}
+    return Ok()
+
+
+class _MentionSourceContact(BaseModel):
+    id: uuid.UUID
+    first_name: str
+    last_name: str | None = None
+    avatar_url: str | None = None
+
+
+class NoteMentionPublic(BaseModel):
+    note_id: uuid.UUID
+    note_body: str
+    note_created_at: datetime
+    source_contact: _MentionSourceContact
+
+
+@router.get("/{contact_id}/mentions", response_model=list[NoteMentionPublic])
+def list_contact_mentions(
+    session: SessionDep,
+    current_user: CurrentUser,  # noqa: ARG001
+    contact_id: uuid.UUID,
+) -> Any:
+    """List notes that @-mention this contact, with the source (authoring) contact."""
+    contact = session.exec(
+        select(Contact).where(
+            Contact.id == contact_id,
+            Contact.id.in_(visible_contact_ids(current_user)),
+        )
+    ).first()
+    if not contact:
+        raise HTTPException(status_code=404, detail="Contact not found")
+
+    # Note's contact (its "page") is the source contact for the mention.
+    rows = session.exec(
+        select(Note, Contact)
+        .join(NoteMention, NoteMention.note_id == Note.id)
+        .join(Contact, Contact.id == Note.contact_id)
+        .where(
+            NoteMention.contact_id == contact_id,
+            Note.owner_id == current_user.id,
+            Note.contact_id != contact_id,
+            Note.deleted_at == None,  # noqa: E711
+        )
+        .order_by(Note.created_at.desc())
+    ).all()
+
+    return [
+        NoteMentionPublic(
+            note_id=note.id,
+            note_body=note.body,
+            note_created_at=note.created_at,
+            source_contact=_MentionSourceContact(
+                id=src.id,
+                first_name=src.first_name,
+                last_name=src.last_name,
+                avatar_url=src.avatar_url,
+            ),
+        )
+        for note, src in rows
+    ]
 
 
 class _MentionSourceContact(BaseModel):
@@ -801,7 +966,7 @@ def list_contact_mentions(
 @router.post("/{contact_id}/restore", response_model=ContactPublic)
 def restore_contact(
     session: SessionDep,
-    current_user: CurrentUser,
+    current_user: CurrentUser,  # noqa: ARG001
     contact_id: uuid.UUID,
     background_tasks: BackgroundTasks,
 ) -> Any:
@@ -823,7 +988,6 @@ def restore_contact(
         .where(Contact.id == contact.id)
         .options(
             selectinload(Contact.tags),
-            selectinload(Contact.groups),
         )
     )
     contact = session.exec(statement).first()

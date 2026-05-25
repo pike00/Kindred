@@ -9,7 +9,6 @@ import {
 } from "@/client"
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
 import { EmptyState } from "@/components/Common/EmptyState"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -32,8 +31,35 @@ import {
   Trash2,
   Users,
 } from "@/lib/icons"
+
+const CHANNELS = [
+  { value: "call", label: "Call", icon: Phone },
+  { value: "in_person", label: "In Person", icon: Users },
+  { value: "text", label: "Text", icon: MessageSquare },
+  { value: "email", label: "Email", icon: Mail },
+  { value: "video", label: "Video", icon: Video },
+  { value: "social", label: "Social", icon: Users },
+  { value: "other", label: "Other", icon: Pencil },
+] as const
+
+const CHANNEL_OPTIONS = [
+  { value: "", label: "All Channels" },
+  ...CHANNELS.map((c) => ({ value: c.value, label: c.label })),
+]
+
+const CHANNEL_ICON_MAP: Record<string, React.ReactNode> = Object.fromEntries(
+  CHANNELS.map((c) => [c.value, <c.icon key={c.value} className="size-3" />]),
+)
+
+import { Badge } from "@/components/ui/badge"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { cn } from "@/lib/utils"
-import { AddContactDialog } from "./AddContactDialog"
 
 const PAGE_SIZE = 25
 
@@ -108,10 +134,10 @@ function matchesSearch(contact: ContactPublic, q: string): boolean {
     contact.last_name,
     contact.middle_name,
     contact.nickname,
+    contact.pronouns,
     contact.company,
     contact.title,
     ...(contact.tags?.map((t) => t.name) ?? []),
-    ...(contact.groups?.map((g) => g.name) ?? []),
   ]
     .filter(Boolean)
     .join(" ")
@@ -206,8 +232,12 @@ function ContactRow({
 }
 
 export const ContactsList = () => {
+  const seedMutation = useSeedDemo()
+
   const navigate = useNavigate({ from: "/contacts" })
-  const { search: urlSearch } = useSearch({ from: "/_layout/contacts/" })
+  const { search: urlSearch, saved_filter_id: urlFilterId } = useSearch({
+    from: "/_layout/contacts/",
+  })
   const [search, setSearch] = useState(urlSearch ?? "")
   const [pageIndex, setPageIndex] = useState(0)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -221,8 +251,11 @@ export const ContactsList = () => {
   const [isLoading, setIsLoading] = useState(false)
 
   const { data } = useSuspenseQuery({
-    queryKey: ["contacts"],
-    queryFn: () => ContactsService.listContacts(),
+    queryKey: ["contacts", activeFilterId],
+    queryFn: () =>
+      ContactsService.listContacts(
+        activeFilterId ? ({ savedFilterId: activeFilterId } as any) : {},
+      ),
   })
 
   const allContacts = useMemo(() => data?.data ?? [], [data?.data])
@@ -482,7 +515,38 @@ export const ContactsList = () => {
             {selectedCount > 0 && <> · {selectedCount} selected</>}
           </p>
         </div>
-        <AddContactDialog />
+        <div className="flex items-center gap-2">
+          <Button variant="outline" asChild>
+            <a href="/contacts/map">
+              <MapIcon className="size-4" />
+              Map View
+            </a>
+          </Button>
+          <AddContactDialog />
+        </div>
+      </div>
+
+      {/* Filter controls */}
+      <div className="flex flex-wrap items-center gap-2">
+        <Select value={channelFilter} onValueChange={setChannelFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter by channel" />
+          </SelectTrigger>
+          <SelectContent>
+            {CHANNEL_OPTIONS.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button
+          variant={showDncOnly ? "default" : "outline"}
+          size="sm"
+          onClick={() => setShowDncOnly(!showDncOnly)}
+        >
+          DNC Only
+        </Button>
       </div>
 
       {/* Bulk Action Bar */}
@@ -579,7 +643,24 @@ export const ContactsList = () => {
           icon={Users}
           title="No contacts yet"
           description="Add your first contact to start tracking relationships."
-          action={<AddContactDialog />}
+          action={
+            import.meta.env.DEV ? (
+              <div className="flex flex-col items-center gap-2">
+                <AddContactDialog />
+                <p className="text-xs text-muted-foreground">or</p>
+                <button
+                  type="button"
+                  className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3"
+                  disabled={seedMutation.isPending}
+                  onClick={() => seedMutation.mutate({ count: 8 })}
+                >
+                  {seedMutation.isPending ? "Seeding..." : "Seed demo contacts"}
+                </button>
+              </div>
+            ) : (
+              <AddContactDialog />
+            )
+          }
         />
       )}
 
