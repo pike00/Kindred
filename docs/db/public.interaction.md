@@ -17,12 +17,12 @@ Logged touchpoint with one or more contacts (call, meeting, text, etc.). Attende
 | duration_minutes | integer |  | true |  |  | Length of the interaction in minutes. |
 | created_at | timestamp with time zone |  | false |  |  | When the row was inserted (may be after occurred_at; UTC). |
 | deleted_at | timestamp without time zone |  | true |  |  |  |
-| search_vector | tsvector |  | true |  |  |  |
 | is_draft | boolean |  | false |  |  |  |
 | draft_source | varchar(32) |  | true |  |  |  |
 | location_label | varchar(500) |  | true |  |  |  |
 | latitude | double precision |  | true |  |  |  |
 | longitude | double precision |  | true |  |  |  |
+| search_vector | tsvector |  | true |  |  |  |
 | message_id | varchar(998) |  | true |  |  |  |
 | email_subject | varchar(998) |  | true |  |  |  |
 | email_from | varchar(2048) |  | true |  |  |  |
@@ -52,6 +52,7 @@ Logged touchpoint with one or more contacts (call, meeting, text, etc.). Attende
 | ix_interaction_channel | CREATE INDEX ix_interaction_channel ON public.interaction USING btree (channel) |
 | ix_interaction_deleted_at | CREATE INDEX ix_interaction_deleted_at ON public.interaction USING btree (deleted_at) |
 | ix_interaction_search_vector | CREATE INDEX ix_interaction_search_vector ON public.interaction USING gin (search_vector) |
+| ix_interaction_message_id | CREATE INDEX ix_interaction_message_id ON public.interaction USING btree (message_id) |
 
 ## Triggers
 
@@ -77,12 +78,12 @@ erDiagram
   integer duration_minutes
   timestamp_with_time_zone created_at
   timestamp_without_time_zone deleted_at
-  tsvector search_vector
   boolean is_draft
   varchar_32_ draft_source
   varchar_500_ location_label
   double_precision latitude
   double_precision longitude
+  tsvector search_vector
   varchar_998_ message_id
   varchar_998_ email_subject
   varchar_2048_ email_from

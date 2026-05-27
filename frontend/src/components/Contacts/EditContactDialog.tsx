@@ -37,6 +37,8 @@ const contactUpdateSchema = z.object({
   contact_frequency_days: z.number().optional(),
   is_favorite: z.boolean().optional(),
   is_archived: z.boolean().optional(),
+  do_not_contact: z.boolean().optional(),
+  do_not_contact_reason: z.string().optional(),
   timezone: z.string().max(255).optional(),
   pronouns: z.string().max(100).optional(),
 })

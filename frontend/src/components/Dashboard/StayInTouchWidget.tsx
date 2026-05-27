@@ -15,7 +15,7 @@ interface OverdueContact extends ContactPublic {
 export function StayInTouchWidget() {
   const { data: overdueData, isLoading } = useQuery({
     queryKey: ["overdue-contacts"],
-    queryFn: () => ContactsService.listOverdueContacts({ limit: 50 }),
+    queryFn: () => ContactsService.listOverdueContacts({}),
   })
 
   const contacts = (overdueData?.data || []) as OverdueContact[]

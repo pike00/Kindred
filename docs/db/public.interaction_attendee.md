@@ -50,12 +50,12 @@ erDiagram
   integer duration_minutes
   timestamp_with_time_zone created_at
   timestamp_without_time_zone deleted_at
-  tsvector search_vector
   boolean is_draft
   varchar_32_ draft_source
   varchar_500_ location_label
   double_precision latitude
   double_precision longitude
+  tsvector search_vector
   varchar_998_ message_id
   varchar_998_ email_subject
   varchar_2048_ email_from
@@ -89,21 +89,20 @@ erDiagram
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
   timestamp_with_time_zone deleted_at
-  uuid organization_id FK
   contactsource source
   varchar_500_ source_external_id
+  uuid organization_id FK
   boolean do_not_contact
   varchar_500_ do_not_contact_reason
+  varchar_64_ vcard_sha256
   varchar_500_ imessage_id
   timestamp_with_time_zone imessage_synced_at
   varchar_64_ imessage_profile_hash
   jsonb imessage_profile
-  tsvector search_vector
   boolean is_merged
-  uuid merged_into_id FK
-  varchar_64_ vcard_sha256
   varchar_255_ timezone
   text pronouns
+  tsvector search_vector
   boolean auto_log_email
 }
 ```

@@ -17,7 +17,8 @@ import {
 } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 
-const ALL_TIMEZONES: string[] = Intl.supportedValuesOf("timeZone")
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const ALL_TIMEZONES: string[] = (Intl as any).supportedValuesOf("timeZone")
 
 function cityLabel(tz: string): string {
   const parts = tz.split("/")

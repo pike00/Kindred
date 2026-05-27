@@ -29,7 +29,6 @@ import { useCommandPalette } from "./CommandPaletteContext"
 import { SearchBadge } from "./SearchBadge"
 
 const CONTACT_LIMIT = 8
-const _SEARCH_LIMIT = 20
 
 function contactLabel(contact: ContactPublic): string {
   const parts = [contact.first_name, contact.last_name].filter(Boolean)

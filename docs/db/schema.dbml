@@ -114,21 +114,20 @@ Table "contact" {
   "created_at" timestamptz [not null]
   "updated_at" timestamptz [not null]
   "deleted_at" timestamptz
-  "organization_id" uuid
   "source" contactsource [not null, default: 'MANUAL']
   "source_external_id" varchar(500)
+  "organization_id" uuid
   "do_not_contact" bool [not null, default: false]
   "do_not_contact_reason" varchar(500)
+  "vcard_sha256" varchar(64)
   "imessage_id" varchar(500)
   "imessage_synced_at" timestamptz
   "imessage_profile_hash" varchar(64)
   "imessage_profile" jsonb
-  "search_vector" tsvector
   "is_merged" bool [not null, default: false]
-  "merged_into_id" uuid
-  "vcard_sha256" varchar(64)
   "timezone" varchar(255)
   "pronouns" text
+  "search_vector" tsvector
   "auto_log_email" bool [not null, default: false]
 
   Indexes {
@@ -253,12 +252,12 @@ Table "interaction" {
   "duration_minutes" int4
   "created_at" timestamptz [not null]
   "deleted_at" timestamp
-  "search_vector" tsvector
   "is_draft" bool [not null]
   "draft_source" varchar(32)
   "location_label" varchar(500)
   "latitude" float8
   "longitude" float8
+  "search_vector" tsvector
   "message_id" varchar(998)
   "email_subject" varchar(998)
   "email_from" varchar(2048)
@@ -268,6 +267,7 @@ Table "interaction" {
   Indexes {
     channel [type: btree, name: "ix_interaction_channel"]
     deleted_at [type: btree, name: "ix_interaction_deleted_at"]
+    message_id [type: btree, name: "ix_interaction_message_id"]
     occurred_at [type: btree, name: "ix_interaction_occurred_at"]
     owner_id [type: btree, name: "ix_interaction_owner_id"]
     search_vector [type: gin, name: "ix_interaction_search_vector"]
@@ -369,8 +369,8 @@ Table "note" {
   "created_at" timestamptz [not null]
   "updated_at" timestamptz [not null]
   "deleted_at" timestamp
-  "search_vector" tsvector
   "client_id" varchar(36)
+  "search_vector" tsvector
 
   Indexes {
     client_id [type: btree, name: "ix_note_client_id"]
@@ -485,17 +485,29 @@ Table "note_mention" {
   }
 }
 
-Table "reminder_snooze" {
+Table "api_key" {
   "id" uuid [pk, not null]
-  "reminder_id" uuid [not null]
-  "snoozed_at" timestamptz [not null, default: `now()`]
-  "snoozed_until" timestamptz [not null]
-  "reason" text
+  "name" varchar(255) [not null]
+  "key_hash" varchar(64) [unique, not null]
+  "key_prefix" varchar(16) [not null]
+  "owned_by_user_id" uuid [not null]
   "created_at" timestamptz [not null, default: `now()`]
+  "last_used_at" timestamptz
+  "revoked_at" timestamptz
+  "expires_at" timestamptz
 
   Indexes {
-    reminder_id [type: btree, name: "ix_reminder_snooze_reminder_id"]
-    snoozed_at [type: btree, name: "ix_reminder_snooze_snoozed_at"]
+    key_hash [type: btree, name: "ix_api_key_key_hash"]
+    owned_by_user_id [type: btree, name: "ix_api_key_owned_by_user_id"]
+  }
+}
+
+Table "api_key_impersonate" {
+  "api_key_id" uuid [not null]
+  "user_id" uuid [not null]
+
+  Indexes {
+    (api_key_id, user_id) [pk, type: btree, name: "api_key_impersonate_pkey"]
   }
 }
 
@@ -523,36 +535,45 @@ Table "organization" {
   }
 }
 
-Table "api_key" {
+Table "reminder_snooze" {
   "id" uuid [pk, not null]
-  "name" varchar(255) [not null]
-  "key_hash" varchar(64) [unique, not null]
-  "key_prefix" varchar(16) [not null]
-  "owned_by_user_id" uuid [not null]
+  "reminder_id" uuid [not null]
+  "snoozed_at" timestamptz [not null, default: `now()`]
+  "snoozed_until" timestamptz [not null]
+  "reason" text
   "created_at" timestamptz [not null, default: `now()`]
-  "last_used_at" timestamptz
-  "revoked_at" timestamptz
-  "expires_at" timestamptz
 
   Indexes {
-    key_hash [type: btree, name: "ix_api_key_key_hash"]
-    owned_by_user_id [type: btree, name: "ix_api_key_owned_by_user_id"]
+    reminder_id [type: btree, name: "ix_reminder_snooze_reminder_id"]
+    snoozed_at [type: btree, name: "ix_reminder_snooze_snoozed_at"]
   }
 }
 
-Table "api_key_impersonate" {
-  "api_key_id" uuid [not null]
-  "user_id" uuid [not null]
+Table "contact_merge" {
+  "id" uuid [pk, not null]
+  "surviving_id" uuid [not null]
+  "absorbed_id" uuid [unique, not null]
+  "merged_by" uuid
+  "merged_at" timestamptz [not null, default: `now()`]
+  "notes" varchar(1000)
 
   Indexes {
-    (api_key_id, user_id) [pk, type: btree, name: "api_key_impersonate_pkey"]
+    merged_at [type: btree, name: "ix_contact_merge_merged_at"]
+    (surviving_id, absorbed_id) [type: btree, name: "ix_contact_merge_surviving_absorbed"]
+    surviving_id [type: btree, name: "ix_contact_merge_surviving_id"]
   }
 }
 
-Table "setup_state" {
-  "id" int4 [pk, not null, increment]
-  "complete" bool [not null, default: false]
-  "token_hash" varchar(128)
+Table "inverse_relationship_map" {
+  "id" uuid [pk, not null]
+  "relationship_type" varchar(100) [unique, not null]
+  "inverse_type" varchar(100) [not null]
+  "is_symmetric" bool [not null]
+  "created_at" timestamptz [not null, default: `now()`]
+
+  Indexes {
+    relationship_type [type: btree, name: "ix_inverse_relationship_map_relationship_type"]
+  }
 }
 
 Table "journal_entry_contact" {
@@ -563,6 +584,56 @@ Table "journal_entry_contact" {
     (journal_entry_id, contact_id) [pk, type: btree, name: "journal_entry_contact_pkey"]
     contact_id [type: btree, name: "ix_journal_entry_contact_contact_id"]
     journal_entry_id [type: btree, name: "ix_journal_entry_contact_journal_entry_id"]
+  }
+}
+
+Table "debt_payment" {
+  "id" uuid [pk, not null]
+  "debt_id" uuid [not null]
+  "amount" numeric(12,2) [not null]
+  "paid_at" date [not null]
+  "note" text
+  "created_at" timestamptz [not null]
+
+  Indexes {
+    debt_id [type: btree, name: "ix_debt_payment_debt_id"]
+  }
+}
+
+Table "communication_preference" {
+  "id" uuid [pk, not null]
+  "contact_id" uuid [unique, not null]
+  "preferred_channel" varchar(20)
+  "best_time_local" varchar(11)
+  "do_not_contact" bool [not null, default: false]
+  "do_not_contact_reason" varchar(500)
+  "created_at" timestamptz [not null]
+  "updated_at" timestamptz [not null]
+
+  Indexes {
+    contact_id [type: btree, name: "ix_communication_preference_contact_id"]
+    preferred_channel [type: btree, name: "ix_communication_preference_preferred_channel"]
+  }
+}
+
+Table "setup_state" {
+  "id" int4 [pk, not null, increment]
+  "complete" bool [not null, default: false]
+  "token_hash" varchar(128)
+}
+
+Table "ical_import_log" {
+  "id" uuid [pk, not null]
+  "owner_id" uuid [not null]
+  "uid" varchar(2048) [not null]
+  "contact_id" uuid
+  "event_type" varchar(50) [not null]
+  "imported_at" timestamptz [not null]
+
+  Indexes {
+    (owner_id, uid) [type: btree, unique, name: "uq_ical_import_owner_uid"]
+    owner_id [type: btree, name: "ix_ical_import_log_owner_id"]
+    uid [type: btree, name: "ix_ical_import_log_uid"]
   }
 }
 
@@ -594,75 +665,6 @@ Table "contact_stage_event" {
   }
 }
 
-Table "contact_merge" {
-  "id" uuid [pk, not null]
-  "surviving_id" uuid [not null]
-  "absorbed_id" uuid [unique, not null]
-  "merged_by" uuid
-  "merged_at" timestamptz [not null, default: `now()`]
-  "notes" varchar(1000)
-
-  Indexes {
-    merged_at [type: btree, name: "ix_contact_merge_merged_at"]
-    (surviving_id, absorbed_id) [type: btree, name: "ix_contact_merge_surviving_absorbed"]
-    surviving_id [type: btree, name: "ix_contact_merge_surviving_id"]
-  }
-}
-
-Table "inverse_relationship_map" {
-  "id" uuid [pk, not null]
-  "relationship_type" varchar(100) [unique, not null]
-  "inverse_type" varchar(100) [not null]
-  "is_symmetric" bool [not null]
-  "created_at" timestamptz [not null, default: `now()`]
-
-  Indexes {
-    relationship_type [type: btree, name: "ix_inverse_relationship_map_relationship_type"]
-  }
-}
-
-Table "debt_payment" {
-  "id" uuid [pk, not null]
-  "debt_id" uuid [not null]
-  "amount" numeric(12,2) [not null]
-  "paid_at" date [not null]
-  "note" text
-  "created_at" timestamptz [not null]
-
-  Indexes {
-    debt_id [type: btree, name: "ix_debt_payment_debt_id"]
-  }
-}
-
-Table "saved_filter" {
-  "id" uuid [pk, not null]
-  "name" varchar(255) [not null]
-  "filter_json" jsonb [not null]
-  "tag_id" uuid
-  "owner_id" uuid [not null]
-  "created_at" timestamptz [not null]
-  "updated_at" timestamptz [not null]
-
-  Indexes {
-    owner_id [type: btree, name: "ix_saved_filter_owner_id"]
-  }
-}
-
-Table "ical_import_log" {
-  "id" uuid [pk, not null]
-  "owner_id" uuid [not null]
-  "uid" varchar(2048) [not null]
-  "contact_id" uuid
-  "event_type" varchar(50) [not null]
-  "imported_at" timestamptz [not null]
-
-  Indexes {
-    (owner_id, uid) [type: btree, unique, name: "uq_ical_import_owner_uid"]
-    owner_id [type: btree, name: "ix_ical_import_log_owner_id"]
-    uid [type: btree, name: "ix_ical_import_log_uid"]
-  }
-}
-
 Table "email_oauth_token" {
   "id" uuid [pk, not null]
   "owner_id" uuid [not null]
@@ -679,6 +681,20 @@ Table "email_oauth_token" {
     contact_id [type: btree, name: "ix_email_oauth_token_contact_id"]
     email_address [type: btree, name: "ix_email_oauth_token_email_address"]
     owner_id [type: btree, name: "ix_email_oauth_token_owner_id"]
+  }
+}
+
+Table "saved_filter" {
+  "id" uuid [pk, not null]
+  "name" varchar(255) [not null]
+  "filter_json" jsonb [not null]
+  "tag_id" uuid
+  "owner_id" uuid [not null]
+  "created_at" timestamptz [not null]
+  "updated_at" timestamptz [not null]
+
+  Indexes {
+    owner_id [type: btree, name: "ix_saved_filter_owner_id"]
   }
 }
 
@@ -714,7 +730,7 @@ Ref "api_key_impersonate_user_id_fkey":"user"."id" < "api_key_impersonate"."user
 
 Ref "calendar_token_owner_id_fkey":"user"."id" < "calendar_token"."owner_id" [delete: cascade]
 
-Ref "contact_merged_into_id_fkey":"contact"."id" < "contact"."merged_into_id" [delete: set null]
+Ref "communication_preference_contact_id_fkey":"contact"."id" < "communication_preference"."contact_id" [delete: cascade]
 
 Ref "contact_owner_id_fkey":"user"."id" < "contact"."owner_id" [delete: cascade]
 

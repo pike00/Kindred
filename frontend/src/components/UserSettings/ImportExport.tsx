@@ -48,7 +48,7 @@ export default function ImportExport() {
   const importMutation = useMutation({
     mutationFn: (file: File) =>
       ImportExportService.importVcard({
-        formData: { file },
+        formData: { file: file as unknown as string },
       }),
     onSuccess: (res) => {
       const r = res as ImportResult

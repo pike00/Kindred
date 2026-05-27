@@ -13,7 +13,7 @@ Authenticated user; tenant-scope owner of every row below.
 | is_superuser | boolean |  | false |  |  | Grants admin-only endpoints. |
 | full_name | varchar(255) |  | true |  |  | Display name; optional. |
 | hashed_password | varchar |  | true |  |  | Argon2id hash; null for OIDC-only users. |
-| id | uuid |  | false | [public.tag](public.tag.md) [public.contact](public.contact.md) [public.custom_field_definition](public.custom_field_definition.md) [public.interaction](public.interaction.md) [public.reminder](public.reminder.md) [public.gift](public.gift.md) [public.debt](public.debt.md) [public.life_event](public.life_event.md) [public.note](public.note.md) [public.journal_entry](public.journal_entry.md) [public.webhook_endpoint](public.webhook_endpoint.md) [public.tag_share](public.tag_share.md) [public.media_recommendation](public.media_recommendation.md) [public.activity_log](public.activity_log.md) [public.organization](public.organization.md) [public.api_key](public.api_key.md) [public.api_key_impersonate](public.api_key_impersonate.md) [public.calendar_token](public.calendar_token.md) [public.contact_stage_event](public.contact_stage_event.md) [public.contact_merge](public.contact_merge.md) [public.saved_filter](public.saved_filter.md) [public.ical_import_log](public.ical_import_log.md) [public.email_oauth_token](public.email_oauth_token.md) |  | Primary key. |
+| id | uuid |  | false | [public.tag](public.tag.md) [public.contact](public.contact.md) [public.custom_field_definition](public.custom_field_definition.md) [public.interaction](public.interaction.md) [public.reminder](public.reminder.md) [public.gift](public.gift.md) [public.debt](public.debt.md) [public.life_event](public.life_event.md) [public.note](public.note.md) [public.journal_entry](public.journal_entry.md) [public.webhook_endpoint](public.webhook_endpoint.md) [public.tag_share](public.tag_share.md) [public.media_recommendation](public.media_recommendation.md) [public.activity_log](public.activity_log.md) [public.api_key](public.api_key.md) [public.api_key_impersonate](public.api_key_impersonate.md) [public.organization](public.organization.md) [public.contact_merge](public.contact_merge.md) [public.ical_import_log](public.ical_import_log.md) [public.calendar_token](public.calendar_token.md) [public.contact_stage_event](public.contact_stage_event.md) [public.email_oauth_token](public.email_oauth_token.md) [public.saved_filter](public.saved_filter.md) |  | Primary key. |
 | created_at | timestamp with time zone |  | true |  |  | When the account was created (UTC). |
 | oidc_iss | varchar(512) |  | true |  |  | OIDC issuer URL; paired with oidc_sub forms the unique external identity. |
 | oidc_sub | varchar(255) |  | true |  |  | OIDC subject; paired with oidc_iss forms the unique external identity. |
@@ -59,15 +59,15 @@ erDiagram
 "public.media_recommendation" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.activity_log" }o--o| "public.user" : "FOREIGN KEY (actor_id) REFERENCES #quot;user#quot;(id) ON DELETE SET NULL"
 "public.activity_log" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
-"public.organization" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.api_key" }o--|| "public.user" : "FOREIGN KEY (owned_by_user_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.api_key_impersonate" }o--|| "public.user" : "FOREIGN KEY (user_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
+"public.organization" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
+"public.contact_merge" }o--o| "public.user" : "FOREIGN KEY (merged_by) REFERENCES #quot;user#quot;(id) ON DELETE SET NULL"
+"public.ical_import_log" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.calendar_token" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.contact_stage_event" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
-"public.contact_merge" }o--o| "public.user" : "FOREIGN KEY (merged_by) REFERENCES #quot;user#quot;(id) ON DELETE SET NULL"
-"public.saved_filter" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
-"public.ical_import_log" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.email_oauth_token" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
+"public.saved_filter" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 
 "public.user" {
   varchar_255_ email
@@ -115,21 +115,20 @@ erDiagram
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
   timestamp_with_time_zone deleted_at
-  uuid organization_id FK
   contactsource source
   varchar_500_ source_external_id
+  uuid organization_id FK
   boolean do_not_contact
   varchar_500_ do_not_contact_reason
+  varchar_64_ vcard_sha256
   varchar_500_ imessage_id
   timestamp_with_time_zone imessage_synced_at
   varchar_64_ imessage_profile_hash
   jsonb imessage_profile
-  tsvector search_vector
   boolean is_merged
-  uuid merged_into_id FK
-  varchar_64_ vcard_sha256
   varchar_255_ timezone
   text pronouns
+  tsvector search_vector
   boolean auto_log_email
 }
 "public.custom_field_definition" {
@@ -152,12 +151,12 @@ erDiagram
   integer duration_minutes
   timestamp_with_time_zone created_at
   timestamp_without_time_zone deleted_at
-  tsvector search_vector
   boolean is_draft
   varchar_32_ draft_source
   varchar_500_ location_label
   double_precision latitude
   double_precision longitude
+  tsvector search_vector
   varchar_998_ message_id
   varchar_998_ email_subject
   varchar_2048_ email_from
@@ -226,8 +225,8 @@ erDiagram
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
   timestamp_without_time_zone deleted_at
-  tsvector search_vector
   varchar_36_ client_id
+  tsvector search_vector
 }
 "public.journal_entry" {
   uuid id
@@ -279,6 +278,21 @@ erDiagram
   timestamp_with_time_zone occurred_at
   uuid acting_api_key_id FK
 }
+"public.api_key" {
+  uuid id
+  varchar_255_ name
+  varchar_64_ key_hash
+  varchar_16_ key_prefix
+  uuid owned_by_user_id FK
+  timestamp_with_time_zone created_at
+  timestamp_with_time_zone last_used_at
+  timestamp_with_time_zone revoked_at
+  timestamp_with_time_zone expires_at
+}
+"public.api_key_impersonate" {
+  uuid api_key_id FK
+  uuid user_id FK
+}
 "public.organization" {
   varchar_255_ name
   varchar_255_ domain
@@ -298,20 +312,21 @@ erDiagram
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
 }
-"public.api_key" {
+"public.contact_merge" {
   uuid id
-  varchar_255_ name
-  varchar_64_ key_hash
-  varchar_16_ key_prefix
-  uuid owned_by_user_id FK
-  timestamp_with_time_zone created_at
-  timestamp_with_time_zone last_used_at
-  timestamp_with_time_zone revoked_at
-  timestamp_with_time_zone expires_at
+  uuid surviving_id FK
+  uuid absorbed_id FK
+  uuid merged_by FK
+  timestamp_with_time_zone merged_at
+  varchar_1000_ notes
 }
-"public.api_key_impersonate" {
-  uuid api_key_id FK
-  uuid user_id FK
+"public.ical_import_log" {
+  uuid id
+  uuid owner_id FK
+  varchar_2048_ uid
+  uuid contact_id FK
+  varchar_50_ event_type
+  timestamp_with_time_zone imported_at
 }
 "public.calendar_token" {
   uuid id
@@ -333,31 +348,6 @@ erDiagram
   varchar_2000_ note
   timestamp_with_time_zone created_at
 }
-"public.contact_merge" {
-  uuid id
-  uuid surviving_id FK
-  uuid absorbed_id FK
-  uuid merged_by FK
-  timestamp_with_time_zone merged_at
-  varchar_1000_ notes
-}
-"public.saved_filter" {
-  uuid id
-  varchar_255_ name
-  jsonb filter_json
-  uuid tag_id FK
-  uuid owner_id FK
-  timestamp_with_time_zone created_at
-  timestamp_with_time_zone updated_at
-}
-"public.ical_import_log" {
-  uuid id
-  uuid owner_id FK
-  varchar_2048_ uid
-  uuid contact_id FK
-  varchar_50_ event_type
-  timestamp_with_time_zone imported_at
-}
 "public.email_oauth_token" {
   uuid id
   uuid owner_id FK
@@ -367,6 +357,15 @@ erDiagram
   text encrypted_access_token
   text encrypted_refresh_token
   timestamp_with_time_zone token_expires_at
+  timestamp_with_time_zone created_at
+  timestamp_with_time_zone updated_at
+}
+"public.saved_filter" {
+  uuid id
+  varchar_255_ name
+  jsonb filter_json
+  uuid tag_id FK
+  uuid owner_id FK
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
 }

@@ -48,7 +48,7 @@ function Dashboard() {
   })
   const { data: losingTouch } = useQuery({
     queryKey: ["losing-touch"],
-    queryFn: () => ContactsService.listOverdueContacts({ limit: 10 }),
+    queryFn: () => ContactsService.listOverdueContacts({}),
   })
   const { data: recentInteractions } = useQuery({
     queryKey: ["interactions-recent"],
@@ -76,7 +76,7 @@ function Dashboard() {
           <span aria-hidden="true">·</span>
           <span>
             <b className="font-display font-semibold tracking-tight text-foreground">
-              {reminders?.count ?? 0}
+              {reminders?.data?.length ?? 0}
             </b>{" "}
             reminders
           </span>

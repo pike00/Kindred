@@ -243,7 +243,7 @@ export const ContactsList = () => {
     queryKey: ["contacts", activeFilterId],
     queryFn: () =>
       ContactsService.listContacts(
-        activeFilterId ? { saved_filter_id: activeFilterId as any } : {},
+        activeFilterId ? { savedFilterId: activeFilterId } : {},
       ),
   })
 
@@ -349,35 +349,6 @@ export const ContactsList = () => {
       toast.error("Failed to export CSV")
     }
   }, [selectAllFiltered, search])
-
-  const _handleUndo = useCallback(
-    async (undoData: { ids: string[]; action: BulkActionId }) => {
-      // Reverse the action
-      const operations: BulkContactRequest["operations"] = {}
-      switch (undoData.action) {
-        case "archive":
-          operations.set_is_archived = false
-          break
-        case "unarchive":
-          operations.set_is_archived = true
-          break
-        case "favorite":
-          operations.set_is_favorite = false
-          break
-        case "unfavorite":
-          operations.set_is_favorite = true
-          break
-      }
-      try {
-        // TODO: backend bulk update endpoint not yet implemented
-        void operations
-        toast.error("Bulk undo is not yet supported")
-      } catch (_error) {
-        toast.error("Undo failed")
-      }
-    },
-    [],
-  )
 
   const handleBulkAction = useCallback(
     async (actionId: BulkActionId) => {

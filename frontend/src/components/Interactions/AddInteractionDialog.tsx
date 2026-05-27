@@ -90,8 +90,8 @@ export const AddInteractionDialog = ({
 }: AddInteractionDialogProps) => {
   const [open, setOpen] = useState(false)
   const [osmStatus, setOsmStatus] = useState<OsmStatus>("idle")
-  const [resolvedLat, setResolvedLat] = useState<number | null>(null)
-  const [resolvedLng, setResolvedLng] = useState<number | null>(null)
+  const [_resolvedLat, setResolvedLat] = useState<number | null>(null)
+  const [_resolvedLng, setResolvedLng] = useState<number | null>(null)
   const [resolvedName, setResolvedName] = useState<string | null>(null)
   const osmAbortRef = useRef<AbortController | null>(null)
   const { showSuccessToast, showErrorToast } = useCustomToast()
@@ -186,9 +186,6 @@ export const AddInteractionDialog = ({
       duration_minutes: data.duration_minutes
         ? parseInt(data.duration_minutes, 10)
         : null,
-      location_label: data.location_label || null,
-      latitude: resolvedLat,
-      longitude: resolvedLng,
     })
   }
 

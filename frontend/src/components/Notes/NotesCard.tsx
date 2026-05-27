@@ -64,7 +64,7 @@ function QuickCapture({ contactId }: { contactId: string }) {
 
   const syncMutation = useMutation({
     mutationFn: async (draft: OfflineDraft) => {
-      const _response = await NotesService.createNoteRoute({
+      await NotesService.createNoteRoute({
         requestBody: {
           contact_id: contactId,
           body: draft.body,

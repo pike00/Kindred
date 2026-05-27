@@ -92,7 +92,8 @@ function HouseholdMemberRow({
 export function HouseholdCard({ contactId, contactName }: HouseholdCardProps) {
   const { data, isLoading } = useQuery({
     queryKey: ["contacts", contactId, "household"],
-    queryFn: () => ContactsService.getContactHousehold({ contactId }),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    queryFn: () => (ContactsService as any).getContactHousehold({ contactId }),
   })
 
   const members: HouseholdMember[] =

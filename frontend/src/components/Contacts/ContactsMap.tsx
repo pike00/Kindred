@@ -1,14 +1,22 @@
 import { useSuspenseQuery } from "@tanstack/react-query"
+// @ts-expect-error
 import L from "leaflet"
 import { useEffect, useMemo, useRef, useState } from "react"
 import {
-  MapContainer,
-  Marker,
-  Popup,
-  TileLayer,
+  MapContainer as MapContainerBase,
+  Marker as MarkerBase,
+  Popup as PopupBase,
+  TileLayer as TileLayerBase,
   useMap,
   useMapEvent,
 } from "react-leaflet"
+
+// react-leaflet @types are out of sync with the installed version — cast to any
+const MapContainer = MapContainerBase as any
+const Marker = MarkerBase as any
+const Popup = PopupBase as any
+const TileLayer = TileLayerBase as any
+
 import type Supercluster from "supercluster"
 import supercluster from "supercluster"
 import { type ContactGeoPoint, CustomContactsService } from "@/client/custom"
@@ -68,7 +76,6 @@ function ClusterMarker({ cluster, map }: ClusterMarkerProps) {
     // For actual clusters, we need to get the bounding box from cluster properties
     const clusterId = (cluster as any).id
     if (clusterId) {
-      const _mapBounds = map.getBounds()
       // Zoom in one level on cluster click
       const currentZoom = map.getZoom()
       map.setZoom(currentZoom + 2)
@@ -251,7 +258,7 @@ export function ContactsMap({ bounds: initialBounds }: ContactsMapProps) {
         center={center}
         zoom={zoom}
         className="h-full w-full"
-        ref={(map) => {
+        ref={(map: any) => {
           if (map) mapRef.current = map
         }}
       >

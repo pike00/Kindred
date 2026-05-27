@@ -91,10 +91,10 @@ export function OrganizationsList() {
                       </Badge>
                     )}
                   </div>
-                  {(org.industry || org.contact_count > 0) && (
+                  {(org.industry || (org.contact_count ?? 0) > 0) && (
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       {org.industry && <span>{org.industry}</span>}
-                      {org.contact_count > 0 && (
+                      {(org.contact_count ?? 0) > 0 && (
                         <span>
                           {org.contact_count} contact
                           {org.contact_count !== 1 ? "s" : ""}

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
 
-import type { ReminderWithContactPublic } from "@/client"
+import type { ReminderDuePublic } from "@/client"
 import { RemindersService } from "@/client"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -48,7 +48,7 @@ function formatRelative(remindAt: string, now: number): string {
   return `${diffDay}d overdue`
 }
 
-function contactDisplayName(r: ReminderWithContactPublic): string | null {
+function contactDisplayName(r: ReminderDuePublic): string | null {
   return r.contact_name || null
 }
 

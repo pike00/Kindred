@@ -75,7 +75,7 @@ export function GraphVisualization({
     // Setup zoom
     const zoomBehavior = zoom()
       .scaleExtent([0.1, 4])
-      .on("zoom", (event) => {
+      .on("zoom", (event: any) => {
         g.attr("transform", event.transform)
       })
 
@@ -122,7 +122,7 @@ export function GraphVisualization({
       .data(simEdges)
       .enter()
       .append("line")
-      .attr("stroke", (d) => getEdgeColor(d.label))
+      .attr("stroke", (d: any) => getEdgeColor(d.label))
       .attr("stroke-width", 2)
       .attr("stroke-opacity", 0.6)
 
@@ -136,7 +136,7 @@ export function GraphVisualization({
       .attr("font-size", "10px")
       .attr("fill", "#64748b")
       .attr("text-anchor", "middle")
-      .text((d) => d.label)
+      .text((d: any) => d.label)
 
     // Draw nodes
     const nodeGroup = g.append("g").attr("class", "nodes")
@@ -152,7 +152,7 @@ export function GraphVisualization({
           .on("drag", dragged)
           .on("end", dragended),
       )
-      .on("click", (event, d) => {
+      .on("click", (event: any, d: any) => {
         event.stopPropagation()
         setSelectedNode(d.id)
         if (onNodeClick) onNodeClick(d.id)

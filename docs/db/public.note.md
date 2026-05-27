@@ -15,8 +15,8 @@ Timestamped freeform note attached to a specific contact.
 | created_at | timestamp with time zone |  | false |  |  | When the note was created (UTC). |
 | updated_at | timestamp with time zone |  | false |  |  | Auto-bumped on edit (UTC). |
 | deleted_at | timestamp without time zone |  | true |  |  |  |
-| search_vector | tsvector |  | true |  |  |  |
 | client_id | varchar(36) |  | true |  |  |  |
+| search_vector | tsvector |  | true |  |  |  |
 
 ## Constraints
 
@@ -41,8 +41,8 @@ Timestamped freeform note attached to a specific contact.
 | ix_note_owner_id | CREATE INDEX ix_note_owner_id ON public.note USING btree (owner_id) |
 | ix_note_created_at | CREATE INDEX ix_note_created_at ON public.note USING btree (created_at) |
 | ix_note_deleted_at | CREATE INDEX ix_note_deleted_at ON public.note USING btree (deleted_at) |
-| ix_note_search_vector | CREATE INDEX ix_note_search_vector ON public.note USING gin (search_vector) |
 | ix_note_client_id | CREATE INDEX ix_note_client_id ON public.note USING btree (client_id) |
+| ix_note_search_vector | CREATE INDEX ix_note_search_vector ON public.note USING gin (search_vector) |
 
 ## Triggers
 
@@ -67,8 +67,8 @@ erDiagram
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
   timestamp_without_time_zone deleted_at
-  tsvector search_vector
   varchar_36_ client_id
+  tsvector search_vector
 }
 "public.note_mention" {
   uuid note_id FK
@@ -112,21 +112,20 @@ erDiagram
   timestamp_with_time_zone created_at
   timestamp_with_time_zone updated_at
   timestamp_with_time_zone deleted_at
-  uuid organization_id FK
   contactsource source
   varchar_500_ source_external_id
+  uuid organization_id FK
   boolean do_not_contact
   varchar_500_ do_not_contact_reason
+  varchar_64_ vcard_sha256
   varchar_500_ imessage_id
   timestamp_with_time_zone imessage_synced_at
   varchar_64_ imessage_profile_hash
   jsonb imessage_profile
-  tsvector search_vector
   boolean is_merged
-  uuid merged_into_id FK
-  varchar_64_ vcard_sha256
   varchar_255_ timezone
   text pronouns
+  tsvector search_vector
   boolean auto_log_email
 }
 ```

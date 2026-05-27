@@ -15,10 +15,9 @@ export function OverdueContacts() {
   const { data: contactsData, isLoading } = useQuery({
     queryKey: ["overdue-contacts"],
     queryFn: () =>
-      ContactsService.listOverdueContacts({ limit: 50 }).catch(() => {
-        // Fallback to losing-touch endpoint if overdue endpoint isn't available yet
-        return ContactsService.listLosingTouch({ limit: 50 })
-      }),
+      ContactsService.listOverdueContacts({}).catch(() =>
+        ContactsService.listLosingTouchContacts(),
+      ),
   })
 
   const contacts = (contactsData?.data || []) as OverdueContact[]

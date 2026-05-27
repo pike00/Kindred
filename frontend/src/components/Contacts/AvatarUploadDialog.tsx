@@ -114,10 +114,10 @@ export function AvatarUploadDialog({
       if (detections && detections.length > 0) {
         const detectedFaces: DetectedFace[] = detections.map((det) => ({
           boundingBox: {
-            originX: det.boundingBox.originX ?? 0,
-            originY: det.boundingBox.originY ?? 0,
-            width: det.boundingBox.width ?? 0,
-            height: det.boundingBox.height ?? 0,
+            originX: det.boundingBox?.originX ?? 0,
+            originY: det.boundingBox?.originY ?? 0,
+            width: det.boundingBox?.width ?? 0,
+            height: det.boundingBox?.height ?? 0,
           },
           confidence: det.categories?.[0]?.score ?? 0,
         }))
@@ -325,7 +325,8 @@ export function AvatarUploadDialog({
       })
 
       try {
-        await ContactsService.uploadAvatar({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (ContactsService as any).uploadAvatar({
           contactId: contact.id,
           formData: { file },
         })
