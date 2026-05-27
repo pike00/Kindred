@@ -1,9 +1,11 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "types": []
+    "types": ["@types/node"]
   },
   "exclude": [
+    "vitest.config.ts",
+    "vitest.config.*.ts",
     "tests/**/*.ts",
     "src/__tests__/**",
     "src/test/**",
