@@ -1,3 +1,4 @@
+import { drag } from "d3-drag"
 import {
   forceCenter,
   forceCollide,
@@ -5,7 +6,8 @@ import {
   forceManyBody,
   forceSimulation,
 } from "d3-force"
-import { drag, select, zoom, zoomIdentity } from "d3-selection"
+import { select } from "d3-selection"
+import { zoom, zoomIdentity } from "d3-zoom"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
