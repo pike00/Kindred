@@ -9,13 +9,13 @@ import {
   useMap,
   useMapEvent,
 } from "react-leaflet"
-import supercluster, { type Cluster } from "supercluster"
+import type Supercluster from "supercluster"
+import supercluster from "supercluster"
 import { type ContactGeoPoint, CustomContactsService } from "@/client/custom"
 import "leaflet/dist/leaflet.css"
 import { MapIcon } from "lucide-react"
 import { ContactMapCard } from "@/components/Contacts/ContactMapCard"
 
-// @ts-expect-error: No type declarations for leaflet
 delete (L.Icon.Default.prototype as Record<string, unknown>)._getIconUrl
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
@@ -38,7 +38,7 @@ interface ContactsMapProps {
 }
 
 interface ClusterMarkerProps {
-  cluster: Cluster & { properties: { cluster: true; point_count: number } }
+  cluster: Supercluster.ClusterFeature<Supercluster.AnyProps>
   map: L.Map
   points: ContactGeoPoint[]
 }
@@ -183,7 +183,7 @@ export function ContactsMap({ bounds: initialBounds }: ContactsMapProps) {
   const clusterIndex = useMemo(() => {
     if (points.length === 0) return null
 
-    const index = supercluster({
+    const index = new supercluster({
       radius: 60,
       maxZoom: 16,
     })

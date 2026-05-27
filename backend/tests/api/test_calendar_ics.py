@@ -20,7 +20,7 @@ from tests.utils.utils import get_superuser_token_headers, random_email
 
 
 @pytest.fixture(scope="module")
-def user_token_headers(client: TestClient) -> dict[str, str]:
+def user_token_headers(client: TestClient, db: Session) -> dict[str, str]:
     """Get token headers for a test user."""
     email = random_email()
     return authentication_token_from_email(client=client, email=email, db=db)
@@ -33,14 +33,15 @@ def superuser_token_headers(client: TestClient) -> dict[str, str]:
 
 
 @pytest.fixture(scope="module")
-def test_user(db: Session, client: TestClient) -> User:
+def test_user(db: Session) -> User:
     """Create a test user."""
     from app import crud
+    from app.models import UserCreate
     from tests.utils.utils import random_lower_string
 
     email = random_email()
     password = random_lower_string()
-    user_in = User(email=email, hashed_password="test")  # type: ignore
+    user_in = UserCreate(email=email, password=password)
     user = crud.create_user(session=db, user_create=user_in)
     return user
 

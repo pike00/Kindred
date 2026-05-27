@@ -1,6 +1,7 @@
 import { useSuspenseQuery } from "@tanstack/react-query"
 import { Link, useNavigate, useSearch } from "@tanstack/react-router"
-import { useMemo } from "react"
+import { useCallback, useMemo, useState } from "react"
+import { toast } from "sonner"
 
 import {
   type ContactPublic,
@@ -10,6 +11,8 @@ import {
 import type { SavedFilterPublic } from "@/client/types.gen"
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
 import { EmptyState } from "@/components/Common/EmptyState"
+import { AddContactDialog } from "@/components/Contacts/AddContactDialog"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -22,20 +25,70 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
+  Archive,
   ChevronLeft,
   ChevronRight,
   Clock,
   Map as MapIcon,
   Search,
   Star,
+  Trash2,
   Users,
 } from "@/lib/icons"
 import { useSeedDemo } from "@/lib/seed"
 import { cn } from "@/lib/utils"
 
+type BulkActionId =
+  | "archive"
+  | "unarchive"
+  | "favorite"
+  | "unfavorite"
+  | "delete"
+  | "export"
+
+interface BulkContactRequest {
+  operations: {
+    set_is_archived?: boolean
+    set_is_favorite?: boolean
+  }
+  contact_ids?: string[]
+  select_all_filtered?: boolean
+  filters?: { search?: string }
+}
+
+interface PreviewModalState {
+  open: boolean
+  action: BulkActionId | null
+  count: number
+  contacts: ContactPublic[]
+}
+
 const PAGE_SIZE = 25
 
-import { useState } from "react"
+const CHANNEL_OPTIONS = [
+  { value: "", label: "All channels" },
+  { value: "phone", label: "Phone" },
+  { value: "email", label: "Email" },
+  { value: "in_person", label: "In Person" },
+  { value: "video", label: "Video" },
+  { value: "text", label: "Text" },
+]
+
+const BULK_ACTIONS = [
+  { id: "archive", label: "Archive", icon: Archive, color: "" },
+  { id: "unarchive", label: "Unarchive", icon: Archive, color: "" },
+  { id: "favorite", label: "Favorite", icon: Star, color: "" },
+  { id: "unfavorite", label: "Unfavorite", icon: Star, color: "" },
+  { id: "delete", label: "Delete", icon: Trash2, color: "text-destructive" },
+  { id: "export", label: "Export CSV", icon: Users, color: "" },
+]
 
 function fullName(contact: ContactPublic): string {
   return (
@@ -67,7 +120,6 @@ function matchesSearch(contact: ContactPublic, q: string): boolean {
     contact.last_name,
     contact.middle_name,
     contact.nickname,
-    contact.pronouns,
     contact.company,
     contact.title,
     ...(contact.tags?.map((t) => t.name) ?? []),
@@ -116,11 +168,6 @@ function ContactRow({
           <span className="font-display text-base font-semibold tracking-tight truncate">
             {fullName(contact)}
           </span>
-          {contact.pronouns && (
-            <span className="text-xs text-muted-foreground">
-              ({contact.pronouns})
-            </span>
-          )}
           {titleLine(contact) && (
             <span className="text-xs text-muted-foreground truncate hidden sm:inline">
               · {titleLine(contact)}
@@ -178,12 +225,13 @@ export const ContactsList = () => {
     contacts: [],
   })
   const [isLoading, setIsLoading] = useState(false)
+  const [channelFilter, setChannelFilter] = useState("")
+  const [showDncOnly, setShowDncOnly] = useState(false)
 
   // Fetch saved filters to find active filter name
   const { data: filtersData } = useSuspenseQuery({
     queryKey: ["saved-filters"],
-    queryFn: () =>
-      SavedFiltersService.listSavedFilters().then((res) => res.data),
+    queryFn: () => SavedFiltersService.listSavedFilters(),
   })
 
   const activeFilterId = urlFilterId
@@ -254,21 +302,14 @@ export const ContactsList = () => {
     } else {
       // Preview how many contacts would be selected
       try {
-        const result = await ContactsService.previewBulkContacts({
-          search: search || undefined,
-        })
-        setPreviewModal({
-          open: true,
-          action: null,
-          count: result.count ?? 0,
-          contacts: result.data ?? [],
-        })
-        setSelectAllFiltered(true)
+        // TODO: backend bulk preview endpoint not yet implemented
+        toast.error("Bulk select all is not yet supported")
+        return
       } catch (_error) {
         toast.error("Failed to preview contacts")
       }
     }
-  }, [search, selectAllFiltered])
+  }, [selectAllFiltered])
 
   const handleExportCsv = useCallback(async () => {
     try {
@@ -309,7 +350,7 @@ export const ContactsList = () => {
     }
   }, [selectAllFiltered, search])
 
-  const handleUndo = useCallback(
+  const _handleUndo = useCallback(
     async (undoData: { ids: string[]; action: BulkActionId }) => {
       // Reverse the action
       const operations: BulkContactRequest["operations"] = {}
@@ -328,13 +369,9 @@ export const ContactsList = () => {
           break
       }
       try {
-        await ContactsService.bulkUpdateContacts({
-          requestBody: {
-            contact_ids: undoData.ids,
-            operations,
-          },
-        })
-        toast.success("Undo successful")
+        // TODO: backend bulk update endpoint not yet implemented
+        void operations
+        toast.error("Bulk undo is not yet supported")
       } catch (_error) {
         toast.error("Undo failed")
       }
@@ -387,25 +424,11 @@ export const ContactsList = () => {
             : undefined,
         }
 
-        const result = await ContactsService.bulkUpdateContacts({
-          requestBody: body,
-        })
-        toast.success(`Updated ${result.updated_count} contacts`, {
-          action: {
-            label: "Undo",
-            onClick: () => {
-              const ids = selectAllFiltered
-                ? filtered.map((c: ContactPublic) => c.id)
-                : Array.from(selectedIds)
-              handleUndo({ ids, action: actionId })
-            },
-          },
-        })
-        if (result.failed_ids && result.failed_ids.length > 0) {
-          toast.error(`Failed to update ${result.failed_ids.length} contacts`)
-        }
+        // TODO: backend bulk update endpoint not yet implemented
+        void body
+        toast.error("Bulk operations are not yet supported")
 
-        // Clear selection and refresh
+        // Clear selection
         setSelectedIds(new Set())
         setSelectAllFiltered(false)
       } catch (_error) {
@@ -415,15 +438,7 @@ export const ContactsList = () => {
         setPreviewModal({ open: false, action: null, count: 0, contacts: [] })
       }
     },
-    [
-      selectedCount,
-      selectAllFiltered,
-      selectedIds,
-      search,
-      handleExportCsv,
-      handleUndo,
-      filtered.map,
-    ],
+    [selectedCount, selectAllFiltered, selectedIds, search, handleExportCsv],
   )
 
   const handlePreviewAction = useCallback(

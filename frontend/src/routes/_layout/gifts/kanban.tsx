@@ -25,10 +25,28 @@ import {
 import { createFileRoute } from "@tanstack/react-router"
 import { useCallback, useState } from "react"
 import { toast } from "sonner"
-import { type GiftKanbanCard, type GiftStatus, GiftsService } from "@/client"
+import { type GiftPublic, type GiftStatus, GiftsService } from "@/client"
 import { Badge } from "@/components/ui/badge"
 import { Gift, GripVertical } from "@/lib/icons"
 import { cn } from "@/lib/utils"
+
+type KanbanColumn = {
+  gifts: GiftKanbanCard[]
+  count: number
+  total_value: number
+}
+type KanbanBoard = Record<GiftStatus, KanbanColumn>
+
+type GiftKanbanCard = {
+  gift: GiftPublic & {
+    contact_first_name?: string | null
+    contact_last_name?: string | null
+    days_until_occasion?: number | null
+    contact_birthday?: string | null
+  }
+  is_overdue: boolean
+  days_until_occasion?: number | null
+}
 
 export const Route = createFileRoute("/_layout/gifts/kanban")({
   component: GiftsKanbanPage,
@@ -189,10 +207,11 @@ function GiftsKanbanPage() {
   const [overColumn, setOverColumn] = useState<string | null>(null)
   const queryClient = useQueryClient()
 
-  const { data: boardData, refetch } = useSuspenseQuery({
+  const { data: rawBoardData, refetch } = useSuspenseQuery({
     queryKey: ["gifts-kanban"],
     queryFn: () => GiftsService.getKanbanBoard(),
   })
+  const boardData = rawBoardData as KanbanBoard | undefined
 
   const changeStatusMutation = useMutation({
     mutationFn: ({

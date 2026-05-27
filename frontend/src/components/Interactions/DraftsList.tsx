@@ -91,22 +91,22 @@ export const DraftsList = () => {
   const { data } = useSuspenseQuery({
     queryKey: ["drafts"],
     queryFn: () =>
-      InteractionsService.listInteractions({ is_draft: true, limit: 200 }),
+      InteractionsService.listInteractions({ isDraft: true, limit: 200 }),
   })
 
   const queryClient = useQueryClient()
-  const { showSuccess, showError } = useCustomToast()
+  const { showSuccessToast, showErrorToast } = useCustomToast()
 
   const confirmMutation = useMutation({
-    mutationFn: (id: string) =>
-      InteractionsService.confirmDraft({ interactionId: id }),
+    mutationFn: (_id: string) =>
+      Promise.reject(new Error("confirmDraft not yet implemented")),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["drafts"] })
       queryClient.invalidateQueries({ queryKey: ["interactions"] })
-      showSuccess("Draft confirmed and promoted to interaction")
+      showSuccessToast("Draft confirmed and promoted to interaction")
     },
     onError: () => {
-      showError("Failed to confirm draft")
+      showErrorToast("Draft confirmation not yet available")
     },
   })
 
@@ -115,10 +115,10 @@ export const DraftsList = () => {
       InteractionsService.deleteInteraction({ interactionId: id }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["drafts"] })
-      showSuccess("Draft deleted")
+      showSuccessToast("Draft deleted")
     },
     onError: () => {
-      showError("Failed to delete draft")
+      showErrorToast("Failed to delete draft")
     },
   })
 

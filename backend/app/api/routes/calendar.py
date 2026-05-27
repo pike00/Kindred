@@ -4,7 +4,6 @@ import re
 import secrets
 import uuid
 from datetime import date, datetime, timedelta, timezone
-from zoneinfo import ZoneInfo
 from email.utils import format_datetime
 from hashlib import md5
 from typing import Any
@@ -97,6 +96,7 @@ def get_calendar_month(
 
 
 # ─── Calendar Token Management ─────────────────────────────────────────────
+
 
 @router.post("/token", response_model=CalendarTokenPublic)
 def create_calendar_token(

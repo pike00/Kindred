@@ -7,6 +7,7 @@
 export type { LucideIcon } from "lucide-react"
 // Additional icons for bulk operations
 export {
+  AlertCircle,
   AlertTriangle,
   Archive,
   AtSign,
@@ -19,6 +20,8 @@ export {
   CalendarHeart,
   Camera,
   Check,
+  // Forms / inputs
+  CheckCircle2,
   CheckSquare,
   ChevronDown,
   // Pagination
@@ -32,12 +35,14 @@ export {
   CircleCheck,
   Clock,
   Coffee,
+  Crop,
   Download,
-  // Forms / inputs
   Eye,
   EyeOff,
   FileSpreadsheet,
   Film,
+  Focus,
+  Gift,
   GripVertical,
   HeartHandshake,
   // Sidebar nav
@@ -82,6 +87,7 @@ export {
   Settings,
   Share2,
   ShieldCheck,
+  SkipForward,
   Square,
   Star,
   // Theme

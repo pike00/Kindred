@@ -7,7 +7,8 @@ import { EmptyState } from "@/components/Common/EmptyState"
 import { Tag } from "@/lib/icons"
 import { useSeedDemo } from "@/lib/seed"
 import { AddTagDialog } from "./AddTagDialog"
-import { columns } from "./columns"
+import { createColumns } from "./columns"
+import { TagShareDialog } from "./TagShareDialog"
 
 export const TagsList = () => {
   const seedMutation = useSeedDemo()
@@ -16,7 +17,8 @@ export const TagsList = () => {
     queryKey: ["tags"],
     queryFn: () => TagsService.listTags(),
   })
-  const [_selectedTag, _setSelectedTag] = useState<TagPublic | null>(null)
+  const [selectedTag, setSelectedTag] = useState<TagPublic | null>(null)
+  const columns = createColumns(setSelectedTag)
 
   const tags = data?.data || []
 
@@ -52,6 +54,15 @@ export const TagsList = () => {
         />
       ) : (
         <DataTable columns={columns} data={tags} />
+      )}
+      {selectedTag && (
+        <TagShareDialog
+          tag={selectedTag}
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) setSelectedTag(null)
+          }}
+        />
       )}
     </div>
   )

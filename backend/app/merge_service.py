@@ -14,7 +14,6 @@ from app.models import (
     Address,
     Contact,
     ContactField,
-    ContactGroup,
     ContactMerge,
     ContactTag,
     CustomFieldValue,
@@ -93,11 +92,6 @@ def merge_contacts(
         select(ContactTag)
         .where(ContactTag.contact_id == absorbed.id)
         .update({ContactTag.contact_id: surviving.id})
-    )
-    session.exec(
-        select(ContactGroup)
-        .where(ContactGroup.contact_id == absorbed.id)
-        .update({ContactGroup.contact_id: surviving.id})
     )
     session.exec(
         select(InteractionAttendee)
@@ -256,15 +250,6 @@ def unmerge_contact(
         )
         .update({ContactTag.contact_id: absorbed.id})
     )
-    session.exec(
-        select(ContactGroup)
-        .where(
-            ContactGroup.contact_id == surviving_id,
-            ContactGroup.created_at > merge_time,
-        )
-        .update({ContactGroup.contact_id: absorbed.id})
-    )
-
     # InteractionAttendee - move back attendees where interaction was created after merge
     # Get interactions that were moved to survivor after merge
     moved_interactions = (

@@ -1,3 +1,9 @@
+import importlib.metadata
+import logging
+import os
+import subprocess
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 import sentry_sdk
@@ -23,6 +29,17 @@ from app.middleware.setup_gate import SetupGateMiddleware
 logger = logging.getLogger(__name__)
 
 
+def _git_hash() -> str:
+    try:
+        return subprocess.check_output(
+            ["git", "rev-parse", "--short", "HEAD"],
+            stderr=subprocess.DEVNULL,
+            text=True,
+        ).strip()
+    except Exception:
+        return os.environ.get("GIT_HASH", "unknown")
+
+
 def custom_generate_unique_id(route: APIRoute) -> str:
     return f"{route.tags[0]}-{route.name}"
 
@@ -32,7 +49,7 @@ if settings.SENTRY_DSN and settings.ENVIRONMENT != "local":
 
 
 @asynccontextmanager
-async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     """Print the one-time setup URL on first boot, Jupyter-style.
 
     - If setup is already complete, do nothing.
@@ -40,6 +57,22 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
       same token keeps working — we don't regenerate it on every restart.
     - If there's no row at all, create one and emit a brand-new token.
     """
+    git_hash = _git_hash()
+    try:
+        version = importlib.metadata.version("app")
+    except importlib.metadata.PackageNotFoundError:
+        version = "dev"
+    logger.info(
+        "Kindred starting  version=%s  git=%s  env=%s",
+        version,
+        git_hash,
+        settings.ENVIRONMENT,
+    )
+    print(  # noqa: T201
+        f"[kindred] version={version}  git={git_hash}  env={settings.ENVIRONMENT}",
+        flush=True,
+    )
+
     with Session(engine) as session:
         state, token = ensure_state_with_token(session)
     if not state.complete:
@@ -108,6 +141,7 @@ if uploads_dir.exists():
 
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
+app.include_router(setup_router)
 
 # SPA mount. In prod (Dockerfile.prod) STATIC_DIR=/app/static contains the
 # vite build output; in dev STATIC_DIR is unset and the SPA is served by

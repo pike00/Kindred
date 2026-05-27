@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/popover"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
-import { CalendarIcon, Trash2 } from "@/lib/icons"
+import { Calendar as CalendarIcon, Trash2 } from "@/lib/icons"
 
 interface DebtPaymentsCardProps {
   debt: DebtPublic

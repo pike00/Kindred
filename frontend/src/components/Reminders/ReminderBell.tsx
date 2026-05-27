@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
 
-import type { ReminderDuePublic } from "@/client"
+import type { ReminderWithContactPublic } from "@/client"
 import { RemindersService } from "@/client"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -48,13 +48,8 @@ function formatRelative(remindAt: string, now: number): string {
   return `${diffDay}d overdue`
 }
 
-function contactDisplayName(
-  contact: ReminderDuePublic["contact"],
-): string | null {
-  if (!contact) return null
-  const parts = [contact.first_name, contact.last_name].filter(Boolean)
-  const full = parts.join(" ").trim()
-  return contact.nickname || full || null
+function contactDisplayName(r: ReminderWithContactPublic): string | null {
+  return r.contact_name || null
 }
 
 export function ReminderBell() {
@@ -83,11 +78,7 @@ export function ReminderBell() {
       reminderId: string
       minutes: number
       label: string
-    }) =>
-      RemindersService.snoozeReminder({
-        reminderId,
-        requestBody: { minutes },
-      }),
+    }) => RemindersService.snoozeReminder({ reminderId, minutes }),
     onSuccess: (_data, variables) => {
       showSuccessToast(`Snoozed for ${variables.label.toLowerCase()}`)
       invalidate()
@@ -149,7 +140,7 @@ export function ReminderBell() {
         ) : (
           <ul className="max-h-96 divide-y overflow-y-auto">
             {dueReminders.slice(0, POPOVER_DISPLAY_LIMIT).map((r) => {
-              const name = contactDisplayName(r.contact)
+              const name = contactDisplayName(r)
               return (
                 <li key={r.id} className="min-h-[44px] px-4 py-3">
                   <div className="flex items-start justify-between gap-2">

@@ -1,6 +1,6 @@
 """add SKIP to interactionchannel enum
 
-Revision ID: f7a8b9c0d1e2
+Revision ID: ics0001_interaction_channel_skip
 Revises: c4e5f6a7b8c9
 Create Date: 2026-05-06 21:00:00.000000
 
@@ -8,7 +8,7 @@ Create Date: 2026-05-06 21:00:00.000000
 
 from alembic import op
 
-revision = "f7a8b9c0d1e2"
+revision = "ics0001_interaction_channel_skip"
 down_revision = "c4e5f6a7b8c9"
 branch_labels = None
 depends_on = None

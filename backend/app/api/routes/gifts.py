@@ -1,7 +1,7 @@
 """Gift management routes."""
 
 import uuid
-from datetime import date
+from datetime import date, datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
@@ -17,6 +17,7 @@ from app.models import (
     GiftsPublic,
     GiftStatus,
     GiftUpdate,
+    Ok,
 )
 
 router = APIRouter(prefix="/gifts", tags=["gifts"])
@@ -120,29 +121,6 @@ def delete_gift(
     session.add(gift)
     session.commit()
     return Ok()
-
-
-@router.post("/{gift_id}/restore")
-def restore_gift(
-    session: SessionDep,
-    gift_id: uuid.UUID,
-) -> Any:
-    """Soft-delete a gift by setting deleted_at."""
-    gift = session.get(Gift, gift_id)
-    if gift is None:
-        raise HTTPException(status_code=404, detail="Gift not found")
-
-    if gift.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
-
-    _require_contact_visible(session, current_user, gift.contact_id)
-
-    from datetime import datetime, timezone
-
-    gift.deleted_at = datetime.now(timezone.utc)
-    session.add(gift)
-    session.commit()
-    return {"ok": True}
 
 
 @router.post("/{gift_id}/restore")

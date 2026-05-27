@@ -8,12 +8,12 @@ from fastapi.responses import Response
 from sqlmodel import SQLModel, select
 
 from app.api.deps import CurrentUser, SessionDep
+from app.crud import upsert_contact
 from app.csv_utils import (
     build_contact_from_row,
     detect_column_mapping,
     export_contacts_to_csv,
     get_existing_contacts_by_email,
-    get_existing_groups,
     get_existing_tags,
     normalize_email,
     parse_csv_content,
@@ -24,9 +24,8 @@ from app.models import (
     ContactCreate,
     ContactField,
     ContactFieldType,
-    ContactGroup,
+    ContactSource,
     ContactTag,
-    Group,
     Tag,
 )
 from app.vcard import contact_to_vcard, vcard_to_contact_data
@@ -76,7 +75,6 @@ async def import_vcard(
                 source=ContactSource.VCARD_IMPORT,
                 source_external_id=source_external_id,
                 tag_ids=[],
-                group_ids=[],
             )
 
             # Use upsert_contact for idempotent import
@@ -179,149 +177,6 @@ def export_json(
     return JsonExportResponse(contacts=[c.model_dump() for c in contacts])
 
 
-@router.get("/export/csv")
-def export_csv(
-    session: SessionDep,
-    current_user: CurrentUser,
-    select_all_filtered: bool = False,
-    search: str | None = None,
-    tag_id: uuid.UUID | None = None,
-    group_id: uuid.UUID | None = None,
-    is_favorite: bool | None = None,
-    is_archived: bool | None = None,
-    stage: str | None = None,
-    limit: int = 500,
-) -> Any:
-    """Export contacts as CSV file."""
-    import csv
-    from io import StringIO
-
-    limit = min(max(1, limit), 500)
-
-    stmt = select(Contact).where(
-        Contact.id.in_(visible_contact_ids(current_user, include_deleted=False))
-    )
-
-    if is_archived is not None:
-        stmt = stmt.where(Contact.is_archived == is_archived)
-    elif select_all_filtered:
-        stmt = stmt.where(Contact.is_archived.is_(False))
-
-    if is_favorite is not None:
-        stmt = stmt.where(Contact.is_favorite == is_favorite)
-    if stage is not None:
-        stmt = stmt.where(Contact.stage == stage)
-    if search:
-        search_filter = f"%{search}%"
-        stmt = stmt.where(
-            col(Contact.first_name).ilike(search_filter)
-            | col(Contact.last_name).ilike(search_filter)
-            | col(Contact.nickname).ilike(search_filter)
-            | col(Contact.company).ilike(search_filter)
-        )
-    if tag_id:
-        stmt = stmt.join(ContactTag).where(ContactTag.tag_id == tag_id)
-    if group_id:
-        stmt = stmt.join(ContactGroup).where(ContactGroup.group_id == group_id)
-
-    stmt = stmt.options(
-        selectinload(Contact.tags),
-        selectinload(Contact.groups),
-        selectinload(Contact.fields),
-    ).limit(limit)
-
-    contacts = session.exec(stmt).all()
-
-    # Build CSV content
-    output = StringIO()
-    writer = csv.writer(output)
-
-    # Write header
-    writer.writerow(
-        [
-            "id",
-            "first_name",
-            "middle_name",
-            "last_name",
-            "nickname",
-            "prefix",
-            "suffix",
-            "company",
-            "title",
-            "department",
-            "email",
-            "phone",
-            "birthday",
-            "how_we_met",
-            "is_favorite",
-            "is_archived",
-            "stage",
-            "contact_frequency_days",
-            "tags",
-            "groups",
-            "created_at",
-            "last_contacted_at",
-        ]
-    )
-
-    for contact in contacts:
-        # Get primary email and phone
-        primary_email = next(
-            (
-                f.value
-                for f in contact.fields
-                if f.field_type == "email" and f.is_primary
-            ),
-            next((f.value for f in contact.fields if f.field_type == "email"), ""),
-        )
-        primary_phone = next(
-            (
-                f.value
-                for f in contact.fields
-                if f.field_type == "phone" and f.is_primary
-            ),
-            next((f.value for f in contact.fields if f.field_type == "phone"), ""),
-        )
-
-        writer.writerow(
-            [
-                str(contact.id),
-                contact.first_name,
-                contact.middle_name or "",
-                contact.last_name or "",
-                contact.nickname or "",
-                contact.prefix or "",
-                contact.suffix or "",
-                contact.company or "",
-                contact.title or "",
-                contact.department or "",
-                primary_email,
-                primary_phone,
-                str(contact.birthday) if contact.birthday else "",
-                contact.how_we_met or "",
-                contact.is_favorite,
-                contact.is_archived,
-                contact.stage or "",
-                contact.contact_frequency_days or "",
-                ", ".join(t.name for t in contact.tags) if contact.tags else "",
-                ", ".join(g.name for g in contact.groups) if contact.groups else "",
-                contact.created_at.isoformat() if contact.created_at else "",
-                contact.last_contacted_at.isoformat()
-                if contact.last_contacted_at
-                else "",
-            ]
-        )
-
-    csv_content = output.getvalue()
-    output.close()
-
-    return Response(
-        content=csv_content,
-        media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=contacts.csv"},
-    )
-
-
 def _split_vcards(text: str) -> list[str]:
     """Split a multi-vCard file into individual vCard strings."""
     cards = []
@@ -387,7 +242,6 @@ class CSVImportRequest(SQLModel):
     skip_duplicates: bool = True
     merge_duplicates: bool = False
     create_missing_tags: bool = True
-    create_missing_groups: bool = True
 
 
 class CSVImportResponse(SQLModel):
@@ -398,7 +252,6 @@ class CSVImportResponse(SQLModel):
     updated: int
     errors: list[str]
     tag_names_created: list[str] = []
-    group_names_created: list[str] = []
 
 
 @router.post("/import/csv", response_model=CSVImportResponse)
@@ -411,7 +264,6 @@ async def import_csv(
     skip_duplicates: bool = Query(True),
     merge_duplicates: bool = Query(False),
     create_missing_tags: bool = Query(True),
-    create_missing_groups: bool = Query(True),
 ) -> Any:
     """Import contacts from a CSV file.
 
@@ -419,7 +271,6 @@ async def import_csv(
     - **skip_duplicates**: Skip contacts with matching email (default: True).
     - **merge_duplicates**: Update existing contacts with matching email (default: False).
     - **create_missing_tags**: Auto-create tags that don't exist (default: True).
-    - **create_missing_groups**: Auto-create groups that don't exist (default: True).
     """
     content = await file.read()
     headers, rows, _ = parse_csv_content(content)
@@ -466,14 +317,12 @@ async def import_csv(
     # Get existing data for dedupe
     existing_contacts = get_existing_contacts_by_email(session, str(current_user.id))
     existing_tags = get_existing_tags(session, str(current_user.id))
-    existing_groups = get_existing_groups(session, str(current_user.id))
 
     imported = 0
     skipped = 0
     updated = 0
     errors: list[str] = []
     tags_created: list[str] = []
-    groups_created: list[str] = []
 
     for row_idx, row in enumerate(rows, start=2):  # Row 1 is header
         try:
@@ -482,7 +331,6 @@ async def import_csv(
             contact_data = parsed["contact_data"]
             fields = parsed["fields"]
             tag_names = parsed["tag_names"]
-            group_names = parsed["group_names"]
             addresses = parsed["addresses"]
 
             # Check for duplicates by email
@@ -580,33 +428,6 @@ async def import_csv(
                     session.add(ContactTag(contact_id=contact.id, tag_id=tag.id))
 
             # Handle groups
-            for group_name in group_names:
-                group_name_lower = group_name.lower()
-                if group_name_lower in existing_groups:
-                    group = existing_groups[group_name_lower]
-                elif create_missing_groups:
-                    group = Group(
-                        name=group_name,
-                        owner_id=current_user.id,
-                    )
-                    session.add(group)
-                    session.commit()
-                    session.refresh(group)
-                    existing_groups[group_name_lower] = group
-                    groups_created.append(group_name)
-                else:
-                    continue
-
-                # Link group to contact
-                existing_link = session.exec(
-                    select(ContactGroup).where(
-                        (ContactGroup.contact_id == contact.id)
-                        & (ContactGroup.group_id == group.id)
-                    )
-                ).first()
-                if not existing_link:
-                    session.add(ContactGroup(contact_id=contact.id, group_id=group.id))
-
             session.commit()
             imported += 1
 
@@ -620,7 +441,6 @@ async def import_csv(
         updated=updated,
         errors=errors,
         tag_names_created=tags_created,
-        group_names_created=groups_created,
     )
 
 
@@ -632,20 +452,17 @@ def export_csv(
     session: SessionDep,
     current_user: CurrentUser,
     include_tags: bool = Query(True),
-    include_groups: bool = Query(True),
     include_fields: bool = Query(True),
 ) -> Any:
     """Export all contacts as a CSV file with UTF-8 BOM for Excel compatibility.
 
     - **include_tags**: Include tag names column (default: True).
-    - **include_groups**: Include group names column (default: True).
     - **include_fields**: Include emails and phones columns (default: True).
     """
     filename, csv_bytes = export_contacts_to_csv(
         session=session,
         owner_id=str(current_user.id),
         include_tags=include_tags,
-        include_groups=include_groups,
         include_fields=include_fields,
     )
 

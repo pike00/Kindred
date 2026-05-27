@@ -1,5 +1,4 @@
 import { useMutation } from "@tanstack/react-query"
-import { useNavigate } from "@tanstack/react-router"
 import { format } from "date-fns"
 import { CalendarIcon, CheckIcon, InfoIcon, UploadIcon } from "lucide-react"
 import { useRef, useState } from "react"
@@ -71,7 +70,6 @@ export default function IcalImport() {
     null,
   )
   const { showSuccessToast, showErrorToast } = useCustomToast()
-  const _navigate = useNavigate()
 
   const uploadMutation = useMutation({
     mutationFn: (file: File) => IcalService.uploadIcal({ formData: { file } }),
@@ -359,11 +357,6 @@ export default function IcalImport() {
                         {_formatDate(prop.occurred_at)}
                       </TableCell>
                       <TableCell>
-                        {prop.already_imported && (
-                          <Badge variant="outline" className="text-yellow-600">
-                            Already imported
-                          </Badge>
-                        )}
                         {prop.attendees.length === 0 ? (
                           <span className="text-xs text-muted-foreground">
                             No attendees

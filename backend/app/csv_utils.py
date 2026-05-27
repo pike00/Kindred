@@ -13,7 +13,6 @@ from app.models import (
     Contact,
     ContactField,
     ContactFieldType,
-    Group,
     Tag,
 )
 
@@ -330,12 +329,6 @@ def get_existing_tags(session: Session, owner_id: str) -> dict[str, Tag]:
     return {tag.name.lower(): tag for tag in tags}
 
 
-def get_existing_groups(session: Session, owner_id: str) -> dict[str, Group]:
-    """Get existing groups for a user, keyed by lowercase name."""
-    groups = session.exec(select(Group).where(Group.owner_id == owner_id)).all()
-    return {group.name.lower(): group for group in groups}
-
-
 def get_existing_contacts_by_email(
     session: Session, owner_id: str
 ) -> dict[str, Contact]:
@@ -371,7 +364,6 @@ def build_contact_from_row(
     contact_data: dict[str, Any] = {}
     fields: list[dict[str, Any]] = []
     tag_names: list[str] = []
-    group_names: list[str] = []
     addresses: list[dict[str, Any]] = []
 
     for csv_header, canonical in column_mapping.items():
@@ -462,10 +454,6 @@ def build_contact_from_row(
             names = re.split(r"[;,]+\s*", value)
             tag_names.extend([n.strip() for n in names if n.strip()])
 
-        elif canonical == "group_names":
-            names = re.split(r"[;,]+\s*", value)
-            group_names.extend([n.strip() for n in names if n.strip()])
-
         elif canonical == "address":
             addresses.append({"label": "home", "street": value})
 
@@ -502,7 +490,6 @@ def build_contact_from_row(
         "contact_data": contact_data,
         "fields": fields,
         "tag_names": tag_names,
-        "group_names": group_names,
         "addresses": addresses,
     }
 
@@ -539,7 +526,6 @@ def export_contacts_to_csv(
     session: Session,
     owner_id: str,
     include_tags: bool = True,
-    include_groups: bool = True,
     include_fields: bool = True,
 ) -> tuple[str, bytes]:
     """Export contacts to CSV format with UTF-8 BOM for Excel compatibility.
@@ -573,8 +559,6 @@ def export_contacts_to_csv(
         fieldnames.extend(["emails", "phones"])
     if include_tags:
         fieldnames.append("tag_names")
-    if include_groups:
-        fieldnames.append("group_names")
 
     writer = csv.DictWriter(output, fieldnames=fieldnames)
     writer.writeheader()
@@ -613,10 +597,6 @@ def export_contacts_to_csv(
         if include_tags:
             tag_names = [tag.name for tag in contact.tags]
             row["tag_names"] = "; ".join(tag_names)
-
-        if include_groups:
-            group_names = [group.name for group in contact.groups]
-            row["group_names"] = "; ".join(group_names)
 
         writer.writerow(row)
 

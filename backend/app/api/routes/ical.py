@@ -80,12 +80,8 @@ def _parse_datetime(dt_value) -> datetime | None:
     if dt_value is None:
         return None
 
-    from icalendar.prop import vDate, vDatetime
-
-    if isinstance(dt_value, (vDate, vDatetime)):
-        dt = dt_value.dt
-    else:
-        dt = dt_value
+    # icalendar >= 6 uses vDDDTypes; older versions use vDate/vDatetime directly
+    dt = dt_value.dt if hasattr(dt_value, "dt") else dt_value
 
     if isinstance(dt, datetime):
         # Ensure timezone aware
@@ -176,7 +172,7 @@ def _classify_event(summary: str, description: str | None, attendee_count: int) 
     }
 
 
-def _infer_channel(summary: str, full_text: str) -> str | None:
+def _infer_channel(_summary: str, full_text: str) -> str | None:
     """Infer interaction channel from event text."""
     if any(kw in full_text for kw in ["call", "phone", "audio"]):
         return "call"
@@ -310,11 +306,11 @@ async def upload_ical(
     ).all()
 
     # Get existing UIDs to detect duplicates
-    existing_uids = set()
-    for row in session.exec(
-        select(IcalImportLog.uid).where(IcalImportLog.owner_id == current_user.id)
-    ).all():
-        existing_uids.add(row[0])
+    existing_uids = set(
+        session.exec(
+            select(IcalImportLog.uid).where(IcalImportLog.owner_id == current_user.id)
+        ).all()
+    )
 
     proposals = []
     skipped_future = 0

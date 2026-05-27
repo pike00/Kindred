@@ -1,4 +1,5 @@
 """Reminder management routes."""
+
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any
@@ -9,23 +10,18 @@ from sqlmodel import func, or_, select
 from app.api.deps import CurrentUser, SessionDep
 from app.crud import contact_visible, create_reminder, visible_contact_ids
 from app.models import (
-    ChronicSnoozer,
     Contact,
     Ok,
     Reminder,
-    ReminderContactSummary,
+    ReminderContactInfo,
     ReminderCreate,
     ReminderDuePublic,
     ReminderPublic,
     RemindersDuePublic,
     ReminderSnooze,
-    ReminderSnoozeHistoryEntry,
     ReminderSnoozeRequest,
-    ReminderSnoozeStat,
     RemindersPublic,
-    ReminderSnooze,
     ReminderUpdate,
-    ReminderSnooze,
 )
 
 router = APIRouter(prefix="/reminders", tags=["reminders"])
@@ -74,78 +70,59 @@ def list_reminders(
     )
 
 
-@router.get("/due", response_model=RemindersWithContactPublic)
+@router.get("/due", response_model=RemindersDuePublic)
 def list_due_reminders(
     session: SessionDep,
     current_user: CurrentUser,
     skip: int = 0,
     limit: int = 100,
 ) -> Any:
-    """List reminders due now or overdue for the current user.
-
-    Filters for reminders where:
-    - remind_at <= now (due or overdue)
-    - snoozed_until is NULL or snoozed_until <= now (not snoozed)
-    - is_active is True
-    - owned by current user or tied to visible contacts
-
-    Also joins with Contact to include contact_name.
-    """
+    """List reminders due now or overdue for the current user."""
     now = datetime.now(timezone.utc)
 
-    statement = (
-        select(Reminder, Contact.first_name, Contact.last_name)
-        .outerjoin(Contact, Reminder.contact_id == Contact.id)
-        .where(
-            Reminder.remind_at <= now,
-            or_(
-                Reminder.snoozed_until.is_(None),
-                Reminder.snoozed_until <= now,
-            ),
-            Reminder.is_active == True,
-            or_(
-                Reminder.owner_id == current_user.id,
-                Reminder.contact_id.in_(visible_contact_ids(current_user)),
-            ),
+    base_filter = [
+        Reminder.remind_at <= now,
+        or_(
+            Reminder.snoozed_until.is_(None),
+            Reminder.snoozed_until <= now,
+        ),
+        Reminder.is_active.is_(True),
+        or_(
+            Reminder.owner_id == current_user.id,
+            Reminder.contact_id.in_(visible_contact_ids(current_user)),
+        ),
+    ]
+
+    count = session.exec(
+        select(func.count()).select_from(
+            select(Reminder.id).where(*base_filter).subquery()
         )
-    )
+    ).one()
 
-    count_statement = select(func.count()).select_from(
-        select(Reminder.id)
+    results = session.exec(
+        select(Reminder, Contact)
         .outerjoin(Contact, Reminder.contact_id == Contact.id)
-        .where(
-            Reminder.remind_at <= now,
-            or_(
-                Reminder.snoozed_until.is_(None),
-                Reminder.snoozed_until <= now,
-            ),
-            Reminder.is_active == True,
-            or_(
-                Reminder.owner_id == current_user.id,
-                Reminder.contact_id.in_(visible_contact_ids(current_user)),
-            ),
-        )
-        .subquery()
-    )
-    count = session.exec(count_statement).one()
+        .where(*base_filter)
+        .order_by(Reminder.remind_at.asc())
+        .offset(skip)
+        .limit(limit)
+    ).all()
 
-    statement = statement.order_by(Reminder.remind_at.asc()).offset(skip).limit(limit)
-    results = session.exec(statement).all()
+    due_list = []
+    for reminder, contact in results:
+        reminder_data = ReminderDuePublic.model_validate(reminder)
+        if contact:
+            reminder_data.contact_name = (
+                f"{contact.first_name} {contact.last_name or ''}".strip()
+            )
+            reminder_data.contact = ReminderContactInfo(
+                id=contact.id,
+                first_name=contact.first_name,
+                last_name=contact.last_name,
+            )
+        due_list.append(reminder_data)
 
-    reminders_with_contact = []
-    for row in results:
-        reminder = row[0]
-        first_name = row[1]
-        last_name = row[2]
-        reminder_data = ReminderWithContactPublic.model_validate(reminder)
-        if first_name:
-            reminder_data.contact_name = f"{first_name} {last_name or ''}".strip()
-        reminders_with_contact.append(reminder_data)
-
-    return RemindersWithContactPublic(
-        data=reminders_with_contact,
-        count=count,
-    )
+    return RemindersDuePublic(data=due_list, count=count)
 
 
 @router.post("/{reminder_id}/dismiss")
@@ -159,7 +136,7 @@ def dismiss_reminder(
     if reminder is None or not _reminder_accessible(current_user, reminder, session):
         raise HTTPException(status_code=404, detail="Reminder not found")
 
-    reminder.snoozed_until = datetime.now(timezone.utc)
+    reminder.snoozed_until = datetime.now(timezone.utc) + timedelta(days=365)
     session.add(reminder)
     session.commit()
     session.refresh(reminder)
@@ -211,48 +188,47 @@ def snooze_reminder(
     session: SessionDep,
     current_user: CurrentUser,
     reminder_id: uuid.UUID,
-    minutes: int = 30,
-    reason: str | None = None,
+    minutes: int | None = None,
+    body: ReminderSnoozeRequest | None = None,
 ) -> Any:
-    """Snooze a reminder: write a log row and update denormalized snoozed_until."""
+    """Snooze a reminder. Accepts JSON body with minutes/snooze_until, or minutes as query param."""
     reminder = session.get(Reminder, reminder_id)
     if reminder is None or not _reminder_accessible(current_user, reminder, session):
         raise HTTPException(status_code=404, detail="Reminder not found")
 
     now = datetime.now(timezone.utc)
+
+    # Resolve snoozed_until from body or query param
+    snooze_until = None
+    snooze_minutes = None
+    snooze_reason = None
+    if body is not None:
+        snooze_until = body.snoozed_until
+        snooze_minutes = body.minutes
+        snooze_reason = body.reason
+    if minutes is not None:
+        snooze_minutes = minutes
+
     if snooze_until is not None:
-        reminder.snoozed_until = snooze_until
-    elif minutes is not None:
-        reminder.snoozed_until = now + timedelta(minutes=minutes)
+        new_snoozed_until = snooze_until
+    elif snooze_minutes is not None:
+        new_snoozed_until = now + timedelta(minutes=snooze_minutes)
     else:
-        # Default: snooze for 1 hour
-        reminder.snoozed_until = now + timedelta(hours=1)
+        new_snoozed_until = now + timedelta(minutes=30)
 
-    now = datetime.now(timezone.utc)
-    new_snoozed_until = now + timedelta(minutes=minutes)
-
-    # Write snooze log row
     snooze_log = ReminderSnooze(
         reminder_id=reminder.id,
         snoozed_at=now,
         snoozed_until=new_snoozed_until,
-        reason=reason,
+        reason=snooze_reason,
     )
     session.add(snooze_log)
 
-    # Update denormalized cache on Reminder
     reminder.snoozed_until = new_snoozed_until
     session.add(reminder)
-
     session.commit()
     session.refresh(reminder)
     return ReminderPublic.model_validate(reminder)
-
-
-
-
-from datetime import timedelta
-from app.crud import get_effective_snoozed_until
 
 
 @router.get("/{reminder_id}/snooze-history")
@@ -272,7 +248,14 @@ def get_snooze_history(
         .order_by(ReminderSnooze.snoozed_at.desc())
     )
     history = session.exec(stmt).all()
-    return [{"snoozed_at": h.snoozed_at, "snoozed_until": h.snoozed_until, "reason": h.reason} for h in history]
+    return [
+        {
+            "snoozed_at": h.snoozed_at,
+            "snoozed_until": h.snoozed_until,
+            "reason": h.reason,
+        }
+        for h in history
+    ]
 
 
 @router.get("/snooze-stats")
@@ -356,27 +339,6 @@ def delete_reminder(
     session.add(reminder)
     session.commit()
     return {"ok": True}
-
-
-@router.post("/{reminder_id}/restore")
-def restore_reminder(
-    session: SessionDep,
-    reminder_id: uuid.UUID,
-) -> Any:
-    """Restore a soft-deleted reminder by clearing deleted_at."""
-    from sqlalchemy import text, update
-
-    result = session.exec(
-        text("SELECT id FROM reminder WHERE id = :id AND deleted_at IS NOT NULL"),
-        params={"id": str(reminder_id)},
-    ).first()
-    if result is None:
-        raise HTTPException(status_code=404, detail="Reminder not found or not deleted")
-    session.exec(
-        update(Reminder).where(Reminder.id == reminder_id).values(deleted_at=None)
-    )
-    session.commit()
-    return Ok()
 
 
 @router.post("/{reminder_id}/restore")

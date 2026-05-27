@@ -1,5 +1,4 @@
 import { useSuspenseQuery } from "@tanstack/react-query"
-import { Link } from "@tanstack/react-router"
 import { useState } from "react"
 
 import { type OrganizationPublic, OrganizationsService } from "@/client"
@@ -27,12 +26,14 @@ export function OrganizationsList() {
   const [page, setPage] = useState(0)
   const [addOpen, setAddOpen] = useState(false)
 
-  const { data } = useSuspenseQuery(
-    OrganizationsService.listOrganizationsQueryOptions({
-      skip: page * PAGE_SIZE,
-      limit: PAGE_SIZE,
-    }),
-  )
+  const { data } = useSuspenseQuery({
+    queryKey: ["organizations", page],
+    queryFn: () =>
+      OrganizationsService.listOrganizations({
+        skip: page * PAGE_SIZE,
+        limit: PAGE_SIZE,
+      }),
+  })
   const orgs = (data?.data ?? []).filter((o) => matchesSearch(o, search))
   const total = data?.count ?? 0
   const totalPages = Math.ceil(total / PAGE_SIZE)
@@ -65,7 +66,7 @@ export function OrganizationsList() {
       {/* List */}
       {orgs.length === 0 ? (
         <EmptyState
-          icon={<Building2 className="h-8 w-8 text-muted-foreground" />}
+          icon={Building2}
           title="No organizations yet"
           description="Add your first organization to get started."
           action={
@@ -75,10 +76,8 @@ export function OrganizationsList() {
       ) : (
         <div className="space-y-2">
           {orgs.map((org) => (
-            <Link
+            <div
               key={org.id}
-              to="/organizations/$orgId"
-              params={{ orgId: org.id }}
               className="block rounded-lg border p-4 transition-colors hover:bg-muted/50"
             >
               <div className="flex items-center justify-between">
@@ -105,7 +104,7 @@ export function OrganizationsList() {
                   )}
                 </div>
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       )}

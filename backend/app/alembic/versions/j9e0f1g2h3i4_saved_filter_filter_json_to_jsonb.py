@@ -14,7 +14,7 @@ from alembic import op
 
 
 revision = "j9e0f1g2h3i4"
-down_revision = "i8d9e0f1g2h3"
+down_revision = ("i8d9e0f1g2h3", "001_add_saved_filter")
 branch_labels = None
 depends_on = None
 

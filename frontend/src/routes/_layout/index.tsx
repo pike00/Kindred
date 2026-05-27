@@ -48,7 +48,7 @@ function Dashboard() {
   })
   const { data: losingTouch } = useQuery({
     queryKey: ["losing-touch"],
-    queryFn: () => ContactsService.listLosingTouch({ limit: 10 }),
+    queryFn: () => ContactsService.listOverdueContacts({ limit: 10 }),
   })
   const { data: recentInteractions } = useQuery({
     queryKey: ["interactions-recent"],

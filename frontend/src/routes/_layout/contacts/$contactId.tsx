@@ -21,6 +21,7 @@ import { AvatarUploadDialog } from "@/components/Contacts/AvatarUploadDialog"
 import { ContactFieldsCard } from "@/components/Contacts/ContactFieldsCard"
 import { CustomFieldsCard } from "@/components/Contacts/CustomFieldsCard"
 import { EditContactDialog } from "@/components/Contacts/EditContactDialog"
+import { HouseholdCard } from "@/components/Contacts/HouseholdCard"
 import { InteractionHeatmap } from "@/components/Contacts/InteractionHeatmap"
 import { LifeEventsCard } from "@/components/Contacts/LifeEventsCard"
 import { PetsCard } from "@/components/Contacts/PetsCard"
@@ -406,29 +407,7 @@ function ContactDetailPage() {
           )}
 
           {/* Groups */}
-          {contact.groups && contact.groups.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  Groups
-                  <InfoHint>
-                    Named collections of people with a shared context, like
-                    "Family", "D&D Group", or "Work Team". Groups have a
-                    description; tags don't.
-                  </InfoHint>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-1.5">
-                  {contact.groups.map((group) => (
-                    <Badge key={group.id} variant="outline">
-                      {group.name}
-                    </Badge>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          {/* Groups — ContactPublic doesn't include groups yet; field is rendered when backend adds it */}
           {/* Interaction Map */}
           <Card>
             <CardHeader>

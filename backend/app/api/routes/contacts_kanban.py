@@ -11,7 +11,6 @@ from app.api.deps import CurrentUser, SessionDep
 from app.crud import visible_contact_ids
 from app.models import (
     Contact,
-    ContactGroup,
     ContactPublic,
     ContactsPublic,
     ContactStageEvent,
@@ -48,7 +47,6 @@ def get_kanban_board(
     current_user: CurrentUser,
     search: str | None = None,
     tag_id: uuid.UUID | None = None,
-    group_id: uuid.UUID | None = None,
 ) -> Any:
     """Return contacts grouped by stage for kanban board."""
     # Get distinct stages
@@ -80,7 +78,6 @@ def get_kanban_board(
             )
             .options(
                 selectinload(Contact.tags),
-                selectinload(Contact.groups),
             )
             .order_by(col(Contact.first_name).asc(), col(Contact.last_name).asc())
         )
@@ -96,13 +93,6 @@ def get_kanban_board(
 
         if tag_id:
             statement = statement.join(ContactTag).where(ContactTag.tag_id == tag_id)
-        # Note: Need to import ContactTag
-
-        if group_id:
-            statement = statement.join(ContactGroup).where(
-                ContactGroup.group_id == group_id
-            )
-        # Note: Need to import ContactGroup
 
         contacts = session.exec(statement).all()
         result[stage] = ContactsPublic(

@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router"
 import { useState } from "react"
 import { GraphService } from "@/client"
 import { GraphVisualization } from "@/components/Graph/GraphVisualization"
+import type { GraphEdge, GraphNode } from "@/components/Graph/types"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -20,13 +21,15 @@ function RelationshipGraphPage() {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["graph", "contacts", depth, rootContactId],
     queryFn: () =>
-      GraphService.getGraphContacts({
+      GraphService.getContactsGraph({
         depth,
         rootContactId: rootContactId || undefined,
       }),
   })
 
-  const graphData = data
+  const graphData = data as
+    | { nodes?: GraphNode[]; edges?: GraphEdge[] }
+    | undefined
 
   return (
     <div className="space-y-6">

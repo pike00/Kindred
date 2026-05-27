@@ -15,6 +15,46 @@ Human-verify that all 29 features merged in the v0.2.42–v0.2.70 train are work
 
 ---
 
+## Version bump sequence
+
+Prod is at **v0.2.30**. All tags v0.2.42–v0.2.72 already exist. After each feature section passes QA, run `just deploy <tag>` to advance prod to that version.
+
+| # | Feature | Tag | Command |
+|---|---------|-----|---------|
+| 1 | Contact fields (timezone/pronouns) | v0.2.42 | `just deploy v0.2.42` |
+| 2 | CSV import/export | v0.2.43 | `just deploy v0.2.43` |
+| 3 | Debt partial payments | v0.2.44 | `just deploy v0.2.44` |
+| 4 | Email log ingestion | v0.2.45 | `just deploy v0.2.45` |
+| 5 | Empty state illustrations | v0.2.46 | `just deploy v0.2.46` |
+| 6 | Face-aware avatar crop | v0.2.47 | `just deploy v0.2.47` |
+| 7 | Household aggregate view | v0.2.48 | `just deploy v0.2.48` |
+| 8 | iCal importer backfill | v0.2.49 | `just deploy v0.2.49` |
+| 9 | ICS calendar export | v0.2.50 | `just deploy v0.2.50` |
+| 10 | Interaction draft saving | v0.2.51 | `just deploy v0.2.51` |
+| 11 | Interaction frequency heatmap | v0.2.52 | `just deploy v0.2.52` |
+| 12 | Interaction location | v0.2.53 | `just deploy v0.2.53` |
+| 13 | Journal entries linked to multiple contacts | v0.2.54 | `just deploy v0.2.54` |
+| 14 | Map view for contacts | v0.2.55 | `just deploy v0.2.55` |
+| 15 | Organizations as first-class entities | v0.2.56 | `just deploy v0.2.56` |
+| 16 | Printable contact one-pager | v0.2.57 | `just deploy v0.2.57` |
+| 17 | PWA offline note drafting | v0.2.58 | `just deploy v0.2.58` |
+| 18 | Relationship graph | v0.2.59 | `just deploy v0.2.59` |
+| 19 | Automatic inverse relationship mapping | v0.2.60 | `just deploy v0.2.60` |
+| 20 | Reminder bell badge | v0.2.61 | `just deploy v0.2.61` |
+| 21 | Reminder snooze history | v0.2.62 | `just deploy v0.2.62` |
+| 22 | Saved filters and smart lists | v0.2.63 | `just deploy v0.2.63` |
+| 23 | Soft delete with restore | v0.2.64 | `just deploy v0.2.64` |
+| 24 | Stay-in-touch dashboard widget | v0.2.65 | `just deploy v0.2.65` |
+| 25 | Twilio webhook ingestion | v0.2.66 | `just deploy v0.2.66` |
+| 26 | vCard hash verification | v0.2.67 | `just deploy v0.2.67` |
+| 27 | Voice-to-text interaction | v0.2.68 | `just deploy v0.2.68` |
+| 28 | iMessage sync | v0.2.69 | `just deploy v0.2.69` |
+| 29 | Undo toast for destructive actions | v0.2.70 | `just deploy v0.2.70` |
+
+After all 29 pass, run `just deploy v0.2.72` to bring prod fully current.
+
+---
+
 ## Setup
 
 Before testing, bring up the full dev stack:

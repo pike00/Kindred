@@ -33,28 +33,11 @@ def upgrade() -> None:
         sa.Column("draft_source", sa.String(length=32), nullable=True),
     )
 
-    # Create partial index for draft queries: (contact_id, is_draft) WHERE is_draft=true
-    # This optimizes the common query pattern for listing drafts per contact
-    op.create_index(
-        "ix_interaction_draft_contact",
-        "interaction",
-        ["contact_id", "is_draft"],
-        postgresql_where=sa.text("is_draft = true"),
-        unique=False,
-    )
-
     # Drop the server default now that existing rows are populated
     op.alter_column("interaction", "is_draft", server_default=None)
 
 
 def downgrade() -> None:
-    # Drop the partial index
-    op.drop_index(
-        "ix_interaction_draft_contact",
-        "interaction",
-        postgresql_where=sa.text("is_draft = true"),
-    )
-
     # Drop draft_source column
     op.drop_column("interaction", "draft_source")
 

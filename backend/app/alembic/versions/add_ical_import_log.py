@@ -11,7 +11,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "add_ical_import_log"
-down_revision = "add_vcard_sha256"
+down_revision = "f7a8b9c0d1e2"
 branch_labels = None
 depends_on = None
 

@@ -4,6 +4,8 @@ Privacy-first: Only stores Message-ID, From, To, Date, Subject headers.
 Never stores email body or attachments.
 """
 
+from __future__ import annotations
+
 import email
 import imaplib
 import logging
@@ -13,9 +15,16 @@ from datetime import datetime, timezone
 from email.header import decode_header
 from typing import Any
 
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import Flow
+try:
+    from google.auth.transport.requests import Request
+    from google.oauth2.credentials import Credentials
+    from google_auth_oauthlib.flow import Flow
+
+    _GOOGLE_AVAILABLE = True
+except ImportError:
+    _GOOGLE_AVAILABLE = False
+    Request = Credentials = Flow = None  # type: ignore[assignment,misc]
+
 from sqlalchemy import func, select
 from sqlmodel import Session
 

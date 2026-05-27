@@ -7,7 +7,7 @@ from sqlmodel import select
 from app.models import InverseRelationshipMap, Relationship, RelationshipUpdate
 
 
-def seed_inverse_map(session, owner_id: uuid.UUID | None = None) -> int:
+def seed_inverse_map(session, _owner_id: uuid.UUID | None = None) -> int:
     """Populate ``inverse_relationship_map`` with the canonical pairs.
 
     Idempotent: existing rows are skipped based on ``relationship_type``.

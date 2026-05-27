@@ -13,11 +13,11 @@ from app.models import (
     Debt,
     DebtCreate,
     DebtPayment,
-    DebtPaymentCreate,
     DebtPaymentPublic,
     DebtPublic,
     DebtsPublic,
     DebtUpdate,
+    Ok,
 )
 
 router = APIRouter(prefix="/debts", tags=["debts"])
@@ -121,29 +121,6 @@ def delete_debt(
     session.add(debt)
     session.commit()
     return Ok()
-
-
-@router.post("/{debt_id}/restore")
-def restore_debt(
-    session: SessionDep,
-    debt_id: uuid.UUID,
-) -> Any:
-    """Soft-delete a debt by setting deleted_at."""
-    debt = session.get(Debt, debt_id)
-    if debt is None:
-        raise HTTPException(status_code=404, detail="Debt not found")
-    if debt.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
-
-        raise HTTPException(status_code=404, detail="Debt not found")
-    _require_contact_visible(session, current_user, debt.contact_id)
-
-    from datetime import datetime, timezone
-
-    debt.deleted_at = datetime.now(timezone.utc)
-    session.add(debt)
-    session.commit()
-    return {"ok": True}
 
 
 @router.post("/{debt_id}/restore")

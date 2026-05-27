@@ -17,6 +17,7 @@ import {
   ShieldCheck,
   Tag,
   Users,
+  UsersRound,
 } from "@/lib/icons"
 import { type Item, Main } from "./Main"
 import { SmartLists } from "./SmartLists"

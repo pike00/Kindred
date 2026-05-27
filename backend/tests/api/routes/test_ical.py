@@ -3,7 +3,7 @@
 import uuid
 
 from fastapi.testclient import TestClient
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 from app.models import Contact, IcalImportLog
 
@@ -27,6 +27,7 @@ def _create_contact(
         field = ContactField(
             contact_id=contact.id,
             field_type=ContactFieldType.EMAIL,
+            label="home",
             value=email,
             is_primary=True,
         )

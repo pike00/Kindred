@@ -1,13 +1,12 @@
 import { useQuery } from "@tanstack/react-query"
-import { useState } from "react"
 import type { ContactPublic } from "@/client"
 import { ContactsService } from "@/client"
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
-import { LogInteractionDialog } from "@/components/Interactions/AddInteractionDialog"
+import { AddInteractionDialog } from "@/components/Interactions/AddInteractionDialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Clock, MessageSquare, SkipForward } from "@/lib/icons"
+import { Clock, SkipForward } from "@/lib/icons"
 
 interface OverdueContact extends ContactPublic {
   days_overdue?: number
@@ -16,25 +15,11 @@ interface OverdueContact extends ContactPublic {
 export function StayInTouchWidget() {
   const { data: overdueData, isLoading } = useQuery({
     queryKey: ["overdue-contacts"],
-    queryFn: () =>
-      ContactsService.listOverdueContacts({ limit: 50 }).catch(() => {
-        // Fallback to losing-touch endpoint if overdue endpoint isn't available yet
-        return ContactsService.listLosingTouch({ limit: 50 })
-      }),
+    queryFn: () => ContactsService.listOverdueContacts({ limit: 50 }),
   })
-
-  const [selectedContactId, setSelectedContactId] = useState<string | null>(
-    null,
-  )
-  const [logDialogOpen, setLogDialogOpen] = useState(false)
 
   const contacts = (overdueData?.data || []) as OverdueContact[]
   const count = overdueData?.count || 0
-
-  const handleLogInteraction = (contactId: string) => {
-    setSelectedContactId(contactId)
-    setLogDialogOpen(true)
-  }
 
   const handleSkip = async (contactId: string) => {
     try {
@@ -141,15 +126,7 @@ export function StayInTouchWidget() {
                   </Badge>
                   {!isDoNotContact && (
                     <>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-8 w-8 p-0"
-                        onClick={() => handleLogInteraction(contact.id)}
-                        title="Log interaction"
-                      >
-                        <MessageSquare className="h-4 w-4" />
-                      </Button>
+                      <AddInteractionDialog seedContact={contact} />
                       <Button
                         size="sm"
                         variant="ghost"
@@ -166,14 +143,6 @@ export function StayInTouchWidget() {
             )
           })}
         </div>
-      )}
-
-      {selectedContactId && (
-        <LogInteractionDialog
-          contactId={selectedContactId}
-          open={logDialogOpen}
-          onOpenChange={setLogDialogOpen}
-        />
       )}
     </div>
   )

@@ -90,6 +90,11 @@ def normalize_vcard_for_hash(vcard_text: str) -> str:
     return "\n".join(result_parts) + "\n"
 
 
+def compute_etag(vcard_text: str) -> str:
+    """Return an HTTP ETag (quoted SHA-256) for the given vCard text."""
+    return f'"{compute_vcard_hash(vcard_text)}"'
+
+
 def compute_vcard_hash(vcard_text: str) -> str:
     """Compute SHA-256 hash of normalized vCard text.
 

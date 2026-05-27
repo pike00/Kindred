@@ -43,9 +43,9 @@ def _reset_test_schema() -> None:
 
 
 def _migrate_test_database() -> None:
-    from alembic import command
     from alembic.config import Config
 
+    from alembic import command
     from app.core.config import settings
 
     cfg = Config("/app/backend/alembic.ini")
@@ -130,3 +130,36 @@ def normal_user_token_headers(client: TestClient, db: Session) -> dict[str, str]
     return authentication_token_from_email(
         client=client, email=settings.EMAIL_TEST_USER, db=db
     )
+
+
+@pytest.fixture
+def session(db: Session) -> Session:
+    """Alias for db fixture; some test modules use 'session' instead of 'db'."""
+    return db
+
+
+@pytest.fixture
+def user(db: Session):
+    """Create and return a random test user."""
+    from tests.utils.user import create_random_user
+
+    return create_random_user(db)
+
+
+@pytest.fixture
+def user_headers(client: TestClient, db: Session, user) -> dict[str, str]:
+    """Return auth headers for the user fixture."""
+    from tests.utils.user import authentication_token_from_email
+
+    return authentication_token_from_email(client=client, email=user.email, db=db)
+
+
+@pytest.fixture
+def api_key_headers(db: Session, user) -> dict[str, str]:
+    """Create an API key for the user fixture and return headers with it."""
+    from app.crud import create_api_key
+    from app.models import APIKeyCreate
+
+    key_in = APIKeyCreate(name="test-key")
+    _api_key, plaintext = create_api_key(session=db, key_in=key_in, owner_id=user.id)
+    return {"Authorization": f"Bearer {plaintext}"}

@@ -17,7 +17,15 @@ from radicale.storage import BaseCollection, BaseStorage
 from sqlmodel import Session, create_engine, select
 
 from app.core.config import settings
-from app.models import Contact, User, VCardConflict
+from app.models import (
+    Address,
+    Contact,
+    ContactField,
+    ContactFieldType,
+    ContactSource,
+    User,
+    VCardConflict,
+)
 from app.vcard import compute_vcard_hash, normalize_vcard_for_hash
 
 
@@ -155,6 +163,8 @@ class Collection(BaseCollection):
                     )
                 # Update fields from parsed vCard
                 contact_data = parsed["contact"]
+                fields_data = parsed.get("fields", [])
+                addresses_data = parsed.get("addresses", [])
 
                 # vCard hash verification for conflict detection
                 incoming_hash = compute_vcard_hash(vcard_text)
@@ -181,9 +191,10 @@ class Collection(BaseCollection):
 
                 # Update ContactField entries (phone/email)
                 # First, remove existing fields for this contact
-                session.exec(
-                    ContactField.delete().where(ContactField.contact_id == existing.id)
-                )
+                for f in session.exec(
+                    select(ContactField).where(ContactField.contact_id == existing.id)
+                ).all():
+                    session.delete(f)
                 # Then add new fields from vCard
                 for field_info in fields_data:
                     field = ContactField(
@@ -197,7 +208,10 @@ class Collection(BaseCollection):
 
                 # Update Address entries
                 # First, remove existing addresses for this contact
-                session.exec(Address.delete().where(Address.contact_id == existing.id))
+                for a in session.exec(
+                    select(Address).where(Address.contact_id == existing.id)
+                ).all():
+                    session.delete(a)
                 # Then add new addresses from vCard
                 for addr_info in addresses_data:
                     addr = Address(

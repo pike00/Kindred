@@ -1,7 +1,6 @@
 """Tests for Twilio SMS/Call webhook endpoint."""
 
-from datetime import datetime, timezone
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -71,8 +70,9 @@ class TestTwilioWebhook:
         # Create a contact with the phone number
         from app.models import Contact, ContactField, ContactFieldType
 
-        contact = Contact(first_name="John", last_name="Doe", owner_id=webhook_data["id"])  # type: ignore
-        # Actually use the current user's ID
+        contact = Contact(
+            first_name="John", last_name="Doe", owner_id=webhook_data["owner_id"]
+        )
         session.add(contact)
         session.commit()
         session.refresh(contact)
@@ -135,7 +135,9 @@ class TestTwilioWebhook:
         # Create a contact with the phone number
         from app.models import Contact, ContactField, ContactFieldType
 
-        contact = Contact(first_name="Jane", last_name="Doe")
+        contact = Contact(
+            first_name="Jane", last_name="Doe", owner_id=webhook_data["owner_id"]
+        )
         session.add(contact)
         session.commit()
         session.refresh(contact)
@@ -232,7 +234,7 @@ class TestTwilioWebhook:
         # Send SMS from unknown number
         sms_data = {
             "MessageSid": "SM1234567890",
-            "From": "+19999999999",  # Unknown number
+            "From": "+14155559876",  # Valid but unknown number
             "To": "+18005551234",
             "Body": "Hello from unknown",
         }
@@ -272,9 +274,7 @@ class TestTwilioWebhook:
         assert _normalize_phone("+14155552671") == "+14155552671"
         assert _normalize_phone("invalid") is None
 
-    def test_rate_limiting(
-        self, client: TestClient, session: Session, api_key_headers
-    ):
+    def test_rate_limiting(self, client: TestClient, session: Session, api_key_headers):
         """Test that rate limiting works for webhook endpoint."""
         # Create webhook endpoint
         webhook_data = {
@@ -296,7 +296,12 @@ class TestTwilioWebhook:
             mock_redis = MagicMock()
             mock_redis_class.from_url.return_value = mock_redis
             # Simulate rate limit exceeded (count >= limit)
-            mock_redis.pipeline.return_value.execute.return_value = [None, 10, None, None]
+            mock_redis.pipeline.return_value.execute.return_value = [
+                None,
+                10,
+                None,
+                None,
+            ]
 
             sms_data = {
                 "MessageSid": "SM1234567890",

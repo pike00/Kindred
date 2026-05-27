@@ -6,6 +6,7 @@ services:
     env_file: .env
     environment:
       - ENVIRONMENT=local
+      - GIT_HASH=${GIT_HASH:-}
     networks:
       - pikenet-private
       - kindred-internal-crm
@@ -55,6 +56,7 @@ services:
       - VITE_PUBLIC_HOST=kindred.dev.khanpikehome.com
       - VITE_AUTH_MODE=${AUTH_MODE:-local}
       - VITE_CF_LOGOUT_URL=${VITE_CF_LOGOUT_URL:-}
+      - GIT_HASH=${GIT_HASH:-}
     volumes:
       - ./package.json:/app/package.json:ro
       - ./bun.lock:/app/bun.lock:ro

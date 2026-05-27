@@ -4,13 +4,19 @@ import logging
 import uuid
 from typing import Any
 
-import httpx
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
+from fastapi import APIRouter, HTTPException
 from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.crud import contact_visible, create_address
-from app.models import Address, AddressCreate, AddressPublic, AddressUpdate
+from app.models import (
+    Address,
+    AddressCreate,
+    AddressesPublic,
+    AddressPublic,
+    AddressUpdate,
+    Ok,
+)
 from app.services import geocoding
 
 logger = logging.getLogger(__name__)
@@ -141,7 +147,9 @@ def geocode_address_manual(
     session.refresh(address)
 
     if address.latitude is None or address.longitude is None:
-        raise HTTPException(status_code=400, detail="Geocoding failed - could not find coordinates")
+        raise HTTPException(
+            status_code=400, detail="Geocoding failed - could not find coordinates"
+        )
 
     return AddressPublic.model_validate(address)
 
@@ -150,7 +158,6 @@ def geocode_address_manual(
 def geocode_missing_coordinates(
     session: SessionDep,
     current_user: CurrentUser,
-    background_tasks: BackgroundTasks,
 ) -> Any:
     """Trigger geocoding for all addresses missing coordinates (owned by user)."""
     from app.models import Contact

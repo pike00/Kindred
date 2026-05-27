@@ -60,6 +60,17 @@ repos:
         language: unsupported
         files: ^backend/.*$|^scripts/generate-client\.sh$
 
+      # Runs on `git push`. Catches TypeScript errors (missing exports, type
+      # mismatches) that biome/lint can't see. This is what prevents "module
+      # does not provide an export named X" crashes in production.
+      - id: frontend-typecheck
+        name: TypeScript typecheck
+        entry: just typecheck
+        pass_filenames: false
+        language: system
+        stages: [pre-push]
+        always_run: true
+
       # Runs on `git push`. Uses `tbls diff` to compare the committed docs/db/
       # tree against the live Postgres schema. Requires the `db` compose
       # service to be running. Blocks the push with instructions to run

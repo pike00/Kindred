@@ -95,11 +95,11 @@ export function AvatarUploadDialog({
         "@mediapipe/tasks-vision"
       )
 
-      const _filesetResolver = await FilesetResolver.forVisionTasks(
+      const filesetResolver = await FilesetResolver.forVisionTasks(
         "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/wasm",
       )
 
-      const detector = await FaceDetector.createFromOptions({
+      const detector = await FaceDetector.createFromOptions(filesetResolver, {
         baseOptions: {
           delegate: "GPU",
           modelAssetPath:

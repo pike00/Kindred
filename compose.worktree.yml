@@ -27,6 +27,7 @@ services:
       # config.py so the worktree URL is auto-allowed for CORS.
       - ENVIRONMENT=local
       - FRONTEND_HOST=https://${WORKTREE_HOST:?run via 'just up' so WORKTREE_HOST is set}
+      - GIT_HASH=${GIT_HASH:-}
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     volumes:
@@ -74,6 +75,7 @@ services:
       # HMR over wss connects back through Traefik instead of localhost.
       - VITE_API_URL=https://${WORKTREE_HOST}
       - VITE_PUBLIC_HOST=${WORKTREE_HOST}
+      - GIT_HASH=${GIT_HASH:-}
       - VITE_AUTH_MODE=${AUTH_MODE:-local}
       - VITE_CF_LOGOUT_URL=${VITE_CF_LOGOUT_URL:-}
     ports:

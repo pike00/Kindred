@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { ActivityLogsListActivityLogsData, ActivityLogsListActivityLogsResponse, AddressesListAddressesData, AddressesListAddressesResponse, AddressesCreateAddressRouteData, AddressesCreateAddressRouteResponse, AddressesUpdateAddressData, AddressesUpdateAddressResponse, AddressesDeleteAddressData, AddressesDeleteAddressResponse, ApiKeysListMyApiKeysResponse, ApiKeysCreateMyApiKeyData, ApiKeysCreateMyApiKeyResponse, ApiKeysRevokeMyApiKeyData, ApiKeysRevokeMyApiKeyResponse, CalendarGetCalendarMonthData, CalendarGetCalendarMonthResponse, CarddavWellKnownCarddavResponse, ContactFieldsListContactFieldsData, ContactFieldsListContactFieldsResponse, ContactFieldsCreateContactFieldRouteData, ContactFieldsCreateContactFieldRouteResponse, ContactFieldsUpdateContactFieldData, ContactFieldsUpdateContactFieldResponse, ContactFieldsDeleteContactFieldData, ContactFieldsDeleteContactFieldResponse, ContactsBulkUpdateContactsData, ContactsBulkUpdateContactsResponse, ContactsPreviewBulkContactsData, ContactsPreviewBulkContactsResponse, ContactsListContactsData, ContactsListContactsResponse, ContactsCreateContactData, ContactsCreateContactResponse, ContactsListLosingTouchData, ContactsListLosingTouchResponse, ContactsListOverdueContactsData, ContactsListOverdueContactsResponse, ContactsSkipContactData, ContactsSkipContactResponse, ContactsGetContactData, ContactsGetContactResponse, ContactsUpdateContactData, ContactsUpdateContactResponse, ContactsDeleteContactData, ContactsDeleteContactResponse, ContactsRestoreContactData, ContactsRestoreContactResponse, ContactsListContactMentionsData, ContactsListContactMentionsResponse, CustomFieldsListFieldDefinitionsResponse, CustomFieldsCreateFieldDefinitionData, CustomFieldsCreateFieldDefinitionResponse, CustomFieldsUpdateFieldDefinitionData, CustomFieldsUpdateFieldDefinitionResponse, CustomFieldsDeleteFieldDefinitionData, CustomFieldsDeleteFieldDefinitionResponse, CustomFieldsListFieldValuesData, CustomFieldsListFieldValuesResponse, CustomFieldsCreateFieldValueData, CustomFieldsCreateFieldValueResponse, CustomFieldsUpdateFieldValueData, CustomFieldsUpdateFieldValueResponse, CustomFieldsDeleteFieldValueData, CustomFieldsDeleteFieldValueResponse, DebtsListDebtsData, DebtsListDebtsResponse, DebtsCreateDebtRouteData, DebtsCreateDebtRouteResponse, DebtsUpdateDebtData, DebtsUpdateDebtResponse, DebtsDeleteDebtData, DebtsDeleteDebtResponse, GiftsListGiftsData, GiftsListGiftsResponse, GiftsCreateGiftRouteData, GiftsCreateGiftRouteResponse, GiftsUpdateGiftData, GiftsUpdateGiftResponse, GiftsDeleteGiftData, GiftsDeleteGiftResponse, GiftsGetKanbanBoardResponse, GiftsChangeGiftStatusData, GiftsChangeGiftStatusResponse, GroupsListGroupsData, GroupsListGroupsResponse, GroupsCreateGroupRouteData, GroupsCreateGroupRouteResponse, GroupsUpdateGroupData, GroupsUpdateGroupResponse, GroupsDeleteGroupData, GroupsDeleteGroupResponse, ImportExportImportVcardData, ImportExportImportVcardResponse, ImportExportExportVcardResponse, ImportExportExportJsonResponse, InteractionsListInteractionsData, InteractionsListInteractionsResponse, InteractionsCreateInteractionRouteData, InteractionsCreateInteractionRouteResponse, InteractionsUpdateInteractionData, InteractionsUpdateInteractionResponse, InteractionsDeleteInteractionData, InteractionsDeleteInteractionResponse, JournalListJournalEntriesData, JournalListJournalEntriesResponse, JournalCreateJournalEntryRouteData, JournalCreateJournalEntryRouteResponse, JournalUpdateJournalEntryData, JournalUpdateJournalEntryResponse, JournalDeleteJournalEntryData, JournalDeleteJournalEntryResponse, LifeEventsListLifeEventsData, LifeEventsListLifeEventsResponse, LifeEventsCreateLifeEventRouteData, LifeEventsCreateLifeEventRouteResponse, LifeEventsUpdateLifeEventData, LifeEventsUpdateLifeEventResponse, LifeEventsDeleteLifeEventData, LifeEventsDeleteLifeEventResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, MediaRecommendationsListMediaRecommendationsData, MediaRecommendationsListMediaRecommendationsResponse, MediaRecommendationsCreateMediaRecommendationRouteData, MediaRecommendationsCreateMediaRecommendationRouteResponse, MediaRecommendationsUpdateMediaRecommendationData, MediaRecommendationsUpdateMediaRecommendationResponse, MediaRecommendationsDeleteMediaRecommendationData, MediaRecommendationsDeleteMediaRecommendationResponse, NotesListNotesData, NotesListNotesResponse, NotesCreateNoteRouteData, NotesCreateNoteRouteResponse, NotesUpdateNoteRouteData, NotesUpdateNoteRouteResponse, NotesDeleteNoteData, NotesDeleteNoteResponse, PetsListPetsData, PetsListPetsResponse, PetsCreatePetRouteData, PetsCreatePetRouteResponse, PetsUpdatePetData, PetsUpdatePetResponse, PetsDeletePetData, PetsDeletePetResponse, PrivateCreateUserData, PrivateCreateUserResponse, RelationshipsLookupInverseData, RelationshipsLookupInverseResponse, RelationshipsListRelationshipsData, RelationshipsListRelationshipsResponse, RelationshipsCreateRelationshipRouteData, RelationshipsCreateRelationshipRouteResponse, RelationshipsUpdateRelationshipData, RelationshipsUpdateRelationshipResponse, RelationshipsDeleteRelationshipData, RelationshipsDeleteRelationshipResponse, RemindersListRemindersData, RemindersListRemindersResponse, RemindersCreateReminderRouteData, RemindersCreateReminderRouteResponse, RemindersUpdateReminderData, RemindersUpdateReminderResponse, RemindersDeleteReminderData, RemindersDeleteReminderResponse, RemindersSnoozeReminderData, RemindersSnoozeReminderResponse, TagsListTagsData, TagsListTagsResponse, TagsCreateTagRouteData, TagsCreateTagRouteResponse, TagsUpdateTagData, TagsUpdateTagResponse, TagsDeleteTagData, TagsDeleteTagResponse, TagSharesCreateTagShareData, TagSharesCreateTagShareResponse, TagSharesListTagSharesData, TagSharesListTagSharesResponse, TagSharesDeleteTagShareData, TagSharesDeleteTagShareResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse, VCardConflictsListVcardConflictsData, VCardConflictsListVcardConflictsResponse, VCardConflictsResolveVcardConflictData, VCardConflictsResolveVcardConflictResponse, VCardConflictsDeleteVcardConflictData, VCardConflictsDeleteVcardConflictResponse, WebhooksListWebhooksResponse, WebhooksCreateWebhookData, WebhooksCreateWebhookResponse, WebhooksUpdateWebhookData, WebhooksUpdateWebhookResponse, WebhooksDeleteWebhookData, WebhooksDeleteWebhookResponse, WebhooksInboundWebhookData, WebhooksInboundWebhookResponse } from './types.gen';
+import type { ActivityLogsListActivityLogsData, ActivityLogsListActivityLogsResponse, AddressesListAddressesData, AddressesListAddressesResponse, AddressesCreateAddressRouteData, AddressesCreateAddressRouteResponse, AddressesUpdateAddressData, AddressesUpdateAddressResponse, AddressesDeleteAddressData, AddressesDeleteAddressResponse, AddressesGeocodeAddressManualData, AddressesGeocodeAddressManualResponse, AddressesGeocodeMissingCoordinatesResponse, ApiKeysListMyApiKeysResponse, ApiKeysCreateMyApiKeyData, ApiKeysCreateMyApiKeyResponse, ApiKeysRevokeMyApiKeyData, ApiKeysRevokeMyApiKeyResponse, CalendarGetCalendarMonthData, CalendarGetCalendarMonthResponse, CalendarCreateCalendarTokenData, CalendarCreateCalendarTokenResponse, CalendarListCalendarTokensResponse, CalendarRevokeCalendarTokenData, CalendarRevokeCalendarTokenResponse, CalendarGetCalendarIcsData, CalendarGetCalendarIcsResponse, CarddavWellKnownCarddavResponse, CommunicationPreferencesGetCommunicationPreferenceData, CommunicationPreferencesGetCommunicationPreferenceResponse, CommunicationPreferencesUpsertCommunicationPreferenceData, CommunicationPreferencesUpsertCommunicationPreferenceResponse, CommunicationPreferencesDeleteCommunicationPreferenceData, CommunicationPreferencesDeleteCommunicationPreferenceResponse, ContactFieldsListContactFieldsData, ContactFieldsListContactFieldsResponse, ContactFieldsCreateContactFieldRouteData, ContactFieldsCreateContactFieldRouteResponse, ContactFieldsUpdateContactFieldData, ContactFieldsUpdateContactFieldResponse, ContactFieldsDeleteContactFieldData, ContactFieldsDeleteContactFieldResponse, ContactsListContactsData, ContactsListContactsResponse, ContactsCreateContactData, ContactsCreateContactResponse, ContactsListOverdueContactsData, ContactsListOverdueContactsResponse, ContactsListLosingTouchContactsResponse, ContactsBulkUpdateContactsData, ContactsBulkUpdateContactsResponse, ContactsGetContactData, ContactsGetContactResponse, ContactsUpdateContactData, ContactsUpdateContactResponse, ContactsDeleteContactData, ContactsDeleteContactResponse, ContactsRestoreContactData, ContactsRestoreContactResponse, ContactsListJournalEntriesData, ContactsListJournalEntriesResponse, ContactsGetContactHeatmapData, ContactsGetContactHeatmapResponse, ContactsGetContactReflectionsData, ContactsGetContactReflectionsResponse, ContactsListContactsGeoData, ContactsListContactsGeoResponse, ContactsListContactMentionsData, ContactsListContactMentionsResponse, ContactsSyncImessageContactsData, ContactsSyncImessageContactsResponse, ContactsGetImessageProfileData, ContactsGetImessageProfileResponse, ContactsGetContactStageEventsData, ContactsGetContactStageEventsResponse, ContactsGetContactPdfData, ContactsGetContactPdfResponse, ContactsGetDistinctStagesResponse, ContactsGetKanbanBoardData, ContactsGetKanbanBoardResponse, ContactStageEventsListContactStageHistoryData, ContactStageEventsListContactStageHistoryResponse, ContactStageEventsGetLatestStageData, ContactStageEventsGetLatestStageResponse, ContactStageEventsCreateContactStageEventData, ContactStageEventsCreateContactStageEventResponse, ContactStageEventsGetStageDurationRouteData, ContactStageEventsGetStageDurationRouteResponse, ContactStageEventsBackfillStageEventsRouteResponse, ContactStageEventsGetStageAnalyticsData, ContactStageEventsGetStageAnalyticsResponse, CustomFieldsListFieldDefinitionsResponse, CustomFieldsCreateFieldDefinitionData, CustomFieldsCreateFieldDefinitionResponse, CustomFieldsUpdateFieldDefinitionData, CustomFieldsUpdateFieldDefinitionResponse, CustomFieldsDeleteFieldDefinitionData, CustomFieldsDeleteFieldDefinitionResponse, CustomFieldsListFieldValuesData, CustomFieldsListFieldValuesResponse, CustomFieldsCreateFieldValueData, CustomFieldsCreateFieldValueResponse, CustomFieldsUpdateFieldValueData, CustomFieldsUpdateFieldValueResponse, CustomFieldsDeleteFieldValueData, CustomFieldsDeleteFieldValueResponse, DebtsListDebtsData, DebtsListDebtsResponse, DebtsCreateDebtRouteData, DebtsCreateDebtRouteResponse, DebtsUpdateDebtData, DebtsUpdateDebtResponse, DebtsDeleteDebtData, DebtsDeleteDebtResponse, DebtsRestoreDebtData, DebtsRestoreDebtResponse, EmailGmailAuthorizeData, EmailGmailAuthorizeResponse, EmailGmailCallbackData, EmailGmailCallbackResponse, EmailListEmailTokensData, EmailListEmailTokensResponse, EmailDeleteEmailTokenData, EmailDeleteEmailTokenResponse, EmailPollContactEmailData, EmailPollContactEmailResponse, EmailPollAllEmailsResponse, GiftsListGiftsData, GiftsListGiftsResponse, GiftsCreateGiftRouteData, GiftsCreateGiftRouteResponse, GiftsUpdateGiftData, GiftsUpdateGiftResponse, GiftsDeleteGiftData, GiftsDeleteGiftResponse, GiftsRestoreGiftData, GiftsRestoreGiftResponse, GiftsGetKanbanBoardResponse, GiftsChangeGiftStatusData, GiftsChangeGiftStatusResponse, GraphGetContactsGraphData, GraphGetContactsGraphResponse, GraphGetContactGraphData, GraphGetContactGraphResponse, IcalUploadIcalData, IcalUploadIcalResponse, IcalConfirmIcalImportData, IcalConfirmIcalImportResponse, ImportExportImportVcardData, ImportExportImportVcardResponse, ImportExportExportVcardResponse, ImportExportExportJsonResponse, ImportExportPreviewCsvImportData, ImportExportPreviewCsvImportResponse, ImportExportImportCsvData, ImportExportImportCsvResponse, ImportExportExportCsvData, ImportExportExportCsvResponse, InteractionsListInteractionsData, InteractionsListInteractionsResponse, InteractionsCreateInteractionRouteData, InteractionsCreateInteractionRouteResponse, InteractionsUpdateInteractionData, InteractionsUpdateInteractionResponse, InteractionsDeleteInteractionData, InteractionsDeleteInteractionResponse, InteractionsConfirmDraftInteractionData, InteractionsConfirmDraftInteractionResponse, InteractionsRestoreInteractionData, InteractionsRestoreInteractionResponse, JournalListJournalEntriesData, JournalListJournalEntriesResponse, JournalCreateJournalEntryRouteData, JournalCreateJournalEntryRouteResponse, JournalUpdateJournalEntryData, JournalUpdateJournalEntryResponse, JournalDeleteJournalEntryData, JournalDeleteJournalEntryResponse, LifeEventsListLifeEventsData, LifeEventsListLifeEventsResponse, LifeEventsCreateLifeEventRouteData, LifeEventsCreateLifeEventRouteResponse, LifeEventsUpdateLifeEventData, LifeEventsUpdateLifeEventResponse, LifeEventsDeleteLifeEventData, LifeEventsDeleteLifeEventResponse, LifeEventsRestoreLifeEventData, LifeEventsRestoreLifeEventResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, MediaRecommendationsListMediaRecommendationsData, MediaRecommendationsListMediaRecommendationsResponse, MediaRecommendationsCreateMediaRecommendationRouteData, MediaRecommendationsCreateMediaRecommendationRouteResponse, MediaRecommendationsUpdateMediaRecommendationData, MediaRecommendationsUpdateMediaRecommendationResponse, MediaRecommendationsDeleteMediaRecommendationData, MediaRecommendationsDeleteMediaRecommendationResponse, NotesListNotesData, NotesListNotesResponse, NotesCreateNoteRouteData, NotesCreateNoteRouteResponse, NotesUpdateNoteRouteData, NotesUpdateNoteRouteResponse, NotesDeleteNoteData, NotesDeleteNoteResponse, NotesRestoreNoteData, NotesRestoreNoteResponse, OrganizationsListOrganizationsData, OrganizationsListOrganizationsResponse, OrganizationsCreateOrganizationData, OrganizationsCreateOrganizationResponse, OrganizationsGetOrganizationData, OrganizationsGetOrganizationResponse, OrganizationsUpdateOrganizationData, OrganizationsUpdateOrganizationResponse, OrganizationsDeleteOrganizationData, OrganizationsDeleteOrganizationResponse, OrganizationsGetOrganizationWithContactsData, OrganizationsGetOrganizationWithContactsResponse, PetsListPetsData, PetsListPetsResponse, PetsCreatePetRouteData, PetsCreatePetRouteResponse, PetsUpdatePetData, PetsUpdatePetResponse, PetsDeletePetData, PetsDeletePetResponse, PrivateCreateUserData, PrivateCreateUserResponse, PrivateSeedDataData, PrivateSeedDataResponse, RelationshipInverseMapListInverseMapsData, RelationshipInverseMapListInverseMapsResponse, RelationshipInverseMapCreateInverseMapData, RelationshipInverseMapCreateInverseMapResponse, RelationshipInverseMapGetInverseMapData, RelationshipInverseMapGetInverseMapResponse, RelationshipInverseMapUpdateInverseMapData, RelationshipInverseMapUpdateInverseMapResponse, RelationshipInverseMapDeleteInverseMapData, RelationshipInverseMapDeleteInverseMapResponse, RelationshipInverseMapSeedInverseMapEndpointResponse, RelationshipInverseMapLookupInverseData, RelationshipInverseMapLookupInverseResponse, RelationshipsLookupInverseData, RelationshipsLookupInverseResponse, RelationshipsListRelationshipsData, RelationshipsListRelationshipsResponse, RelationshipsCreateRelationshipRouteData, RelationshipsCreateRelationshipRouteResponse, RelationshipsUpdateRelationshipData, RelationshipsUpdateRelationshipResponse, RelationshipsDeleteRelationshipData, RelationshipsDeleteRelationshipResponse, RemindersListRemindersData, RemindersListRemindersResponse, RemindersCreateReminderRouteData, RemindersCreateReminderRouteResponse, RemindersListDueRemindersData, RemindersListDueRemindersResponse, RemindersDismissReminderData, RemindersDismissReminderResponse, RemindersUpdateReminderData, RemindersUpdateReminderResponse, RemindersDeleteReminderData, RemindersDeleteReminderResponse, RemindersSnoozeReminderData, RemindersSnoozeReminderResponse, RemindersGetSnoozeHistoryData, RemindersGetSnoozeHistoryResponse, RemindersGetSnoozeStatsData, RemindersGetSnoozeStatsResponse, RemindersGetChronicSnoozersData, RemindersGetChronicSnoozersResponse, RemindersRestoreReminderData, RemindersRestoreReminderResponse, SavedFiltersListSavedFiltersData, SavedFiltersListSavedFiltersResponse, SavedFiltersCreateSavedFilterRouteData, SavedFiltersCreateSavedFilterRouteResponse, SavedFiltersUpdateSavedFilterRouteData, SavedFiltersUpdateSavedFilterRouteResponse, SavedFiltersDeleteSavedFilterRouteData, SavedFiltersDeleteSavedFilterRouteResponse, SearchSearchData, SearchSearchResponse, SetupSetupPageData, SetupSetupPageResponse, SetupSetupSubmitData, SetupSetupSubmitResponse, TagsListTagsData, TagsListTagsResponse, TagsCreateTagRouteData, TagsCreateTagRouteResponse, TagsUpdateTagData, TagsUpdateTagResponse, TagsDeleteTagData, TagsDeleteTagResponse, TagSharesPreviewTagShareData, TagSharesPreviewTagShareResponse, TagSharesCreateTagShareData, TagSharesCreateTagShareResponse, TagSharesListTagSharesData, TagSharesListTagSharesResponse, TagSharesDeleteTagShareData, TagSharesDeleteTagShareResponse, TagSharesLogTagShareAuditData, TagSharesLogTagShareAuditResponse, TranscribeTranscribeAudioData, TranscribeTranscribeAudioResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsHealthResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse, UtilsEnvironmentResponse, VCardConflictsListVcardConflictsData, VCardConflictsListVcardConflictsResponse, VCardConflictsResolveVcardConflictData, VCardConflictsResolveVcardConflictResponse, VCardConflictsDeleteVcardConflictData, VCardConflictsDeleteVcardConflictResponse, WebhooksTwilioWebhookData, WebhooksTwilioWebhookResponse, WebhooksListWebhooksResponse, WebhooksCreateWebhookData, WebhooksCreateWebhookResponse, WebhooksUpdateWebhookData, WebhooksUpdateWebhookResponse, WebhooksDeleteWebhookData, WebhooksDeleteWebhookResponse, WebhooksInboundWebhookData, WebhooksInboundWebhookResponse } from './types.gen';
 
 export class ActivityLogsService {
     /**
@@ -535,9 +535,6 @@ export class ContactsService {
     /**
      * Create Contact
      * Create a new contact.
-     *
-     * If source_external_id is provided, uses upsert logic to update existing
-     * contact with same (owner_id, source, source_external_id) or create new.
      * @param data The data for the request.
      * @param data.requestBody
      * @returns ContactPublic Successful Response
@@ -556,20 +553,53 @@ export class ContactsService {
     }
     
     /**
-     * List Losing Touch
-     * Return contacts whose cadence has been exceeded.
+     * List Overdue Contacts
+     * List contacts that are overdue for a follow-up.
      * @param data The data for the request.
-     * @param data.limit
+     * @param data.days
+     * @returns OverdueContactsPublic Successful Response
+     * @throws ApiError
+     */
+    public static listOverdueContacts(data: ContactsListOverdueContactsData = {}): CancelablePromise<ContactsListOverdueContactsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/contacts/overdue',
+            query: {
+                days: data.days
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * List Losing Touch Contacts
+     * List contacts with a set cadence that are overdue or never contacted.
      * @returns ContactsPublic Successful Response
      * @throws ApiError
      */
-    public static listLosingTouch(data: ContactsListLosingTouchData = {}): CancelablePromise<ContactsListLosingTouchResponse> {
+    public static listLosingTouchContacts(): CancelablePromise<ContactsListLosingTouchContactsResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/contacts/losing-touch',
-            query: {
-                limit: data.limit
-            },
+            url: '/api/v1/contacts/losing-touch'
+        });
+    }
+    
+    /**
+     * Bulk Update Contacts
+     * Bulk update contacts by explicit IDs or filtered selection.
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns BulkUpdateResponse Successful Response
+     * @throws ApiError
+     */
+    public static bulkUpdateContacts(data: ContactsBulkUpdateContactsData): CancelablePromise<ContactsBulkUpdateContactsResponse> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/contacts/bulk',
+            body: data.requestBody,
+            mediaType: 'application/json',
             errors: {
                 422: 'Validation Error'
             }
@@ -626,34 +656,13 @@ export class ContactsService {
      * Soft-delete a contact.
      * @param data The data for the request.
      * @param data.contactId
-     * @returns Ok Successful Response
+     * @returns unknown Successful Response
      * @throws ApiError
      */
     public static deleteContact(data: ContactsDeleteContactData): CancelablePromise<ContactsDeleteContactResponse> {
         return __request(OpenAPI, {
             method: 'DELETE',
             url: '/api/v1/contacts/{contact_id}',
-            path: {
-                contact_id: data.contactId
-            },
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
-    /**
-     * List Contact Mentions
-     * List notes that @-mention this contact, with the source (authoring) contact.
-     * @param data The data for the request.
-     * @param data.contactId
-     * @returns NoteMentionPublic Successful Response
-     * @throws ApiError
-     */
-    public static listContactMentions(data: ContactsListContactMentionsData): CancelablePromise<ContactsListContactMentionsResponse> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/contacts/{contact_id}/mentions',
             path: {
                 contact_id: data.contactId
             },
@@ -677,6 +686,81 @@ export class ContactsService {
             url: '/api/v1/contacts/{contact_id}/restore',
             path: {
                 contact_id: data.contactId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * List Journal Entries
+     * List journal entries for a contact.
+     * @param data The data for the request.
+     * @param data.contactId
+     * @param data.skip
+     * @param data.limit
+     * @returns JournalEntryPublic Successful Response
+     * @throws ApiError
+     */
+    public static listJournalEntries(data: ContactsListJournalEntriesData): CancelablePromise<ContactsListJournalEntriesResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/contacts/{contact_id}/journal',
+            path: {
+                contact_id: data.contactId
+            },
+            query: {
+                skip: data.skip,
+                limit: data.limit
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get Contact Heatmap
+     * Return 52 weekly interaction-count buckets for a contact (oldest first).
+     * @param data The data for the request.
+     * @param data.contactId
+     * @returns ContactHeatmapResponse Successful Response
+     * @throws ApiError
+     */
+    public static getContactHeatmap(data: ContactsGetContactHeatmapData): CancelablePromise<ContactsGetContactHeatmapResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/contacts/{contact_id}/heatmap',
+            path: {
+                contact_id: data.contactId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get Contact Reflections
+     * List journal entries linked to this contact.
+     * @param data The data for the request.
+     * @param data.contactId
+     * @param data.skip
+     * @param data.limit
+     * @returns JournalEntryPublic Successful Response
+     * @throws ApiError
+     */
+    public static getContactReflections(data: ContactsGetContactReflectionsData): CancelablePromise<ContactsGetContactReflectionsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/contacts/{contact_id}/reflections',
+            path: {
+                contact_id: data.contactId
+            },
+            query: {
+                skip: data.skip,
+                limit: data.limit
             },
             errors: {
                 422: 'Validation Error'
@@ -717,21 +801,279 @@ export class ContactsService {
     
     /**
      * List Contact Mentions
-     * Return notes that @-mention this contact, grouped with the source contact.
+     * Get notes where this contact is mentioned.
      * @param data The data for the request.
      * @param data.contactId
-     * @returns ContactHeatmap Successful Response
+     * @returns _MentionPublic Successful Response
      * @throws ApiError
      */
-    public static getContactHeatmap(data: ContactsGetContactHeatmapData): CancelablePromise<ContactsGetContactHeatmapResponse> {
+    public static listContactMentions(data: ContactsListContactMentionsData): CancelablePromise<ContactsListContactMentionsResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/contacts/{contact_id}/heatmap',
+            url: '/api/v1/contacts/{contact_id}/mentions',
             path: {
                 contact_id: data.contactId
             },
-            formData: data.formData,
-            mediaType: 'multipart/form-data',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Sync Imessage Contacts
+     * Sync iMessage profiles to kindred contacts.
+     *
+     * Performs idempotent upsert: matches by imessage_id (E.164 phone or email).
+     * Updates if profile_hash changed, skips if unchanged.
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns IMessageSyncResult Successful Response
+     * @throws ApiError
+     */
+    public static syncImessageContacts(data: ContactsSyncImessageContactsData): CancelablePromise<ContactsSyncImessageContactsResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/contacts/imessage-sync',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get Imessage Profile
+     * Get the raw iMessage profile for a contact.
+     * @param data The data for the request.
+     * @param data.contactId
+     * @returns IMessageProfileResponse Successful Response
+     * @throws ApiError
+     */
+    public static getImessageProfile(data: ContactsGetImessageProfileData): CancelablePromise<ContactsGetImessageProfileResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/contacts/{contact_id}/imessage-profile',
+            path: {
+                contact_id: data.contactId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get Contact Stage Events
+     * Get stage change history for a contact.
+     * @param data The data for the request.
+     * @param data.contactId
+     * @returns ContactStageEventsPublic Successful Response
+     * @throws ApiError
+     */
+    public static getContactStageEvents(data: ContactsGetContactStageEventsData): CancelablePromise<ContactsGetContactStageEventsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/contacts/{contact_id}/stage-events',
+            path: {
+                contact_id: data.contactId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get Contact Pdf
+     * Generate a printable PDF one-pager for a contact.
+     * @param data The data for the request.
+     * @param data.contactId
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static getContactPdf(data: ContactsGetContactPdfData): CancelablePromise<ContactsGetContactPdfResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/contacts/{contact_id}.pdf',
+            path: {
+                contact_id: data.contactId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get Distinct Stages
+     * Return distinct stage values used by the current user's contacts.
+     * @returns string Successful Response
+     * @throws ApiError
+     */
+    public static getDistinctStages(): CancelablePromise<ContactsGetDistinctStagesResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/contacts/stages/distinct'
+        });
+    }
+    
+    /**
+     * Get Kanban Board
+     * Return contacts grouped by stage for kanban board.
+     * @param data The data for the request.
+     * @param data.search
+     * @param data.tagId
+     * @returns ContactsPublic Successful Response
+     * @throws ApiError
+     */
+    public static getKanbanBoard(data: ContactsGetKanbanBoardData = {}): CancelablePromise<ContactsGetKanbanBoardResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/contacts/kanban',
+            query: {
+                search: data.search,
+                tag_id: data.tagId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+}
+
+export class ContactStageEventsService {
+    /**
+     * List Contact Stage History
+     * List all stage events for a contact, newest first.
+     * @param data The data for the request.
+     * @param data.contactId
+     * @returns ContactStageEventsPublic Successful Response
+     * @throws ApiError
+     */
+    public static listContactStageHistory(data: ContactStageEventsListContactStageHistoryData): CancelablePromise<ContactStageEventsListContactStageHistoryResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/contacts/{contact_id}/stage-history',
+            path: {
+                contact_id: data.contactId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get Latest Stage
+     * Get the most recent stage event for a contact.
+     * @param data The data for the request.
+     * @param data.contactId
+     * @returns ContactStageEventPublic Successful Response
+     * @throws ApiError
+     */
+    public static getLatestStage(data: ContactStageEventsGetLatestStageData): CancelablePromise<ContactStageEventsGetLatestStageResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/contacts/{contact_id}/stage-history/latest',
+            path: {
+                contact_id: data.contactId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Create Contact Stage Event
+     * Create a stage event (and update Contact.stage cache).
+     *
+     * The ``event_in`` body must include ``to_stage`` and ``occurred_at``.
+     * ``from_stage`` is optional (auto-populated by the service if omitted).
+     * @param data The data for the request.
+     * @param data.contactId
+     * @param data.requestBody
+     * @returns ContactStageEventPublic Successful Response
+     * @throws ApiError
+     */
+    public static createContactStageEvent(data: ContactStageEventsCreateContactStageEventData): CancelablePromise<ContactStageEventsCreateContactStageEventResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/contacts/{contact_id}/stage-events',
+            path: {
+                contact_id: data.contactId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get Stage Duration Route
+     * Get dwell times for a specific stage.
+     *
+     * Returns a list of ``(entered_at, exited_at, duration_seconds)`` tuples.
+     * ``exited_at`` is ``None`` when the contact is still in that stage.
+     * @param data The data for the request.
+     * @param data.contactId
+     * @param data.stage
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static getStageDurationRoute(data: ContactStageEventsGetStageDurationRouteData): CancelablePromise<ContactStageEventsGetStageDurationRouteResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/contacts/{contact_id}/stage-duration/{stage}',
+            path: {
+                contact_id: data.contactId,
+                stage: data.stage
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Backfill Stage Events Route
+     * Backfill seed stage events for all contacts owned by the current user.
+     *
+     * Creates one event per contact using the current stage and ``created_at``.
+     * Idempotent: won't duplicate existing seed events.
+     * @returns number Successful Response
+     * @throws ApiError
+     */
+    public static backfillStageEventsRoute(): CancelablePromise<ContactStageEventsBackfillStageEventsRouteResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/contacts/backfill-stage-events'
+        });
+    }
+    
+    /**
+     * Get Stage Analytics
+     * Get aggregate dwell time per stage for a contact.
+     *
+     * Returns a dict keyed by stage name, where each value is a list of
+     * ``[entered_at, exited_at, duration_seconds]`` lists for every dwell
+     * in that stage. A contact may re-enter the same stage multiple times.
+     * @param data The data for the request.
+     * @param data.contactId
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static getStageAnalytics(data: ContactStageEventsGetStageAnalyticsData): CancelablePromise<ContactStageEventsGetStageAnalyticsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/contacts/{contact_id}/stage-analytics',
+            path: {
+                contact_id: data.contactId
+            },
             errors: {
                 422: 'Validation Error'
             }
@@ -1012,202 +1354,6 @@ export class DebtsService {
             }
         });
     }
-    
-    /**
-     * List Debt Payments
-     * List all payments for a specific debt.
-     * @param data The data for the request.
-     * @param data.debtId
-     * @returns DebtPaymentPublic Successful Response
-     * @throws ApiError
-     */
-    public static listDebtPayments(data: DebtsListDebtPaymentsData): CancelablePromise<DebtsListDebtPaymentsResponse> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/debts/{debt_id}/payments',
-            path: {
-                debt_id: data.debtId
-            },
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
-    /**
-     * Create Debt Payment
-     * Add a payment to a debt.
-     * @param data The data for the request.
-     * @param data.debtId
-     * @param data.requestBody
-     * @returns DebtPaymentPublic Successful Response
-     * @throws ApiError
-     */
-    public static createDebtPayment(data: DebtsCreateDebtPaymentData): CancelablePromise<DebtsCreateDebtPaymentResponse> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v1/debts/{debt_id}/payments',
-            path: {
-                debt_id: data.debtId
-            },
-            body: data.requestBody,
-            mediaType: 'application/json',
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
-    /**
-     * Delete Debt Payment
-     * Delete a payment.
-     * @param data The data for the request.
-     * @param data.paymentId
-     * @returns unknown Successful Response
-     * @throws ApiError
-     */
-    public static deleteDebtPayment(data: DebtsDeleteDebtPaymentData): CancelablePromise<DebtsDeleteDebtPaymentResponse> {
-        return __request(OpenAPI, {
-            method: 'DELETE',
-            url: '/api/v1/debts/payments/{payment_id}',
-            path: {
-                payment_id: data.paymentId
-            },
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-}
-
-export class EmailService {
-    /**
-     * Gmail Authorize
-     * Get Gmail OAuth2 authorization URL.
-     *
-     * The state parameter will encode the contact_id and email_address.
-     * @param data The data for the request.
-     * @param data.contactId Contact ID to associate with this email
-     * @param data.emailAddress Email address being authorized
-     * @returns unknown Successful Response
-     * @throws ApiError
-     */
-    public static gmailAuthorize(data: EmailGmailAuthorizeData): CancelablePromise<EmailGmailAuthorizeResponse> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/email/oauth/authorize',
-            query: {
-                contact_id: data.contactId,
-                email_address: data.emailAddress
-            },
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
-    /**
-     * Gmail Callback
-     * Handle Gmail OAuth2 callback and store encrypted tokens.
-     *
-     * State format: "{contact_id}:{email_address}"
-     * @param data The data for the request.
-     * @param data.code
-     * @param data.state
-     * @returns unknown Successful Response
-     * @throws ApiError
-     */
-    public static gmailCallback(data: EmailGmailCallbackData): CancelablePromise<EmailGmailCallbackResponse> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/email/oauth/callback',
-            query: {
-                code: data.code,
-                state: data.state
-            },
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
-    /**
-     * List Email Tokens
-     * List configured email OAuth tokens for the current user.
-     * @param data The data for the request.
-     * @param data.contactId
-     * @returns EmailOAuthTokensPublic Successful Response
-     * @throws ApiError
-     */
-    public static listEmailTokens(data: EmailListEmailTokensData = {}): CancelablePromise<EmailListEmailTokensResponse> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/email/tokens',
-            query: {
-                contact_id: data.contactId
-            },
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
-    /**
-     * Delete Email Token
-     * Delete an email OAuth token.
-     * @param data The data for the request.
-     * @param data.tokenId
-     * @returns string Successful Response
-     * @throws ApiError
-     */
-    public static deleteEmailToken(data: EmailDeleteEmailTokenData): CancelablePromise<EmailDeleteEmailTokenResponse> {
-        return __request(OpenAPI, {
-            method: 'DELETE',
-            url: '/api/v1/email/tokens/{token_id}',
-            path: {
-                token_id: data.tokenId
-            },
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
-    /**
-     * Poll Contact Email
-     * Manually trigger email polling for a contact.
-     *
-     * Processes emails and creates Interaction records for matched messages.
-     * @param data The data for the request.
-     * @param data.contactId
-     * @returns unknown Successful Response
-     * @throws ApiError
-     */
-    public static pollContactEmail(data: EmailPollContactEmailData): CancelablePromise<EmailPollContactEmailResponse> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v1/email/poll/{contact_id}',
-            path: {
-                contact_id: data.contactId
-            },
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
-    /**
-     * Poll All Emails
-     * Manually trigger email polling for all contacts with auto_log_email enabled.
-     * @returns unknown Successful Response
-     * @throws ApiError
-     */
-    public static pollAllEmails(): CancelablePromise<EmailPollAllEmailsResponse> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v1/email/poll/all'
-        });
-    }
 }
 
 export class EmailService {
@@ -1428,6 +1574,27 @@ export class GiftsService {
     }
     
     /**
+     * Restore Gift
+     * Restore a soft-deleted gift by clearing deleted_at.
+     * @param data The data for the request.
+     * @param data.giftId
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static restoreGift(data: GiftsRestoreGiftData): CancelablePromise<GiftsRestoreGiftResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/gifts/{gift_id}/restore',
+            path: {
+                gift_id: data.giftId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
      * Get Kanban Board
      * Get gifts grouped by status for Kanban board view.
      * @returns unknown Successful Response
@@ -1509,68 +1676,6 @@ export class GraphService {
             query: {
                 depth: data.depth
             },
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-}
-
-export class HealthService {
-    /**
-     * Health
-     * @returns string Successful Response
-     * @throws ApiError
-     */
-    public static health(): CancelablePromise<HealthHealthResponse> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/health'
-        });
-    }
-}
-
-export class IcalService {
-    /**
-     * Upload Ical
-     * Upload and parse a .ics file, returning proposed imports.
-     *
-     * Parses the iCal file, matches attendees to contacts, classifies events,
-     * and returns a list of proposals for user confirmation. Filters out future events.
-     * @param data The data for the request.
-     * @param data.formData
-     * @returns unknown Successful Response
-     * @throws ApiError
-     */
-    public static uploadIcal(data: IcalUploadIcalData): CancelablePromise<IcalUploadIcalResponse> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v1/ical/upload',
-            formData: data.formData,
-            mediaType: 'multipart/form-data',
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
-    /**
-     * Confirm Ical Import
-     * Confirm and import selected iCal proposals.
-     *
-     * Accepts a list of proposal dicts (with user-confirmed contact matches)
-     * and creates Interaction or LifeEvent records. Uses UID-based dedup.
-     * @param data The data for the request.
-     * @param data.requestBody
-     * @returns unknown Successful Response
-     * @throws ApiError
-     */
-    public static confirmIcalImport(data: IcalConfirmIcalImportData): CancelablePromise<IcalConfirmIcalImportResponse> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v1/ical/confirm',
-            body: data.requestBody,
-            mediaType: 'application/json',
             errors: {
                 422: 'Validation Error'
             }
@@ -1703,13 +1808,11 @@ export class ImportExportService {
      * - **skip_duplicates**: Skip contacts with matching email (default: True).
      * - **merge_duplicates**: Update existing contacts with matching email (default: False).
      * - **create_missing_tags**: Auto-create tags that don't exist (default: True).
-     * - **create_missing_groups**: Auto-create groups that don't exist (default: True).
      * @param data The data for the request.
      * @param data.formData
      * @param data.skipDuplicates
      * @param data.mergeDuplicates
      * @param data.createMissingTags
-     * @param data.createMissingGroups
      * @returns CSVImportResponse Successful Response
      * @throws ApiError
      */
@@ -1720,8 +1823,7 @@ export class ImportExportService {
             query: {
                 skip_duplicates: data.skipDuplicates,
                 merge_duplicates: data.mergeDuplicates,
-                create_missing_tags: data.createMissingTags,
-                create_missing_groups: data.createMissingGroups
+                create_missing_tags: data.createMissingTags
             },
             formData: data.formData,
             mediaType: 'multipart/form-data',
@@ -1736,11 +1838,9 @@ export class ImportExportService {
      * Export all contacts as a CSV file with UTF-8 BOM for Excel compatibility.
      *
      * - **include_tags**: Include tag names column (default: True).
-     * - **include_groups**: Include group names column (default: True).
      * - **include_fields**: Include emails and phones columns (default: True).
      * @param data The data for the request.
      * @param data.includeTags
-     * @param data.includeGroups
      * @param data.includeFields
      * @returns unknown Successful Response
      * @throws ApiError
@@ -1751,7 +1851,6 @@ export class ImportExportService {
             url: '/api/v1/import-export/export/csv',
             query: {
                 include_tags: data.includeTags,
-                include_groups: data.includeGroups,
                 include_fields: data.includeFields
             },
             errors: {
@@ -1858,19 +1957,38 @@ export class InteractionsService {
     }
     
     /**
-     * Confirm Draft
-     * Confirm (promote) a draft interaction to a real interaction.
-     *
-     * Sets is_draft=False and recomputes last_contacted_at for attendees.
+     * Confirm Draft Interaction
+     * Promote a draft interaction to confirmed.
      * @param data The data for the request.
      * @param data.interactionId
      * @returns InteractionPublic Successful Response
      * @throws ApiError
      */
-    public static confirmDraft(data: InteractionsConfirmDraftData): CancelablePromise<InteractionsConfirmDraftResponse> {
+    public static confirmDraftInteraction(data: InteractionsConfirmDraftInteractionData): CancelablePromise<InteractionsConfirmDraftInteractionResponse> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/v1/interactions/{interaction_id}/confirm',
+            path: {
+                interaction_id: data.interactionId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Restore Interaction
+     * Restore a soft-deleted interaction by clearing deleted_at.
+     * @param data The data for the request.
+     * @param data.interactionId
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static restoreInteraction(data: InteractionsRestoreInteractionData): CancelablePromise<InteractionsRestoreInteractionResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/interactions/{interaction_id}/restore',
             path: {
                 interaction_id: data.interactionId
             },
@@ -2647,6 +2765,153 @@ export class PrivateService {
     }
 }
 
+export class RelationshipInverseMapService {
+    /**
+     * List Inverse Maps
+     * List all relationship type → inverse mappings.
+     * @param data The data for the request.
+     * @param data.skip
+     * @param data.limit
+     * @returns InverseRelationshipMapsPublic Successful Response
+     * @throws ApiError
+     */
+    public static listInverseMaps(data: RelationshipInverseMapListInverseMapsData = {}): CancelablePromise<RelationshipInverseMapListInverseMapsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/relationship-inverse-map/',
+            query: {
+                skip: data.skip,
+                limit: data.limit
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Create Inverse Map
+     * Add or update a relationship type → inverse mapping.
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns InverseRelationshipMapPublic Successful Response
+     * @throws ApiError
+     */
+    public static createInverseMap(data: RelationshipInverseMapCreateInverseMapData): CancelablePromise<RelationshipInverseMapCreateInverseMapResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/relationship-inverse-map/',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get Inverse Map
+     * Get a single mapping by ID.
+     * @param data The data for the request.
+     * @param data.mapId
+     * @returns InverseRelationshipMapPublic Successful Response
+     * @throws ApiError
+     */
+    public static getInverseMap(data: RelationshipInverseMapGetInverseMapData): CancelablePromise<RelationshipInverseMapGetInverseMapResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/relationship-inverse-map/{map_id}',
+            path: {
+                map_id: data.mapId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Update Inverse Map
+     * Update a mapping (superuser only).
+     * @param data The data for the request.
+     * @param data.mapId
+     * @param data.requestBody
+     * @returns InverseRelationshipMapPublic Successful Response
+     * @throws ApiError
+     */
+    public static updateInverseMap(data: RelationshipInverseMapUpdateInverseMapData): CancelablePromise<RelationshipInverseMapUpdateInverseMapResponse> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/relationship-inverse-map/{map_id}',
+            path: {
+                map_id: data.mapId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Delete Inverse Map
+     * Delete a mapping (superuser only).
+     * @param data The data for the request.
+     * @param data.mapId
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static deleteInverseMap(data: RelationshipInverseMapDeleteInverseMapData): CancelablePromise<RelationshipInverseMapDeleteInverseMapResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/relationship-inverse-map/{map_id}',
+            path: {
+                map_id: data.mapId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Seed Inverse Map Endpoint
+     * (Re-)populate the map with the canonical symmetric/asymmetric pairs.
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static seedInverseMapEndpoint(): CancelablePromise<RelationshipInverseMapSeedInverseMapEndpointResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/relationship-inverse-map/seed'
+        });
+    }
+    
+    /**
+     * Lookup Inverse
+     * Look up the inverse type for a given relationship type.
+     *
+     * Checks the database first, falls back to the Python mapping.
+     * @param data The data for the request.
+     * @param data.relationshipType
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static lookupInverse(data: RelationshipInverseMapLookupInverseData): CancelablePromise<RelationshipInverseMapLookupInverseResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/relationship-inverse-map/lookup/{relationship_type}',
+            path: {
+                relationship_type: data.relationshipType
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+}
+
 export class RelationshipsService {
     /**
      * Lookup Inverse
@@ -2814,13 +3079,9 @@ export class RemindersService {
     
     /**
      * List Due Reminders
-     * List reminders that are due now for the current user.
-     *
-     * A reminder is "due" when it is active, its `remind_at` is in the past,
-     * and it is not currently snoozed (`snoozed_until` is null or in the past).
-     * Results include the linked contact (when present) so the popover can
-     * render contact name without N+1 fetches. Ordered oldest-due first.
+     * List reminders due now or overdue for the current user.
      * @param data The data for the request.
+     * @param data.skip
      * @param data.limit
      * @returns RemindersDuePublic Successful Response
      * @throws ApiError
@@ -2830,7 +3091,29 @@ export class RemindersService {
             method: 'GET',
             url: '/api/v1/reminders/due',
             query: {
+                skip: data.skip,
                 limit: data.limit
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Dismiss Reminder
+     * Dismiss a reminder by setting snoozed_until to now (soft-clear from badge).
+     * @param data The data for the request.
+     * @param data.reminderId
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static dismissReminder(data: RemindersDismissReminderData): CancelablePromise<RemindersDismissReminderResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/reminders/{reminder_id}/dismiss',
+            path: {
+                reminder_id: data.reminderId
             },
             errors: {
                 422: 'Validation Error'
@@ -2867,7 +3150,7 @@ export class RemindersService {
      * Soft-delete a reminder by setting deleted_at.
      * @param data The data for the request.
      * @param data.reminderId
-     * @returns Ok Successful Response
+     * @returns unknown Successful Response
      * @throws ApiError
      */
     public static deleteReminder(data: RemindersDeleteReminderData): CancelablePromise<RemindersDeleteReminderResponse> {
@@ -2885,15 +3168,10 @@ export class RemindersService {
     
     /**
      * Snooze Reminder
-     * Snooze a reminder.
-     *
-     * Accepts either a JSON body with ``snoozed_until`` (absolute UTC datetime) or
-     * ``minutes`` (relative duration), or a legacy ``?minutes=`` query parameter.
-     * Defaults to 30 minutes when nothing is provided. Writes a snooze history row.
+     * Snooze a reminder. Accepts JSON body with minutes/snooze_until, or minutes as query param.
      * @param data The data for the request.
      * @param data.reminderId
      * @param data.minutes
-     * @param data.reason
      * @param data.requestBody
      * @returns ReminderPublic Successful Response
      * @throws ApiError
@@ -2906,37 +3184,10 @@ export class RemindersService {
                 reminder_id: data.reminderId
             },
             query: {
-                minutes: data.minutes,
-                reason: data.reason
+                minutes: data.minutes
             },
             body: data.requestBody,
             mediaType: 'application/json',
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
-    /**
-     * Dismiss Reminder
-     * Soft-clear a reminder from the badge.
-     *
-     * Bumps ``snoozed_until`` to a far-future sentinel so the reminder
-     * disappears from `/reminders/due` without being deleted. The reminder is
-     * still listed by `GET /reminders/` and can be re-enabled by editing it
-     * (clearing or shortening ``snoozed_until``).
-     * @param data The data for the request.
-     * @param data.reminderId
-     * @returns ReminderPublic Successful Response
-     * @throws ApiError
-     */
-    public static dismissReminder(data: RemindersDismissReminderData): CancelablePromise<RemindersDismissReminderResponse> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v1/reminders/{reminder_id}/dismiss',
-            path: {
-                reminder_id: data.reminderId
-            },
             errors: {
                 422: 'Validation Error'
             }
@@ -2948,7 +3199,7 @@ export class RemindersService {
      * Get snooze history for a reminder.
      * @param data The data for the request.
      * @param data.reminderId
-     * @returns ReminderSnoozeHistoryEntry Successful Response
+     * @returns unknown Successful Response
      * @throws ApiError
      */
     public static getSnoozeHistory(data: RemindersGetSnoozeHistoryData): CancelablePromise<RemindersGetSnoozeHistoryResponse> {
@@ -2969,7 +3220,7 @@ export class RemindersService {
      * Get snooze count per reminder in the last N days.
      * @param data The data for the request.
      * @param data.days
-     * @returns ReminderSnoozeStat Successful Response
+     * @returns unknown Successful Response
      * @throws ApiError
      */
     public static getSnoozeStats(data: RemindersGetSnoozeStatsData = {}): CancelablePromise<RemindersGetSnoozeStatsResponse> {
@@ -2991,7 +3242,7 @@ export class RemindersService {
      * @param data The data for the request.
      * @param data.days
      * @param data.threshold
-     * @returns ChronicSnoozer Successful Response
+     * @returns unknown Successful Response
      * @throws ApiError
      */
     public static getChronicSnoozers(data: RemindersGetChronicSnoozersData = {}): CancelablePromise<RemindersGetChronicSnoozersResponse> {
@@ -3182,168 +3433,6 @@ export class SetupService {
             url: '/setup',
             body: data.requestBody,
             mediaType: 'application/json',
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    },
-
-    /**
-     * List Due Reminders
-     * List reminders due now or overdue for the current user.
-     * @param data The data for the request.
-     * @param data.skip
-     * @param data.limit
-     * @returns RemindersPublic Successful Response
-     * @throws ApiError
-     */
-    public static listDueReminders(data: RemindersListDueRemindersData = {}): CancelablePromise<RemindersListDueRemindersResponse> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/reminders/due',
-            query: {
-                skip: data.skip,
-                limit: data.limit,
-            },
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-
-    /**
-     * Dismiss Reminder
-     * Dismiss a reminder by setting snoozed_until to now (soft-clear from badge).
-     * @param data The data for the request.
-     * @param data.reminderId
-     * @returns ReminderPublic Successful Response
-     * @throws ApiError
-     */
-    public static dismissReminder(data: RemindersDismissReminderData): CancelablePromise<RemindersDismissReminderResponse> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v1/reminders/{reminder_id}/dismiss',
-            path: {
-                reminder_id: data.reminderId
-            },
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-
-    /**
-     * Snooze Reminder
-     * Snooze a reminder.
-     * @param data The data for the request.
-     * @param data.reminderId
-     * @param data.minutes
-     * @param data.snoozeUntil
-     * @returns ReminderPublic Successful Response
-     * @throws ApiError
-     */
-    public static snoozeReminder(data: RemindersSnoozeReminderData): CancelablePromise<RemindersSnoozeReminderResponse> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v1/reminders/{reminder_id}/snooze',
-            path: {
-                reminder_id: data.reminderId
-            },
-            query: {
-                minutes: data.minutes,
-                snooze_until: data.snoozeUntil,
-            },
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-}
-}
-
-export class SavedFiltersService {
-    /**
-     * List Saved Filters
-     * List saved filters visible to the current user (owned + shared via tag).
-     * @param data The data for the request.
-     * @param data.skip
-     * @param data.limit
-     * @returns SavedFiltersPublic Successful Response
-     * @throws ApiError
-     */
-    public static listSavedFilters(data: SavedFiltersListSavedFiltersData = {}): CancelablePromise<SavedFiltersListSavedFiltersResponse> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/saved-filters/',
-            query: {
-                skip: data.skip,
-                limit: data.limit
-            },
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
-    /**
-     * Create Saved Filter Route
-     * Create a new saved filter / smart list.
-     * @param data The data for the request.
-     * @param data.requestBody
-     * @returns SavedFilterPublic Successful Response
-     * @throws ApiError
-     */
-    public static createSavedFilterRoute(data: SavedFiltersCreateSavedFilterRouteData): CancelablePromise<SavedFiltersCreateSavedFilterRouteResponse> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v1/saved-filters/',
-            body: data.requestBody,
-            mediaType: 'application/json',
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
-    /**
-     * Update Saved Filter Route
-     * Update a saved filter.
-     * @param data The data for the request.
-     * @param data.filterId
-     * @param data.requestBody
-     * @returns SavedFilterPublic Successful Response
-     * @throws ApiError
-     */
-    public static updateSavedFilterRoute(data: SavedFiltersUpdateSavedFilterRouteData): CancelablePromise<SavedFiltersUpdateSavedFilterRouteResponse> {
-        return __request(OpenAPI, {
-            method: 'PATCH',
-            url: '/api/v1/saved-filters/{filter_id}',
-            path: {
-                filter_id: data.filterId
-            },
-            body: data.requestBody,
-            mediaType: 'application/json',
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
-    /**
-     * Delete Saved Filter Route
-     * Delete a saved filter.
-     * @param data The data for the request.
-     * @param data.filterId
-     * @returns unknown Successful Response
-     * @throws ApiError
-     */
-    public static deleteSavedFilterRoute(data: SavedFiltersDeleteSavedFilterRouteData): CancelablePromise<SavedFiltersDeleteSavedFilterRouteResponse> {
-        return __request(OpenAPI, {
-            method: 'DELETE',
-            url: '/api/v1/saved-filters/{filter_id}',
-            path: {
-                filter_id: data.filterId
-            },
             errors: {
                 422: 'Validation Error'
             }
@@ -3541,6 +3630,31 @@ export class TagSharesService {
                 tag_id: data.tagId,
                 grantee_id: data.granteeId
             },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+}
+
+export class TranscribeService {
+    /**
+     * Transcribe Audio
+     * Transcribe an audio file using the Whisper service.
+     *
+     * Accepts WAV, MP3, or any audio format supported by ffmpeg.
+     * Returns the transcribed text for review before saving as an Interaction.
+     * @param data The data for the request.
+     * @param data.formData
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static transcribeAudio(data: TranscribeTranscribeAudioData): CancelablePromise<TranscribeTranscribeAudioResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/transcribe/',
+            formData: data.formData,
+            mediaType: 'multipart/form-data',
             errors: {
                 422: 'Validation Error'
             }
@@ -3747,6 +3861,18 @@ export class UsersService {
 
 export class UtilsService {
     /**
+     * Health
+     * @returns boolean Successful Response
+     * @throws ApiError
+     */
+    public static health(): CancelablePromise<UtilsHealthResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/health'
+        });
+    }
+    
+    /**
      * Test Email
      * Test emails.
      * @param data The data for the request.
@@ -3788,79 +3914,6 @@ export class UtilsService {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/utils/environment/'
-        });
-    }
-}
-
-export class VCardConflictsService {
-    /**
-     * List Vcard Conflicts
-     * List all unresolved vCard conflicts for the current user.
-     * @param data The data for the request.
-     * @param data.skip
-     * @param data.limit
-     * @returns VCardConflictsPublic Successful Response
-     * @throws ApiError
-     */
-    public static listVcardConflicts(data: VCardConflictsListVcardConflictsData = {}): CancelablePromise<VCardConflictsListVcardConflictsResponse> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/vcard-conflicts/',
-            query: {
-                skip: data.skip,
-                limit: data.limit
-            },
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
-    /**
-     * Resolve Vcard Conflict
-     * Resolve a vCard conflict by accepting remote or keeping local.
-     *
-     * resolution_type must be one of: 'keep_local', 'accept_remote'
-     * @param data The data for the request.
-     * @param data.conflictId
-     * @param data.resolutionType
-     * @returns VCardConflictPublic Successful Response
-     * @throws ApiError
-     */
-    public static resolveVcardConflict(data: VCardConflictsResolveVcardConflictData): CancelablePromise<VCardConflictsResolveVcardConflictResponse> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v1/vcard-conflicts/{conflict_id}/resolve',
-            path: {
-                conflict_id: data.conflictId
-            },
-            query: {
-                resolution_type: data.resolutionType
-            },
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
-    /**
-     * Delete Vcard Conflict
-     * Delete a vCard conflict (dismiss without action).
-     * @param data The data for the request.
-     * @param data.conflictId
-     * @returns void Successful Response
-     * @throws ApiError
-     */
-    public static deleteVcardConflict(data: VCardConflictsDeleteVcardConflictData): CancelablePromise<VCardConflictsDeleteVcardConflictResponse> {
-        return __request(OpenAPI, {
-            method: 'DELETE',
-            url: '/api/v1/vcard-conflicts/{conflict_id}',
-            path: {
-                conflict_id: data.conflictId
-            },
-            errors: {
-                422: 'Validation Error'
-            }
         });
     }
 }
@@ -4073,30 +4126,6 @@ export class WebhooksService {
             mediaType: 'application/json',
             errors: {
                 422: 'Validation Error'
-            }
-        });
-    }
-}
-export class GraphService {
-    /**
-     * Get Contacts Graph
-     * Returns contacts + relationships as a graph (nodes + edges).
-     * @param data The data for the request.
-     * @param data.depth
-     * @param data.rootContactId
-     * @returns object Successful Response
-     * @throws ApiError
-     */
-    public static getGraphContacts(data: { depth?: number; rootContactId?: string } = {}): CancelablePromise<{ nodes: Array<{ id: string; label: string; avatar_url?: string | null; company?: string | null; is_favorite: boolean }>; edges: Array<{ source: string; target: string; label: string }> }> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/graph/contacts',
-            query: {
-                depth: data.depth,
-                root_contact_id: data.rootContactId,
-            },
-            errors: {
-                422: 'Validation Error',
             }
         });
     }

@@ -13,7 +13,12 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 from app.email_service import poll_all_email_accounts  # noqa: E402
-from app.models import Contact, Reminder, ReminderFrequency  # noqa: E402
+from app.models import (  # noqa: E402
+    CommunicationPreference,
+    Contact,
+    Reminder,
+    ReminderFrequency,
+)
 
 
 def _get_apprise() -> apprise.Apprise:

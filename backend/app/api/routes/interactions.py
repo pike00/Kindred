@@ -107,6 +107,8 @@ def list_interactions(
     )
     if is_draft is not None:
         base = base.where(Interaction.is_draft == is_draft)
+    else:
+        base = base.where(Interaction.is_draft == False)  # noqa: E712
     if contact_id is not None:
         base = base.where(InteractionAttendee.contact_id == contact_id)
 
@@ -233,8 +235,6 @@ def delete_interaction(
     if not (attendee_ids & visible_ids):
         raise HTTPException(status_code=404, detail="Interaction not found")
 
-    from datetime import datetime, timezone
-
     interaction.deleted_at = datetime.now(timezone.utc)
     session.add(interaction)
     session.flush()
@@ -242,6 +242,42 @@ def delete_interaction(
         recompute_last_contacted_at(session=session, contact_id=aid)
     session.commit()
     return {"ok": True}
+
+
+@router.post("/{interaction_id}/confirm", response_model=InteractionPublic)
+def confirm_draft_interaction(
+    session: SessionDep,
+    current_user: CurrentUser,
+    interaction_id: uuid.UUID,
+) -> Any:
+    """Promote a draft interaction to confirmed."""
+    interaction = session.get(Interaction, interaction_id)
+    if interaction is None:
+        raise HTTPException(status_code=404, detail="Interaction not found")
+
+    visible_ids = _resolve_visible_contact_ids(session, current_user)
+    attendee_ids = set(
+        session.exec(
+            select(InteractionAttendee.contact_id).where(
+                InteractionAttendee.interaction_id == interaction_id
+            )
+        ).all()
+    )
+    if not (attendee_ids & visible_ids):
+        raise HTTPException(status_code=404, detail="Interaction not found")
+
+    if not interaction.is_draft:
+        raise HTTPException(status_code=400, detail="Interaction is already confirmed")
+
+    interaction.is_draft = False
+    interaction.draft_source = None
+    session.add(interaction)
+    session.flush()
+    for aid in attendee_ids:
+        recompute_last_contacted_at(session=session, contact_id=aid)
+    session.commit()
+    session.refresh(interaction)
+    return _interaction_to_public(session, interaction, visible_ids)
 
 
 @router.post("/{interaction_id}/restore")

@@ -8,6 +8,7 @@ from app.api.routes import (
     communication_preferences,
     contact_fields,
     contact_pdf,
+    contact_stage_events,
     contacts,
     contacts_kanban,
     custom_fields,
@@ -15,7 +16,7 @@ from app.api.routes import (
     email,
     gifts,
     graph,
-    groups,
+    ical,
     import_export,
     interactions,
     journal,
@@ -30,6 +31,7 @@ from app.api.routes import (
     relationships,
     reminders,
     saved_filters,
+    search,
     tag_shares,
     tags,
     transcribe,
@@ -41,6 +43,13 @@ from app.api.routes import (
 from app.core.config import settings
 
 api_router = APIRouter()
+
+
+@api_router.get("/health", tags=["utils"])
+async def health() -> bool:
+    return True
+
+
 api_router.include_router(communication_preferences.router)
 api_router.include_router(login.router)
 api_router.include_router(users.router)
@@ -53,7 +62,6 @@ api_router.include_router(contact_stage_events.router)
 api_router.include_router(tags.router)
 api_router.include_router(tag_shares.router)
 api_router.include_router(saved_filters.router)
-api_router.include_router(groups.router)
 api_router.include_router(contact_fields.router)
 api_router.include_router(addresses.router)
 api_router.include_router(relationships.router)
@@ -77,6 +85,11 @@ api_router.include_router(activity_logs.router)
 api_router.include_router(vcard_conflicts.router)
 api_router.include_router(calendar.router)
 api_router.include_router(graph.router)
+api_router.include_router(contacts_kanban.router)
+api_router.include_router(email.router)
+api_router.include_router(organizations.router)
+api_router.include_router(search.router)
+api_router.include_router(ical.router)
 
 if settings.ENVIRONMENT == "local":
     api_router.include_router(private.router)

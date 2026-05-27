@@ -22,12 +22,7 @@ router = APIRouter(prefix="/journal", tags=["journal"])
 
 
 def _to_public(session: SessionDep, entry: JournalEntry) -> JournalEntryPublic:
-    """Serialize a journal entry with its linked contact IDs.
-
-    ``contact_ids`` lives only on ``JournalEntryPublic`` (the table model has no
-    such column), so it is supplied at validation time rather than assigned onto
-    the ORM object.
-    """
+    """Serialize a journal entry with its linked contact IDs."""
     contact_ids = list(
         session.exec(
             select(JournalEntryContact.contact_id).where(
@@ -35,7 +30,15 @@ def _to_public(session: SessionDep, entry: JournalEntry) -> JournalEntryPublic:
             )
         ).all()
     )
-    return JournalEntryPublic.model_validate(entry, update={"contact_ids": contact_ids})
+    return JournalEntryPublic(
+        id=entry.id,
+        body=entry.body,
+        mood=entry.mood,
+        entry_date=entry.entry_date,
+        created_at=entry.created_at,
+        updated_at=entry.updated_at,
+        contact_ids=contact_ids,
+    )
 
 
 @router.get("/", response_model=JournalEntriesPublic)
@@ -54,12 +57,6 @@ def list_journal_entries(
         .limit(limit)
     )
     entries = session.exec(statement).all()
-    # Load contact IDs for each entry
-    for entry in entries:
-        contact_ids_stmt = select(JournalEntryContact.contact_id).where(
-            JournalEntryContact.journal_entry_id == entry.id
-        )
-        entry.contact_ids = list(session.exec(contact_ids_stmt).all())
 
     count_statement = select(func.count(JournalEntry.id)).where(
         JournalEntry.owner_id == current_user.id
@@ -83,12 +80,7 @@ def create_journal_entry_route(
     entry = create_journal_entry(
         session=session, journal_in=entry_in, owner_id=current_user.id
     )
-    # Load contact IDs for response
-    contact_ids_stmt = select(JournalEntryContact.contact_id).where(
-        JournalEntryContact.journal_entry_id == entry.id
-    )
-    entry.contact_ids = list(session.exec(contact_ids_stmt).all())
-    return JournalEntryPublic.model_validate(entry)
+    return _to_public(session, entry)
 
 
 @router.patch("/{entry_id}", response_model=JournalEntryPublic)
@@ -107,36 +99,20 @@ def update_journal_entry(
         raise HTTPException(status_code=403, detail="Not enough permissions")
 
     update_data = entry_in.model_dump(exclude_unset=True)
-    # contact_ids is not a column on JournalEntry; handle it via the junction
-    # table separately and keep it out of the ORM update.
-    has_contact_ids = "contact_ids" in update_data
     new_contact_ids = update_data.pop("contact_ids", None)
     entry.sqlmodel_update(update_data)
     session.add(entry)
-    session.commit()
-    session.refresh(entry)
-    # Sync contact associations if provided
-    if "contact_ids" in update_data:
-        # Remove existing associations
+    if new_contact_ids is not None:
         session.exec(
             sql_delete(JournalEntryContact).where(
                 JournalEntryContact.journal_entry_id == entry.id
             )
         )
-        # Add new associations
-        if update_data.get("contact_ids"):
-            for cid in set(update_data["contact_ids"]):
-                session.add(
-                    JournalEntryContact(journal_entry_id=entry.id, contact_id=cid)
-                )
-        session.flush()
-        session.refresh(entry)
-    # Load contact IDs for response
-    contact_ids_stmt = select(JournalEntryContact.contact_id).where(
-        JournalEntryContact.journal_entry_id == entry.id
-    )
-    entry.contact_ids = list(session.exec(contact_ids_stmt).all())
-    return JournalEntryPublic.model_validate(entry)
+        for cid in set(new_contact_ids):
+            session.add(JournalEntryContact(journal_entry_id=entry.id, contact_id=cid))
+    session.commit()
+    session.refresh(entry)
+    return _to_public(session, entry)
 
 
 @router.delete("/{entry_id}", response_model=Ok)
