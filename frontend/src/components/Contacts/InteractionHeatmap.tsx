@@ -6,7 +6,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { cn } from "@/lib/utils"
 
 /**
  * Intensity color scale (5 steps) for both light and dark modes.
@@ -61,23 +60,18 @@ function HeatmapCell({ weekStart, count, onClick }: HeatmapCellProps) {
         <button
           type="button"
           onClick={() => onClick?.(weekStart, count)}
-          className={cn(
-            "w-3.5 h-3.5 rounded-sm transition-colors hover:ring-1 hover:ring-ring",
-            "dark:hidden",
-          )}
-          style={{ backgroundColor: lightColor }}
+          className="w-3.5 h-3.5 rounded-sm transition-colors hover:ring-1 hover:ring-ring"
           aria-label={`Week of ${formatWeekRange(weekStart)}: ${count} interaction${count !== 1 ? "s" : ""}`}
-        />
-        <button
-          type="button"
-          onClick={() => onClick?.(weekStart, count)}
-          className={cn(
-            "w-3.5 h-3.5 rounded-sm transition-colors hover:ring-1 hover:ring-ring hidden",
-            "dark:block",
-          )}
-          style={{ backgroundColor: darkColor }}
-          aria-label={`Week of ${formatWeekRange(weekStart)}: ${count} interaction${count !== 1 ? "s" : ""}`}
-        />
+        >
+          <span
+            className="block w-full h-full rounded-sm dark:hidden"
+            style={{ backgroundColor: lightColor }}
+          />
+          <span
+            className="hidden w-full h-full rounded-sm dark:block"
+            style={{ backgroundColor: darkColor }}
+          />
+        </button>
       </TooltipTrigger>
       <TooltipContent side="top" className="text-xs">
         <p>{formatWeekRange(weekStart)}</p>

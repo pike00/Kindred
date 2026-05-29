@@ -660,7 +660,7 @@ def get_contact_heatmap(
             Interaction.is_draft == False,  # noqa: E712
         )
     )
-    for (occurred_at,) in session.exec(stmt).all():
+    for occurred_at in session.exec(stmt).all():
         # Normalize to UTC
         if occurred_at.tzinfo is None:
             occurred_at = occurred_at.replace(tzinfo=timezone.utc)
