@@ -1,10 +1,12 @@
 import enum
 import uuid
 from datetime import date, datetime, timezone
+from typing import Any
 
 import sqlalchemy as sa
 from pydantic import EmailStr
 from sqlalchemy import JSON, DateTime
+from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlmodel import Field, Relationship, SQLModel
 from sqlmodel import (
     Relationship as SQLMRelationship,  # alias; avoids shadowing by the Relationship table model below
@@ -671,6 +673,13 @@ class Contact(SoftDeleteMixin, ContactBase, table=True):
         nullable=False,
         ondelete="CASCADE",
         description="Owner user; cascades on delete.",
+    )
+    # Full-text search vector, maintained by a DB trigger (see migration
+    # a0b1c2d3e4f5). Excluded from the API; only used in search queries.
+    search_vector: Any | None = Field(
+        default=None,
+        sa_column=sa.Column(TSVECTOR, nullable=True),
+        exclude=True,
     )
     # Raw vCard text for CardDAV round-trip fidelity
     vcard_raw: str | None = Field(
@@ -1549,6 +1558,13 @@ class Interaction(SoftDeleteMixin, InteractionBase, table=True):
         ondelete="CASCADE",
         description="Owner user; cascades on delete.",
     )
+    # Full-text search vector, maintained by a DB trigger (see migration
+    # a0b1c2d3e4f5). Excluded from the API; only used in search queries.
+    search_vector: Any | None = Field(
+        default=None,
+        sa_column=sa.Column(TSVECTOR, nullable=True),
+        exclude=True,
+    )
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
         nullable=False,
@@ -2186,6 +2202,13 @@ class Note(SoftDeleteMixin, NoteBase, table=True):
         ondelete="CASCADE",
         description="Owner user; cascades on delete.",
     )
+    # Full-text search vector, maintained by a DB trigger (see migration
+    # a0b1c2d3e4f5). Excluded from the API; only used in search queries.
+    search_vector: Any | None = Field(
+        default=None,
+        sa_column=sa.Column(TSVECTOR, nullable=True),
+        exclude=True,
+    )
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
         nullable=False,
@@ -2349,6 +2372,13 @@ class JournalEntry(JournalEntryBase, table=True):
         nullable=False,
         ondelete="CASCADE",
         description="Owner user; cascades on delete.",
+    )
+    # Full-text search vector, maintained by a DB trigger (see migration
+    # a0b1c2d3e4f5). Excluded from the API; only used in search queries.
+    search_vector: Any | None = Field(
+        default=None,
+        sa_column=sa.Column(TSVECTOR, nullable=True),
+        exclude=True,
     )
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),

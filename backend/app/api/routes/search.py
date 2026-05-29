@@ -10,6 +10,7 @@ from app.models import (
     Contact,
     ContactTag,
     Interaction,
+    InteractionAttendee,
     JournalEntry,
     Note,
     TagShare,
@@ -162,20 +163,24 @@ def _search_interactions(
 ) -> list[dict]:
     """Search Interaction table using tsvector."""
     ts_query = func.plainto_tsquery("english", query)
+    # Interactions have no direct contact_id (attendees are many-to-many via
+    # interaction_attendee) and no updated_at column.
+    shared_interaction_ids = select(InteractionAttendee.interaction_id).where(
+        InteractionAttendee.contact_id.in_(shared_contact_ids)  # type: ignore[arg-type]
+    )
     stmt = (
         select(
             Interaction.id,
             Interaction.notes,
             Interaction.occurred_at,
             Interaction.created_at,
-            Interaction.updated_at,
             func.ts_rank(Interaction.search_vector, ts_query).label("rank"),
         )
         .where(
             Interaction.search_vector.op("@@")(ts_query),
             or_(
                 Interaction.owner_id == owner_id,
-                Interaction.contact_id.in_(shared_contact_ids),  # type: ignore[arg-type]
+                Interaction.id.in_(shared_interaction_ids),  # type: ignore[arg-type]
             ),
         )
         .order_by(func.ts_rank(Interaction.search_vector, ts_query).desc())
@@ -196,7 +201,7 @@ def _search_interactions(
                 "snippet": snippet,
                 "rank": float(row.rank) if row.rank else None,
                 "created_at": row.created_at.isoformat() if row.created_at else None,
-                "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+                "updated_at": None,
             }
         )
     return results
