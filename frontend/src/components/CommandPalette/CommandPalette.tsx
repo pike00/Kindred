@@ -50,21 +50,6 @@ function contactHaystack(contact: ContactPublic): string {
 }
 
 export function CommandPalette() {
-  // Register the Cmd+K / Ctrl+K shortcut in the global registry
-  useRegisterShortcuts([
-    {
-      keys: "Meta+k",
-      description: "Open command palette",
-      group: "Search",
-      callback: () => toggle(),
-    },
-    {
-      keys: "Control+k",
-      description: "Open command palette",
-      group: "Search",
-      callback: () => toggle(),
-    },
-  ])
   const { open, setOpen, toggle } = useCommandPalette()
   // Memoize so useRegisterShortcuts sees a stable reference — an inline
   // literal previously triggered an infinite render loop.

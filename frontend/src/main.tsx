@@ -11,6 +11,7 @@ import { ApiError, OpenAPI } from "./client"
 import { PwaInstallPrompt } from "./components/PwaInstallPrompt"
 import { ThemeProvider } from "./components/theme-provider"
 import { Toaster } from "./components/ui/sonner"
+import { ShortcutRegistryProvider } from "./hooks/useKeyboardShortcuts"
 import "./index.css"
 import { routeTree } from "./routeTree.gen"
 
@@ -103,10 +104,12 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
-        <Toaster richColors closeButton />
-        <PwaInstallPrompt />
-        <ServiceWorkerUpdatePrompt />
+        <ShortcutRegistryProvider>
+          <RouterProvider router={router} />
+          <Toaster richColors closeButton />
+          <PwaInstallPrompt />
+          <ServiceWorkerUpdatePrompt />
+        </ShortcutRegistryProvider>
       </QueryClientProvider>
     </ThemeProvider>
   </StrictMode>,

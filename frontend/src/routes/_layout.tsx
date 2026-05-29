@@ -5,7 +5,7 @@ import {
   redirect,
   useNavigate,
 } from "@tanstack/react-router"
-import { useEffect } from "react"
+import { useEffect, useMemo } from "react"
 import { ApiError } from "@/client"
 import { CommandPalette } from "@/components/CommandPalette/CommandPalette"
 import {
@@ -120,56 +120,63 @@ function Layout() {
 function LayoutShortcuts() {
   const navigate = useNavigate()
 
-  useRegisterShortcuts([
-    {
-      keys: "g c",
-      description: "Go to Contacts",
-      group: "Navigation",
-      callback: () => navigate({ to: "/contacts" }),
-    },
-    {
-      keys: "g i",
-      description: "Go to Interactions",
-      group: "Navigation",
-      callback: () => navigate({ to: "/interactions" }),
-    },
-    {
-      keys: "g j",
-      description: "Go to Journal",
-      group: "Navigation",
-      callback: () => navigate({ to: "/journal" }),
-    },
-    {
-      keys: "g t",
-      description: "Go to Tags",
-      group: "Navigation",
-      callback: () => navigate({ to: "/tags" }),
-    },
-    {
-      keys: "g r",
-      description: "Go to Reminders",
-      group: "Navigation",
-      callback: () => navigate({ to: "/reminders" }),
-    },
-    {
-      keys: "g s",
-      description: "Go to Settings",
-      group: "Navigation",
-      callback: () => navigate({ to: "/settings" }),
-    },
-    {
-      keys: "Meta+Shift+n",
-      description: "New Contact",
-      group: "Actions",
-      callback: () => navigate({ to: "/contacts" }),
-    },
-    {
-      keys: "Meta+Shift+i",
-      description: "New Interaction",
-      group: "Actions",
-      callback: () => navigate({ to: "/interactions" }),
-    },
-  ])
+  // Memoize so useRegisterShortcuts sees a stable reference — an inline
+  // literal changes identity every render and triggers an infinite loop.
+  const shortcuts = useMemo(
+    () => [
+      {
+        keys: "g c",
+        description: "Go to Contacts",
+        group: "Navigation",
+        callback: () => navigate({ to: "/contacts" }),
+      },
+      {
+        keys: "g i",
+        description: "Go to Interactions",
+        group: "Navigation",
+        callback: () => navigate({ to: "/interactions" }),
+      },
+      {
+        keys: "g j",
+        description: "Go to Journal",
+        group: "Navigation",
+        callback: () => navigate({ to: "/journal" }),
+      },
+      {
+        keys: "g t",
+        description: "Go to Tags",
+        group: "Navigation",
+        callback: () => navigate({ to: "/tags" }),
+      },
+      {
+        keys: "g r",
+        description: "Go to Reminders",
+        group: "Navigation",
+        callback: () => navigate({ to: "/reminders" }),
+      },
+      {
+        keys: "g s",
+        description: "Go to Settings",
+        group: "Navigation",
+        callback: () => navigate({ to: "/settings" }),
+      },
+      {
+        keys: "Meta+Shift+n",
+        description: "New Contact",
+        group: "Actions",
+        callback: () => navigate({ to: "/contacts" }),
+      },
+      {
+        keys: "Meta+Shift+i",
+        description: "New Interaction",
+        group: "Actions",
+        callback: () => navigate({ to: "/interactions" }),
+      },
+    ],
+    [navigate],
+  )
+
+  useRegisterShortcuts(shortcuts)
 
   return null
 }

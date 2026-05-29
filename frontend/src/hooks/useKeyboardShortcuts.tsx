@@ -209,17 +209,23 @@ export function useRegisterShortcuts(
 
   const shortcuts = Array.isArray(arg) ? arg : [arg]
 
+  // Depend on the stable register/unregister callbacks, NOT the whole ctx
+  // object: ctx gets a new identity whenever the registry list changes, so
+  // depending on it would re-run this effect on every registration and churn
+  // unregister/re-register forever ("Maximum update depth exceeded").
+  const { register, unregister } = ctx
+
   useEffect(() => {
     for (const shortcut of shortcuts) {
-      ctx.register(shortcut)
+      register(shortcut)
     }
 
     return () => {
       for (const shortcut of shortcuts) {
-        ctx.unregister(shortcut.keys, shortcut.description)
+        unregister(shortcut.keys, shortcut.description)
       }
     }
-  }, [shortcuts, ctx])
+  }, [shortcuts, register, unregister])
 }
 
 /**
