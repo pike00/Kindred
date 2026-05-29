@@ -190,9 +190,11 @@ export function QuickLogFAB() {
     /Mac|iPod|iPhone|iPad/.test(navigator.platform)
 
   return (
+    // Stack above the larger hold-to-record FAB (bottom-6 right-6, h-16) so the
+    // two don't overlap into one blob in the corner.
     <div
       className="fixed right-4 z-50 md:right-6"
-      style={{ bottom: "calc(1rem + env(safe-area-inset-bottom, 0px))" }}
+      style={{ bottom: "calc(6.5rem + env(safe-area-inset-bottom, 0px))" }}
     >
       <Popover open={open} onOpenChange={handleOpenChange}>
         <PopoverTrigger asChild>
