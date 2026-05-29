@@ -16,6 +16,11 @@ function gitHash(): string {
 }
 
 function appVersion(): string {
+  // Prod builds inject the release tag via the APP_VERSION build-arg (the git
+  // tag is the source of truth). Strip the leading "v" since the footer renders
+  // `v{__APP_VERSION__}`. Fall back to package.json for local dev.
+  const fromEnv = process.env.APP_VERSION?.trim()
+  if (fromEnv) return fromEnv.replace(/^v/, "")
   const pkg = JSON.parse(
     readFileSync(new URL("./package.json", import.meta.url), "utf-8"),
   )
