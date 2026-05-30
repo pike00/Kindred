@@ -155,6 +155,7 @@ function DrillDown({
     weekday: "long",
     month: "long",
     day: "numeric",
+    year: "numeric",
   })
 
   return (
@@ -162,7 +163,7 @@ function DrillDown({
       <CardContent className="pt-4">
         <p className="text-sm font-semibold mb-3">{formatted}</p>
         {entries.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No events this day.</p>
+          <p className="text-sm text-muted-foreground">Nothing on this day.</p>
         ) : (
           <ul className="space-y-1">
             {entries.map((entry, i) => (
@@ -187,8 +188,15 @@ function DrillDown({
                   <div>
                     <p className="text-sm font-medium">{entry.name}</p>
                     <p className="text-xs text-muted-foreground capitalize">
-                      {entry.type === "birthday" ? "Birthday" : entry.type}
-                      {entry.age != null && ` · turns ${entry.age}`}
+                      {entry.type === "birthday"
+                        ? "Birthday"
+                        : entry.type.replace(/_/g, " ")}
+                      {entry.age != null && entry.type === "birthday" && (
+                        <> · turns {entry.age}</>
+                      )}
+                      {entry.age != null && entry.type !== "birthday" && (
+                        <> · {entry.age === 1 ? "1 year" : `${entry.age} years`}</>
+                      )}
                     </p>
                   </div>
                 </Link>

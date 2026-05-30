@@ -78,7 +78,7 @@ describe("JournalList", () => {
     })
   })
 
-  it("renders empty DataTable when no entries", async () => {
+  it("renders empty state when no entries", async () => {
     mockListJournalEntries.mockResolvedValue({ data: [] })
 
     renderWithProviders(
@@ -88,9 +88,9 @@ describe("JournalList", () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByTestId("data-table")).toBeInTheDocument()
+      expect(screen.getByText("No journal entries yet")).toBeInTheDocument()
     })
-    expect(screen.queryByTestId(/row-/)).not.toBeInTheDocument()
+    expect(screen.queryByTestId("data-table")).not.toBeInTheDocument()
   })
 
   it("renders DataTable with journal entries", async () => {
@@ -145,7 +145,7 @@ describe("JournalList", () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByTestId("data-table")).toBeInTheDocument()
+      expect(screen.getByText("No journal entries yet")).toBeInTheDocument()
     })
   })
 
@@ -159,7 +159,7 @@ describe("JournalList", () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByTestId("data-table")).toBeInTheDocument()
+      expect(screen.getByText("No journal entries yet")).toBeInTheDocument()
     })
   })
 

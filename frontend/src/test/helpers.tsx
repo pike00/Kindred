@@ -12,7 +12,8 @@
  */
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { type RenderOptions, render } from "@testing-library/react"
-import type { ReactElement, ReactNode } from "react"
+import { Suspense, type ReactElement, type ReactNode } from "react"
+import { ShortcutRegistryProvider } from "@/hooks/useKeyboardShortcuts"
 
 // ---------------------------------------------------------------------------
 // QueryClient factory
@@ -46,7 +47,13 @@ export function renderWithProviders(
   const client = queryClient ?? createQueryClient()
 
   function Wrapper({ children }: { children: ReactNode }) {
-    return <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    return (
+      <QueryClientProvider client={client}>
+        <ShortcutRegistryProvider>
+          <Suspense fallback={null}>{children}</Suspense>
+        </ShortcutRegistryProvider>
+      </QueryClientProvider>
+    )
   }
 
   return {
@@ -74,6 +81,15 @@ export function makeContact(
     suffix: string | null
     last_contacted_at: string | null
     is_starred: boolean
+    is_favorite: boolean
+    is_archived: boolean
+    is_deceased: boolean
+    do_not_contact: boolean
+    do_not_contact_reason: string | null
+    contact_frequency_days: number | null
+    how_we_met: string | null
+    timezone: string | null
+    pronouns: string | null
     tags: { id: string; name: string; color: string | null }[]
   }> = {},
 ) {
@@ -90,6 +106,15 @@ export function makeContact(
     suffix: null,
     last_contacted_at: null,
     is_starred: false,
+    is_favorite: false,
+    is_archived: false,
+    is_deceased: false,
+    do_not_contact: false,
+    do_not_contact_reason: null,
+    contact_frequency_days: null,
+    how_we_met: null,
+    timezone: null,
+    pronouns: null,
     tags: [],
     ...overrides,
   }

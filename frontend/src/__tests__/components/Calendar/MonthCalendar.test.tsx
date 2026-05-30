@@ -187,7 +187,7 @@ describe("MonthCalendar", () => {
     })
 
     await waitFor(() => {
-      expect(screen.getByText("turns 30")).toBeInTheDocument()
+      expect(screen.getByText(/turns 30/)).toBeInTheDocument()
     })
   })
 
@@ -217,7 +217,7 @@ describe("MonthCalendar", () => {
     })
 
     await waitFor(() => {
-      expect(screen.getByText("5 years")).toBeInTheDocument()
+      expect(screen.getByText(/5 years/)).toBeInTheDocument()
     })
   })
 
@@ -247,7 +247,7 @@ describe("MonthCalendar", () => {
     })
 
     await waitFor(() => {
-      expect(screen.getByText("1 year")).toBeInTheDocument()
+      expect(screen.getByText(/1 year/)).toBeInTheDocument()
     })
   })
 
@@ -384,7 +384,7 @@ describe("MonthCalendar", () => {
     })
 
     await waitFor(() => {
-      expect(screen.getByText("work anniversary")).toBeInTheDocument()
+      expect(screen.getByText(/work anniversary/)).toBeInTheDocument()
     })
   })
 

@@ -5,12 +5,15 @@ import { ContactsList } from "@/components/Contacts/ContactsList"
 import { createQueryClient, makeContact, makeTag, renderWithProviders } from "@/test/helpers"
 
 // Use hoisted variables for mocks
-const { mockNavigate, mockUseSearch } = vi.hoisted(() => {
-  return {
-    mockNavigate: vi.fn(),
-    mockUseSearch: vi.fn(() => ({})),
-  }
-})
+const { mockNavigate, mockUseSearch, mockListContacts, mockListSavedFilters } =
+  vi.hoisted(() => {
+    return {
+      mockNavigate: vi.fn(),
+      mockUseSearch: vi.fn(() => ({})),
+      mockListContacts: vi.fn(),
+      mockListSavedFilters: vi.fn(),
+    }
+  })
 
 // Mock router
 vi.mock("@tanstack/react-router", async (importOriginal) => {
@@ -30,7 +33,10 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
 // Mock API client
 vi.mock("@/client", () => ({
   ContactsService: {
-    listContacts: vi.fn(),
+    listContacts: mockListContacts,
+  },
+  SavedFiltersService: {
+    listSavedFilters: mockListSavedFilters,
   },
 }))
 
@@ -79,16 +85,27 @@ vi.mock("@/components/ui/input", () => ({
   Input: (props: any) => <input data-testid="search-input" {...props} />,
 }))
 
+// Pre-populate both query caches to avoid double-suspension under load
+function renderContactsListWithData(
+  contacts: ReturnType<typeof makeContact>[] = [],
+  savedFilters: any[] = [],
+) {
+  const queryClient = createQueryClient()
+  queryClient.setQueryData(["saved-filters"], { data: savedFilters })
+  queryClient.setQueryData(["contacts", undefined], { data: contacts })
+  return { ...renderWithProviders(<ContactsList />, { queryClient }), queryClient }
+}
+
 describe("ContactsList", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockListSavedFilters.mockResolvedValue({ data: [] })
     mockNavigate.mockReset()
     mockUseSearch.mockReturnValue({})
   })
 
   it("renders contacts list with heading and search", async () => {
-    const { ContactsService } = await import("@/client")
-    vi.mocked(ContactsService.listContacts).mockResolvedValue({
+    mockListContacts.mockResolvedValue({
       data: [
         makeContact({ id: "1", first_name: "Alice", last_name: "Smith" }),
       ],
@@ -104,8 +121,7 @@ describe("ContactsList", () => {
   })
 
   it("displays contact count (singular)", async () => {
-    const { ContactsService } = await import("@/client")
-    vi.mocked(ContactsService.listContacts).mockResolvedValue({
+    mockListContacts.mockResolvedValue({
       data: [
         makeContact({ id: "1", first_name: "Alice", last_name: "Smith" }),
       ],
@@ -119,8 +135,7 @@ describe("ContactsList", () => {
   })
 
   it("displays contact count (plural)", async () => {
-    const { ContactsService } = await import("@/client")
-    vi.mocked(ContactsService.listContacts).mockResolvedValue({
+    mockListContacts.mockResolvedValue({
       data: [
         makeContact({ id: "1", first_name: "Alice" }),
         makeContact({ id: "2", first_name: "Bob" }),
@@ -135,8 +150,7 @@ describe("ContactsList", () => {
   })
 
   it("renders empty state when no contacts", async () => {
-    const { ContactsService } = await import("@/client")
-    vi.mocked(ContactsService.listContacts).mockResolvedValue({
+    mockListContacts.mockResolvedValue({
       data: [],
     })
 
@@ -154,8 +168,7 @@ describe("ContactsList", () => {
   })
 
   it("shows AddContactDialog in empty state", async () => {
-    const { ContactsService } = await import("@/client")
-    vi.mocked(ContactsService.listContacts).mockResolvedValue({
+    mockListContacts.mockResolvedValue({
       data: [],
     })
 
@@ -169,8 +182,7 @@ describe("ContactsList", () => {
   })
 
   it("renders contact rows with names", async () => {
-    const { ContactsService } = await import("@/client")
-    vi.mocked(ContactsService.listContacts).mockResolvedValue({
+    mockListContacts.mockResolvedValue({
       data: [
         makeContact({
           id: "1",
@@ -191,8 +203,7 @@ describe("ContactsList", () => {
   })
 
   it("displays unnamed contact fallback", async () => {
-    const { ContactsService } = await import("@/client")
-    vi.mocked(ContactsService.listContacts).mockResolvedValue({
+    mockListContacts.mockResolvedValue({
       data: [
         makeContact({
           id: "1",
@@ -213,8 +224,7 @@ describe("ContactsList", () => {
   })
 
   it("displays title and company in contact row", async () => {
-    const { ContactsService } = await import("@/client")
-    vi.mocked(ContactsService.listContacts).mockResolvedValue({
+    mockListContacts.mockResolvedValue({
       data: [
         makeContact({
           id: "1",
@@ -234,8 +244,7 @@ describe("ContactsList", () => {
   })
 
   it("displays title only when company is missing", async () => {
-    const { ContactsService } = await import("@/client")
-    vi.mocked(ContactsService.listContacts).mockResolvedValue({
+    mockListContacts.mockResolvedValue({
       data: [
         makeContact({
           id: "1",
@@ -254,8 +263,7 @@ describe("ContactsList", () => {
   })
 
   it("displays company only when title is missing", async () => {
-    const { ContactsService } = await import("@/client")
-    vi.mocked(ContactsService.listContacts).mockResolvedValue({
+    mockListContacts.mockResolvedValue({
       data: [
         makeContact({
           id: "1",
@@ -274,8 +282,7 @@ describe("ContactsList", () => {
   })
 
   it("displays 'No interactions yet' when last_contacted_at is null", async () => {
-    const { ContactsService } = await import("@/client")
-    vi.mocked(ContactsService.listContacts).mockResolvedValue({
+    mockListContacts.mockResolvedValue({
       data: [
         makeContact({
           id: "1",
@@ -293,9 +300,8 @@ describe("ContactsList", () => {
   })
 
   it("displays days since last contact", async () => {
-    const { ContactsService } = await import("@/client")
     const tenDaysAgo = new Date(Date.now() - 10 * 86_400_000).toISOString()
-    vi.mocked(ContactsService.listContacts).mockResolvedValue({
+    mockListContacts.mockResolvedValue({
       data: [
         makeContact({
           id: "1",
@@ -313,8 +319,7 @@ describe("ContactsList", () => {
   })
 
   it("displays star icon when is_favorite is true", async () => {
-    const { ContactsService } = await import("@/client")
-    vi.mocked(ContactsService.listContacts).mockResolvedValue({
+    mockListContacts.mockResolvedValue({
       data: [
         makeContact({
           id: "1",
@@ -334,12 +339,11 @@ describe("ContactsList", () => {
   })
 
   it("displays tags (up to 3)", async () => {
-    const { ContactsService } = await import("@/client")
     const tag1 = makeTag({ id: "t1", name: "Friends" })
     const tag2 = makeTag({ id: "t2", name: "Colleagues" })
     const tag3 = makeTag({ id: "t3", name: "Family" })
 
-    vi.mocked(ContactsService.listContacts).mockResolvedValue({
+    mockListContacts.mockResolvedValue({
       data: [
         makeContact({
           id: "1",
@@ -359,12 +363,11 @@ describe("ContactsList", () => {
   })
 
   it("displays +N badge for extra tags beyond 3", async () => {
-    const { ContactsService } = await import("@/client")
     const tags = Array.from({ length: 5 }, (_, i) =>
       makeTag({ id: `t${i}`, name: `Tag${i}` }),
     )
 
-    vi.mocked(ContactsService.listContacts).mockResolvedValue({
+    mockListContacts.mockResolvedValue({
       data: [
         makeContact({
           id: "1",
@@ -382,8 +385,7 @@ describe("ContactsList", () => {
   })
 
   it("filters contacts by search query", async () => {
-    const { ContactsService } = await import("@/client")
-    vi.mocked(ContactsService.listContacts).mockResolvedValue({
+    mockListContacts.mockResolvedValue({
       data: [
         makeContact({ id: "1", first_name: "Alice", last_name: "Smith" }),
         makeContact({ id: "2", first_name: "Bob", last_name: "Jones" }),
@@ -407,8 +409,7 @@ describe("ContactsList", () => {
   })
 
   it("filters by last name", async () => {
-    const { ContactsService } = await import("@/client")
-    vi.mocked(ContactsService.listContacts).mockResolvedValue({
+    mockListContacts.mockResolvedValue({
       data: [
         makeContact({ id: "1", first_name: "Alice", last_name: "Smith" }),
         makeContact({ id: "2", first_name: "Bob", last_name: "Jones" }),
@@ -432,8 +433,7 @@ describe("ContactsList", () => {
   })
 
   it("filters by company", async () => {
-    const { ContactsService } = await import("@/client")
-    vi.mocked(ContactsService.listContacts).mockResolvedValue({
+    mockListContacts.mockResolvedValue({
       data: [
         makeContact({
           id: "1",
@@ -467,11 +467,10 @@ describe("ContactsList", () => {
   })
 
   it("filters by tag name", async () => {
-    const { ContactsService } = await import("@/client")
     const friendsTag = makeTag({ id: "t1", name: "Friends" })
     const colleaguesTag = makeTag({ id: "t2", name: "Colleagues" })
 
-    vi.mocked(ContactsService.listContacts).mockResolvedValue({
+    mockListContacts.mockResolvedValue({
       data: [
         makeContact({
           id: "1",
@@ -505,8 +504,7 @@ describe("ContactsList", () => {
   })
 
   it("renders empty state when search returns no results", async () => {
-    const { ContactsService } = await import("@/client")
-    vi.mocked(ContactsService.listContacts).mockResolvedValue({
+    mockListContacts.mockResolvedValue({
       data: [
         makeContact({ id: "1", first_name: "Alice", last_name: "Smith" }),
       ],
@@ -530,7 +528,6 @@ describe("ContactsList", () => {
   })
 
   it("resets to page 0 when search changes", async () => {
-    const { ContactsService } = await import("@/client")
     const contacts = Array.from({ length: 30 }, (_, i) =>
       makeContact({
         id: `${i}`,
@@ -539,12 +536,8 @@ describe("ContactsList", () => {
       }),
     )
 
-    vi.mocked(ContactsService.listContacts).mockResolvedValue({
-      data: contacts,
-    })
-
     const user = userEvent.setup()
-    renderWithProviders(<ContactsList />)
+    renderContactsListWithData(contacts)
 
     await waitFor(() => {
       expect(screen.getByText(/Contact 0/)).toBeInTheDocument()
@@ -569,7 +562,6 @@ describe("ContactsList", () => {
   })
 
   it("paginates contacts with PAGE_SIZE=25", async () => {
-    const { ContactsService } = await import("@/client")
     const contacts = Array.from({ length: 30 }, (_, i) =>
       makeContact({
         id: `${i}`,
@@ -578,11 +570,7 @@ describe("ContactsList", () => {
       }),
     )
 
-    vi.mocked(ContactsService.listContacts).mockResolvedValue({
-      data: contacts,
-    })
-
-    renderWithProviders(<ContactsList />)
+    renderContactsListWithData(contacts)
 
     await waitFor(() => {
       expect(screen.getByText(/Contact 0/)).toBeInTheDocument()
@@ -594,7 +582,6 @@ describe("ContactsList", () => {
   })
 
   it("disables prev button on first page", async () => {
-    const { ContactsService } = await import("@/client")
     const contacts = Array.from({ length: 30 }, (_, i) =>
       makeContact({
         id: `${i}`,
@@ -603,11 +590,7 @@ describe("ContactsList", () => {
       }),
     )
 
-    vi.mocked(ContactsService.listContacts).mockResolvedValue({
-      data: contacts,
-    })
-
-    renderWithProviders(<ContactsList />)
+    renderContactsListWithData(contacts)
 
     await waitFor(() => {
       expect(screen.getByText(/Contact 0/)).toBeInTheDocument()
@@ -619,7 +602,6 @@ describe("ContactsList", () => {
   })
 
   it("disables next button on last page", async () => {
-    const { ContactsService } = await import("@/client")
     const contacts = Array.from({ length: 30 }, (_, i) =>
       makeContact({
         id: `${i}`,
@@ -628,12 +610,8 @@ describe("ContactsList", () => {
       }),
     )
 
-    vi.mocked(ContactsService.listContacts).mockResolvedValue({
-      data: contacts,
-    })
-
     const user = userEvent.setup()
-    renderWithProviders(<ContactsList />)
+    renderContactsListWithData(contacts)
 
     await waitFor(() => {
       expect(screen.getByText(/Contact 0/)).toBeInTheDocument()
@@ -652,8 +630,7 @@ describe("ContactsList", () => {
   })
 
   it("does not show pagination when contacts fit on one page", async () => {
-    const { ContactsService } = await import("@/client")
-    vi.mocked(ContactsService.listContacts).mockResolvedValue({
+    mockListContacts.mockResolvedValue({
       data: [
         makeContact({ id: "1", first_name: "Alice", last_name: "Smith" }),
         makeContact({ id: "2", first_name: "Bob", last_name: "Jones" }),
@@ -671,8 +648,7 @@ describe("ContactsList", () => {
   })
 
   it("navigates when contact row is clicked", async () => {
-    const { ContactsService } = await import("@/client")
-    vi.mocked(ContactsService.listContacts).mockResolvedValue({
+    mockListContacts.mockResolvedValue({
       data: [
         makeContact({ id: "123", first_name: "Alice", last_name: "Smith" }),
       ],
@@ -689,8 +665,7 @@ describe("ContactsList", () => {
   })
 
   it("calls navigate with search param when search changes", async () => {
-    const { ContactsService } = await import("@/client")
-    vi.mocked(ContactsService.listContacts).mockResolvedValue({
+    mockListContacts.mockResolvedValue({
       data: [makeContact({ id: "1", first_name: "Alice", last_name: "Smith" })],
     })
 
@@ -713,8 +688,7 @@ describe("ContactsList", () => {
   })
 
   it("clears search param when search is empty", async () => {
-    const { ContactsService } = await import("@/client")
-    vi.mocked(ContactsService.listContacts).mockResolvedValue({
+    mockListContacts.mockResolvedValue({
       data: [makeContact({ id: "1", first_name: "Alice", last_name: "Smith" })],
     })
 
@@ -748,8 +722,7 @@ describe("ContactsList", () => {
   })
 
   it("initializes with search param from URL", async () => {
-    const { ContactsService } = await import("@/client")
-    vi.mocked(ContactsService.listContacts).mockResolvedValue({
+    mockListContacts.mockResolvedValue({
       data: [
         makeContact({ id: "1", first_name: "Alice", last_name: "Smith" }),
         makeContact({ id: "2", first_name: "Bob", last_name: "Jones" }),
@@ -767,8 +740,7 @@ describe("ContactsList", () => {
   })
 
   it("handles case-insensitive search", async () => {
-    const { ContactsService } = await import("@/client")
-    vi.mocked(ContactsService.listContacts).mockResolvedValue({
+    mockListContacts.mockResolvedValue({
       data: [
         makeContact({ id: "1", first_name: "Alice", last_name: "Smith", company: "ACME CORP" }),
       ],
@@ -790,8 +762,7 @@ describe("ContactsList", () => {
   })
 
   it("searches by middle name", async () => {
-    const { ContactsService } = await import("@/client")
-    vi.mocked(ContactsService.listContacts).mockResolvedValue({
+    mockListContacts.mockResolvedValue({
       data: [
         makeContact({
           id: "1",
@@ -818,8 +789,7 @@ describe("ContactsList", () => {
   })
 
   it("searches by nickname", async () => {
-    const { ContactsService } = await import("@/client")
-    vi.mocked(ContactsService.listContacts).mockResolvedValue({
+    mockListContacts.mockResolvedValue({
       data: [
         makeContact({
           id: "1",
@@ -846,8 +816,7 @@ describe("ContactsList", () => {
   })
 
   it("searches by title", async () => {
-    const { ContactsService } = await import("@/client")
-    vi.mocked(ContactsService.listContacts).mockResolvedValue({
+    mockListContacts.mockResolvedValue({
       data: [
         makeContact({
           id: "1",
@@ -874,7 +843,6 @@ describe("ContactsList", () => {
   })
 
   it("handles pagination with filtered results", async () => {
-    const { ContactsService } = await import("@/client")
     const aliceContacts = Array.from({ length: 30 }, (_, i) =>
       makeContact({
         id: `alice-${i}`,
@@ -890,12 +858,8 @@ describe("ContactsList", () => {
       }),
     )
 
-    vi.mocked(ContactsService.listContacts).mockResolvedValue({
-      data: [...aliceContacts, ...bobContacts],
-    })
-
     const user = userEvent.setup()
-    renderWithProviders(<ContactsList />)
+    renderContactsListWithData([...aliceContacts, ...bobContacts])
 
     await waitFor(() => {
       expect(screen.getByText(/Alice Smith0/)).toBeInTheDocument()
@@ -921,7 +885,6 @@ describe("ContactsList", () => {
   })
 
   it("displays results count in pagination", async () => {
-    const { ContactsService } = await import("@/client")
     const contacts = Array.from({ length: 30 }, (_, i) =>
       makeContact({
         id: `${i}`,
@@ -930,11 +893,7 @@ describe("ContactsList", () => {
       }),
     )
 
-    vi.mocked(ContactsService.listContacts).mockResolvedValue({
-      data: contacts,
-    })
-
-    renderWithProviders(<ContactsList />)
+    renderContactsListWithData(contacts)
 
     await waitFor(() => {
       expect(screen.getByText(/Contact 0/)).toBeInTheDocument()

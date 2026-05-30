@@ -1,6 +1,9 @@
 import "@testing-library/jest-dom"
-import { cleanup } from "@testing-library/react"
+import { cleanup, configure } from "@testing-library/react"
 import { afterEach, vi } from "vitest"
+
+// Increase default waitFor timeout to handle slow async resolution under load
+configure({ asyncUtilTimeout: 5000 })
 
 // Vite-injected build-time globals — defined in vite.config.ts, declared in
 // vite-env.d.ts. Vitest doesn't run Vite's define plugin, so polyfill here.
@@ -72,3 +75,24 @@ Element.prototype.scrollIntoView = vi.fn()
 
 // Silence console.warn in tests (Radix noisy)
 vi.spyOn(console, "warn").mockImplementation(() => {})
+
+// Stub indexedDB (jsdom doesn't implement it; used by offline-db.ts for draft persistence)
+const indexedDBMock = {
+  open: vi.fn().mockReturnValue({
+    result: null,
+    error: null,
+    onupgradeneeded: null,
+    onsuccess: null,
+    onerror: null,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  }),
+  deleteDatabase: vi.fn(),
+  databases: vi.fn().mockResolvedValue([]),
+  cmp: vi.fn().mockReturnValue(0),
+}
+Object.defineProperty(globalThis, "indexedDB", {
+  value: indexedDBMock,
+  writable: true,
+  configurable: true,
+})

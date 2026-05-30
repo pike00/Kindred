@@ -169,6 +169,8 @@ describe("EditContactDialog", () => {
           is_archived: false,
           do_not_contact: false,
           do_not_contact_reason: null,
+          timezone: null,
+          pronouns: null,
         },
       })
     })

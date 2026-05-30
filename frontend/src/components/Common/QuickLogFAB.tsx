@@ -243,6 +243,7 @@ export function QuickLogFAB() {
                         <Button
                           variant="outline"
                           role="combobox"
+                          data-testid="contact-picker-button"
                           className={cn(
                             "w-full justify-between text-sm",
                             !field.value && "text-muted-foreground",

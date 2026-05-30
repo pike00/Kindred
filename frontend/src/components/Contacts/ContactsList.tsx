@@ -73,7 +73,7 @@ interface PreviewModalState {
 const PAGE_SIZE = 25
 
 const CHANNEL_OPTIONS = [
-  { value: "", label: "All channels" },
+  { value: "all", label: "All channels" },
   { value: "phone", label: "Phone" },
   { value: "email", label: "Email" },
   { value: "in_person", label: "In Person" },
@@ -225,7 +225,7 @@ export const ContactsList = () => {
     contacts: [],
   })
   const [isLoading, setIsLoading] = useState(false)
-  const [channelFilter, setChannelFilter] = useState("")
+  const [channelFilter, setChannelFilter] = useState("all")
   const [showDncOnly, setShowDncOnly] = useState(false)
 
   // Fetch saved filters to find active filter name

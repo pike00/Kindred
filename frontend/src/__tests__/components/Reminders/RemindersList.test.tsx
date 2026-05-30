@@ -78,7 +78,7 @@ describe("RemindersList", () => {
     })
   })
 
-  it("renders empty DataTable when no reminders", async () => {
+  it("renders empty state when no reminders", async () => {
     mockListReminders.mockResolvedValue({ data: [] })
 
     renderWithProviders(
@@ -88,9 +88,9 @@ describe("RemindersList", () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByTestId("data-table")).toBeInTheDocument()
+      expect(screen.getByText("No reminders yet")).toBeInTheDocument()
     })
-    expect(screen.queryByTestId(/row-/)).not.toBeInTheDocument()
+    expect(screen.queryByTestId("data-table")).not.toBeInTheDocument()
   })
 
   it("renders DataTable with reminders", async () => {
@@ -145,7 +145,7 @@ describe("RemindersList", () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByTestId("data-table")).toBeInTheDocument()
+      expect(screen.getByText("No reminders yet")).toBeInTheDocument()
     })
   })
 
@@ -159,7 +159,7 @@ describe("RemindersList", () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByTestId("data-table")).toBeInTheDocument()
+      expect(screen.getByText("No reminders yet")).toBeInTheDocument()
     })
   })
 

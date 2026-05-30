@@ -59,6 +59,7 @@ vi.mock("@/components/Common/RowActionsMenu", () => ({
 // Mock icons
 vi.mock("@/lib/icons", () => ({
   Trash2: () => null,
+  Share2: () => null,
 }))
 
 describe("TagActionsMenu", () => {

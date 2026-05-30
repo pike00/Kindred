@@ -61,6 +61,7 @@ const interactionCreateSchema = z.object({
   channel: z.string().min(1, "Select a channel"),
   occurred_at: z.string().min(1, "Date is required"),
   notes: z.string().optional(),
+  mood: z.string().nullable().optional(),
   duration_minutes: z.string().optional(),
   location_label: z.string().max(500).optional(),
 })
@@ -104,6 +105,7 @@ export const AddInteractionDialog = ({
       channel: "",
       occurred_at: toLocalDateTimeInput(new Date()),
       notes: "",
+      mood: "",
       duration_minutes: "",
     },
   })
@@ -182,7 +184,7 @@ export const AddInteractionDialog = ({
       channel: data.channel as InteractionCreate["channel"],
       occurred_at: new Date(data.occurred_at).toISOString(),
       notes: data.notes || null,
-      mood: null,
+      mood: data.mood || null,
       duration_minutes: data.duration_minutes
         ? parseInt(data.duration_minutes, 10)
         : null,
@@ -253,6 +255,26 @@ export const AddInteractionDialog = ({
                   <FormLabel>Duration (minutes)</FormLabel>
                   <FormControl>
                     <Input type="number" min="0" placeholder="30" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="mood"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Mood</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="How did it go? (e.g. great, tired, inspired)"
+                      {...field}
+                      value={field.value ?? ""}
+                      onChange={(e) =>
+                        field.onChange(e.target.value || null)
+                      }
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

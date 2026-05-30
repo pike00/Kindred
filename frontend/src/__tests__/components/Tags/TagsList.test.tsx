@@ -40,7 +40,12 @@ vi.mock("@/components/Common/DataTable", () => ({
 
 // Mock columns
 vi.mock("@/components/Tags/columns", () => ({
-  columns: [],
+  createColumns: vi.fn(() => []),
+}))
+
+// Mock TagShareDialog
+vi.mock("@/components/Tags/TagShareDialog", () => ({
+  TagShareDialog: () => null,
 }))
 
 describe("TagsList", () => {
@@ -76,7 +81,7 @@ describe("TagsList", () => {
     })
   })
 
-  it("renders empty DataTable when no tags", async () => {
+  it("renders empty state when no tags", async () => {
     mockListTags.mockResolvedValue({ data: [] })
 
     renderWithProviders(
@@ -86,9 +91,9 @@ describe("TagsList", () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByTestId("data-table")).toBeInTheDocument()
+      expect(screen.getByText("No tags yet")).toBeInTheDocument()
     })
-    expect(screen.queryByTestId(/row-/)).not.toBeInTheDocument()
+    expect(screen.queryByTestId("data-table")).not.toBeInTheDocument()
   })
 
   it("renders DataTable with tags", async () => {
@@ -143,7 +148,7 @@ describe("TagsList", () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByTestId("data-table")).toBeInTheDocument()
+      expect(screen.getByText("No tags yet")).toBeInTheDocument()
     })
   })
 
@@ -157,7 +162,7 @@ describe("TagsList", () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByTestId("data-table")).toBeInTheDocument()
+      expect(screen.getByText("No tags yet")).toBeInTheDocument()
     })
   })
 

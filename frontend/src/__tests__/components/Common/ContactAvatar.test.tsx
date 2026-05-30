@@ -11,7 +11,7 @@ describe("ContactAvatar", () => {
 
   it("renders the avatar container", () => {
     const { container } = render(<ContactAvatar contact={mockContact} />)
-    expect(container.querySelector("div")).toBeInTheDocument()
+    expect(container.querySelector('[data-slot="avatar"]')).toBeInTheDocument()
   })
 
   it("computes initials for first and last name", () => {
@@ -53,13 +53,13 @@ describe("ContactAvatar", () => {
     const { container } = render(
       <ContactAvatar contact={mockContact} size="sm" />,
     )
-    const avatar = container.querySelector("div")
+    const avatar = container.querySelector('[data-slot="avatar"]')
     expect(avatar).toHaveClass("size-8", "text-xs")
   })
 
   it("applies md size class by default", () => {
     const { container } = render(<ContactAvatar contact={mockContact} />)
-    const avatar = container.querySelector("div")
+    const avatar = container.querySelector('[data-slot="avatar"]')
     expect(avatar).toHaveClass("size-10", "text-sm")
   })
 
@@ -67,17 +67,20 @@ describe("ContactAvatar", () => {
     const { container } = render(
       <ContactAvatar contact={mockContact} size="lg" />,
     )
-    const avatar = container.querySelector("div")
+    const avatar = container.querySelector('[data-slot="avatar"]')
     expect(avatar).toHaveClass("size-14", "text-lg")
   })
 
   it("sets background gradient using hashed contact ID", () => {
     const { container } = render(<ContactAvatar contact={mockContact} />)
-    const avatar = container.querySelector("div") as HTMLDivElement
-    expect(avatar.style.backgroundImage).toContain("linear-gradient")
-    expect(avatar.style.backgroundImage).toContain("--avatar-")
-    expect(avatar.style.backgroundImage).toContain("-from")
-    expect(avatar.style.backgroundImage).toContain("-to")
+    const fallback = container.querySelector(
+      '[data-slot="avatar-fallback"]',
+    ) as HTMLSpanElement
+    expect(fallback).not.toBeNull()
+    expect(fallback.style.backgroundImage).toContain("linear-gradient")
+    expect(fallback.style.backgroundImage).toContain("--avatar-")
+    expect(fallback.style.backgroundImage).toContain("-from")
+    expect(fallback.style.backgroundImage).toContain("-to")
   })
 
   it("uses different gradient slots for different IDs", () => {
@@ -91,19 +94,21 @@ describe("ContactAvatar", () => {
       <ContactAvatar contact={contact2} />,
     )
 
-    const avatar1 = container1.querySelector("div") as HTMLDivElement
-    const avatar2 = container2.querySelector("div") as HTMLDivElement
+    const avatar1 = container1.querySelector(
+      '[data-slot="avatar-fallback"]',
+    ) as HTMLSpanElement
+    const avatar2 = container2.querySelector(
+      '[data-slot="avatar-fallback"]',
+    ) as HTMLSpanElement
 
-    expect(avatar1.style.backgroundImage).not.toBe(
-      avatar2.style.backgroundImage,
-    )
+    expect(avatar1.style.backgroundImage).not.toBe(avatar2.style.backgroundImage)
   })
 
   it("applies custom className", () => {
     const { container } = render(
       <ContactAvatar contact={mockContact} className="custom-class" />,
     )
-    const avatar = container.querySelector("div")
+    const avatar = container.querySelector('[data-slot="avatar"]')
     expect(avatar).toHaveClass("custom-class")
   })
 
@@ -111,21 +116,14 @@ describe("ContactAvatar", () => {
     const { container } = render(
       <ContactAvatar contact={mockContact} className="custom-class" />,
     )
-    const avatar = container.querySelector("div")
-    expect(avatar).toHaveClass("custom-class", "rounded-full", "font-semibold")
+    const avatar = container.querySelector('[data-slot="avatar"]')
+    expect(avatar).toHaveClass("custom-class", "rounded-full")
   })
 
-  it("has aria-hidden attribute", () => {
+  it("applies base styling classes on fallback", () => {
     const { container } = render(<ContactAvatar contact={mockContact} />)
-    const avatar = container.querySelector("div")
-    expect(avatar).toHaveAttribute("aria-hidden", "true")
-  })
-
-  it("applies base styling classes", () => {
-    const { container } = render(<ContactAvatar contact={mockContact} />)
-    const avatar = container.querySelector("div")
-    expect(avatar).toHaveClass(
-      "inline-flex",
+    const fallback = container.querySelector('[data-slot="avatar-fallback"]')
+    expect(fallback).toHaveClass(
       "items-center",
       "justify-center",
       "rounded-full",
@@ -162,23 +160,27 @@ describe("ContactAvatar", () => {
       <ContactAvatar contact={contact} />,
     )
 
-    const avatar1 = container1.querySelector("div") as HTMLDivElement
-    const avatar2 = container2.querySelector("div") as HTMLDivElement
+    const avatar1 = container1.querySelector(
+      '[data-slot="avatar-fallback"]',
+    ) as HTMLSpanElement
+    const avatar2 = container2.querySelector(
+      '[data-slot="avatar-fallback"]',
+    ) as HTMLSpanElement
 
     expect(avatar1.style.backgroundImage).toBe(avatar2.style.backgroundImage)
   })
 
   it("hash function produces value between 1 and 12", () => {
-    // Test various IDs to ensure hash is in the correct range
     const testIds = ["a", "abc", "xyz123", "!@#$%", "verylongidstring"]
 
     testIds.forEach((id) => {
       const contact = { id, first_name: "T", last_name: "U" }
       const { container } = render(<ContactAvatar contact={contact} />)
-      const avatar = container.querySelector("div") as HTMLDivElement
-      const bgImage = avatar.style.backgroundImage
+      const fallback = container.querySelector(
+        '[data-slot="avatar-fallback"]',
+      ) as HTMLSpanElement
+      const bgImage = fallback.style.backgroundImage
 
-      // Extract the slot number from the background image
       const match = bgImage.match(/--avatar-(\d+)-/)
       expect(match).not.toBeNull()
       const slot = parseInt(match![1], 10)

@@ -64,6 +64,8 @@ export const EditContactDialog = ({ contact }: EditContactDialogProps) => {
       contact_frequency_days: contact.contact_frequency_days || 0,
       is_favorite: contact.is_favorite,
       is_archived: contact.is_archived,
+      do_not_contact: contact.do_not_contact ?? false,
+      do_not_contact_reason: contact.do_not_contact_reason || "",
       timezone: contact.timezone || "",
       pronouns: contact.pronouns || "",
     },
@@ -84,6 +86,8 @@ export const EditContactDialog = ({ contact }: EditContactDialogProps) => {
         contact_frequency_days: contact.contact_frequency_days || 0,
         is_favorite: contact.is_favorite,
         is_archived: contact.is_archived,
+        do_not_contact: contact.do_not_contact ?? false,
+        do_not_contact_reason: contact.do_not_contact_reason || "",
         timezone: contact.timezone || "",
         pronouns: contact.pronouns || "",
       })
@@ -116,6 +120,8 @@ export const EditContactDialog = ({ contact }: EditContactDialogProps) => {
       contact_frequency_days: data.contact_frequency_days || null,
       is_favorite: data.is_favorite,
       is_archived: data.is_archived,
+      do_not_contact: data.do_not_contact ?? false,
+      do_not_contact_reason: data.do_not_contact_reason || null,
       timezone: data.timezone || null,
       pronouns: data.pronouns || null,
     }

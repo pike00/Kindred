@@ -161,7 +161,7 @@ describe("AddJournalDialog", () => {
   it("shows loading state while submitting", async () => {
     const user = userEvent.setup()
     mockCreateJournalEntry.mockImplementation(
-      () => new Promise((resolve) => setTimeout(() => resolve({}), 100)),
+      () => new Promise((resolve) => setTimeout(() => resolve({}), 2000)),
     )
 
     renderWithProviders(<AddJournalDialog />)
@@ -171,13 +171,14 @@ describe("AddJournalDialog", () => {
     const entryTextarea = screen.getByTestId("mention-textarea")
     const submitButton = screen.getByRole("button", { name: /save entry/i })
 
-    // Date input has default value
     await user.clear(entryTextarea)
     await user.type(entryTextarea, "Test entry")
 
     await user.click(submitButton)
 
-    expect(screen.getByRole("button", { name: /saving/i })).toBeDisabled()
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /saving/i })).toBeDisabled()
+    })
   })
 
   it("keeps dialog open on API error", async () => {
