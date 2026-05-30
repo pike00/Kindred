@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kindred 0.2.x — Feature Verification Checklist</title>
+<style>
+  :root {
+    --green: #67863a;
+    --green-dark: #4f6a2c;
+    --bg: #fdfcfa;
+    --card: #ffffff;
+    --ink: #1c1c1a;
+    --muted: #6b6b63;
+    --line: #e7e4dc;
+    --ok: #2e7d32;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  header {
+    background: var(--green); color: #fff; padding: 28px 24px;
+  }
+  header h1 { margin: 0 0 4px; font-size: 24px; }
+  header p { margin: 2px 0; opacity: .92; font-size: 14px; }
+  .wrap { max-width: 940px; margin: 0 auto; padding: 24px; }
+  .bar {
+    position: sticky; top: 0; z-index: 5; background: var(--bg);
+    border-bottom: 1px solid var(--line); padding: 12px 24px;
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  }
+  .bar .count { font-weight: 600; }
+  .progress { flex: 1; height: 10px; background: var(--line); border-radius: 6px; overflow: hidden; min-width: 160px; }
+  .progress > div { height: 100%; width: 0; background: var(--green); transition: width .2s; }
+  button {
+    border: 1px solid var(--line); background: var(--card); color: var(--ink);
+    padding: 6px 12px; border-radius: 7px; cursor: pointer; font-size: 13px;
+  }
+  button:hover { border-color: var(--green); }
+  .note {
+    background: #fff7e6; border: 1px solid #f0d999; border-radius: 10px;
+    padding: 14px 16px; margin: 20px 0; font-size: 14px;
+  }
+  .note strong { color: var(--green-dark); }
+  section { margin: 22px 0; }
+  section > h2 {
+    font-size: 15px; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--green-dark); border-bottom: 2px solid var(--line);
+    padding-bottom: 6px; margin: 0 0 10px;
+  }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li {
+    display: flex; gap: 12px; align-items: flex-start;
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 9px; padding: 11px 13px; margin: 7px 0;
+  }
+  li.done { background: #f3f7ee; border-color: #cfe0bd; }
+  li input { margin-top: 3px; width: 17px; height: 17px; accent-color: var(--green); flex: none; }
+  .feat { font-weight: 600; }
+  .feat.done { text-decoration: line-through; color: var(--muted); }
+  .where { display: block; font-size: 13px; color: var(--muted); margin-top: 2px; }
+  footer { color: var(--muted); font-size: 13px; padding: 20px 24px 40px; max-width: 940px; margin: 0 auto; }
+  code { background: #f0eee8; padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Kindred — 0.2.x Feature Verification</h1>
+  <p>Every feature shipped across the v0.2.0 → v0.2.78 series. Tick each one once you've confirmed it works in production.</p>
+  <p>Production: <strong>https://kindred.khanpikehome.com</strong> · current image <strong>v0.2.78</strong></p>
+</header>
+
+<div class="bar">
+  <span class="count"><span id="done">0</span> / <span id="total">0</span> verified</span>
+  <div class="progress"><div id="pbar"></div></div>
+  <button onclick="setAll(true)">Check all</button>
+  <button onclick="setAll(false)">Reset</button>
+  <span style="font-size:12px;color:var(--muted)">Progress saved in this browser.</span>
+</div>
+
+<div class="wrap">
+  <div class="note">
+    <strong>Read first.</strong> Until v0.2.78 the authenticated app crashed on load (the keyboard-shortcut provider was never mounted), so almost none of these features were actually reachable in production. Start by confirming the app loads at all: log in, land on the <em>Dashboard</em>, and open the <strong>Command Palette</strong> (<code>⌘K</code> / <code>Ctrl K</code>) and the <strong>shortcut help overlay</strong> (<code>?</code>) — those exercise the code that was broken. Then work through the rest.
+  </div>
+
+  <div id="list"></div>
+</div>
+
+<footer>
+  Generated for verification after the v0.2.78 dashboard-crash fix. Source of truth: <code>git log v0.2.0~1..v0.2.78</code> (feat commits) and <code>CHANGELOG.md</code>.
+</footer>
+
+<script>
+const DATA = [
+  ["Core app loads (regression check)", [
+    ["App loads when authenticated", "Log in → Dashboard renders without the 'Oops! Something went wrong' error page"],
+    ["Command palette", "Press ⌘K / Ctrl K — palette opens, search across contacts works"],
+    ["Stay-in-touch dashboard widget", "Dashboard shows the stay-in-touch / losing-touch widget"],
+  ]],
+  ["Contacts", [
+    ["CSV import & export", "Import/Export route — upload a CSV, export contacts"],
+    ["Bulk contact operations", "Select multiple contacts → bulk action (tag/delete/etc.)"],
+    ["Contacts kanban board (stage grouping)", "Kanban view groups contacts by stage; drag between stages"],
+    ["Contact stage history", "Contact card shows stage-change history / audit trail"],
+    ["Contact merge & unmerge", "Merge two contacts; audit log records it; restore/unmerge works"],
+    ["Contact provenance tracking", "Provenance badge shows source / source_external_id on imported contacts"],
+    ["Timezone & pronouns fields", "Contact form has timezone picker + pronouns; saved & displayed"],
+    ["Message templates per contact", "Per-contact message templates available"],
+    ["Communication preferences", "Per-contact communication preferences saved"],
+    ["Soft delete + undo", "Deleting a contact is soft (restorable); undo toast appears"],
+    ["Face-aware avatar crop", "Upload an avatar — MediaPipe centers the face; delete works"],
+    ["Printable one-pager PDF", "Contact card → export/print a one-page PDF"],
+    ["Map view for contacts", "Contacts map view renders pins from geocoded addresses"],
+    ["Household aggregate view", "Household view aggregates members"],
+  ]],
+  ["Organizations", [
+    ["Organizations as first-class entities", "Create an organization; assign contacts via organization_id; org routes work"],
+  ]],
+  ["Relationships", [
+    ["Automatic inverse relationship mapping", "Add 'parent' relationship → inverse 'child' is auto-created bidirectionally"],
+    ["Relationship graph visualization", "Graph route renders the relationship network; pan/zoom/drag work"],
+  ]],
+  ["Interactions", [
+    ["Voice-to-text logging", "Voice record button transcribes via Whisper into an interaction"],
+    ["Draft saving", "Interactions can be saved as drafts and confirmed later; drafts filterable"],
+    ["Location tracking + map", "Attach a location to an interaction; InteractionMap shows it"],
+    ["Frequency heatmap", "Interaction frequency heatmap renders"],
+    ["Quick-log floating action button", "QuickLog FAB logs an interaction from anywhere"],
+  ]],
+  ["Reminders", [
+    ["Reminder bell with unread badge", "Bell shows unread count badge; due reminders listed"],
+    ["Snooze history", "Snoozing a reminder records snooze history"],
+  ]],
+  ["Journal", [
+    ["Entries linked to multiple contacts", "A journal entry can reference several contacts"],
+  ]],
+  ["Gifts & Debts", [
+    ["Gift kanban board", "Gifts kanban groups gifts by status; drag between columns"],
+    ["Debt partial payments", "Record partial payments against a debt; balance updates"],
+  ]],
+  ["Calendar", [
+    ["iCal import with dedup", "Import an .ics — events dedup against IcalImportLog; backfill works"],
+    ["ICS calendar export", "Export calendar events as .ics"],
+  ]],
+  ["Search, Filters & Tags", [
+    ["Full-text search (Meilisearch)", "Search returns matches across contacts, interactions, journal"],
+    ["Saved filters / smart lists", "Save a filter as a smart list; it appears in the sidebar"],
+    ["Tag share scope warning", "Sharing a tag-filtered view warns about scope"],
+  ]],
+  ["Sync & Integrations", [
+    ["CardDAV server", "Add the CardDAV URL to a phone/client; contacts sync with address/field support"],
+    ["vCard hash verification", "vCard round-trip preserves vcard_sha256; conflicts surface in conflict UI"],
+    ["iMessage sync", "iMessage sync ingests messages"],
+    ["Email log ingestion", "Email log ingestion works with stored OAuth token"],
+    ["Twilio SMS & call webhooks", "Inbound Twilio SMS/call webhooks create interaction logs"],
+  ]],
+  ["PWA", [
+    ["Offline note drafting", "Draft a note offline; syncs with client_id dedup when back online"],
+    ["Installable PWA", "Browser offers 'Install Kindred'; installed app launches standalone"],
+  ]],
+  ["Platform & tooling (non-UI)", [
+    ["Kindred Python SDK", "sdk/ package — CLI/SDK can read/write the CRM"],
+    ["Empty-state illustrations + seed", "Empty lists show illustrations; seed demo buttons populate data"],
+    ["Automated release-notes generation", "release-kit drafts GH release notes"],
+    ["sweep-overnight recipe", "just sweep-overnight runs"],
+    ["Playwright e2e contact CRUD tests", "e2e/ specs cover contact CRUD"],
+  ]],
+];
+
+const list = document.getElementById('list');
+let total = 0;
+DATA.forEach((sec, si) => {
+  const s = document.createElement('section');
+  const h = document.createElement('h2'); h.textContent = sec[0]; s.appendChild(h);
+  const ul = document.createElement('ul');
+  sec[1].forEach((it, ii) => {
+    total++;
+    const id = 'k_' + si + '_' + ii;
+    const li = document.createElement('li');
+    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = id;
+    const lbl = document.createElement('label'); lbl.setAttribute('for', id); lbl.style.flex = '1';
+    const f = document.createElement('span'); f.className = 'feat'; f.textContent = it[0];
+    const w = document.createElement('span'); w.className = 'where'; w.textContent = it[1];
+    lbl.appendChild(f); lbl.appendChild(w);
+    li.appendChild(cb); li.appendChild(lbl); ul.appendChild(li);
+    cb.checked = localStorage.getItem(id) === '1';
+    const sync = () => {
+      li.classList.toggle('done', cb.checked);
+      f.classList.toggle('done', cb.checked);
+      localStorage.setItem(id, cb.checked ? '1' : '0');
+      tally();
+    };
+    cb.addEventListener('change', sync); sync();
+  });
+  s.appendChild(ul); list.appendChild(s);
+});
+document.getElementById('total').textContent = total;
+
+function tally() {
+  const done = document.querySelectorAll('input[type=checkbox]:checked').length;
+  document.getElementById('done').textContent = done;
+  document.getElementById('pbar').style.width = (total ? (done/total*100) : 0) + '%';
+}
+function setAll(v) {
+  document.querySelectorAll('input[type=checkbox]').forEach(cb => { cb.checked = v; cb.dispatchEvent(new Event('change')); });
+}
+tally();
+</script>
+</body>
+</html>
