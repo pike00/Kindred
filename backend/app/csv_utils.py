@@ -3,7 +3,7 @@
 import csv
 import io
 import re
-from datetime import date
+from datetime import date, datetime
 from typing import Any
 
 from sqlalchemy.orm import Session
@@ -515,7 +515,7 @@ def parse_date_flexible(date_str: str) -> date | None:
 
     for fmt in formats:
         try:
-            return date.strptime(date_str.strip(), fmt).date()
+            return datetime.strptime(date_str.strip(), fmt).date()
         except ValueError:
             continue
 
