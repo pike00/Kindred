@@ -271,9 +271,7 @@ export const AddInteractionDialog = ({
                       placeholder="How did it go? (e.g. great, tired, inspired)"
                       {...field}
                       value={field.value ?? ""}
-                      onChange={(e) =>
-                        field.onChange(e.target.value || null)
-                      }
+                      onChange={(e) => field.onChange(e.target.value || null)}
                     />
                   </FormControl>
                   <FormMessage />

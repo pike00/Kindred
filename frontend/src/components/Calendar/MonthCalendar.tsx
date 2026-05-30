@@ -195,7 +195,10 @@ function DrillDown({
                         <> · turns {entry.age}</>
                       )}
                       {entry.age != null && entry.type !== "birthday" && (
-                        <> · {entry.age === 1 ? "1 year" : `${entry.age} years`}</>
+                        <>
+                          {" "}
+                          · {entry.age === 1 ? "1 year" : `${entry.age} years`}
+                        </>
                       )}
                     </p>
                   </div>
