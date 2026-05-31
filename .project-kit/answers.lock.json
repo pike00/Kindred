@@ -1,0 +1,102 @@
+{
+  "branch": "main",
+  "build": {
+    "cargo_enabled": false,
+    "enabled": true,
+    "image_enabled": true,
+    "image_name": null,
+    "image_registry": "ghcr.io/pike00",
+    "images": [
+      {
+        "build_args": {
+          "VITE_API_URL": "${VITE_API_URL:-}"
+        },
+        "context": ".",
+        "dockerfile": "Dockerfile.prod",
+        "name": "kindred",
+        "registry": "ghcr.io/pike00"
+      }
+    ],
+    "wheel_enabled": false
+  },
+  "clean": {
+    "enabled": true
+  },
+  "db": {
+    "backend": "none",
+    "enabled": false
+  },
+  "delete_recipes": [
+    "build",
+    "deploy",
+    "ship",
+    "typecheck",
+    "test-all",
+    "frontend-test"
+  ],
+  "deploy": {
+    "cf_worker": null,
+    "custom_command": null,
+    "enabled": true,
+    "homelab_app": "kindred",
+    "pypi_package": null,
+    "target": "homelab"
+  },
+  "docs": {
+    "backend": "none",
+    "deploy_custom_command": null,
+    "deploy_project_name": null,
+    "deploy_target": "none",
+    "enabled": false,
+    "output_dir": "site",
+    "source_dir": "docs"
+  },
+  "domain": "khanpikehome.com",
+  "language": "python+ts",
+  "preview": {
+    "compose_file": "compose.dev.yml",
+    "enabled": true,
+    "health_path": "/api/v1/utils/health-check/",
+    "host_pattern": "kindred.dev.khanpikehome.com",
+    "shell_service": "backend"
+  },
+  "project_name": "kindred",
+  "refreshed_at": "2026-05-31",
+  "release": {
+    "enabled": true,
+    "install_command": null,
+    "litellm_base_url": "https://pikellm.khanpikehome.com/v1",
+    "litellm_model": "deepseek-v4-pro-cloud"
+  },
+  "setup": {
+    "backend": "uv sync --project backend",
+    "enabled": true,
+    "frontend": "bun install",
+    "hooks": false,
+    "precommit": false
+  },
+  "skill_version": "0.1.0",
+  "test": {
+    "backend": {
+      "cmd": "docker compose -f compose.dev.yml exec -T backend pytest",
+      "watch": null
+    },
+    "e2e": {
+      "cmd": "bash scripts/run-e2e-prepush.sh",
+      "watch": null
+    },
+    "enabled": true,
+    "frontend": {
+      "cmd": "cd frontend && bun run test",
+      "watch": null
+    },
+    "lint": {
+      "cmd": "cd frontend && bunx @biomejs/biome check src && cd ../backend && uvx ruff check app",
+      "watch": null
+    },
+    "typecheck": {
+      "cmd": "cd frontend && bunx tsc --noEmit",
+      "watch": null
+    }
+  }
+}

@@ -1,5 +1,59 @@
 # personal-crm (Kindred) — Project Instructions
 
+<!-- BEGIN PROJECT-KIT — generated, do not edit by hand -->
+## Project-kit recipes
+
+This repo is managed by project-kit (skill version: 0.1.0, last refreshed: 2026-05-31).
+All dev/test/release/deploy operations go through `just`.
+
+### Quick reference
+
+| Task | Command |
+|---|---|
+| Bring up dev environment | `just dev` |
+| Tear down dev | `just down` |
+| Tail logs | `just logs <service>` |
+| Create preview PR | `just pr` |
+| Run all tests | `just test-all` |
+| Backend tests | `just test-backend` |
+| Frontend tests | `just test-frontend` |
+| E2E tests | `just test-e2e` |
+| Lint | `just lint` |
+| Typecheck | `just typecheck` |
+| Cut a release | `just release patch` |
+| Update CHANGELOG | `just changelog` |
+| Build container image(s) | `just build-image [tag]` |
+| Deploy to prod | `just deploy` |
+| Ship (release+build+deploy) | `just ship patch` |
+| Install dependencies | `just setup` |
+| Health check | `uv run .project-kit/scripts/doctor.py` |
+
+### Subsystem status
+
+- preview: enabled
+- release: enabled
+- test: enabled
+- deploy: enabled (target=homelab)
+- build: enabled
+- db: disabled
+- setup: enabled
+- docs: disabled
+- clean: enabled
+
+### Where things live
+
+- `.project-kit/*.just` — recipe definitions (10 files)
+- `.project-kit/scripts/` — uv-scripts for non-trivial recipes
+- `.project-kit/cliff.toml` — git-cliff config (centralized; passed via `--config`, no root copy)
+- `justfile` (root) — imports the 10 `.just` files plus repo-specific recipes
+
+### How to refresh
+
+Re-run the project-kit wizard in chat: ask Claude to "refresh project-kit"
+or "audit project-kit in this repo".
+<!-- END PROJECT-KIT -->
+
+
 Origin: `pike00/Kindred` (public repo). Scaffolded from `fastapi/full-stack-fastapi-template`.
 
 ## Stack
