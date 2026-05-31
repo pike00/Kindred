@@ -3,7 +3,7 @@ title: Reminders Bell and Badge
 status: to_review
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-05-15
+last_updated: 2026-05-31
 next_step: Released as v0.1.6. Log-as-interaction wiring (FAB pre-populated with contact_id) remains as a follow-up.
 ---
 
@@ -15,6 +15,7 @@ Persistent header bell icon with a badge showing the count of reminders due toda
 
 ## Tasks
 
+- [ ] **Verify (LLM-built, to_review):** exercise the /reminders/due badge + snooze/dismiss end-to-end on the live stack; confirm the dismiss far-future sentinel behaves and dead `RemindersWithContactPublic` models cause no issues
 - [x] Implement /reminders/due GET endpoint (filter reminders due today + overdue, scoped to owner_id)
 - [x] Header bell component with count badge and aria-live region
 - [x] Popover list showing due reminders with contact name + title + description
@@ -24,6 +25,9 @@ Persistent header bell icon with a badge showing the count of reminders due toda
 - [x] Auto-refetch count every 60s (or SSE streaming for near-real-time updates)
 
 ## Session Log
+
+### 2026-05-31
+- Housekeeping: status → `to_review`. Completed by an LLM (Dirac agent, squash-merge `6fe926b`, shipped v0.1.6) with four hand-resolved conflict sections in `reminders.py` and leftover dead response models. Added a verification task.
 
 ### 2026-05-15
 - Squash-merged `dirac/reminders-bell-badge` into main as commit `6fe926b`; tagged and released **v0.1.6**.

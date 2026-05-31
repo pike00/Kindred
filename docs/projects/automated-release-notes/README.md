@@ -3,7 +3,7 @@ title: Automated Release Notes in GitHub
 status: to_review
 repos: [personal-crm]
 started: 2026-04-28
-last_updated: 2026-05-15
+last_updated: 2026-05-31
 next_step: Released as v0.1.7. Backfilling notes for older tags remains a follow-up; script supports --since-tag.
 ---
 
@@ -13,6 +13,7 @@ next_step: Released as v0.1.7. Backfilling notes for older tags remains a follow
 Automate generation and publishing of release notes for personal-crm on GitHub. Collect commit subjects (or conventional-commit groupings) since the previous tag, format them into a release-notes block, and publish via GitHub Releases.
 
 ## Tasks
+- [ ] **Verify (LLM-built, to_review):** run `scripts/generate-release-notes.py` against a real tag range; confirm v0.1.7 GH release notes group correctly and the workflow publishes
 - [x] Decide release trigger (tag push, workflow_dispatch, or both)
 - [x] Choose tooling (gh CLI + script, release-please, semantic-release, custom Action)
 - [x] Define grouping rules (Features / Fixes / Chores / Breaking)
@@ -20,6 +21,9 @@ Automate generation and publishing of release notes for personal-crm on GitHub. 
 - [ ] Decide whether to backfill notes for existing tags
 
 ## Session Log
+
+### 2026-05-31
+- Housekeeping: status → `to_review`. Completed entirely by an LLM (Dirac agent, squash-merge `dirac/automated-release-notes`, commit `5cd6273`, shipped v0.1.7) with no human verification of the generated notes. Added a verification task.
 
 ### 2026-05-15
 - Squash-merged `dirac/automated-release-notes` into main as commit `5cd6273`; tagged and released **v0.1.7**. Clean merge — no backend or model conflicts; only the squash brought along the unrelated `EditUser.test.tsx` `waitFor` hardening that the branch had picked up.

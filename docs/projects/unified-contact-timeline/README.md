@@ -1,9 +1,9 @@
 ---
 title: Unified Contact Timeline
-status: archived
+status: to_review
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-04-24
+last_updated: 2026-05-31
 next_step: Implement /contacts/{id}/timeline backend endpoint (SQL UNION ALL of Interactions, Notes, Gifts, LifeEvents, Debts, and stage changes)
 ---
 
@@ -13,6 +13,7 @@ next_step: Implement /contacts/{id}/timeline backend endpoint (SQL UNION ALL of 
 Display all contact-related events in a single reverse-chronological feed on the contact detail page. Each event type (Interaction, Note, Gift, LifeEvent, Debt, stage change) appears as a colored card, with filters along the top to show/hide event types, enabling users to see the complete history of a relationship at a glance.
 
 ## Tasks
+- [ ] **Verify (LLM-built, to_review):** confirm UnifiedTimeline (commit 1978daa) aggregates all event types in reverse-chron with working per-type filter chips on the contact detail page — note it ships client-side aggregation, NOT the backend endpoint the tasks below describe
 - [ ] Backend: `/contacts/{id}/timeline` endpoint with SQL UNION ALL, cursor-based pagination by `occurred_at`, owner_id filter
 - [ ] Backend: Timestamp normalization helper (map each entity type to its timestamp column)
 - [ ] Backend: Response schema unifying timeline events (type, timestamp, payload)
@@ -21,6 +22,9 @@ Display all contact-related events in a single reverse-chronological feed on the
 - [ ] Frontend: Filter bar (checkboxes by event type) + visual type colors
 
 ## Session Log
+
+### 2026-05-31
+- Housekeeping: status `archived` → `to_review`. Shipped by an LLM (commit 1978daa, client-side aggregation with no backend endpoint) but archived with all tasks unchecked and no human verification. Pulled back into review with a verification task.
 
 ### 2026-04-24
 - Project archived. UnifiedTimeline shipped in commit 1978daa: single client-side aggregation of Interactions / Notes / Gifts / LifeEvents / Debts on the contact detail page, with per-type filter chips. No dedicated backend endpoint — reuses existing per-type list endpoints. Stage changes deferred (no audit table yet).

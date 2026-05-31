@@ -3,7 +3,7 @@ title: Reminder Snooze History
 status: to_review
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-05-15
+last_updated: 2026-05-31
 next_step: Released as v0.1.5. UI badges + dashboard chronic-snooze widget remain for a follow-up.
 ---
 
@@ -13,6 +13,7 @@ next_step: Released as v0.1.5. UI badges + dashboard chronic-snooze widget remai
 Transform reminder snoozing from a single overwrite (`snoozed_until` on Reminder) into an append-only log. This reveals usage patterns like "I've snoozed calling Mom four times in two weeks" and enables UI features like snooze-count badges and chronic-snooze alerts on the dashboard.
 
 ## Tasks
+- [ ] **Verify (LLM-built, to_review):** exercise the snooze append-log + snooze-stats + chronic-snoozers endpoints; confirm the denormalized `Reminder.snoozed_until` cache stays consistent with the latest log row
 - [x] Create Alembic migration: add `reminder_snooze` table with (reminder_id, snoozed_at, snoozed_until, reason)
 - [x] Implement snooze API endpoint: POST /reminders/{id}/snooze writes a log row and updates denormalized Reminder.snoozed_until
 - [x] Add compute function: derive effective snoozed_until from latest reminder_snooze row
@@ -21,6 +22,9 @@ Transform reminder snoozing from a single overwrite (`snoozed_until` on Reminder
 - [ ] Data retention: Document and enforce policy (e.g. keep 90 days of snooze history, archive older rows)
 
 ## Session Log
+
+### 2026-05-31
+- Housekeeping: status → `to_review`. Completed by an LLM (Dirac agent, squash-merge `7cea062`, shipped v0.1.5); involved a SQLModel `back_populates` workaround and a non-default `__tablename__`. Added a verification task.
 
 ### 2026-05-15
 - Squash-merged `dirac/reminder-snooze-history` into main as commit `7cea062`; tagged and released **v0.1.5**.

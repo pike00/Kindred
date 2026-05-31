@@ -3,7 +3,7 @@ title: Frontend Test Coverage ≥90%
 status: to_review
 repos: [kindred]
 started: 2026-05-15
-last_updated: 2026-05-16
+last_updated: 2026-05-31
 next_step: Goal achieved (all four metrics ≥90%); commit working tree
 progress: 4/4
 ---
@@ -14,12 +14,16 @@ progress: 4/4
 Add comprehensive Vitest unit tests to the kindred frontend so all four v8 coverage metrics (statements, branches, functions, lines) hit the 90% global threshold enforced in `vitest.config.ts`. Excluded from coverage: shadcn/ui vendor components, TanStack Router route definitions, generated client, and boilerplate files.
 
 ## Tasks
+- [ ] **Verify (LLM-built, to_review):** re-run vitest coverage; confirm all four metrics still ≥90% and the flaky `AddReminderDialog` loading-state test isn't masking a regression
 - [x] Wave 1: scaffold test files for all major component groups (82 test files, 1834 tests passing)
 - [x] Wave 2: rewrite low-coverage tests for RelationshipsCard, MentionTextarea, CommandPalette, QuickLogFAB, Appearance, and queryFn-dead-code fix for JournalList/RemindersList/TagsList
 - [x] Wave 3: fix remaining branch/function gaps — QuickLogFAB (41% branch), CommandPalette (51% func), AddressesCard/CustomFieldsCard/ContactFieldsCard edit-dialog paths, ImportExport downloadAuthed error branch, ReminderBell formatRelative edge cases, UserSettings/CustomFieldDefinitions edit dialog
 - [x] All four metrics ≥90%: statements, branches, functions, lines
 
 ## Session Log
+
+### 2026-05-31
+- Housekeeping: status → `to_review`. Coverage was driven to ≥90% by 5 parallel haiku agents (Wave 3); the agent-written tests have not been human-reviewed for assertion quality (passing ≠ meaningful). Added a verification task to re-run coverage and sanity-check the flaky `AddReminderDialog` test.
 
 ### 2026-05-16
 - Goal hit: all four v8 coverage metrics now ≥90% — Statements 96.97% (1954/2015), Branches 90.05% (1105/1227), Functions 95.99% (814/848), Lines 97.48% (1860/1908)

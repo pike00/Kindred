@@ -1,9 +1,9 @@
 ---
 title: @contact Autocomplete
-status: archived
+status: to_review
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-04-24
+last_updated: 2026-05-31
 next_step: Add caret-position detection and @-triggered popover to Note editor
 ---
 
@@ -13,6 +13,7 @@ next_step: Add caret-position detection and @-triggered popover to Note editor
 Bring inline contact mentions to Note, Interaction, and JournalEntry bodies via an @ autocomplete picker. When a user types @, a popover appears showing contacts; selecting one inserts a `@[Name](contact_id)` token. This token renders as a clickable link in the UI and forms the capture side of the note mentions feature.
 
 ## Tasks
+- [ ] **Verify (LLM-built, to_review):** confirm @mention autocomplete (commit 52edbc4) inserts `@[Name](contact_id)` tokens and renders as links across the Note/Journal/Interaction editors — it shipped & was archived with all tasks below still unchecked
 - [ ] Add caret-position detection to plain textarea editors (or evaluate rich-text library: tiptap, lexical)
 - [ ] Trigger popover on @ character and manage suggestion state (contact search query)
 - [ ] Implement contact search API endpoint: GET /contacts/search?q=...&limit=10
@@ -22,6 +23,9 @@ Bring inline contact mentions to Note, Interaction, and JournalEntry bodies via 
 - [ ] Apply autocomplete to all three editor surfaces (Note.body, Interaction.note, JournalEntry.body)
 
 ## Session Log
+
+### 2026-05-31
+- Housekeeping: status `archived` → `to_review`. Shipped by an LLM (commit 52edbc4) but archived with all tasks unchecked and no human verification. Pulled back into review with a verification task.
 
 ### 2026-04-24
 - Project archived. @mention autocomplete shipped in commit 52edbc4: MentionTextarea inserts `@[Name](contact_id)` tokens, MentionText renders them as Link components. Wired into NotesCard quick-capture/edit, AddJournalDialog, Journal columns. The same textarea primitive also powers the Interaction notes field (landed with #1).

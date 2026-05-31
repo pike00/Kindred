@@ -1,9 +1,9 @@
 ---
 title: Global Command Palette (Cmd+K)
-status: archived
+status: to_review
 repos: [personal-crm]
 started: 2026-04-23
-last_updated: 2026-04-24
+last_updated: 2026-05-31
 next_step: Set up keyboard listener and command registry pattern (hook + context)
 ---
 
@@ -13,6 +13,7 @@ next_step: Set up keyboard listener and command registry pattern (hook + context
 Implement a global keyboard-invoked command palette (Cmd+K on Mac, Ctrl+K on Windows/Linux) that provides fast navigation and bulk actions across the app. Support fuzzy-search over contacts + recent interactions/notes, quick-jump to any contact, create new interaction/note, toggle tag filters, and open settings.
 
 ## Tasks
+- [ ] **Verify (LLM-built, to_review):** confirm the Cmd+K/Ctrl+K palette (commit 7237b8e) opens, fuzzy-searches contacts, and every command group navigates correctly — it shipped & was archived with all tasks below still unchecked
 - [ ] Set up global Cmd+K (Ctrl+K) keyboard listener and focus management (suppress text input when palette is open)
 - [ ] Create command registry pattern: a hook that collects commands from all features (contacts, notes, interactions, settings)
 - [ ] Implement contact/interaction/note fuzzy-search via existing /search endpoint (pair with full-text-search project)
@@ -22,6 +23,9 @@ Implement a global keyboard-invoked command palette (Cmd+K on Mac, Ctrl+K on Win
 - [ ] Add command keyboard shortcuts in UI (e.g., "Cmd+Shift+N for new note") and help panel
 
 ## Session Log
+
+### 2026-05-31
+- Housekeeping: status `archived` → `to_review`. Shipped by an LLM (commit 7237b8e) but archived without a human verifying it, and the task list was never checked off. Pulled back into review with a verification task.
 
 ### 2026-04-24
 - Project archived. Palette shipped in commit 7237b8e: Cmd+K/Ctrl+K opens a dialog with Contacts / Quick actions / Navigate groups, wired via CommandPaletteProvider in _layout.
