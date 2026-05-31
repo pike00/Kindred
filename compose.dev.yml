@@ -57,6 +57,9 @@ services:
       - VITE_AUTH_MODE=${AUTH_MODE:-local}
       - VITE_CF_LOGOUT_URL=${VITE_CF_LOGOUT_URL:-}
       - GIT_HASH=${GIT_HASH:-}
+      # Playwright runs on the host (scripts/run-e2e-prepush.sh), not in this
+      # container. Skip the ~400 MB Chromium/Firefox/WebKit/ffmpeg download.
+      - PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
     volumes:
       - ./package.json:/app/package.json:ro
       - ./bun.lock:/app/bun.lock:ro

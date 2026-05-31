@@ -1,18 +1,20 @@
-FROM python:3.10
+FROM python:3.14-slim
 
-ENV PYTHONUNBUFFERED=1
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy
+
+# System deps the slim base lacks: libpq for psycopg, curl for healthchecks,
+# build-essential for any sdist that needs compiling, ca-certs for TLS.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      build-essential libpq-dev curl ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install uv
 # Ref: https://docs.astral.sh/uv/guides/integration/docker/#installing-uv
 COPY --from=ghcr.io/astral-sh/uv:0.9.26 /uv /uvx /bin/
-
-# Compile bytecode
-# Ref: https://docs.astral.sh/uv/guides/integration/docker/#compiling-bytecode
-ENV UV_COMPILE_BYTECODE=1
-
-# uv Cache
-# Ref: https://docs.astral.sh/uv/guides/integration/docker/#caching
-ENV UV_LINK_MODE=copy
 
 WORKDIR /app/
 

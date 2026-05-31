@@ -13,6 +13,9 @@ WORKDIR /build
 COPY package.json bun.lock ./
 COPY frontend/package.json frontend/
 
+# Vite build doesn't need Playwright's bundled browsers / ffmpeg (~400 MB).
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+
 RUN bun install --frozen-lockfile
 
 # Source + build
@@ -36,7 +39,7 @@ RUN bun run --cwd frontend build
 # produces /build/frontend/dist
 
 # ---- Stage 2: python runtime -----------------------------------------------
-FROM python:3.13-slim AS runtime
+FROM python:3.14-slim AS runtime
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \

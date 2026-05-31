@@ -9,6 +9,9 @@ COPY frontend/package.json /app/frontend/
 
 WORKDIR /app/frontend
 
+# Vite build doesn't need Playwright's bundled browsers / ffmpeg (~400 MB).
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+
 RUN bun install
 
 COPY ./frontend /app/frontend
