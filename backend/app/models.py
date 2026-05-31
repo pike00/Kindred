@@ -5,8 +5,8 @@ from typing import Any
 
 import sqlalchemy as sa
 from pydantic import EmailStr
-from sqlalchemy import JSON, DateTime
-from sqlalchemy.dialects.postgresql import TSVECTOR
+from sqlalchemy import DateTime
+from sqlalchemy.dialects.postgresql import JSONB, TSVECTOR
 from sqlmodel import Field, Relationship, SQLModel
 from sqlmodel import (
     Relationship as SQLMRelationship,  # alias; avoids shadowing by the Relationship table model below
@@ -179,7 +179,7 @@ class SavedFilterBase(SQLModel):
     )
     filter_json: dict = Field(
         description="Structured filter: {conditions: FilterCondition[], op: 'and'|'or'}.",
-        sa_column=sa.Column("filter_json", JSON, nullable=False),
+        sa_column=sa.Column("filter_json", JSONB, nullable=False),
     )
     tag_id: uuid.UUID | None = Field(
         default=None,
@@ -721,7 +721,7 @@ class Contact(SoftDeleteMixin, ContactBase, table=True):
     )
     imessage_profile: dict | None = Field(
         default=None,
-        sa_column=sa.Column("imessage_profile", sa.JSON, nullable=True),
+        sa_column=sa.Column("imessage_profile", JSONB, nullable=True),
         description="Raw iMessage profile data (JSON).",
     )
 
@@ -2531,7 +2531,7 @@ class ActivityLog(SQLModel, table=True):
     action: str = Field(max_length=32)
     changes_json: dict | None = Field(
         default=None,
-        sa_column=sa.Column("changes_json", sa.JSON, nullable=True),
+        sa_column=sa.Column("changes_json", JSONB, nullable=True),
     )
     acting_api_key_id: uuid.UUID | None = Field(
         default=None,
