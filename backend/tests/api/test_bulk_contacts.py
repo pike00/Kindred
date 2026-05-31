@@ -12,13 +12,23 @@ from app.models import Contact, ContactTag, Tag
 
 
 def get_superuser_id(db: Session) -> uuid.UUID:
-    """Get the first user ID from the database."""
+    """Get the superuser ID matching the auth token used in these tests.
+
+    Must resolve the FIRST_SUPERUSER specifically (not an arbitrary
+    ``select(User).limit(1)``): other test modules create additional users in
+    the shared session-scoped DB, so "first row" is not guaranteed to be the
+    user that ``superuser_token_headers`` authenticates as. A mismatch makes
+    the bulk endpoint see zero owned contacts and return ``updated_count == 0``.
+    """
+    from app.core.config import settings
     from app.models import User
 
-    user = db.exec(select(User).limit(1)).first()
+    user = db.exec(
+        select(User).where(User.email == settings.FIRST_SUPERUSER)
+    ).first()
     if user:
         return user.id
-    raise ValueError("No user found in database")
+    raise ValueError("No superuser found in database")
 
 
 def create_test_contact(db: Session, owner_id: uuid.UUID, **kwargs: Any) -> Contact:
