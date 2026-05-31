@@ -1,0 +1,49 @@
+merge all dependabot entries
+
+Fix: Dashboard (/) — missing birthdays + other metadata on the dashboard
+
+Fix: Contacts list (/contacts) — PROD hard-errors: TypeError: D.map is not a function (response shape mismatch). Confirmed on kindred.khanpikehome.com
+
+Fix: Contacts map (/contacts/map) — 422 from server on load (likely listContactsGeo validation); prod
+
+Remove: Drafts feature (/interactions DraftsList) — user wants it removed entirely
+
+Tags (/tags): Groups doesn't work — merge Groups into Tags (consolidate the two concepts)
+
+
+updatea ll dates to be yyyy-mm-dd with estimates for 'about 2 weeks ago', etc
+
+audio transcription doesnt' work
+
+Timeline + Notes + Life EVents + Gifts + Debts should be on one timeline on the contacts page
+
+What is media for? 
+
+combine household and relationships
+
+some ctoancts have the name as tel:Aleisha Khan etc
+
+don't need DNC and dropdown on contacts page
+
+make add new create contact modal not so flag/boring. add hierarchy and notation. add tagss field to this as well. 
+
+timezone should support a broad city search, e.g. New Orleans
+
+
+rm journal completely
+
+Reward2§ is still in the sidebar- removed
+
+
+admin should be under user pop out near user setting
+
+interactive activity show anything
+
+somehow Parks' birthday was set to today - debug this and remove
+
+log interaction button should be a drop down of log interaction, add note, add gift 
+
+
+download pdf doesn't work 
+
+Contact info and address info should be at the top in the header bar
