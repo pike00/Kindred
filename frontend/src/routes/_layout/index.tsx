@@ -12,7 +12,7 @@ import { SectionHeading } from "@/components/Common/SectionHeading"
 import { StayInTouchWidget } from "@/components/Dashboard/StayInTouchWidget"
 import { Badge } from "@/components/ui/badge"
 import useAuth from "@/hooks/useAuth"
-import { MessagesSquare } from "@/lib/icons"
+import { Bell, Cake, MessagesSquare } from "@/lib/icons"
 
 export const Route = createFileRoute("/_layout/")({
   component: Dashboard,
@@ -30,6 +30,26 @@ function greeting(): string {
   if (hour < 12) return "Good morning"
   if (hour < 18) return "Good afternoon"
   return "Good evening"
+}
+
+/** Whole days until the next occurrence of a birthday (MM-DD of any year). */
+function daysUntilBirthday(birthday: string, now: Date = new Date()): number {
+  const parts = birthday.split("-").map(Number)
+  const mm = parts[parts.length - 2]
+  const dd = parts[parts.length - 1]
+  if (!mm || !dd) return Number.POSITIVE_INFINITY
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  let next = new Date(today.getFullYear(), mm - 1, dd)
+  if (next.getTime() < today.getTime()) {
+    next = new Date(today.getFullYear() + 1, mm - 1, dd)
+  }
+  return Math.round((next.getTime() - today.getTime()) / 86_400_000)
+}
+
+function untilLabel(days: number): string {
+  if (days === 0) return "today"
+  if (days === 1) return "tomorrow"
+  return `in ${days} days`
 }
 
 function Dashboard() {
@@ -54,10 +74,23 @@ function Dashboard() {
     queryKey: ["interactions-recent"],
     queryFn: () => InteractionsService.listInteractions({ limit: 5 }),
   })
+  const { data: dueReminders } = useQuery({
+    queryKey: ["reminders-due"],
+    queryFn: () => RemindersService.listDueReminders({ limit: 5 }),
+  })
 
   const firstName =
     currentUser?.full_name?.split(" ")[0] || currentUser?.email || "there"
   const overdueCount = losingTouch?.count ?? 0
+
+  // Upcoming birthdays — computed client-side from the contacts already loaded
+  // above (next 60 days), so no extra request.
+  const upcomingBirthdays = (contacts?.data ?? [])
+    .filter((c) => c.birthday)
+    .map((c) => ({ contact: c, days: daysUntilBirthday(c.birthday as string) }))
+    .filter((b) => b.days <= 60)
+    .sort((a, b) => a.days - b.days)
+    .slice(0, 6)
 
   return (
     <div className="space-y-8">
@@ -92,6 +125,103 @@ function Dashboard() {
 
       {/* Stay in touch — only shown when user has opted in via contact_frequency_days */}
       {overdueCount > 0 && <StayInTouchWidget />}
+
+      {/* Upcoming birthdays + Due reminders */}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div>
+          <SectionHeading
+            icon={Cake}
+            title="Upcoming birthdays"
+            count={upcomingBirthdays.length}
+            className="mb-4"
+          />
+          {upcomingBirthdays.length > 0 ? (
+            <div className="space-y-2">
+              {upcomingBirthdays.map(({ contact, days }) => {
+                const fullName =
+                  [contact.first_name, contact.last_name]
+                    .filter(Boolean)
+                    .join(" ") || "Unnamed contact"
+                return (
+                  <Link
+                    key={contact.id}
+                    to="/contacts/$contactId"
+                    params={{ contactId: contact.id }}
+                    className="flex items-center gap-3 rounded-2xl border bg-card p-3 shadow-xs transition-colors hover:bg-accent/50"
+                  >
+                    <ContactAvatar contact={contact} size="sm" />
+                    <p className="min-w-0 flex-1 truncate font-medium text-sm">
+                      {fullName}
+                    </p>
+                    <Badge variant="outline" className="shrink-0 text-xs">
+                      {untilLabel(days)}
+                    </Badge>
+                  </Link>
+                )
+              })}
+            </div>
+          ) : (
+            <EmptyState
+              icon={Cake}
+              title="No birthdays coming up"
+              description="Add birthdays to contacts to see them here."
+            />
+          )}
+        </div>
+
+        <div>
+          <SectionHeading
+            icon={Bell}
+            title="Due reminders"
+            count={dueReminders?.count}
+            className="mb-4"
+          />
+          {dueReminders?.data && dueReminders.data.length > 0 ? (
+            <div className="space-y-2">
+              {dueReminders.data.map((r) => {
+                const row = (
+                  <>
+                    <Bell className="size-4 shrink-0 text-muted-foreground" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium text-sm">{r.title}</p>
+                      {r.contact_name && (
+                        <p className="truncate text-xs text-muted-foreground">
+                          {r.contact_name}
+                        </p>
+                      )}
+                    </div>
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      {new Date(r.remind_at).toLocaleDateString()}
+                    </span>
+                  </>
+                )
+                const cls =
+                  "flex items-center gap-3 rounded-2xl border bg-card p-3 shadow-xs transition-colors hover:bg-accent/50"
+                return r.contact_id ? (
+                  <Link
+                    key={r.id}
+                    to="/contacts/$contactId"
+                    params={{ contactId: r.contact_id }}
+                    className={cls}
+                  >
+                    {row}
+                  </Link>
+                ) : (
+                  <Link key={r.id} to="/reminders" className={cls}>
+                    {row}
+                  </Link>
+                )
+              })}
+            </div>
+          ) : (
+            <EmptyState
+              icon={Bell}
+              title="All caught up"
+              description="No reminders are due right now."
+            />
+          )}
+        </div>
+      </div>
 
       {/* Recent interactions */}
       <div>
