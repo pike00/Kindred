@@ -1,0 +1,12 @@
+# Build context exclusions for Dockerfile.prod (root-context build).
+# node_modules/.venv are reinstalled inside the image — never copy host copies
+# (bloats the context and breaks on stale/owner-mismatched files).
+**/node_modules
+**/dist
+**/.venv
+**/__pycache__
+**/*.pyc
+.git
+.worktrees
+.project-kit
+*.log
