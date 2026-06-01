@@ -52,7 +52,13 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v7
       - name: Create .env from example
-        run: cp .env.example .env
+        run: |
+          cp .env.example .env
+          # Point service hosts at the CI service containers (mapped to
+          # localhost) regardless of env-var-vs-dotenv precedence.
+          sed -i 's#^POSTGRES_SERVER=.*#POSTGRES_SERVER="localhost"#' .env
+          sed -i 's#^REDIS_URL=.*#REDIS_URL="redis://localhost:6379"#' .env
+          sed -i 's#^MEILI_URL=.*#MEILI_URL="http://localhost:7700"#' .env
       - name: Migrate DB
         env:
           POSTGRES_SERVER: localhost
