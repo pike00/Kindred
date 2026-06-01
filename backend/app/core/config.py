@@ -134,6 +134,7 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://redis:6379"
     MEILI_URL: str = "http://meilisearch:7700"
     MEILI_MASTER_KEY: str = ""
+    WHISPER_URL: str = "http://whisper:8000"
 
     # OIDC / multi-user (Phase 0+)
     AUTH_MODE: Literal["local", "oidc", "both"] = "local"

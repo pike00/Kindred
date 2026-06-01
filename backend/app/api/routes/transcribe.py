@@ -11,14 +11,15 @@ import httpx
 from fastapi import APIRouter, HTTPException, UploadFile
 
 from app.api.deps import CurrentUser
+from app.core.config import settings
 
 router = APIRouter(prefix="/transcribe", tags=["transcribe"])
 
 logger = logging.getLogger(__name__)
 
-# Internal Whisper service URL (Docker network)
-# The service name "whisper" resolves via Docker DNS
-WHISPER_URL = "http://whisper:8000/transcribe"
+# Internal Whisper service URL — configurable via WHISPER_URL (default points
+# at the "whisper" service on the Docker network).
+WHISPER_URL = f"{settings.WHISPER_URL.rstrip('/')}/transcribe"
 
 
 @router.post("/")
