@@ -43,13 +43,19 @@ def _reset_test_schema() -> None:
 
 
 def _migrate_test_database() -> None:
+    from pathlib import Path
+
     from alembic.config import Config
 
     from alembic import command
     from app.core.config import settings
 
-    cfg = Config("/app/backend/alembic.ini")
-    cfg.set_main_option("script_location", "/app/backend/app/alembic")
+    # Resolve paths relative to this file so it works both in the container
+    # (/app/backend) and in CI (/home/runner/work/.../backend), where the
+    # previous hard-coded /app/backend paths did not exist.
+    backend_dir = Path(__file__).resolve().parent.parent
+    cfg = Config(str(backend_dir / "alembic.ini"))
+    cfg.set_main_option("script_location", str(backend_dir / "app" / "alembic"))
     cfg.set_main_option("sqlalchemy.url", str(settings.SQLALCHEMY_DATABASE_URI))
     command.upgrade(cfg, "head")
 
