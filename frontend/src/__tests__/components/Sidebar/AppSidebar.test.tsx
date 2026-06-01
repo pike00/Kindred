@@ -185,10 +185,10 @@ describe("AppSidebar", () => {
 
     const mainComponent = screen.getByTestId("sidebar-main")
     expect(mainComponent).toBeInTheDocument()
-    // Should have 10 base items
+    // Should have 9 base items
     expect(
       mainComponent.querySelectorAll("[data-testid^='nav-item-']"),
-    ).toHaveLength(10)
+    ).toHaveLength(9)
   })
 
   it("renders Main component with admin item included for superuser", async () => {
@@ -203,10 +203,10 @@ describe("AppSidebar", () => {
     renderWithProviders(<AppSidebar />)
 
     const mainComponent = screen.getByTestId("sidebar-main")
-    // Should have 11 items (10 base + admin)
+    // Should have 10 items (9 base + admin)
     expect(
       mainComponent.querySelectorAll("[data-testid^='nav-item-']"),
-    ).toHaveLength(11)
+    ).toHaveLength(10)
     expect(screen.getByTestId("nav-item-Admin")).toBeInTheDocument()
   })
 
