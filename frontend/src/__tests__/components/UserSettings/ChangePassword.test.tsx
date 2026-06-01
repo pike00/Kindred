@@ -2,6 +2,7 @@ import { screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import ChangePassword from "@/components/UserSettings/ChangePassword"
+import type { Message } from "@/client"
 import { renderWithProviders } from "@/test/helpers"
 
 // Mock Sonner toast
@@ -54,9 +55,9 @@ describe("ChangePassword", () => {
     const { UsersService } = await import("@/client")
     vi.mocked(UsersService.updatePasswordMe).mockImplementation(
       () =>
-        new Promise((resolve) => {
-          setTimeout(() => resolve({}), 100)
-        }),
+        new Promise<Message>((resolve) => {
+          setTimeout(() => resolve({ message: "ok" }), 100)
+        }) as unknown as ReturnType<typeof UsersService.updatePasswordMe>,
     )
 
     const user = userEvent.setup()
@@ -172,7 +173,7 @@ describe("ChangePassword", () => {
   it("successfully submits valid password change", async () => {
     const { UsersService } = await import("@/client")
     const mockUpdatePasswordMe = vi.mocked(UsersService.updatePasswordMe)
-    mockUpdatePasswordMe.mockResolvedValueOnce({})
+    mockUpdatePasswordMe.mockResolvedValueOnce({ message: "Password updated successfully" })
 
     const { toast } = await import("sonner")
     const mockSuccessToast = vi.mocked(toast.success)
@@ -209,7 +210,7 @@ describe("ChangePassword", () => {
 
   it("clears form after successful password change", async () => {
     const { UsersService } = await import("@/client")
-    vi.mocked(UsersService.updatePasswordMe).mockResolvedValueOnce({})
+    vi.mocked(UsersService.updatePasswordMe).mockResolvedValueOnce({ message: "Password updated successfully" })
 
     const user = userEvent.setup()
     renderWithProviders(<ChangePassword />)

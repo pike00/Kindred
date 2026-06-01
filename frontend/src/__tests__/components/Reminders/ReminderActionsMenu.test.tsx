@@ -2,8 +2,18 @@ import { describe, it, expect, beforeEach, vi } from "vitest"
 import { screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { ReminderActionsMenu } from "@/components/Reminders/ReminderActionsMenu"
-import { makeReminder } from "@/test/helpers"
+import { makeReminder as makeReminderBase } from "@/test/helpers"
 import { renderWithProviders } from "@/test/helpers"
+import type { ReminderPublic } from "@/client"
+
+const makeReminder = (
+  overrides: Parameters<typeof makeReminderBase>[0] = {},
+): ReminderPublic => ({
+  last_sent_at: null,
+  snoozed_until: null,
+  created_at: "2026-01-01T00:00:00Z",
+  ...makeReminderBase(overrides),
+})
 
 // Mock toast
 vi.mock("sonner", () => ({

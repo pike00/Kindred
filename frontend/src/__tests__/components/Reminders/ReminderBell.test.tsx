@@ -66,10 +66,10 @@ vi.mock("@/components/ui/badge", () => ({
 // Mock popover
 vi.mock("@/components/ui/popover", () => ({
   Popover: ({ children }: any) => <div>{children}</div>,
-  PopoverTrigger: ({ children, asChild }: any) => (
+  PopoverTrigger: ({ children }: any) => (
     <div data-testid="popover-trigger">{children}</div>
   ),
-  PopoverContent: ({ children, align, className }: any) => (
+  PopoverContent: ({ children, align }: any) => (
     <div data-testid="popover-content" data-align={align}>
       {children}
     </div>
@@ -79,7 +79,7 @@ vi.mock("@/components/ui/popover", () => ({
 // Mock dropdown menu
 vi.mock("@/components/ui/dropdown-menu", () => ({
   DropdownMenu: ({ children }: any) => <div>{children}</div>,
-  DropdownMenuTrigger: ({ children, asChild }: any) => (
+  DropdownMenuTrigger: ({ children }: any) => (
     <div data-testid="dropdown-trigger">{children}</div>
   ),
   DropdownMenuContent: ({ children, align, ...props }: any) => (
@@ -204,7 +204,6 @@ describe("ReminderBell", () => {
       count: 1,
     })
 
-    const user = userEvent.setup()
     renderWithProviders(<ReminderBell />)
 
     await waitFor(() => {

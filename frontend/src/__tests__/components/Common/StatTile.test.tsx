@@ -253,7 +253,7 @@ describe("StatTile", () => {
   })
 
   it("value spacing uses margin", () => {
-    const { container } = render(
+    render(
       <StatTile icon={Heart} label="Contacts" value={42} tone="blue" />,
     )
     const value = screen.getByText("42")

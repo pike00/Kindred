@@ -151,7 +151,7 @@ describe("AppSidebar", () => {
       logout: vi.fn(),
       loginMutation: { mutate: vi.fn(), isPending: false },
       signUpMutation: { mutate: vi.fn(), isPending: false },
-    })
+    } as unknown as ReturnType<typeof useAuthModule.default>)
 
     renderWithProviders(<AppSidebar />)
 
@@ -190,7 +190,7 @@ describe("AppSidebar", () => {
       logout: vi.fn(),
       loginMutation: { mutate: vi.fn(), isPending: false },
       signUpMutation: { mutate: vi.fn(), isPending: false },
-    })
+    } as unknown as ReturnType<typeof useAuthModule.default>)
 
     renderWithProviders(<AppSidebar />)
 

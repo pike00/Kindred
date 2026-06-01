@@ -34,7 +34,6 @@ describe("Footer", () => {
     })
 
     it("renders year after the dot separator", () => {
-      const currentYear = new Date().getFullYear()
       render(<Footer />)
       expect(screen.getByText(/Kindred · \d+/)).toBeInTheDocument()
     })
@@ -59,14 +58,12 @@ describe("Footer", () => {
 
   describe("content", () => {
     it("displays the correct copyright text format", () => {
-      const currentYear = new Date().getFullYear()
       render(<Footer />)
       const footerText = screen.getByText(/Kindred · \d+/)
       expect(footerText).toBeInTheDocument()
     })
 
     it("updates year when year changes", () => {
-      const currentYear = new Date().getFullYear()
       render(<Footer />)
       expect(screen.getByText(/Kindred · \d+/)).toBeInTheDocument()
     })
@@ -150,7 +147,6 @@ describe("Footer", () => {
   describe("component integration", () => {
     it("renders both text and EnvironmentChip together", () => {
       render(<Footer />)
-      const currentYear = new Date().getFullYear()
       expect(screen.getByText(/Kindred · \d+/)).toBeInTheDocument()
       expect(screen.getByTestId("environment-chip")).toBeInTheDocument()
     })
@@ -203,7 +199,6 @@ describe("Footer", () => {
   describe("edge cases", () => {
     it("handles mounting and unmounting", () => {
       const { unmount } = render(<Footer />)
-      const currentYear = new Date().getFullYear()
       expect(screen.getByText(/Kindred · \d+/)).toBeInTheDocument()
 
       unmount()

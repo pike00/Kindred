@@ -7,8 +7,8 @@ configure({ asyncUtilTimeout: 5000 })
 
 // Vite-injected build-time globals — defined in vite.config.ts, declared in
 // vite-env.d.ts. Vitest doesn't run Vite's define plugin, so polyfill here.
-;(globalThis as { __APP_VERSION__: string }).__APP_VERSION__ = "test"
-;(globalThis as { __APP_HASH__: string }).__APP_HASH__ = "testhash"
+;(globalThis as Record<string, unknown>).__APP_VERSION__ = "test"
+;(globalThis as Record<string, unknown>).__APP_HASH__ = "testhash"
 
 // localStorage polyfill (not available in Node.js jsdom without --localstorage-file)
 const localStorageStore: Record<string, string> = {}

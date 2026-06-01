@@ -3,7 +3,6 @@ import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { AddGift } from "@/components/Gifts/AddGift"
 import { renderWithProviders } from "@/test/helpers"
-import React from "react"
 
 // Mock dialog to render inline (wraps Radix primitives)
 vi.mock("@/components/ui/dialog", async () => {

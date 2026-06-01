@@ -154,7 +154,6 @@ describe("NotFound", () => {
 
   it("content has z-index for layering", () => {
     const { container } = render(<NotFound />)
-    const heading = screen.getByText("404")
     // The z-10 is on the parent div that wraps 404 and Oops!
     const mainContentDiv = container.querySelector("div[class*='z-10']")
     expect(mainContentDiv).toHaveClass("z-10")
@@ -246,9 +245,8 @@ describe("NotFound", () => {
   })
 
   it("404 and oops text are in correct order", () => {
-    const { container } = render(<NotFound />)
+    render(<NotFound />)
     const heading404 = screen.getByText("404")
-    const _oops = screen.getByText("Oops!")
     const textContainer = heading404.parentElement?.parentElement
 
     expect(textContainer?.textContent).toContain("404")

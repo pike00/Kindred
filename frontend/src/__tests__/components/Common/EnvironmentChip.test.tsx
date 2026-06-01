@@ -165,7 +165,7 @@ describe("EnvironmentChip", () => {
     })
 
     it("includes credentials in fetch request", async () => {
-      const fetchMock = vi.fn(() =>
+      const fetchMock = vi.fn((..._args: Parameters<typeof fetch>) =>
         Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ environment: "staging" }),

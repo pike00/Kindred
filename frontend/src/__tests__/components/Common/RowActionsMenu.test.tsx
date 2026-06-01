@@ -16,7 +16,7 @@ vi.mock("@/lib/icons", () => ({
 // Mock dropdown-menu to render inline (avoids Radix portal/jsdom issues)
 vi.mock("@/components/ui/dropdown-menu", () => ({
   DropdownMenu: ({ children }: any) => <div>{children}</div>,
-  DropdownMenuTrigger: ({ children, asChild }: any) => <div>{children}</div>,
+  DropdownMenuTrigger: ({ children }: any) => <div>{children}</div>,
   DropdownMenuContent: ({ children }: any) => (
     <div role="menu" data-testid="dropdown-content">
       {children}
@@ -91,7 +91,7 @@ describe("RowActionsMenu", () => {
       const items: RowActionItem[] = [{ label: "Edit", onSelect: vi.fn() }]
       const parentClick = vi.fn()
 
-      const { container } = render(
+      render(
         <div onClick={parentClick}>
           <RowActionsMenu items={items} />
         </div>,

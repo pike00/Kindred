@@ -2,6 +2,7 @@ import { screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import UserInformation from "@/components/UserSettings/UserInformation"
+import type { UserPublic } from "@/client"
 import {
   createQueryClient,
   makeUser,
@@ -185,7 +186,7 @@ describe("UserInformation", () => {
   it("successfully submits valid changes", async () => {
     const { UsersService } = await import("@/client")
     const mockUpdateUserMe = vi.mocked(UsersService.updateUserMe)
-    mockUpdateUserMe.mockResolvedValueOnce({})
+    mockUpdateUserMe.mockResolvedValueOnce(makeUser())
 
     const user = userEvent.setup()
     renderWithProviders(<UserInformation />)
@@ -216,7 +217,7 @@ describe("UserInformation", () => {
   it("submits only changed fields", async () => {
     const { UsersService } = await import("@/client")
     const mockUpdateUserMe = vi.mocked(UsersService.updateUserMe)
-    mockUpdateUserMe.mockResolvedValueOnce({})
+    mockUpdateUserMe.mockResolvedValueOnce(makeUser())
 
     const user = userEvent.setup()
     renderWithProviders(<UserInformation />)
@@ -246,7 +247,7 @@ describe("UserInformation", () => {
 
   it("shows success toast after successful update", async () => {
     const { UsersService } = await import("@/client")
-    vi.mocked(UsersService.updateUserMe).mockResolvedValueOnce({})
+    vi.mocked(UsersService.updateUserMe).mockResolvedValueOnce(makeUser())
 
     const { toast } = await import("sonner")
     const mockSuccessToast = vi.mocked(toast.success)
@@ -277,7 +278,7 @@ describe("UserInformation", () => {
 
   it("exits edit mode after successful update", async () => {
     const { UsersService } = await import("@/client")
-    vi.mocked(UsersService.updateUserMe).mockResolvedValueOnce({})
+    vi.mocked(UsersService.updateUserMe).mockResolvedValueOnce(makeUser())
 
     const user = userEvent.setup()
     renderWithProviders(<UserInformation />)
@@ -384,9 +385,9 @@ describe("UserInformation", () => {
     const { UsersService } = await import("@/client")
     vi.mocked(UsersService.updateUserMe).mockImplementation(
       () =>
-        new Promise((resolve) => {
-          setTimeout(() => resolve({}), 100)
-        }),
+        new Promise<UserPublic>((resolve) => {
+          setTimeout(() => resolve(makeUser()), 100)
+        }) as unknown as ReturnType<typeof UsersService.updateUserMe>,
     )
 
     const user = userEvent.setup()
@@ -412,7 +413,7 @@ describe("UserInformation", () => {
 
   it("invalidates queries after successful update", async () => {
     const { UsersService } = await import("@/client")
-    vi.mocked(UsersService.updateUserMe).mockResolvedValueOnce({})
+    vi.mocked(UsersService.updateUserMe).mockResolvedValueOnce(makeUser())
 
     const queryClient = createQueryClient()
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries")

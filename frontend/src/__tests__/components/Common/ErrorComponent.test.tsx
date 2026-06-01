@@ -160,13 +160,13 @@ describe("ErrorComponent", () => {
   })
 
   it("error text section has specific spacing", () => {
-    const { container } = render(<ErrorComponent />)
+    render(<ErrorComponent />)
     const errorText = screen.getByText("Error")
     expect(errorText).toHaveClass("mb-4")
   })
 
   it("oops text section has specific spacing", () => {
-    const { container } = render(<ErrorComponent />)
+    render(<ErrorComponent />)
     const oopsText = screen.getByText("Oops!")
     expect(oopsText).toHaveClass("mb-2")
   })
@@ -215,9 +215,8 @@ describe("ErrorComponent", () => {
   })
 
   it("error and oops text are displayed in sequence", () => {
-    const { container } = render(<ErrorComponent />)
+    render(<ErrorComponent />)
     const errorSpan = screen.getByText("Error")
-    const _oopsSpan = screen.getByText("Oops!")
     const parent = errorSpan.parentElement?.parentElement
 
     expect(parent).toBeInTheDocument()

@@ -1,10 +1,10 @@
-import { useQuery } from "@tanstack/react-query"
 import { screen, waitFor } from "@testing-library/react"
 import { describe, beforeEach, it, expect, vi } from "vitest"
 
 import { ContactsService } from "@/client"
+import type { ContactPublic } from "@/client"
 import { MentionText } from "@/components/Mentions/MentionText"
-import { renderWithProviders, makeContact } from "@/test/helpers"
+import { cancelable, makeContact, renderWithProviders } from "@/test/helpers"
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ to, params, children, className }: any) => (
@@ -152,7 +152,9 @@ describe("MentionText", () => {
   })
 
   it("falls back to token name when contact not found", async () => {
-    vi.mocked(ContactsService.getContact).mockResolvedValue(undefined)
+    vi.mocked(ContactsService.getContact).mockReturnValue(
+      cancelable(undefined as unknown as ContactPublic),
+    )
 
     renderWithProviders(
       <MentionText text="Hey @[Old Name](deleted-contact)" />,
@@ -446,7 +448,9 @@ describe("MentionText", () => {
   })
 
   it("uses fallback name from token when contact not found", async () => {
-    vi.mocked(ContactsService.getContact).mockResolvedValue(undefined)
+    vi.mocked(ContactsService.getContact).mockReturnValue(
+      cancelable(undefined as unknown as ContactPublic),
+    )
 
     renderWithProviders(
       <MentionText text="@[Fallback Name](contact-123)" />,

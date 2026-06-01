@@ -1,5 +1,6 @@
 import { AxiosError } from "axios"
 import { describe, expect, it } from "vitest"
+import type { ApiError } from "@/client"
 import { getInitials, handleError } from "@/utils"
 
 describe("extractErrorMessage and handleError", () => {
@@ -9,7 +10,7 @@ describe("extractErrorMessage and handleError", () => {
     }
 
     const axiosErr = new AxiosError("Network Error")
-    handleError.call(mockCallback, axiosErr)
+    handleError.call(mockCallback, axiosErr as unknown as ApiError)
   })
 
   it("handles error with array detail in body", () => {

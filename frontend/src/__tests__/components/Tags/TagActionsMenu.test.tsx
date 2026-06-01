@@ -1,8 +1,20 @@
 import { screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import type { TagPublic } from "@/client"
 import { TagActionsMenu } from "@/components/Tags/TagActionsMenu"
 import { makeTag, renderWithProviders } from "@/test/helpers"
+
+// makeTag returns a minimal tag; TagPublic also requires created_at.
+function makeTagPublic(
+  overrides: Partial<TagPublic> = {},
+): TagPublic {
+  return {
+    ...makeTag(),
+    created_at: "2026-01-01T00:00:00Z",
+    ...overrides,
+  }
+}
 
 // Mock router
 vi.mock("@tanstack/react-router", async (importOriginal) => {
@@ -68,15 +80,15 @@ describe("TagActionsMenu", () => {
   })
 
   it("renders menu", () => {
-    const tag = makeTag()
-    renderWithProviders(<TagActionsMenu tag={tag} />)
+    const tag = makeTagPublic()
+    renderWithProviders(<TagActionsMenu tag={tag} onShare={vi.fn()} />)
 
     expect(screen.getByTestId("row-actions-menu")).toBeInTheDocument()
   })
 
   it("renders delete action", () => {
-    const tag = makeTag()
-    renderWithProviders(<TagActionsMenu tag={tag} />)
+    const tag = makeTagPublic()
+    renderWithProviders(<TagActionsMenu tag={tag} onShare={vi.fn()} />)
 
     expect(screen.getByText("Delete")).toBeInTheDocument()
   })
@@ -86,10 +98,10 @@ describe("TagActionsMenu", () => {
     const mockDeleteTag = vi.mocked(TagsService.deleteTag)
     mockDeleteTag.mockResolvedValue({})
 
-    const tag = makeTag({ id: "tag-123" })
+    const tag = makeTagPublic({ id: "tag-123" })
     const user = userEvent.setup()
 
-    renderWithProviders(<TagActionsMenu tag={tag} />)
+    renderWithProviders(<TagActionsMenu tag={tag} onShare={vi.fn()} />)
 
     const deleteButton = screen.getByText("Delete")
     await user.click(deleteButton)
@@ -104,10 +116,10 @@ describe("TagActionsMenu", () => {
     const mockDeleteTag = vi.mocked(TagsService.deleteTag)
     mockDeleteTag.mockResolvedValue({})
 
-    const tag = makeTag()
+    const tag = makeTagPublic()
     const user = userEvent.setup()
 
-    renderWithProviders(<TagActionsMenu tag={tag} />)
+    renderWithProviders(<TagActionsMenu tag={tag} onShare={vi.fn()} />)
 
     const deleteButton = screen.getByText("Delete")
     await user.click(deleteButton)
@@ -122,10 +134,10 @@ describe("TagActionsMenu", () => {
     const mockDeleteTag = vi.mocked(TagsService.deleteTag)
     mockDeleteTag.mockResolvedValue({})
 
-    const tag = makeTag()
+    const tag = makeTagPublic()
     const user = userEvent.setup()
 
-    const { queryClient } = renderWithProviders(<TagActionsMenu tag={tag} />)
+    const { queryClient } = renderWithProviders(<TagActionsMenu tag={tag} onShare={vi.fn()} />)
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries")
 
     const deleteButton = screen.getByText("Delete")
@@ -141,10 +153,10 @@ describe("TagActionsMenu", () => {
     const mockDeleteTag = vi.mocked(TagsService.deleteTag)
     mockDeleteTag.mockRejectedValue(new Error("API error"))
 
-    const tag = makeTag()
+    const tag = makeTagPublic()
     const user = userEvent.setup()
 
-    renderWithProviders(<TagActionsMenu tag={tag} />)
+    renderWithProviders(<TagActionsMenu tag={tag} onShare={vi.fn()} />)
 
     const deleteButton = screen.getByText("Delete")
     await user.click(deleteButton)
@@ -159,10 +171,10 @@ describe("TagActionsMenu", () => {
     const mockDeleteTag = vi.mocked(TagsService.deleteTag)
     mockDeleteTag.mockRejectedValue(new Error("API error"))
 
-    const tag = makeTag()
+    const tag = makeTagPublic()
     const user = userEvent.setup()
 
-    renderWithProviders(<TagActionsMenu tag={tag} />)
+    renderWithProviders(<TagActionsMenu tag={tag} onShare={vi.fn()} />)
 
     const deleteButton = screen.getByText("Delete")
     await user.click(deleteButton)
@@ -178,9 +190,9 @@ describe("TagActionsMenu", () => {
     mockDeleteTag.mockResolvedValue({})
 
     const tags = [
-      makeTag({ id: "id-1", name: "Friends" }),
-      makeTag({ id: "id-2", name: "Colleagues" }),
-      makeTag({ id: "id-3", name: "Family" }),
+      makeTagPublic({ id: "id-1", name: "Friends" }),
+      makeTagPublic({ id: "id-2", name: "Colleagues" }),
+      makeTagPublic({ id: "id-3", name: "Family" }),
     ]
 
     const user = userEvent.setup()
@@ -189,7 +201,7 @@ describe("TagActionsMenu", () => {
       vi.clearAllMocks()
       mockDeleteTag.mockResolvedValue({})
 
-      const { unmount } = renderWithProviders(<TagActionsMenu tag={tag} />)
+      const { unmount } = renderWithProviders(<TagActionsMenu tag={tag} onShare={vi.fn()} />)
 
       const deleteButton = screen.getByText("Delete")
       await user.click(deleteButton)
@@ -203,13 +215,13 @@ describe("TagActionsMenu", () => {
   })
 
   it("renders with tag data passed as prop", () => {
-    const tag = makeTag({
+    const tag = makeTagPublic({
       id: "specific-tag-id",
       name: "Urgent",
       color: "#ef4444",
     })
 
-    renderWithProviders(<TagActionsMenu tag={tag} />)
+    renderWithProviders(<TagActionsMenu tag={tag} onShare={vi.fn()} />)
 
     // Component doesn't directly display tag info, but should render without errors
     expect(screen.getByTestId("row-actions-menu")).toBeInTheDocument()
@@ -220,10 +232,10 @@ describe("TagActionsMenu", () => {
     const mockDeleteTag = vi.mocked(TagsService.deleteTag)
     mockDeleteTag.mockResolvedValue({})
 
-    const tag = makeTag({ color: null })
+    const tag = makeTagPublic({ color: null })
     const user = userEvent.setup()
 
-    renderWithProviders(<TagActionsMenu tag={tag} />)
+    renderWithProviders(<TagActionsMenu tag={tag} onShare={vi.fn()} />)
 
     const deleteButton = screen.getByText("Delete")
     await user.click(deleteButton)
@@ -234,8 +246,8 @@ describe("TagActionsMenu", () => {
   })
 
   it("only renders delete action (not edit or view)", () => {
-    const tag = makeTag()
-    renderWithProviders(<TagActionsMenu tag={tag} />)
+    const tag = makeTagPublic()
+    renderWithProviders(<TagActionsMenu tag={tag} onShare={vi.fn()} />)
 
     expect(screen.getByText("Delete")).toBeInTheDocument()
     expect(screen.queryByText("Edit")).not.toBeInTheDocument()
@@ -247,10 +259,10 @@ describe("TagActionsMenu", () => {
     const mockDeleteTag = vi.mocked(TagsService.deleteTag)
     mockDeleteTag.mockRejectedValue(new Error("API error"))
 
-    const tag = makeTag()
+    const tag = makeTagPublic()
     const user = userEvent.setup()
 
-    const { queryClient } = renderWithProviders(<TagActionsMenu tag={tag} />)
+    const { queryClient } = renderWithProviders(<TagActionsMenu tag={tag} onShare={vi.fn()} />)
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries")
 
     const deleteButton = screen.getByText("Delete")
@@ -266,10 +278,10 @@ describe("TagActionsMenu", () => {
     const mockDeleteTag = vi.mocked(TagsService.deleteTag)
     mockDeleteTag.mockResolvedValue({})
 
-    const tag = makeTag({ id: "tag-multi" })
+    const tag = makeTagPublic({ id: "tag-multi" })
     const user = userEvent.setup()
 
-    renderWithProviders(<TagActionsMenu tag={tag} />)
+    renderWithProviders(<TagActionsMenu tag={tag} onShare={vi.fn()} />)
 
     const deleteButton = screen.getByText("Delete")
 

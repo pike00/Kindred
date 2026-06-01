@@ -53,7 +53,9 @@ describe("cn", () => {
   })
 
   it("handles mixed truthy falsy values", () => {
-    expect(cn("px-2", 0 && "py-1", "" && "hidden", "margin-auto")).toBe(
+    const zero: number = 0
+    const empty: string = ""
+    expect(cn("px-2", zero && "py-1", empty && "hidden", "margin-auto")).toBe(
       "px-2 margin-auto",
     )
   })

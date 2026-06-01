@@ -35,7 +35,7 @@ vi.mock("@tanstack/react-router", () => ({
 
 // Mock ContactAvatar
 vi.mock("@/components/Common/ContactAvatar", () => ({
-  ContactAvatar: ({ contact }: any) => <div data-testid="avatar">Avatar</div>,
+  ContactAvatar: () => <div data-testid="avatar">Avatar</div>,
 }))
 
 // Mock command UI components to render inline
@@ -503,7 +503,11 @@ describe("CommandPalette", () => {
   })
 
   it("handles unnamed contact", async () => {
-    const contact = makeContact({ id: "c1", first_name: null, last_name: null })
+    const contact = makeContact({
+      id: "c1",
+      first_name: undefined,
+      last_name: null,
+    })
 
     vi.mocked(ContactsService.ContactsService.listContacts).mockResolvedValue({
       data: [contact],
@@ -790,7 +794,7 @@ describe("CommandPalette", () => {
   it("displays contact using contactLabel with only last name", async () => {
     const contact = makeContact({
       id: "c1",
-      first_name: null,
+      first_name: undefined,
       last_name: "Smith",
     })
 
@@ -898,8 +902,18 @@ describe("CommandPalette", () => {
       first_name: "Eve",
       last_name: "Miller",
       tags: [
-        { id: "t1", name: "Friend", color: "#ff0000" },
-        { id: "t2", name: "Colleague", color: "#00ff00" },
+        {
+          id: "t1",
+          name: "Friend",
+          color: "#ff0000",
+          created_at: "2026-01-01T00:00:00Z",
+        },
+        {
+          id: "t2",
+          name: "Colleague",
+          color: "#00ff00",
+          created_at: "2026-01-01T00:00:00Z",
+        },
       ],
     })
 
@@ -961,7 +975,14 @@ describe("CommandPalette", () => {
         company: "TechCorp",
         title: "Manager",
         nickname: "Al",
-        tags: [{ id: "t1", name: "VIP", color: "#ff0000" }],
+        tags: [
+          {
+            id: "t1",
+            name: "VIP",
+            color: "#ff0000",
+            created_at: "2026-01-01T00:00:00Z",
+          },
+        ],
       }),
       makeContact({
         id: "c2",

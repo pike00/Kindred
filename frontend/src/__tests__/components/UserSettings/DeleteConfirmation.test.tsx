@@ -153,7 +153,7 @@ describe("DeleteConfirmation", () => {
   it("calls deleteUserMe when delete button is clicked", async () => {
     const { UsersService } = await import("@/client")
     const mockDeleteUserMe = vi.mocked(UsersService.deleteUserMe)
-    mockDeleteUserMe.mockResolvedValueOnce({})
+    mockDeleteUserMe.mockResolvedValueOnce({ message: "Account deleted" })
 
     const user = userEvent.setup()
     renderWithProviders(<DeleteConfirmation />)
@@ -176,7 +176,7 @@ describe("DeleteConfirmation", () => {
 
   it("shows success toast after successful deletion", async () => {
     const { UsersService } = await import("@/client")
-    vi.mocked(UsersService.deleteUserMe).mockResolvedValueOnce({})
+    vi.mocked(UsersService.deleteUserMe).mockResolvedValueOnce({ message: "Account deleted" })
 
     const { toast } = await import("sonner")
     const mockSuccessToast = vi.mocked(toast.success)
@@ -204,7 +204,7 @@ describe("DeleteConfirmation", () => {
 
   it("calls logout after successful deletion", async () => {
     const { UsersService } = await import("@/client")
-    vi.mocked(UsersService.deleteUserMe).mockResolvedValueOnce({})
+    vi.mocked(UsersService.deleteUserMe).mockResolvedValueOnce({ message: "Account deleted" })
 
     const user = userEvent.setup()
     renderWithProviders(<DeleteConfirmation />)
@@ -257,8 +257,8 @@ describe("DeleteConfirmation", () => {
     vi.mocked(UsersService.deleteUserMe).mockImplementation(
       () =>
         new Promise((resolve) => {
-          setTimeout(() => resolve({}), 100)
-        }),
+          setTimeout(() => resolve({ message: "Account deleted" }), 100)
+        }) as unknown as ReturnType<typeof UsersService.deleteUserMe>,
     )
 
     const user = userEvent.setup()
@@ -283,7 +283,7 @@ describe("DeleteConfirmation", () => {
 
   it("invalidates currentUser query after settled", async () => {
     const { UsersService } = await import("@/client")
-    vi.mocked(UsersService.deleteUserMe).mockResolvedValueOnce({})
+    vi.mocked(UsersService.deleteUserMe).mockResolvedValueOnce({ message: "Account deleted" })
 
     const queryClient = createQueryClient()
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries")

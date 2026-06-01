@@ -103,6 +103,7 @@ function makeInteraction(
     mood: null,
     duration_minutes: null,
     occurred_at: new Date().toISOString(),
+    created_at: "2026-01-01T00:00:00Z",
     ...overrides,
   }
 }

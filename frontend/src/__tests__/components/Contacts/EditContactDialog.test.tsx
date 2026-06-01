@@ -260,7 +260,10 @@ describe("EditContactDialog", () => {
     const { ContactsService } = await import("@/client")
     const mockUpdate = vi.mocked(ContactsService.updateContact)
     mockUpdate.mockImplementation(
-      () => new Promise((r) => setTimeout(r, 1000)),
+      () =>
+        new Promise((r) => setTimeout(r, 1000)) as unknown as ReturnType<
+          typeof ContactsService.updateContact
+        >,
     )
 
     const user = userEvent.setup()

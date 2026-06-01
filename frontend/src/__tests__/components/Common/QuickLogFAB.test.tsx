@@ -33,7 +33,7 @@ vi.mock("@/hooks/useCustomToast", () => ({
 vi.mock("@/components/ui/popover", () => {
   const React = require("react")
   return {
-    Popover: ({ open, onOpenChange, children }: any) => {
+    Popover: ({ open, children }: any) => {
       return (
         <div data-testid="popover-root" data-open={open?.toString()}>
           {Array.isArray(children) ? children : [children]}
@@ -446,7 +446,7 @@ describe("QuickLogFAB", () => {
       data: [contact],
     } as any)
 
-    const { container } = renderWithProviders(<QuickLogFAB />)
+    renderWithProviders(<QuickLogFAB />)
 
     // Wait for contacts to load
     await waitFor(() => {

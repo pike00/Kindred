@@ -1,5 +1,4 @@
 import { fireEvent, screen, waitFor } from "@testing-library/react"
-import userEvent from "@testing-library/user-event"
 import { describe, beforeEach, it, expect, vi, afterEach } from "vitest"
 
 import { ContactsService } from "@/client"
@@ -12,20 +11,6 @@ vi.mock("@/client", () => ({
     getContact: vi.fn(),
   },
 }))
-
-// Helper to simulate user typing (which triggers onChange and updates value)
-function changeTextareaValue(
-  textarea: HTMLTextAreaElement,
-  newValue: string,
-  rerender: (ui: React.ReactElement) => void,
-  onChange: (value: string) => void,
-  currentValue: string,
-) {
-  fireEvent.change(textarea, { target: { value: newValue } })
-  rerender(
-    <MentionTextarea value={newValue} onChange={onChange} />,
-  )
-}
 
 describe("MentionTextarea", () => {
   beforeEach(() => {
@@ -127,6 +112,7 @@ describe("MentionTextarea", () => {
       data: [
         makeContact({ id: "1", first_name: "Alice", last_name: "Smith" }),
       ],
+      count: 1,
     })
 
     renderWithProviders(
@@ -149,6 +135,7 @@ describe("MentionTextarea", () => {
       data: [
         makeContact({ id: "1", first_name: "Alice", last_name: "Smith" }),
       ],
+      count: 1,
     })
 
     const handleChange = vi.fn()
@@ -179,6 +166,7 @@ describe("MentionTextarea", () => {
         makeContact({ id: "1", first_name: "Alice", last_name: "Smith" }),
         makeContact({ id: "2", first_name: "Bob", last_name: "Jones" }),
       ],
+      count: 2,
     })
 
     const handleChange = vi.fn()
@@ -204,6 +192,7 @@ describe("MentionTextarea", () => {
       data: [
         makeContact({ id: "1", first_name: "Alice", last_name: "Smith" }),
       ],
+      count: 1,
     })
 
     renderWithProviders(
@@ -221,6 +210,7 @@ describe("MentionTextarea", () => {
         makeContact({ id: "1", first_name: "Alice", last_name: "Smith" }),
         makeContact({ id: "2", first_name: "Bob", last_name: "Jones" }),
       ],
+      count: 2,
     })
 
     const handleChange = vi.fn()
@@ -247,6 +237,7 @@ describe("MentionTextarea", () => {
       data: [
         makeContact({ id: "1", first_name: "Alice", last_name: null }),
       ],
+      count: 1,
     })
 
     const handleChange = vi.fn()
@@ -270,8 +261,9 @@ describe("MentionTextarea", () => {
   it("shows 'Unnamed contact' when contact has no name", async () => {
     vi.mocked(ContactsService.listContacts).mockResolvedValue({
       data: [
-        makeContact({ id: "1", first_name: null, last_name: null }),
+        makeContact({ id: "1", first_name: "", last_name: null }),
       ],
+      count: 1,
     })
 
     const handleChange = vi.fn()
@@ -302,6 +294,7 @@ describe("MentionTextarea", () => {
         makeContact({ id: "1", first_name: "Bob", last_name: "Smith" }),
         makeContact({ id: "2", first_name: "Alice", last_name: "Jones" }),
       ],
+      count: 2,
     })
 
     const handleChange = vi.fn()
@@ -329,6 +322,7 @@ describe("MentionTextarea", () => {
         makeContact({ id: "1", first_name: "Bob", last_name: "Anderson" }),
         makeContact({ id: "2", first_name: "Charlie", last_name: "Smith" }),
       ],
+      count: 2,
     })
 
     const handleChange = vi.fn()
@@ -366,6 +360,7 @@ describe("MentionTextarea", () => {
           company: null,
         }),
       ],
+      count: 2,
     })
 
     const handleChange = vi.fn()
@@ -393,6 +388,7 @@ describe("MentionTextarea", () => {
         makeContact({ id: "1", first_name: "Alice", last_name: "Smith" }),
         makeContact({ id: "2", first_name: "Bob", last_name: "Jones" }),
       ],
+      count: 2,
     })
 
     const handleChange = vi.fn()
@@ -424,6 +420,7 @@ describe("MentionTextarea", () => {
 
     vi.mocked(ContactsService.listContacts).mockResolvedValue({
       data: contacts,
+      count: contacts.length,
     })
 
     const handleChange = vi.fn()
@@ -455,6 +452,7 @@ describe("MentionTextarea", () => {
           company: "Acme Corp",
         }),
       ],
+      count: 1,
     })
 
     const handleChange = vi.fn()
@@ -485,6 +483,7 @@ describe("MentionTextarea", () => {
           company: null,
         }),
       ],
+      count: 1,
     })
 
     const handleChange = vi.fn()
@@ -519,6 +518,7 @@ describe("MentionTextarea", () => {
         makeContact({ id: "1", first_name: "Alice", last_name: "Smith" }),
         makeContact({ id: "2", first_name: "Bob", last_name: "Jones" }),
       ],
+      count: 2,
     })
 
     const handleChange = vi.fn()
@@ -547,6 +547,7 @@ describe("MentionTextarea", () => {
         makeContact({ id: "2", first_name: "Bob", last_name: "Jones" }),
         makeContact({ id: "3", first_name: "Charlie", last_name: "Brown" }),
       ],
+      count: 3,
     })
 
     const handleChange = vi.fn()
@@ -600,6 +601,7 @@ describe("MentionTextarea", () => {
         makeContact({ id: "1", first_name: "Alice", last_name: "Smith" }),
         makeContact({ id: "2", first_name: "Bob", last_name: "Jones" }),
       ],
+      count: 2,
     })
 
     const handleChange = vi.fn()
@@ -635,6 +637,7 @@ describe("MentionTextarea", () => {
         makeContact({ id: "1", first_name: "Alice", last_name: "Smith" }),
         makeContact({ id: "2", first_name: "Bob", last_name: "Jones" }),
       ],
+      count: 2,
     })
 
     const handleChange = vi.fn()
@@ -677,6 +680,7 @@ describe("MentionTextarea", () => {
         makeContact({ id: "1", first_name: "Alice", last_name: "Smith" }),
         makeContact({ id: "2", first_name: "Bob", last_name: "Jones" }),
       ],
+      count: 2,
     })
 
     const handleChange = vi.fn()
@@ -713,6 +717,7 @@ describe("MentionTextarea", () => {
         makeContact({ id: "2", first_name: "Bob", last_name: "Jones" }),
         makeContact({ id: "3", first_name: "Charlie", last_name: "Brown" }),
       ],
+      count: 3,
     })
 
     const handleChange = vi.fn()
@@ -755,6 +760,7 @@ describe("MentionTextarea", () => {
         makeContact({ id: "1", first_name: "Alice", last_name: "Smith" }),
         makeContact({ id: "2", first_name: "Bob", last_name: "Jones" }),
       ],
+      count: 2,
     })
 
     const handleChange = vi.fn()
@@ -789,6 +795,7 @@ describe("MentionTextarea", () => {
       data: [
         makeContact({ id: "alice-123", first_name: "Alice", last_name: "Smith" }),
       ],
+      count: 1,
     })
 
     const { rerender } = renderWithProviders(
@@ -819,6 +826,7 @@ describe("MentionTextarea", () => {
       data: [
         makeContact({ id: "alice-123", first_name: "Alice", last_name: "Smith" }),
       ],
+      count: 1,
     })
 
     const { rerender } = renderWithProviders(
@@ -852,6 +860,7 @@ describe("MentionTextarea", () => {
       data: [
         makeContact({ id: "bob-456", first_name: "Bob", last_name: "Jones" }),
       ],
+      count: 1,
     })
 
     const { rerender } = renderWithProviders(
@@ -882,6 +891,7 @@ describe("MentionTextarea", () => {
       data: [
         makeContact({ id: "alice-123", first_name: "Alice", last_name: "Smith" }),
       ],
+      count: 1,
     })
 
     const { rerender } = renderWithProviders(
@@ -913,6 +923,7 @@ describe("MentionTextarea", () => {
       data: [
         makeContact({ id: "1", first_name: "Alice", last_name: "Smith" }),
       ],
+      count: 1,
     })
 
     const { rerender } = renderWithProviders(
@@ -943,6 +954,7 @@ describe("MentionTextarea", () => {
       data: [
         makeContact({ id: "alice-123", first_name: "Alice", last_name: "Smith" }),
       ],
+      count: 1,
     })
 
     const { rerender } = renderWithProviders(
@@ -993,6 +1005,7 @@ describe("MentionTextarea", () => {
       data: [
         makeContact({ id: "1", first_name: "Alice", last_name: "Smith" }),
       ],
+      count: 1,
     })
 
     const { rerender } = renderWithProviders(
@@ -1027,6 +1040,7 @@ describe("MentionTextarea", () => {
       data: [
         makeContact({ id: "1", first_name: "Alice", last_name: "Smith" }),
       ],
+      count: 1,
     })
 
     const { rerender } = renderWithProviders(
@@ -1070,6 +1084,7 @@ describe("MentionTextarea", () => {
         makeContact({ id: "alice-123", first_name: "Alice", last_name: "Smith" }),
         makeContact({ id: "bob-456", first_name: "Bob", last_name: "Jones" }),
       ],
+      count: 2,
     })
 
     const { rerender } = renderWithProviders(
@@ -1105,6 +1120,7 @@ describe("MentionTextarea", () => {
       data: [
         makeContact({ id: "alice-123", first_name: "Alice", last_name: "Smith" }),
       ],
+      count: 1,
     })
 
     const { rerender } = renderWithProviders(
@@ -1137,6 +1153,7 @@ describe("MentionTextarea", () => {
       data: [
         makeContact({ id: "alice-123", first_name: "Alice", last_name: "Smith" }),
       ],
+      count: 1,
     })
 
     const handleChange = vi.fn()
@@ -1174,6 +1191,7 @@ describe("MentionTextarea", () => {
       data: [
         makeContact({ id: "1", first_name: "Alice", last_name: "Smith" }),
       ],
+      count: 1,
     })
 
     const handleChange = vi.fn()
@@ -1218,6 +1236,7 @@ describe("MentionTextarea", () => {
       data: [
         makeContact({ id: "1", first_name: "Alice", last_name: "Smith" }),
       ],
+      count: 1,
     })
 
     renderWithProviders(
@@ -1244,6 +1263,7 @@ describe("MentionTextarea", () => {
       data: [
         makeContact({ id: "1", first_name: "Alice", last_name: "Smith" }),
       ],
+      count: 1,
     })
 
     const { rerender } = renderWithProviders(
@@ -1272,6 +1292,7 @@ describe("MentionTextarea", () => {
       data: [
         makeContact({ id: "1", first_name: "Alice", last_name: "Smith" }),
       ],
+      count: 1,
     })
 
     const { rerender } = renderWithProviders(

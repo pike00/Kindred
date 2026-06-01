@@ -34,7 +34,7 @@ describe("SectionHeading", () => {
   })
 
   it("does not render count when count is null", () => {
-    render(<SectionHeading icon={Heart} title="Contacts" count={null} />)
+    render(<SectionHeading icon={Heart} title="Contacts" count={undefined} />)
     const countElements = screen.queryAllByText(/^\d+$/)
     // Filter to ensure we're not matching the count
     const counts = countElements.filter((el) => el.textContent?.match(/^\d+$/))

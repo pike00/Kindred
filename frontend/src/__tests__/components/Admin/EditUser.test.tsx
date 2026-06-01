@@ -503,7 +503,7 @@ describe("EditUser", () => {
         () =>
           new Promise((resolve) => {
             resolveUpdate = resolve
-          }),
+          }) as unknown as ReturnType<typeof UsersService.updateUser>,
       )
 
       renderWithProviders(
@@ -539,7 +539,7 @@ describe("EditUser", () => {
         () =>
           new Promise((resolve) => {
             resolveUpdate = resolve
-          }),
+          }) as unknown as ReturnType<typeof UsersService.updateUser>,
       )
 
       renderWithProviders(
@@ -852,10 +852,9 @@ describe("EditUser", () => {
     it("handles updating different user instances", async () => {
       const user = userEvent.setup()
       const user1 = makeUser({ id: "user-1", full_name: "User One" })
-      const user2 = makeUser({ id: "user-2", full_name: "User Two" })
       vi.mocked(UsersService.updateUser).mockResolvedValue(user1)
 
-      const { rerender } = renderWithProviders(
+      renderWithProviders(
         <EditUserWrapper user={user1} onSuccess={mockOnSuccess} />,
       )
 

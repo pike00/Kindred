@@ -8,12 +8,12 @@ import { AddressesService } from "@/client"
 
 // Mock dialog to render inline
 const mockDialog = vi.hoisted(() => ({
-  Dialog: ({ children, open }: any) => {
+  Dialog: ({ children }: any) => {
     const arr = React.Children.toArray(children)
     // Always render content for testing (both trigger and content)
     return React.createElement("div", null, arr[0], arr[1])
   },
-  DialogTrigger: ({ children, asChild }: any) =>
+  DialogTrigger: ({ children }: any) =>
     React.createElement("div", null, children),
   DialogContent: ({ children }: any) =>
     React.createElement("div", { role: "dialog" }, children),
@@ -25,7 +25,7 @@ const mockDialog = vi.hoisted(() => ({
     React.createElement("p", null, children),
   DialogFooter: ({ children }: any) =>
     React.createElement("div", null, children),
-  DialogClose: ({ children, asChild }: any) =>
+  DialogClose: ({ children }: any) =>
     React.createElement("div", null, children),
 }))
 
@@ -71,7 +71,7 @@ vi.mock("@/components/Common/RowActionsMenu", () => ({
 
 // Mock EmptyState
 vi.mock("@/components/Common/EmptyState", () => ({
-  EmptyState: ({ title, description }: any) =>
+  EmptyState: ({ title }: any) =>
     React.createElement("div", { "data-testid": "empty-state" }, title),
 }))
 
@@ -253,9 +253,6 @@ describe("AddressesCard", () => {
   })
 
   it("shows error toast on address creation failure", async () => {
-    const { showErrorToast } = await import("@/hooks/useCustomToast").then(
-      (m) => m.default(),
-    )
     mockAddressService.listAddresses.mockResolvedValue({ data: [] })
     mockAddressService.createAddressRoute.mockRejectedValue(
       new Error("Network error"),

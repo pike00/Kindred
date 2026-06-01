@@ -1,6 +1,18 @@
+import type { ColumnDef } from "@tanstack/react-table"
 import { describe, expect, it, vi } from "vitest"
+import type { ContactPublic } from "@/client"
 import { columns } from "@/components/Contacts/columns"
 import { makeContact, makeTag } from "@/test/helpers"
+
+// ColumnDef.cell is a union (ReactNode | render fn); narrow to the render fn
+// form to invoke it in tests. accessorKey only exists on the accessor variant.
+type CellFn = (ctx: unknown) => unknown
+function cellOf(col: ColumnDef<ContactPublic>): CellFn | undefined {
+  return col.cell as CellFn | undefined
+}
+function accessorKeyOf(col: ColumnDef<ContactPublic>): string | undefined {
+  return (col as { accessorKey?: string }).accessorKey
+}
 
 // Mock ContactActionsMenu
 vi.mock("@/components/Contacts/ContactActionsMenu", () => ({
@@ -44,13 +56,13 @@ describe("columns.tsx", () => {
     it("has Name column as first column", () => {
       const nameColumn = columns[0]
       expect(nameColumn.header).toBe("Name")
-      expect(nameColumn.accessorKey).toBe("first_name")
+      expect(accessorKeyOf(nameColumn)).toBe("first_name")
     })
 
     it("has Tags column", () => {
       const tagsColumn = columns.find((col) => col.header === "Tags")
       expect(tagsColumn).toBeDefined()
-      expect(tagsColumn?.accessorKey).toBe("tags")
+      expect(tagsColumn && accessorKeyOf(tagsColumn)).toBe("tags")
     })
 
     it("has Last Contacted column", () => {
@@ -58,12 +70,14 @@ describe("columns.tsx", () => {
         (col) => col.header === "Last Contacted",
       )
       expect(lastContactedColumn).toBeDefined()
-      expect(lastContactedColumn?.accessorKey).toBe("last_contacted_at")
+      expect(lastContactedColumn && accessorKeyOf(lastContactedColumn)).toBe(
+        "last_contacted_at",
+      )
     })
 
     it("has is_favorite column with empty header", () => {
       const favoriteColumn = columns.find(
-        (col) => col.header === "" && col.accessorKey === "is_favorite",
+        (col) => col.header === "" && accessorKeyOf(col) === "is_favorite",
       )
       expect(favoriteColumn).toBeDefined()
     })
@@ -92,7 +106,7 @@ describe("columns.tsx", () => {
       })
       const row = { original: contact }
 
-      const rendered = nameColumn.cell?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
+      const rendered = cellOf(nameColumn)?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
 
       expect(rendered).toBeDefined()
     })
@@ -101,7 +115,7 @@ describe("columns.tsx", () => {
       const nameColumn = columns[0]
       const contact = makeContact({
         id: "1",
-        first_name: null,
+        first_name: undefined,
         last_name: null,
         middle_name: null,
         prefix: null,
@@ -109,7 +123,7 @@ describe("columns.tsx", () => {
       })
       const row = { original: contact }
 
-      const rendered = nameColumn.cell?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
+      const rendered = cellOf(nameColumn)?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
 
       expect(rendered).toBeDefined()
     })
@@ -123,7 +137,7 @@ describe("columns.tsx", () => {
       })
       const row = { original: contact }
 
-      const rendered = nameColumn.cell?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
+      const rendered = cellOf(nameColumn)?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
 
       expect(rendered).toBeDefined()
     })
@@ -137,7 +151,7 @@ describe("columns.tsx", () => {
       })
       const row = { original: contact }
 
-      const rendered = nameColumn.cell?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
+      const rendered = cellOf(nameColumn)?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
 
       expect(rendered).toBeDefined()
     })
@@ -151,7 +165,7 @@ describe("columns.tsx", () => {
       })
       const row = { original: contact }
 
-      const rendered = nameColumn.cell?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
+      const rendered = cellOf(nameColumn)?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
 
       // Should have initials "AS"
       expect(rendered).toBeDefined()
@@ -166,7 +180,7 @@ describe("columns.tsx", () => {
       })
       const row = { original: contact }
 
-      const rendered = nameColumn.cell?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
+      const rendered = cellOf(nameColumn)?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
 
       expect(rendered).toBeDefined()
     })
@@ -175,7 +189,7 @@ describe("columns.tsx", () => {
       const nameColumn = columns[0]
       const contact = makeContact({
         id: "1",
-        first_name: null,
+        first_name: undefined,
         last_name: null,
         middle_name: null,
         prefix: null,
@@ -183,7 +197,7 @@ describe("columns.tsx", () => {
       })
       const row = { original: contact }
 
-      const rendered = nameColumn.cell?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
+      const rendered = cellOf(nameColumn)?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
 
       expect(rendered).toBeDefined()
     })
@@ -198,7 +212,7 @@ describe("columns.tsx", () => {
       })
       const row = { original: contact }
 
-      const rendered = tagsColumn.cell?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
+      const rendered = cellOf(tagsColumn)?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
 
       expect(rendered).toBe("—")
     })
@@ -211,7 +225,7 @@ describe("columns.tsx", () => {
       })
       const row = { original: contact }
 
-      const rendered = tagsColumn.cell?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
+      const rendered = cellOf(tagsColumn)?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
 
       expect(rendered).toBe("—")
     })
@@ -228,7 +242,7 @@ describe("columns.tsx", () => {
       })
       const row = { original: contact }
 
-      const rendered = tagsColumn.cell?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
+      const rendered = cellOf(tagsColumn)?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
       const html = rendered as any
 
       expect(html.props.children).toBeDefined()
@@ -246,7 +260,7 @@ describe("columns.tsx", () => {
       })
       const row = { original: contact }
 
-      const rendered = tagsColumn.cell?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
+      const rendered = cellOf(tagsColumn)?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
       const html = rendered as any
 
       expect(html.props.children).toBeDefined()
@@ -264,7 +278,7 @@ describe("columns.tsx", () => {
       })
       const row = { original: contact }
 
-      const rendered = tagsColumn.cell?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
+      const rendered = cellOf(tagsColumn)?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
       const html = rendered as any
 
       // Should render 3 individual tags + 1 +2 badge
@@ -283,7 +297,7 @@ describe("columns.tsx", () => {
       })
       const row = { original: contact }
 
-      const rendered = tagsColumn.cell?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
+      const rendered = cellOf(tagsColumn)?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
       const html = rendered as any
 
       expect(html.props.children).toBeDefined()
@@ -301,7 +315,7 @@ describe("columns.tsx", () => {
       })
       const row = { original: contact }
 
-      const rendered = tagsColumn.cell?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
+      const rendered = cellOf(tagsColumn)?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
       const html = rendered as any
 
       expect(html.props.children).toBeDefined()
@@ -317,7 +331,7 @@ describe("columns.tsx", () => {
       })
       const row = { original: contact }
 
-      const rendered = tagsColumn.cell?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
+      const rendered = cellOf(tagsColumn)?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
       const html = rendered as any
 
       expect(html.props.children).toBeDefined()
@@ -335,7 +349,7 @@ describe("columns.tsx", () => {
       })
       const row = { original: contact }
 
-      const rendered = lastContactedColumn.cell?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
+      const rendered = cellOf(lastContactedColumn)?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
 
       expect(rendered).toBe("Never")
     })
@@ -350,7 +364,7 @@ describe("columns.tsx", () => {
       })
       const row = { original: contact }
 
-      const rendered = lastContactedColumn.cell?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
+      const rendered = cellOf(lastContactedColumn)?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
 
       expect(typeof rendered).toBe("string")
       expect(rendered).not.toBe("Never")
@@ -366,11 +380,11 @@ describe("columns.tsx", () => {
       })
       const row = { original: contact }
 
-      const rendered = lastContactedColumn.cell?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
+      const rendered = cellOf(lastContactedColumn)?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
 
       // Should be a valid date string (format depends on locale)
       expect(typeof rendered).toBe("string")
-      expect(rendered.length).toBeGreaterThan(0)
+      expect((rendered as string).length).toBeGreaterThan(0)
     })
 
     it("handles different date formats", () => {
@@ -390,7 +404,7 @@ describe("columns.tsx", () => {
         })
         const row = { original: contact }
 
-        const rendered = lastContactedColumn.cell?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
+        const rendered = cellOf(lastContactedColumn)?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
 
         expect(typeof rendered).toBe("string")
         expect(rendered).not.toBe("Never")
@@ -401,60 +415,60 @@ describe("columns.tsx", () => {
   describe("is_favorite column cell", () => {
     it("renders star icon when is_favorite is true", () => {
       const favoriteColumn = columns.find(
-        (col) => col.header === "" && col.accessorKey === "is_favorite",
+        (col) => col.header === "" && accessorKeyOf(col) === "is_favorite",
       )!
       const contact = makeContact({
         id: "1",
-        is_starred: true,
+        is_favorite: true,
       })
       const row = { original: contact }
 
-      const rendered = favoriteColumn.cell?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
+      const rendered = cellOf(favoriteColumn)?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
 
       expect(rendered).toBeDefined()
     })
 
     it("renders empty when is_favorite is false", () => {
       const favoriteColumn = columns.find(
-        (col) => col.header === "" && col.accessorKey === "is_favorite",
+        (col) => col.header === "" && accessorKeyOf(col) === "is_favorite",
       )!
       const contact = makeContact({
         id: "1",
-        is_starred: false,
+        is_favorite: false,
       })
       const row = { original: contact }
 
-      const rendered = favoriteColumn.cell?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
+      const rendered = cellOf(favoriteColumn)?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
 
       expect(rendered).toBeDefined()
     })
 
     it("renders empty div structure when not favorite", () => {
       const favoriteColumn = columns.find(
-        (col) => col.header === "" && col.accessorKey === "is_favorite",
+        (col) => col.header === "" && accessorKeyOf(col) === "is_favorite",
       )!
       const contact = makeContact({
         id: "1",
-        is_starred: false,
+        is_favorite: false,
       })
       const row = { original: contact }
 
-      const rendered = favoriteColumn.cell?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
+      const rendered = cellOf(favoriteColumn)?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
 
       expect(rendered).toBeDefined()
     })
 
     it("has correct alignment classNames", () => {
       const favoriteColumn = columns.find(
-        (col) => col.header === "" && col.accessorKey === "is_favorite",
+        (col) => col.header === "" && accessorKeyOf(col) === "is_favorite",
       )!
       const contact = makeContact({
         id: "1",
-        is_starred: true,
+        is_favorite: true,
       })
       const row = { original: contact }
 
-      const rendered = favoriteColumn.cell?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
+      const rendered = cellOf(favoriteColumn)?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
 
       expect(rendered).toBeDefined()
     })
@@ -469,7 +483,7 @@ describe("columns.tsx", () => {
       })
       const row = { original: contact }
 
-      const rendered = actionsColumn.cell?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
+      const rendered = cellOf(actionsColumn)?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
 
       expect(rendered).toBeDefined()
     })
@@ -483,7 +497,7 @@ describe("columns.tsx", () => {
       })
       const row = { original: contact }
 
-      const rendered = actionsColumn.cell?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
+      const rendered = cellOf(actionsColumn)?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
 
       expect(rendered).toBeDefined()
     })
@@ -502,13 +516,13 @@ describe("columns.tsx", () => {
         title: null,
         company: null,
         nickname: null,
-        tags: null,
+        tags: undefined,
         last_contacted_at: null,
-        is_starred: false,
+        is_favorite: false,
       })
       const row = { original: contact }
 
-      const rendered = nameColumn.cell?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
+      const rendered = cellOf(nameColumn)?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
 
       expect(rendered).toBeDefined()
     })
@@ -528,11 +542,11 @@ describe("columns.tsx", () => {
         company: "Acme Corp",
         tags,
         last_contacted_at: "2025-05-15T10:00:00Z",
-        is_starred: true,
+        is_favorite: true,
       })
       const row = { original: contact }
 
-      const rendered = nameColumn.cell?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
+      const rendered = cellOf(nameColumn)?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
 
       expect(rendered).toBeDefined()
     })
@@ -549,7 +563,7 @@ describe("columns.tsx", () => {
       })
       const row = { original: contact }
 
-      const rendered = nameColumn.cell?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
+      const rendered = cellOf(nameColumn)?.({ row, column: null, getValue: () => null, renderingCell: false } as any)
 
       expect(rendered).toBeDefined()
     })

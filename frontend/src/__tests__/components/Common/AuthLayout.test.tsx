@@ -5,7 +5,7 @@ import { AuthLayout } from "@/components/Common/AuthLayout"
 
 // Mock Logo component
 vi.mock("@/components/Common/Logo", () => ({
-  Logo: ({ variant, className, asLink }: any) => (
+  Logo: ({ variant, className }: any) => (
     <div data-testid="logo" data-variant={variant} className={className}>
       Logo
     </div>
@@ -130,7 +130,7 @@ describe("AuthLayout", () => {
     const leftSide = container.querySelector(".hidden.lg\\:flex")
     expect(leftSide).toHaveClass("lg:items-center")
     expect(leftSide).toHaveClass("lg:justify-center")
-    expect(leftSide.querySelector("[data-testid='logo']")).toBeInTheDocument()
+    expect(leftSide!.querySelector("[data-testid='logo']")).toBeInTheDocument()
   })
 
   it("right side contains appearance toggle, children, and footer", () => {
@@ -268,7 +268,7 @@ describe("AuthLayout", () => {
   })
 
   it("logo has correct text size", () => {
-    const { container } = renderWithProviders(
+    renderWithProviders(
       <AuthLayout>
         <div>Test Content</div>
       </AuthLayout>
@@ -279,7 +279,7 @@ describe("AuthLayout", () => {
   })
 
   it("logo has correct gap", () => {
-    const { container } = renderWithProviders(
+    renderWithProviders(
       <AuthLayout>
         <div>Test Content</div>
       </AuthLayout>

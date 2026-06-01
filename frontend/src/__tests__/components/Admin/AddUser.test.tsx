@@ -377,7 +377,7 @@ describe("AddUser", () => {
         () =>
           new Promise((resolve) => {
             resolveCreateUser = resolve
-          }),
+          }) as unknown as ReturnType<typeof UsersService.createUser>,
       )
 
       renderWithProviders(<AddUser />)
@@ -413,7 +413,7 @@ describe("AddUser", () => {
         () =>
           new Promise((resolve) => {
             resolveCreateUser = resolve
-          }),
+          }) as unknown as ReturnType<typeof UsersService.createUser>,
       )
 
       renderWithProviders(<AddUser />)
@@ -541,7 +541,7 @@ describe("AddUser", () => {
       const user = userEvent.setup()
       vi.mocked(UsersService.createUser).mockResolvedValue(makeUser())
 
-      const { queryClient } = renderWithProviders(<AddUser />)
+      renderWithProviders(<AddUser />)
 
       const trigger = screen.getByRole("button", { name: /Add User/i })
       await user.click(trigger)

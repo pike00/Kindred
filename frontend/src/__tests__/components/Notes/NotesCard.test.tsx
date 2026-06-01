@@ -54,7 +54,7 @@ vi.mock("@/components/Mentions/MentionTextarea", () => ({
 
 // Mock Dialog (render inline so it's visible in tests)
 vi.mock("@/components/ui/dialog", () => ({
-  Dialog: ({ open, onOpenChange, children }: any) => (
+  Dialog: ({ open, children }: any) => (
     open ? <div data-testid="dialog">{children}</div> : null
   ),
   DialogContent: ({ children, className }: any) => (
@@ -73,12 +73,12 @@ vi.mock("@/components/ui/dialog", () => ({
       {children}
     </div>
   ),
-  DialogClose: ({ children, asChild }: any) => <>{children}</>,
+  DialogClose: ({ children }: any) => <>{children}</>,
 }))
 
 // Mock EmptyState
 vi.mock("@/components/Common/EmptyState", () => ({
-  EmptyState: ({ icon: Icon, title, description }: any) => (
+  EmptyState: ({ title, description }: any) => (
     <div data-testid="empty-state">
       <h3>{title}</h3>
       <p>{description}</p>
@@ -788,7 +788,7 @@ describe("NotesCard", () => {
 
   it("invalidates query after note creation", async () => {
     const user = userEvent.setup()
-    const { queryClient } = renderWithProviders(<NotesCard contactId="c1" />)
+    renderWithProviders(<NotesCard contactId="c1" />)
 
     const textarea = screen.getByTestId("mention-textarea")
     await user.type(textarea, "Test note")

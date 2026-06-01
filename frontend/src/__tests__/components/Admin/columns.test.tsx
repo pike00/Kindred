@@ -68,25 +68,25 @@ describe("columns", () => {
     })
 
     it("has full_name column", () => {
-      const fullNameCol = columns.find((col) => col.accessorKey === "full_name")
+      const fullNameCol = columns.find((col) => (col as { accessorKey?: string }).accessorKey === "full_name")
       expect(fullNameCol).toBeDefined()
       expect(fullNameCol?.header).toBe("Full Name")
     })
 
     it("has email column", () => {
-      const emailCol = columns.find((col) => col.accessorKey === "email")
+      const emailCol = columns.find((col) => (col as { accessorKey?: string }).accessorKey === "email")
       expect(emailCol).toBeDefined()
       expect(emailCol?.header).toBe("Email")
     })
 
     it("has is_superuser column", () => {
-      const roleCol = columns.find((col) => col.accessorKey === "is_superuser")
+      const roleCol = columns.find((col) => (col as { accessorKey?: string }).accessorKey === "is_superuser")
       expect(roleCol).toBeDefined()
       expect(roleCol?.header).toBe("Role")
     })
 
     it("has is_active column", () => {
-      const statusCol = columns.find((col) => col.accessorKey === "is_active")
+      const statusCol = columns.find((col) => (col as { accessorKey?: string }).accessorKey === "is_active")
       expect(statusCol).toBeDefined()
       expect(statusCol?.header).toBe("Status")
     })
@@ -102,7 +102,7 @@ describe("columns", () => {
 
   describe("full_name column cell", () => {
     it("renders full name when provided", () => {
-      const fullNameCol = columns.find((col) => col.accessorKey === "full_name")
+      const fullNameCol = columns.find((col) => (col as { accessorKey?: string }).accessorKey === "full_name")
       const cellRender = fullNameCol?.cell as any
 
       const { container } = render(cellRender({ row: mockRow }))
@@ -116,7 +116,7 @@ describe("columns", () => {
         original: { ...mockRow.original, full_name: null },
       }
 
-      const fullNameCol = columns.find((col) => col.accessorKey === "full_name")
+      const fullNameCol = columns.find((col) => (col as { accessorKey?: string }).accessorKey === "full_name")
       const cellRender = fullNameCol?.cell as any
 
       const { container } = render(cellRender({ row: rowWithoutName }))
@@ -130,7 +130,7 @@ describe("columns", () => {
         original: { ...mockRow.original, full_name: "" },
       }
 
-      const fullNameCol = columns.find((col) => col.accessorKey === "full_name")
+      const fullNameCol = columns.find((col) => (col as { accessorKey?: string }).accessorKey === "full_name")
       const cellRender = fullNameCol?.cell as any
 
       const { container } = render(cellRender({ row: rowWithEmptyName }))
@@ -144,7 +144,7 @@ describe("columns", () => {
         original: { ...mockRow.original, full_name: null },
       }
 
-      const fullNameCol = columns.find((col) => col.accessorKey === "full_name")
+      const fullNameCol = columns.find((col) => (col as { accessorKey?: string }).accessorKey === "full_name")
       const cellRender = fullNameCol?.cell as any
 
       const { container } = render(cellRender({ row: rowWithoutName }))
@@ -154,7 +154,7 @@ describe("columns", () => {
     })
 
     it("applies font-medium class to actual name", () => {
-      const fullNameCol = columns.find((col) => col.accessorKey === "full_name")
+      const fullNameCol = columns.find((col) => (col as { accessorKey?: string }).accessorKey === "full_name")
       const cellRender = fullNameCol?.cell as any
 
       const { container } = render(cellRender({ row: mockRow }))
@@ -169,7 +169,7 @@ describe("columns", () => {
         original: { ...mockRow.original, isCurrentUser: true },
       }
 
-      const fullNameCol = columns.find((col) => col.accessorKey === "full_name")
+      const fullNameCol = columns.find((col) => (col as { accessorKey?: string }).accessorKey === "full_name")
       const cellRender = fullNameCol?.cell as any
 
       const { container } = render(cellRender({ row: currentUserRow }))
@@ -183,7 +183,7 @@ describe("columns", () => {
         original: { ...mockRow.original, isCurrentUser: false },
       }
 
-      const fullNameCol = columns.find((col) => col.accessorKey === "full_name")
+      const fullNameCol = columns.find((col) => (col as { accessorKey?: string }).accessorKey === "full_name")
       const cellRender = fullNameCol?.cell as any
 
       const { container } = render(cellRender({ row: otherUserRow }))
@@ -197,7 +197,7 @@ describe("columns", () => {
         original: { ...mockRow.original, isCurrentUser: true },
       }
 
-      const fullNameCol = columns.find((col) => col.accessorKey === "full_name")
+      const fullNameCol = columns.find((col) => (col as { accessorKey?: string }).accessorKey === "full_name")
       const cellRender = fullNameCol?.cell as any
 
       const { container } = render(cellRender({ row: currentUserRow }))
@@ -213,7 +213,7 @@ describe("columns", () => {
 
   describe("email column cell", () => {
     it("renders email address", () => {
-      const emailCol = columns.find((col) => col.accessorKey === "email")
+      const emailCol = columns.find((col) => (col as { accessorKey?: string }).accessorKey === "email")
       const cellRender = emailCol?.cell as any
 
       const { container } = render(cellRender({ row: mockRow }))
@@ -222,7 +222,7 @@ describe("columns", () => {
     })
 
     it("applies muted-foreground class", () => {
-      const emailCol = columns.find((col) => col.accessorKey === "email")
+      const emailCol = columns.find((col) => (col as { accessorKey?: string }).accessorKey === "email")
       const cellRender = emailCol?.cell as any
 
       const { container } = render(cellRender({ row: mockRow }))
@@ -232,7 +232,7 @@ describe("columns", () => {
     })
 
     it("renders different email addresses correctly", () => {
-      const emailCol = columns.find((col) => col.accessorKey === "email")
+      const emailCol = columns.find((col) => (col as { accessorKey?: string }).accessorKey === "email")
       const cellRender = emailCol?.cell as any
 
       const testRows = [
@@ -250,7 +250,7 @@ describe("columns", () => {
 
   describe("is_superuser (role) column cell", () => {
     it("renders Superuser badge when is_superuser is true", () => {
-      const roleCol = columns.find((col) => col.accessorKey === "is_superuser")
+      const roleCol = columns.find((col) => (col as { accessorKey?: string }).accessorKey === "is_superuser")
       const cellRender = roleCol?.cell as any
 
       const superUserRow = {
@@ -264,7 +264,7 @@ describe("columns", () => {
     })
 
     it("renders User badge when is_superuser is false", () => {
-      const roleCol = columns.find((col) => col.accessorKey === "is_superuser")
+      const roleCol = columns.find((col) => (col as { accessorKey?: string }).accessorKey === "is_superuser")
       const cellRender = roleCol?.cell as any
 
       const regularUserRow = {
@@ -278,7 +278,7 @@ describe("columns", () => {
     })
 
     it("Superuser badge has default variant", () => {
-      const roleCol = columns.find((col) => col.accessorKey === "is_superuser")
+      const roleCol = columns.find((col) => (col as { accessorKey?: string }).accessorKey === "is_superuser")
       const cellRender = roleCol?.cell as any
 
       const superUserRow = {
@@ -292,7 +292,7 @@ describe("columns", () => {
     })
 
     it("User badge has secondary variant", () => {
-      const roleCol = columns.find((col) => col.accessorKey === "is_superuser")
+      const roleCol = columns.find((col) => (col as { accessorKey?: string }).accessorKey === "is_superuser")
       const cellRender = roleCol?.cell as any
 
       const regularUserRow = {
@@ -309,7 +309,7 @@ describe("columns", () => {
 
   describe("is_active (status) column cell", () => {
     it("renders Active status when is_active is true", () => {
-      const statusCol = columns.find((col) => col.accessorKey === "is_active")
+      const statusCol = columns.find((col) => (col as { accessorKey?: string }).accessorKey === "is_active")
       const cellRender = statusCol?.cell as any
 
       const activeUserRow = {
@@ -323,7 +323,7 @@ describe("columns", () => {
     })
 
     it("renders Inactive status when is_active is false", () => {
-      const statusCol = columns.find((col) => col.accessorKey === "is_active")
+      const statusCol = columns.find((col) => (col as { accessorKey?: string }).accessorKey === "is_active")
       const cellRender = statusCol?.cell as any
 
       const inactiveUserRow = {
@@ -337,7 +337,7 @@ describe("columns", () => {
     })
 
     it("renders green dot for active status", () => {
-      const statusCol = columns.find((col) => col.accessorKey === "is_active")
+      const statusCol = columns.find((col) => (col as { accessorKey?: string }).accessorKey === "is_active")
       const cellRender = statusCol?.cell as any
 
       const activeUserRow = {
@@ -354,7 +354,7 @@ describe("columns", () => {
     })
 
     it("renders gray dot for inactive status", () => {
-      const statusCol = columns.find((col) => col.accessorKey === "is_active")
+      const statusCol = columns.find((col) => (col as { accessorKey?: string }).accessorKey === "is_active")
       const cellRender = statusCol?.cell as any
 
       const inactiveUserRow = {
@@ -369,7 +369,7 @@ describe("columns", () => {
     })
 
     it("applies muted-foreground class to inactive text", () => {
-      const statusCol = columns.find((col) => col.accessorKey === "is_active")
+      const statusCol = columns.find((col) => (col as { accessorKey?: string }).accessorKey === "is_active")
       const cellRender = statusCol?.cell as any
 
       const inactiveUserRow = {
@@ -386,7 +386,7 @@ describe("columns", () => {
     })
 
     it("does not apply muted-foreground class to active text", () => {
-      const statusCol = columns.find((col) => col.accessorKey === "is_active")
+      const statusCol = columns.find((col) => (col as { accessorKey?: string }).accessorKey === "is_active")
       const cellRender = statusCol?.cell as any
 
       const activeUserRow = {
@@ -504,7 +504,7 @@ describe("columns", () => {
     })
 
     it("handles special characters in full_name", () => {
-      const fullNameCol = columns.find((col) => col.accessorKey === "full_name")
+      const fullNameCol = columns.find((col) => (col as { accessorKey?: string }).accessorKey === "full_name")
       const cellRender = fullNameCol?.cell as any
 
       const specialNameRow = {
@@ -521,7 +521,7 @@ describe("columns", () => {
     })
 
     it("handles long email addresses", () => {
-      const emailCol = columns.find((col) => col.accessorKey === "email")
+      const emailCol = columns.find((col) => (col as { accessorKey?: string }).accessorKey === "email")
       const cellRender = emailCol?.cell as any
 
       const longEmailRow = {
@@ -540,7 +540,7 @@ describe("columns", () => {
     })
 
     it("handles all status combinations", () => {
-      const statusCol = columns.find((col) => col.accessorKey === "is_active")
+      const statusCol = columns.find((col) => (col as { accessorKey?: string }).accessorKey === "is_active")
       const cellRender = statusCol?.cell as any
 
       const combinations = [
@@ -560,7 +560,7 @@ describe("columns", () => {
     })
 
     it("handles all role combinations", () => {
-      const roleCol = columns.find((col) => col.accessorKey === "is_superuser")
+      const roleCol = columns.find((col) => (col as { accessorKey?: string }).accessorKey === "is_superuser")
       const cellRender = roleCol?.cell as any
 
       const combinations = [

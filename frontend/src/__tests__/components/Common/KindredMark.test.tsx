@@ -47,7 +47,7 @@ describe("KindredMark", () => {
   it("sets WebkitMaskImage style property", () => {
     const { container } = render(<KindredMark />)
     const span = container.querySelector("span") as HTMLSpanElement
-    expect(span.style.WebkitMaskImage).toBe(
+    expect(span.style.webkitMaskImage).toBe(
       'url("/assets/icons/kindred-mark.svg")',
     )
   })
@@ -61,7 +61,7 @@ describe("KindredMark", () => {
   it("sets WebkitMaskRepeat style property", () => {
     const { container } = render(<KindredMark />)
     const span = container.querySelector("span") as HTMLSpanElement
-    expect(span.style.WebkitMaskRepeat).toBe("no-repeat")
+    expect(span.style.webkitMaskRepeat).toBe("no-repeat")
   })
 
   it("sets maskRepeat style property", () => {
@@ -73,7 +73,7 @@ describe("KindredMark", () => {
   it("sets WebkitMaskPosition style property", () => {
     const { container } = render(<KindredMark />)
     const span = container.querySelector("span") as HTMLSpanElement
-    expect(span.style.WebkitMaskPosition).toBe("center")
+    expect(span.style.webkitMaskPosition).toBe("center")
   })
 
   it("sets maskPosition style property", () => {
@@ -85,7 +85,7 @@ describe("KindredMark", () => {
   it("sets WebkitMaskSize style property", () => {
     const { container } = render(<KindredMark />)
     const span = container.querySelector("span") as HTMLSpanElement
-    expect(span.style.WebkitMaskSize).toBe("contain")
+    expect(span.style.webkitMaskSize).toBe("contain")
   })
 
   it("sets maskSize style property", () => {
@@ -140,7 +140,7 @@ describe("KindredMark", () => {
     const { container } = render(<KindredMark />)
     const span = container.querySelector("span") as HTMLSpanElement
     expect(span.style.maskRepeat).toBe("no-repeat")
-    expect(span.style.WebkitMaskRepeat).toBe("no-repeat")
+    expect(span.style.webkitMaskRepeat).toBe("no-repeat")
   })
 
   it("color is inherited from currentColor", () => {
@@ -205,12 +205,12 @@ describe("KindredMark", () => {
     const span = container.querySelector("span") as HTMLSpanElement
 
     // Webkit versions
-    expect(span.style.WebkitMaskImage).toBe(
+    expect(span.style.webkitMaskImage).toBe(
       'url("/assets/icons/kindred-mark.svg")',
     )
-    expect(span.style.WebkitMaskRepeat).toBe("no-repeat")
-    expect(span.style.WebkitMaskPosition).toBe("center")
-    expect(span.style.WebkitMaskSize).toBe("contain")
+    expect(span.style.webkitMaskRepeat).toBe("no-repeat")
+    expect(span.style.webkitMaskPosition).toBe("center")
+    expect(span.style.webkitMaskSize).toBe("contain")
 
     // Standard versions
     expect(span.style.maskImage).toBe('url("/assets/icons/kindred-mark.svg")')

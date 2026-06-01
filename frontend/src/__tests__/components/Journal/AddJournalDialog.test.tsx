@@ -230,7 +230,6 @@ describe("AddJournalDialog", () => {
     // First submission
     await user.click(screen.getByRole("button", { name: /new entry/i }))
 
-    const dateInput = screen.getByLabelText(/date \*/i) as HTMLInputElement
     const entryTextarea = screen.getByTestId(
       "mention-textarea",
     ) as HTMLTextAreaElement
@@ -268,7 +267,6 @@ describe("AddJournalDialog", () => {
 
     await user.click(screen.getByRole("button", { name: /new entry/i }))
 
-    const dateInput = screen.getByLabelText(/date \*/i)
     const entryTextarea = screen.getByTestId("mention-textarea")
     const submitButton = screen.getByRole("button", { name: /save entry/i })
 

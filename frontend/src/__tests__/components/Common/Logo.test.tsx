@@ -137,9 +137,7 @@ describe("Logo", () => {
     })
 
     it("applies custom className to icon", () => {
-      const { container } = render(
-        <Logo variant="icon" className="custom-size" />,
-      )
+      render(<Logo variant="icon" className="custom-size" />)
       const mark = screen.getByTestId("kindred-mark")
       expect(mark).toHaveClass("custom-size")
     })
@@ -266,7 +264,7 @@ describe("Logo", () => {
     })
 
     it("responsive variant marks full mark as aria-hidden", () => {
-      const { container } = render(<Logo variant="responsive" />)
+      render(<Logo variant="responsive" />)
       const marks = screen.getAllByTestId("kindred-mark")
       expect(marks.some((m) => m.getAttribute("aria-hidden") === "true")).toBe(
         true,

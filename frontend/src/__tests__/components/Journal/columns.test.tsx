@@ -2,6 +2,9 @@ import { render, screen } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { columns } from "@/components/Journal/columns"
 import { makeJournalEntry } from "@/test/helpers"
+import type { ReactNode } from "react"
+
+type CellFn = (props: { row: { original: unknown } }) => ReactNode
 
 // Mock MentionText
 vi.mock("@/components/Mentions/MentionText", () => ({
@@ -36,7 +39,7 @@ describe("Journal columns", () => {
   })
 
   it("first column has accessorKey 'body'", () => {
-    expect(columns[0].accessorKey).toBe("body")
+    expect((columns[0] as { accessorKey?: string }).accessorKey).toBe("body")
   })
 
   it("first column header is 'Entry'", () => {
@@ -44,7 +47,9 @@ describe("Journal columns", () => {
   })
 
   it("second column has accessorKey 'created_at'", () => {
-    expect(columns[1].accessorKey).toBe("created_at")
+    expect((columns[1] as { accessorKey?: string }).accessorKey).toBe(
+      "created_at",
+    )
   })
 
   it("second column header is 'Date'", () => {
@@ -56,16 +61,18 @@ describe("Journal columns", () => {
   })
 
   it("renders entry body cell with MentionText", () => {
-    const entry = makeJournalEntry({
-      id: "j1",
-      body: "Test journal entry",
+    const entry = {
+      ...makeJournalEntry({
+        id: "j1",
+        body: "Test journal entry",
+      }),
       mood: null,
-    })
+    }
 
-    const { cell } = columns[0]
-    const rendered = render(
+    const cell = columns[0].cell as CellFn
+    render(
       <div>
-        {cell!({
+        {cell({
           row: { original: entry },
         } as any)}
       </div>
@@ -79,10 +86,10 @@ describe("Journal columns", () => {
   it("renders notebook icon in body cell", () => {
     const entry = makeJournalEntry()
 
-    const { cell } = columns[0]
+    const cell = columns[0].cell as CellFn
     render(
       <div>
-        {cell!({
+        {cell({
           row: { original: entry },
         } as any)}
       </div>
@@ -92,16 +99,18 @@ describe("Journal columns", () => {
   })
 
   it("renders mood when present in body cell", () => {
-    const entry = makeJournalEntry({
-      id: "j1",
-      body: "Great day",
+    const entry = {
+      ...makeJournalEntry({
+        id: "j1",
+        body: "Great day",
+      }),
       mood: "Happy",
-    })
+    }
 
-    const { cell } = columns[0]
-    const { container } = render(
+    const cell = columns[0].cell as CellFn
+    render(
       <div>
-        {cell!({
+        {cell({
           row: { original: entry },
         } as any)}
       </div>
@@ -111,16 +120,18 @@ describe("Journal columns", () => {
   })
 
   it("does not render mood section when mood is null", () => {
-    const entry = makeJournalEntry({
-      id: "j1",
-      body: "Regular day",
+    const entry = {
+      ...makeJournalEntry({
+        id: "j1",
+        body: "Regular day",
+      }),
       mood: null,
-    })
+    }
 
-    const { cell } = columns[0]
-    const { container } = render(
+    const cell = columns[0].cell as CellFn
+    render(
       <div>
-        {cell!({
+        {cell({
           row: { original: entry },
         } as any)}
       </div>
@@ -136,10 +147,10 @@ describe("Journal columns", () => {
       created_at: "2024-05-15T10:30:00Z",
     })
 
-    const { cell } = columns[1]
+    const cell = columns[1].cell as CellFn
     render(
       <div>
-        {cell!({
+        {cell({
           row: { original: entry },
         } as any)}
       </div>
@@ -152,10 +163,10 @@ describe("Journal columns", () => {
   it("renders JournalActionsMenu in actions cell", () => {
     const entry = makeJournalEntry({ id: "j123" })
 
-    const { cell } = columns[2]
+    const cell = columns[2].cell as CellFn
     render(
       <div>
-        {cell!({
+        {cell({
           row: { original: entry },
         } as any)}
       </div>
@@ -168,16 +179,18 @@ describe("Journal columns", () => {
     const moods = ["Happy", "Sad", "Neutral", "Excited"]
 
     for (const mood of moods) {
-      const entry = makeJournalEntry({
-        id: `j-${mood}`,
-        body: "Test",
+      const entry = {
+        ...makeJournalEntry({
+          id: `j-${mood}`,
+          body: "Test",
+        }),
         mood,
-      })
+      }
 
-      const { cell } = columns[0]
+      const cell = columns[0].cell as CellFn
       const { unmount } = render(
         <div>
-          {cell!({
+          {cell({
             row: { original: entry },
           } as any)}
         </div>
@@ -191,10 +204,10 @@ describe("Journal columns", () => {
   it("body cell has correct CSS classes", () => {
     const entry = makeJournalEntry()
 
-    const { cell } = columns[0]
-    const { container } = render(
+    const cell = columns[0].cell as CellFn
+    render(
       <div>
-        {cell!({
+        {cell({
           row: { original: entry },
         } as any)}
       </div>
@@ -213,10 +226,10 @@ describe("Journal columns", () => {
       created_at: "2024-12-31T23:59:59Z",
     })
 
-    const { cell } = columns[1]
+    const cell = columns[1].cell as CellFn
     render(
       <div>
-        {cell!({
+        {cell({
           row: { original: entry },
         } as any)}
       </div>
@@ -227,16 +240,18 @@ describe("Journal columns", () => {
   })
 
   it("renders entry with empty body string", () => {
-    const entry = makeJournalEntry({
-      id: "j1",
-      body: "",
+    const entry = {
+      ...makeJournalEntry({
+        id: "j1",
+        body: "",
+      }),
       mood: null,
-    })
+    }
 
-    const { cell } = columns[0]
-    const { container } = render(
+    const cell = columns[0].cell as CellFn
+    render(
       <div>
-        {cell!({
+        {cell({
           row: { original: entry },
         } as any)}
       </div>
@@ -246,16 +261,18 @@ describe("Journal columns", () => {
   })
 
   it("mood section has correct styling", () => {
-    const entry = makeJournalEntry({
-      id: "j1",
-      body: "Test",
+    const entry = {
+      ...makeJournalEntry({
+        id: "j1",
+        body: "Test",
+      }),
       mood: "Reflective",
-    })
+    }
 
-    const { cell } = columns[0]
+    const cell = columns[0].cell as CellFn
     const { container } = render(
       <div>
-        {cell!({
+        {cell({
           row: { original: entry },
         } as any)}
       </div>

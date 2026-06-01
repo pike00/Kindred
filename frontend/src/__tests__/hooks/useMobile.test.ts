@@ -358,8 +358,6 @@ describe("useIsMobile", () => {
   it("removes same listener that was added", () => {
     renderHook(() => useIsMobile())
 
-    const _addedCallback = addEventListenerSpy.mock.calls[0][1]
-
     renderHook(() => useIsMobile()).unmount()
 
     const removedCallback = removeEventListenerSpy.mock.calls[0]?.[1]

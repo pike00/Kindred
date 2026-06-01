@@ -15,7 +15,6 @@ vi.mock("sonner", () => ({
 // Mock Dialog component to render inline
 vi.mock("@/components/ui/dialog", () => {
   const React = require("react")
-  const dialogState = new Map()
 
   return {
     Dialog: ({ children, open, onOpenChange }: any) => {
@@ -38,7 +37,7 @@ vi.mock("@/components/ui/dialog", () => {
         open ? content : null,
       )
     },
-    DialogTrigger: ({ children, asChild, _onOpenChange }: any) => {
+    DialogTrigger: ({ children, _onOpenChange }: any) => {
       if (!React.isValidElement(children)) return children
 
       return React.cloneElement(children, {
@@ -58,7 +57,7 @@ vi.mock("@/components/ui/dialog", () => {
       React.createElement("p", null, children),
     DialogFooter: ({ children }: any) =>
       React.createElement("div", null, children),
-    DialogClose: ({ children, asChild }: any) =>
+    DialogClose: ({ children }: any) =>
       React.isValidElement(children)
         ? React.cloneElement(children, {
             onClick: (e: any) => {
@@ -115,9 +114,8 @@ describe("ApiKeys", () => {
   })
 
   it("shows loading skeleton when query is loading", () => {
-    let resolveQuery: any
-    const queryPromise = new Promise((resolve) => {
-      resolveQuery = resolve
+    const queryPromise = new Promise(() => {
+      // Never resolves — keeps the query in loading state
     })
     vi.mocked(global.fetch as any).mockReturnValueOnce(queryPromise)
 

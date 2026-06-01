@@ -2,7 +2,11 @@ import { screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { AddContactDialog } from "@/components/Contacts/AddContactDialog"
-import { createQueryClient, renderWithProviders } from "@/test/helpers"
+import {
+  createQueryClient,
+  makeContact,
+  renderWithProviders,
+} from "@/test/helpers"
 
 // Mock router
 vi.mock("@tanstack/react-router", async (importOriginal) => {
@@ -98,21 +102,14 @@ describe("AddContactDialog", () => {
   it("submits form with valid data", async () => {
     const { ContactsService } = await import("@/client")
     const mockCreateContact = vi.mocked(ContactsService.createContact)
-    mockCreateContact.mockResolvedValue({
-      id: "new-contact-id",
-      first_name: "Bob",
-      last_name: "Johnson",
-      birthday: "1990-01-15",
-      nickname: null,
-      company: null,
-      title: null,
-      prefix: null,
-      middle_name: null,
-      suffix: null,
-      last_contacted_at: null,
-      is_starred: false,
-      tags: [],
-    })
+    mockCreateContact.mockResolvedValue(
+      makeContact({
+        id: "new-contact-id",
+        first_name: "Bob",
+        last_name: "Johnson",
+        birthday: "1990-01-15",
+      }),
+    )
 
     const user = userEvent.setup()
     renderWithProviders(<AddContactDialog />)
@@ -145,21 +142,14 @@ describe("AddContactDialog", () => {
   it("shows success toast on successful creation", async () => {
     const { ContactsService } = await import("@/client")
     const mockCreateContact = vi.mocked(ContactsService.createContact)
-    mockCreateContact.mockResolvedValue({
-      id: "new-contact-id",
-      first_name: "Bob",
-      last_name: null,
-      birthday: null,
-      nickname: null,
-      company: null,
-      title: null,
-      prefix: null,
-      middle_name: null,
-      suffix: null,
-      last_contacted_at: null,
-      is_starred: false,
-      tags: [],
-    })
+    mockCreateContact.mockResolvedValue(
+      makeContact({
+        id: "new-contact-id",
+        first_name: "Bob",
+        last_name: null,
+        birthday: null,
+      }),
+    )
 
     const user = userEvent.setup()
     renderWithProviders(<AddContactDialog />)
@@ -183,21 +173,14 @@ describe("AddContactDialog", () => {
   it("closes dialog on successful creation", async () => {
     const { ContactsService } = await import("@/client")
     const mockCreateContact = vi.mocked(ContactsService.createContact)
-    mockCreateContact.mockResolvedValue({
-      id: "new-contact-id",
-      first_name: "Bob",
-      last_name: null,
-      birthday: null,
-      nickname: null,
-      company: null,
-      title: null,
-      prefix: null,
-      middle_name: null,
-      suffix: null,
-      last_contacted_at: null,
-      is_starred: false,
-      tags: [],
-    })
+    mockCreateContact.mockResolvedValue(
+      makeContact({
+        id: "new-contact-id",
+        first_name: "Bob",
+        last_name: null,
+        birthday: null,
+      }),
+    )
 
     const user = userEvent.setup()
     renderWithProviders(<AddContactDialog />)
@@ -219,21 +202,14 @@ describe("AddContactDialog", () => {
   it("resets form after successful submission", async () => {
     const { ContactsService } = await import("@/client")
     const mockCreateContact = vi.mocked(ContactsService.createContact)
-    mockCreateContact.mockResolvedValue({
-      id: "new-contact-id",
-      first_name: "Bob",
-      last_name: null,
-      birthday: null,
-      nickname: null,
-      company: null,
-      title: null,
-      prefix: null,
-      middle_name: null,
-      suffix: null,
-      last_contacted_at: null,
-      is_starred: false,
-      tags: [],
-    })
+    mockCreateContact.mockResolvedValue(
+      makeContact({
+        id: "new-contact-id",
+        first_name: "Bob",
+        last_name: null,
+        birthday: null,
+      }),
+    )
 
     const user = userEvent.setup()
     renderWithProviders(<AddContactDialog />)
@@ -257,21 +233,14 @@ describe("AddContactDialog", () => {
   it("invalidates contacts query on successful creation", async () => {
     const { ContactsService } = await import("@/client")
     const mockCreateContact = vi.mocked(ContactsService.createContact)
-    mockCreateContact.mockResolvedValue({
-      id: "new-contact-id",
-      first_name: "Bob",
-      last_name: null,
-      birthday: null,
-      nickname: null,
-      company: null,
-      title: null,
-      prefix: null,
-      middle_name: null,
-      suffix: null,
-      last_contacted_at: null,
-      is_starred: false,
-      tags: [],
-    })
+    mockCreateContact.mockResolvedValue(
+      makeContact({
+        id: "new-contact-id",
+        first_name: "Bob",
+        last_name: null,
+        birthday: null,
+      }),
+    )
 
     const queryClient = createQueryClient()
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries")
@@ -321,7 +290,10 @@ describe("AddContactDialog", () => {
     const { ContactsService } = await import("@/client")
     const mockCreateContact = vi.mocked(ContactsService.createContact)
     mockCreateContact.mockImplementation(
-      () => new Promise((r) => setTimeout(r, 1000)),
+      () =>
+        new Promise((r) => setTimeout(r, 1000)) as unknown as ReturnType<
+          typeof ContactsService.createContact
+        >,
     )
 
     const user = userEvent.setup()
@@ -347,7 +319,10 @@ describe("AddContactDialog", () => {
     const { ContactsService } = await import("@/client")
     const mockCreateContact = vi.mocked(ContactsService.createContact)
     mockCreateContact.mockImplementation(
-      () => new Promise((r) => setTimeout(r, 1000)),
+      () =>
+        new Promise((r) => setTimeout(r, 1000)) as unknown as ReturnType<
+          typeof ContactsService.createContact
+        >,
     )
 
     const user = userEvent.setup()
@@ -370,21 +345,14 @@ describe("AddContactDialog", () => {
   it("handles optional last_name and birthday fields", async () => {
     const { ContactsService } = await import("@/client")
     const mockCreateContact = vi.mocked(ContactsService.createContact)
-    mockCreateContact.mockResolvedValue({
-      id: "new-contact-id",
-      first_name: "Bob",
-      last_name: null,
-      birthday: null,
-      nickname: null,
-      company: null,
-      title: null,
-      prefix: null,
-      middle_name: null,
-      suffix: null,
-      last_contacted_at: null,
-      is_starred: false,
-      tags: [],
-    })
+    mockCreateContact.mockResolvedValue(
+      makeContact({
+        id: "new-contact-id",
+        first_name: "Bob",
+        last_name: null,
+        birthday: null,
+      }),
+    )
 
     const user = userEvent.setup()
     renderWithProviders(<AddContactDialog />)

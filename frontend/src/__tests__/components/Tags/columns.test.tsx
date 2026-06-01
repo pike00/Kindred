@@ -1,7 +1,10 @@
 import { render, screen } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { columns } from "@/components/Tags/columns"
+import type { TagPublic } from "@/client"
+import { createColumns } from "@/components/Tags/columns"
 import { makeTag } from "@/test/helpers"
+
+const columns = createColumns(() => {})
 
 // Mock TagActionsMenu
 vi.mock("@/components/Tags/TagActionsMenu", () => ({
@@ -20,7 +23,7 @@ describe("Tags columns", () => {
   })
 
   it("first column has accessorKey 'name'", () => {
-    expect(columns[0].accessorKey).toBe("name")
+    expect((columns[0] as { accessorKey?: string }).accessorKey).toBe("name")
   })
 
   it("first column header is 'Name'", () => {
@@ -28,7 +31,9 @@ describe("Tags columns", () => {
   })
 
   it("second column has accessorKey 'created_at'", () => {
-    expect(columns[1].accessorKey).toBe("created_at")
+    expect((columns[1] as { accessorKey?: string }).accessorKey).toBe(
+      "created_at",
+    )
   })
 
   it("second column header is 'Created'", () => {
@@ -49,7 +54,7 @@ describe("Tags columns", () => {
     const { cell } = columns[0]
     const { container } = render(
       <div>
-        {cell!({
+        {(cell as (props: any) => import("react").ReactNode)({
           row: { original: tag },
         } as any)}
       </div>
@@ -72,7 +77,7 @@ describe("Tags columns", () => {
     const { cell } = columns[0]
     const { container } = render(
       <div>
-        {cell!({
+        {(cell as (props: any) => import("react").ReactNode)({
           row: { original: tag },
         } as any)}
       </div>
@@ -93,7 +98,7 @@ describe("Tags columns", () => {
     const { cell } = columns[0]
     const { container } = render(
       <div>
-        {cell!({
+        {(cell as (props: any) => import("react").ReactNode)({
           row: { original: tag },
         } as any)}
       </div>
@@ -114,7 +119,7 @@ describe("Tags columns", () => {
     const { cell } = columns[0]
     render(
       <div>
-        {cell!({
+        {(cell as (props: any) => import("react").ReactNode)({
           row: { original: tag },
         } as any)}
       </div>
@@ -125,20 +130,21 @@ describe("Tags columns", () => {
   })
 
   it("renders created date in correct format", () => {
-    const tag = makeTag({
-      id: "t1",
-      name: "Test",
-      color: null,
-    })
-
     // Override created_at with a specific date - use today's date
     const today = new Date()
-    tag.created_at = today.toISOString()
+    const tag: TagPublic = {
+      ...makeTag({
+        id: "t1",
+        name: "Test",
+        color: null,
+      }),
+      created_at: today.toISOString(),
+    }
 
     const { cell } = columns[1]
     render(
       <div>
-        {cell!({
+        {(cell as (props: any) => import("react").ReactNode)({
           row: { original: tag },
         } as any)}
       </div>
@@ -155,7 +161,7 @@ describe("Tags columns", () => {
     const { cell } = columns[2]
     render(
       <div>
-        {cell!({
+        {(cell as (props: any) => import("react").ReactNode)({
           row: { original: tag },
         } as any)}
       </div>
@@ -174,7 +180,7 @@ describe("Tags columns", () => {
     const { cell } = columns[0]
     const { container } = render(
       <div>
-        {cell!({
+        {(cell as (props: any) => import("react").ReactNode)({
           row: { original: tag },
         } as any)}
       </div>
@@ -199,7 +205,7 @@ describe("Tags columns", () => {
       const { cell } = columns[0]
       const { unmount } = render(
         <div>
-          {cell!({
+          {(cell as (props: any) => import("react").ReactNode)({
             row: { original: tag },
           } as any)}
         </div>
@@ -223,7 +229,7 @@ describe("Tags columns", () => {
       const { cell } = columns[0]
       const { container, unmount } = render(
         <div>
-          {cell!({
+          {(cell as (props: any) => import("react").ReactNode)({
             row: { original: tag },
           } as any)}
         </div>
@@ -243,16 +249,18 @@ describe("Tags columns", () => {
     ]
 
     for (const date of dates) {
-      const tag = makeTag({
-        id: `t-${date}`,
-        name: "Tag",
-      })
-      tag.created_at = date
+      const tag: TagPublic = {
+        ...makeTag({
+          id: `t-${date}`,
+          name: "Tag",
+        }),
+        created_at: date,
+      }
 
       const { cell } = columns[1]
       const { unmount } = render(
         <div>
-          {cell!({
+          {(cell as (props: any) => import("react").ReactNode)({
             row: { original: tag },
           } as any)}
         </div>
@@ -273,7 +281,7 @@ describe("Tags columns", () => {
     const { cell } = columns[0]
     render(
       <div>
-        {cell!({
+        {(cell as (props: any) => import("react").ReactNode)({
           row: { original: tag },
         } as any)}
       </div>
@@ -293,7 +301,7 @@ describe("Tags columns", () => {
     const { cell } = columns[0]
     render(
       <div>
-        {cell!({
+        {(cell as (props: any) => import("react").ReactNode)({
           row: { original: tag },
         } as any)}
       </div>
@@ -312,7 +320,7 @@ describe("Tags columns", () => {
     const { cell } = columns[0]
     const { container } = render(
       <div>
-        {cell!({
+        {(cell as (props: any) => import("react").ReactNode)({
           row: { original: tag },
         } as any)}
       </div>

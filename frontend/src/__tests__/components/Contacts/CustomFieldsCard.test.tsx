@@ -2,7 +2,7 @@ import { screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { CustomFieldsCard } from "@/components/Contacts/CustomFieldsCard"
-import { createQueryClient, renderWithProviders } from "@/test/helpers"
+import { renderWithProviders } from "@/test/helpers"
 
 // Mock router
 vi.mock("@tanstack/react-router", async (importOriginal) => {
@@ -53,12 +53,12 @@ vi.mock("@/hooks/useCustomToast", () => ({
 const React = require("react")
 const mockDialog = vi.hoisted(() => {
   return {
-    Dialog: ({ children, open }: any) => {
+    Dialog: ({ children }: any) => {
       const arr = React.Children.toArray(children)
       // Always render content for testing (both trigger and content)
       return React.createElement("div", null, arr[0], arr[1])
     },
-    DialogTrigger: ({ children, asChild }: any) =>
+    DialogTrigger: ({ children }: any) =>
       React.createElement("div", null, children),
     DialogContent: ({ children }: any) =>
       React.createElement("div", { role: "dialog" }, children),
@@ -70,7 +70,7 @@ const mockDialog = vi.hoisted(() => {
       React.createElement("p", null, children),
     DialogFooter: ({ children }: any) =>
       React.createElement("div", null, children),
-    DialogClose: ({ children, asChild }: any) =>
+    DialogClose: ({ children }: any) =>
       React.createElement("div", null, children),
   }
 })
@@ -99,7 +99,7 @@ vi.mock("@/components/Common/RowActionsMenu", () => ({
 
 // Mock EmptyState
 vi.mock("@/components/Common/EmptyState", () => ({
-  EmptyState: ({ title, description }: any) =>
+  EmptyState: ({ title }: any) =>
     React.createElement("div", { "data-testid": "empty-state" }, title),
 }))
 
@@ -112,6 +112,7 @@ describe("CustomFieldsCard", () => {
     const { CustomFieldsService } = await import("@/client")
     vi.mocked(CustomFieldsService.listFieldValues).mockResolvedValue({
       data: [],
+      count: 0,
     })
 
     renderWithProviders(<CustomFieldsCard contactId="test-contact-id" />)
@@ -122,6 +123,7 @@ describe("CustomFieldsCard", () => {
     const { CustomFieldsService } = await import("@/client")
     vi.mocked(CustomFieldsService.listFieldValues).mockResolvedValue({
       data: [],
+      count: 0,
     })
 
     renderWithProviders(<CustomFieldsCard contactId="test-contact-id" />)
@@ -132,6 +134,7 @@ describe("CustomFieldsCard", () => {
     const { CustomFieldsService } = await import("@/client")
     vi.mocked(CustomFieldsService.listFieldValues).mockResolvedValue({
       data: [],
+      count: 0,
     })
 
     renderWithProviders(<CustomFieldsCard contactId="test-contact-id" />)
@@ -153,6 +156,7 @@ describe("CustomFieldsCard", () => {
           value: "Blue",
         },
       ],
+      count: 1,
     })
 
     renderWithProviders(<CustomFieldsCard contactId="test-contact-id" />)
@@ -167,12 +171,14 @@ describe("CustomFieldsCard", () => {
     const { CustomFieldsService } = await import("@/client")
     vi.mocked(CustomFieldsService.listFieldValues).mockResolvedValue({
       data: [],
+      count: 0,
     })
     vi.mocked(CustomFieldsService.listFieldDefinitions).mockResolvedValue({
       data: [
-        { id: "def-1", name: "Favorite Color" },
-        { id: "def-2", name: "Pet Name" },
+        { id: "def-1", name: "Favorite Color", created_at: "2026-01-01T00:00:00Z" },
+        { id: "def-2", name: "Pet Name", created_at: "2026-01-01T00:00:00Z" },
       ],
+      count: 2,
     })
 
     const user = userEvent.setup()
@@ -190,12 +196,14 @@ describe("CustomFieldsCard", () => {
     const { CustomFieldsService } = await import("@/client")
     vi.mocked(CustomFieldsService.listFieldValues).mockResolvedValue({
       data: [],
+      count: 0,
     })
     vi.mocked(CustomFieldsService.listFieldDefinitions).mockResolvedValue({
       data: [
-        { id: "def-1", name: "Favorite Color" },
-        { id: "def-2", name: "Pet Name" },
+        { id: "def-1", name: "Favorite Color", created_at: "2026-01-01T00:00:00Z" },
+        { id: "def-2", name: "Pet Name", created_at: "2026-01-01T00:00:00Z" },
       ],
+      count: 2,
     })
 
     const user = userEvent.setup()
@@ -219,9 +227,10 @@ describe("CustomFieldsCard", () => {
     const mockList = vi.mocked(CustomFieldsService.listFieldValues)
     const mockDefs = vi.mocked(CustomFieldsService.listFieldDefinitions)
 
-    mockList.mockResolvedValue({ data: [] })
+    mockList.mockResolvedValue({ data: [], count: 0 })
     mockDefs.mockResolvedValue({
-      data: [{ id: "def-1", name: "Favorite Color" }],
+      data: [{ id: "def-1", name: "Favorite Color", created_at: "2026-01-01T00:00:00Z" }],
+      count: 1,
     })
 
     const user = userEvent.setup()
@@ -248,9 +257,10 @@ describe("CustomFieldsCard", () => {
     const mockList = vi.mocked(CustomFieldsService.listFieldValues)
     const mockDefs = vi.mocked(CustomFieldsService.listFieldDefinitions)
 
-    mockList.mockResolvedValue({ data: [] })
+    mockList.mockResolvedValue({ data: [], count: 0 })
     mockDefs.mockResolvedValue({
-      data: [{ id: "def-1", name: "Favorite Color" }],
+      data: [{ id: "def-1", name: "Favorite Color", created_at: "2026-01-01T00:00:00Z" }],
+      count: 1,
     })
 
     const user = userEvent.setup()
@@ -277,9 +287,10 @@ describe("CustomFieldsCard", () => {
     const mockList = vi.mocked(CustomFieldsService.listFieldValues)
     const mockDefs = vi.mocked(CustomFieldsService.listFieldDefinitions)
 
-    mockList.mockResolvedValue({ data: [] })
+    mockList.mockResolvedValue({ data: [], count: 0 })
     mockDefs.mockResolvedValue({
-      data: [{ id: "def-1", name: "Favorite Color" }],
+      data: [{ id: "def-1", name: "Favorite Color", created_at: "2026-01-01T00:00:00Z" }],
+      count: 1,
     })
 
     const user = userEvent.setup()
@@ -308,9 +319,10 @@ describe("CustomFieldsCard", () => {
     const mockList = vi.mocked(CustomFieldsService.listFieldValues)
     const mockDefs = vi.mocked(CustomFieldsService.listFieldDefinitions)
 
-    mockList.mockResolvedValue({ data: [] })
+    mockList.mockResolvedValue({ data: [], count: 0 })
     mockDefs.mockResolvedValue({
       data: [], // No definitions available
+      count: 0,
     })
 
     const user = userEvent.setup()
@@ -329,9 +341,10 @@ describe("CustomFieldsCard", () => {
     const mockList = vi.mocked(CustomFieldsService.listFieldValues)
     const mockDefs = vi.mocked(CustomFieldsService.listFieldDefinitions)
 
-    mockList.mockResolvedValue({ data: [] })
+    mockList.mockResolvedValue({ data: [], count: 0 })
     mockDefs.mockResolvedValue({
-      data: [{ id: "def-1", name: "Favorite Color" }],
+      data: [{ id: "def-1", name: "Favorite Color", created_at: "2026-01-01T00:00:00Z" }],
+      count: 1,
     })
 
     const user = userEvent.setup()
@@ -367,6 +380,7 @@ describe("CustomFieldsCard", () => {
           value: "Blue",
         },
       ],
+      count: 1,
     })
 
     const user = userEvent.setup()
@@ -400,6 +414,7 @@ describe("CustomFieldsCard", () => {
           value: "Pizza",
         },
       ],
+      count: 1,
     })
 
     const user = userEvent.setup()
@@ -436,6 +451,7 @@ describe("CustomFieldsCard", () => {
           value: "Dog",
         },
       ],
+      count: 1,
     })
 
     mockUpdate.mockResolvedValue({
@@ -492,6 +508,7 @@ describe("CustomFieldsCard", () => {
           value: "Reading",
         },
       ],
+      count: 1,
     })
 
     mockUpdate.mockRejectedValue(new Error("Update failed"))
@@ -533,6 +550,7 @@ describe("CustomFieldsCard", () => {
           value: "Golden Retriever",
         },
       ],
+      count: 1,
     })
 
     renderWithProviders(<CustomFieldsCard contactId="test-contact-id" />)
@@ -556,6 +574,7 @@ describe("CustomFieldsCard", () => {
           value: "Some Value",
         },
       ],
+      count: 1,
     })
 
     renderWithProviders(<CustomFieldsCard contactId="test-contact-id" />)
@@ -571,9 +590,10 @@ describe("CustomFieldsCard", () => {
     const mockList = vi.mocked(CustomFieldsService.listFieldValues)
     const mockDefs = vi.mocked(CustomFieldsService.listFieldDefinitions)
 
-    mockList.mockResolvedValue({ data: [] })
+    mockList.mockResolvedValue({ data: [], count: 0 })
     mockDefs.mockResolvedValue({
       data: [], // No definitions
+      count: 0,
     })
 
     const user = userEvent.setup()
@@ -604,9 +624,11 @@ describe("CustomFieldsCard", () => {
           value: "Chess",
         },
       ],
+      count: 1,
     })
     vi.mocked(CustomFieldsService.listFieldDefinitions).mockResolvedValue({
-      data: [{ id: "def-1", name: "Hobby", field_type: "text", contact_id: null }],
+      data: [{ id: "def-1", name: "Hobby", field_type: "text", created_at: "2026-01-01T00:00:00Z" }],
+      count: 1,
     })
     vi.mocked(CustomFieldsService.deleteFieldValue).mockResolvedValue(undefined as any)
 
@@ -640,9 +662,11 @@ describe("CustomFieldsCard", () => {
           value: "Painting",
         },
       ],
+      count: 1,
     })
     vi.mocked(CustomFieldsService.listFieldDefinitions).mockResolvedValue({
-      data: [{ id: "def-1", name: "Hobby", field_type: "text", contact_id: null }],
+      data: [{ id: "def-1", name: "Hobby", field_type: "text", created_at: "2026-01-01T00:00:00Z" }],
+      count: 1,
     })
 
     vi.spyOn(window, "confirm").mockReturnValue(false)
@@ -671,9 +695,11 @@ describe("CustomFieldsCard", () => {
           value: "Gardening",
         },
       ],
+      count: 1,
     })
     vi.mocked(CustomFieldsService.listFieldDefinitions).mockResolvedValue({
-      data: [{ id: "def-1", name: "Hobby", field_type: "text", contact_id: null }],
+      data: [{ id: "def-1", name: "Hobby", field_type: "text", created_at: "2026-01-01T00:00:00Z" }],
+      count: 1,
     })
     vi.mocked(CustomFieldsService.deleteFieldValue).mockRejectedValue(
       new Error("Server error"),
@@ -707,11 +733,13 @@ describe("CustomFieldsCard", () => {
           value: "FallbackHobby",
         },
       ],
+      count: 1,
     })
     vi.mocked(CustomFieldsService.listFieldDefinitions).mockResolvedValue({
       data: [
-        { id: "def-1", name: "Hobby", field_type: "text", contact_id: null },
+        { id: "def-1", name: "Hobby", field_type: "text", created_at: "2026-01-01T00:00:00Z" },
       ],
+      count: 1,
     })
     vi.mocked(CustomFieldsService.deleteFieldValue).mockRejectedValue(
       "plain-string-error",

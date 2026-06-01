@@ -13,14 +13,14 @@ vi.mock("@/components/Common/ContactAvatar", () => ({
 
 // Mock EmptyState
 vi.mock("@/components/Common/EmptyState", () => ({
-  EmptyState: ({ title, description }: any) =>
+  EmptyState: ({ title }: any) =>
     React.createElement("div", { "data-testid": "empty-state" }, title),
 }))
 
 // Mock Tooltip
 vi.mock("@/components/ui/tooltip", () => ({
   Tooltip: ({ children }: any) => React.createElement("div", null, children),
-  TooltipTrigger: ({ children, asChild }: any) =>
+  TooltipTrigger: ({ children }: any) =>
     React.createElement("button", { type: "button" }, children),
   TooltipContent: ({ children }: any) =>
     React.createElement("div", { role: "tooltip" }, children),

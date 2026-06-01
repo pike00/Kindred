@@ -24,7 +24,7 @@ vi.mock("@/components/Journal/AddJournalDialog", () => ({
 
 // Mock DataTable
 vi.mock("@/components/Common/DataTable", () => ({
-  DataTable: ({ columns, data }: any) => (
+  DataTable: ({ data }: any) => (
     <table data-testid="data-table">
       <tbody>
         {data.map((row: any) => (
@@ -199,7 +199,7 @@ describe("JournalList", () => {
   it("displays layout structure with heading and button in flex container", async () => {
     mockListJournalEntries.mockResolvedValue({ data: [] })
 
-    const { container } = renderWithProviders(
+    renderWithProviders(
       <Suspense fallback={<div>Loading...</div>}>
         <JournalList />
       </Suspense>

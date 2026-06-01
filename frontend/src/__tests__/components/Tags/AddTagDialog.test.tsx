@@ -110,6 +110,7 @@ describe("AddTagDialog", () => {
       id: "tag-1",
       name: "Work",
       color: "#3b82f6",
+      created_at: "2026-01-01T00:00:00Z",
     })
 
     const user = userEvent.setup()
@@ -141,6 +142,7 @@ describe("AddTagDialog", () => {
       id: "tag-1",
       name: "Friends",
       color: "#ef4444",
+      created_at: "2026-01-01T00:00:00Z",
     })
 
     const user = userEvent.setup()
@@ -170,6 +172,7 @@ describe("AddTagDialog", () => {
       id: "tag-1",
       name: "Work",
       color: "#3b82f6",
+      created_at: "2026-01-01T00:00:00Z",
     })
 
     const user = userEvent.setup()
@@ -198,6 +201,7 @@ describe("AddTagDialog", () => {
       id: "tag-1",
       name: "Work",
       color: "#3b82f6",
+      created_at: "2026-01-01T00:00:00Z",
     })
 
     const user = userEvent.setup()
@@ -224,6 +228,7 @@ describe("AddTagDialog", () => {
       id: "tag-1",
       name: "Work",
       color: "#3b82f6",
+      created_at: "2026-01-01T00:00:00Z",
     })
 
     const user = userEvent.setup()
@@ -252,6 +257,7 @@ describe("AddTagDialog", () => {
       id: "tag-1",
       name: "Work",
       color: "#3b82f6",
+      created_at: "2026-01-01T00:00:00Z",
     })
 
     const user = userEvent.setup()
@@ -288,6 +294,7 @@ describe("AddTagDialog", () => {
       id: "tag-1",
       name: "Work",
       color: "#3b82f6",
+      created_at: "2026-01-01T00:00:00Z",
     })
 
     const queryClient = createQueryClient()
@@ -358,7 +365,10 @@ describe("AddTagDialog", () => {
     const { TagsService } = await import("@/client")
     const mockCreateTag = vi.mocked(TagsService.createTagRoute)
     mockCreateTag.mockImplementation(
-      () => new Promise((r) => setTimeout(r, 1000)),
+      () =>
+        new Promise(() => {}) as unknown as ReturnType<
+          typeof TagsService.createTagRoute
+        >,
     )
 
     const user = userEvent.setup()
@@ -384,7 +394,10 @@ describe("AddTagDialog", () => {
     const { TagsService } = await import("@/client")
     const mockCreateTag = vi.mocked(TagsService.createTagRoute)
     mockCreateTag.mockImplementation(
-      () => new Promise((r) => setTimeout(r, 1000)),
+      () =>
+        new Promise(() => {}) as unknown as ReturnType<
+          typeof TagsService.createTagRoute
+        >,
     )
 
     const user = userEvent.setup()
@@ -411,6 +424,7 @@ describe("AddTagDialog", () => {
       id: "tag-1",
       name: "Work",
       color: "#3b82f6",
+      created_at: "2026-01-01T00:00:00Z",
     })
 
     const user = userEvent.setup()

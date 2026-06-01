@@ -71,12 +71,12 @@ vi.mock("@/components/Common/RowActionsMenu", () => ({
 
 // Mock dialog to render inline
 const mockDialog = vi.hoisted(() => ({
-  Dialog: ({ children, open }: any) => {
+  Dialog: ({ children }: any) => {
     const arr = React.Children.toArray(children)
     // Always render content for testing (both trigger and content)
     return React.createElement("div", null, arr[0], arr[1])
   },
-  DialogTrigger: ({ children, asChild }: any) =>
+  DialogTrigger: ({ children }: any) =>
     React.createElement("div", null, children),
   DialogContent: ({ children }: any) =>
     React.createElement("div", { role: "dialog" }, children),
@@ -88,7 +88,7 @@ const mockDialog = vi.hoisted(() => ({
     React.createElement("p", null, children),
   DialogFooter: ({ children }: any) =>
     React.createElement("div", null, children),
-  DialogClose: ({ children, asChild }: any) =>
+  DialogClose: ({ children }: any) =>
     React.createElement("div", null, children),
 }))
 
@@ -103,6 +103,7 @@ describe("ContactFieldsCard", () => {
     const { ContactFieldsService } = await import("@/client")
     vi.mocked(ContactFieldsService.listContactFields).mockResolvedValue({
       data: [],
+      count: 0,
     })
 
     renderWithProviders(<ContactFieldsCard contactId="test-contact-id" />)
@@ -113,6 +114,7 @@ describe("ContactFieldsCard", () => {
     const { ContactFieldsService } = await import("@/client")
     vi.mocked(ContactFieldsService.listContactFields).mockResolvedValue({
       data: [],
+      count: 0,
     })
 
     renderWithProviders(<ContactFieldsCard contactId="test-contact-id" />)
@@ -123,6 +125,7 @@ describe("ContactFieldsCard", () => {
     const { ContactFieldsService } = await import("@/client")
     vi.mocked(ContactFieldsService.listContactFields).mockResolvedValue({
       data: [],
+      count: 0,
     })
 
     renderWithProviders(<ContactFieldsCard contactId="test-contact-id" />)
@@ -156,6 +159,7 @@ describe("ContactFieldsCard", () => {
           is_primary: true,
         },
       ],
+      count: 2,
     })
 
     renderWithProviders(<ContactFieldsCard contactId="test-contact-id" />)
@@ -181,6 +185,7 @@ describe("ContactFieldsCard", () => {
           is_primary: true,
         },
       ],
+      count: 1,
     })
 
     renderWithProviders(<ContactFieldsCard contactId="test-contact-id" />)
@@ -206,6 +211,7 @@ describe("ContactFieldsCard", () => {
           is_primary: true,
         },
       ],
+      count: 1,
     })
 
     renderWithProviders(<ContactFieldsCard contactId="test-contact-id" />)
@@ -231,6 +237,7 @@ describe("ContactFieldsCard", () => {
           is_primary: true,
         },
       ],
+      count: 1,
     })
 
     renderWithProviders(<ContactFieldsCard contactId="test-contact-id" />)
@@ -244,6 +251,7 @@ describe("ContactFieldsCard", () => {
     const { ContactFieldsService } = await import("@/client")
     vi.mocked(ContactFieldsService.listContactFields).mockResolvedValue({
       data: [],
+      count: 0,
     })
 
     const user = userEvent.setup()
@@ -261,6 +269,7 @@ describe("ContactFieldsCard", () => {
     const { ContactFieldsService } = await import("@/client")
     vi.mocked(ContactFieldsService.listContactFields).mockResolvedValue({
       data: [],
+      count: 0,
     })
 
     const user = userEvent.setup()
@@ -284,7 +293,7 @@ describe("ContactFieldsCard", () => {
     const mockCreate = vi.mocked(ContactFieldsService.createContactFieldRoute)
     const mockList = vi.mocked(ContactFieldsService.listContactFields)
 
-    mockList.mockResolvedValue({ data: [] })
+    mockList.mockResolvedValue({ data: [], count: 0 })
     mockCreate.mockResolvedValue({
       id: "field-1",
       contact_id: "test-contact-id",
@@ -332,7 +341,7 @@ describe("ContactFieldsCard", () => {
     const { ContactFieldsService } = await import("@/client")
     const mockList = vi.mocked(ContactFieldsService.listContactFields)
 
-    mockList.mockResolvedValue({ data: [] })
+    mockList.mockResolvedValue({ data: [], count: 0 })
 
     const user = userEvent.setup()
     renderWithProviders(<ContactFieldsCard contactId="test-contact-id" />)
@@ -360,7 +369,7 @@ describe("ContactFieldsCard", () => {
     const mockCreate = vi.mocked(ContactFieldsService.createContactFieldRoute)
     const mockList = vi.mocked(ContactFieldsService.listContactFields)
 
-    mockList.mockResolvedValue({ data: [] })
+    mockList.mockResolvedValue({ data: [], count: 0 })
     mockCreate.mockResolvedValue({
       id: "field-1",
       contact_id: "test-contact-id",
@@ -402,7 +411,7 @@ describe("ContactFieldsCard", () => {
     const mockCreate = vi.mocked(ContactFieldsService.createContactFieldRoute)
     const mockList = vi.mocked(ContactFieldsService.listContactFields)
 
-    mockList.mockResolvedValue({ data: [] })
+    mockList.mockResolvedValue({ data: [], count: 0 })
     mockCreate.mockRejectedValue(new Error("Creation failed"))
 
     const user = userEvent.setup()
@@ -435,7 +444,7 @@ describe("ContactFieldsCard", () => {
     const { ContactFieldsService } = await import("@/client")
     const mockList = vi.mocked(ContactFieldsService.listContactFields)
 
-    mockList.mockResolvedValue({ data: [] })
+    mockList.mockResolvedValue({ data: [], count: 0 })
 
     const user = userEvent.setup()
     renderWithProviders(<ContactFieldsCard contactId="test-contact-id" />)
@@ -461,7 +470,7 @@ describe("ContactFieldsCard", () => {
     const mockCreate = vi.mocked(ContactFieldsService.createContactFieldRoute)
     const mockList = vi.mocked(ContactFieldsService.listContactFields)
 
-    mockList.mockResolvedValue({ data: [] })
+    mockList.mockResolvedValue({ data: [], count: 0 })
     mockCreate.mockResolvedValue({
       id: "field-1",
       contact_id: "test-contact-id",
@@ -508,7 +517,7 @@ describe("ContactFieldsCard", () => {
     const { ContactFieldsService } = await import("@/client")
     const mockList = vi.mocked(ContactFieldsService.listContactFields)
 
-    mockList.mockResolvedValue({ data: [] })
+    mockList.mockResolvedValue({ data: [], count: 0 })
 
     const user = userEvent.setup()
     renderWithProviders(<ContactFieldsCard contactId="test-contact-id" />)
@@ -545,6 +554,7 @@ describe("ContactFieldsCard", () => {
           is_primary: false,
         },
       ],
+      count: 1,
     })
 
     renderWithProviders(<ContactFieldsCard contactId="test-contact-id" />)
@@ -579,6 +589,7 @@ describe("ContactFieldsCard", () => {
           is_primary: false,
         },
       ],
+      count: 2,
     })
 
     renderWithProviders(<ContactFieldsCard contactId="test-contact-id" />)
@@ -592,7 +603,9 @@ describe("ContactFieldsCard", () => {
   it("displays loading skeleton when data is loading", async () => {
     const { ContactFieldsService } = await import("@/client")
     vi.mocked(ContactFieldsService.listContactFields).mockReturnValue(
-      new Promise(() => {}),
+      new Promise(() => {}) as unknown as ReturnType<
+        typeof ContactFieldsService.listContactFields
+      >,
     )
 
     renderWithProviders(<ContactFieldsCard contactId="test-contact-id" />)
@@ -609,7 +622,7 @@ describe("ContactFieldsCard", () => {
     const mockCreate = vi.mocked(ContactFieldsService.createContactFieldRoute)
     const mockList = vi.mocked(ContactFieldsService.listContactFields)
 
-    mockList.mockResolvedValue({ data: [] })
+    mockList.mockResolvedValue({ data: [], count: 0 })
     mockCreate.mockResolvedValue({
       id: "field-1",
       contact_id: "test-contact-id",
@@ -673,6 +686,7 @@ describe("ContactFieldsCard", () => {
           is_primary: true,
         },
       ],
+      count: 1,
     })
 
     const user = userEvent.setup()
@@ -704,6 +718,7 @@ describe("ContactFieldsCard", () => {
           is_primary: true,
         },
       ],
+      count: 1,
     })
 
     const user = userEvent.setup()
@@ -754,6 +769,7 @@ describe("ContactFieldsCard", () => {
           is_primary: true,
         },
       ],
+      count: 1,
     })
 
     mockUpdate.mockResolvedValue({
@@ -836,6 +852,7 @@ describe("ContactFieldsCard", () => {
           is_primary: true,
         },
       ],
+      count: 1,
     })
 
     mockUpdate.mockResolvedValue({
@@ -885,6 +902,7 @@ describe("ContactFieldsCard", () => {
           is_primary: true,
         },
       ],
+      count: 1,
     })
 
     mockUpdate.mockRejectedValue(new Error("Update failed"))
@@ -913,7 +931,6 @@ describe("ContactFieldsCard", () => {
 
   it("closes edit dialog without API call when cancel is clicked", async () => {
     const { ContactFieldsService } = await import("@/client")
-    const mockUpdate = vi.mocked(ContactFieldsService.updateContactField)
     const mockList = vi.mocked(ContactFieldsService.listContactFields)
 
     mockList.mockResolvedValue({
@@ -927,6 +944,7 @@ describe("ContactFieldsCard", () => {
           is_primary: true,
         },
       ],
+      count: 1,
     })
 
     const user = userEvent.setup()
@@ -975,6 +993,7 @@ describe("ContactFieldsCard", () => {
           is_primary: false,
         },
       ],
+      count: 1,
     })
 
     const user = userEvent.setup()
@@ -1016,6 +1035,7 @@ describe("ContactFieldsCard", () => {
           is_primary: false,
         },
       ],
+      count: 1,
     })
 
     const user = userEvent.setup()
@@ -1051,6 +1071,7 @@ describe("ContactFieldsCard", () => {
           is_primary: false,
         },
       ],
+      count: 1,
     })
 
     renderWithProviders(<ContactFieldsCard contactId="test-contact-id" />)
@@ -1076,6 +1097,7 @@ describe("ContactFieldsCard", () => {
           is_primary: false,
         },
       ],
+      count: 1,
     })
 
     renderWithProviders(<ContactFieldsCard contactId="test-contact-id" />)
@@ -1101,6 +1123,7 @@ describe("ContactFieldsCard", () => {
           is_primary: true,
         },
       ],
+      count: 1,
     })
 
     renderWithProviders(<ContactFieldsCard contactId="test-contact-id" />)
@@ -1124,6 +1147,7 @@ describe("ContactFieldsCard", () => {
           is_primary: false,
         },
       ],
+      count: 1,
     })
 
     renderWithProviders(<ContactFieldsCard contactId="test-contact-id" />)
@@ -1150,6 +1174,7 @@ describe("ContactFieldsCard", () => {
           is_primary: false,
         },
       ],
+      count: 1,
     })
     vi.mocked(ContactFieldsService.deleteContactField).mockResolvedValue(undefined as any)
 
@@ -1184,6 +1209,7 @@ describe("ContactFieldsCard", () => {
           is_primary: false,
         },
       ],
+      count: 1,
     })
 
     vi.spyOn(window, "confirm").mockReturnValue(false)
@@ -1213,6 +1239,7 @@ describe("ContactFieldsCard", () => {
           is_primary: false,
         },
       ],
+      count: 1,
     })
     vi.mocked(ContactFieldsService.deleteContactField).mockRejectedValue(
       new Error("Delete failed"),
@@ -1247,6 +1274,7 @@ describe("ContactFieldsCard", () => {
           is_primary: false,
         },
       ],
+      count: 1,
     })
     vi.mocked(ContactFieldsService.deleteContactField).mockRejectedValue(
       "plain-string-error",

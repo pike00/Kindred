@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { Item } from "@/components/Sidebar/Main"
 import { Main } from "@/components/Sidebar/Main"
+import type { LucideIcon } from "@/lib/icons"
 import { renderWithProviders } from "@/test/helpers"
 
 // Mock sidebar UI components
@@ -92,14 +93,18 @@ describe("Main", () => {
   })
 
   const mockItems: Item[] = [
-    { icon: () => <span>HomeIcon</span>, title: "Dashboard", path: "/" },
     {
-      icon: () => <span>UsersIcon</span>,
+      icon: (() => <span>HomeIcon</span>) as unknown as LucideIcon,
+      title: "Dashboard",
+      path: "/",
+    },
+    {
+      icon: (() => <span>UsersIcon</span>) as unknown as LucideIcon,
       title: "Contacts",
       path: "/contacts",
     },
     {
-      icon: () => <span>MessagesIcon</span>,
+      icon: (() => <span>MessagesIcon</span>) as unknown as LucideIcon,
       title: "Interactions",
       path: "/interactions",
     },
@@ -232,8 +237,16 @@ describe("Main", () => {
 
   it("handles items with special characters in titles", () => {
     const specialItems: Item[] = [
-      { icon: () => <span>Icon</span>, title: "Home & Garden", path: "/" },
-      { icon: () => <span>Icon</span>, title: "Q&A", path: "/qa" },
+      {
+        icon: (() => <span>Icon</span>) as unknown as LucideIcon,
+        title: "Home & Garden",
+        path: "/",
+      },
+      {
+        icon: (() => <span>Icon</span>) as unknown as LucideIcon,
+        title: "Q&A",
+        path: "/qa",
+      },
     ]
 
     renderWithProviders(<Main items={specialItems} />)

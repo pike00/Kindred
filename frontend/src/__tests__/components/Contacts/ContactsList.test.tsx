@@ -47,7 +47,7 @@ vi.mock("@/components/Contacts/AddContactDialog", () => ({
 
 // Mock EmptyState
 vi.mock("@/components/Common/EmptyState", () => ({
-  EmptyState: ({ icon: Icon, title, description, action }: any) => (
+  EmptyState: ({ title, description, action }: any) => (
     <div data-testid="empty-state">
       <h2>{title}</h2>
       <p>{description}</p>
@@ -207,7 +207,7 @@ describe("ContactsList", () => {
       data: [
         makeContact({
           id: "1",
-          first_name: null,
+          first_name: "",
           last_name: null,
           middle_name: null,
           prefix: null,
@@ -324,7 +324,7 @@ describe("ContactsList", () => {
         makeContact({
           id: "1",
           first_name: "Alice",
-          is_starred: true,
+          is_favorite: true,
         }),
       ],
     })

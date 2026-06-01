@@ -163,7 +163,9 @@ describe("DeleteUser", () => {
   describe("form submission", () => {
     it("calls deleteUser with correct user ID on confirmation", async () => {
       const user = userEvent.setup()
-      vi.mocked(UsersService.deleteUser).mockResolvedValue(undefined)
+      vi.mocked(UsersService.deleteUser).mockResolvedValue({
+        message: "User deleted successfully",
+      })
 
       renderWithProviders(
         <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />,
@@ -187,7 +189,9 @@ describe("DeleteUser", () => {
 
     it("calls deleteUser exactly once", async () => {
       const user = userEvent.setup()
-      vi.mocked(UsersService.deleteUser).mockResolvedValue(undefined)
+      vi.mocked(UsersService.deleteUser).mockResolvedValue({
+        message: "User deleted successfully",
+      })
 
       renderWithProviders(
         <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />,
@@ -214,7 +218,7 @@ describe("DeleteUser", () => {
         () =>
           new Promise((resolve) => {
             resolveDelete = resolve
-          }),
+          }) as unknown as ReturnType<typeof UsersService.deleteUser>,
       )
 
       renderWithProviders(
@@ -246,7 +250,7 @@ describe("DeleteUser", () => {
         () =>
           new Promise((resolve) => {
             resolveDelete = resolve
-          }),
+          }) as unknown as ReturnType<typeof UsersService.deleteUser>,
       )
 
       renderWithProviders(
@@ -276,7 +280,9 @@ describe("DeleteUser", () => {
   describe("success handling", () => {
     it("shows success toast on deletion", async () => {
       const user = userEvent.setup()
-      vi.mocked(UsersService.deleteUser).mockResolvedValue(undefined)
+      vi.mocked(UsersService.deleteUser).mockResolvedValue({
+        message: "User deleted successfully",
+      })
 
       renderWithProviders(
         <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />,
@@ -303,7 +309,9 @@ describe("DeleteUser", () => {
 
     it("calls onSuccess callback after successful deletion", async () => {
       const user = userEvent.setup()
-      vi.mocked(UsersService.deleteUser).mockResolvedValue(undefined)
+      vi.mocked(UsersService.deleteUser).mockResolvedValue({
+        message: "User deleted successfully",
+      })
 
       renderWithProviders(
         <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />,
@@ -325,7 +333,9 @@ describe("DeleteUser", () => {
 
     it("closes dialog after successful deletion", async () => {
       const user = userEvent.setup()
-      vi.mocked(UsersService.deleteUser).mockResolvedValue(undefined)
+      vi.mocked(UsersService.deleteUser).mockResolvedValue({
+        message: "User deleted successfully",
+      })
 
       renderWithProviders(
         <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />,
@@ -353,7 +363,9 @@ describe("DeleteUser", () => {
 
     it("invalidates queries on successful deletion", async () => {
       const user = userEvent.setup()
-      vi.mocked(UsersService.deleteUser).mockResolvedValue(undefined)
+      vi.mocked(UsersService.deleteUser).mockResolvedValue({
+        message: "User deleted successfully",
+      })
 
       renderWithProviders(
         <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />,
@@ -453,7 +465,7 @@ describe("DeleteUser", () => {
       const user = userEvent.setup()
       vi.mocked(UsersService.deleteUser)
         .mockRejectedValueOnce(new Error("API Error"))
-        .mockResolvedValueOnce(undefined)
+        .mockResolvedValueOnce({ message: "User deleted successfully" })
 
       renderWithProviders(
         <DeleteUserWrapper id={userId} onSuccess={mockOnSuccess} />,

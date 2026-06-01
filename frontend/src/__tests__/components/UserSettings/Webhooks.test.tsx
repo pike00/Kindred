@@ -36,7 +36,7 @@ vi.mock("@/components/ui/dialog", () => {
         open ? content : null,
       )
     },
-    DialogTrigger: ({ children, asChild, _onOpenChange }: any) => {
+    DialogTrigger: ({ children, _onOpenChange }: any) => {
       if (!React.isValidElement(children)) return children
 
       return React.cloneElement(children, {
@@ -56,7 +56,7 @@ vi.mock("@/components/ui/dialog", () => {
       React.createElement("p", null, children),
     DialogFooter: ({ children }: any) =>
       React.createElement("div", null, children),
-    DialogClose: ({ children, asChild }: any) =>
+    DialogClose: ({ children }: any) =>
       React.isValidElement(children)
         ? React.cloneElement(children, {
             onClick: (e: any) => {
@@ -73,7 +73,7 @@ vi.mock("@/components/ui/dropdown-menu", () => {
   return {
     DropdownMenu: ({ children }: any) =>
       React.createElement("div", null, children),
-    DropdownMenuTrigger: ({ children, asChild }: any) => children,
+    DropdownMenuTrigger: ({ children }: any) => children,
     DropdownMenuContent: ({ children }: any) =>
       React.createElement("div", { role: "menu" }, children),
     DropdownMenuItem: ({ children, onClick }: any) =>
@@ -117,11 +117,10 @@ describe("Webhooks", () => {
 
   it("shows loading skeleton when query is loading", async () => {
     const { WebhooksService } = await import("@/client")
-    let resolveQuery: any
-    const queryPromise = new Promise((resolve) => {
-      resolveQuery = resolve
-    })
-    vi.mocked(WebhooksService.listWebhooks).mockReturnValueOnce(queryPromise)
+    const queryPromise = new Promise(() => {})
+    vi.mocked(WebhooksService.listWebhooks).mockReturnValueOnce(
+      queryPromise as unknown as ReturnType<typeof WebhooksService.listWebhooks>,
+    )
 
     renderWithProviders(<Webhooks />)
 
@@ -172,6 +171,7 @@ describe("Webhooks", () => {
         direction: "outbound",
         event_types: "contact.created",
         is_active: true,
+        owner_id: "owner-1",
         created_at: "2024-01-01T00:00:00Z",
       },
     ]
@@ -199,6 +199,7 @@ describe("Webhooks", () => {
         direction: "inbound",
         event_types: null,
         is_active: true,
+        owner_id: "owner-1",
         created_at: "2024-01-01T00:00:00Z",
       },
     ]
@@ -225,6 +226,7 @@ describe("Webhooks", () => {
         direction: "inbound",
         event_types: null,
         is_active: false,
+        owner_id: "owner-1",
         created_at: "2024-01-01T00:00:00Z",
       },
     ]
@@ -251,6 +253,7 @@ describe("Webhooks", () => {
         direction: "inbound",
         event_types: "contact.created, interaction.logged",
         is_active: true,
+        owner_id: "owner-1",
         created_at: "2024-01-01T00:00:00Z",
       },
     ]
@@ -395,6 +398,7 @@ describe("Webhooks", () => {
       direction: "inbound",
       event_types: null,
       is_active: true,
+      owner_id: "owner-1",
       created_at: "2024-01-01T00:00:00Z",
       api_key: "test-api-key-123",
     })
@@ -430,6 +434,7 @@ describe("Webhooks", () => {
       direction: "outbound",
       event_types: "contact.created",
       is_active: true,
+      owner_id: "owner-1",
       created_at: "2024-01-01T00:00:00Z",
       api_key: "test-api-key-123",
     })
@@ -486,6 +491,7 @@ describe("Webhooks", () => {
       direction: "inbound",
       event_types: null,
       is_active: true,
+      owner_id: "owner-1",
       created_at: "2024-01-01T00:00:00Z",
       api_key: "webhook-api-key-123",
     })
@@ -525,6 +531,7 @@ describe("Webhooks", () => {
       direction: "inbound",
       event_types: null,
       is_active: true,
+      owner_id: "owner-1",
       created_at: "2024-01-01T00:00:00Z",
       api_key: apiKey,
     })
@@ -561,6 +568,7 @@ describe("Webhooks", () => {
       direction: "inbound",
       event_types: null,
       is_active: true,
+      owner_id: "owner-1",
       created_at: "2024-01-01T00:00:00Z",
       api_key: apiKey,
     })
@@ -602,6 +610,7 @@ describe("Webhooks", () => {
       direction: "inbound",
       event_types: null,
       is_active: true,
+      owner_id: "owner-1",
       created_at: "2024-01-01T00:00:00Z",
       api_key: apiKey,
     })
@@ -641,6 +650,7 @@ describe("Webhooks", () => {
         direction: "outbound",
         event_types: "contact.created",
         is_active: true,
+        owner_id: "owner-1",
         created_at: "2024-01-01T00:00:00Z",
       },
     ]
@@ -667,6 +677,7 @@ describe("Webhooks", () => {
         direction: "outbound",
         event_types: "contact.created",
         is_active: true,
+        owner_id: "owner-1",
         created_at: "2024-01-01T00:00:00Z",
       },
     ]
@@ -697,6 +708,7 @@ describe("Webhooks", () => {
         direction: "outbound",
         event_types: "contact.created",
         is_active: true,
+        owner_id: "owner-1",
         created_at: "2024-01-01T00:00:00Z",
       },
     ]
@@ -728,6 +740,7 @@ describe("Webhooks", () => {
         direction: "outbound",
         event_types: "contact.created",
         is_active: true,
+        owner_id: "owner-1",
         created_at: "2024-01-01T00:00:00Z",
       },
     ]
@@ -762,6 +775,7 @@ describe("Webhooks", () => {
         direction: "outbound",
         event_types: "contact.created",
         is_active: true,
+        owner_id: "owner-1",
         created_at: "2024-01-01T00:00:00Z",
       },
     ]
@@ -778,6 +792,7 @@ describe("Webhooks", () => {
       direction: "outbound",
       event_types: "contact.created, interaction.created",
       is_active: true,
+      owner_id: "owner-1",
       created_at: "2024-01-01T00:00:00Z",
     })
 
@@ -822,6 +837,7 @@ describe("Webhooks", () => {
         direction: "outbound",
         event_types: "contact.created",
         is_active: true,
+        owner_id: "owner-1",
         created_at: "2024-01-01T00:00:00Z",
       },
     ]
@@ -866,6 +882,7 @@ describe("Webhooks", () => {
         direction: "outbound",
         event_types: "contact.created",
         is_active: true,
+        owner_id: "owner-1",
         created_at: "2024-01-01T00:00:00Z",
       },
     ]
@@ -941,6 +958,7 @@ describe("Webhooks", () => {
       direction: "inbound",
       event_types: null,
       is_active: true,
+      owner_id: "owner-1",
       created_at: "2024-01-01T00:00:00Z",
       api_key: "test-key",
     })
@@ -979,6 +997,7 @@ describe("Webhooks", () => {
         direction: "outbound",
         event_types: null,
         is_active: true,
+        owner_id: "owner-1",
         created_at: "2024-01-01T00:00:00Z",
       },
     ]
@@ -1007,6 +1026,7 @@ describe("Webhooks", () => {
         direction: "inbound",
         event_types: null,
         is_active: true,
+        owner_id: "owner-1",
         created_at: "2024-01-01T00:00:00Z",
       },
     ]
@@ -1035,6 +1055,7 @@ describe("Webhooks", () => {
         direction: "outbound",
         event_types: null,
         is_active: true,
+        owner_id: "owner-1",
         created_at: "2024-01-01T00:00:00Z",
       },
     ]
@@ -1061,6 +1082,7 @@ describe("Webhooks", () => {
         direction: "inbound",
         event_types: null,
         is_active: true,
+        owner_id: "owner-1",
         created_at: "2024-01-01T00:00:00Z",
       },
     ]
@@ -1087,6 +1109,7 @@ describe("Webhooks", () => {
         direction: "inbound",
         event_types: "contact.created, interaction.logged",
         is_active: true,
+        owner_id: "owner-1",
         created_at: "2024-01-01T00:00:00Z",
       },
     ]
@@ -1115,6 +1138,7 @@ describe("Webhooks", () => {
         direction: "inbound",
         event_types: null,
         is_active: true,
+        owner_id: "owner-1",
         created_at: "2024-01-01T00:00:00Z",
       },
     ]
@@ -1141,6 +1165,7 @@ describe("Webhooks", () => {
         direction: "outbound",
         event_types: "contact.created",
         is_active: true,
+        owner_id: "owner-1",
         created_at: "2024-01-01T00:00:00Z",
       },
     ]
@@ -1187,6 +1212,7 @@ describe("Webhooks", () => {
         direction: "outbound",
         event_types: "contact.created",
         is_active: true,
+        owner_id: "owner-1",
         created_at: "2024-01-01T00:00:00Z",
       },
     ]
@@ -1289,6 +1315,7 @@ describe("Webhooks", () => {
         direction: "outbound",
         event_types: "contact.created",
         is_active: true,
+        owner_id: "owner-1",
         created_at: "2024-01-01T00:00:00Z",
       },
     ]
@@ -1328,6 +1355,7 @@ describe("Webhooks", () => {
         direction: "outbound",
         event_types: "contact.created",
         is_active: true,
+        owner_id: "owner-1",
         created_at: "2024-01-01T00:00:00Z",
       },
     ]
@@ -1344,6 +1372,7 @@ describe("Webhooks", () => {
       direction: "outbound",
       event_types: "contact.created",
       is_active: false,
+      owner_id: "owner-1",
       created_at: "2024-01-01T00:00:00Z",
     })
 
@@ -1388,6 +1417,7 @@ describe("Webhooks", () => {
       direction: "inbound",
       event_types: null,
       is_active: true,
+      owner_id: "owner-1",
       created_at: "2024-01-01T00:00:00Z",
       api_key: apiKey,
     })
@@ -1440,6 +1470,7 @@ describe("Webhooks", () => {
       direction: "outbound",
       event_types: null,
       is_active: true,
+      owner_id: "owner-1",
       created_at: "2024-01-01T00:00:00Z",
       api_key: apiKey,
     })
@@ -1532,6 +1563,7 @@ describe("Webhooks", () => {
         direction: "outbound",
         event_types: "contact.created",
         is_active: true,
+        owner_id: "owner-1",
         created_at: "2024-01-01T00:00:00Z",
       },
     ]

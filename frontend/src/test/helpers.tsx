@@ -13,6 +13,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { type RenderOptions, render } from "@testing-library/react"
 import { Suspense, type ReactElement, type ReactNode } from "react"
+import type { CancelablePromise, ContactPublic, TagPublic } from "@/client"
 import { ShortcutRegistryProvider } from "@/hooks/useKeyboardShortcuts"
 
 // ---------------------------------------------------------------------------
@@ -66,33 +67,10 @@ export function renderWithProviders(
 // Common mock factories
 // ---------------------------------------------------------------------------
 
-/** Factory for a minimal ContactPublic object. */
+/** Factory for a minimal ContactPublic object. Typed so it stays in sync. */
 export function makeContact(
-  overrides: Partial<{
-    id: string
-    first_name: string
-    last_name: string | null
-    nickname: string | null
-    company: string | null
-    title: string | null
-    birthday: string | null
-    prefix: string | null
-    middle_name: string | null
-    suffix: string | null
-    last_contacted_at: string | null
-    is_starred: boolean
-    is_favorite: boolean
-    is_archived: boolean
-    is_deceased: boolean
-    do_not_contact: boolean
-    do_not_contact_reason: string | null
-    contact_frequency_days: number | null
-    how_we_met: string | null
-    timezone: string | null
-    pronouns: string | null
-    tags: { id: string; name: string; color: string | null }[]
-  }> = {},
-) {
+  overrides: Partial<ContactPublic> = {},
+): ContactPublic {
   return {
     id: "test-contact-id",
     first_name: "Alice",
@@ -105,7 +83,6 @@ export function makeContact(
     middle_name: null,
     suffix: null,
     last_contacted_at: null,
-    is_starred: false,
     is_favorite: false,
     is_archived: false,
     is_deceased: false,
@@ -115,19 +92,30 @@ export function makeContact(
     how_we_met: null,
     timezone: null,
     pronouns: null,
+    avatar_url: null,
+    created_at: "2026-01-01T00:00:00Z",
+    updated_at: "2026-01-01T00:00:00Z",
     tags: [],
     ...overrides,
   }
 }
 
-/** Factory for a minimal TagPublic object. */
-export function makeTag(
-  overrides: Partial<{ id: string; name: string; color: string | null }> = {},
-) {
+/**
+ * Wrap a value as a CancelablePromise (the SDK return type) so test mocks of
+ * generated services typecheck. CancelablePromise is structurally a Promise
+ * plus cancel handlers tests don't exercise, so the cast is sound here.
+ */
+export function cancelable<T>(value: T): CancelablePromise<T> {
+  return Promise.resolve(value) as unknown as CancelablePromise<T>
+}
+
+/** Factory for a minimal TagPublic object. Typed so it stays in sync. */
+export function makeTag(overrides: Partial<TagPublic> = {}): TagPublic {
   return {
     id: "tag-id",
     name: "Friends",
     color: "#3b82f6",
+    created_at: "2026-01-01T00:00:00Z",
     ...overrides,
   }
 }

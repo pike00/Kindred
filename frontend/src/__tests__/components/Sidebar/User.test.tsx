@@ -55,7 +55,7 @@ vi.mock("@/components/ui/avatar", () => ({
 // Mock dropdown menu
 vi.mock("@/components/ui/dropdown-menu", () => ({
   DropdownMenu: ({ children }: any) => <div>{children}</div>,
-  DropdownMenuTrigger: ({ children, asChild }: any) => (
+  DropdownMenuTrigger: ({ children }: any) => (
     <div data-testid="dropdown-trigger">{children}</div>
   ),
   DropdownMenuContent: ({
@@ -63,7 +63,6 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
     side,
     align,
     sideOffset,
-    className,
   }: any) => (
     <div
       data-testid="dropdown-content"

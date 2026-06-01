@@ -4,7 +4,6 @@ import { screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { renderWithProviders } from "@/test/helpers"
 import { RelationshipsCard } from "@/components/Contacts/RelationshipsCard"
-import { ContactsService, RelationshipsService } from "@/client"
 
 // Mock variables for easier manipulation
 const {
@@ -31,7 +30,7 @@ const {
 
 // Mock dialog to render inline
 vi.mock("@/components/ui/dialog", () => ({
-  Dialog: ({ children, open, onOpenChange }: any) => {
+  Dialog: ({ children, open }: any) => {
     const arr = React.Children.toArray(children)
     return open ? React.createElement("div", null, ...arr) : React.createElement("div", null, arr[0] || null)
   },
@@ -47,15 +46,15 @@ vi.mock("@/components/ui/dialog", () => ({
     React.createElement("p", null, children),
   DialogFooter: ({ children }: any) =>
     React.createElement("div", null, children),
-  DialogClose: ({ children, asChild }: any) =>
+  DialogClose: ({ children }: any) =>
     React.createElement("div", null, children),
 }))
 
 // Mock Popover
 vi.mock("@/components/ui/popover", () => ({
-  Popover: ({ children, open, onOpenChange }: any) =>
+  Popover: ({ children }: any) =>
     React.createElement("div", null, children),
-  PopoverTrigger: ({ children, asChild }: any) =>
+  PopoverTrigger: ({ children }: any) =>
     React.createElement("div", null, children),
   PopoverContent: ({ children }: any) =>
     React.createElement("div", null, children),
@@ -98,7 +97,7 @@ vi.mock("@/hooks/useCustomToast", () => ({
 
 // Mock router Link
 vi.mock("@tanstack/react-router", () => ({
-  Link: ({ children, to, params }: any) =>
+  Link: ({ children }: any) =>
     React.createElement("a", { href: "#" }, children),
   useNavigate: vi.fn(),
 }))
@@ -140,7 +139,7 @@ vi.mock("@/components/Common/RowActionsMenu", () => ({
 
 // Mock EmptyState
 vi.mock("@/components/Common/EmptyState", () => ({
-  EmptyState: ({ title, description }: any) =>
+  EmptyState: ({ title }: any) =>
     React.createElement("div", { "data-testid": "empty-state" }, title),
 }))
 
@@ -996,7 +995,8 @@ describe("RelationshipsCard", () => {
       })
 
       const saveButton = within(
-        document.querySelector("[role='dialog']") || document,
+        (document.querySelector("[role='dialog']") as HTMLElement) ||
+          document.body,
       ).getByRole("button", { name: "Save" })
 
       await userEvent.click(saveButton)
@@ -1035,7 +1035,8 @@ describe("RelationshipsCard", () => {
       })
 
       const saveButton = within(
-        document.querySelector("[role='dialog']") || document,
+        (document.querySelector("[role='dialog']") as HTMLElement) ||
+          document.body,
       ).getByRole("button", { name: "Save" })
 
       await userEvent.click(saveButton)
@@ -1076,7 +1077,8 @@ describe("RelationshipsCard", () => {
       })
 
       const saveButton = within(
-        document.querySelector("[role='dialog']") || document,
+        (document.querySelector("[role='dialog']") as HTMLElement) ||
+          document.body,
       ).getByRole("button", { name: "Save" })
 
       await userEvent.click(saveButton)
@@ -1115,7 +1117,8 @@ describe("RelationshipsCard", () => {
       })
 
       const saveButton = within(
-        document.querySelector("[role='dialog']") || document,
+        (document.querySelector("[role='dialog']") as HTMLElement) ||
+          document.body,
       ).getByRole("button", { name: "Save" })
 
       await userEvent.click(saveButton)

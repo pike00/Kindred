@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest"
 import { screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { renderWithProviders, createQueryClient } from "@/test/helpers"
+import { renderWithProviders } from "@/test/helpers"
 import CustomFieldDefinitions from "@/components/UserSettings/CustomFieldDefinitions"
 
 vi.mock("sonner", () => ({
@@ -43,6 +43,7 @@ describe("CustomFieldDefinitions", () => {
     const { CustomFieldsService } = await import("@/client")
     vi.mocked(CustomFieldsService.listFieldDefinitions).mockResolvedValueOnce({
       data: [],
+      count: 0,
     })
 
     renderWithProviders(<CustomFieldDefinitions />)
@@ -54,6 +55,7 @@ describe("CustomFieldDefinitions", () => {
     const { CustomFieldsService } = await import("@/client")
     vi.mocked(CustomFieldsService.listFieldDefinitions).mockResolvedValueOnce({
       data: [],
+      count: 0,
     })
 
     renderWithProviders(<CustomFieldDefinitions />)
@@ -68,6 +70,7 @@ describe("CustomFieldDefinitions", () => {
     const { CustomFieldsService } = await import("@/client")
     vi.mocked(CustomFieldsService.listFieldDefinitions).mockResolvedValueOnce({
       data: [],
+      count: 0,
     })
 
     renderWithProviders(<CustomFieldDefinitions />)
@@ -78,9 +81,12 @@ describe("CustomFieldDefinitions", () => {
   it("shows loading skeleton while loading", async () => {
     const { CustomFieldsService } = await import("@/client")
     vi.mocked(CustomFieldsService.listFieldDefinitions).mockImplementation(
-      () => new Promise((resolve) => {
-        setTimeout(() => resolve({ data: [] }), 1000)
-      })
+      () =>
+        new Promise((resolve) => {
+          setTimeout(() => resolve({ data: [], count: 0 }), 1000)
+        }) as unknown as ReturnType<
+          typeof CustomFieldsService.listFieldDefinitions
+        >,
     )
 
     const { container } = renderWithProviders(<CustomFieldDefinitions />)
@@ -93,6 +99,7 @@ describe("CustomFieldDefinitions", () => {
     const { CustomFieldsService } = await import("@/client")
     vi.mocked(CustomFieldsService.listFieldDefinitions).mockResolvedValueOnce({
       data: [],
+      count: 0,
     })
 
     renderWithProviders(<CustomFieldDefinitions />)
@@ -114,6 +121,7 @@ describe("CustomFieldDefinitions", () => {
           field_type: "text",
           description: "Preferred coffee order",
           icon: "coffee",
+          created_at: "2026-01-01T00:00:00Z",
         },
         {
           id: "def-2",
@@ -121,8 +129,10 @@ describe("CustomFieldDefinitions", () => {
           field_type: "text",
           description: null,
           icon: "palette",
+          created_at: "2026-01-01T00:00:00Z",
         },
       ],
+      count: 1,
     })
 
     renderWithProviders(<CustomFieldDefinitions />)
@@ -143,8 +153,10 @@ describe("CustomFieldDefinitions", () => {
           field_type: "text",
           description: null,
           icon: "coffee",
+          created_at: "2026-01-01T00:00:00Z",
         },
       ],
+      count: 1,
     })
 
     renderWithProviders(<CustomFieldDefinitions />)
@@ -164,8 +176,10 @@ describe("CustomFieldDefinitions", () => {
           field_type: "text",
           description: "How they like their coffee",
           icon: null,
+          created_at: "2026-01-01T00:00:00Z",
         },
       ],
+      count: 1,
     })
 
     renderWithProviders(<CustomFieldDefinitions />)
@@ -179,6 +193,7 @@ describe("CustomFieldDefinitions", () => {
     const { CustomFieldsService } = await import("@/client")
     vi.mocked(CustomFieldsService.listFieldDefinitions).mockResolvedValueOnce({
       data: [],
+      count: 0,
     })
 
     const user = userEvent.setup()
@@ -196,6 +211,7 @@ describe("CustomFieldDefinitions", () => {
     const { CustomFieldsService } = await import("@/client")
     vi.mocked(CustomFieldsService.listFieldDefinitions).mockResolvedValueOnce({
       data: [],
+      count: 0,
     })
 
     const user = userEvent.setup()
@@ -215,6 +231,7 @@ describe("CustomFieldDefinitions", () => {
     const { CustomFieldsService } = await import("@/client")
     vi.mocked(CustomFieldsService.listFieldDefinitions).mockResolvedValueOnce({
       data: [],
+      count: 0,
     })
 
     const user = userEvent.setup()
@@ -238,7 +255,7 @@ describe("CustomFieldDefinitions", () => {
   it("successfully creates new definition", async () => {
     const { CustomFieldsService } = await import("@/client")
     vi.mocked(CustomFieldsService.listFieldDefinitions)
-      .mockResolvedValueOnce({ data: [] })
+      .mockResolvedValueOnce({ data: [], count: 0 })
       .mockResolvedValueOnce({
         data: [
           {
@@ -247,8 +264,10 @@ describe("CustomFieldDefinitions", () => {
             field_type: "text",
             description: "How they like their coffee",
             icon: "coffee",
+            created_at: "2026-01-01T00:00:00Z",
           },
         ],
+        count: 1,
       })
 
     const mockCreateFieldDefinition = vi.mocked(CustomFieldsService.createFieldDefinition)
@@ -258,6 +277,7 @@ describe("CustomFieldDefinitions", () => {
       field_type: "text",
       description: "How they like their coffee",
       icon: "coffee",
+      created_at: "2026-01-01T00:00:00Z",
     })
 
     const user = userEvent.setup()
@@ -295,7 +315,7 @@ describe("CustomFieldDefinitions", () => {
   it("closes dialog after successful creation", async () => {
     const { CustomFieldsService } = await import("@/client")
     vi.mocked(CustomFieldsService.listFieldDefinitions)
-      .mockResolvedValueOnce({ data: [] })
+      .mockResolvedValueOnce({ data: [], count: 0 })
       .mockResolvedValueOnce({
         data: [
           {
@@ -304,8 +324,10 @@ describe("CustomFieldDefinitions", () => {
             field_type: "text",
             description: null,
             icon: null,
+            created_at: "2026-01-01T00:00:00Z",
           },
         ],
+        count: 1,
       })
 
     vi.mocked(CustomFieldsService.createFieldDefinition).mockResolvedValueOnce({
@@ -314,6 +336,7 @@ describe("CustomFieldDefinitions", () => {
       field_type: "text",
       description: null,
       icon: null,
+      created_at: "2026-01-01T00:00:00Z",
     })
 
     const user = userEvent.setup()
@@ -347,8 +370,10 @@ describe("CustomFieldDefinitions", () => {
           field_type: "text",
           description: null,
           icon: null,
+          created_at: "2026-01-01T00:00:00Z",
         },
       ],
+      count: 1,
     })
 
     renderWithProviders(<CustomFieldDefinitions />)
@@ -371,8 +396,10 @@ describe("CustomFieldDefinitions", () => {
           field_type: "text",
           description: "Original description",
           icon: "coffee",
+          created_at: "2026-01-01T00:00:00Z",
         },
       ],
+      count: 1,
     })
 
     const user = userEvent.setup()
@@ -408,8 +435,10 @@ describe("CustomFieldDefinitions", () => {
           field_type: "text",
           description: "Original description",
           icon: "coffee",
+          created_at: "2026-01-01T00:00:00Z",
         },
       ],
+      count: 1,
     })
 
     const user = userEvent.setup()
@@ -446,8 +475,10 @@ describe("CustomFieldDefinitions", () => {
             field_type: "text",
             description: "Original",
             icon: "coffee",
+            created_at: "2026-01-01T00:00:00Z",
           },
         ],
+        count: 1,
       })
       .mockResolvedValueOnce({
         data: [
@@ -457,8 +488,10 @@ describe("CustomFieldDefinitions", () => {
             field_type: "text",
             description: "Updated",
             icon: "coffee",
+            created_at: "2026-01-01T00:00:00Z",
           },
         ],
+        count: 1,
       })
 
     const mockUpdateFieldDefinition = vi.mocked(CustomFieldsService.updateFieldDefinition)
@@ -468,6 +501,7 @@ describe("CustomFieldDefinitions", () => {
       field_type: "text",
       description: "Updated",
       icon: "coffee",
+      created_at: "2026-01-01T00:00:00Z",
     })
 
     const user = userEvent.setup()
@@ -510,8 +544,10 @@ describe("CustomFieldDefinitions", () => {
           field_type: "text",
           description: null,
           icon: "coffee",
+          created_at: "2026-01-01T00:00:00Z",
         },
       ],
+      count: 1,
     })
 
     const user = userEvent.setup()
@@ -551,11 +587,14 @@ describe("CustomFieldDefinitions", () => {
             field_type: "text",
             description: null,
             icon: "coffee",
+            created_at: "2026-01-01T00:00:00Z",
           },
         ],
+        count: 1,
       })
       .mockResolvedValueOnce({
         data: [],
+        count: 0,
       })
 
     const mockDeleteFieldDefinition = vi.mocked(CustomFieldsService.deleteFieldDefinition)
@@ -603,8 +642,10 @@ describe("CustomFieldDefinitions", () => {
           field_type: "text",
           description: null,
           icon: "coffee",
+          created_at: "2026-01-01T00:00:00Z",
         },
       ],
+      count: 1,
     })
 
     const mockDeleteFieldDefinition = vi.mocked(CustomFieldsService.deleteFieldDefinition)
@@ -646,8 +687,10 @@ describe("CustomFieldDefinitions", () => {
           field_type: "text",
           description: null,
           icon: "coffee",
+          created_at: "2026-01-01T00:00:00Z",
         },
       ],
+      count: 1,
     })
 
     const mockError = new Error("Delete failed")
@@ -690,8 +733,10 @@ describe("CustomFieldDefinitions", () => {
             field_type: "text",
             description: "Original description",
             icon: "coffee",
+            created_at: "2026-01-01T00:00:00Z",
           },
         ],
+        count: 1,
       })
       .mockResolvedValueOnce({
         data: [
@@ -701,8 +746,10 @@ describe("CustomFieldDefinitions", () => {
             field_type: "text",
             description: "Updated description",
             icon: "coffee",
+            created_at: "2026-01-01T00:00:00Z",
           },
         ],
+        count: 1,
       })
 
     const mockUpdateFieldDefinition = vi.mocked(CustomFieldsService.updateFieldDefinition)
@@ -712,6 +759,7 @@ describe("CustomFieldDefinitions", () => {
       field_type: "text",
       description: "Updated description",
       icon: "coffee",
+      created_at: "2026-01-01T00:00:00Z",
     })
 
     const user = userEvent.setup()
@@ -752,8 +800,10 @@ describe("CustomFieldDefinitions", () => {
             field_type: "text",
             description: "Original",
             icon: "coffee",
+            created_at: "2026-01-01T00:00:00Z",
           },
         ],
+        count: 1,
       })
       .mockResolvedValueOnce({
         data: [
@@ -763,8 +813,10 @@ describe("CustomFieldDefinitions", () => {
             field_type: "text",
             description: "Updated",
             icon: "coffee",
+            created_at: "2026-01-01T00:00:00Z",
           },
         ],
+        count: 1,
       })
 
     vi.mocked(CustomFieldsService.updateFieldDefinition).mockResolvedValueOnce({
@@ -773,6 +825,7 @@ describe("CustomFieldDefinitions", () => {
       field_type: "text",
       description: "Updated",
       icon: "coffee",
+      created_at: "2026-01-01T00:00:00Z",
     })
 
     const user = userEvent.setup()
@@ -812,8 +865,10 @@ describe("CustomFieldDefinitions", () => {
           field_type: "text",
           description: "Original",
           icon: "coffee",
+          created_at: "2026-01-01T00:00:00Z",
         },
       ],
+      count: 1,
     })
 
     const mockError = new Error("Update failed")
@@ -858,8 +913,10 @@ describe("CustomFieldDefinitions", () => {
             field_type: "text",
             description: "Original",
             icon: "coffee",
+            created_at: "2026-01-01T00:00:00Z",
           },
         ],
+        count: 1,
       })
       .mockResolvedValueOnce({
         data: [
@@ -869,8 +926,10 @@ describe("CustomFieldDefinitions", () => {
             field_type: "text",
             description: "Original",
             icon: "coffee",
+            created_at: "2026-01-01T00:00:00Z",
           },
         ],
+        count: 1,
       })
 
     vi.mocked(CustomFieldsService.updateFieldDefinition).mockResolvedValueOnce({
@@ -879,6 +938,7 @@ describe("CustomFieldDefinitions", () => {
       field_type: "text",
       description: "Original",
       icon: "coffee",
+      created_at: "2026-01-01T00:00:00Z",
     })
 
     const user = userEvent.setup()
@@ -920,31 +980,36 @@ describe("CustomFieldDefinitions", () => {
           {
             id: "def-1",
             name: "Simple Field",
-            field_type: null,
+            field_type: undefined,
             description: null,
             icon: null,
+            created_at: "2026-01-01T00:00:00Z",
           },
         ],
+        count: 1,
       })
       .mockResolvedValueOnce({
         data: [
           {
             id: "def-1",
             name: "Simple Field",
-            field_type: null,
+            field_type: undefined,
             description: null,
             icon: null,
+            created_at: "2026-01-01T00:00:00Z",
           },
         ],
+        count: 1,
       })
 
     const mockUpdateFieldDefinition = vi.mocked(CustomFieldsService.updateFieldDefinition)
     mockUpdateFieldDefinition.mockResolvedValueOnce({
       id: "def-1",
       name: "Simple Field",
-      field_type: null,
+      field_type: undefined,
       description: null,
       icon: null,
+      created_at: "2026-01-01T00:00:00Z",
     })
 
     const user = userEvent.setup()
@@ -984,8 +1049,10 @@ describe("CustomFieldDefinitions", () => {
           field_type: "text",
           description: null,
           icon: "coffee",
+          created_at: "2026-01-01T00:00:00Z",
         },
       ],
+      count: 1,
     })
     vi.mocked(
       CustomFieldsService.deleteFieldDefinition,

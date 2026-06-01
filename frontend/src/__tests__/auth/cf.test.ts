@@ -69,7 +69,6 @@ describe("Cloudflare Access auth", () => {
       vi.stubEnv("VITE_AUTH_MODE", "oidc")
       vi.stubEnv("VITE_CF_LOGOUT_URL", "https://cf.example.com/logout")
 
-      const _hrefSpy = vi.fn()
       Object.defineProperty(window, "location", {
         value: {
           href: "",

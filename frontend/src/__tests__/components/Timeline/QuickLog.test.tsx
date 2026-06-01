@@ -49,7 +49,7 @@ vi.mock("@/components/ui/input", () => ({
 
 // Mock select component
 vi.mock("@/components/ui/select", () => ({
-  Select: ({ onValueChange, defaultValue, children }: any) => (
+  Select: ({ children }: any) => (
     <div data-testid="select">{children}</div>
   ),
   SelectTrigger: ({ children, size, ...props }: any) => (
@@ -207,7 +207,6 @@ describe("QuickLog", () => {
   })
 
   it("allows changing channel before submission", async () => {
-    const user = userEvent.setup()
     renderWithProviders(<QuickLog contactId="c1" />)
 
     // Try to interact with channel select (this is challenging with mocked components)
@@ -308,7 +307,7 @@ describe("QuickLog", () => {
 
   it("invalidates related queries after successful submission", async () => {
     const user = userEvent.setup()
-    const { queryClient } = renderWithProviders(<QuickLog contactId="c1" />)
+    renderWithProviders(<QuickLog contactId="c1" />)
 
     const submitButton = screen.getByRole("button", { name: /send/i })
     await user.click(submitButton)

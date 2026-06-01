@@ -2,6 +2,9 @@ import { render, screen } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { columns } from "@/components/Reminders/columns"
 import { makeReminder } from "@/test/helpers"
+import type { ReactNode } from "react"
+
+type CellFn = (props: any) => ReactNode
 
 // Mock icons
 vi.mock("@/lib/icons", () => ({
@@ -30,7 +33,7 @@ describe("Reminders columns", () => {
   })
 
   it("first column has accessorKey 'title'", () => {
-    expect(columns[0].accessorKey).toBe("title")
+    expect((columns[0] as { accessorKey?: string }).accessorKey).toBe("title")
   })
 
   it("first column header is 'Reminder'", () => {
@@ -38,7 +41,7 @@ describe("Reminders columns", () => {
   })
 
   it("second column has accessorKey 'remind_at'", () => {
-    expect(columns[1].accessorKey).toBe("remind_at")
+    expect((columns[1] as { accessorKey?: string }).accessorKey).toBe("remind_at")
   })
 
   it("second column header is 'Scheduled'", () => {
@@ -58,7 +61,7 @@ describe("Reminders columns", () => {
     const { cell } = columns[0]
     render(
       <div>
-        {cell!({
+        {(cell as CellFn)({
           row: { original: reminder },
         } as any)}
       </div>
@@ -75,9 +78,9 @@ describe("Reminders columns", () => {
     })
 
     const { cell } = columns[0]
-    const { container } = render(
+    render(
       <div>
-        {cell!({
+        {(cell as CellFn)({
           row: { original: reminder },
         } as any)}
       </div>
@@ -97,7 +100,7 @@ describe("Reminders columns", () => {
     const { cell } = columns[1]
     render(
       <div>
-        {cell!({
+        {(cell as CellFn)({
           row: { original: reminder },
         } as any)}
       </div>
@@ -120,7 +123,7 @@ describe("Reminders columns", () => {
     const { cell } = columns[1]
     render(
       <div>
-        {cell!({
+        {(cell as CellFn)({
           row: { original: reminder },
         } as any)}
       </div>
@@ -139,7 +142,7 @@ describe("Reminders columns", () => {
     const { cell } = columns[1]
     render(
       <div>
-        {cell!({
+        {(cell as CellFn)({
           row: { original: reminder },
         } as any)}
       </div>
@@ -156,7 +159,7 @@ describe("Reminders columns", () => {
     const { cell } = columns[2]
     render(
       <div>
-        {cell!({
+        {(cell as CellFn)({
           row: { original: reminder },
         } as any)}
       </div>
@@ -175,7 +178,7 @@ describe("Reminders columns", () => {
     const { cell } = columns[1]
     const { container } = render(
       <div>
-        {cell!({
+        {(cell as CellFn)({
           row: { original: reminder },
         } as any)}
       </div>
@@ -200,7 +203,7 @@ describe("Reminders columns", () => {
       const { cell } = columns[0]
       const { unmount } = render(
         <div>
-          {cell!({
+          {(cell as CellFn)({
             row: { original: reminder },
           } as any)}
         </div>
@@ -222,7 +225,7 @@ describe("Reminders columns", () => {
     const { cell } = columns[1]
     render(
       <div>
-        {cell!({
+        {(cell as CellFn)({
           row: { original: reminder },
         } as any)}
       </div>
@@ -240,7 +243,7 @@ describe("Reminders columns", () => {
     const { cell } = columns[0]
     render(
       <div>
-        {cell!({
+        {(cell as CellFn)({
           row: { original: reminder },
         } as any)}
       </div>
@@ -262,7 +265,7 @@ describe("Reminders columns", () => {
     const { cell } = columns[1]
     render(
       <div>
-        {cell!({
+        {(cell as CellFn)({
           row: { original: reminder },
         } as any)}
       </div>
@@ -280,9 +283,9 @@ describe("Reminders columns", () => {
     })
 
     const { cell } = columns[0]
-    const { container } = render(
+    render(
       <div>
-        {cell!({
+        {(cell as CellFn)({
           row: { original: reminder },
         } as any)}
       </div>

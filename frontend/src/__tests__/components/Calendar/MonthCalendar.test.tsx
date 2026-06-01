@@ -25,8 +25,6 @@ vi.mock("@tanstack/react-router", () => ({
 }))
 
 describe("MonthCalendar", () => {
-  const mockOnMonthChange = vi.fn()
-
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -48,7 +46,7 @@ describe("MonthCalendar", () => {
     )
 
     renderWithProviders(
-      <MonthCalendar month="2024-05" onMonthChange={mockOnMonthChange} />
+      <MonthCalendar month="2024-05" />
     )
 
     await waitFor(() => {
@@ -79,7 +77,7 @@ describe("MonthCalendar", () => {
     )
 
     const { container } = renderWithProviders(
-      <MonthCalendar month="2024-05" onMonthChange={mockOnMonthChange} />
+      <MonthCalendar month="2024-05" />
     )
 
     await waitFor(() => {
@@ -123,7 +121,7 @@ describe("MonthCalendar", () => {
     )
 
     renderWithProviders(
-      <MonthCalendar month="2024-05" onMonthChange={mockOnMonthChange} />
+      <MonthCalendar month="2024-05" />
     )
 
     await waitFor(() => {
@@ -148,7 +146,7 @@ describe("MonthCalendar", () => {
     )
 
     renderWithProviders(
-      <MonthCalendar month="2024-05" onMonthChange={mockOnMonthChange} />
+      <MonthCalendar month="2024-05" />
     )
 
     await waitFor(() => {
@@ -178,7 +176,7 @@ describe("MonthCalendar", () => {
     )
 
     renderWithProviders(
-      <MonthCalendar month="2024-05" onMonthChange={mockOnMonthChange} />
+      <MonthCalendar month="2024-05" />
     )
 
     await waitFor(() => {
@@ -208,7 +206,7 @@ describe("MonthCalendar", () => {
     )
 
     renderWithProviders(
-      <MonthCalendar month="2024-05" onMonthChange={mockOnMonthChange} />
+      <MonthCalendar month="2024-05" />
     )
 
     await waitFor(() => {
@@ -238,7 +236,7 @@ describe("MonthCalendar", () => {
     )
 
     renderWithProviders(
-      <MonthCalendar month="2024-05" onMonthChange={mockOnMonthChange} />
+      <MonthCalendar month="2024-05" />
     )
 
     await waitFor(() => {
@@ -259,7 +257,7 @@ describe("MonthCalendar", () => {
     )
 
     renderWithProviders(
-      <MonthCalendar month="2024-05" onMonthChange={mockOnMonthChange} />
+      <MonthCalendar month="2024-05" />
     )
 
     await waitFor(() => {
@@ -280,7 +278,7 @@ describe("MonthCalendar", () => {
     )
 
     const { container } = renderWithProviders(
-      <MonthCalendar month="2024-05" onMonthChange={mockOnMonthChange} />
+      <MonthCalendar month="2024-05" />
     )
 
     await waitFor(() => {
@@ -308,8 +306,8 @@ describe("MonthCalendar", () => {
       } as any
     )
 
-    const { rerender } = renderWithProviders(
-      <MonthCalendar month="2024-05" onMonthChange={mockOnMonthChange} />
+    renderWithProviders(
+      <MonthCalendar month="2024-05" />
     )
 
     await waitFor(() => {
@@ -331,7 +329,7 @@ describe("MonthCalendar", () => {
     )
 
     const { container } = renderWithProviders(
-      <MonthCalendar month="2024-05" onMonthChange={mockOnMonthChange} />
+      <MonthCalendar month="2024-05" />
     )
 
     await waitFor(() => {
@@ -348,7 +346,7 @@ describe("MonthCalendar", () => {
     )
 
     renderWithProviders(
-      <MonthCalendar month="2024-05" onMonthChange={mockOnMonthChange} />
+      <MonthCalendar month="2024-05" />
     )
 
     await waitFor(() => {
@@ -375,7 +373,7 @@ describe("MonthCalendar", () => {
     )
 
     renderWithProviders(
-      <MonthCalendar month="2024-05" onMonthChange={mockOnMonthChange} />
+      <MonthCalendar month="2024-05" />
     )
 
     await waitFor(() => {
@@ -405,7 +403,7 @@ describe("MonthCalendar", () => {
     )
 
     renderWithProviders(
-      <MonthCalendar month="2024-05" onMonthChange={mockOnMonthChange} />
+      <MonthCalendar month="2024-05" />
     )
 
     await waitFor(() => {
@@ -436,7 +434,7 @@ describe("MonthCalendar", () => {
     )
 
     renderWithProviders(
-      <MonthCalendar month="2024-05" onMonthChange={mockOnMonthChange} />
+      <MonthCalendar month="2024-05" />
     )
 
     await waitFor(() => {
