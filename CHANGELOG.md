@@ -5,6 +5,41 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.85] - 2026-06-01
+
+### Documentation
+- Docs: add README files for Contacts List Render Crash, Dashboard Metadata Widgets, and Interaction Drafts; update Map View of Contacts README (d7a3504)
+- Docs: add 0.2.x feature verification report (5603022)
+
+### Fixed
+- Fix(webhooks): use settings.REDIS_URL instead of hardcoded redis host (38b71de)
+- Fix: align SQLModel json columns with applied jsonb migrations (cd73770)
+- Fix: correct CSV import date parsing that dropped every row with a birthday (d9f262d)
+
+### Other
+- Test+fix: green the full frontend vitest suite (1941 passing) (d9e6401)
+- Ci: point .env service hosts at localhost for Test Backend (ab46dff)
+- Ci: add redis + meilisearch service containers to Test Backend (a904c07)
+- Test: resolve alembic paths relative to conftest, not hard-coded /app/backend (507537c)
+- Test+ci: make frontend typecheck green and fix Test Backend CI env (e4372cb)
+- Test: resolve FIRST_SUPERUSER by email in bulk-contacts tests (e68cecf)
+- ⬆ bump typescript from 5.9.3 to 6.0.3 (4958fff)
+- ⬆ bump tinykeys from 3.1.0 to 4.0.0 (553c413)
+- ⬆ bump @tanstack/router-plugin from 1.168.11 to 1.168.13 (3f9e764)
+- ⬆ bump @tanstack/react-router from 1.170.8 to 1.170.10 (e335031)
+- ⬆ bump @biomejs/biome from 2.4.15 to 2.4.16 (63bba7c)
+- ⬆ bump getmeili/meilisearch from v1.44.0 to v1.45.1 (f9e4ed3)
+- ⬆ bump pytest from 7.4.4 to 9.0.3 (08f4913)
+- ⬆ update fastapi[standard] requirement (a69787a)
+- ⬆ update sentry-sdk[fastapi] requirement (9b8cea2)
+- ⬆ update psycopg[binary] requirement (eba9658)
+- ⬆ bump ruff from 0.15.14 to 0.15.15 (ddb6999)
+- Chore: migrate to project-kit (ae928ce)
+- Projects: flag 8 LLM-completed projects as to_review (d0ec205)
+- Build: upgrade base images to python 3.14-slim and skip Playwright browser download (89806de)
+- Style: apply biome formatting to calendar and interaction dialog (fea8977)
+- Test: stabilize frontend component tests (zod/indexedDB shims, longer timeouts) and supporting UI tweaks (f56af91)
+
 ## [0.2.84] - 2026-05-29
 
 ### Fixed
@@ -18,9 +53,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Other
 - Ci: remove release.yml — it auto-incremented a phantom tag on every tag push (72ebdb3)
 
+## [0.2.82] - 2026-05-29
+
+### Fixed
+- Fix: stack QuickLog FAB above the voice-record FAB (cb390db)
+
+## [0.2.80] - 2026-05-29
+
+### Fixed
+- Fix: show release version in footer instead of v0.0.0 (ad0e6b8)
+
+## [0.2.78] - 2026-05-29
+
+### Fixed
+- Fix: mount ShortcutRegistryProvider and stop shortcut registration loop (d329369)
+
 ## [0.2.72] - 2026-05-27
 
 ### Fixed
+- Fix: correct d3-drag/d3-zoom imports and add missing packages for production build (f9b308e)
+- Fix: add @radix-ui/react-alert-dialog as direct dep for Docker build (2360cc5)
+- Fix: exclude vitest.config.ts and test types from production tsconfig.build.json (b6581c4)
+- Fix: remove vitest/globals from tsconfig.build.json to fix Docker production build (1d5c911)
 - Fix: resolve TypeScript typecheck errors and update DB docs (8308f71)
 - Fix: resolve all 347 test failures and regenerate client SDK (b834062)
 
@@ -230,6 +284,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.2.38] - 2026-05-25
 
 ### Added
+- Feat: CardDAV server integration (a54815c)
 - Feat: bulk contact operations (ddbda75)
 
 ## [0.2.37] - 2026-05-25
@@ -291,25 +346,200 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Other
 - Chore: gitignore container-owned backend/uv.lock (7de9b30)
 
-## [0.2.30] - 2026-05-25
-
-### Added
-- Feat(pr-sweep): add sweep-overnight.sh + just sweep-overnight recipe (492b1b2)
-- Feat: gifts kanban route + Playwright e2e migration (9e32370)
-
-### Documentation
-- Docs: regenerate db schema docs — add vcard_conflict table (165878a)
-- Docs: regenerate db schema docs (tbls) — sync with live schema (cd0ee1e)
+## [0.2.29] - 2026-05-24
 
 ### Fixed
-- Fix(release-kit): correct LiteLLM URL (no .lab. subdomain) (3c082fc)
-- Fix(release-kit): use correct 'model' and 'base_url' keys (7e524cc)
-- Fix: route shadowing, render loop, sidebar text, ? shortcut, vcard_conflict table; e2e 14->176 (fc8a8c0)
-- Fix(sweep): skip directories when reading review file blocks (fe6d079)
-- Fix(sweep-overnight): remove double-tee logging; count all non-ready PRs for STUCK detection (9659006)
+- Fix: pass VITE_API_URL (empty=relative) to production docker build (d53f427)
+
+## [0.2.28] - 2026-05-24
+
+### Fixed
+- Fix: handle auth errors at layout route boundary, redirect expired tokens to login (672555a)
+
+## [0.2.27] - 2026-05-24
+
+### Documentation
+- Docs: regenerate db schema docs (tbls) — sync with live schema (ba510fa)
+- Docs: add debug-login screenshot (4583064)
+
+### Fixed
+- Fix: redirect to login on 403 auth errors from expired JWT tokens (3c21a90)
+- Fix: resolve all TypeScript build errors for v0.2.26 (06ce692)
+- Fix: missing closing brace in IcalImport _formatDate function (b73b475)
+- Fix: missing closing braces in IcalImport.tsx JSX props (a8ec9b7)
+- Fix: regenerate bun.lock after removing duplicate typecheck key (d61c939)
+- Fix: remove duplicate typecheck key in frontend/package.json (ef22dd0)
 
 ### Other
-- Chore: gitignore container-owned backend/uv.lock (7de9b30)
+- Website: inject version+hash into static site at build/deploy time (2fe920b)
+- Uv: add .python-version 3.14, add uv lock --check CI gate (baefa25)
+- Just: standardize header to canonical Tier 1 block; move compose/_dc vars below (c215e11)
+- Docs+scripts: 'just up' -> 'just dev'; wire prod resolver (b6bd69e)
+- Uv: add .python-version 3.14, add --frozen to sdk-test justfile recipe (ab06c76)
+- Website: update license to Elastic License 2.0, add GitHub star/fork buttons (997ced0)
+- Website: extract website/justfile with dev, render, lint, deploy recipes (0f1ba53)
+- Projects: save feature-backlog-merge-train (Wave 3 complete: v0.2.0–v0.2.26, 339 tests) (556da8a)
+
+## [0.2.26] - 2026-05-24
+
+### Added
+- Feat: email log ingestion with OAuth token storage (v0.2.26) (96b6ca0)
+
+## [0.2.25] - 2026-05-24
+
+### Added
+- Feat: e2e contact CRUD tests with Playwright (v0.2.25) (d0f9d01)
+
+## [0.2.24] - 2026-05-24
+
+### Added
+- Feat: bulk contact operations (v0.2.24) (31135f6)
+
+## [0.2.23] - 2026-05-24
+
+### Added
+- Feat: map view for contacts with geocoding support (v0.2.23) (5b15810)
+
+## [0.2.22] - 2026-05-24
+
+### Added
+- Feat: contacts kanban board with stage grouping (v0.2.22) (7bd3e30)
+
+## [0.2.21] - 2026-05-24
+
+### Added
+- Feat: PWA offline notes with client_id deduplication (v0.2.21) (3818d8c)
+
+## [0.2.20] - 2026-05-24
+
+### Added
+- Feat: contact timezone, pronouns, and message templates (v0.2.20) (bd9250e)
+
+## [0.2.19] - 2026-05-24
+
+### Added
+- Feat: voice-to-text interaction logging (Whisper service, transcribe route, VoiceRecorder UI) (1c41d56)
+
+## [0.2.18] - 2026-05-24
+
+### Added
+- Feat: iCal importer with deduplication (IcalImportLog table, /ical routes, IcalImport UI) (ccf75b2)
+
+## [0.2.17] - 2026-05-24
+
+### Added
+- Feat: vCard hash verification (vcard_sha256 column, VCardConflict model, conflict UI) (e28fed8)
+
+## [0.2.16] - 2026-05-24
+
+### Added
+- Feat: saved filters / smart lists (SavedFilter model, filter_compiler, SmartLists UI) (d0687ee)
+
+## [0.2.15] - 2026-05-24
+
+### Added
+- Feat: carddav server - enhanced vCard storage with address/field support (d8cedcc)
+
+## [0.2.14] - 2026-05-24
+
+### Added
+- Feat: debt partial payments (DebtPayment table, payment endpoints, backfill migration) (63e111e)
+
+## [0.2.13] - 2026-05-24
+
+### Added
+- Feat: contact-provenance -- source/source_external_id upsert, ContactSource enum, provenance badge (eb63a55)
+
+## [0.2.12] - 2026-05-24
+
+### Added
+- Feat: empty-state-illustrations -- EmptyState components with seed demo buttons, /private/seed endpoint (aa524c3)
+
+## [0.2.11] - 2026-05-24
+
+### Added
+- Feat: soft-delete for interactions, notes, gifts, debts, reminders, life events (ef2ad56)
+
+## [0.2.10] - 2026-05-24
+
+### Added
+- Feat: face-aware-avatar-crop -- avatar upload/delete endpoint, AvatarUploadDialog with MediaPipe face detection (981d61f)
+
+## [0.2.9] - 2026-05-24
+
+### Added
+- Feat: organizations-first-class -- Organization model, routes, organization_id on Contact (03facdb)
+
+## [0.2.8] - 2026-05-24
+
+### Added
+- Feat: interaction-location -- location_label/lat/lng fields, InteractionMap component (8f87388)
+
+## [0.2.7] - 2026-05-24
+
+### Added
+- Feat: interaction-drafts -- is_draft/draft_source fields, confirm endpoint, draft filtering (b4edc8b)
+
+## [0.2.6] - 2026-05-24
+
+### Added
+- Feat: relationship-inverse-mapping -- db-backed inverse relationship map with automatic bidirectional linking (1d526c6)
+
+## [0.2.5] - 2026-05-24
+
+### Added
+- Feat: contact-merge-history -- contact merge/unmerge with audit log and restore capability (c41bf6d)
+
+## [0.2.4] - 2026-05-24
+
+### Added
+- Feat: full-text-search -- Meilisearch full-text search across contacts, interactions, and journal (8053e63)
+
+## [0.2.3] - 2026-05-24
+
+### Added
+- Feat: contact-stage-history -- contact stage event tracking with full history audit trail (7cbab06)
+
+## [0.2.2] - 2026-05-24
+
+### Added
+- Feat: gift-kanban -- kanban board view for tracking gifts by status (33d2bbc)
+
+## [0.2.1] - 2026-05-24
+
+### Added
+- Feat: keyboard-shortcut-overlay -- global keyboard shortcut system with overlay help panel (49a5893)
+
+## [0.2.0] - 2026-05-24
+
+### Added
+- Feat: tagshare-scope-warning -- scope warning when sharing tag-filtered views (235a6c3)
+- Feat: add withkindred.app Cloudflare Pages deploy (7ff0cd3)
+- Feat: birthday-anniversary-calendar -- refactored month calendar with birthday/anniversary event display (b497e17)
+- Feat: relationship-graph -- interactive contact relationship graph with BFS traversal (a4e07d9)
+- Feat: ics-calendar-export -- per-user subscribable calendar feed (e37bee7)
+- Feat: kindred-web-presence marketing landing page (0bfb57a)
+- Feat: interaction-heatmap -- 52-week GitHub-style interaction heatmap (58f7a61)
+- Feat: journal-contact-join -- journal_entry_contact junction table and reflections endpoint (3985e65)
+- Feat: type response models across all routes, add snooze/household/webhook endpoints (e216866)
+
+### Fixed
+- Fix: use pikenet-private network in compose.dev.yml so Traefik can route (2eb5a2a)
+- Fix: contact-detail page bugs + retina screenshots (4d97433)
+- Fix: /contacts/{id}/reflections 500 on contact_ids assignment (5f0cd45)
+
+### Other
+- Projects: save feature-backlog-merge-train (Wave 2 complete: +4 branches merged) (fb155f6)
+- Projects: save feature-backlog-merge-train (Wave 2 complete: +4 branches merged) (ec484a1)
+- Website: add screenshot lightbox; license: drop upstream attribution section (b9d9269)
+- Chore(frontend): regen client + routeTree after relationship-graph + ics-calendar-export (1f2422c)
+- License: switch from MIT to Elastic License 2.0 (ELv2) (1421ea1)
+- Projects: save kindred-web-presence (865ac68)
+- Projects: create kindred-web-presence (7671fc5)
+- Chore: add .codegraph/ to .gitignore (5fd56ee)
+- Projects: handoff marker + report for feature-backlog-merge-train (dbe6aca)
+- Chore: merge-train progress (journal-contact-join); remove orphaned fix-alembic-heads.py (5ab6a3e)
+- Sdk: regen _generated/ from updated spec; add snooze, delete, webhook CLI commands (76b01a6)
 
 ## [0.1.9] - 2026-05-17
 
@@ -326,6 +556,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix: use absolute symlink for release.just to work in worktrees (8b71323)
 
 ### Other
+- Build: deref annotated tag to commit SHA in build recipe (81aebaa)
+- Build: pass APP_VERSION + GIT_HASH through Dockerfile.prod into Vite (acc154d)
+- Chore(frontend): pin react-day-picker back to ^9.14.0 (0adaff9)
+- Chore(frontend): regenerate bun.lock to drop stale resolutions (ee302c1)
 - Sdk: fix CLI param names for losing-touch and overdue (e058e29)
 - Just: standardize header to canonical Tier 1 block (a02001a)
 - Docs+scripts: 'just up' -> 'just dev'; wire prod resolver (574eadf)
@@ -342,9 +576,65 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Test(frontend): fix 8 failing test suites (5b5c393)
 - Projects: save merge-train progress (v0.1.5-v0.1.8) and scaffold umbrella (02d14fa)
 
-## [Unreleased]
+## [0.1.8] - 2026-05-16
 
 ### Added
+- Feat: household-aggregate-view -- BFS household member aggregation endpoint and HouseholdCard component (6b8b1b0)
+
+## [0.1.7] - 2026-05-16
+
+### Added
+- Feat: automated-release-notes -- release notes generation script with LLM summarization (5cd6273)
+
+## [0.1.6] - 2026-05-16
+
+### Added
+- Feat: reminders-bell-badge -- bell badge with due reminders popover, dismiss sentinel, ReminderWithContactPublic model (6fe926b)
+
+## [0.1.5] - 2026-05-16
+
+### Added
+- Feat: reminder-snooze-history -- append-only snooze log, snooze-history and stats endpoints, dismiss endpoint (7cea062)
+
+### Other
+- Chore: re-point preview.just symlink to preview-kit repo (5de82f1)
+- Test(sdk): add tests for display_name, search/stage params, losing_touch, retry, event hooks (bd37c80)
+
+## [0.1.4] - 2026-05-16
+
+### Added
+- Feat: csv-import-export -- CSV import/export with auto-column detection, preview step, tag support; SDK retry/pagination improvements and CLI entry point (ad02c89)
+
+### Other
+- Chore: migrate worktree recipes to shared preview.just (cf8677a)
+
+## [0.1.3] - 2026-05-16
+
+### Added
+- Feat: twilio-sms-call-webhook -- Twilio SMS/call inbound webhook with E.164 normalization, rate limiting, and interaction logging (502bd48)
+
+## [0.1.2] - 2026-05-16
+
+### Added
+- Feat: quick-log-fab -- add floating QuickLog FAB to layout with pet/life-event tests (3fbffa4)
+
+### Other
+- Chore(frontend): biome-format ImportExport test (fe85cd2)
+
+## [0.1.1] - 2026-05-16
+
+### Added
+- Feat: imessage-sync -- add iMessage contact fields (imessage_id, synced_at, profile_hash, profile) (ff704a9)
+
+### Other
+- Chore(frontend): biome-format remaining test + tsconfig.build array format (cc71105)
+- Chore(frontend): exclude tests from biome/tsc; format+add vitest unit tests (cd8f429)
+
+## [0.1.0] - 2026-05-16
+
+### Added
+- Feat: undo-toast-destructive -- add deleted_at soft-delete to Interaction/Reminder/Gift/Debt/LifeEvent/Note (3ad5eb6)
+- Feat(sdk): add Python client SDK (4704795)
 - Feat(pr-sweep): add review pass — deepseek-v4-pro-cloud review + kimi-k2.6-cloud fixes (59e5c4e)
 - Feat(pr-sweep): auto-resolve generated file conflicts before LLM repair (9eb7a6e)
 - Feat(pr-sweep): fix precommit auto-fix loop + typecheck env vars (fec4e71)
@@ -356,6 +646,112 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Feat(pr-sweep): worktree checkout + stack up/down helpers (6657746)
 - Feat(pr-sweep): scaffold script + PR discovery (f749525)
 - Feat(pr-sweep): scaffold orchestrator project + LiteLLM auth (575f142)
+
+### Changed
+- Refactor(justfile): rename publish→build, bump→deploy, release-and-ship→ship (83901f2)
+
+### Documentation
+- Docs: release/deploy section + Gitea Actions test workflow (bb5ffbd)
+- Docs: document three-tier deployment model (prod/dev/PR previews) (4dd6655)
+- Docs: add extension ideas and feature roadmap for personal-crm (fc4e336)
+- Docs(pr-sweep): session log entries for tasks 1-2 + UNKNOWN-mergeable gotcha (f3eb8b5)
+- Docs(projects): add pr-sweep-orchestrator implementation plan (a8f2ce0)
+- Docs(projects): scaffold pr-sweep-orchestrator project README (e945650)
+- Docs(readme): add Screenshots section with seeded fixture captures (32a8977)
+- Docs(reminders-bell-badge): tick 6/7 tasks, log 2026-05-06 session (3ebb147)
+- Docs(db): regenerate after Groups removal; drop stale table comments (a31dcdc)
+- Docs: add project CLAUDE.md with terraform and stack context (d01b40d)
+
+### Fixed
+- Fix(pr-sweep): syntax-fix writes corrected file directly instead of applying a second diff (c4c7313)
+- Fix(pr-sweep): prek PATH + LLM syntax-error repair pass after conflict resolution (804cc95)
+- Fix(pr-sweep): skip pre-push hooks in push_branch (sweep already ran gauntlet) (be1b817)
+- Fix(pre-push): extend e2e timeout to 5min + regenerate db docs (4872da8)
+- Fix(pr-sweep): switch to merge + refresh stale local branches from origin (c4c4b5a)
+
+### Other
+- Chore(frontend): add vitest unit tests for components, hooks, and lib utilities (fc32385)
+- Chore(frontend): add vitest + testing-library infrastructure (7b1dd6e)
+- Test(login): patch EMAILS_FROM_EMAIL in test_recovery_password so emails_enabled is true locally (f13637c)
+- ⬆ Bump emails from 0.6 to 1.1.1 (#77) (a10c26a)
+- ⬆ Bump @tailwindcss/vite from 4.2.2 to 4.3.0 (#78) (fcbb86b)
+- ⬆ Bump pydantic-settings from 2.12.0 to 2.14.1 (#79) (eed52c6)
+- ⬆ Bump alembic from 1.18.1 to 1.18.4 (#80) (69a1f2b)
+- ⬆ Bump react-dom from 19.2.4 to 19.2.6 (#81) (e814873)
+- ⬆ Bump lucide-react from 0.563.0 to 1.14.0 (#82) (e7c089c)
+- ⬆ Bump typescript from 5.9.3 to 6.0.3 (#84) (987097a)
+- ⬆ Bump meilisearch from 0.40.0 to 0.41.0 (#85) (35211c9)
+- ⬆ Bump @types/node from 25.5.0 to 25.6.2 (#86) (23578f2)
+- ⬆ Bump urllib3 from 2.6.3 to 2.7.0 (#87) (50fd1da)
+- ⬆ Bump getmeili/meilisearch from v1.12 to v1.43 (#76) (f6b41dc)
+- ⬆ Bump coverage from 7.13.1 to 7.13.5 (#83) (311f574)
+- Chore: update deploy section comment (publish/bump → build/deploy) (0f3f208)
+- Release-kit: add release-kit.toml + symlink cliff/release.just to shared template (de76096)
+- Release: adopt git-cliff CHANGELOG + shared release.just; drop GHA (80cd290)
+- Claude.md: rewrite around worktree-first dev, deploy tiers, pre-push gates (67d7121)
+- E2e: refresh contact-edit dialog screenshots (47111e3)
+- Deploy: add just release/publish/bump recipes and expand release docs (910a53b)
+- Projects: housekeeping pr-sweep-orchestrator (bump last_updated; note 3 post-save commits) (5e0758c)
+- Projects: save pr-sweep-orchestrator (PR #37 manually fixed; 7 PRs ready; batch 5 results) (e2cb259)
+- Pr-sweep: include actual file content in repair prompt to fix context mismatch (f9cb145)
+- Pr-sweep: fix corrupt LLM patches by recounting hunk line counts (f7ca04e)
+- Projects: save pr-sweep-orchestrator (Task 10 complete; PR #36 smoke-test passed) (c29619c)
+- Frontend: add typecheck script (tsc --noEmit) for pr-sweep gauntlet (d39e583)
+- Projects: save pr-sweep-orchestrator (DNS fix; stack operational for Task 10) (06c9977)
+- Compose.dev: fix DNS for dev stack containers (172.20.2.253 → 1.1.1.1) (f1cc775)
+- Projects: save pr-sweep-orchestrator (9/12 tasks; Tasks 8-9 complete) (8511901)
+- Projects: save pr-sweep-orchestrator (7/12 tasks landed; paused at Task 8) (f93638a)
+- E2e: refresh screenshot baselines after seed-fixed data (c1b4e01)
+- Backend(seed): seed journal entries alongside contacts (754ca1d)
+- Frontend(client): regen SDK to drop stale PrivateUserCreate (3753d6a)
+- Dev: make loopback stack self-sufficient for e2e/screenshots (9a940ca)
+- Chore: prep for public release — license, security contact, drop personal email (a437596)
+- Dev: add 'just regen-client' recipe and document Vite SDK cache gotcha (a6fd8ea)
+- Frontend(reminders): poll /reminders/due, add snooze menu and dismiss (ed5c12e)
+- Backend+frontend: add /reminders/due, /reminders/{id}/dismiss, snooze body (7c3a09d)
+- Backend: add SKIP to interactionchannel enum to match models.py (27d3118)
+- Frontend: move EnvironmentChip from fixed overlay into Footer (9700950)
+- E2e: harden suite against Radix dialogs and refresh screenshot baseline (654c0fd)
+- Backend+frontend: surface non-prod ENVIRONMENT as a screen-bottom chip (a778a7a)
+- Backend: serve real static files before SPA index fallback (f6e634e)
+- Backend+frontend: drop Groups, merge into Tags (43e8c28)
+- Dev: e2e pre-push gate + dev-stack loopback ports (055c313)
+- Dev: route compose.dev.yml at kindred.dev.example.com (7797b2b)
+
+## [0.0.1-rc.7] - 2026-05-06
+
+### Other
+- Frontend: update root bun.lock with leaflet + react-leaflet; remove spurious frontend/bun.lock (4d56f2d)
+
+## [0.0.1-rc.6] - 2026-05-06
+
+### Other
+- Ci: write GHCR auth directly to config.json, skip docker login (03b898b)
+
+## [0.0.1-rc.5] - 2026-05-06
+
+### Other
+- Ci: isolate Docker config in RUNNER_TEMP to avoid D-Bus/keyring (cb1ea18)
+
+## [0.0.1-rc.4] - 2026-05-06
+
+### Other
+- Ci: clear Docker credential store before login on self-hosted runner (68246fd)
+
+## [0.0.1-rc.3] - 2026-05-06
+
+### Other
+- Ci: switch to self-hosted runner on host, local buildx cache (df782a7)
+- Frontend: add leaflet + react-leaflet for map view (fd3365e)
+
+## [0.0.1-rc.2] - 2026-05-06
+
+### Other
+- Ci: drop auto-deploy job from release.yml — bump is manual (680d5e8)
+
+## [0.0.1-rc.1] - 2026-05-03
+
+### Added
 - Feat: prod Dockerfile + SPA fallback for canonical kindred deploy (e5641cc)
 - Feat: token-gated first-boot admin onboarding (deda354)
 - Feat: add CardDAV auth and rights modules for Radicale integration (e036324)
@@ -386,15 +782,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Feat(auth): add AUTH_MODE and OIDC_* settings (default local) (bf9963d)
 
 ### Documentation
-- Docs: document three-tier deployment model (prod/dev/PR previews) (4dd6655)
-- Docs: add extension ideas and feature roadmap for personal-crm (fc4e336)
-- Docs(pr-sweep): session log entries for tasks 1-2 + UNKNOWN-mergeable gotcha (f3eb8b5)
-- Docs(projects): add pr-sweep-orchestrator implementation plan (a8f2ce0)
-- Docs(projects): scaffold pr-sweep-orchestrator project README (e945650)
-- Docs(readme): add Screenshots section with seeded fixture captures (32a8977)
-- Docs(reminders-bell-badge): tick 6/7 tasks, log 2026-05-06 session (3ebb147)
-- Docs(db): regenerate after Groups removal; drop stale table comments (a31dcdc)
-- Docs: add project CLAUDE.md with terraform and stack context (d01b40d)
 - Docs(db): regenerate after adding setup_state table (01336be)
 - Docs: rename project to Kindred (1a519fc)
 - Docs: regenerate db schema docs (do_not_contact fields) (7c6c948)
@@ -423,11 +810,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Docs: rewrite README for the personal CRM (96e5499)
 
 ### Fixed
-- Fix(pr-sweep): syntax-fix writes corrected file directly instead of applying a second diff (c4c7313)
-- Fix(pr-sweep): prek PATH + LLM syntax-error repair pass after conflict resolution (804cc95)
-- Fix(pr-sweep): skip pre-push hooks in push_branch (sweep already ran gauntlet) (be1b817)
-- Fix(pre-push): extend e2e timeout to 5min + regenerate db docs (4872da8)
-- Fix(pr-sweep): switch to merge + refresh stale local branches from origin (c4c4b5a)
 - Fix: add Relationship.inverse_id and fix bulk contact test isolation (fcd2b21)
 - Fix: add bulk contact routes and fix create_relationship inverse_type (2e33ada)
 - Fix: expose postgres env vars to test runner steps (be3697b)
@@ -435,41 +817,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix(auth): correct mypy annotations in visible_contact_ids and get_or_create_user_from_claims (17b9fec)
 
 ### Other
-- E2e: refresh contact-edit dialog screenshots (47111e3)
-- Deploy: add just release/publish/bump recipes and expand release docs (910a53b)
-- Projects: housekeeping pr-sweep-orchestrator (bump last_updated; note 3 post-save commits) (5e0758c)
-- Projects: save pr-sweep-orchestrator (PR #37 manually fixed; 7 PRs ready; batch 5 results) (e2cb259)
-- Pr-sweep: include actual file content in repair prompt to fix context mismatch (f9cb145)
-- Pr-sweep: fix corrupt LLM patches by recounting hunk line counts (f7ca04e)
-- Projects: save pr-sweep-orchestrator (Task 10 complete; PR #36 smoke-test passed) (c29619c)
-- Frontend: add typecheck script (tsc --noEmit) for pr-sweep gauntlet (d39e583)
-- Projects: save pr-sweep-orchestrator (DNS fix; stack operational for Task 10) (06c9977)
-- Compose.dev: fix DNS for dev stack containers (172.20.2.253 → 1.1.1.1) (f1cc775)
-- Projects: save pr-sweep-orchestrator (9/12 tasks; Tasks 8-9 complete) (8511901)
-- Projects: save pr-sweep-orchestrator (7/12 tasks landed; paused at Task 8) (f93638a)
-- E2e: refresh screenshot baselines after seed-fixed data (c1b4e01)
-- Backend(seed): seed journal entries alongside contacts (754ca1d)
-- Frontend(client): regen SDK to drop stale PrivateUserCreate (3753d6a)
-- Dev: make loopback stack self-sufficient for e2e/screenshots (9a940ca)
-- Chore: prep for public release — license, security contact, drop personal email (a437596)
-- Dev: add 'just regen-client' recipe and document Vite SDK cache gotcha (a6fd8ea)
-- Frontend(reminders): poll /reminders/due, add snooze menu and dismiss (ed5c12e)
-- Backend+frontend: add /reminders/due, /reminders/{id}/dismiss, snooze body (7c3a09d)
-- Backend: add SKIP to interactionchannel enum to match models.py (27d3118)
-- Frontend: move EnvironmentChip from fixed overlay into Footer (9700950)
-- E2e: harden suite against Radix dialogs and refresh screenshot baseline (654c0fd)
-- Backend+frontend: surface non-prod ENVIRONMENT as a screen-bottom chip (a778a7a)
-- Backend: serve real static files before SPA index fallback (f6e634e)
-- Backend+frontend: drop Groups, merge into Tags (43e8c28)
-- Dev: e2e pre-push gate + dev-stack loopback ports (055c313)
-- Dev: route compose.dev.yml at kindred.dev.example.com (7797b2b)
-- Frontend: update root bun.lock with leaflet + react-leaflet; remove spurious frontend/bun.lock (4d56f2d)
-- Ci: write GHCR auth directly to config.json, skip docker login (03b898b)
-- Ci: isolate Docker config in RUNNER_TEMP to avoid D-Bus/keyring (cb1ea18)
-- Ci: clear Docker credential store before login on self-hosted runner (68246fd)
-- Ci: switch to self-hosted runner on host, local buildx cache (df782a7)
-- Frontend: add leaflet + react-leaflet for map view (fd3365e)
-- Ci: drop auto-deploy job from release.yml — bump is manual (680d5e8)
 - Ci: add release.yml — tag-driven build + deploy to host (265db31)
 - Chore(dev): hard-code kindred.localhost; project-local volumes (f54796d)
 - Chore: update generated frontend SDK after contacts mentions endpoint (c3d07e9)
@@ -587,3 +934,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Frontend: use refetchQueries instead of invalidateQueries for reminders (d13c12a)
 - Docker-compose: add explicit DNS server for backend and frontend (010f2d4)
 - Chore: flatten app/ subdirectory to project root (97b7694)
+
+
