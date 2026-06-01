@@ -51,6 +51,7 @@ interface HouseholdMember {
 interface HouseholdCardProps {
   contactId: string
   contactName: string
+  embedded?: boolean
 }
 
 function HouseholdMemberRow({
@@ -89,7 +90,11 @@ function HouseholdMemberRow({
   )
 }
 
-export function HouseholdCard({ contactId, contactName }: HouseholdCardProps) {
+export function HouseholdCard({
+  contactId,
+  contactName,
+  embedded = false,
+}: HouseholdCardProps) {
   const { data, isLoading } = useQuery({
     queryKey: ["contacts", contactId, "household"],
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -98,6 +103,45 @@ export function HouseholdCard({ contactId, contactName }: HouseholdCardProps) {
 
   const members: HouseholdMember[] =
     (data as { data?: HouseholdMember[] } | undefined)?.data ?? []
+
+  if (embedded) {
+    // When embedded inside the People card, render a compact sub-section
+    // without its own Card shell. Hide entirely when no household exists so
+    // the relationships list/empty-state below carries the empty case.
+    if (!isLoading && members.length === 0) return null
+
+    return (
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+          <Users className="size-4" /> Household
+          <InfoHint>
+            Derived from spouse, child, parent, and sibling relationships.
+            Shows household members with their ages for gift occasions and
+            visit planning.
+          </InfoHint>
+        </div>
+        {isLoading ? (
+          <div className="space-y-3">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        ) : (
+          <div className="space-y-1">
+            {members.map((member) => (
+              <HouseholdMemberRow
+                key={member.id}
+                member={member}
+                isPrimary={member.id === contactId}
+              />
+            ))}
+            <p className="text-xs text-muted-foreground mt-3 pt-2 border-t">
+              {formatHouseholdDisplay(members)}
+            </p>
+          </div>
+        )}
+      </div>
+    )
+  }
 
   return (
     <Card>

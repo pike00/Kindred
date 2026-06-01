@@ -9,6 +9,7 @@ import { RelationshipsCard } from "@/components/Contacts/RelationshipsCard"
 const {
   mockListContacts,
   mockGetContact,
+  mockGetContactHousehold,
   mockListRelationships,
   mockCreateRelationship,
   mockUpdateRelationship,
@@ -19,6 +20,7 @@ const {
 } = vi.hoisted(() => ({
   mockListContacts: vi.fn(),
   mockGetContact: vi.fn(),
+  mockGetContactHousehold: vi.fn(),
   mockListRelationships: vi.fn(),
   mockCreateRelationship: vi.fn(),
   mockUpdateRelationship: vi.fn(),
@@ -107,6 +109,7 @@ vi.mock("@/client", () => ({
   ContactsService: {
     listContacts: mockListContacts,
     getContact: mockGetContact,
+    getContactHousehold: mockGetContactHousehold,
   },
   RelationshipsService: {
     listRelationships: mockListRelationships,
@@ -143,6 +146,21 @@ vi.mock("@/components/Common/EmptyState", () => ({
     React.createElement("div", { "data-testid": "empty-state" }, title),
 }))
 
+// Mock ContactAvatar (used by the embedded HouseholdCard)
+vi.mock("@/components/Common/ContactAvatar", () => ({
+  ContactAvatar: ({ contact }: any) =>
+    React.createElement("div", { "data-testid": "avatar" }, contact.first_name),
+}))
+
+// Mock Tooltip (used by the embedded HouseholdCard's info hint)
+vi.mock("@/components/ui/tooltip", () => ({
+  Tooltip: ({ children }: any) => React.createElement("div", null, children),
+  TooltipTrigger: ({ children }: any) =>
+    React.createElement("button", { type: "button" }, children),
+  TooltipContent: ({ children }: any) =>
+    React.createElement("div", { role: "tooltip" }, children),
+}))
+
 const makeContact = (overrides: any = {}) => ({
   id: "contact-id",
   first_name: "Bob",
@@ -176,6 +194,9 @@ describe("RelationshipsCard", () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    // Embedded HouseholdCard renders nothing for an empty household, keeping
+    // these relationship-focused tests isolated from household rendering.
+    mockGetContactHousehold.mockResolvedValue({ data: [] })
   })
 
   describe("RelationshipsCard main component", () => {
@@ -194,8 +215,8 @@ describe("RelationshipsCard", () => {
       const skeletons = container.querySelectorAll(".h-4, .w-2\\/3")
       expect(skeletons.length).toBeGreaterThanOrEqual(0) // Just test that render succeeded
 
-      // The component renders with "Relationships" title visible
-      expect(screen.getByText("Relationships")).toBeInTheDocument()
+      // The component renders with the "People" card title visible
+      expect(screen.getByText("People")).toBeInTheDocument()
     })
 
     it("shows empty state when no relationships exist", async () => {
@@ -233,10 +254,10 @@ describe("RelationshipsCard", () => {
       await waitFor(() => {
         expect(screen.queryByTestId("empty-state")).not.toBeInTheDocument()
       })
-      expect(screen.getByText("Relationships")).toBeInTheDocument()
+      expect(screen.getByText("People")).toBeInTheDocument()
     })
 
-    it("renders card title with icon", async () => {
+    it("renders 'People' card title and 'Relationships' sub-heading", async () => {
       mockListContacts.mockResolvedValue({ data: [] })
       mockListRelationships.mockResolvedValue({ data: [] })
 
@@ -245,7 +266,35 @@ describe("RelationshipsCard", () => {
       )
 
       await waitFor(() => {
-        expect(screen.getByText("Relationships")).toBeInTheDocument()
+        expect(screen.getByText("People")).toBeInTheDocument()
+      })
+      // The relationships section keeps a labeled sub-heading inside the card.
+      expect(screen.getByText("Relationships")).toBeInTheDocument()
+    })
+
+    it("renders the embedded Household sub-section when a household exists", async () => {
+      mockListContacts.mockResolvedValue({ data: [] })
+      mockListRelationships.mockResolvedValue({ data: [] })
+      mockGetContactHousehold.mockResolvedValue({
+        data: [
+          {
+            id: "member-1",
+            first_name: "Dave",
+            last_name: "Smith",
+            nickname: null,
+            birthday: null,
+            age: 40,
+          },
+        ],
+      })
+
+      renderWithProviders(
+        <RelationshipsCard contactId={contactId} contactName={contactName} />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText("Household")).toBeInTheDocument()
+        expect(screen.getByText("Dave Smith")).toBeInTheDocument()
       })
     })
   })

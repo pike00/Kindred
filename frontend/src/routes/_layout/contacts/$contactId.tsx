@@ -21,7 +21,6 @@ import { AvatarUploadDialog } from "@/components/Contacts/AvatarUploadDialog"
 import { ContactFieldsCard } from "@/components/Contacts/ContactFieldsCard"
 import { CustomFieldsCard } from "@/components/Contacts/CustomFieldsCard"
 import { EditContactDialog } from "@/components/Contacts/EditContactDialog"
-import { HouseholdCard } from "@/components/Contacts/HouseholdCard"
 import { InteractionHeatmap } from "@/components/Contacts/InteractionHeatmap"
 import { LifeEventsCard } from "@/components/Contacts/LifeEventsCard"
 import { PetsCard } from "@/components/Contacts/PetsCard"
@@ -343,10 +342,6 @@ function ContactDetailPage() {
           <PetsCard contactId={contactId} />
           <LifeEventsCard contactId={contactId} />
           <CustomFieldsCard contactId={contactId} />
-          <HouseholdCard
-            contactId={contactId}
-            contactName={contact.first_name ?? ""}
-          />
         </div>
 
         {/* Right column (1/3 width) */}

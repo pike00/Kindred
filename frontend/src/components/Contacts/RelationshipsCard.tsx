@@ -12,6 +12,7 @@ import type {
 } from "@/client"
 import { ContactsService, RelationshipsService } from "@/client"
 import { EmptyState } from "@/components/Common/EmptyState"
+import { HouseholdCard } from "@/components/Contacts/HouseholdCard"
 import { RowActionsMenu } from "@/components/Common/RowActionsMenu"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -57,6 +58,7 @@ import {
   Pencil,
   Plus,
   Trash2,
+  Users,
   X,
 } from "@/lib/icons"
 
@@ -495,29 +497,39 @@ export function RelationshipsCard({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <HeartHandshake className="size-4" /> Relationships
+          <Users className="size-4" /> People
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        <AddRelationshipInline
+        <HouseholdCard
           contactId={contactId}
           contactName={contactName}
+          embedded
         />
-        {isLoading ? (
-          <Skeleton className="h-4 w-2/3" />
-        ) : relationships.length > 0 ? (
-          <div className="space-y-2">
-            {relationships.map((r) => (
-              <RelationshipRow key={r.id} rel={r} />
-            ))}
+        <div className="space-y-2 pt-3 border-t">
+          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <HeartHandshake className="size-4" /> Relationships
           </div>
-        ) : (
-          <EmptyState
-            icon={HeartHandshake}
-            title="No relationships"
-            description="Link this contact to family members, partners, friends, or coworkers."
+          <AddRelationshipInline
+            contactId={contactId}
+            contactName={contactName}
           />
-        )}
+          {isLoading ? (
+            <Skeleton className="h-4 w-2/3" />
+          ) : relationships.length > 0 ? (
+            <div className="space-y-2">
+              {relationships.map((r) => (
+                <RelationshipRow key={r.id} rel={r} />
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              icon={HeartHandshake}
+              title="No relationships"
+              description="Link this contact to family members, partners, friends, or coworkers."
+            />
+          )}
+        </div>
       </CardContent>
     </Card>
   )

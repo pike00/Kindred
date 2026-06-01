@@ -325,4 +325,71 @@ describe("HouseholdCard", () => {
       expect(avatars).toHaveLength(2)
     })
   })
+
+  describe("embedded mode", () => {
+    it("renders members without an outer card shell", async () => {
+      const mockMembers = [
+        {
+          id: contactId,
+          first_name: "Alice",
+          last_name: "Smith",
+          nickname: null,
+          birthday: null,
+          age: 35,
+        },
+        {
+          id: "member-2",
+          first_name: "Bob",
+          last_name: "Smith",
+          nickname: null,
+          birthday: null,
+          age: 38,
+        },
+      ]
+
+      mockContactService.getContactHousehold.mockResolvedValue({
+        data: mockMembers,
+      })
+
+      const { container } = renderWithProviders(
+        <HouseholdCard
+          contactId={contactId}
+          contactName={contactName}
+          embedded
+        />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText("Alice Smith")).toBeInTheDocument()
+        expect(screen.getByText("Bob Smith")).toBeInTheDocument()
+      })
+
+      // Still shows the Household sub-heading...
+      expect(screen.getByText("Household")).toBeInTheDocument()
+      // ...but no Card shell (data-slot="card") is rendered.
+      expect(
+        container.querySelector('[data-slot="card"]'),
+      ).not.toBeInTheDocument()
+    })
+
+    it("renders nothing when household is empty", async () => {
+      mockContactService.getContactHousehold.mockResolvedValue({ data: [] })
+
+      const { container } = renderWithProviders(
+        <HouseholdCard
+          contactId={contactId}
+          contactName={contactName}
+          embedded
+        />,
+      )
+
+      // Once the empty household resolves, the component returns null:
+      // no heading, no empty-state, empty DOM.
+      await waitFor(() => {
+        expect(screen.queryByText("Household")).not.toBeInTheDocument()
+      })
+      expect(screen.queryByTestId("empty-state")).not.toBeInTheDocument()
+      expect(container).toBeEmptyDOMElement()
+    })
+  })
 })
