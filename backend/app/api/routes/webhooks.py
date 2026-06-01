@@ -12,6 +12,7 @@ from redis import Redis
 from sqlmodel import col, select
 
 from app.api.deps import CurrentUser, SessionDep
+from app.core.config import settings
 from app.models import (
     Contact,
     ContactCreate,
@@ -31,7 +32,7 @@ from app.models import (
 
 router = APIRouter(prefix="/webhooks", tags=["webhooks"])
 
-RedisDep = Depends(lambda: Redis.from_url("redis://redis:6379/0"))
+RedisDep = Depends(lambda: Redis.from_url(f"{settings.REDIS_URL}/0"))
 
 
 # ─── Twilio Helpers ────────────────────────────────────────────────────
