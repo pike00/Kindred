@@ -350,6 +350,9 @@ class InteractionChannel(str, enum.Enum):
     SOCIAL = "social"
     OTHER = "other"
     SKIP = "skip"
+    # Recommendations (books/shows/etc. to or from a contact) are logged as
+    # interactions rather than a separate entity — see media fold (tofix #10).
+    RECOMMENDATION = "recommendation"
 
 
 class InteractionDraftSource(str, enum.Enum):

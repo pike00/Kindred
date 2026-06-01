@@ -5,14 +5,12 @@ import type {
   DebtPublic,
   GiftPublic,
   InteractionPublic,
-  MediaRecommendationPublic,
 } from "@/client"
 import {
   ContactsService,
   DebtsService,
   GiftsService,
   InteractionsService,
-  MediaRecommendationsService,
 } from "@/client"
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
 import { EmptyState } from "@/components/Common/EmptyState"
@@ -30,7 +28,6 @@ import { AddDebt } from "@/components/Debts/AddDebt"
 import { AddGift } from "@/components/Gifts/AddGift"
 import { AddInteractionDialog } from "@/components/Interactions/AddInteractionDialog"
 import { InteractionMap } from "@/components/Interactions/InteractionMap"
-import { AddMediaRecommendation } from "@/components/MediaRecommendations/AddMediaRecommendation"
 import { NotesCard } from "@/components/Notes/NotesCard"
 import { UnifiedTimeline } from "@/components/Timeline/UnifiedTimeline"
 import { Badge } from "@/components/ui/badge"
@@ -51,7 +48,6 @@ import {
   Camera,
   Clock,
   Download,
-  Film,
   Info,
   MapPin,
   MessagesSquare,
@@ -102,15 +98,6 @@ export const Route = createFileRoute("/_layout/contacts/$contactId")({
   component: ContactDetailPage,
 })
 
-const mediaCategoryLabels: Record<string, string> = {
-  movie: "Movie",
-  tv_show: "TV Show",
-  podcast: "Podcast",
-  musician: "Musician",
-  book: "Book",
-  other: "Other",
-}
-
 function formatDate(iso: string) {
   return formatDateWithRelative(iso)
 }
@@ -156,12 +143,6 @@ function ContactDetailPage() {
     queryFn: () => DebtsService.listDebts({ contactId }),
   })
 
-  const { data: mediaData, isLoading: mediaLoading } = useQuery({
-    queryKey: ["media-recommendations", contactId],
-    queryFn: () =>
-      MediaRecommendationsService.listMediaRecommendations({ contactId }),
-  })
-
   const { data: interactionsData } = useQuery({
     queryKey: ["interactions", contactId],
     queryFn: () =>
@@ -180,7 +161,6 @@ function ContactDetailPage() {
 
   const gifts = giftsData?.data ?? []
   const debts = debtsData?.data ?? []
-  const mediaRecs = mediaData?.data ?? []
   const interactions: InteractionPublic[] = interactionsData?.data ?? []
 
   return (
@@ -407,7 +387,7 @@ function ContactDetailPage() {
         </div>
       </div>
 
-      {/* Tabbed section: Gifts, Debts, Media */}
+      {/* Tabbed section: Gifts, Debts */}
       <Tabs defaultValue="gifts">
         <div className="flex items-center justify-between mb-2 gap-2">
           <TabsList>
@@ -416,9 +396,6 @@ function ContactDetailPage() {
             </TabsTrigger>
             <TabsTrigger value="debts">
               Debts {!debtsLoading && `(${debts.length})`}
-            </TabsTrigger>
-            <TabsTrigger value="media">
-              Media {!mediaLoading && `(${mediaRecs.length})`}
             </TabsTrigger>
           </TabsList>
         </div>
@@ -511,56 +488,6 @@ function ContactDetailPage() {
               title="No debts tracked"
               description="Track money you owe or are owed by this contact."
               action={<AddDebt contactId={contactId} />}
-            />
-          )}
-        </TabsContent>
-
-        <TabsContent value="media" className="mt-4">
-          {mediaLoading ? (
-            <SectionSkeleton />
-          ) : mediaRecs.length > 0 ? (
-            <>
-              <div className="flex justify-end mb-2">
-                <AddMediaRecommendation contactId={contactId} />
-              </div>
-              <div className="space-y-3">
-                {mediaRecs.map((rec: MediaRecommendationPublic) => (
-                  <Card key={rec.id} className="py-4">
-                    <CardContent>
-                      <div className="flex justify-between items-start gap-3">
-                        <div className="min-w-0">
-                          <p className="font-medium text-sm">{rec.title}</p>
-                          {rec.creator && (
-                            <p className="text-xs text-muted-foreground">
-                              {rec.creator}
-                            </p>
-                          )}
-                          {rec.note && (
-                            <p className="text-sm mt-1 whitespace-pre-wrap">
-                              {rec.note}
-                            </p>
-                          )}
-                        </div>
-                        <Badge variant="outline" className="shrink-0">
-                          {mediaCategoryLabels[rec.category] ?? rec.category}
-                        </Badge>
-                      </div>
-                      {rec.recommended_at && (
-                        <p className="text-xs text-muted-foreground mt-2">
-                          {formatDate(rec.recommended_at)}
-                        </p>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </>
-          ) : (
-            <EmptyState
-              icon={Film}
-              title="No media recommendations yet"
-              description="Save movies, shows, podcasts, musicians, or books this contact recommended."
-              action={<AddMediaRecommendation contactId={contactId} />}
             />
           )}
         </TabsContent>

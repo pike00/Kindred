@@ -53,6 +53,7 @@ const channels = [
   { value: "email", label: "Email" },
   { value: "video", label: "Video" },
   { value: "social", label: "Social" },
+  { value: "recommendation", label: "Recommendation" },
   { value: "other", label: "Other" },
 ]
 
