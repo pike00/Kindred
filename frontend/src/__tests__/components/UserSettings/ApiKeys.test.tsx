@@ -777,9 +777,9 @@ describe("ApiKeys", () => {
     renderWithProviders(<ApiKeys />)
 
     await waitFor(() => {
-      expect(screen.getByText(/Created Jan 15, 2024/)).toBeInTheDocument()
-      expect(screen.getByText(/Last used Jan 20, 2024/)).toBeInTheDocument()
-      expect(screen.getByText(/Expires Dec 31, 2024/)).toBeInTheDocument()
+      expect(screen.getByText(/Created 2024-01-15/)).toBeInTheDocument()
+      expect(screen.getByText(/Last used 2024-01-20/)).toBeInTheDocument()
+      expect(screen.getByText(/Expires 2024-12-31/)).toBeInTheDocument()
     })
   })
 
@@ -1278,7 +1278,7 @@ describe("ApiKeys", () => {
     renderWithProviders(<ApiKeys />)
 
     await waitFor(() => {
-      expect(screen.getByText(/Created Jan 15, 2024/)).toBeInTheDocument()
+      expect(screen.getByText(/Created 2024-01-15/)).toBeInTheDocument()
       // Verify no "Last used" or "Expires" text in the dates row
       expect(screen.queryByText(/Last used/)).not.toBeInTheDocument()
       expect(screen.queryByText(/Expires/)).not.toBeInTheDocument()

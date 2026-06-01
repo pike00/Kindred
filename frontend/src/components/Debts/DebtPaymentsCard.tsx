@@ -15,6 +15,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { Calendar as CalendarIcon, Trash2 } from "@/lib/icons"
+import { formatDateWithRelative } from "@/lib/utils"
 
 interface DebtPaymentsCardProps {
   debt: DebtPublic
@@ -175,7 +176,7 @@ export function DebtPaymentsCard({ debt }: DebtPaymentsCardProps) {
                   ${payment.amount?.toFixed(2)}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {payment.paid_at && format(new Date(payment.paid_at), "PPP")}
+                  {payment.paid_at && formatDateWithRelative(payment.paid_at)}
                 </p>
                 {payment.note && (
                   <p className="text-xs text-muted-foreground">

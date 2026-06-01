@@ -27,7 +27,7 @@ import {
   Video,
 } from "@/lib/icons"
 import { useSeedDemo } from "@/lib/seed"
-import { cn } from "@/lib/utils"
+import { cn, formatDateWithRelative } from "@/lib/utils"
 import { AddInteractionDialog } from "./AddInteractionDialog"
 
 type ChannelTone =
@@ -63,11 +63,7 @@ const toneClasses: Record<ChannelTone, string> = {
 }
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  })
+  return formatDateWithRelative(iso)
 }
 
 function formatTime(iso: string) {

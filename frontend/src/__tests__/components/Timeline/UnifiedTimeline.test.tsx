@@ -430,7 +430,7 @@ describe("UnifiedTimeline", () => {
     renderWithProviders(<UnifiedTimeline contactId="c1" />)
 
     await waitFor(() => {
-      expect(screen.getByText(/edited Jan 10/)).toBeInTheDocument()
+      expect(screen.getByText(/edited 2024-01-10/)).toBeInTheDocument()
     })
   })
 

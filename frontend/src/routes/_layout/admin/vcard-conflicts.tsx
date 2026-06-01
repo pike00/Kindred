@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
+import { formatDateWithRelative } from "@/lib/utils"
 
 function getConflictsQueryOptions() {
   return {
@@ -125,7 +126,7 @@ function ConflictCard({
           <Badge variant="destructive">Pending</Badge>
         </div>
         <p className="text-xs text-muted-foreground">
-          Detected: {new Date(conflict.created_at).toLocaleString()}
+          Detected: {formatDateWithRelative(conflict.created_at)}
         </p>
       </CardHeader>
       <CardContent>

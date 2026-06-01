@@ -27,6 +27,7 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import { Skeleton } from "@/components/ui/skeleton"
 import useCustomToast from "@/hooks/useCustomToast"
 import { MoreHorizontal, Plus } from "@/lib/icons"
+import { formatDateWithRelative } from "@/lib/utils"
 
 // ─── types ────────────────────────────────────────────────────────────────────
 
@@ -312,11 +313,7 @@ function ApiKeyRow({ apiKey }: { apiKey: ApiKey }) {
 
   const formatDate = (iso: string | null) => {
     if (!iso) return null
-    return new Date(iso).toLocaleDateString(undefined, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    })
+    return formatDateWithRelative(iso)
   }
 
   return (

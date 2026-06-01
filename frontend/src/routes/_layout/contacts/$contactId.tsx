@@ -39,6 +39,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { formatDateWithRelative } from "@/lib/utils"
 import {
   Tooltip,
   TooltipContent,
@@ -112,11 +113,7 @@ const mediaCategoryLabels: Record<string, string> = {
 }
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  })
+  return formatDateWithRelative(iso)
 }
 
 function SectionSkeleton() {

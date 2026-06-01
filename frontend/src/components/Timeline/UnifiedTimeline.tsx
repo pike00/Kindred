@@ -29,7 +29,7 @@ import {
   MessagesSquare,
   NotebookPen,
 } from "@/lib/icons"
-import { cn } from "@/lib/utils"
+import { cn, formatDateWithRelative } from "@/lib/utils"
 
 type TimelineEventType = "interaction" | "note" | "gift" | "life_event" | "debt"
 
@@ -104,11 +104,7 @@ const channelLabels: Record<string, string> = {
 }
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  })
+  return formatDateWithRelative(iso)
 }
 
 function formatTime(iso: string) {

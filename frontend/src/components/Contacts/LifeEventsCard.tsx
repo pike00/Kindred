@@ -38,6 +38,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import useCustomToast from "@/hooks/useCustomToast"
 import { CalendarHeart, Pencil, Plus, Trash2 } from "@/lib/icons"
+import { formatDateWithRelative } from "@/lib/utils"
 
 const EVENT_TYPES = [
   "anniversary",
@@ -67,11 +68,7 @@ const emptyDefaults: FormData = {
 }
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  })
+  return formatDateWithRelative(iso)
 }
 
 function LifeEventFormFields({

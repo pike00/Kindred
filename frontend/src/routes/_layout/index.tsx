@@ -13,6 +13,7 @@ import { StayInTouchWidget } from "@/components/Dashboard/StayInTouchWidget"
 import { Badge } from "@/components/ui/badge"
 import useAuth from "@/hooks/useAuth"
 import { Bell, Cake, MessagesSquare } from "@/lib/icons"
+import { formatDateWithRelative } from "@/lib/utils"
 
 export const Route = createFileRoute("/_layout/")({
   component: Dashboard,
@@ -191,7 +192,7 @@ function Dashboard() {
                       )}
                     </div>
                     <span className="shrink-0 text-xs text-muted-foreground">
-                      {new Date(r.remind_at).toLocaleDateString()}
+                      {formatDateWithRelative(r.remind_at)}
                     </span>
                   </>
                 )
@@ -277,7 +278,7 @@ function Dashboard() {
                     )}
                   </div>
                   <span className="text-xs text-muted-foreground shrink-0">
-                    {new Date(ix.occurred_at).toLocaleDateString()}
+                    {formatDateWithRelative(ix.occurred_at)}
                   </span>
                 </Link>
               )

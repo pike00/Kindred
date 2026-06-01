@@ -235,7 +235,7 @@ describe("Journal columns", () => {
       </div>
     )
 
-    const dateElement = screen.getByText(/12\/31\/2024|31\/12\/2024/)
+    const dateElement = screen.getByText(/2024-12-31/)
     expect(dateElement).toBeInTheDocument()
   })
 

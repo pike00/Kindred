@@ -3,6 +3,7 @@ import type { ColumnDef } from "@tanstack/react-table"
 import type { JournalEntryPublic } from "@/client"
 import { MentionText } from "@/components/Mentions/MentionText"
 import { NotebookPen } from "@/lib/icons"
+import { formatDateWithRelative } from "@/lib/utils"
 import { JournalActionsMenu } from "./JournalActionsMenu"
 
 export const columns: ColumnDef<JournalEntryPublic>[] = [
@@ -34,8 +35,7 @@ export const columns: ColumnDef<JournalEntryPublic>[] = [
     header: "Date",
     cell: ({ row }) => {
       const date = row.original.created_at
-      const d = new Date(date)
-      return d.toLocaleDateString()
+      return formatDateWithRelative(date)
     },
   },
   {

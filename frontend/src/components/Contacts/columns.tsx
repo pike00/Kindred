@@ -3,6 +3,7 @@ import type { ColumnDef } from "@tanstack/react-table"
 import type { ContactPublic } from "@/client"
 import { Badge } from "@/components/ui/badge"
 import { Star } from "@/lib/icons"
+import { formatDateWithRelative } from "@/lib/utils"
 import { getInitials } from "@/utils"
 import { ContactActionsMenu } from "./ContactActionsMenu"
 
@@ -69,8 +70,7 @@ export const columns: ColumnDef<ContactPublic>[] = [
     cell: ({ row }) => {
       const date = row.original.last_contacted_at
       if (!date) return "Never"
-      const d = new Date(date)
-      return d.toLocaleDateString()
+      return formatDateWithRelative(date)
     },
   },
   {

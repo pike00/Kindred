@@ -2,6 +2,7 @@ import type { ColumnDef } from "@tanstack/react-table"
 
 import type { ReminderPublic } from "@/client"
 import { Bell, Clock } from "@/lib/icons"
+import { formatDateWithRelative } from "@/lib/utils"
 import { ReminderActionsMenu } from "./ReminderActionsMenu"
 
 export const columns: ColumnDef<ReminderPublic>[] = [
@@ -25,7 +26,7 @@ export const columns: ColumnDef<ReminderPublic>[] = [
       return (
         <div className="flex items-center gap-1 text-sm">
           <Clock className="h-3 w-3" />
-          {d.toLocaleDateString()}{" "}
+          {formatDateWithRelative(date)}{" "}
           {d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
         </div>
       )

@@ -1,6 +1,7 @@
 import type { ColumnDef } from "@tanstack/react-table"
 
 import type { TagPublic } from "@/client"
+import { formatDateWithRelative } from "@/lib/utils"
 import { TagActionsMenu } from "./TagActionsMenu"
 
 export function createColumns(
@@ -30,7 +31,7 @@ export function createColumns(
       header: "Created",
       cell: ({ row }) => {
         const date = row.original.created_at
-        return new Date(date).toLocaleDateString()
+        return formatDateWithRelative(date)
       },
     },
     {

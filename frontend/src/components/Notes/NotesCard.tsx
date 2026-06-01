@@ -20,6 +20,7 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import { Skeleton } from "@/components/ui/skeleton"
 import useCustomToast from "@/hooks/useCustomToast"
 import { NotebookPen, Pencil, RefreshCw, Trash2, WifiOff } from "@/lib/icons"
+import { formatDateWithRelative } from "@/lib/utils"
 
 import {
   addDraft,
@@ -31,11 +32,7 @@ import {
 } from "@/lib/offline-db"
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  })
+  return formatDateWithRelative(iso)
 }
 
 function QuickCapture({ contactId }: { contactId: string }) {
