@@ -26,6 +26,22 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      meilisearch:
+        image: getmeili/meilisearch:v1.45
+        env:
+          MEILI_NO_ANALYTICS: "true"
+          MEILI_ENV: development
+        ports:
+          - 7700:7700
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -52,6 +68,8 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: changethis
           POSTGRES_DB: crm
+          REDIS_URL: redis://localhost:6379
+          MEILI_URL: http://localhost:7700
         run: uv run bash scripts/tests-start.sh "Coverage for $SHA"
         working-directory: backend
       - name: Store coverage files
