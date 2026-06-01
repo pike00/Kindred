@@ -5,6 +5,25 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.86] - 2026-06-01
+
+### Added
+- Feat: fold media recommendations into interactions (4fd8f3e)
+- Feat(ui): unify date displays as YYYY-MM-DD with relative estimate (5665b2c)
+- Feat(dashboard): add Upcoming Birthdays + Due Reminders cards (8bc3f78)
+- Feat(interactions): remove Drafts feature (UI) (95b383c)
+
+### Changed
+- Refactor(transcribe): make WHISPER_URL configurable (2227e11)
+- Refactor(contacts): merge Household + Relationships into one People card (afa4f95)
+
+### Fixed
+- Fix(whisper): add requests dep + bake base.en model into image (96edf07)
+- Fix(sidebar): remove vestigial Groups nav link (238346a)
+
+### Other
+- Build: add root .dockerignore (exclude node_modules/.venv/etc.) (943273d)
+
 ## [0.2.85] - 2026-06-01
 
 ### Documentation
