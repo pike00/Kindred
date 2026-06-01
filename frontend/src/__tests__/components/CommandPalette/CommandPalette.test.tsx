@@ -104,7 +104,7 @@ describe("CommandPalette", () => {
     )
 
     // Open via keyboard
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
 
     await waitFor(() => {
       expect(screen.getByTestId("command-dialog")).toBeInTheDocument()
@@ -122,11 +122,11 @@ describe("CommandPalette", () => {
       </CommandPaletteProvider>
     )
 
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
 
     await waitFor(() => {
       const input = screen.getByTestId("command-input")
-      expect(input).toHaveAttribute("placeholder", "Type a command or search contacts...")
+      expect(input).toHaveAttribute("placeholder", "Type a command or search...")
     })
   })
 
@@ -141,7 +141,7 @@ describe("CommandPalette", () => {
       </CommandPaletteProvider>
     )
 
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
 
     await waitFor(() => {
       expect(screen.getByTestId("command-empty")).toBeInTheDocument()
@@ -159,7 +159,7 @@ describe("CommandPalette", () => {
       </CommandPaletteProvider>
     )
 
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
 
     await waitFor(() => {
       expect(
@@ -181,7 +181,7 @@ describe("CommandPalette", () => {
       </CommandPaletteProvider>
     )
 
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
 
     await waitFor(() => {
       expect(screen.getByTestId("command-group-contacts")).toBeInTheDocument()
@@ -201,7 +201,7 @@ describe("CommandPalette", () => {
       </CommandPaletteProvider>
     )
 
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
 
     await waitFor(() => {
       expect(screen.getByText("Alice Smith")).toBeInTheDocument()
@@ -225,7 +225,7 @@ describe("CommandPalette", () => {
       </CommandPaletteProvider>
     )
 
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
 
     await waitFor(() => {
       expect(screen.getByText("Acme Corp")).toBeInTheDocument()
@@ -247,7 +247,7 @@ describe("CommandPalette", () => {
       </CommandPaletteProvider>
     )
 
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
 
     await waitFor(() => {
       // Only first 8 should render
@@ -270,7 +270,7 @@ describe("CommandPalette", () => {
       </CommandPaletteProvider>
     )
 
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
 
     await waitFor(() => {
       expect(screen.getByTestId("command-group-contacts")).toBeInTheDocument()
@@ -288,7 +288,7 @@ describe("CommandPalette", () => {
       </CommandPaletteProvider>
     )
 
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
 
     await waitFor(() => {
       expect(screen.getByTestId("command-group-quick-actions")).toBeInTheDocument()
@@ -306,7 +306,7 @@ describe("CommandPalette", () => {
       </CommandPaletteProvider>
     )
 
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
 
     await waitFor(() => {
       const addContactItem = screen.getByTestId("command-item-action:new-contact")
@@ -327,7 +327,7 @@ describe("CommandPalette", () => {
       </CommandPaletteProvider>
     )
 
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
 
     await waitFor(() => {
       expect(screen.getByTestId("command-group-navigate")).toBeInTheDocument()
@@ -349,7 +349,7 @@ describe("CommandPalette", () => {
       </CommandPaletteProvider>
     )
 
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
 
     await waitFor(() => {
       expect(screen.queryByTestId("command-item-nav:admin")).not.toBeInTheDocument()
@@ -371,7 +371,7 @@ describe("CommandPalette", () => {
       </CommandPaletteProvider>
     )
 
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
 
     await waitFor(() => {
       expect(screen.getByTestId("command-item-nav:admin")).toBeInTheDocument()
@@ -393,7 +393,7 @@ describe("CommandPalette", () => {
       </CommandPaletteProvider>
     )
 
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
 
     await waitFor(() => {
       const adminItem = screen.getByTestId("command-item-nav:admin")
@@ -415,14 +415,14 @@ describe("CommandPalette", () => {
     )
 
     // Open
-    fireEvent.keyDown(window, { key: "k", ctrlKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", ctrlKey: true })
 
     await waitFor(() => {
       expect(screen.getByTestId("command-dialog")).toBeInTheDocument()
     })
 
     // Close
-    fireEvent.keyDown(window, { key: "k", ctrlKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", ctrlKey: true })
 
     await waitFor(() => {
       expect(screen.queryByTestId("command-dialog")).not.toBeInTheDocument()
@@ -440,7 +440,7 @@ describe("CommandPalette", () => {
       </CommandPaletteProvider>
     )
 
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
 
     await waitFor(() => {
       expect(screen.getByTestId("command-dialog")).toBeInTheDocument()
@@ -458,7 +458,7 @@ describe("CommandPalette", () => {
       </CommandPaletteProvider>
     )
 
-    fireEvent.keyDown(window, { key: "k", shiftKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", shiftKey: true })
 
     expect(screen.queryByTestId("command-dialog")).not.toBeInTheDocument()
   })
@@ -474,7 +474,7 @@ describe("CommandPalette", () => {
       </CommandPaletteProvider>
     )
 
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
 
     await waitFor(() => {
       const dialog = screen.getByTestId("command-dialog")
@@ -495,7 +495,7 @@ describe("CommandPalette", () => {
       </CommandPaletteProvider>
     )
 
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
 
     await waitFor(() => {
       expect(screen.getByText("Alice")).toBeInTheDocument()
@@ -519,7 +519,7 @@ describe("CommandPalette", () => {
       </CommandPaletteProvider>
     )
 
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
 
     await waitFor(() => {
       expect(screen.getByText("Unnamed contact")).toBeInTheDocument()
@@ -537,7 +537,7 @@ describe("CommandPalette", () => {
       </CommandPaletteProvider>
     )
 
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
 
     await waitFor(() => {
       const logItem = screen.getByTestId("command-item-action:new-interaction log")
@@ -558,7 +558,7 @@ describe("CommandPalette", () => {
       </CommandPaletteProvider>
     )
 
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
 
     await waitFor(() => {
       const dashboardItem = screen.getByTestId("command-item-nav:dashboard home")
@@ -583,10 +583,12 @@ describe("CommandPalette", () => {
 
     unmount()
 
-    expect(removeEventListenerSpy).toHaveBeenCalledWith(
-      "keydown",
-      expect.any(Function)
-    )
+    // tinykeys removes its window keydown listener on cleanup. It passes a
+    // third `capture` arg, so match on the event name rather than an exact
+    // (and brittle) full-argument list.
+    expect(
+      removeEventListenerSpy.mock.calls.some((c) => c[0] === "keydown"),
+    ).toBe(true)
 
     removeEventListenerSpy.mockRestore()
   })
@@ -606,7 +608,7 @@ describe("CommandPalette", () => {
       </CommandPaletteProvider>
     )
 
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
 
     await waitFor(() => {
       const contactsNavItem = screen.getByTestId("command-item-nav:contacts people")
@@ -627,7 +629,7 @@ describe("CommandPalette", () => {
       </CommandPaletteProvider>
     )
 
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
 
     await waitFor(() => {
       const interactionsNavItem = screen.getByTestId("command-item-nav:interactions")
@@ -648,7 +650,7 @@ describe("CommandPalette", () => {
       </CommandPaletteProvider>
     )
 
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
 
     await waitFor(() => {
       const tagsNavItem = screen.getByTestId("command-item-nav:tags")
@@ -669,7 +671,7 @@ describe("CommandPalette", () => {
       </CommandPaletteProvider>
     )
 
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
 
     await waitFor(() => {
       const remindersNavItem = screen.getByTestId("command-item-nav:reminders")
@@ -690,7 +692,7 @@ describe("CommandPalette", () => {
       </CommandPaletteProvider>
     )
 
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
 
     await waitFor(() => {
       const journalNavItem = screen.getByTestId("command-item-nav:journal")
@@ -711,7 +713,7 @@ describe("CommandPalette", () => {
       </CommandPaletteProvider>
     )
 
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
 
     await waitFor(() => {
       const settingsNavItem = screen.getByTestId("command-item-nav:settings")
@@ -732,7 +734,7 @@ describe("CommandPalette", () => {
       </CommandPaletteProvider>
     )
 
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
 
     await waitFor(() => {
       const addContactItem = screen.getByTestId("command-item-action:new-contact")
@@ -753,7 +755,7 @@ describe("CommandPalette", () => {
       </CommandPaletteProvider>
     )
 
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
 
     await waitFor(() => {
       const journalItem = screen.getByTestId("command-item-action:new-journal entry")
@@ -784,7 +786,7 @@ describe("CommandPalette", () => {
       </CommandPaletteProvider>
     )
 
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
 
     await waitFor(() => {
       expect(screen.getByText("John Doe")).toBeInTheDocument()
@@ -808,7 +810,7 @@ describe("CommandPalette", () => {
       </CommandPaletteProvider>
     )
 
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
 
     await waitFor(() => {
       expect(screen.getByText("Smith")).toBeInTheDocument()
@@ -833,7 +835,7 @@ describe("CommandPalette", () => {
       </CommandPaletteProvider>
     )
 
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
 
     await waitFor(() => {
       const item = screen.getByTestId("command-item-contact:c1 Alice Johnson Marie")
@@ -860,7 +862,7 @@ describe("CommandPalette", () => {
       </CommandPaletteProvider>
     )
 
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
 
     await waitFor(() => {
       const item = screen.getByTestId("command-item-contact:c2 Robert Brown Bob")
@@ -887,7 +889,7 @@ describe("CommandPalette", () => {
       </CommandPaletteProvider>
     )
 
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
 
     await waitFor(() => {
       const item = screen.getByTestId("command-item-contact:c3 Charlie Davis Engineer")
@@ -927,7 +929,7 @@ describe("CommandPalette", () => {
       </CommandPaletteProvider>
     )
 
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
 
     await waitFor(() => {
       const item = screen.getByTestId("command-item-contact:c4 Eve Miller Friend Colleague")
@@ -953,7 +955,7 @@ describe("CommandPalette", () => {
       </CommandPaletteProvider>
     )
 
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
 
     await waitFor(() => {
       const contactItem = screen.getByTestId("command-item-contact:contact-abc Test Contact")
@@ -1002,7 +1004,7 @@ describe("CommandPalette", () => {
       </CommandPaletteProvider>
     )
 
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
 
     await waitFor(() => {
       expect(screen.getByText("Alice Smith")).toBeInTheDocument()
@@ -1030,7 +1032,7 @@ describe("CommandPalette", () => {
       </CommandPaletteProvider>,
     )
 
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
 
     await waitFor(() => {
       const items = screen.getAllByTestId(/^command-item-contact:c-tag/)

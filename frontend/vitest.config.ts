@@ -8,6 +8,10 @@ export default defineConfig({
     globals: true,
     setupFiles: ["./src/test/setup.ts"],
     testTimeout: 15000,
+    // Only run unit/component tests under src. The e2e/ directory holds
+    // Playwright specs (run separately) that import node-only deps like uuid
+    // and must not be collected by vitest.
+    include: ["src/**/*.test.{ts,tsx}"],
     // Bun resolves zod v4 to TypeScript source via the "@zod/source" export
     // condition. Inlining forces vitest to transform it through vite instead.
     server: {

@@ -247,10 +247,13 @@ export function useShortcutRegistry(): ShortcutRegistryContextValue {
  * Escape is explicitly NOT suppressed by this function.
  */
 function shouldSuppress(event: globalThis.KeyboardEvent): boolean {
-  const target = event.target as HTMLElement
-  const tag = target.tagName.toLowerCase()
+  // event.target can be a non-element (e.g. window/document) when an event is
+  // dispatched at the window — guard against missing tagName so the hotkey
+  // handler never throws (which would silently swallow the shortcut).
+  const target = event.target as HTMLElement | null
+  const tag = target?.tagName?.toLowerCase()
   if (tag === "input" || tag === "textarea") return true
-  if (target.isContentEditable) return true
+  if (target?.isContentEditable) return true
   return false
 }
 

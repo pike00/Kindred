@@ -276,7 +276,7 @@ describe("CsvImportDialog", () => {
 
     await waitFor(() => {
       expect(mockImport).toHaveBeenCalledWith({
-        formData: { file },
+        formData: expect.any(FormData),
         skipDuplicates: true,
         mergeDuplicates: false,
         createMissingTags: true,

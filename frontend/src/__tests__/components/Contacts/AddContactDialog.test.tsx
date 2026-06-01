@@ -134,6 +134,8 @@ describe("AddContactDialog", () => {
           first_name: "Bob",
           last_name: "Johnson",
           birthday: "1990-01-15",
+          timezone: null,
+          pronouns: null,
         },
       })
     })
@@ -372,6 +374,8 @@ describe("AddContactDialog", () => {
           first_name: "Bob",
           last_name: null,
           birthday: null,
+          timezone: null,
+          pronouns: null,
         },
       })
     })

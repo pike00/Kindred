@@ -82,6 +82,12 @@ vi.mock("@/components/Sidebar/Main", () => ({
   ),
 }))
 
+// Mock SmartLists (renders TanStack Router Links + fetches saved filters;
+// tested separately). Without this it crashes on the missing router context.
+vi.mock("@/components/Sidebar/SmartLists", () => ({
+  SmartLists: () => <div data-testid="sidebar-smart-lists" />,
+}))
+
 // Mock useAuth hook
 vi.mock("@/hooks/useAuth", () => ({
   default: vi.fn(() => ({
@@ -96,10 +102,12 @@ vi.mock("@/hooks/useAuth", () => ({
 vi.mock("@/lib/icons", () => ({
   Home: () => <span>HomeIcon</span>,
   Users: () => <span>UsersIcon</span>,
+  UsersRound: () => <span>UsersRoundIcon</span>,
   MessagesSquare: () => <span>MessagesIcon</span>,
   Tag: () => <span>TagIcon</span>,
   Bell: () => <span>BellIcon</span>,
   CalendarHeart: () => <span>CalendarIcon</span>,
+  Gift: () => <span>GiftIcon</span>,
   NotebookPen: () => <span>NotebookIcon</span>,
   ShieldCheck: () => <span>ShieldIcon</span>,
 }))
@@ -177,10 +185,10 @@ describe("AppSidebar", () => {
 
     const mainComponent = screen.getByTestId("sidebar-main")
     expect(mainComponent).toBeInTheDocument()
-    // Should have 7 base items
+    // Should have 10 base items
     expect(
       mainComponent.querySelectorAll("[data-testid^='nav-item-']"),
-    ).toHaveLength(7)
+    ).toHaveLength(10)
   })
 
   it("renders Main component with admin item included for superuser", async () => {
@@ -195,10 +203,10 @@ describe("AppSidebar", () => {
     renderWithProviders(<AppSidebar />)
 
     const mainComponent = screen.getByTestId("sidebar-main")
-    // Should have 8 items (7 base + admin)
+    // Should have 11 items (10 base + admin)
     expect(
       mainComponent.querySelectorAll("[data-testid^='nav-item-']"),
-    ).toHaveLength(8)
+    ).toHaveLength(11)
     expect(screen.getByTestId("nav-item-Admin")).toBeInTheDocument()
   })
 

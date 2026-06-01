@@ -218,7 +218,8 @@ export function QuickLogFAB() {
               variant="ghost"
               size="icon"
               className="h-6 w-6"
-              onClick={() => setOpen(false)}
+              aria-label="Close"
+              onClick={() => handleOpenChange(false)}
             >
               <X className="size-3.5" />
             </Button>
