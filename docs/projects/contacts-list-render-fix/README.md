@@ -5,6 +5,7 @@ repos: [personal-crm]
 started: 2026-05-31
 last_updated: 2026-05-31
 next_step: Reproduce /contacts on the dev stack (current main) — if it does NOT crash, this is a stale-prod-build issue → cut a release + redeploy; if it DOES crash, capture the unguarded field from source-mapped stack
+handoff: 2026-06-03 | tofix branch finished (journal/mood removal, backend boot fix, geocoding, DNC) committed f6f1832; ask-C analysis = stale v0.2.86 client → rebuild fixes it; BLOCKED on deploy + 6 UI items. See docs/updates/2026-06-03/handoff-tofix-remaining.md
 ---
 
 # Contacts List Render Crash (prod)
