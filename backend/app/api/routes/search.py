@@ -11,7 +11,6 @@ from app.models import (
     ContactTag,
     Interaction,
     InteractionAttendee,
-    JournalEntry,
     Note,
     TagShare,
     User,
@@ -207,49 +206,6 @@ def _search_interactions(
     return results
 
 
-def _search_journal_entries(
-    session: Session,
-    query: str,
-    owner_id: str,
-    limit: int,
-) -> list[dict]:
-    """Search JournalEntry table using tsvector (owner-scoped only, no TagShare)."""
-    ts_query = func.plainto_tsquery("english", query)
-    stmt = (
-        select(
-            JournalEntry.id,
-            JournalEntry.body,
-            JournalEntry.entry_date,
-            JournalEntry.created_at,
-            JournalEntry.updated_at,
-            func.ts_rank(JournalEntry.search_vector, ts_query).label("rank"),
-        )
-        .where(
-            JournalEntry.search_vector.op("@@")(ts_query),
-            JournalEntry.owner_id == owner_id,
-        )
-        .order_by(func.ts_rank(JournalEntry.search_vector, ts_query).desc())
-        .limit(limit)
-    )
-    rows = session.exec(stmt).all()
-    results = []
-    for row in rows:
-        snippet = (row.body[:120] + "...") if len(row.body) > 120 else row.body
-        title = f"Journal entry: {row.entry_date}"
-        results.append(
-            {
-                "id": str(row.id),
-                "type": "journal_entry",
-                "title": title,
-                "snippet": snippet,
-                "rank": float(row.rank) if row.rank else None,
-                "created_at": row.created_at.isoformat() if row.created_at else None,
-                "updated_at": row.updated_at.isoformat() if row.updated_at else None,
-            }
-        )
-    return results
-
-
 # ─── Endpoint ──────────────────────────────────────────────────────────
 
 
@@ -272,10 +228,9 @@ def search(
     contacts = _search_contacts(session, q, owner_id, shared_contact_ids, limit)
     notes = _search_notes(session, q, owner_id, shared_contact_ids, limit)
     interactions = _search_interactions(session, q, owner_id, shared_contact_ids, limit)
-    journal_entries = _search_journal_entries(session, q, owner_id, limit)
 
     # Merge and sort by rank (descending), then by type for stable ordering
-    all_results = contacts + notes + interactions + journal_entries
+    all_results = contacts + notes + interactions
     all_results.sort(key=lambda r: (-(r["rank"] or 0), r["type"]))
 
     return SearchResponse(

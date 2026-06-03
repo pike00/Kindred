@@ -370,11 +370,6 @@ function TimelineRowBody({
             <span>{formatDate(ix.occurred_at)}</span>
             <span>{formatTime(ix.occurred_at)}</span>
             {ix.duration_minutes != null && <span>{ix.duration_minutes}m</span>}
-            {ix.mood && (
-              <Badge variant="secondary" className="text-xs">
-                {ix.mood}
-              </Badge>
-            )}
           </div>
           {ix.notes && (
             <MentionText

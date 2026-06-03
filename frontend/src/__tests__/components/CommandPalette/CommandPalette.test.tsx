@@ -681,27 +681,6 @@ describe("CommandPalette", () => {
     expect(mockFns.navigate).toHaveBeenCalledWith({ to: "/reminders" })
   })
 
-  it("navigates to Journal nav item", async () => {
-    vi.mocked(ContactsService.ContactsService.listContacts).mockResolvedValue({
-      data: [],
-    } as any)
-
-    renderWithProviders(
-      <CommandPaletteProvider>
-        <CommandPalette />
-      </CommandPaletteProvider>
-    )
-
-    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
-
-    await waitFor(() => {
-      const journalNavItem = screen.getByTestId("command-item-nav:journal")
-      fireEvent.click(journalNavItem)
-    })
-
-    expect(mockFns.navigate).toHaveBeenCalledWith({ to: "/journal" })
-  })
-
   it("navigates to Settings nav item", async () => {
     vi.mocked(ContactsService.ContactsService.listContacts).mockResolvedValue({
       data: [],
@@ -742,27 +721,6 @@ describe("CommandPalette", () => {
     })
 
     expect(mockFns.navigate).toHaveBeenCalledWith({ to: "/contacts" })
-  })
-
-  it("navigates to New Journal Entry quick action", async () => {
-    vi.mocked(ContactsService.ContactsService.listContacts).mockResolvedValue({
-      data: [],
-    } as any)
-
-    renderWithProviders(
-      <CommandPaletteProvider>
-        <CommandPalette />
-      </CommandPaletteProvider>
-    )
-
-    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
-
-    await waitFor(() => {
-      const journalItem = screen.getByTestId("command-item-action:new-journal entry")
-      fireEvent.click(journalItem)
-    })
-
-    expect(mockFns.navigate).toHaveBeenCalledWith({ to: "/journal" })
   })
 
   // ============================================================================

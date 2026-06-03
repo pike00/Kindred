@@ -34,7 +34,6 @@ from app.models import (
     Interaction,
     InteractionAttendee,
     InteractionChannel,
-    JournalEntry,
     LifeEvent,
     MediaCategory,
     MediaRecommendation,
@@ -518,44 +517,6 @@ NOTE_BODIES = [
     "Hates phone calls — text only.",
 ]
 
-JOURNAL_BODIES = [
-    "Quiet morning. Coffee on the porch, finished the chapter I'd been stalled on.",
-    "Long walk after work to clear my head. The light through the trees was unreal.",
-    "Stuck on the same problem all day. Slept on it; tomorrow I'll come back fresh.",
-    "Dinner with old friends — laughed harder than I have in months.",
-    "Felt the seasonal slump kick in today. Going to bed early and trying again.",
-    "Climbing session went well. Sent the route I'd been projecting for weeks.",
-    "Hard conversation with a coworker. Glad I didn't dodge it.",
-    "Energy was low all day; got the bare minimum done and called it.",
-    "Spent the afternoon cooking with no plan. Soup turned out great.",
-    "Reread an old letter from my grandmother. Cried a little, in a good way.",
-    "Big idea brewing for the side project. Sketched it out on the back of a receipt.",
-    "Took the long route home and made a playlist for the drive.",
-    "Felt grateful today for nothing in particular. Just a good baseline kind of day.",
-    "Annoyed at myself for procrastinating. Set a 25-minute timer and finally started.",
-    "Beach trip with the family. Sand everywhere, exhausted, completely worth it.",
-    "Tried a new yoga class. Bad at it, but the savasana fixed my whole week.",
-    "Got the news I'd been waiting on. Big shift; need a few days to sit with it.",
-    "Worked on the garden. Planted basil, mint, and two tomato starts.",
-    "Insomnia again. Made tea at 3am and read until I drifted off.",
-    "Studio day. Sketched, painted, threw most of it out, kept the one piece I liked.",
-]
-
-JOURNAL_MOODS = [
-    "🙂",
-    "😌",
-    "😄",
-    "😤",
-    "😔",
-    "🤔",
-    "🌧️",
-    "🌤️",
-    None,
-    None,
-    None,
-    None,
-]
-
 # ─── Helpers ─────────────────────────────────────────────────────────────────
 
 
@@ -620,7 +581,6 @@ def wipe_user_data(session: Session, user_id: uuid.UUID) -> None:
     session.execute(sql_delete(Contact).where(Contact.owner_id == user_id))
     session.execute(sql_delete(Tag).where(Tag.owner_id == user_id))
     session.execute(sql_delete(Reminder).where(Reminder.owner_id == user_id))
-    session.execute(sql_delete(JournalEntry).where(JournalEntry.owner_id == user_id))
     session.commit()
 
 
@@ -635,32 +595,6 @@ def seed_tags(session: Session, owner_id: uuid.UUID) -> list[Tag]:
         session.refresh(t)
     log.info("Seeded %d tags", len(tags))
     return tags
-
-
-def seed_journal(session: Session, owner_id: uuid.UUID, count: int = 40) -> int:
-    today = date.today()
-    entries: list[JournalEntry] = []
-    used_dates: set[date] = set()
-    for _ in range(count):
-        for _attempt in range(5):
-            d = today - timedelta(days=random.randint(0, 180))
-            if d not in used_dates:
-                used_dates.add(d)
-                break
-        else:
-            d = today - timedelta(days=random.randint(0, 180))
-        entries.append(
-            JournalEntry(
-                owner_id=owner_id,
-                body=random.choice(JOURNAL_BODIES),
-                mood=random.choice(JOURNAL_MOODS),
-                entry_date=d,
-            )
-        )
-    session.add_all(entries)
-    session.commit()
-    log.info("Seeded %d journal entries", len(entries))
-    return len(entries)
 
 
 def make_contact(owner_id: uuid.UUID) -> Contact:
@@ -785,7 +719,6 @@ def seed_contact_children(
             channel=random.choice(list(InteractionChannel)),
             occurred_at=occurred,
             notes=random.choice(INTERACTION_NOTES) or None,
-            mood=random.choice([None, None, "😊", "😐", "🙂", "🤔", "😂"]),
             duration_minutes=random.choice([None, 5, 15, 30, 45, 60, 90]),
         )
         session.add(ix)
@@ -950,8 +883,6 @@ def run(count: int, email: str, reset: bool, rng_seed: int | None) -> None:
         rel_count = seed_relationships(session, contacts)
         session.commit()
         log.info("Seeded %d relationships", rel_count)
-
-        seed_journal(session, user.id)
 
         del_count = simulate_deletes(session, contacts, fraction=0.03)
         session.commit()

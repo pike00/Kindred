@@ -57,7 +57,6 @@ export function useSeedDemo(): UseMutationResult<
         ["interactions"],
         ["reminders"],
         ["tags"],
-        ["journal"],
         ["losing-touch"],
         ["interactions-recent"],
       ]

@@ -13,8 +13,6 @@ import {
   Gift,
   Home,
   MessagesSquare,
-  NotebookPen,
-  ShieldCheck,
   Tag,
   Users,
 } from "@/lib/icons"
@@ -31,15 +29,13 @@ const baseItems: Item[] = [
   { icon: Bell, title: "Reminders", path: "/reminders" },
   { icon: CalendarHeart, title: "Calendar", path: "/calendar" },
   { icon: Gift, title: "Gift Kanban", path: "/gifts/kanban" },
-  { icon: NotebookPen, title: "Journal", path: "/journal" },
 ]
 
 export function AppSidebar() {
   const { user: currentUser } = useAuth()
 
-  const items = currentUser?.is_superuser
-    ? [...baseItems, { icon: ShieldCheck, title: "Admin", path: "/admin" }]
-    : baseItems
+  // Admin moved to the user popout (see Sidebar/User.tsx).
+  const items = baseItems
 
   return (
     <Sidebar collapsible="icon">
@@ -48,7 +44,7 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <Main items={items} />
-        Reward2§ <SmartLists />
+        <SmartLists />
       </SidebarContent>
       <SidebarFooter>
         <SidebarAppearance />

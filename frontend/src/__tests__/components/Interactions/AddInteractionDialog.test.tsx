@@ -166,7 +166,6 @@ describe("AddInteractionDialog", () => {
     expect(screen.getByText(/channel \*/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/when \*/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/duration/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/mood/i)).toBeInTheDocument()
     expect(screen.getByTestId("mention-textarea")).toBeInTheDocument()
   })
 
@@ -315,11 +314,9 @@ describe("AddInteractionDialog", () => {
 
     // Fill optional fields
     const durationInput = screen.getByPlaceholderText("30")
-    const moodInput = screen.getByPlaceholderText(/how did it go/i)
     const notesTextarea = screen.getByTestId("mention-textarea")
 
     await user.type(durationInput, "45")
-    await user.type(moodInput, "Energized")
     await user.type(notesTextarea, "Great catch-up call")
 
     // Submit
@@ -337,7 +334,6 @@ describe("AddInteractionDialog", () => {
           expect.objectContaining({
             requestBody: expect.objectContaining({
               duration_minutes: 45,
-              mood: "Energized",
               notes: "Great catch-up call",
             }),
           }),

@@ -1491,11 +1491,6 @@ class InteractionBase(SQLModel):
         max_length=10000,
         description="Conversation summary, action items, etc.",
     )
-    mood: str | None = Field(
-        default=None,
-        max_length=50,
-        description="Emoji or keyword capturing the tone.",
-    )
     duration_minutes: int | None = Field(
         default=None,
         ge=0,
@@ -1516,7 +1511,6 @@ class InteractionUpdate(SQLModel):
     channel: InteractionChannel | None = None
     occurred_at: datetime | None = None
     notes: str | None = None
-    mood: str | None = None
     duration_minutes: int | None = None
     attendee_ids: list[uuid.UUID] | None = Field(
         default=None,
@@ -2329,100 +2323,6 @@ class MediaRecommendationPublic(MediaRecommendationBase):
 
 class MediaRecommendationsPublic(SQLModel):
     data: list[MediaRecommendationPublic]
-    count: int
-
-
-# ─── JournalEntry (not tied to a contact) ────────────────────────────────────
-
-
-class JournalEntryBase(SQLModel):
-    body: str = Field(
-        min_length=1,
-        max_length=50000,
-        description="Entry body, 1-50000 chars.",
-    )
-    mood: str | None = Field(
-        default=None,
-        max_length=50,
-        description="Emoji or keyword capturing the mood.",
-    )
-    entry_date: date = Field(
-        description="Date the entry is about (may differ from created_at).",
-    )
-
-
-class JournalEntryCreate(JournalEntryBase):
-    contact_ids: list[uuid.UUID] | None = None
-
-
-class JournalEntryUpdate(SQLModel):
-    body: str | None = None
-    mood: str | None = None
-    entry_date: date | None = None
-
-
-class JournalEntry(JournalEntryBase, table=True):
-    """Personal journal entry, not tied to a specific contact."""
-
-    __tablename__ = "journal_entry"
-    id: uuid.UUID = Field(
-        default_factory=uuid.uuid4,
-        primary_key=True,
-        description="Primary key.",
-    )
-    owner_id: uuid.UUID = Field(
-        foreign_key="user.id",
-        nullable=False,
-        ondelete="CASCADE",
-        description="Owner user; cascades on delete.",
-    )
-    # Full-text search vector, maintained by a DB trigger (see migration
-    # a0b1c2d3e4f5). Excluded from the API; only used in search queries.
-    search_vector: Any | None = Field(
-        default=None,
-        sa_column=sa.Column(TSVECTOR, nullable=True),
-        exclude=True,
-    )
-    created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
-        nullable=False,
-        description="When the entry was logged (UTC).",
-    )
-    updated_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
-        sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
-        nullable=False,
-        description="Auto-bumped on edit (UTC).",
-    )
-
-
-class JournalEntryContact(SQLModel, table=True):
-    """Many-to-many link between journal entries and contacts."""
-
-    __tablename__ = "journal_entry_contact"
-    journal_entry_id: uuid.UUID = Field(
-        foreign_key="journal_entry.id",
-        primary_key=True,
-        ondelete="CASCADE",
-        description="Journal entry side of the link; cascades on delete.",
-    )
-    contact_id: uuid.UUID = Field(
-        foreign_key="contact.id",
-        primary_key=True,
-        ondelete="CASCADE",
-        description="Contact side of the link; cascades on delete.",
-    )
-
-
-class JournalEntryPublic(JournalEntryBase):
-    id: uuid.UUID
-    created_at: datetime
-    updated_at: datetime
-    contact_ids: list[uuid.UUID] = []
-
-
-class JournalEntriesPublic(SQLModel):
-    data: list[JournalEntryPublic]
     count: int
 
 

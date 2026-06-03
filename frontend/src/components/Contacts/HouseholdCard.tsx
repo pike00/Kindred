@@ -115,9 +115,9 @@ export function HouseholdCard({
         <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
           <Users className="size-4" /> Household
           <InfoHint>
-            Derived from spouse, child, parent, and sibling relationships.
-            Shows household members with their ages for gift occasions and
-            visit planning.
+            Derived from spouse, child, parent, and sibling relationships. Shows
+            household members with their ages for gift occasions and visit
+            planning.
           </InfoHint>
         </div>
         {isLoading ? (

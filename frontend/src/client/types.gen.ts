@@ -1079,7 +1079,7 @@ export type InteractionAttendeeSummary = {
     avatar_url?: (string | null);
 };
 
-export type InteractionChannel = 'call' | 'in_person' | 'text' | 'email' | 'video' | 'social' | 'other' | 'skip';
+export type InteractionChannel = 'call' | 'in_person' | 'text' | 'email' | 'video' | 'social' | 'other' | 'skip' | 'recommendation';
 
 export type InteractionCreate = {
     /**
@@ -1094,10 +1094,6 @@ export type InteractionCreate = {
      * Conversation summary, action items, etc.
      */
     notes?: (string | null);
-    /**
-     * Emoji or keyword capturing the tone.
-     */
-    mood?: (string | null);
     /**
      * Length of the interaction in minutes.
      */
@@ -1124,10 +1120,6 @@ export type InteractionPublic = {
      */
     notes?: (string | null);
     /**
-     * Emoji or keyword capturing the tone.
-     */
-    mood?: (string | null);
-    /**
      * Length of the interaction in minutes.
      */
     duration_minutes?: (number | null);
@@ -1151,7 +1143,6 @@ export type InteractionUpdate = {
     channel?: (InteractionChannel | null);
     occurred_at?: (string | null);
     notes?: (string | null);
-    mood?: (string | null);
     duration_minutes?: (number | null);
     /**
      * Replace the attendee set; must have at least one if provided.
@@ -1205,52 +1196,6 @@ export type InverseRelationshipMapsPublic = {
 export type InverseRelationshipMapUpdate = {
     inverse_type?: (string | null);
     is_symmetric?: (boolean | null);
-};
-
-export type JournalEntriesPublic = {
-    data: Array<JournalEntryPublic>;
-    count: number;
-};
-
-export type JournalEntryCreate = {
-    /**
-     * Entry body, 1-50000 chars.
-     */
-    body: string;
-    /**
-     * Emoji or keyword capturing the mood.
-     */
-    mood?: (string | null);
-    /**
-     * Date the entry is about (may differ from created_at).
-     */
-    entry_date: string;
-    contact_ids?: (Array<(string)> | null);
-};
-
-export type JournalEntryPublic = {
-    /**
-     * Entry body, 1-50000 chars.
-     */
-    body: string;
-    /**
-     * Emoji or keyword capturing the mood.
-     */
-    mood?: (string | null);
-    /**
-     * Date the entry is about (may differ from created_at).
-     */
-    entry_date: string;
-    id: string;
-    created_at: string;
-    updated_at: string;
-    contact_ids?: Array<(string)>;
-};
-
-export type JournalEntryUpdate = {
-    body?: (string | null);
-    mood?: (string | null);
-    entry_date?: (string | null);
 };
 
 /**
@@ -2356,6 +2301,29 @@ export type ContactFieldsDeleteContactFieldData = {
 
 export type ContactFieldsDeleteContactFieldResponse = (Ok);
 
+export type ContactsGetContactPdfData = {
+    contactId: string;
+};
+
+export type ContactsGetContactPdfResponse = (unknown);
+
+export type ContactsGetDistinctStagesResponse = (Array<(string)>);
+
+export type ContactsGetKanbanBoardData = {
+    search?: (string | null);
+    tagId?: (string | null);
+};
+
+export type ContactsGetKanbanBoardResponse = ({
+    [key: string]: ContactsPublic;
+});
+
+export type ContactsGetContactStageEventsData = {
+    contactId: string;
+};
+
+export type ContactsGetContactStageEventsResponse = (ContactStageEventsPublic);
+
 export type ContactsListContactsData = {
     ids?: (Array<(string)> | null);
     includeDeleted?: boolean;
@@ -2392,6 +2360,27 @@ export type ContactsBulkUpdateContactsData = {
 
 export type ContactsBulkUpdateContactsResponse = (BulkUpdateResponse);
 
+export type ContactsListContactsGeoData = {
+    /**
+     * Maximum latitude for bounding box filter
+     */
+    maxLat?: (number | null);
+    /**
+     * Maximum longitude for bounding box filter
+     */
+    maxLng?: (number | null);
+    /**
+     * Minimum latitude for bounding box filter
+     */
+    minLat?: (number | null);
+    /**
+     * Minimum longitude for bounding box filter
+     */
+    minLng?: (number | null);
+};
+
+export type ContactsListContactsGeoResponse = (ContactsGeoResponse);
+
 export type ContactsGetContactData = {
     contactId: string;
 };
@@ -2419,48 +2408,11 @@ export type ContactsRestoreContactData = {
 
 export type ContactsRestoreContactResponse = (ContactPublic);
 
-export type ContactsListJournalEntriesData = {
-    contactId: string;
-    limit?: number;
-    skip?: number;
-};
-
-export type ContactsListJournalEntriesResponse = (Array<JournalEntryPublic>);
-
 export type ContactsGetContactHeatmapData = {
     contactId: string;
 };
 
 export type ContactsGetContactHeatmapResponse = (ContactHeatmapResponse);
-
-export type ContactsGetContactReflectionsData = {
-    contactId: string;
-    limit?: number;
-    skip?: number;
-};
-
-export type ContactsGetContactReflectionsResponse = (Array<JournalEntryPublic>);
-
-export type ContactsListContactsGeoData = {
-    /**
-     * Maximum latitude for bounding box filter
-     */
-    maxLat?: (number | null);
-    /**
-     * Maximum longitude for bounding box filter
-     */
-    maxLng?: (number | null);
-    /**
-     * Minimum latitude for bounding box filter
-     */
-    minLat?: (number | null);
-    /**
-     * Minimum longitude for bounding box filter
-     */
-    minLng?: (number | null);
-};
-
-export type ContactsListContactsGeoResponse = (ContactsGeoResponse);
 
 export type ContactsListContactMentionsData = {
     contactId: string;
@@ -2480,28 +2432,12 @@ export type ContactsGetImessageProfileData = {
 
 export type ContactsGetImessageProfileResponse = (IMessageProfileResponse);
 
-export type ContactsGetContactStageEventsData = {
+export type ContactStageEventsCreateContactStageEventData = {
     contactId: string;
+    requestBody: ContactStageEventCreate;
 };
 
-export type ContactsGetContactStageEventsResponse = (ContactStageEventsPublic);
-
-export type ContactsGetContactPdfData = {
-    contactId: string;
-};
-
-export type ContactsGetContactPdfResponse = (unknown);
-
-export type ContactsGetDistinctStagesResponse = (Array<(string)>);
-
-export type ContactsGetKanbanBoardData = {
-    search?: (string | null);
-    tagId?: (string | null);
-};
-
-export type ContactsGetKanbanBoardResponse = ({
-    [key: string]: ContactsPublic;
-});
+export type ContactStageEventsCreateContactStageEventResponse = (ContactStageEventPublic);
 
 export type ContactStageEventsListContactStageHistoryData = {
     contactId: string;
@@ -2514,13 +2450,6 @@ export type ContactStageEventsGetLatestStageData = {
 };
 
 export type ContactStageEventsGetLatestStageResponse = (ContactStageEventPublic);
-
-export type ContactStageEventsCreateContactStageEventData = {
-    contactId: string;
-    requestBody: ContactStageEventCreate;
-};
-
-export type ContactStageEventsCreateContactStageEventResponse = (ContactStageEventPublic);
 
 export type ContactStageEventsGetStageDurationRouteData = {
     contactId: string;
@@ -2822,32 +2751,6 @@ export type InteractionsRestoreInteractionData = {
 };
 
 export type InteractionsRestoreInteractionResponse = (unknown);
-
-export type JournalListJournalEntriesData = {
-    limit?: number;
-    skip?: number;
-};
-
-export type JournalListJournalEntriesResponse = (JournalEntriesPublic);
-
-export type JournalCreateJournalEntryRouteData = {
-    requestBody: JournalEntryCreate;
-};
-
-export type JournalCreateJournalEntryRouteResponse = (JournalEntryPublic);
-
-export type JournalUpdateJournalEntryData = {
-    entryId: string;
-    requestBody: JournalEntryUpdate;
-};
-
-export type JournalUpdateJournalEntryResponse = (JournalEntryPublic);
-
-export type JournalDeleteJournalEntryData = {
-    entryId: string;
-};
-
-export type JournalDeleteJournalEntryResponse = (Ok);
 
 export type LifeEventsListLifeEventsData = {
     contactId: string;

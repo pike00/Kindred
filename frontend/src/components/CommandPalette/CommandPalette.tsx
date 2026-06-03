@@ -18,7 +18,6 @@ import {
   Bell,
   Home,
   MessagesSquare,
-  NotebookPen,
   Plus,
   Settings,
   ShieldCheck,
@@ -146,8 +145,6 @@ export function CommandPalette() {
                         })
                       } else if (result.type === "interaction") {
                         navigate({ to: "/interactions" })
-                      } else if (result.type === "journal_entry") {
-                        navigate({ to: "/journal" })
                       }
                     })
                   }
@@ -214,13 +211,6 @@ export function CommandPalette() {
             <MessagesSquare />
             <span>Log interaction</span>
           </CommandItem>
-          <CommandItem
-            value="action:new-journal entry"
-            onSelect={() => runCommand(() => navigate({ to: "/journal" }))}
-          >
-            <NotebookPen />
-            <span>New journal entry</span>
-          </CommandItem>
         </CommandGroup>
 
         <CommandSeparator />
@@ -260,13 +250,6 @@ export function CommandPalette() {
           >
             <Bell />
             <span>Reminders</span>
-          </CommandItem>
-          <CommandItem
-            value="nav:journal"
-            onSelect={() => runCommand(() => navigate({ to: "/journal" }))}
-          >
-            <NotebookPen />
-            <span>Journal</span>
           </CommandItem>
           <CommandItem
             value="nav:settings"

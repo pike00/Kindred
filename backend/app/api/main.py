@@ -19,7 +19,6 @@ from app.api.routes import (
     ical,
     import_export,
     interactions,
-    journal,
     life_events,
     login,
     media_recommendations,
@@ -57,6 +56,13 @@ api_router.include_router(api_keys.router)
 api_router.include_router(utils.router)
 
 # CRM routes
+# These routers also use the "/contacts" prefix and declare literal sub-paths
+# ("/contacts/{contact_id}.pdf", "/contacts/kanban", "/contacts/stages/distinct").
+# They MUST be included before contacts.router, otherwise the dynamic
+# "/contacts/{contact_id}" route matches first and the literal segment fails
+# UUID validation with a 422.
+api_router.include_router(contact_pdf.router)
+api_router.include_router(contacts_kanban.router)
 api_router.include_router(contacts.router)
 api_router.include_router(contact_stage_events.router)
 api_router.include_router(tags.router)
@@ -75,9 +81,7 @@ api_router.include_router(debts.router)
 api_router.include_router(life_events.router)
 api_router.include_router(notes.router)
 api_router.include_router(media_recommendations.router)
-api_router.include_router(journal.router)
 api_router.include_router(import_export.router)
-api_router.include_router(contact_pdf.router)
 api_router.include_router(webhooks.router)
 
 api_router.include_router(transcribe.router)
@@ -85,7 +89,6 @@ api_router.include_router(activity_logs.router)
 api_router.include_router(vcard_conflicts.router)
 api_router.include_router(calendar.router)
 api_router.include_router(graph.router)
-api_router.include_router(contacts_kanban.router)
 api_router.include_router(email.router)
 api_router.include_router(organizations.router)
 api_router.include_router(search.router)

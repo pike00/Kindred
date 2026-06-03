@@ -46,7 +46,6 @@ const reviewSchema = z.object({
   channel: z.string().min(1, "Select a channel"),
   attendee_ids: z.array(z.string().uuid()).min(1, "Pick at least one attendee"),
   occurred_at: z.string().min(1, "Date is required"),
-  mood: z.string().optional(),
   duration_minutes: z.string().optional(),
 })
 
@@ -88,7 +87,6 @@ export function VoiceReviewModal({
       channel: "in_person", // Default for voice recordings
       attendee_ids: [],
       occurred_at: new Date().toISOString().slice(0, 16), // Current datetime-local format
-      mood: "",
       duration_minutes: "",
     },
   })
@@ -112,7 +110,6 @@ export function VoiceReviewModal({
       channel: data.channel as InteractionCreate["channel"],
       occurred_at: new Date(data.occurred_at).toISOString(),
       notes: data.notes,
-      mood: data.mood || null,
       duration_minutes: data.duration_minutes
         ? parseInt(data.duration_minutes, 10)
         : null,
@@ -296,20 +293,6 @@ export function VoiceReviewModal({
                         placeholder="30"
                         {...field}
                       />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="mood"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Mood</FormLabel>
-                    <FormControl>
-                      <Input placeholder="😊 How did it go?" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

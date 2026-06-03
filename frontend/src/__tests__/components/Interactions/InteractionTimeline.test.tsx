@@ -100,7 +100,6 @@ function makeInteraction(
     attendees: [],
     channel: "call",
     notes: null,
-    mood: null,
     duration_minutes: null,
     occurred_at: new Date().toISOString(),
     created_at: "2026-01-01T00:00:00Z",
@@ -315,43 +314,6 @@ describe("InteractionTimeline", () => {
     await waitFor(() => {
       // Should not display any duration text
       expect(screen.queryByText(/\d+m$/)).not.toBeInTheDocument()
-    })
-  })
-
-  it("displays mood badge when present", async () => {
-    const interactions = [
-      makeInteraction({
-        id: "i1",
-        mood: "Energized",
-      }),
-    ]
-
-    mockListInteractions.mockResolvedValue({ data: interactions })
-
-    renderWithProviders(<InteractionTimeline />)
-
-    await waitFor(() => {
-      expect(screen.getByText("Energized")).toBeInTheDocument()
-    })
-  })
-
-  it("hides mood badge when not present", async () => {
-    const interactions = [
-      makeInteraction({
-        id: "i1",
-        mood: null,
-      }),
-    ]
-
-    mockListInteractions.mockResolvedValue({ data: interactions })
-
-    renderWithProviders(<InteractionTimeline />)
-
-    await waitFor(() => {
-      // Verify component renders
-      expect(screen.getByText("Call")).toBeInTheDocument()
-      // Should not display "null" as a mood badge
-      expect(screen.queryByText("null")).not.toBeInTheDocument()
     })
   })
 

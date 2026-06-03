@@ -137,12 +137,6 @@ function LayoutShortcuts() {
         callback: () => navigate({ to: "/interactions" }),
       },
       {
-        keys: "g j",
-        description: "Go to Journal",
-        group: "Navigation",
-        callback: () => navigate({ to: "/journal" }),
-      },
-      {
         keys: "g t",
         description: "Go to Tags",
         group: "Navigation",

@@ -3,7 +3,6 @@ import { createFileRoute, Link } from "@tanstack/react-router"
 import {
   ContactsService,
   InteractionsService,
-  JournalService,
   RemindersService,
 } from "@/client"
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
@@ -63,10 +62,6 @@ function Dashboard() {
     queryKey: ["reminders"],
     queryFn: () => RemindersService.listReminders(),
   })
-  const { data: journal } = useSuspenseQuery({
-    queryKey: ["journal"],
-    queryFn: () => JournalService.listJournalEntries(),
-  })
   const { data: losingTouch } = useQuery({
     queryKey: ["losing-touch"],
     queryFn: () => ContactsService.listOverdueContacts({}),
@@ -113,13 +108,6 @@ function Dashboard() {
               {reminders?.data?.length ?? 0}
             </b>{" "}
             reminders
-          </span>
-          <span aria-hidden="true">·</span>
-          <span>
-            <b className="font-display font-semibold tracking-tight text-foreground">
-              {journal?.count ?? 0}
-            </b>{" "}
-            journal entries
           </span>
         </div>
       </div>

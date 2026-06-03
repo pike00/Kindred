@@ -120,24 +120,6 @@ export function makeTag(overrides: Partial<TagPublic> = {}): TagPublic {
   }
 }
 
-/** Factory for a minimal JournalEntryPublic object. */
-export function makeJournalEntry(
-  overrides: Partial<{
-    id: string
-    title: string
-    body: string | null
-    created_at: string
-  }> = {},
-) {
-  return {
-    id: "journal-id",
-    title: "Test Entry",
-    body: "Test body",
-    created_at: new Date().toISOString(),
-    ...overrides,
-  }
-}
-
 /** Factory for a minimal ReminderPublic object. */
 export function makeReminder(
   overrides: Partial<{

@@ -38,9 +38,6 @@ from app.models import (
     Interaction,
     InteractionAttendee,
     InteractionCreate,
-    JournalEntry,
-    JournalEntryContact,
-    JournalEntryCreate,
     LifeEvent,
     LifeEventCreate,
     MediaRecommendation,
@@ -434,26 +431,6 @@ def update_note(*, session: Session, note: Note, note_in: NoteUpdate) -> Note:
     session.commit()
     session.refresh(note)
     return note
-
-
-# ─── JournalEntry CRUD ────────────────────────────────────────────────────────
-
-
-def create_journal_entry(
-    *, session: Session, journal_in: JournalEntryCreate, owner_id: uuid.UUID
-) -> JournalEntry:
-    db_obj = JournalEntry.model_validate(
-        journal_in.model_dump(exclude={"contact_ids"}), update={"owner_id": owner_id}
-    )
-    session.add(db_obj)
-    session.flush()
-    # Sync contact associations
-    if journal_in.contact_ids:
-        for cid in set(journal_in.contact_ids):
-            session.add(JournalEntryContact(journal_entry_id=db_obj.id, contact_id=cid))
-    session.commit()
-    session.refresh(db_obj)
-    return db_obj
 
 
 # ─── SavedFilter CRUD ─────────────────────────────────────────────

@@ -25,13 +25,6 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
   Archive,
   ChevronLeft,
   ChevronRight,
@@ -71,15 +64,6 @@ interface PreviewModalState {
 }
 
 const PAGE_SIZE = 25
-
-const CHANNEL_OPTIONS = [
-  { value: "all", label: "All channels" },
-  { value: "phone", label: "Phone" },
-  { value: "email", label: "Email" },
-  { value: "in_person", label: "In Person" },
-  { value: "video", label: "Video" },
-  { value: "text", label: "Text" },
-]
 
 const BULK_ACTIONS = [
   { id: "archive", label: "Archive", icon: Archive, color: "" },
@@ -225,8 +209,6 @@ export const ContactsList = () => {
     contacts: [],
   })
   const [isLoading, setIsLoading] = useState(false)
-  const [channelFilter, setChannelFilter] = useState("all")
-  const [showDncOnly, setShowDncOnly] = useState(false)
 
   // Fetch saved filters to find active filter name
   const { data: filtersData } = useSuspenseQuery({
@@ -462,29 +444,6 @@ export const ContactsList = () => {
           </Button>
           <AddContactDialog />
         </div>
-      </div>
-
-      {/* Filter controls */}
-      <div className="flex flex-wrap items-center gap-2">
-        <Select value={channelFilter} onValueChange={setChannelFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by channel" />
-          </SelectTrigger>
-          <SelectContent>
-            {CHANNEL_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Button
-          variant={showDncOnly ? "default" : "outline"}
-          size="sm"
-          onClick={() => setShowDncOnly(!showDncOnly)}
-        >
-          DNC Only
-        </Button>
       </div>
 
       {/* Bulk Action Bar */}

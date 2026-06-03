@@ -9,7 +9,6 @@ import { InteractionsService } from "@/client"
 import { EmptyState } from "@/components/Common/EmptyState"
 import { RowActionsMenu } from "@/components/Common/RowActionsMenu"
 import { MentionText } from "@/components/Mentions/MentionText"
-import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import useCustomToast from "@/hooks/useCustomToast"
 import {
@@ -208,11 +207,6 @@ function InteractionCard({
                 <Clock className="size-3" />
                 {ix.duration_minutes}m
               </span>
-            )}
-            {ix.mood && (
-              <Badge variant="secondary" className="text-xs">
-                {ix.mood}
-              </Badge>
             )}
             {ix.location_label && (
               <div className="text-sm text-muted-foreground flex items-center gap-1 mt-1">

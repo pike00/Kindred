@@ -143,27 +143,12 @@ describe("AppSidebar", () => {
     expect(screen.getByTestId("nav-item-Tags")).toBeInTheDocument()
     expect(screen.getByTestId("nav-item-Reminders")).toBeInTheDocument()
     expect(screen.getByTestId("nav-item-Calendar")).toBeInTheDocument()
-    expect(screen.getByTestId("nav-item-Journal")).toBeInTheDocument()
   })
 
-  it("does not render Admin item for non-superuser", () => {
+  it("does not render Admin item in the sidebar (moved to user popout)", () => {
     renderWithProviders(<AppSidebar />)
 
     expect(screen.queryByTestId("nav-item-Admin")).not.toBeInTheDocument()
-  })
-
-  it("renders Admin item for superuser", async () => {
-    const useAuthModule = await import("@/hooks/useAuth")
-    vi.mocked(useAuthModule.default).mockReturnValueOnce({
-      user: makeUser({ is_superuser: true }),
-      logout: vi.fn(),
-      loginMutation: { mutate: vi.fn(), isPending: false },
-      signUpMutation: { mutate: vi.fn(), isPending: false },
-    } as unknown as ReturnType<typeof useAuthModule.default>)
-
-    renderWithProviders(<AppSidebar />)
-
-    expect(screen.getByTestId("nav-item-Admin")).toBeInTheDocument()
   })
 
   it("renders SidebarAppearance in footer", () => {
@@ -185,13 +170,13 @@ describe("AppSidebar", () => {
 
     const mainComponent = screen.getByTestId("sidebar-main")
     expect(mainComponent).toBeInTheDocument()
-    // Should have 9 base items
+    // Should have 8 base items (Journal removed; Admin lives in the user popout)
     expect(
       mainComponent.querySelectorAll("[data-testid^='nav-item-']"),
-    ).toHaveLength(9)
+    ).toHaveLength(8)
   })
 
-  it("renders Main component with admin item included for superuser", async () => {
+  it("does not add an Admin nav item for superuser (Admin moved to user popout)", async () => {
     const useAuthModule = await import("@/hooks/useAuth")
     vi.mocked(useAuthModule.default).mockReturnValueOnce({
       user: makeUser({ is_superuser: true }),
@@ -203,11 +188,11 @@ describe("AppSidebar", () => {
     renderWithProviders(<AppSidebar />)
 
     const mainComponent = screen.getByTestId("sidebar-main")
-    // Should have 10 items (9 base + admin)
+    // Still 8 items — Admin is not in the sidebar for anyone
     expect(
       mainComponent.querySelectorAll("[data-testid^='nav-item-']"),
-    ).toHaveLength(10)
-    expect(screen.getByTestId("nav-item-Admin")).toBeInTheDocument()
+    ).toHaveLength(8)
+    expect(screen.queryByTestId("nav-item-Admin")).not.toBeInTheDocument()
   })
 
   it("renders with collapsible icon mode", () => {

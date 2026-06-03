@@ -20,8 +20,6 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import { Skeleton } from "@/components/ui/skeleton"
 import useCustomToast from "@/hooks/useCustomToast"
 import { NotebookPen, Pencil, RefreshCw, Trash2, WifiOff } from "@/lib/icons"
-import { formatDateWithRelative } from "@/lib/utils"
-
 import {
   addDraft,
   generateUUID,
@@ -30,6 +28,7 @@ import {
   markDraftSynced,
   type OfflineDraft,
 } from "@/lib/offline-db"
+import { formatDateWithRelative } from "@/lib/utils"
 
 function formatDate(iso: string) {
   return formatDateWithRelative(iso)

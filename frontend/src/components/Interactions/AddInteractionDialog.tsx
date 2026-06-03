@@ -62,7 +62,6 @@ const interactionCreateSchema = z.object({
   channel: z.string().min(1, "Select a channel"),
   occurred_at: z.string().min(1, "Date is required"),
   notes: z.string().optional(),
-  mood: z.string().nullable().optional(),
   duration_minutes: z.string().optional(),
   location_label: z.string().max(500).optional(),
 })
@@ -106,7 +105,6 @@ export const AddInteractionDialog = ({
       channel: "",
       occurred_at: toLocalDateTimeInput(new Date()),
       notes: "",
-      mood: "",
       duration_minutes: "",
     },
   })
@@ -116,6 +114,23 @@ export const AddInteractionDialog = ({
     setResolvedLat(null)
     setResolvedLng(null)
     setResolvedName(null)
+  }
+
+  const geocodeQuery = async (
+    query: string,
+    signal: AbortSignal,
+  ): Promise<OsmResult[]> => {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`,
+      {
+        signal,
+        headers: {
+          "Accept-Language": "en",
+          "User-Agent": "Kindred-PersonalCRM/1.0 (personal use)",
+        },
+      },
+    )
+    return (await res.json()) as OsmResult[]
   }
 
   const handleLocationBlur = async (value: string) => {
@@ -129,17 +144,20 @@ export const AddInteractionDialog = ({
     osmAbortRef.current = controller
     setOsmStatus("searching")
     try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(trimmed)}&limit=1`,
-        {
-          signal: controller.signal,
-          headers: {
-            "Accept-Language": "en",
-            "User-Agent": "Kindred-PersonalCRM/1.0 (personal use)",
-          },
-        },
-      )
-      const results: OsmResult[] = await res.json()
+      let results = await geocodeQuery(trimmed, controller.signal)
+      // Fallback: a label like "Rose Mary, 932 W Fulton St, Chicago, IL" has the
+      // contact's name prepended, which Nominatim can't resolve. If the first
+      // comma-segment is name-like (no digits — street addresses carry a number),
+      // drop it and retry on the postal-address portion alone.
+      if (results.length === 0) {
+        const idx = trimmed.indexOf(",")
+        if (idx > 0 && !/\d/.test(trimmed.slice(0, idx))) {
+          const addressOnly = trimmed.slice(idx + 1).trim()
+          if (addressOnly) {
+            results = await geocodeQuery(addressOnly, controller.signal)
+          }
+        }
+      }
       if (results.length > 0) {
         setResolvedLat(parseFloat(results[0].lat))
         setResolvedLng(parseFloat(results[0].lon))
@@ -185,7 +203,6 @@ export const AddInteractionDialog = ({
       channel: data.channel as InteractionCreate["channel"],
       occurred_at: new Date(data.occurred_at).toISOString(),
       notes: data.notes || null,
-      mood: data.mood || null,
       duration_minutes: data.duration_minutes
         ? parseInt(data.duration_minutes, 10)
         : null,
@@ -256,24 +273,6 @@ export const AddInteractionDialog = ({
                   <FormLabel>Duration (minutes)</FormLabel>
                   <FormControl>
                     <Input type="number" min="0" placeholder="30" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="mood"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Mood</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="How did it go? (e.g. great, tired, inspired)"
-                      {...field}
-                      value={field.value ?? ""}
-                      onChange={(e) => field.onChange(e.target.value || null)}
-                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

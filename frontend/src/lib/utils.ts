@@ -22,7 +22,8 @@ export function relativeEstimate(iso: string, now: Date = new Date()): string {
   const diffMs = d.getTime() - now.getTime()
   const days = Math.round(Math.abs(diffMs) / 86_400_000)
   if (days === 0) return "today"
-  const plural = (n: number, unit: string) => `${n} ${unit}${n === 1 ? "" : "s"}`
+  const plural = (n: number, unit: string) =>
+    `${n} ${unit}${n === 1 ? "" : "s"}`
   let est: string
   if (days < 7) est = plural(days, "day")
   else if (days < 30) est = `about ${plural(Math.round(days / 7), "week")}`

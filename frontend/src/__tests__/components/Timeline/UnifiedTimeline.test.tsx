@@ -69,7 +69,6 @@ describe("UnifiedTimeline", () => {
           { id: "c1", first_name: "Alice", last_name: "Smith" },
           { id: "other1", first_name: "Bob", last_name: "Jones" },
         ],
-        mood: "positive",
         duration_minutes: 30,
       },
     ],
@@ -401,16 +400,6 @@ describe("UnifiedTimeline", () => {
 
     await waitFor(() => {
       expect(screen.getByText("30m")).toBeInTheDocument()
-    })
-  })
-
-  it("interaction shows mood badge when present", async () => {
-    mockListInteractions.mockResolvedValueOnce(mockInteractionData)
-
-    renderWithProviders(<UnifiedTimeline contactId="c1" />)
-
-    await waitFor(() => {
-      expect(screen.getByText("positive")).toBeInTheDocument()
     })
   })
 

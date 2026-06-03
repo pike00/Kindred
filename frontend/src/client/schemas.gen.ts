@@ -4060,7 +4060,7 @@ export const InteractionAttendeeSummarySchema = {
 
 export const InteractionChannelSchema = {
     type: 'string',
-    enum: ['call', 'in_person', 'text', 'email', 'video', 'social', 'other', 'skip'],
+    enum: ['call', 'in_person', 'text', 'email', 'video', 'social', 'other', 'skip', 'recommendation'],
     title: 'InteractionChannel'
 } as const;
 
@@ -4088,19 +4088,6 @@ export const InteractionCreateSchema = {
             ],
             title: 'Notes',
             description: 'Conversation summary, action items, etc.'
-        },
-        mood: {
-            anyOf: [
-                {
-                    type: 'string',
-                    maxLength: 50
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Mood',
-            description: 'Emoji or keyword capturing the tone.'
         },
         duration_minutes: {
             anyOf: [
@@ -4172,19 +4159,6 @@ export const InteractionPublicSchema = {
             ],
             title: 'Notes',
             description: 'Conversation summary, action items, etc.'
-        },
-        mood: {
-            anyOf: [
-                {
-                    type: 'string',
-                    maxLength: 50
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Mood',
-            description: 'Emoji or keyword capturing the tone.'
         },
         duration_minutes: {
             anyOf: [
@@ -4318,17 +4292,6 @@ export const InteractionUpdateSchema = {
                 }
             ],
             title: 'Notes'
-        },
-        mood: {
-            anyOf: [
-                {
-                    type: 'string'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Mood'
         },
         duration_minutes: {
             anyOf: [
@@ -4494,173 +4457,6 @@ export const InverseRelationshipMapsPublicSchema = {
     type: 'object',
     required: ['data', 'count'],
     title: 'InverseRelationshipMapsPublic'
-} as const;
-
-export const JournalEntriesPublicSchema = {
-    properties: {
-        data: {
-            items: {
-                '$ref': '#/components/schemas/JournalEntryPublic'
-            },
-            type: 'array',
-            title: 'Data'
-        },
-        count: {
-            type: 'integer',
-            title: 'Count'
-        }
-    },
-    type: 'object',
-    required: ['data', 'count'],
-    title: 'JournalEntriesPublic'
-} as const;
-
-export const JournalEntryCreateSchema = {
-    properties: {
-        body: {
-            type: 'string',
-            maxLength: 50000,
-            minLength: 1,
-            title: 'Body',
-            description: 'Entry body, 1-50000 chars.'
-        },
-        mood: {
-            anyOf: [
-                {
-                    type: 'string',
-                    maxLength: 50
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Mood',
-            description: 'Emoji or keyword capturing the mood.'
-        },
-        entry_date: {
-            type: 'string',
-            format: 'date',
-            title: 'Entry Date',
-            description: 'Date the entry is about (may differ from created_at).'
-        },
-        contact_ids: {
-            anyOf: [
-                {
-                    items: {
-                        type: 'string',
-                        format: 'uuid'
-                    },
-                    type: 'array'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Contact Ids'
-        }
-    },
-    type: 'object',
-    required: ['body', 'entry_date'],
-    title: 'JournalEntryCreate'
-} as const;
-
-export const JournalEntryPublicSchema = {
-    properties: {
-        body: {
-            type: 'string',
-            maxLength: 50000,
-            minLength: 1,
-            title: 'Body',
-            description: 'Entry body, 1-50000 chars.'
-        },
-        mood: {
-            anyOf: [
-                {
-                    type: 'string',
-                    maxLength: 50
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Mood',
-            description: 'Emoji or keyword capturing the mood.'
-        },
-        entry_date: {
-            type: 'string',
-            format: 'date',
-            title: 'Entry Date',
-            description: 'Date the entry is about (may differ from created_at).'
-        },
-        id: {
-            type: 'string',
-            format: 'uuid',
-            title: 'Id'
-        },
-        created_at: {
-            type: 'string',
-            format: 'date-time',
-            title: 'Created At'
-        },
-        updated_at: {
-            type: 'string',
-            format: 'date-time',
-            title: 'Updated At'
-        },
-        contact_ids: {
-            items: {
-                type: 'string',
-                format: 'uuid'
-            },
-            type: 'array',
-            title: 'Contact Ids',
-            default: []
-        }
-    },
-    type: 'object',
-    required: ['body', 'entry_date', 'id', 'created_at', 'updated_at'],
-    title: 'JournalEntryPublic'
-} as const;
-
-export const JournalEntryUpdateSchema = {
-    properties: {
-        body: {
-            anyOf: [
-                {
-                    type: 'string'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Body'
-        },
-        mood: {
-            anyOf: [
-                {
-                    type: 'string'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Mood'
-        },
-        entry_date: {
-            anyOf: [
-                {
-                    type: 'string',
-                    format: 'date'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Entry Date'
-        }
-    },
-    type: 'object',
-    title: 'JournalEntryUpdate'
 } as const;
 
 export const JsonExportResponseSchema = {

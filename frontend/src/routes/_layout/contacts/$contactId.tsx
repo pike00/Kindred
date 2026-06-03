@@ -1,11 +1,7 @@
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { useEffect, useState } from "react"
-import type {
-  DebtPublic,
-  GiftPublic,
-  InteractionPublic,
-} from "@/client"
+import type { DebtPublic, GiftPublic, InteractionPublic } from "@/client"
 import {
   ContactsService,
   DebtsService,
@@ -35,7 +31,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { formatDateWithRelative } from "@/lib/utils"
 import {
   Tooltip,
   TooltipContent,
@@ -54,6 +49,7 @@ import {
   Star,
   UserRoundSearch,
 } from "@/lib/icons"
+import { formatDateWithRelative } from "@/lib/utils"
 
 function ContactLocalTime({ timezone }: { timezone: string }) {
   const [localTime, setLocalTime] = useState(() => formatLocalTime(timezone))
@@ -365,8 +361,6 @@ function ContactDetailPage() {
             </Card>
           )}
 
-          {/* Groups */}
-          {/* Groups — ContactPublic doesn't include groups yet; field is rendered when backend adds it */}
           {/* Interaction Map */}
           <Card>
             <CardHeader>

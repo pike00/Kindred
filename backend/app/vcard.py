@@ -5,6 +5,7 @@ Preserves unknown vCard properties through round-trips by storing raw vCard text
 """
 
 import hashlib
+import re
 import uuid
 
 import vobject
@@ -17,6 +18,20 @@ from app.models import (
     ContactField,
     ContactFieldType,
 )
+
+
+_NAME_URI_PREFIX_RE = re.compile(r"^\s*(?:tel|mailto|sip|fax):\s*", re.IGNORECASE)
+
+
+def strip_name_uri_prefix(value: str | None) -> str | None:
+    """Strip a leading URI scheme (tel:/mailto:/...) from a name value.
+
+    Some vCards carry a URI where a name belongs (e.g. FN = "tel:Aleisha Khan").
+    Returns the cleaned value, or the original if there's nothing to strip.
+    """
+    if not value:
+        return value
+    return _NAME_URI_PREFIX_RE.sub("", value)
 
 
 def normalize_vcard_for_hash(vcard_text: str) -> str:
@@ -355,6 +370,11 @@ def vcard_to_contact_data(vcard_text: str) -> dict:
         contact["first_name"] = card.fn.value
     else:
         contact["first_name"] = "Unknown"
+
+    # Some vCards put a "tel:"/"mailto:" URI where a name belongs (seen in the
+    # wild, e.g. FN = "tel:Aleisha Khan"). Strip the scheme so the name is clean.
+    for _key in ("first_name", "last_name", "middle_name"):
+        contact[_key] = strip_name_uri_prefix(contact.get(_key))
 
     # ORG
     if hasattr(card, "org"):

@@ -1,12 +1,7 @@
-import {
-  BookOpen,
-  MessagesSquare,
-  NotebookPen,
-  UserRoundSearch,
-} from "lucide-react"
+import { MessagesSquare, NotebookPen, UserRoundSearch } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 
-type SearchResultType = "contact" | "note" | "interaction" | "journal_entry"
+type SearchResultType = "contact" | "note" | "interaction"
 
 const typeConfig: Record<
   SearchResultType,
@@ -30,11 +25,6 @@ const typeConfig: Record<
     label: "Interaction",
     icon: <MessagesSquare className="h-3 w-3" />,
     variant: "outline",
-  },
-  journal_entry: {
-    label: "Journal",
-    icon: <BookOpen className="h-3 w-3" />,
-    variant: "destructive",
   },
 }
 

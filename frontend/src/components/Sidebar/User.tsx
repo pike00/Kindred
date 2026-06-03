@@ -16,7 +16,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import useAuth from "@/hooks/useAuth"
-import { ChevronsUpDown, LogOut, Settings } from "@/lib/icons"
+import { ChevronsUpDown, LogOut, Settings, ShieldCheck } from "@/lib/icons"
 import { getInitials } from "@/utils"
 
 interface UserInfoProps {
@@ -85,6 +85,14 @@ export function User({ user }: { user: any }) {
                 User Settings
               </DropdownMenuItem>
             </RouterLink>
+            {user?.is_superuser && (
+              <RouterLink to="/admin" onClick={handleMenuClick}>
+                <DropdownMenuItem>
+                  <ShieldCheck />
+                  Admin
+                </DropdownMenuItem>
+              </RouterLink>
+            )}
             <DropdownMenuItem onClick={handleLogout}>
               <LogOut />
               Log Out
