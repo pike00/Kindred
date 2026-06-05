@@ -301,6 +301,12 @@ function ContactDetailPage() {
         </div>
       </div>
 
+      {/* Contact info + addresses, surfaced at the top under the header (item23) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <ContactFieldsCard contactId={contactId} />
+        <AddressesCard contactId={contactId} />
+      </div>
+
       {/* Grid: left + right columns */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Left column (2/3 width) */}
@@ -311,10 +317,6 @@ function ContactDetailPage() {
             endDate={heatmapFilter?.endDate ?? null}
           />
           <NotesCard contactId={contactId} />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <ContactFieldsCard contactId={contactId} />
-            <AddressesCard contactId={contactId} />
-          </div>
           <PetsCard contactId={contactId} />
           <LifeEventsCard contactId={contactId} />
           <CustomFieldsCard contactId={contactId} />
