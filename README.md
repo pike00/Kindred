@@ -120,8 +120,9 @@ docker compose exec backend bash scripts/tests-start.sh
 End-to-end (Puppeteer, requires a running stack):
 
 ```bash
-bun install
-bun run e2e
+corepack enable
+pnpm install
+pnpm run e2e
 ```
 
 ## Secrets

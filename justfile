@@ -115,7 +115,7 @@ db-docs-check:
 
 # Run frontend Vitest with v8 coverage. Writes report to frontend/coverage/.
 frontend-coverage *args:
-    cd frontend && bun run test -- --coverage {{args}}
+    cd frontend && pnpm run test -- --coverage {{args}}
 
 # Install prek hooks (pre-commit + pre-push) into .git/hooks.
 install-hooks:

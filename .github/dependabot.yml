@@ -16,8 +16,8 @@ updates:
     commit-message:
       prefix: ⬆
     labels: [dependencies, internal]
-  # bun
-  - package-ecosystem: bun
+  # pnpm (npm ecosystem covers pnpm-lock.yaml)
+  - package-ecosystem: npm
     directory: /
     schedule:
       interval: weekly

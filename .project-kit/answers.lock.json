@@ -71,7 +71,7 @@
   "setup": {
     "backend": "uv sync --project backend",
     "enabled": true,
-    "frontend": "bun install",
+    "frontend": "corepack enable && pnpm install",
     "hooks": false,
     "precommit": false
   },
@@ -87,15 +87,15 @@
     },
     "enabled": true,
     "frontend": {
-      "cmd": "cd frontend && bun run test",
+      "cmd": "cd frontend && pnpm run test",
       "watch": null
     },
     "lint": {
-      "cmd": "cd frontend && bunx @biomejs/biome check src && cd ../backend && uvx ruff check app",
+      "cmd": "cd frontend && pnpm exec biome check src && cd ../backend && uvx ruff check app",
       "watch": null
     },
     "typecheck": {
-      "cmd": "cd frontend && bunx tsc --noEmit",
+      "cmd": "cd frontend && pnpm exec tsc --noEmit",
       "watch": null
     }
   }

@@ -16,7 +16,7 @@ test-backend:
     @docker compose -f compose.dev.yml exec -T backend pytest
 
 test-frontend:
-    @cd frontend && bun run test
+    @cd frontend && pnpm run test
 
 test-e2e:
     @bash scripts/run-e2e-prepush.sh
@@ -25,7 +25,7 @@ test-watch:
     @just _skip "backend watch"
 
 lint:
-    @cd frontend && bunx @biomejs/biome check src && cd ../backend && uvx ruff check app
+    @cd frontend && pnpm exec biome check src && cd ../backend && uvx ruff check app
 
 typecheck:
-    @cd frontend && bunx tsc --noEmit
+    @cd frontend && pnpm exec tsc --noEmit

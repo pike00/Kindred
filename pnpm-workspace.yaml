@@ -1,0 +1,12 @@
+packages:
+  - frontend
+
+# pnpm v11 reads these from pnpm-workspace.yaml (not .npmrc).
+# Flat/hoisted node_modules (like npm/bun) so vitest/config + vite plugins
+# resolve without pnpm's strict symlink isolation.
+nodeLinker: hoisted
+
+# @vitejs/plugin-react-swc -> @swc/core needs its postinstall to link the
+# native binding. pnpm v11 blocks build scripts until explicitly allowed.
+allowBuilds:
+  '@swc/core': true

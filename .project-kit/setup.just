@@ -11,7 +11,7 @@ setup-backend:
     @uv sync --project backend
 
 setup-frontend:
-    @bun install
+    @corepack enable && pnpm install
 
 # Activate the vendored git hooks (.project-kit/hooks/) for this repo by pointing
 # core.hooksPath at them. Self-contained: no global install needed, and a fresh

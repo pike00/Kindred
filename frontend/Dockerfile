@@ -1,18 +1,17 @@
-# Stage 0, "build-stage", based on Bun, to build and compile the frontend
-FROM oven/bun:1 AS build-stage
+# Stage 0, "build-stage", based on Node + pnpm, to build and compile the frontend
+FROM node:22-slim AS build-stage
+RUN corepack enable
 
 WORKDIR /app
 
-COPY package.json bun.lock /app/
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml /app/
 
 COPY frontend/package.json /app/frontend/
-
-WORKDIR /app/frontend
 
 # Vite build doesn't need Playwright's bundled browsers / ffmpeg (~400 MB).
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 
-RUN bun install
+RUN pnpm install --frozen-lockfile
 
 COPY ./frontend /app/frontend
 ARG VITE_API_URL
@@ -24,7 +23,7 @@ ENV VITE_AUTH_MODE=${VITE_AUTH_MODE}
 ENV VITE_CF_LOGOUT_URL=${VITE_CF_LOGOUT_URL}
 ENV NODE_ENV=${NODE_ENV}
 
-RUN bun run build
+RUN pnpm --filter frontend build
 
 
 # Stage 1, based on Nginx, to have only the compiled app, ready for production with Nginx

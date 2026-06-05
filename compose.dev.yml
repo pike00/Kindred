@@ -48,7 +48,7 @@ services:
         condition: service_healthy
 
   frontend:
-    image: oven/bun:1
+    image: node:22-slim
     working_dir: /app/frontend
     env_file: .env
     environment:
@@ -62,15 +62,20 @@ services:
       - PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
     volumes:
       - ./package.json:/app/package.json:ro
-      - ./bun.lock:/app/bun.lock:ro
+      - ./pnpm-lock.yaml:/app/pnpm-lock.yaml:ro
+      - ./pnpm-workspace.yaml:/app/pnpm-workspace.yaml:ro
       - ./frontend:/app/frontend
-      - crm-frontend-node-modules:/app/frontend/node_modules
+      # pnpm's hoisted node_modules lives at the workspace root (/app), not
+      # /app/frontend. Persist that and mask the host's frontend/node_modules.
+      - crm-frontend-node-modules:/app/node_modules
+      - /app/frontend/node_modules
     command:
       - sh
       - -c
       - |
-        bun install --frozen-lockfile &&
-        bun run dev --host 0.0.0.0 --port 5173
+        corepack enable &&
+        pnpm install --frozen-lockfile &&
+        pnpm dev -- --host 0.0.0.0 --port 5173
     networks:
       - pikenet-private
     dns:

@@ -1,13 +1,11 @@
 {
   "name": "personal-crm",
   "private": true,
-  "workspaces": [
-    "frontend"
-  ],
+  "packageManager": "pnpm@11.3.0",
   "scripts": {
-    "dev": "bun run --filter frontend dev",
-    "lint": "bun run --filter frontend lint",
-    "e2e": "bunx playwright test"
+    "dev": "pnpm --filter frontend dev",
+    "lint": "pnpm --filter frontend lint",
+    "e2e": "pnpm exec playwright test"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0"

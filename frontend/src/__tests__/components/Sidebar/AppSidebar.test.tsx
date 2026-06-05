@@ -100,6 +100,7 @@ vi.mock("@/hooks/useAuth", () => ({
 
 // Mock icons
 vi.mock("@/lib/icons", () => ({
+  Activity: () => <span>ActivityIcon</span>,
   Home: () => <span>HomeIcon</span>,
   Users: () => <span>UsersIcon</span>,
   UsersRound: () => <span>UsersRoundIcon</span>,
@@ -170,10 +171,10 @@ describe("AppSidebar", () => {
 
     const mainComponent = screen.getByTestId("sidebar-main")
     expect(mainComponent).toBeInTheDocument()
-    // Should have 8 base items (Journal removed; Admin lives in the user popout)
+    // 9 base items: Journal removed, Activity added; Admin lives in the user popout
     expect(
       mainComponent.querySelectorAll("[data-testid^='nav-item-']"),
-    ).toHaveLength(8)
+    ).toHaveLength(9)
   })
 
   it("does not add an Admin nav item for superuser (Admin moved to user popout)", async () => {
@@ -188,10 +189,10 @@ describe("AppSidebar", () => {
     renderWithProviders(<AppSidebar />)
 
     const mainComponent = screen.getByTestId("sidebar-main")
-    // Still 8 items — Admin is not in the sidebar for anyone
+    // Still 9 items — Admin is not in the sidebar for anyone
     expect(
       mainComponent.querySelectorAll("[data-testid^='nav-item-']"),
-    ).toHaveLength(8)
+    ).toHaveLength(9)
     expect(screen.queryByTestId("nav-item-Admin")).not.toBeInTheDocument()
   })
 

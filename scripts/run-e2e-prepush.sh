@@ -37,7 +37,7 @@ if ! stack_up; then
     echo "e2e: stack not reachable on loopback — bringing up dev compose with override"
     docker compose -f compose.dev.yml -f compose.dev.override.yml up -d \
         --force-recreate backend frontend >/dev/null
-    # Wait up to 5 min — cold starts include bun install + Vite startup
+    # Wait up to 5 min — cold starts include pnpm install + Vite startup
     waited=0
     until stack_up || (( waited >= 300 )); do
         sleep 5
@@ -52,10 +52,10 @@ fi
 
 echo "e2e: stack ready, running Playwright specs..."
 
-if ! bunx playwright test --reporter=list; then
+if ! pnpm exec playwright test --reporter=list; then
     echo
     echo "ERROR: Playwright e2e specs failed." >&2
-    echo "Run 'bunx playwright show-report e2e/report' to view the HTML report." >&2
+    echo "Run 'pnpm exec playwright show-report e2e/report' to view the HTML report." >&2
     echo "Bypass intentionally with: PERSONAL_CRM_SKIP_E2E=1 git push" >&2
     exit 1
 fi
