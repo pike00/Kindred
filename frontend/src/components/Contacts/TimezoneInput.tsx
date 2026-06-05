@@ -15,6 +15,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { lookupCities } from "@/lib/cityTimezones"
 import { cn } from "@/lib/utils"
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -59,6 +60,7 @@ function parseUtcOffset(input: string): string | null {
 }
 
 type TzOption = { tz: string; city: string; offset: string }
+type RenderOption = TzOption & { key: string }
 
 const BASE_OPTIONS: TzOption[] = ALL_TIMEZONES.map((tz) => ({
   tz,
@@ -80,30 +82,39 @@ export function TimezoneInput({
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState("")
 
-  const filtered = useMemo(() => {
+  const filtered = useMemo<RenderOption[]>(() => {
     const q = search.toLowerCase().replace(/[\s_]/g, "")
-    if (!q) return BASE_OPTIONS.slice(0, 60)
+    if (!q) return BASE_OPTIONS.slice(0, 60).map((o) => ({ ...o, key: o.tz }))
 
-    // Check if input looks like a UTC offset and inject a synthetic option
-    const synthetic: TzOption[] = []
+    const out: RenderOption[] = []
+
+    // 1) UTC offset synthetic (e.g. "UTC-5", "+05:30")
     const resolved = parseUtcOffset(search)
     if (resolved) {
-      synthetic.push({
+      out.push({
+        key: `utc-${resolved}`,
         tz: resolved,
-        city: `UTC offset`,
+        city: "UTC offset",
         offset: getOffset(resolved),
       })
     }
 
-    const matches = BASE_OPTIONS.filter(({ tz, city }) => {
-      const tzNorm = tz.toLowerCase().replace(/[\s_/]/g, "")
-      const cityNorm = city.toLowerCase().replace(/\s/g, "")
-      return tzNorm.includes(q) || cityNorm.includes(q)
-    }).slice(0, 60)
+    // 2) Broad city-name matches (e.g. "New Orleans" -> America/Chicago)
+    for (const { city, tz } of lookupCities(search)) {
+      out.push({ key: `city-${city}`, tz, city, offset: getOffset(tz) })
+    }
 
-    // Dedupe synthetic vs matches
-    const deduped = synthetic.filter((s) => !matches.some((m) => m.tz === s.tz))
-    return [...deduped, ...matches]
+    // 3) IANA zone id / zone-city matches
+    for (const m of BASE_OPTIONS) {
+      if (out.length >= 60) break
+      const tzNorm = m.tz.toLowerCase().replace(/[\s_/]/g, "")
+      const cityNorm = m.city.toLowerCase().replace(/\s/g, "")
+      if (tzNorm.includes(q) || cityNorm.includes(q)) {
+        out.push({ ...m, key: `tz-${m.tz}` })
+      }
+    }
+
+    return out
   }, [search])
 
   const displayLabel = value
@@ -137,7 +148,7 @@ export function TimezoneInput({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0" align="start">
-        <Command>
+        <Command shouldFilter={false}>
           <CommandInput
             placeholder="City, America/New_York, UTC-5…"
             value={search}
@@ -146,10 +157,10 @@ export function TimezoneInput({
           <CommandList>
             <CommandEmpty>No timezone found.</CommandEmpty>
             <CommandGroup>
-              {filtered.map(({ tz, city, offset }) => (
+              {filtered.map(({ key, tz, city, offset }) => (
                 <CommandItem
-                  key={tz}
-                  value={tz}
+                  key={key}
+                  value={`${key} ${city} ${tz}`}
                   onSelect={() => handleSelect(tz)}
                   className="flex items-center gap-2"
                 >
