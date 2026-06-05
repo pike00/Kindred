@@ -3,7 +3,7 @@ title: Organizations as First-Class
 status: to_review
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-04-21
+last_updated: 2026-06-05
 next_step: Create Organization model and schema migration; define dedupe strategy by trimmed/lowercased company string
 ---
 
@@ -22,6 +22,9 @@ Promote Contact.company (currently a free-text string field) into a first-class 
 - [ ] Remove legacy Contact.company field after migration window (post-transition)
 
 ## Session Log
+
+### 2026-06-05
+- Housekeeping: State reconciled during the tofix-remaining ship (v0.2.87 + v0.2.88 deployed to prod). No scope change to this project.
 
 ### 2026-04-21
 - Project created.

@@ -1,10 +1,10 @@
 ---
 title: Unified Contact Timeline
-status: to_review
+status: completed
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-05-31
-next_step: Implement /contacts/{id}/timeline backend endpoint (SQL UNION ALL of Interactions, Notes, Gifts, LifeEvents, Debts, and stage changes)
+last_updated: 2026-06-05
+next_step: UnifiedTimeline (interactions+notes+life-events+gifts+debts) live; Log-Interaction dropdown added in v0.2.88.
 ---
 
 # Unified Contact Timeline
@@ -22,6 +22,9 @@ Display all contact-related events in a single reverse-chronological feed on the
 - [ ] Frontend: Filter bar (checkboxes by event type) + visual type colors
 
 ## Session Log
+
+### 2026-06-05
+- Housekeeping: UnifiedTimeline (interactions+notes+life-events+gifts+debts) live; Log-Interaction dropdown added in v0.2.88.
 
 ### 2026-05-31
 - Housekeeping: status `archived` → `to_review`. Shipped by an LLM (commit 1978daa, client-side aggregation with no backend endpoint) but archived with all tasks unchecked and no human verification. Pulled back into review with a verification task.

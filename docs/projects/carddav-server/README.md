@@ -3,7 +3,7 @@ title: CardDAV Server Mode
 status: active
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-04-23
+last_updated: 2026-06-05
 next_step: Implement PROPFIND and REPORT WebDAV endpoints; wire vcard serializer to Contact.vcard_raw
 ---
 
@@ -24,6 +24,9 @@ Expose a standards-compliant CardDAV endpoint at `/carddav/{user}/contacts/` so 
 - [ ] Document Apple client compatibility and any quirks
 
 ## Session Log
+
+### 2026-06-05
+- Housekeeping: State reconciled during the tofix-remaining ship (v0.2.87 + v0.2.88 deployed to prod). No scope change to this project.
 
 ### 2026-04-21
 - Project created.

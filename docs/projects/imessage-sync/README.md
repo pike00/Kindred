@@ -3,7 +3,7 @@ title: Kindred — iMessage Social Graph Integration
 status: to_review
 repos: [personal-crm, message_metadata_extraction]
 started: 2026-05-03
-last_updated: 2026-05-03
+last_updated: 2026-06-05
 next_step: Define contact upsert API endpoint accepting iMessage profile payload; design field mapping
 ---
 
@@ -29,6 +29,9 @@ The social.json edges (direct, co_mention) inform kindred relationship edges bet
 - [ ] Expose sync status in contact list: badge or icon indicating contacts with iMessage enrichment
 
 ## Session Log
+
+### 2026-06-05
+- Housekeeping: State reconciled during the tofix-remaining ship (v0.2.87 + v0.2.88 deployed to prod). No scope change to this project.
 
 ### 2026-05-03
 - personal-crm already has `relationship-graph` project (vis-network graph visualization) — this is a data integration that feeds into it

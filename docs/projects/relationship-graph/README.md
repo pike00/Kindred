@@ -3,7 +3,7 @@ title: Relationship Graph
 status: to_review
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-04-21
+last_updated: 2026-06-05
 next_step: Design /contacts/graph endpoint schema and pick force-directed layout library
 ---
 
@@ -21,6 +21,9 @@ Build an interactive force-directed graph visualization of contacts with `Relati
 - [ ] Performance tuning for large networks (canvas vs SVG, node culling, edge bundling)
 
 ## Session Log
+
+### 2026-06-05
+- Housekeeping: State reconciled during the tofix-remaining ship (v0.2.87 + v0.2.88 deployed to prod). No scope change to this project.
 
 ### 2026-04-21
 - Project created.

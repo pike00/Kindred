@@ -1,10 +1,10 @@
 ---
 title: Frontend Toolchain Migration (bun → pnpm 11)
-status: active
+status: completed
 repos: [personal-crm]
 started: 2026-06-05
 last_updated: 2026-06-05
-next_step: Remove stale frontend/bun.lock and add explicit .npmrc supply-chain hardening (minimumReleaseAge, onlyBuiltDependencies allowlist)
+next_step: pnpm 11 migration shipped in v0.2.88 — Dockerfiles/compose/justfile/.project-kit/scripts/dependabot migrated, bun.lock removed, full vitest (1869) + prod image build green.
 ---
 
 # Frontend Toolchain Migration (bun → pnpm 11)
@@ -28,6 +28,7 @@ migration cleanly and make the hardening explicit rather than implicit.
 ## Session Log
 
 ### 2026-06-05
+- Housekeeping: pnpm 11 migration shipped in v0.2.88 — Dockerfiles/compose/justfile/.project-kit/scripts/dependabot migrated, bun.lock removed, full vitest (1869) + prod image build green.
 - Toolchain migration to pnpm 11.3.0 landed at repo root (commit `0764b80`): added `pnpm-lock.yaml` (+8608) and `pnpm-workspace.yaml`, removed root `bun.lock`, updated both Dockerfiles, compose files, generate-client.sh, run-e2e-prepush.sh, justfile, and dependabot config.
 - Wrote and published a decision brief comparing npm/pnpm/bun/deno and analyzing whether the migration actually defends against the recent npm supply-chain attacks. Conclusion: pnpm 11's defaults would have blocked the headline attacks via the release-age cooldown, but that's now a copyable setting in npm/Yarn too — the hardening (cooldown + build-script allowlist + lockfile + minimal deps) matters more than the tool choice.
 - Brief published: https://gist.khanpikehome.com/dFoRLgtFg82A2dJwpk/render

@@ -3,7 +3,7 @@ title: Email Log Ingestion
 status: to_review
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-04-21
+last_updated: 2026-06-05
 next_step: Design OAuth token storage schema and migrations
 ---
 
@@ -24,6 +24,9 @@ Poll Gmail or IMAP inboxes for messages to/from known contacts; automatically cr
 - [ ] Integration with interaction drafts feature (optional future): allow editing before auto-log
 
 ## Session Log
+
+### 2026-06-05
+- Housekeeping: State reconciled during the tofix-remaining ship (v0.2.87 + v0.2.88 deployed to prod). No scope change to this project.
 
 ### 2026-04-21
 - Project created.

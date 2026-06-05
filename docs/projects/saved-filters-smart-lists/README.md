@@ -3,7 +3,7 @@ title: Saved Filters / Smart Lists
 status: to_review
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-04-23
+last_updated: 2026-06-05
 next_step: Create SavedFilter migration and Pydantic schema for filter_json
 ---
 
@@ -22,6 +22,9 @@ Enable users to save and reuse complex contact filters (e.g., "colleagues overdu
 - [ ] Add starter built-in filters and support filter sharing by tag
 
 ## Session Log
+
+### 2026-06-05
+- Housekeeping: State reconciled during the tofix-remaining ship (v0.2.87 + v0.2.88 deployed to prod). No scope change to this project.
 
 ### 2026-04-21
 - Project created.

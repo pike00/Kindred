@@ -3,7 +3,7 @@ title: Household / Family Aggregate View
 status: to_review
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-05-31
+last_updated: 2026-06-05
 next_step: Released as v0.1.8 (BFS walk implementation in app.household). Recursive CTE optimization, caching, and household visibility controls remain as follow-ups.
 ---
 
@@ -25,6 +25,9 @@ Derive a logical household/family unit from chains of spouse, child, parent, and
 - [ ] Handle age calculation from Contact.birthday field
 
 ## Session Log
+
+### 2026-06-05
+- Housekeeping: State reconciled during the tofix-remaining ship (v0.2.87 + v0.2.88 deployed to prod). No scope change to this project.
 
 ### 2026-05-31
 - Housekeeping: status → `to_review`. Completed by an LLM (Dirac agent, squash-merge `6b8b1b0`, shipped v0.1.8); the session log itself records a three-way-merge hazard where git dropped `list_contact_mentions` into the new household function — exactly the kind of thing warranting a human end-to-end check. Added a verification task.

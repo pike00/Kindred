@@ -3,7 +3,7 @@ title: Contacts Kanban Board
 status: active
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-04-23
+last_updated: 2026-06-05
 next_step: Implement dnd-kit board layout with columns from Contact.stage values
 ---
 
@@ -24,6 +24,9 @@ Build a visual kanban board for the Contact list view where contacts are organiz
 - [ ] Write tests: stage update flow, optimistic UI consistency, event logging, empty board state
 
 ## Session Log
+
+### 2026-06-05
+- Housekeeping: State reconciled during the tofix-remaining ship (v0.2.87 + v0.2.88 deployed to prod). No scope change to this project.
 
 ### 2026-04-21
 - Project created.

@@ -3,7 +3,7 @@ title: Debt Partial Payments
 status: to_review
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-04-21
+last_updated: 2026-06-05
 next_step: Create Alembic migration for debt_payment table
 ---
 
@@ -21,6 +21,9 @@ Track multiple payments against a debt to better match real-world IOUs. Currentl
 - [ ] Build UI payments panel on debt detail view with add/delete payment row forms
 
 ## Session Log
+
+### 2026-06-05
+- Housekeeping: State reconciled during the tofix-remaining ship (v0.2.87 + v0.2.88 deployed to prod). No scope change to this project.
 
 ### 2026-04-21
 - Project created.

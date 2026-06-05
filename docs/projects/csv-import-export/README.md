@@ -3,7 +3,7 @@ title: CSV Import / Export
 status: to_review
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-04-21
+last_updated: 2026-06-05
 next_step: Backend CSV parser with auto-column detection and validation
 ---
 
@@ -23,6 +23,9 @@ Enable bulk contact data import via CSV with smart column mapping and duplicate 
 - [ ] Multi-value field handling (email/phone lists split into separate rows or repeated columns)
 
 ## Session Log
+
+### 2026-06-05
+- Housekeeping: State reconciled during the tofix-remaining ship (v0.2.87 + v0.2.88 deployed to prod). No scope change to this project.
 
 ### 2026-04-21
 - Project created; README and handoffs structure initialized.

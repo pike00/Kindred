@@ -4,7 +4,7 @@ status: in-progress
 progress: 2/10
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-04-28
+last_updated: 2026-06-05
 next_step: Implement task 3 — Google People API delta sync (use stored credential + syncToken to fetch contacts, map People API names/emails/phones into Contact + ContactField rows)
 ---
 
@@ -26,6 +26,9 @@ Enable one-click seeding of contacts from Google Contacts and iCloud. Implement 
 - [ ] Test re-import idempotence: verify 2nd run doesn't duplicate, correctly updates changed fields, preserves manual edits
 
 ## Session Log
+
+### 2026-06-05
+- Housekeeping: State reconciled during the tofix-remaining ship (v0.2.87 + v0.2.88 deployed to prod). No scope change to this project.
 
 ### 2026-04-28
 - Implemented tasks 1 and 2 on worktree branch `worktree-google-icloud-oauth-import` (not yet merged to main).

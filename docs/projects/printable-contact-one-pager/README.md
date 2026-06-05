@@ -1,10 +1,10 @@
 ---
 title: Printable Contact One-Pager
-status: to_review
+status: completed
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-04-23
-next_step: Decide on PDF generation approach (WeasyPrint vs react-pdf)
+last_updated: 2026-06-05
+next_step: Download-PDF 422 fixed (moved /{id}.pdf ahead of /{contact_id}); shipped v0.2.87.
 ---
 
 # Printable Contact One-Pager
@@ -20,6 +20,9 @@ Generate a printable PDF summary of a single contact for pre-meeting prep. The o
 - [ ] Handle avatar and image embedding in PDF (base64 or fetch)
 
 ## Session Log
+
+### 2026-06-05
+- Housekeeping: Download-PDF 422 fixed (moved /{id}.pdf ahead of /{contact_id}); shipped v0.2.87.
 
 ### 2026-04-23
 - Project scaffold created: README, handoffs/ directory.

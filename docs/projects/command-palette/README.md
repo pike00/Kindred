@@ -3,7 +3,7 @@ title: Global Command Palette (Cmd+K)
 status: to_review
 repos: [personal-crm]
 started: 2026-04-23
-last_updated: 2026-05-31
+last_updated: 2026-06-05
 next_step: Set up keyboard listener and command registry pattern (hook + context)
 ---
 
@@ -23,6 +23,9 @@ Implement a global keyboard-invoked command palette (Cmd+K on Mac, Ctrl+K on Win
 - [ ] Add command keyboard shortcuts in UI (e.g., "Cmd+Shift+N for new note") and help panel
 
 ## Session Log
+
+### 2026-06-05
+- Housekeeping: State reconciled during the tofix-remaining ship (v0.2.87 + v0.2.88 deployed to prod). No scope change to this project.
 
 ### 2026-05-31
 - Housekeeping: status `archived` → `to_review`. Shipped by an LLM (commit 7237b8e) but archived without a human verifying it, and the task list was never checked off. Pulled back into review with a verification task.

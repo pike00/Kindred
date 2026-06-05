@@ -1,10 +1,10 @@
 ---
 title: Contacts List Render Crash (prod)
-status: active
+status: completed
 repos: [personal-crm]
 started: 2026-05-31
-last_updated: 2026-05-31
-next_step: Reproduce /contacts on the dev stack (current main) — if it does NOT crash, this is a stale-prod-build issue → cut a release + redeploy; if it DOES crash, capture the unguarded field from source-mapped stack
+last_updated: 2026-06-05
+next_step: /contacts `D.map` crash fixed (SDK regen + restored client/custom.ts) and verified live in v0.2.87 (user-confirmed working).
 handoff: 2026-06-03 | tofix branch finished (journal/mood removal, backend boot fix, geocoding, DNC) committed f6f1832; ask-C analysis = stale v0.2.86 client → rebuild fixes it; BLOCKED on deploy + 6 UI items. See docs/updates/2026-06-03/handoff-tofix-remaining.md
 ---
 
@@ -22,6 +22,9 @@ Flagged in the 0.2.x feature-verification pass; reproduced by the user with DevT
 - [ ] Confirm the fix with a real check: load `/contacts` and assert no console error + rows render.
 
 ## Session Log
+
+### 2026-06-05
+- Housekeeping: /contacts `D.map` crash fixed (SDK regen + restored client/custom.ts) and verified live in v0.2.87 (user-confirmed working).
 
 ### 2026-05-31
 - Project created from the 0.2.x feature-verification pass. User confirmed the crash on prod with a screenshot (two identical `D.map is not a function` errors in the console; page body shows "Error").

@@ -1,10 +1,10 @@
 ---
 title: Contact Timezone and Pronouns
-status: to_review
+status: completed
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-04-21
-next_step: Write Alembic migration adding timezone and pronouns columns to Contact table
+last_updated: 2026-06-05
+next_step: Broad city timezone search (e.g. New Orleans -> America/Chicago) shipped v0.2.88.
 ---
 
 # Contact Timezone and Pronouns
@@ -21,6 +21,9 @@ Add two small fields to the Contact model: timezone and pronouns. Timezone enabl
 - [ ] Add tests for timezone conversion (UTC owner, various contact timezones) and pronoun field storage/retrieval
 
 ## Session Log
+
+### 2026-06-05
+- Housekeeping: Broad city timezone search (e.g. New Orleans -> America/Chicago) shipped v0.2.88.
 
 ### 2026-04-21
 - Project created.

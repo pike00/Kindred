@@ -1,10 +1,10 @@
 ---
 title: Interaction Drafts
-status: active
+status: completed
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-05-31
-next_step: REMOVE the Drafts feature (UI-only) — delete DraftsList.tsx and drop the Drafts tab on /interactions; leave backend columns/endpoint in place
+last_updated: 2026-06-05
+next_step: Drafts feature removed (UI + DraftsList) and shipped.
 decision: Remove the feature (2026-05-31 feature-verification pass)
 ---
 
@@ -29,6 +29,9 @@ Enable capture of draft interactions from voice memos and email suggestions with
 - [ ] Remove/skip any e2e or component tests asserting the Drafts tab
 
 ## Session Log
+
+### 2026-06-05
+- Housekeeping: Drafts feature removed (UI + DraftsList) and shipped.
 
 ### 2026-04-21
 - Project created.

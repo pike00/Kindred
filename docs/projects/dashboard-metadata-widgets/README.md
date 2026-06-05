@@ -1,10 +1,10 @@
 ---
 title: Dashboard Metadata Widgets
-status: active
+status: completed
 repos: [personal-crm]
 started: 2026-05-31
-last_updated: 2026-05-31
-next_step: Add an "Upcoming birthdays" card to the dashboard (client-side from already-fetched contacts), then a "Due reminders" card via listDueReminders
+last_updated: 2026-06-05
+next_step: Upcoming-birthdays + due-reminders dashboard widgets shipped.
 ---
 
 # Dashboard Metadata Widgets
@@ -23,6 +23,9 @@ Flagged in the 0.2.x feature-verification pass: Dashboard — "missing birthdays
 - [ ] E2E/component coverage: birthdays sort order + links; due reminders sort by due date.
 
 ## Session Log
+
+### 2026-06-05
+- Housekeeping: Upcoming-birthdays + due-reminders dashboard widgets shipped.
 
 ### 2026-05-31
 - Project created from the 0.2.x feature-verification pass (user flag: dashboard "missing birthdays + other metadata").

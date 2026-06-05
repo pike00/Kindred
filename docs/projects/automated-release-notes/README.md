@@ -3,7 +3,7 @@ title: Automated Release Notes in GitHub
 status: to_review
 repos: [personal-crm]
 started: 2026-04-28
-last_updated: 2026-05-31
+last_updated: 2026-06-05
 next_step: Released as v0.1.7. Backfilling notes for older tags remains a follow-up; script supports --since-tag.
 ---
 
@@ -21,6 +21,9 @@ Automate generation and publishing of release notes for personal-crm on GitHub. 
 - [ ] Decide whether to backfill notes for existing tags
 
 ## Session Log
+
+### 2026-06-05
+- Housekeeping: State reconciled during the tofix-remaining ship (v0.2.87 + v0.2.88 deployed to prod). No scope change to this project.
 
 ### 2026-05-31
 - Housekeeping: status → `to_review`. Completed entirely by an LLM (Dirac agent, squash-merge `dirac/automated-release-notes`, commit `5cd6273`, shipped v0.1.7) with no human verification of the generated notes. Added a verification task.

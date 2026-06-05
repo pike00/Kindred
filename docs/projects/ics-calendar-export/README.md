@@ -3,7 +3,7 @@ title: ICS Calendar Export
 status: to_review
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-04-23
+last_updated: 2026-06-05
 next_step: Design per-user token model and authentication strategy for /calendar.ics endpoint
 ---
 
@@ -25,6 +25,9 @@ Expose a per-user, token-authenticated `/calendar.ics` endpoint that combines Co
 - [ ] Update API docs with endpoint schema and example curl
 
 ## Session Log
+
+### 2026-06-05
+- Housekeeping: State reconciled during the tofix-remaining ship (v0.2.87 + v0.2.88 deployed to prod). No scope change to this project.
 
 ### 2026-04-21
 - Project created.

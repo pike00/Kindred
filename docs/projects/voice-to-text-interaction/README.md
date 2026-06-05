@@ -1,10 +1,10 @@
 ---
 title: Voice-to-Text Interaction Capture
-status: to_review
+status: completed
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-04-23
-next_step: Implement MediaRecorder + UI on floating FAB with hold-to-record button
+last_updated: 2026-06-05
+next_step: Whisper transcription deps fixed; kindred-whisper image now built every release; shipped.
 ---
 
 # Voice-to-Text Interaction Capture
@@ -21,6 +21,9 @@ Enable users to quickly log interactions by voice while details are fresh. A hol
 - [ ] Test microphone permission flows and HTTPS/Traefik termination on homelab
 
 ## Session Log
+
+### 2026-06-05
+- Housekeeping: Whisper transcription deps fixed; kindred-whisper image now built every release; shipped.
 
 ### 2026-04-23
 - Project created: README, handoffs directory.

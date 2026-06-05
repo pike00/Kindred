@@ -3,7 +3,7 @@ title: @contact Autocomplete
 status: to_review
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-05-31
+last_updated: 2026-06-05
 next_step: Add caret-position detection and @-triggered popover to Note editor
 ---
 
@@ -23,6 +23,9 @@ Bring inline contact mentions to Note, Interaction, and JournalEntry bodies via 
 - [ ] Apply autocomplete to all three editor surfaces (Note.body, Interaction.note, JournalEntry.body)
 
 ## Session Log
+
+### 2026-06-05
+- Housekeeping: State reconciled during the tofix-remaining ship (v0.2.87 + v0.2.88 deployed to prod). No scope change to this project.
 
 ### 2026-05-31
 - Housekeeping: status `archived` → `to_review`. Shipped by an LLM (commit 52edbc4) but archived with all tasks unchecked and no human verification. Pulled back into review with a verification task.

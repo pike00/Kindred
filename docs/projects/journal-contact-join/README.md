@@ -3,7 +3,7 @@ title: Journal to Contact Join
 status: to_review
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-04-21
+last_updated: 2026-06-05
 next_step: Design junction table migration
 ---
 
@@ -21,6 +21,9 @@ Allow journal entries to reference specific contacts privately without duplicati
 - [ ] Test cascade behavior on contact/journal entry deletion
 
 ## Session Log
+
+### 2026-06-05
+- Housekeeping: Journal feature removed entirely in v0.2.87 (routes/models/tables dropped) — this project's deliverable was reverted; candidate for archiving.
 
 ### 2026-04-21
 - Project created.

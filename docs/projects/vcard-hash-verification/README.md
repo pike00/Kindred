@@ -3,7 +3,7 @@ title: vCard Round-Trip Hash Verification
 status: to_review
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-04-21
+last_updated: 2026-06-05
 next_step: Create Alembic migration to add vcard_sha256 column to Contact table
 ---
 
@@ -23,6 +23,9 @@ Prevent unintended data loss when CardDAV clients sync contact updates. By stori
 - [ ] Normalize vCard before hashing (CRLF -> LF, sort properties, strip trailing whitespace)
 
 ## Session Log
+
+### 2026-06-05
+- Housekeeping: State reconciled during the tofix-remaining ship (v0.2.87 + v0.2.88 deployed to prod). No scope change to this project.
 
 ### 2026-04-21
 - Project created.

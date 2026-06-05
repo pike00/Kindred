@@ -3,7 +3,7 @@ title: Frontend Test Coverage ≥90%
 status: to_review
 repos: [kindred]
 started: 2026-05-15
-last_updated: 2026-05-31
+last_updated: 2026-06-05
 next_step: Goal achieved (all four metrics ≥90%); commit working tree
 progress: 4/4
 ---
@@ -21,6 +21,9 @@ Add comprehensive Vitest unit tests to the kindred frontend so all four v8 cover
 - [x] All four metrics ≥90%: statements, branches, functions, lines
 
 ## Session Log
+
+### 2026-06-05
+- Housekeeping: State reconciled during the tofix-remaining ship (v0.2.87 + v0.2.88 deployed to prod). No scope change to this project.
 
 ### 2026-05-31
 - Housekeeping: status → `to_review`. Coverage was driven to ≥90% by 5 parallel haiku agents (Wave 3); the agent-written tests have not been human-reviewed for assertion quality (passing ≠ meaningful). Added a verification task to re-run coverage and sanity-check the flaky `AddReminderDialog` test.

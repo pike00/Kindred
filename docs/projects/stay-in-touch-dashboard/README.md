@@ -3,7 +3,7 @@ title: Stay in Touch Dashboard Widget
 status: to_review
 repos: [personal-crm]
 started: 2026-04-23
-last_updated: 2026-04-28
+last_updated: 2026-06-05
 progress: 0/6
 blocker: Communication Preferences project (do_not_contact field) must ship first; user chose full-scope prerequisite path on 2026-04-28
 next_step: After comm-prefs ships, resume brainstorm at the design-decisions checkpoint (endpoint scope=new /overdue, skip=SkipEntry table, log UI=AddInteractionDialog modal, FAB=dashboard-only)
@@ -23,6 +23,9 @@ Enrich the dashboard's overdue contacts section with visibility into how long ea
 - [ ] Wire up quick-log FAB (floating action button) on dashboard to trigger interaction log for currently selected contact
 
 ## Session Log
+
+### 2026-06-05
+- Housekeeping: State reconciled during the tofix-remaining ship (v0.2.87 + v0.2.88 deployed to prod). No scope change to this project.
 
 ### 2026-04-28
 - /project-load: synced README to current state (status active → blocked, last_updated 2026-04-23 → 2026-04-28, progress 0/6). Verified spec prerequisites — 4 mismatches surfaced: `/api/v1/contacts/overdue` not built (only `/losing-touch` exists), `do_not_contact` field missing (depends on Communication Preferences project), `SKIP` not in `InteractionChannel` enum, `frontend/src/components/shared/` and `frontend/src/styles/` paths in spec don't exist.
