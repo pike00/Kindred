@@ -47,6 +47,23 @@ build-image tag="":
         --push \
         "."
     echo "✓ pushed ${image}:${VERSION}"
+    # --- kindred-whisper ---
+    # The prod compose pulls kindred-whisper at the same IMAGE_TAG, so it must
+    # be built and pushed for every release (otherwise `just bump` fails on pull).
+    wimage="ghcr.io/pike00/kindred-whisper"
+    wtags=(--tag "${wimage}:sha-${SHA}")
+    [[ -n "$REF" ]] && wtags+=(--tag "${wimage}:${REF}")
+    [[ "$IS_RELEASE" == 1 ]] && wtags+=(--tag "${wimage}:latest")
+    echo "==> building ${wimage} (version ${VERSION}, sha-${SHA})"
+    docker buildx build \
+        --platform linux/amd64 \
+        --file "whisper-service/Dockerfile" \
+        "${wtags[@]}" \
+        --cache-from "type=local,src=/tmp/buildx-cache-kindred-whisper" \
+        --cache-to "type=local,dest=/tmp/buildx-cache-kindred-whisper,mode=max" \
+        --push \
+        "whisper-service"
+    echo "✓ pushed ${wimage}:${VERSION}"
 
 build-wheel:
     @just _skip "wheel build"
