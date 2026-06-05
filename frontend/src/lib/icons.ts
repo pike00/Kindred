@@ -7,6 +7,7 @@
 export type { LucideIcon } from "lucide-react"
 // Additional icons for bulk operations
 export {
+  Activity,
   AlertCircle,
   AlertTriangle,
   Archive,

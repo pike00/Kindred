@@ -18,7 +18,7 @@ import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
 import { Route as LayoutTagsRouteImport } from './routes/_layout/tags'
 import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
 import { Route as LayoutRemindersRouteImport } from './routes/_layout/reminders'
-import { Route as LayoutJournalRouteImport } from './routes/_layout/journal'
+import { Route as LayoutActivityRouteImport } from './routes/_layout/activity'
 import { Route as LayoutInteractionsRouteImport } from './routes/_layout/interactions'
 import { Route as LayoutGraphRouteImport } from './routes/_layout/graph'
 import { Route as LayoutContactsRouteImport } from './routes/_layout/contacts'
@@ -78,9 +78,9 @@ const LayoutRemindersRoute = LayoutRemindersRouteImport.update({
   path: '/reminders',
   getParentRoute: () => LayoutRoute,
 } as any)
-const LayoutJournalRoute = LayoutJournalRouteImport.update({
-  id: '/journal',
-  path: '/journal',
+const LayoutActivityRoute = LayoutActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
   getParentRoute: () => LayoutRoute,
 } as any)
 const LayoutInteractionsRoute = LayoutInteractionsRouteImport.update({
@@ -166,7 +166,7 @@ export interface FileRoutesByFullPath {
   '/contacts': typeof LayoutContactsRouteWithChildren
   '/graph': typeof LayoutGraphRoute
   '/interactions': typeof LayoutInteractionsRoute
-  '/journal': typeof LayoutJournalRoute
+  '/activity': typeof LayoutActivityRoute
   '/reminders': typeof LayoutRemindersRoute
   '/settings': typeof LayoutSettingsRoute
   '/tags': typeof LayoutTagsRoute
@@ -188,7 +188,7 @@ export interface FileRoutesByTo {
   '/calendar': typeof LayoutCalendarRoute
   '/graph': typeof LayoutGraphRoute
   '/interactions': typeof LayoutInteractionsRoute
-  '/journal': typeof LayoutJournalRoute
+  '/activity': typeof LayoutActivityRoute
   '/reminders': typeof LayoutRemindersRoute
   '/settings': typeof LayoutSettingsRoute
   '/tags': typeof LayoutTagsRoute
@@ -215,7 +215,7 @@ export interface FileRoutesById {
   '/_layout/contacts': typeof LayoutContactsRouteWithChildren
   '/_layout/graph': typeof LayoutGraphRoute
   '/_layout/interactions': typeof LayoutInteractionsRoute
-  '/_layout/journal': typeof LayoutJournalRoute
+  '/_layout/activity': typeof LayoutActivityRoute
   '/_layout/reminders': typeof LayoutRemindersRoute
   '/_layout/settings': typeof LayoutSettingsRoute
   '/_layout/tags': typeof LayoutTagsRoute
@@ -243,7 +243,7 @@ export interface FileRouteTypes {
     | '/contacts'
     | '/graph'
     | '/interactions'
-    | '/journal'
+    | '/activity'
     | '/reminders'
     | '/settings'
     | '/tags'
@@ -265,7 +265,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/graph'
     | '/interactions'
-    | '/journal'
+    | '/activity'
     | '/reminders'
     | '/settings'
     | '/tags'
@@ -291,7 +291,7 @@ export interface FileRouteTypes {
     | '/_layout/contacts'
     | '/_layout/graph'
     | '/_layout/interactions'
-    | '/_layout/journal'
+    | '/_layout/activity'
     | '/_layout/reminders'
     | '/_layout/settings'
     | '/_layout/tags'
@@ -380,11 +380,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutRemindersRouteImport
       parentRoute: typeof LayoutRoute
     }
-    '/_layout/journal': {
-      id: '/_layout/journal'
-      path: '/journal'
-      fullPath: '/journal'
-      preLoaderRoute: typeof LayoutJournalRouteImport
+    '/_layout/activity': {
+      id: '/_layout/activity'
+      path: '/activity'
+      fullPath: '/activity'
+      preLoaderRoute: typeof LayoutActivityRouteImport
       parentRoute: typeof LayoutRoute
     }
     '/_layout/interactions': {
@@ -530,7 +530,7 @@ interface LayoutRouteChildren {
   LayoutContactsRoute: typeof LayoutContactsRouteWithChildren
   LayoutGraphRoute: typeof LayoutGraphRoute
   LayoutInteractionsRoute: typeof LayoutInteractionsRoute
-  LayoutJournalRoute: typeof LayoutJournalRoute
+  LayoutActivityRoute: typeof LayoutActivityRoute
   LayoutRemindersRoute: typeof LayoutRemindersRoute
   LayoutSettingsRoute: typeof LayoutSettingsRoute
   LayoutTagsRoute: typeof LayoutTagsRoute
@@ -544,7 +544,7 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutContactsRoute: LayoutContactsRouteWithChildren,
   LayoutGraphRoute: LayoutGraphRoute,
   LayoutInteractionsRoute: LayoutInteractionsRoute,
-  LayoutJournalRoute: LayoutJournalRoute,
+  LayoutActivityRoute: LayoutActivityRoute,
   LayoutRemindersRoute: LayoutRemindersRoute,
   LayoutSettingsRoute: LayoutSettingsRoute,
   LayoutTagsRoute: LayoutTagsRoute,

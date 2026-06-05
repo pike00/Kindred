@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/sidebar"
 import useAuth from "@/hooks/useAuth"
 import {
+  Activity,
   Bell,
   CalendarHeart,
   Gift,
@@ -29,6 +30,7 @@ const baseItems: Item[] = [
   { icon: Bell, title: "Reminders", path: "/reminders" },
   { icon: CalendarHeart, title: "Calendar", path: "/calendar" },
   { icon: Gift, title: "Gift Kanban", path: "/gifts/kanban" },
+  { icon: Activity, title: "Activity", path: "/activity" },
 ]
 
 export function AppSidebar() {
