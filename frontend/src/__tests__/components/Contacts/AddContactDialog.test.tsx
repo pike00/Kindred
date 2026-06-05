@@ -68,7 +68,7 @@ describe("AddContactDialog", () => {
 
     expect(screen.getByText("Add New Contact")).toBeInTheDocument()
     expect(
-      screen.getByText("Create a new contact to start tracking interactions."),
+      screen.getByText(/only a first name is required/i),
     ).toBeInTheDocument()
   })
 
@@ -95,7 +95,7 @@ describe("AddContactDialog", () => {
     await user.click(submitButton)
 
     await waitFor(() => {
-      expect(screen.getByText(/first name is required/i)).toBeInTheDocument()
+      expect(screen.getByText("First name is required")).toBeInTheDocument()
     })
   })
 
@@ -133,9 +133,13 @@ describe("AddContactDialog", () => {
         requestBody: {
           first_name: "Bob",
           last_name: "Johnson",
+          nickname: null,
+          company: null,
+          title: null,
           birthday: "1990-01-15",
-          timezone: null,
           pronouns: null,
+          timezone: null,
+          tag_ids: null,
         },
       })
     })
@@ -373,9 +377,13 @@ describe("AddContactDialog", () => {
         requestBody: {
           first_name: "Bob",
           last_name: null,
+          nickname: null,
+          company: null,
+          title: null,
           birthday: null,
-          timezone: null,
           pronouns: null,
+          timezone: null,
+          tag_ids: null,
         },
       })
     })

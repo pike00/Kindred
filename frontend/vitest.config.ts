@@ -1,6 +1,17 @@
 /// <reference types="vitest" />
+import { createRequire } from "node:module"
 import path from "node:path"
 import { defineConfig } from "vitest/config"
+
+// Resolve zod's real on-disk location regardless of package-manager layout
+// (bun installs into frontend/node_modules; pnpm hoists to the workspace root).
+const require = createRequire(import.meta.url)
+// zod v4's "exports" map blocks require.resolve("zod/index.cjs"), so derive the
+// raw file path from the package dir instead.
+const zodCjs = path.join(
+  path.dirname(require.resolve("zod/package.json")),
+  "index.cjs",
+)
 
 export default defineConfig({
   test: {
@@ -51,7 +62,7 @@ export default defineConfig({
       // Vitest's ESM transform loses zod's named `z` export (export { z } from
       // a namespace import). The CJS build correctly exports z; alias to it so
       // `import { z } from "zod"` works in the test environment.
-      zod: path.resolve(__dirname, "./node_modules/zod/index.cjs"),
+      zod: zodCjs,
     },
   },
 })
