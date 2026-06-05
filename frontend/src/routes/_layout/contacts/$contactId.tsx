@@ -41,14 +41,24 @@ import {
   BellOff,
   Cake,
   Camera,
+  ChevronDown,
   Clock,
   Download,
+  Gift as GiftIcon,
   Info,
   MapPin,
   MessagesSquare,
+  NotebookPen,
   Star,
   UserRoundSearch,
 } from "@/lib/icons"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { AddNoteDialog } from "@/components/Notes/AddNoteDialog"
 import { formatDateWithRelative } from "@/lib/utils"
 
 function ContactLocalTime({ timezone }: { timezone: string }) {
@@ -123,6 +133,10 @@ function ContactDetailPage() {
   }
 
   const clearHeatmapFilter = () => setHeatmapFilter(null)
+  // Which "Add" dialog the log-interaction dropdown has open (item21).
+  const [addOpen, setAddOpen] = useState<
+    "interaction" | "note" | "gift" | null
+  >(null)
   const { contactId } = Route.useParams()
   const { data: contact } = useSuspenseQuery({
     queryKey: ["contacts", contactId],
@@ -325,8 +339,44 @@ function ContactDetailPage() {
         {/* Right column (1/3 width) */}
         <div className="space-y-6">
           <div className="flex justify-end">
-            <AddInteractionDialog seedContact={contact} />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button>
+                  Log Interaction
+                  <ChevronDown className="ml-1 size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setAddOpen("interaction")}>
+                  <MessagesSquare className="size-4" />
+                  Log interaction
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setAddOpen("note")}>
+                  <NotebookPen className="size-4" />
+                  Add note
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setAddOpen("gift")}>
+                  <GiftIcon className="size-4" />
+                  Add gift
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
+          <AddInteractionDialog
+            seedContact={contact}
+            open={addOpen === "interaction"}
+            onOpenChange={(o) => setAddOpen(o ? "interaction" : null)}
+          />
+          <AddNoteDialog
+            contactId={contactId}
+            open={addOpen === "note"}
+            onOpenChange={(o) => setAddOpen(o ? "note" : null)}
+          />
+          <AddGift
+            contactId={contactId}
+            open={addOpen === "gift"}
+            onOpenChange={(o) => setAddOpen(o ? "gift" : null)}
+          />
 
           {/* Tags */}
           {contact.tags && contact.tags.length > 0 && (

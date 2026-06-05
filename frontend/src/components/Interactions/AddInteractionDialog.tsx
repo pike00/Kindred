@@ -77,6 +77,9 @@ type OsmStatus = "idle" | "searching" | "found" | "not_found"
 
 interface AddInteractionDialogProps {
   seedContact?: ContactPublic
+  /** Controlled-open mode (e.g. from a dropdown). Omit to render the default trigger button. */
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
 function contactLabel(contact: ContactPublic): string {
@@ -88,8 +91,16 @@ function contactLabel(contact: ContactPublic): string {
 
 export const AddInteractionDialog = ({
   seedContact,
+  open: openProp,
+  onOpenChange,
 }: AddInteractionDialogProps) => {
-  const [open, setOpen] = useState(false)
+  const [internalOpen, setInternalOpen] = useState(false)
+  const controlled = openProp !== undefined
+  const open = controlled ? openProp : internalOpen
+  const setOpen = (o: boolean) => {
+    if (controlled) onOpenChange?.(o)
+    else setInternalOpen(o)
+  }
   const [osmStatus, setOsmStatus] = useState<OsmStatus>("idle")
   const [_resolvedLat, setResolvedLat] = useState<number | null>(null)
   const [_resolvedLng, setResolvedLng] = useState<number | null>(null)
@@ -211,9 +222,11 @@ export const AddInteractionDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>Log Interaction</Button>
-      </DialogTrigger>
+      {!controlled && (
+        <DialogTrigger asChild>
+          <Button>Log Interaction</Button>
+        </DialogTrigger>
+      )}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Log Interaction</DialogTitle>

@@ -43,10 +43,23 @@ type FormData = z.infer<typeof schema>
 
 interface AddGiftProps {
   contactId: string
+  /** Controlled-open mode (e.g. from a dropdown). Omit to render the default trigger button. */
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
-export function AddGift({ contactId }: AddGiftProps) {
-  const [isOpen, setIsOpen] = useState(false)
+export function AddGift({
+  contactId,
+  open: openProp,
+  onOpenChange,
+}: AddGiftProps) {
+  const [internalOpen, setInternalOpen] = useState(false)
+  const controlled = openProp !== undefined
+  const isOpen = controlled ? openProp : internalOpen
+  const setIsOpen = (o: boolean) => {
+    if (controlled) onOpenChange?.(o)
+    else setInternalOpen(o)
+  }
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
 
@@ -95,11 +108,13 @@ export function AddGift({ contactId }: AddGiftProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Plus className="mr-1 size-3.5" /> Add Gift
-        </Button>
-      </DialogTrigger>
+      {!controlled && (
+        <DialogTrigger asChild>
+          <Button variant="outline" size="sm">
+            <Plus className="mr-1 size-3.5" /> Add Gift
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Add Gift</DialogTitle>
