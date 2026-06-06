@@ -12,7 +12,11 @@ import { StayInTouchWidget } from "@/components/Dashboard/StayInTouchWidget"
 import { Badge } from "@/components/ui/badge"
 import useAuth from "@/hooks/useAuth"
 import { Bell, Cake, MessagesSquare } from "@/lib/icons"
-import { formatDateWithRelative } from "@/lib/utils"
+import {
+  type BirthdayInfo,
+  formatBirthday,
+  formatDateWithRelative,
+} from "@/lib/utils"
 
 export const Route = createFileRoute("/_layout/")({
   component: Dashboard,
@@ -32,24 +36,16 @@ function greeting(): string {
   return "Good evening"
 }
 
-/** Whole days until the next occurrence of a birthday (MM-DD of any year). */
-function daysUntilBirthday(birthday: string, now: Date = new Date()): number {
-  const parts = birthday.split("-").map(Number)
-  const mm = parts[parts.length - 2]
-  const dd = parts[parts.length - 1]
-  if (!mm || !dd) return Number.POSITIVE_INFINITY
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  let next = new Date(today.getFullYear(), mm - 1, dd)
-  if (next.getTime() < today.getTime()) {
-    next = new Date(today.getFullYear() + 1, mm - 1, dd)
-  }
-  return Math.round((next.getTime() - today.getTime()) / 86_400_000)
-}
-
 function untilLabel(days: number): string {
   if (days === 0) return "today"
   if (days === 1) return "tomorrow"
   return `in ${days} days`
+}
+
+/** "Turns 67 · June 12" (drops the milestone when the birth year is unknown). */
+function milestoneLabel(info: BirthdayInfo): string {
+  const monthDay = info.formatted.split(",")[0]
+  return info.nextAge != null ? `Turns ${info.nextAge} · ${monthDay}` : monthDay
 }
 
 function Dashboard() {
@@ -82,10 +78,12 @@ function Dashboard() {
   // Upcoming birthdays — computed client-side from the contacts already loaded
   // above (next 60 days), so no extra request.
   const upcomingBirthdays = (contacts?.data ?? [])
-    .filter((c) => c.birthday)
-    .map((c) => ({ contact: c, days: daysUntilBirthday(c.birthday as string) }))
-    .filter((b) => b.days <= 60)
-    .sort((a, b) => a.days - b.days)
+    .flatMap((contact) => {
+      const info = contact.birthday && formatBirthday(contact.birthday)
+      return info ? [{ contact, info }] : []
+    })
+    .filter(({ info }) => info.daysUntil <= 60)
+    .sort((a, b) => a.info.daysUntil - b.info.daysUntil)
     .slice(0, 6)
 
   return (
@@ -126,11 +124,12 @@ function Dashboard() {
           />
           {upcomingBirthdays.length > 0 ? (
             <div className="space-y-2">
-              {upcomingBirthdays.map(({ contact, days }) => {
+              {upcomingBirthdays.map(({ contact, info }) => {
                 const fullName =
                   [contact.first_name, contact.last_name]
                     .filter(Boolean)
                     .join(" ") || "Unnamed contact"
+                const imminent = info.daysUntil <= 14
                 return (
                   <Link
                     key={contact.id}
@@ -139,11 +138,17 @@ function Dashboard() {
                     className="flex items-center gap-3 rounded-2xl border bg-card p-3 shadow-xs transition-colors hover:bg-accent/50"
                   >
                     <ContactAvatar contact={contact} size="sm" />
-                    <p className="min-w-0 flex-1 truncate font-medium text-sm">
-                      {fullName}
-                    </p>
-                    <Badge variant="outline" className="shrink-0 text-xs">
-                      {untilLabel(days)}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium text-sm">{fullName}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {milestoneLabel(info)}
+                      </p>
+                    </div>
+                    <Badge
+                      variant={imminent ? "default" : "outline"}
+                      className="shrink-0 text-xs"
+                    >
+                      {untilLabel(info.daysUntil)}
                     </Badge>
                   </Link>
                 )

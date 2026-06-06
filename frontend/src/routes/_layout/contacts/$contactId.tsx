@@ -24,11 +24,18 @@ import { AddDebt } from "@/components/Debts/AddDebt"
 import { AddGift } from "@/components/Gifts/AddGift"
 import { AddInteractionDialog } from "@/components/Interactions/AddInteractionDialog"
 import { InteractionMap } from "@/components/Interactions/InteractionMap"
+import { AddNoteDialog } from "@/components/Notes/AddNoteDialog"
 import { NotesCard } from "@/components/Notes/NotesCard"
 import { UnifiedTimeline } from "@/components/Timeline/UnifiedTimeline"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
@@ -52,14 +59,7 @@ import {
   Star,
   UserRoundSearch,
 } from "@/lib/icons"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { AddNoteDialog } from "@/components/Notes/AddNoteDialog"
-import { formatDateWithRelative } from "@/lib/utils"
+import { formatBirthday, formatDateWithRelative } from "@/lib/utils"
 
 function ContactLocalTime({ timezone }: { timezone: string }) {
   const [localTime, setLocalTime] = useState(() => formatLocalTime(timezone))
@@ -79,6 +79,33 @@ function ContactLocalTime({ timezone }: { timezone: string }) {
       <Clock className="size-3.5" />
       {localTime} their time
       <span className="text-muted-foreground text-xs">({timezone})</span>
+    </span>
+  )
+}
+
+function ContactBirthday({ birthday }: { birthday: string }) {
+  const info = formatBirthday(birthday)
+  if (!info) return null
+
+  const imminent = info.daysUntil <= 14
+
+  return (
+    <span className="flex items-center gap-1">
+      <Cake className="size-3.5" />
+      <span>
+        Born {info.formatted}
+        {info.age != null && <> · {info.age} years old</>}
+        {info.upcoming && (
+          <>
+            {" · "}
+            <span
+              className={imminent ? "font-medium text-foreground" : undefined}
+            >
+              {info.upcoming}
+            </span>
+          </>
+        )}
+      </span>
     </span>
   )
 }
@@ -285,9 +312,7 @@ function ContactDetailPage() {
           )}
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
             {contact.birthday && (
-              <span className="flex items-center gap-1">
-                <Cake className="size-3.5" /> Birthday: {contact.birthday}
-              </span>
+              <ContactBirthday birthday={contact.birthday} />
             )}
             {contact.how_we_met && (
               <span className="flex items-center gap-1">

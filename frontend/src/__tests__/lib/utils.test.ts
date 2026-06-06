@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { cn } from "../../lib/utils"
+import { cn, formatBirthday } from "../../lib/utils"
 
 describe("cn", () => {
   it("merges simple class names", () => {
@@ -72,5 +72,54 @@ describe("cn", () => {
     expect(result).toContain("items-center")
     expect(result).toContain("px-3")
     expect(result).toContain("text-white")
+  })
+})
+
+describe("formatBirthday", () => {
+  const now = new Date(2026, 5, 6) // 2026-06-06
+
+  it("formats the date and computes age before the birthday this year", () => {
+    const info = formatBirthday("1959-06-12", now)
+    expect(info).not.toBeNull()
+    expect(info?.formatted).toBe("June 12, 1959")
+    expect(info?.age).toBe(66)
+    expect(info?.nextAge).toBe(67)
+    expect(info?.daysUntil).toBe(6)
+    expect(info?.upcoming).toBe("turning 67 in 6 days")
+  })
+
+  it("counts age as reached on the birthday itself", () => {
+    const info = formatBirthday("1959-06-06", now)
+    expect(info?.age).toBe(67)
+    expect(info?.daysUntil).toBe(0)
+    expect(info?.upcoming).toBe("turns 67 today")
+  })
+
+  it("says tomorrow the day before", () => {
+    const info = formatBirthday("1990-06-07", now)
+    expect(info?.upcoming).toBe("turns 36 tomorrow")
+  })
+
+  it("rolls to next year for a birthday already passed", () => {
+    const info = formatBirthday("1980-01-15", now)
+    expect(info?.age).toBe(46)
+    expect(info?.upcoming).toBe("turning 47 in 7 months")
+  })
+
+  it("uses weeks for mid-range countdowns", () => {
+    const info = formatBirthday("1980-06-27", now)
+    expect(info?.upcoming).toBe("turning 46 in 3 weeks")
+  })
+
+  it("omits age and year when the year is a placeholder", () => {
+    const info = formatBirthday("1604-03-02", now)
+    expect(info?.formatted).toBe("March 2")
+    expect(info?.age).toBeNull()
+    expect(info?.nextAge).toBeNull()
+    expect(info?.upcoming).toBe("next birthday in 9 months")
+  })
+
+  it("returns null for unparseable input", () => {
+    expect(formatBirthday("not-a-date", now)).toBeNull()
   })
 })
