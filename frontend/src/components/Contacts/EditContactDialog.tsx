@@ -33,6 +33,7 @@ const contactUpdateSchema = z.object({
   first_name: z.string().min(1, "First name is required"),
   last_name: z.string().optional(),
   nickname: z.string().optional(),
+  birthday: z.string().optional(),
   how_we_met: z.string().optional(),
   contact_frequency_days: z.number().optional(),
   is_favorite: z.boolean().optional(),
@@ -44,6 +45,11 @@ const contactUpdateSchema = z.object({
 })
 
 type ContactUpdateFormData = z.infer<typeof contactUpdateSchema>
+
+// <input type="date"> requires a YYYY-MM-DD value; the API may return a full
+// date/datetime string, so slice to the date portion.
+const toDateInputValue = (value: string | null | undefined): string =>
+  value ? value.slice(0, 10) : ""
 
 interface EditContactDialogProps {
   contact: ContactPublic
@@ -60,6 +66,7 @@ export const EditContactDialog = ({ contact }: EditContactDialogProps) => {
       first_name: contact.first_name,
       last_name: contact.last_name || "",
       nickname: contact.nickname || "",
+      birthday: toDateInputValue(contact.birthday),
       how_we_met: contact.how_we_met || "",
       contact_frequency_days: contact.contact_frequency_days || 0,
       is_favorite: contact.is_favorite,
@@ -116,6 +123,7 @@ export const EditContactDialog = ({ contact }: EditContactDialogProps) => {
       first_name: data.first_name,
       last_name: data.last_name || null,
       nickname: data.nickname || null,
+      birthday: data.birthday || null,
       how_we_met: data.how_we_met || null,
       contact_frequency_days: data.contact_frequency_days || null,
       is_favorite: data.is_favorite,
@@ -177,6 +185,19 @@ export const EditContactDialog = ({ contact }: EditContactDialogProps) => {
                   <FormLabel>Nickname</FormLabel>
                   <FormControl>
                     <Input placeholder="Johnny" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="birthday"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Birthday</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
