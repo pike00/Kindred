@@ -1,5 +1,5 @@
 ---
-title: @contact Autocomplete
+title: "@contact Autocomplete"
 status: to_review
 repos: [personal-crm]
 started: 2026-04-21
