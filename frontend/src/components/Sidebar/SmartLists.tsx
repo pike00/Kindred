@@ -123,10 +123,14 @@ export function SmartLists() {
     op: "and",
   })
 
+  // Must return the same shape ContactsList caches under this exact queryKey:
+  // both share ["saved-filters"], so unwrapping to res.data here while
+  // ContactsList keeps the full {data,count} object means whichever fetches
+  // first wins and the other reads a mismatched shape. On /contacts that
+  // collision fed this component the {data,count} object and `.map` threw.
   const { data: filtersData, isLoading } = useQuery({
     queryKey: ["saved-filters"],
-    queryFn: () =>
-      SavedFiltersService.listSavedFilters().then((res) => res.data),
+    queryFn: () => SavedFiltersService.listSavedFilters(),
   })
 
   const deleteMutation = useMutation({
@@ -256,7 +260,7 @@ export function SmartLists() {
     }
   }
 
-  const filters = filtersData || []
+  const filters = filtersData?.data ?? []
 
   return (
     <>
