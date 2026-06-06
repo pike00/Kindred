@@ -5,6 +5,43 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.89] - 2026-06-06
+
+### Documentation
+- Docs: quote frontmatter scalars for docket sync (db619e0)
+
+### Fixed
+- Fix(contacts): stop shared saved-filters cache from crashing the page (c9135db)
+
+### Other
+- Projects: housekeeping — bulk-save all 58 active projects post-v0.2.88 (f1272a6)
+- Projects: create frontend-pnpm-migration (74e93cc)
+
+## [0.2.88] - 2026-06-05
+
+### Added
+- Feat(contacts): Log Interaction button becomes an add dropdown (item21) (ed12dad)
+- Feat(contacts): surface contact info + addresses in the header (item23) (f7e3e84)
+- Feat(contacts): redesign Add Contact modal with sections + tags (item14) (a11d171)
+
+### Other
+- Build: release recipe builds kindred-whisper too (00ccdab)
+- Build: migrate frontend toolchain from bun to pnpm 11 (0764b80)
+
+## [0.2.87] - 2026-06-05
+
+### Added
+- Feat(activity): add Activity Logs view + nav (item19) (a204dba)
+- Feat(timezone): broad city search (e.g. New Orleans -> America/Chicago) (51a36f1)
+
+### Documentation
+- Docs: handoff report + marker for tofix-remaining run (923c2cf)
+
+### Fixed
+- Fix(client): restore src/client/custom.ts dropped by SDK regen (643e722)
+- Fix(crm): finish journal+mood removal, fix contacts crash deps, geocoding, DNC (f6f1832)
+- Fix(whisper): add python-multipart (FastAPI UploadFile dep) (ee31380)
+
 ## [0.2.86] - 2026-06-01
 
 ### Added
