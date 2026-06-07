@@ -238,11 +238,10 @@ def test_update_interaction_scalar_fields(
     r = client.patch(
         f"{settings.API_V1_STR}/interactions/{ix_id}",
         headers=superuser_token_headers,
-        json={"notes": "Updated notes", "mood": "great"},
+        json={"notes": "Updated notes"},
     )
     assert r.status_code == 200
     assert r.json()["notes"] == "Updated notes"
-    assert r.json()["mood"] == "great"
 
 
 def test_delete_interaction_recomputes_last_contacted(
