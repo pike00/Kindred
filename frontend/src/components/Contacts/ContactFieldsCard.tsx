@@ -40,6 +40,9 @@ import { Mail, Pencil, Phone, Plus, Trash2 } from "@/lib/icons"
 
 const FIELD_TYPES: ContactFieldType[] = ["email", "phone"]
 
+// Order the read-only sections render in on the contact card (phone above email).
+const FIELD_DISPLAY_ORDER: ContactFieldType[] = ["phone", "email"]
+
 const fieldTypeIcon: Record<ContactFieldType, React.ReactNode> = {
   email: <Mail className="size-4" />,
   phone: <Phone className="size-4" />,
@@ -388,7 +391,7 @@ export function ContactFieldsCard({ contactId }: { contactId: string }) {
           <Skeleton className="h-4 w-2/3" />
         ) : (
           <div className="grid grid-cols-1 gap-y-4">
-            {FIELD_TYPES.map((type) => (
+            {FIELD_DISPLAY_ORDER.map((type) => (
               <div key={type}>
                 <h4 className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">
                   {type}
