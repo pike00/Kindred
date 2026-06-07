@@ -5,6 +5,15 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.92] - 2026-06-07
+
+### Changed
+- Perf(frontend): self-host display font to cut CLS and a third-party round-trip (40b58ec)
+- Perf(frontend): fix slow first paint and shrink the eager bundle (2b43f4a)
+
+### Fixed
+- Fix(contacts): reject non-numeric phone / non-email contact field values (93791e2)
+
 ## [0.2.91] - 2026-06-07
 
 ### Added
