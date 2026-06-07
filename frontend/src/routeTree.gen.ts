@@ -18,12 +18,12 @@ import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
 import { Route as LayoutTagsRouteImport } from './routes/_layout/tags'
 import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
 import { Route as LayoutRemindersRouteImport } from './routes/_layout/reminders'
-import { Route as LayoutActivityRouteImport } from './routes/_layout/activity'
 import { Route as LayoutInteractionsRouteImport } from './routes/_layout/interactions'
 import { Route as LayoutGraphRouteImport } from './routes/_layout/graph'
 import { Route as LayoutContactsRouteImport } from './routes/_layout/contacts'
 import { Route as LayoutCalendarRouteImport } from './routes/_layout/calendar'
 import { Route as LayoutAdminRouteImport } from './routes/_layout/admin'
+import { Route as LayoutActivityRouteImport } from './routes/_layout/activity'
 import { Route as LayoutContactsIndexRouteImport } from './routes/_layout/contacts/index'
 import { Route as LayoutAdminIndexRouteImport } from './routes/_layout/admin/index'
 import { Route as LayoutGiftsKanbanRouteImport } from './routes/_layout/gifts/kanban'
@@ -78,11 +78,6 @@ const LayoutRemindersRoute = LayoutRemindersRouteImport.update({
   path: '/reminders',
   getParentRoute: () => LayoutRoute,
 } as any)
-const LayoutActivityRoute = LayoutActivityRouteImport.update({
-  id: '/activity',
-  path: '/activity',
-  getParentRoute: () => LayoutRoute,
-} as any)
 const LayoutInteractionsRoute = LayoutInteractionsRouteImport.update({
   id: '/interactions',
   path: '/interactions',
@@ -106,6 +101,11 @@ const LayoutCalendarRoute = LayoutCalendarRouteImport.update({
 const LayoutAdminRoute = LayoutAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutActivityRoute = LayoutActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
   getParentRoute: () => LayoutRoute,
 } as any)
 const LayoutContactsIndexRoute = LayoutContactsIndexRouteImport.update({
@@ -161,12 +161,12 @@ export interface FileRoutesByFullPath {
   '/recover-password': typeof RecoverPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/activity': typeof LayoutActivityRoute
   '/admin': typeof LayoutAdminRouteWithChildren
   '/calendar': typeof LayoutCalendarRoute
   '/contacts': typeof LayoutContactsRouteWithChildren
   '/graph': typeof LayoutGraphRoute
   '/interactions': typeof LayoutInteractionsRoute
-  '/activity': typeof LayoutActivityRoute
   '/reminders': typeof LayoutRemindersRoute
   '/settings': typeof LayoutSettingsRoute
   '/tags': typeof LayoutTagsRoute
@@ -185,10 +185,10 @@ export interface FileRoutesByTo {
   '/recover-password': typeof RecoverPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/activity': typeof LayoutActivityRoute
   '/calendar': typeof LayoutCalendarRoute
   '/graph': typeof LayoutGraphRoute
   '/interactions': typeof LayoutInteractionsRoute
-  '/activity': typeof LayoutActivityRoute
   '/reminders': typeof LayoutRemindersRoute
   '/settings': typeof LayoutSettingsRoute
   '/tags': typeof LayoutTagsRoute
@@ -210,12 +210,12 @@ export interface FileRoutesById {
   '/recover-password': typeof RecoverPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/_layout/activity': typeof LayoutActivityRoute
   '/_layout/admin': typeof LayoutAdminRouteWithChildren
   '/_layout/calendar': typeof LayoutCalendarRoute
   '/_layout/contacts': typeof LayoutContactsRouteWithChildren
   '/_layout/graph': typeof LayoutGraphRoute
   '/_layout/interactions': typeof LayoutInteractionsRoute
-  '/_layout/activity': typeof LayoutActivityRoute
   '/_layout/reminders': typeof LayoutRemindersRoute
   '/_layout/settings': typeof LayoutSettingsRoute
   '/_layout/tags': typeof LayoutTagsRoute
@@ -238,12 +238,12 @@ export interface FileRouteTypes {
     | '/recover-password'
     | '/reset-password'
     | '/signup'
+    | '/activity'
     | '/admin'
     | '/calendar'
     | '/contacts'
     | '/graph'
     | '/interactions'
-    | '/activity'
     | '/reminders'
     | '/settings'
     | '/tags'
@@ -262,10 +262,10 @@ export interface FileRouteTypes {
     | '/recover-password'
     | '/reset-password'
     | '/signup'
+    | '/activity'
     | '/calendar'
     | '/graph'
     | '/interactions'
-    | '/activity'
     | '/reminders'
     | '/settings'
     | '/tags'
@@ -286,12 +286,12 @@ export interface FileRouteTypes {
     | '/recover-password'
     | '/reset-password'
     | '/signup'
+    | '/_layout/activity'
     | '/_layout/admin'
     | '/_layout/calendar'
     | '/_layout/contacts'
     | '/_layout/graph'
     | '/_layout/interactions'
-    | '/_layout/activity'
     | '/_layout/reminders'
     | '/_layout/settings'
     | '/_layout/tags'
@@ -380,13 +380,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutRemindersRouteImport
       parentRoute: typeof LayoutRoute
     }
-    '/_layout/activity': {
-      id: '/_layout/activity'
-      path: '/activity'
-      fullPath: '/activity'
-      preLoaderRoute: typeof LayoutActivityRouteImport
-      parentRoute: typeof LayoutRoute
-    }
     '/_layout/interactions': {
       id: '/_layout/interactions'
       path: '/interactions'
@@ -420,6 +413,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof LayoutAdminRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/activity': {
+      id: '/_layout/activity'
+      path: '/activity'
+      fullPath: '/activity'
+      preLoaderRoute: typeof LayoutActivityRouteImport
       parentRoute: typeof LayoutRoute
     }
     '/_layout/contacts/': {
@@ -525,12 +525,12 @@ const LayoutContactsRouteWithChildren = LayoutContactsRoute._addFileChildren(
 )
 
 interface LayoutRouteChildren {
+  LayoutActivityRoute: typeof LayoutActivityRoute
   LayoutAdminRoute: typeof LayoutAdminRouteWithChildren
   LayoutCalendarRoute: typeof LayoutCalendarRoute
   LayoutContactsRoute: typeof LayoutContactsRouteWithChildren
   LayoutGraphRoute: typeof LayoutGraphRoute
   LayoutInteractionsRoute: typeof LayoutInteractionsRoute
-  LayoutActivityRoute: typeof LayoutActivityRoute
   LayoutRemindersRoute: typeof LayoutRemindersRoute
   LayoutSettingsRoute: typeof LayoutSettingsRoute
   LayoutTagsRoute: typeof LayoutTagsRoute
@@ -539,12 +539,12 @@ interface LayoutRouteChildren {
 }
 
 const LayoutRouteChildren: LayoutRouteChildren = {
+  LayoutActivityRoute: LayoutActivityRoute,
   LayoutAdminRoute: LayoutAdminRouteWithChildren,
   LayoutCalendarRoute: LayoutCalendarRoute,
   LayoutContactsRoute: LayoutContactsRouteWithChildren,
   LayoutGraphRoute: LayoutGraphRoute,
   LayoutInteractionsRoute: LayoutInteractionsRoute,
-  LayoutActivityRoute: LayoutActivityRoute,
   LayoutRemindersRoute: LayoutRemindersRoute,
   LayoutSettingsRoute: LayoutSettingsRoute,
   LayoutTagsRoute: LayoutTagsRoute,

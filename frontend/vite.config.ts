@@ -38,6 +38,33 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // react-hook-form/@hookform are used only by lazy route-level form dialogs,
+        // but ~20 lazy chunks share them so the bundler otherwise hoists them into
+        // the eager entry chunk. Their own group keeps them off the critical path —
+        // the chunk loads on demand with the first form. zod is deliberately NOT in
+        // this group: it's used in route validateSearch (eager routing code), so it
+        // stays near the entry; grouping it with rhf would drag rhf back in eagerly.
+        // vendor-react is a separate group purely for long-term cache stability.
+        advancedChunks: {
+          groups: [
+            {
+              name: "vendor-react",
+              test: /node_modules[\\/](react|react-dom|scheduler)[\\/]/,
+              priority: 20,
+            },
+            {
+              name: "forms",
+              test: /node_modules[\\/](react-hook-form|@hookform)[\\/]/,
+              priority: 10,
+            },
+          ],
+        },
+      },
+    },
+  },
   server: {
     host: true,
     allowedHosts: true,

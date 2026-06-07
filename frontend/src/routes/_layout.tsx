@@ -174,5 +174,3 @@ function LayoutShortcuts() {
 
   return null
 }
-
-export default Layout

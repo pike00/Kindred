@@ -19,13 +19,75 @@
     <meta name="theme-color" content="#67863a" />
     <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
     <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin />
+    <!-- Cabinet Grotesk is a display-only font with system fallbacks in --font-display.
+         Load it non-render-blocking so the first paint doesn't wait on a third-party round-trip. -->
     <link
+      rel="preload"
+      as="style"
       href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@700,800&display=swap"
-      rel="stylesheet"
+      onload="this.onload=null;this.rel='stylesheet'"
     />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@700,800&display=swap"
+      />
+    </noscript>
+    <!-- Apply the persisted theme before first paint to avoid a light->dark flash.
+         Mirrors ThemeProvider (storageKey "vite-ui-theme", defaultTheme "dark"). -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("vite-ui-theme") || "dark"
+          if (t === "system") {
+            t = window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light"
+          }
+          document.documentElement.classList.add(t)
+        } catch (e) {
+          document.documentElement.classList.add("dark")
+        }
+      })()
+    </script>
+    <style>
+      /* Instant, theme-aware paint while the app bundle loads. React replaces
+         #root's contents on mount, removing this automatically. Colors come from
+         the render-blocking app CSS (--background/--primary), with safe fallbacks. */
+      #app-loader {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--background, #fdfcfa);
+      }
+      #app-loader .spinner {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        border: 3px solid color-mix(in oklch, var(--foreground, #1a1a1a) 14%, transparent);
+        border-top-color: var(--primary, #67863a);
+        animation: app-loader-spin 0.7s linear infinite;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #app-loader .spinner {
+          animation-duration: 2s;
+        }
+      }
+      @keyframes app-loader-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="app-loader" aria-hidden="true">
+        <div class="spinner"></div>
+      </div>
+    </div>
     <script type="module" src="./src/main.tsx"></script>
   </body>
 </html>
