@@ -1,6 +1,34 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Self-hosted Cabinet Grotesk (display font). Self-hosting removes a render-
+   blocking third-party round-trip from the critical path. The metric-matched
+   "Cabinet Grotesk Fallback" occupies the exact same space as the real font
+   (size-adjust/overrides computed from the font's own metrics vs Arial), so the
+   swap-in causes ~zero layout shift (CLS). */
+@font-face {
+  font-family: "Cabinet Grotesk";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/cabinet-grotesk-700.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Cabinet Grotesk";
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url("/fonts/cabinet-grotesk-800.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Cabinet Grotesk Fallback";
+  src: local("Arial");
+  size-adjust: 123.24%;
+  ascent-override: 70.59%;
+  descent-override: 22.72%;
+  line-gap-override: 7.3%;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -52,8 +80,8 @@
   --color-accent-teal: var(--accent-teal);
   --color-accent-teal-fg: var(--accent-teal-fg);
   --font-display:
-    "Cabinet Grotesk", ui-sans-serif, system-ui, -apple-system,
-    BlinkMacSystemFont, "Segoe UI", sans-serif;
+    "Cabinet Grotesk", "Cabinet Grotesk Fallback", ui-sans-serif, system-ui,
+    -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 :root {
