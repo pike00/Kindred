@@ -27,7 +27,7 @@ import typer
 PROJECT_NAME = "kindred"
 CLIFF_CONFIG = ".project-kit/cliff.toml"
 BRANCH = "main"
-LITELLM_MODEL = "deepseek-v4-pro-cloud"
+LITELLM_MODEL = "deepseek-v4-pro"
 # OpenAI-compatible base URL, baked at scaffold time from .project-kit answers
 # (default: the homelab pikellm proxy). release.py appends /chat/completions.
 LITELLM_BASE_URL = "https://pikellm.khanpikehome.com/v1"
