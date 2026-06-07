@@ -4,7 +4,7 @@ from datetime import date, datetime, timezone
 from typing import Any
 
 import sqlalchemy as sa
-from pydantic import EmailStr
+from pydantic import EmailStr, ValidationInfo, field_validator
 from sqlalchemy import DateTime
 from sqlalchemy.dialects.postgresql import JSONB, TSVECTOR
 from sqlmodel import Field, Relationship, SQLModel
@@ -859,6 +859,22 @@ class OverdueContactsPublic(SQLModel):
 # ─── ContactField ────────────────────────────────────────────────────────────
 
 
+def validate_contact_field_value(field_type: "ContactFieldType", value: str) -> str:
+    """Reject values that don't fit their field type.
+
+    A phone must contain at least one digit; an email must contain '@'.
+    Guards against importers/clients shoving a display name into a phone or
+    email field (renders as a broken tel:/mailto: link). Returns the value
+    trimmed of surrounding whitespace. Raises ValueError on a bad value.
+    """
+    cleaned = value.strip()
+    if field_type == ContactFieldType.PHONE and not any(c.isdigit() for c in cleaned):
+        raise ValueError("phone value must contain at least one digit")
+    if field_type == ContactFieldType.EMAIL and "@" not in cleaned:
+        raise ValueError("email value must contain '@'")
+    return cleaned
+
+
 class ContactFieldBase(SQLModel):
     field_type: ContactFieldType = Field(
         description="Kind of contact info (email or phone).",
@@ -880,6 +896,15 @@ class ContactFieldBase(SQLModel):
         default=0,
         description="Display order within the same field_type.",
     )
+
+    @field_validator("value")
+    @classmethod
+    def _value_matches_field_type(cls, v: str, info: ValidationInfo) -> str:
+        # field_type is declared before value, so it's available in info.data.
+        field_type = info.data.get("field_type")
+        if field_type is None:
+            return v
+        return validate_contact_field_value(field_type, v)
 
 
 class ContactFieldCreate(ContactFieldBase):

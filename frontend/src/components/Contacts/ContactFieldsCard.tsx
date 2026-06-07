@@ -48,6 +48,28 @@ const fieldTypeIcon: Record<ContactFieldType, React.ReactNode> = {
   phone: <Phone className="size-4" />,
 }
 
+// A phone needs a digit to be dialable; an email needs "@" to be mailable.
+// Bad data (e.g. a name imported into a phone field) renders as plain text
+// instead of a broken `tel:Margaret Valega` link.
+function renderFieldValue(cf: ContactFieldPublic) {
+  const value = cf.value
+  if (cf.field_type === "email" && value.includes("@")) {
+    return (
+      <a href={`mailto:${value}`} className="underline">
+        {value}
+      </a>
+    )
+  }
+  if (cf.field_type === "phone" && /\d/.test(value)) {
+    return (
+      <a href={`tel:${value}`} className="underline">
+        {value}
+      </a>
+    )
+  }
+  return value
+}
+
 const schema = z.object({
   field_type: z.enum(["email", "phone"]),
   label: z.string().min(1, "Label is required"),
@@ -320,17 +342,7 @@ function FieldRow({ field: cf }: { field: ContactFieldPublic }) {
       <div className="flex items-center gap-2 text-sm">
         {fieldTypeIcon[cf.field_type]}
         <span className="text-muted-foreground">{cf.label}:</span>
-        <span className="truncate">
-          {cf.field_type === "email" ? (
-            <a href={`mailto:${cf.value}`} className="underline">
-              {cf.value}
-            </a>
-          ) : (
-            <a href={`tel:${cf.value}`} className="underline">
-              {cf.value}
-            </a>
-          )}
-        </span>
+        <span className="truncate">{renderFieldValue(cf)}</span>
         {cf.is_primary && (
           <Badge variant="secondary" className="text-[10px]">
             primary

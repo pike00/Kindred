@@ -27,6 +27,7 @@ from app.models import (
     ContactSource,
     ContactTag,
     Tag,
+    validate_contact_field_value,
 )
 from app.vcard import contact_to_vcard, vcard_to_contact_data
 
@@ -101,11 +102,23 @@ async def import_vcard(
                 session.delete(field)
 
             for field_data in parsed["fields"]:
+                field_type = ContactFieldType(field_data["field_type"])
+                try:
+                    value = validate_contact_field_value(
+                        field_type, field_data["value"]
+                    )
+                except ValueError as exc:
+                    logger.warning(
+                        "Skipping invalid %s field on vCard import: %s",
+                        field_type.value,
+                        exc,
+                    )
+                    continue
                 cf = ContactField(
                     contact_id=contact.id,
-                    field_type=ContactFieldType(field_data["field_type"]),
+                    field_type=field_type,
                     label=field_data.get("label", "other"),
-                    value=field_data["value"],
+                    value=value,
                     is_primary=field_data.get("is_primary", False),
                 )
                 session.add(cf)
@@ -190,6 +203,22 @@ def _split_vcards(text: str) -> list[str]:
 
 
 logger = logging.getLogger(__name__)
+
+
+def _validate_field_data(field_data: dict) -> bool:
+    """Validate/normalize a CSV field_data dict in place.
+
+    Returns True if the value fits its field type (and trims it), False if the
+    field should be skipped (e.g. a name landed in a phone column).
+    """
+    try:
+        field_data["value"] = validate_contact_field_value(
+            field_data["field_type"], field_data["value"]
+        )
+        return True
+    except ValueError as exc:
+        logger.warning("Skipping invalid field on CSV import: %s", exc)
+        return False
 
 
 # ─── CSV Import Preview ───────────────────────────────────────────────────────
@@ -358,6 +387,8 @@ async def import_csv(
 
                 # Update fields (replace email/phone)
                 for field_data in fields:
+                    if not _validate_field_data(field_data):
+                        continue
                     # Check if field already exists
                     existing_field = session.exec(
                         select(ContactField).where(
@@ -388,6 +419,8 @@ async def import_csv(
 
             # Create contact fields
             for field_data in fields:
+                if not _validate_field_data(field_data):
+                    continue
                 cf = ContactField(
                     contact_id=contact.id,
                     **field_data,

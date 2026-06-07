@@ -1110,6 +1110,33 @@ describe("ContactFieldsCard", () => {
     })
   })
 
+  it("renders a digit-less phone value as plain text, not a broken tel link", async () => {
+    const { ContactFieldsService } = await import("@/client")
+    vi.mocked(ContactFieldsService.listContactFields).mockResolvedValue({
+      data: [
+        {
+          id: "field-1",
+          contact_id: "test-contact-id",
+          field_type: "phone",
+          label: "phone",
+          value: "Margaret Valega",
+          is_primary: false,
+        },
+      ],
+      count: 1,
+    })
+
+    renderWithProviders(<ContactFieldsCard contactId="test-contact-id" />)
+
+    await waitFor(() => {
+      expect(screen.getByText("Margaret Valega")).toBeInTheDocument()
+    })
+    // The bogus value must NOT become a tel: anchor.
+    expect(
+      screen.queryByRole("link", { name: "Margaret Valega" }),
+    ).not.toBeInTheDocument()
+  })
+
   it("field row displays is_primary badge when field is primary", async () => {
     const { ContactFieldsService } = await import("@/client")
     vi.mocked(ContactFieldsService.listContactFields).mockResolvedValue({
