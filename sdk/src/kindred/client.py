@@ -10,8 +10,31 @@ from __future__ import annotations
 
 import os
 from typing import Self
+from uuid import UUID
+
+from pydantic import field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from ._generated.client import AuthenticatedClient
+
+
+class _ImpersonationSettings(BaseSettings):
+    """Reads the optional ``KINDRED_ON_BEHALF_OF`` impersonation fallback.
+
+    Validated at construction: if present, it must be a well-formed UUID, so a
+    typo fails loudly here rather than as an opaque 403 from the backend.
+    """
+
+    model_config = SettingsConfigDict(env_prefix="KINDRED_", extra="ignore")
+
+    on_behalf_of: UUID | None = None
+
+    @field_validator("on_behalf_of", mode="before")
+    @classmethod
+    def _empty_is_none(cls, v: object) -> object:
+        if isinstance(v, str) and not v.strip():
+            return None
+        return v
 
 
 def _default_timeout() -> float:
@@ -41,13 +64,28 @@ class KindredClient:
         timeout: float | None = None,
         verify_ssl: bool = True,
         raise_on_unexpected_status: bool = True,
+        on_behalf_of: str | UUID | None = None,
     ) -> None:
+        """Construct a client.
+
+        ``on_behalf_of`` enables multi-account impersonation: when set (or, if
+        ``None``, when ``KINDRED_ON_BEHALF_OF`` is present in the environment),
+        every request carries the ``X-On-Behalf-Of: <user_uuid>`` header so the
+        API key acts as that user. The user must be whitelisted on the key or
+        the backend returns 403. An explicit argument beats the env var.
+        """
+        if on_behalf_of is None:
+            on_behalf_of = _ImpersonationSettings().on_behalf_of
+
+        headers = {"X-On-Behalf-Of": str(on_behalf_of)} if on_behalf_of is not None else {}
+
         self.raw = AuthenticatedClient(
             base_url=base_url.rstrip("/"),
             token=api_key,
             timeout=timeout if timeout is not None else _default_timeout(),
             verify_ssl=verify_ssl,
             raise_on_unexpected_status=raise_on_unexpected_status,
+            headers=headers,
         )
 
     @classmethod
@@ -55,7 +93,10 @@ class KindredClient:
         """Build a client from ``KINDRED_BASE_URL`` and ``KINDRED_API_KEY``.
 
         Raises ``KeyError`` if either env var is missing. Any keyword in
-        ``overrides`` is passed straight through to ``__init__``.
+        ``overrides`` is passed straight through to ``__init__`` — including
+        ``on_behalf_of`` for impersonation. When ``on_behalf_of`` is omitted (or
+        passed as ``None``), ``__init__`` falls back to the
+        ``KINDRED_ON_BEHALF_OF`` env var.
         """
         try:
             base_url = os.environ["KINDRED_BASE_URL"]

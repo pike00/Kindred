@@ -22,13 +22,15 @@ from __future__ import annotations
 
 import json
 import sys
-from typing import Annotated, Any
+from datetime import datetime, timezone
+from typing import Annotated, Any, Optional
 from uuid import UUID
 
 import typer
 
 from .client import KindredClient
 from ._generated.api.contacts import (
+    contacts_create_contact,
     contacts_get_contact,
     contacts_get_contact_household,
     contacts_list_contacts,
@@ -36,10 +38,21 @@ from ._generated.api.contacts import (
     contacts_list_overdue_contacts,
     contacts_skip_contact,
 )
-from ._generated.api.interactions import interactions_list_interactions
+from ._generated.api.interactions import (
+    interactions_create_interaction_route,
+    interactions_delete_interaction,
+    interactions_list_interactions,
+    interactions_update_interaction,
+)
 from ._generated.api.journal import journal_list_journal_entries
-from ._generated.api.notes import notes_list_notes
+from ._generated.api.notes import (
+    notes_create_note_route,
+    notes_delete_note,
+    notes_list_notes,
+    notes_update_note_route,
+)
 from ._generated.api.reminders import (
+    reminders_create_reminder_route,
     reminders_delete_reminder,
     reminders_dismiss_reminder,
     reminders_get_chronic_snoozers,
@@ -59,6 +72,14 @@ from ._generated.api.webhooks import (
     webhooks_update_webhook,
 )
 from ._generated.errors import UnexpectedStatus
+from ._generated.models.contact_create import ContactCreate
+from ._generated.models.interaction_channel import InteractionChannel
+from ._generated.models.interaction_create import InteractionCreate
+from ._generated.models.interaction_update import InteractionUpdate
+from ._generated.models.note_create import NoteCreate
+from ._generated.models.note_update import NoteUpdate
+from ._generated.models.reminder_create import ReminderCreate
+from ._generated.models.reminder_frequency import ReminderFrequency
 from ._generated.models.webhook_endpoint_base import WebhookEndpointBase
 from ._generated.types import UNSET
 
@@ -110,8 +131,29 @@ def _emit(value: Any, pretty: bool) -> None:
         typer.echo(json.dumps(row, default=str))
 
 
+# Holds the global --on-behalf-of value set by the app callback, so every
+# command's _run() can pass it through to the client. None means "no flag";
+# client.py then falls back to the KINDRED_ON_BEHALF_OF env var.
+_on_behalf_of: UUID | None = None
+
+
+@app.callback()
+def _main(
+    on_behalf_of: Annotated[
+        Optional[UUID],
+        typer.Option(
+            "--on-behalf-of",
+            help="Act as another Kindred user (impersonation; key must be authorized).",
+        ),
+    ] = None,
+) -> None:
+    """Kindred personal-CRM CLI."""
+    global _on_behalf_of
+    _on_behalf_of = on_behalf_of
+
+
 def _run(fn: Any, **kwargs: Any) -> Any:
-    with KindredClient.from_env() as k:
+    with KindredClient.from_env(on_behalf_of=_on_behalf_of) as k:
         try:
             return fn.sync(client=k.raw, **kwargs)
         except UnexpectedStatus as exc:
@@ -191,6 +233,33 @@ def contacts_skip(contact_id: UUID, pretty: PrettyOpt = False) -> None:
     _emit(_run(contacts_skip_contact, contact_id=contact_id), pretty)
 
 
+@contacts_app.command("create")
+def contacts_create(
+    first_name: Annotated[str, typer.Option("--first-name", help="Given name (required).")],
+    pretty: PrettyOpt = False,
+    last_name: Annotated[str | None, typer.Option("--last-name", help="Family name.")] = None,
+    nickname: Annotated[str | None, typer.Option("--nickname", help="Preferred or informal name.")] = None,
+    company: Annotated[str | None, typer.Option("--company", help="Organization name.")] = None,
+    title: Annotated[str | None, typer.Option("--title", help="Job title.")] = None,
+    how_we_met: Annotated[str | None, typer.Option("--how-we-met", help="How you were introduced.")] = None,
+    contact_frequency_days: Annotated[
+        int | None,
+        typer.Option("--contact-frequency-days", help="Target days between interactions."),
+    ] = None,
+) -> None:
+    """Create a new contact (only --first-name is required)."""
+    body = ContactCreate(
+        first_name=first_name,
+        last_name=last_name if last_name is not None else UNSET,
+        nickname=nickname if nickname is not None else UNSET,
+        company=company if company is not None else UNSET,
+        title=title if title is not None else UNSET,
+        how_we_met=how_we_met if how_we_met is not None else UNSET,
+        contact_frequency_days=contact_frequency_days if contact_frequency_days is not None else UNSET,
+    )
+    _emit(_run(contacts_create_contact, body=body), pretty)
+
+
 # ── reminders ───────────────────────────────────────────────────────────────
 
 
@@ -244,6 +313,44 @@ def reminders_delete(reminder_id: UUID, pretty: PrettyOpt = False) -> None:
     _emit(_run(reminders_delete_reminder, reminder_id=reminder_id), pretty)
 
 
+@reminders_app.command("create")
+def reminders_create(
+    title: Annotated[str, typer.Option("--title", help="Reminder title (required).")],
+    remind_at: Annotated[
+        str,
+        typer.Option("--remind-at", help="When to fire: ISO-8601 timestamp, or 'now' (required)."),
+    ],
+    pretty: PrettyOpt = False,
+    description: Annotated[str | None, typer.Option("--description", help="Extra details.")] = None,
+    frequency: Annotated[
+        str | None,
+        typer.Option("--frequency", help="One of: daily, weekly, monthly, yearly, once."),
+    ] = None,
+    contact: Annotated[
+        UUID | None, typer.Option("--contact", help="Associate with a contact.")
+    ] = None,
+    active: Annotated[bool, typer.Option("--active/--inactive", help="Enable the reminder.")] = True,
+) -> None:
+    """Create a new reminder."""
+    if frequency is not None:
+        try:
+            freq: ReminderFrequency | object = ReminderFrequency(frequency)
+        except ValueError:
+            choices = ", ".join(f.value for f in ReminderFrequency)
+            raise typer.BadParameter(f"{frequency!r} not one of: {choices}") from None
+    else:
+        freq = UNSET
+    body = ReminderCreate(
+        title=title,
+        remind_at=_parse_occurred_at(remind_at),
+        description=description if description is not None else UNSET,
+        frequency=freq,  # type: ignore[arg-type]
+        is_active=active,
+        contact_id=contact if contact is not None else UNSET,
+    )
+    _emit(_run(reminders_create_reminder_route, body=body), pretty)
+
+
 @reminders_app.command("snooze-history")
 def reminders_snooze_history(reminder_id: UUID, pretty: PrettyOpt = False) -> None:
     """List snooze history for a reminder."""
@@ -287,6 +394,34 @@ def notes_list(
     )
 
 
+@notes_app.command("create")
+def notes_create(
+    contact: Annotated[UUID, typer.Option("--contact", help="Contact the note is about.")],
+    body: Annotated[str, typer.Option("--body", help="Note body, 1-50000 chars.")],
+    pretty: PrettyOpt = False,
+) -> None:
+    """Create a new note attached to a contact."""
+    payload = NoteCreate(body=body, contact_id=contact)
+    _emit(_run(notes_create_note_route, body=payload), pretty)
+
+
+@notes_app.command("update")
+def notes_update(
+    note_id: UUID,
+    body: Annotated[str, typer.Option("--body", help="Replacement note body.")],
+    pretty: PrettyOpt = False,
+) -> None:
+    """Update a note's body."""
+    payload = NoteUpdate(body=body)
+    _emit(_run(notes_update_note_route, note_id=note_id, body=payload), pretty)
+
+
+@notes_app.command("delete")
+def notes_delete(note_id: UUID, pretty: PrettyOpt = False) -> None:
+    """Delete a note permanently."""
+    _emit(_run(notes_delete_note, note_id=note_id), pretty)
+
+
 # ── tags ────────────────────────────────────────────────────────────────────
 
 
@@ -320,6 +455,98 @@ def interactions_list(
         ),
         pretty,
     )
+
+
+def _parse_occurred_at(value: str) -> datetime:
+    """Parse an ISO-8601 timestamp, or the literal ``now`` for the current UTC."""
+    if value == "now":
+        return datetime.now(timezone.utc)
+    from dateutil.parser import isoparse
+
+    try:
+        return isoparse(value)
+    except (ValueError, OverflowError) as exc:
+        raise typer.BadParameter(f"not ISO-8601 or 'now': {value!r}") from exc
+
+
+def _parse_channel(value: str) -> InteractionChannel:
+    try:
+        return InteractionChannel(value)
+    except ValueError:
+        choices = ", ".join(c.value for c in InteractionChannel)
+        raise typer.BadParameter(f"{value!r} not one of: {choices}") from None
+
+
+@interactions_app.command("create")
+def interactions_create(
+    attendee: Annotated[
+        list[UUID],
+        typer.Option("--attendee", help="Attendee contact UUID; repeat for multiple (min 1)."),
+    ],
+    channel: Annotated[
+        str,
+        typer.Option("--channel", help="One of: call, email, in_person, other, skip, social, text, video."),
+    ],
+    pretty: PrettyOpt = False,
+    occurred_at: Annotated[
+        str,
+        typer.Option("--occurred-at", help="ISO-8601 timestamp, or 'now' (default)."),
+    ] = "now",
+    notes: Annotated[str | None, typer.Option("--notes", help="Conversation summary.")] = None,
+    mood: Annotated[str | None, typer.Option("--mood", help="Emoji or keyword tone.")] = None,
+    duration_minutes: Annotated[
+        int | None, typer.Option("--duration-minutes", help="Length in minutes.")
+    ] = None,
+) -> None:
+    """Log a new interaction (requires at least one --attendee)."""
+    if not attendee:
+        raise typer.BadParameter("at least one --attendee is required")
+    body = InteractionCreate(
+        channel=_parse_channel(channel),
+        occurred_at=_parse_occurred_at(occurred_at),
+        attendee_ids=attendee,
+        notes=notes if notes is not None else UNSET,
+        mood=mood if mood is not None else UNSET,
+        duration_minutes=duration_minutes if duration_minutes is not None else UNSET,
+    )
+    _emit(_run(interactions_create_interaction_route, body=body), pretty)
+
+
+@interactions_app.command("update")
+def interactions_update(
+    interaction_id: UUID,
+    pretty: PrettyOpt = False,
+    attendee: Annotated[
+        list[UUID] | None,
+        typer.Option("--attendee", help="Replace attendee set; repeat for multiple."),
+    ] = None,
+    channel: Annotated[str | None, typer.Option("--channel", help="New channel.")] = None,
+    occurred_at: Annotated[
+        str | None, typer.Option("--occurred-at", help="New ISO-8601 timestamp, or 'now'.")
+    ] = None,
+    notes: Annotated[str | None, typer.Option("--notes")] = None,
+    mood: Annotated[str | None, typer.Option("--mood")] = None,
+    duration_minutes: Annotated[int | None, typer.Option("--duration-minutes")] = None,
+) -> None:
+    """Update an existing interaction; only provided fields change."""
+    body = InteractionUpdate(
+        channel=_parse_channel(channel) if channel is not None else UNSET,
+        occurred_at=_parse_occurred_at(occurred_at) if occurred_at is not None else UNSET,
+        attendee_ids=attendee if attendee else UNSET,
+        notes=notes if notes is not None else UNSET,
+        mood=mood if mood is not None else UNSET,
+        duration_minutes=duration_minutes if duration_minutes is not None else UNSET,
+    )
+    _emit(
+        _run(interactions_update_interaction, interaction_id=interaction_id, body=body),
+        pretty,
+    )
+
+
+@interactions_app.command("delete")
+def interactions_delete(interaction_id: UUID, pretty: PrettyOpt = False) -> None:
+    """Delete an interaction permanently."""
+    _emit(_run(interactions_delete_interaction, interaction_id=interaction_id), pretty)
 
 
 # ── journal ─────────────────────────────────────────────────────────────────
