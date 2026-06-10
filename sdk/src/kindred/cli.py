@@ -143,6 +143,7 @@ def _main(
         Optional[UUID],
         typer.Option(
             "--on-behalf-of",
+            envvar="KINDRED_ON_BEHALF_OF",
             help="Act as another Kindred user (impersonation; key must be authorized).",
         ),
     ] = None,

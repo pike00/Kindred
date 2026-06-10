@@ -12,29 +12,7 @@ import os
 from typing import Self
 from uuid import UUID
 
-from pydantic import field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
-
 from ._generated.client import AuthenticatedClient
-
-
-class _ImpersonationSettings(BaseSettings):
-    """Reads the optional ``KINDRED_ON_BEHALF_OF`` impersonation fallback.
-
-    Validated at construction: if present, it must be a well-formed UUID, so a
-    typo fails loudly here rather than as an opaque 403 from the backend.
-    """
-
-    model_config = SettingsConfigDict(env_prefix="KINDRED_", extra="ignore")
-
-    on_behalf_of: UUID | None = None
-
-    @field_validator("on_behalf_of", mode="before")
-    @classmethod
-    def _empty_is_none(cls, v: object) -> object:
-        if isinstance(v, str) and not v.strip():
-            return None
-        return v
 
 
 def _default_timeout() -> float:
@@ -68,15 +46,12 @@ class KindredClient:
     ) -> None:
         """Construct a client.
 
-        ``on_behalf_of`` enables multi-account impersonation: when set (or, if
-        ``None``, when ``KINDRED_ON_BEHALF_OF`` is present in the environment),
-        every request carries the ``X-On-Behalf-Of: <user_uuid>`` header so the
-        API key acts as that user. The user must be whitelisted on the key or
-        the backend returns 403. An explicit argument beats the env var.
+        ``on_behalf_of`` enables multi-account impersonation: when set, every
+        request carries the ``X-On-Behalf-Of: <user_uuid>`` header so the API
+        key acts as that user. The user must be whitelisted on the key or the
+        backend returns 403. The CLI populates this from ``--on-behalf-of`` /
+        the ``KINDRED_ON_BEHALF_OF`` env var (see ``cli.py``).
         """
-        if on_behalf_of is None:
-            on_behalf_of = _ImpersonationSettings().on_behalf_of
-
         headers = {"X-On-Behalf-Of": str(on_behalf_of)} if on_behalf_of is not None else {}
 
         self.raw = AuthenticatedClient(
