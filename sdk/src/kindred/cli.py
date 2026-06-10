@@ -486,7 +486,10 @@ def interactions_create(
     ],
     channel: Annotated[
         str,
-        typer.Option("--channel", help="One of: call, email, in_person, other, skip, social, text, video."),
+        typer.Option(
+            "--channel",
+            help="One of: call, email, in_person, other, recommendation, skip, social, text, video.",
+        ),
     ],
     pretty: PrettyOpt = False,
     occurred_at: Annotated[
