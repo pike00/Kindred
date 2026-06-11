@@ -158,10 +158,10 @@ def test_interactions_update_partial(httpx_mock: HTTPXMock):
         method="PATCH",
         json=_interaction_resp(id=str(iid)),
     )
-    result = runner.invoke(app, ["interactions", "update", str(iid), "--mood", "happy"])
+    result = runner.invoke(app, ["interactions", "update", str(iid), "--notes", "caught up"])
     assert result.exit_code == 0, result.output
     body = _request_json(httpx_mock)
-    assert body == {"mood": "happy"}
+    assert body == {"notes": "caught up"}
 
 
 def test_interactions_delete(httpx_mock: HTTPXMock):

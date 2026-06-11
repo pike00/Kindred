@@ -32,11 +32,9 @@ from .client import KindredClient
 from ._generated.api.contacts import (
     contacts_create_contact,
     contacts_get_contact,
-    contacts_get_contact_household,
     contacts_list_contacts,
-    contacts_list_losing_touch,
+    contacts_list_losing_touch_contacts,
     contacts_list_overdue_contacts,
-    contacts_skip_contact,
 )
 from ._generated.api.interactions import (
     interactions_create_interaction_route,
@@ -44,7 +42,6 @@ from ._generated.api.interactions import (
     interactions_list_interactions,
     interactions_update_interaction,
 )
-from ._generated.api.journal import journal_list_journal_entries
 from ._generated.api.notes import (
     notes_create_note_route,
     notes_delete_note,
@@ -106,7 +103,6 @@ notes_app = typer.Typer(no_args_is_help=True, help="Note operations.")
 tags_app = typer.Typer(no_args_is_help=True, help="Tag operations.")
 webhooks_app = typer.Typer(no_args_is_help=True, help="Webhook endpoint operations.")
 interactions_app = typer.Typer(no_args_is_help=True, help="Interaction operations.")
-journal_app = typer.Typer(no_args_is_help=True, help="Journal operations.")
 users_app = typer.Typer(no_args_is_help=True, help="User operations (superuser).")
 apikeys_app = typer.Typer(no_args_is_help=True, help="API key operations.")
 
@@ -115,7 +111,6 @@ app.add_typer(reminders_app, name="reminders")
 app.add_typer(notes_app, name="notes")
 app.add_typer(tags_app, name="tags")
 app.add_typer(interactions_app, name="interactions")
-app.add_typer(journal_app, name="journal")
 app.add_typer(webhooks_app, name="webhooks")
 app.add_typer(users_app, name="users")
 app.add_typer(apikeys_app, name="api-keys")
@@ -217,12 +212,9 @@ def contacts_get(contact_id: UUID, pretty: PrettyOpt = False) -> None:
 
 
 @contacts_app.command("losing-touch")
-def contacts_losing_touch(
-    pretty: PrettyOpt = False,
-    limit: Annotated[int, typer.Option()] = 20,
-) -> None:
+def contacts_losing_touch(pretty: PrettyOpt = False) -> None:
     """Contacts whose cadence has elapsed since last_contacted_at."""
-    _emit(_run(contacts_list_losing_touch, limit=limit), pretty)
+    _emit(_run(contacts_list_losing_touch_contacts), pretty)
 
 
 @contacts_app.command("overdue")
@@ -233,21 +225,6 @@ def contacts_overdue(
 ) -> None:
     """Contacts past their next-contact threshold."""
     _emit(_run(contacts_list_overdue_contacts, limit=limit, offset=offset), pretty)
-
-
-@contacts_app.command("household")
-def contacts_household(contact_id: UUID, pretty: PrettyOpt = False) -> None:
-    """Fetch a contact's household membership."""
-    _emit(
-        _run(contacts_get_contact_household, contact_id=contact_id),
-        pretty,
-    )
-
-
-@contacts_app.command("skip")
-def contacts_skip(contact_id: UUID, pretty: PrettyOpt = False) -> None:
-    """Mark a losing-touch contact as skipped this cycle."""
-    _emit(_run(contacts_skip_contact, contact_id=contact_id), pretty)
 
 
 @contacts_app.command("create")
@@ -513,7 +490,6 @@ def interactions_create(
         typer.Option("--occurred-at", help="ISO-8601 timestamp, or 'now' (default)."),
     ] = "now",
     notes: Annotated[str | None, typer.Option("--notes", help="Conversation summary.")] = None,
-    mood: Annotated[str | None, typer.Option("--mood", help="Emoji or keyword tone.")] = None,
     duration_minutes: Annotated[
         int | None, typer.Option("--duration-minutes", help="Length in minutes.")
     ] = None,
@@ -526,7 +502,6 @@ def interactions_create(
         occurred_at=_parse_occurred_at(occurred_at),
         attendee_ids=attendee,
         notes=notes if notes is not None else UNSET,
-        mood=mood if mood is not None else UNSET,
         duration_minutes=duration_minutes if duration_minutes is not None else UNSET,
     )
     _emit(_run(interactions_create_interaction_route, body=body), pretty)
@@ -545,7 +520,6 @@ def interactions_update(
         str | None, typer.Option("--occurred-at", help="New ISO-8601 timestamp, or 'now'.")
     ] = None,
     notes: Annotated[str | None, typer.Option("--notes")] = None,
-    mood: Annotated[str | None, typer.Option("--mood")] = None,
     duration_minutes: Annotated[int | None, typer.Option("--duration-minutes")] = None,
 ) -> None:
     """Update an existing interaction; only provided fields change."""
@@ -554,7 +528,6 @@ def interactions_update(
         occurred_at=_parse_occurred_at(occurred_at) if occurred_at is not None else UNSET,
         attendee_ids=attendee if attendee else UNSET,
         notes=notes if notes is not None else UNSET,
-        mood=mood if mood is not None else UNSET,
         duration_minutes=duration_minutes if duration_minutes is not None else UNSET,
     )
     _emit(
@@ -567,19 +540,6 @@ def interactions_update(
 def interactions_delete(interaction_id: UUID, pretty: PrettyOpt = False) -> None:
     """Delete an interaction permanently."""
     _emit(_run(interactions_delete_interaction, interaction_id=interaction_id), pretty)
-
-
-# ── journal ─────────────────────────────────────────────────────────────────
-
-
-@journal_app.command("list")
-def journal_list(
-    pretty: PrettyOpt = False,
-    limit: Annotated[int, typer.Option()] = 100,
-    skip: Annotated[int, typer.Option()] = 0,
-) -> None:
-    """List journal entries."""
-    _emit(_run(journal_list_journal_entries, skip=skip, limit=limit), pretty)
 
 
 # ── webhooks ────────────────────────────────────────────────────────────────
