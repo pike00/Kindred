@@ -9,7 +9,6 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 from ..types import UNSET, Unset
-from dateutil.parser import isoparse
 from typing import cast
 import datetime
 
@@ -21,16 +20,23 @@ T = TypeVar("T", bound="ReminderSnoozeRequest")
 class ReminderSnoozeRequest:
     """
     Attributes:
-        snoozed_until (datetime.datetime | None | Unset): Absolute time to snooze until (UTC). Mutually exclusive with
-            minutes.
-        minutes (int | None | Unset): Minutes from now to snooze for. Mutually exclusive with snoozed_until.
+        minutes (int | None | Unset):  Default: 30.
+        snoozed_until (datetime.datetime | None | Unset):
+        reason (None | str | Unset):
     """
 
+    minutes: int | None | Unset = 30
     snoozed_until: datetime.datetime | None | Unset = UNSET
-    minutes: int | None | Unset = UNSET
+    reason: None | str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        minutes: int | None | Unset
+        if isinstance(self.minutes, Unset):
+            minutes = UNSET
+        else:
+            minutes = self.minutes
+
         snoozed_until: None | str | Unset
         if isinstance(self.snoozed_until, Unset):
             snoozed_until = UNSET
@@ -39,42 +45,27 @@ class ReminderSnoozeRequest:
         else:
             snoozed_until = self.snoozed_until
 
-        minutes: int | None | Unset
-        if isinstance(self.minutes, Unset):
-            minutes = UNSET
+        reason: None | str | Unset
+        if isinstance(self.reason, Unset):
+            reason = UNSET
         else:
-            minutes = self.minutes
+            reason = self.reason
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
-        if snoozed_until is not UNSET:
-            field_dict["snoozed_until"] = snoozed_until
         if minutes is not UNSET:
             field_dict["minutes"] = minutes
+        if snoozed_until is not UNSET:
+            field_dict["snoozed_until"] = snoozed_until
+        if reason is not UNSET:
+            field_dict["reason"] = reason
 
         return field_dict
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
-
-        def _parse_snoozed_until(data: object) -> datetime.datetime | None | Unset:
-            if data is None:
-                return data
-            if isinstance(data, Unset):
-                return data
-            try:
-                if not isinstance(data, str):
-                    raise TypeError()
-                snoozed_until_type_0 = isoparse(data)
-
-                return snoozed_until_type_0
-            except (TypeError, ValueError, AttributeError, KeyError):
-                pass
-            return cast(datetime.datetime | None | Unset, data)
-
-        snoozed_until = _parse_snoozed_until(d.pop("snoozed_until", UNSET))
 
         def _parse_minutes(data: object) -> int | None | Unset:
             if data is None:
@@ -85,9 +76,36 @@ class ReminderSnoozeRequest:
 
         minutes = _parse_minutes(d.pop("minutes", UNSET))
 
+        def _parse_snoozed_until(data: object) -> datetime.datetime | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, str):
+                    raise TypeError()
+                snoozed_until_type_0 = datetime.datetime.fromisoformat(data)
+
+                return snoozed_until_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(datetime.datetime | None | Unset, data)
+
+        snoozed_until = _parse_snoozed_until(d.pop("snoozed_until", UNSET))
+
+        def _parse_reason(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        reason = _parse_reason(d.pop("reason", UNSET))
+
         reminder_snooze_request = cls(
-            snoozed_until=snoozed_until,
             minutes=minutes,
+            snoozed_until=snoozed_until,
+            reason=reason,
         )
 
         reminder_snooze_request.additional_properties = d

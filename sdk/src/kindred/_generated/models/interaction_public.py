@@ -10,7 +10,6 @@ from ..types import UNSET, Unset
 
 from ..models.interaction_channel import InteractionChannel
 from ..types import UNSET, Unset
-from dateutil.parser import isoparse
 from typing import cast
 from uuid import UUID
 import datetime
@@ -31,10 +30,14 @@ class InteractionPublic:
         id (UUID):
         created_at (datetime.datetime):
         notes (None | str | Unset): Conversation summary, action items, etc.
-        mood (None | str | Unset): Emoji or keyword capturing the tone.
         duration_minutes (int | None | Unset): Length of the interaction in minutes.
         attendees (list[InteractionAttendeeSummary] | Unset):
         deleted_at (datetime.datetime | None | Unset):
+        is_draft (bool | Unset):  Default: False.
+        draft_source (None | str | Unset):
+        location_label (None | str | Unset):
+        latitude (float | None | Unset):
+        longitude (float | None | Unset):
     """
 
     channel: InteractionChannel
@@ -42,10 +45,14 @@ class InteractionPublic:
     id: UUID
     created_at: datetime.datetime
     notes: None | str | Unset = UNSET
-    mood: None | str | Unset = UNSET
     duration_minutes: int | None | Unset = UNSET
     attendees: list[InteractionAttendeeSummary] | Unset = UNSET
     deleted_at: datetime.datetime | None | Unset = UNSET
+    is_draft: bool | Unset = False
+    draft_source: None | str | Unset = UNSET
+    location_label: None | str | Unset = UNSET
+    latitude: float | None | Unset = UNSET
+    longitude: float | None | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -64,12 +71,6 @@ class InteractionPublic:
             notes = UNSET
         else:
             notes = self.notes
-
-        mood: None | str | Unset
-        if isinstance(self.mood, Unset):
-            mood = UNSET
-        else:
-            mood = self.mood
 
         duration_minutes: int | None | Unset
         if isinstance(self.duration_minutes, Unset):
@@ -92,6 +93,32 @@ class InteractionPublic:
         else:
             deleted_at = self.deleted_at
 
+        is_draft = self.is_draft
+
+        draft_source: None | str | Unset
+        if isinstance(self.draft_source, Unset):
+            draft_source = UNSET
+        else:
+            draft_source = self.draft_source
+
+        location_label: None | str | Unset
+        if isinstance(self.location_label, Unset):
+            location_label = UNSET
+        else:
+            location_label = self.location_label
+
+        latitude: float | None | Unset
+        if isinstance(self.latitude, Unset):
+            latitude = UNSET
+        else:
+            latitude = self.latitude
+
+        longitude: float | None | Unset
+        if isinstance(self.longitude, Unset):
+            longitude = UNSET
+        else:
+            longitude = self.longitude
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -104,14 +131,22 @@ class InteractionPublic:
         )
         if notes is not UNSET:
             field_dict["notes"] = notes
-        if mood is not UNSET:
-            field_dict["mood"] = mood
         if duration_minutes is not UNSET:
             field_dict["duration_minutes"] = duration_minutes
         if attendees is not UNSET:
             field_dict["attendees"] = attendees
         if deleted_at is not UNSET:
             field_dict["deleted_at"] = deleted_at
+        if is_draft is not UNSET:
+            field_dict["is_draft"] = is_draft
+        if draft_source is not UNSET:
+            field_dict["draft_source"] = draft_source
+        if location_label is not UNSET:
+            field_dict["location_label"] = location_label
+        if latitude is not UNSET:
+            field_dict["latitude"] = latitude
+        if longitude is not UNSET:
+            field_dict["longitude"] = longitude
 
         return field_dict
 
@@ -122,11 +157,11 @@ class InteractionPublic:
         d = dict(src_dict)
         channel = InteractionChannel(d.pop("channel"))
 
-        occurred_at = isoparse(d.pop("occurred_at"))
+        occurred_at = datetime.datetime.fromisoformat(d.pop("occurred_at"))
 
         id = UUID(d.pop("id"))
 
-        created_at = isoparse(d.pop("created_at"))
+        created_at = datetime.datetime.fromisoformat(d.pop("created_at"))
 
         def _parse_notes(data: object) -> None | str | Unset:
             if data is None:
@@ -136,15 +171,6 @@ class InteractionPublic:
             return cast(None | str | Unset, data)
 
         notes = _parse_notes(d.pop("notes", UNSET))
-
-        def _parse_mood(data: object) -> None | str | Unset:
-            if data is None:
-                return data
-            if isinstance(data, Unset):
-                return data
-            return cast(None | str | Unset, data)
-
-        mood = _parse_mood(d.pop("mood", UNSET))
 
         def _parse_duration_minutes(data: object) -> int | None | Unset:
             if data is None:
@@ -172,7 +198,7 @@ class InteractionPublic:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                deleted_at_type_0 = isoparse(data)
+                deleted_at_type_0 = datetime.datetime.fromisoformat(data)
 
                 return deleted_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -181,16 +207,58 @@ class InteractionPublic:
 
         deleted_at = _parse_deleted_at(d.pop("deleted_at", UNSET))
 
+        is_draft = d.pop("is_draft", UNSET)
+
+        def _parse_draft_source(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        draft_source = _parse_draft_source(d.pop("draft_source", UNSET))
+
+        def _parse_location_label(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        location_label = _parse_location_label(d.pop("location_label", UNSET))
+
+        def _parse_latitude(data: object) -> float | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(float | None | Unset, data)
+
+        latitude = _parse_latitude(d.pop("latitude", UNSET))
+
+        def _parse_longitude(data: object) -> float | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(float | None | Unset, data)
+
+        longitude = _parse_longitude(d.pop("longitude", UNSET))
+
         interaction_public = cls(
             channel=channel,
             occurred_at=occurred_at,
             id=id,
             created_at=created_at,
             notes=notes,
-            mood=mood,
             duration_minutes=duration_minutes,
             attendees=attendees,
             deleted_at=deleted_at,
+            is_draft=is_draft,
+            draft_source=draft_source,
+            location_label=location_label,
+            latitude=latitude,
+            longitude=longitude,
         )
 
         interaction_public.additional_properties = d

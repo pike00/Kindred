@@ -9,7 +9,6 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 from ..types import UNSET, Unset
-from dateutil.parser import isoparse
 from typing import cast
 from uuid import UUID
 import datetime
@@ -41,6 +40,8 @@ class ContactUpdate:
         stage (None | str | Unset):
         do_not_contact (bool | None | Unset):
         do_not_contact_reason (None | str | Unset):
+        pronouns (None | str | Unset):
+        timezone (None | str | Unset):
         tag_ids (list[UUID] | None | Unset):
     """
 
@@ -63,6 +64,8 @@ class ContactUpdate:
     stage: None | str | Unset = UNSET
     do_not_contact: bool | None | Unset = UNSET
     do_not_contact_reason: None | str | Unset = UNSET
+    pronouns: None | str | Unset = UNSET
+    timezone: None | str | Unset = UNSET
     tag_ids: list[UUID] | None | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -185,6 +188,18 @@ class ContactUpdate:
         else:
             do_not_contact_reason = self.do_not_contact_reason
 
+        pronouns: None | str | Unset
+        if isinstance(self.pronouns, Unset):
+            pronouns = UNSET
+        else:
+            pronouns = self.pronouns
+
+        timezone: None | str | Unset
+        if isinstance(self.timezone, Unset):
+            timezone = UNSET
+        else:
+            timezone = self.timezone
+
         tag_ids: list[str] | None | Unset
         if isinstance(self.tag_ids, Unset):
             tag_ids = UNSET
@@ -238,6 +253,10 @@ class ContactUpdate:
             field_dict["do_not_contact"] = do_not_contact
         if do_not_contact_reason is not UNSET:
             field_dict["do_not_contact_reason"] = do_not_contact_reason
+        if pronouns is not UNSET:
+            field_dict["pronouns"] = pronouns
+        if timezone is not UNSET:
+            field_dict["timezone"] = timezone
         if tag_ids is not UNSET:
             field_dict["tag_ids"] = tag_ids
 
@@ -336,7 +355,7 @@ class ContactUpdate:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                birthday_type_0 = isoparse(data).date()
+                birthday_type_0 = datetime.date.fromisoformat(data)
 
                 return birthday_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -389,7 +408,7 @@ class ContactUpdate:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                deceased_at_type_0 = isoparse(data).date()
+                deceased_at_type_0 = datetime.date.fromisoformat(data)
 
                 return deceased_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -434,6 +453,24 @@ class ContactUpdate:
 
         do_not_contact_reason = _parse_do_not_contact_reason(d.pop("do_not_contact_reason", UNSET))
 
+        def _parse_pronouns(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        pronouns = _parse_pronouns(d.pop("pronouns", UNSET))
+
+        def _parse_timezone(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        timezone = _parse_timezone(d.pop("timezone", UNSET))
+
         def _parse_tag_ids(data: object) -> list[UUID] | None | Unset:
             if data is None:
                 return data
@@ -476,6 +513,8 @@ class ContactUpdate:
             stage=stage,
             do_not_contact=do_not_contact,
             do_not_contact_reason=do_not_contact_reason,
+            pronouns=pronouns,
+            timezone=timezone,
             tag_ids=tag_ids,
         )
 

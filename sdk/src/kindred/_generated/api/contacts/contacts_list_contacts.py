@@ -27,6 +27,7 @@ def _get_kwargs(
     include_deleted: bool | Unset = False,
     only_deleted: bool | Unset = False,
     ids: list[UUID] | None | Unset = UNSET,
+    saved_filter_id: None | Unset | UUID = UNSET,
 ) -> dict[str, Any]:
 
     params: dict[str, Any] = {}
@@ -89,6 +90,15 @@ def _get_kwargs(
         json_ids = ids
     params["ids"] = json_ids
 
+    json_saved_filter_id: None | str | Unset
+    if isinstance(saved_filter_id, Unset):
+        json_saved_filter_id = UNSET
+    elif isinstance(saved_filter_id, UUID):
+        json_saved_filter_id = str(saved_filter_id)
+    else:
+        json_saved_filter_id = saved_filter_id
+    params["saved_filter_id"] = json_saved_filter_id
+
     params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
 
     _kwargs: dict[str, Any] = {
@@ -143,18 +153,11 @@ def sync_detailed(
     include_deleted: bool | Unset = False,
     only_deleted: bool | Unset = False,
     ids: list[UUID] | None | Unset = UNSET,
+    saved_filter_id: None | Unset | UUID = UNSET,
 ) -> Response[ContactsPublic | HTTPValidationError]:
     """List Contacts
 
      List contacts with filtering.
-
-    Pass `ids=<uuid>&ids=<uuid>` to fetch a specific batch of contacts (useful for
-    hydrating references from other resources). When `ids` is provided, the default
-    `is_archived=false` filter is lifted so callers can resolve archived rows too.
-
-    Soft-deleted contacts (``deleted_at`` set) are hidden by default. Pass
-    ``include_deleted=true`` to surface them alongside live rows, or
-    ``only_deleted=true`` to fetch the trash view exclusively.
 
     Args:
         skip (int | Unset):  Default: 0.
@@ -167,6 +170,7 @@ def sync_detailed(
         include_deleted (bool | Unset):  Default: False.
         only_deleted (bool | Unset):  Default: False.
         ids (list[UUID] | None | Unset):
+        saved_filter_id (None | Unset | UUID):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -187,6 +191,7 @@ def sync_detailed(
         include_deleted=include_deleted,
         only_deleted=only_deleted,
         ids=ids,
+        saved_filter_id=saved_filter_id,
     )
 
     response = client.get_httpx_client().request(
@@ -209,18 +214,11 @@ def sync(
     include_deleted: bool | Unset = False,
     only_deleted: bool | Unset = False,
     ids: list[UUID] | None | Unset = UNSET,
+    saved_filter_id: None | Unset | UUID = UNSET,
 ) -> ContactsPublic | HTTPValidationError | None:
     """List Contacts
 
      List contacts with filtering.
-
-    Pass `ids=<uuid>&ids=<uuid>` to fetch a specific batch of contacts (useful for
-    hydrating references from other resources). When `ids` is provided, the default
-    `is_archived=false` filter is lifted so callers can resolve archived rows too.
-
-    Soft-deleted contacts (``deleted_at`` set) are hidden by default. Pass
-    ``include_deleted=true`` to surface them alongside live rows, or
-    ``only_deleted=true`` to fetch the trash view exclusively.
 
     Args:
         skip (int | Unset):  Default: 0.
@@ -233,6 +231,7 @@ def sync(
         include_deleted (bool | Unset):  Default: False.
         only_deleted (bool | Unset):  Default: False.
         ids (list[UUID] | None | Unset):
+        saved_filter_id (None | Unset | UUID):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -254,6 +253,7 @@ def sync(
         include_deleted=include_deleted,
         only_deleted=only_deleted,
         ids=ids,
+        saved_filter_id=saved_filter_id,
     ).parsed
 
 
@@ -270,18 +270,11 @@ async def asyncio_detailed(
     include_deleted: bool | Unset = False,
     only_deleted: bool | Unset = False,
     ids: list[UUID] | None | Unset = UNSET,
+    saved_filter_id: None | Unset | UUID = UNSET,
 ) -> Response[ContactsPublic | HTTPValidationError]:
     """List Contacts
 
      List contacts with filtering.
-
-    Pass `ids=<uuid>&ids=<uuid>` to fetch a specific batch of contacts (useful for
-    hydrating references from other resources). When `ids` is provided, the default
-    `is_archived=false` filter is lifted so callers can resolve archived rows too.
-
-    Soft-deleted contacts (``deleted_at`` set) are hidden by default. Pass
-    ``include_deleted=true`` to surface them alongside live rows, or
-    ``only_deleted=true`` to fetch the trash view exclusively.
 
     Args:
         skip (int | Unset):  Default: 0.
@@ -294,6 +287,7 @@ async def asyncio_detailed(
         include_deleted (bool | Unset):  Default: False.
         only_deleted (bool | Unset):  Default: False.
         ids (list[UUID] | None | Unset):
+        saved_filter_id (None | Unset | UUID):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -314,6 +308,7 @@ async def asyncio_detailed(
         include_deleted=include_deleted,
         only_deleted=only_deleted,
         ids=ids,
+        saved_filter_id=saved_filter_id,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -334,18 +329,11 @@ async def asyncio(
     include_deleted: bool | Unset = False,
     only_deleted: bool | Unset = False,
     ids: list[UUID] | None | Unset = UNSET,
+    saved_filter_id: None | Unset | UUID = UNSET,
 ) -> ContactsPublic | HTTPValidationError | None:
     """List Contacts
 
      List contacts with filtering.
-
-    Pass `ids=<uuid>&ids=<uuid>` to fetch a specific batch of contacts (useful for
-    hydrating references from other resources). When `ids` is provided, the default
-    `is_archived=false` filter is lifted so callers can resolve archived rows too.
-
-    Soft-deleted contacts (``deleted_at`` set) are hidden by default. Pass
-    ``include_deleted=true`` to surface them alongside live rows, or
-    ``only_deleted=true`` to fetch the trash view exclusively.
 
     Args:
         skip (int | Unset):  Default: 0.
@@ -358,6 +346,7 @@ async def asyncio(
         include_deleted (bool | Unset):  Default: False.
         only_deleted (bool | Unset):  Default: False.
         ids (list[UUID] | None | Unset):
+        saved_filter_id (None | Unset | UUID):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -380,5 +369,6 @@ async def asyncio(
             include_deleted=include_deleted,
             only_deleted=only_deleted,
             ids=ids,
+            saved_filter_id=saved_filter_id,
         )
     ).parsed

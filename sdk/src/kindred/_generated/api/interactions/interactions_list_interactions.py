@@ -19,6 +19,7 @@ def _get_kwargs(
     *,
     contact_id: None | Unset | UUID = UNSET,
     skip: int | Unset = 0,
+    is_draft: bool | None | Unset = UNSET,
     limit: int | Unset = 100,
 ) -> dict[str, Any]:
 
@@ -34,6 +35,13 @@ def _get_kwargs(
     params["contact_id"] = json_contact_id
 
     params["skip"] = skip
+
+    json_is_draft: bool | None | Unset
+    if isinstance(is_draft, Unset):
+        json_is_draft = UNSET
+    else:
+        json_is_draft = is_draft
+    params["is_draft"] = json_is_draft
 
     params["limit"] = limit
 
@@ -83,15 +91,20 @@ def sync_detailed(
     client: AuthenticatedClient,
     contact_id: None | Unset | UUID = UNSET,
     skip: int | Unset = 0,
+    is_draft: bool | None | Unset = UNSET,
     limit: int | Unset = 100,
 ) -> Response[HTTPValidationError | InteractionsPublic]:
     """List Interactions
 
      List interactions. Pass ``contact_id`` to filter by attendee.
 
+    By default, drafts are excluded. Pass ``is_draft=true`` to list only
+    drafts, or ``is_draft=false`` to explicitly exclude them.
+
     Args:
         contact_id (None | Unset | UUID):
         skip (int | Unset):  Default: 0.
+        is_draft (bool | None | Unset):
         limit (int | Unset):  Default: 100.
 
     Raises:
@@ -105,6 +118,7 @@ def sync_detailed(
     kwargs = _get_kwargs(
         contact_id=contact_id,
         skip=skip,
+        is_draft=is_draft,
         limit=limit,
     )
 
@@ -120,15 +134,20 @@ def sync(
     client: AuthenticatedClient,
     contact_id: None | Unset | UUID = UNSET,
     skip: int | Unset = 0,
+    is_draft: bool | None | Unset = UNSET,
     limit: int | Unset = 100,
 ) -> HTTPValidationError | InteractionsPublic | None:
     """List Interactions
 
      List interactions. Pass ``contact_id`` to filter by attendee.
 
+    By default, drafts are excluded. Pass ``is_draft=true`` to list only
+    drafts, or ``is_draft=false`` to explicitly exclude them.
+
     Args:
         contact_id (None | Unset | UUID):
         skip (int | Unset):  Default: 0.
+        is_draft (bool | None | Unset):
         limit (int | Unset):  Default: 100.
 
     Raises:
@@ -143,6 +162,7 @@ def sync(
         client=client,
         contact_id=contact_id,
         skip=skip,
+        is_draft=is_draft,
         limit=limit,
     ).parsed
 
@@ -152,15 +172,20 @@ async def asyncio_detailed(
     client: AuthenticatedClient,
     contact_id: None | Unset | UUID = UNSET,
     skip: int | Unset = 0,
+    is_draft: bool | None | Unset = UNSET,
     limit: int | Unset = 100,
 ) -> Response[HTTPValidationError | InteractionsPublic]:
     """List Interactions
 
      List interactions. Pass ``contact_id`` to filter by attendee.
 
+    By default, drafts are excluded. Pass ``is_draft=true`` to list only
+    drafts, or ``is_draft=false`` to explicitly exclude them.
+
     Args:
         contact_id (None | Unset | UUID):
         skip (int | Unset):  Default: 0.
+        is_draft (bool | None | Unset):
         limit (int | Unset):  Default: 100.
 
     Raises:
@@ -174,6 +199,7 @@ async def asyncio_detailed(
     kwargs = _get_kwargs(
         contact_id=contact_id,
         skip=skip,
+        is_draft=is_draft,
         limit=limit,
     )
 
@@ -187,15 +213,20 @@ async def asyncio(
     client: AuthenticatedClient,
     contact_id: None | Unset | UUID = UNSET,
     skip: int | Unset = 0,
+    is_draft: bool | None | Unset = UNSET,
     limit: int | Unset = 100,
 ) -> HTTPValidationError | InteractionsPublic | None:
     """List Interactions
 
      List interactions. Pass ``contact_id`` to filter by attendee.
 
+    By default, drafts are excluded. Pass ``is_draft=true`` to list only
+    drafts, or ``is_draft=false`` to explicitly exclude them.
+
     Args:
         contact_id (None | Unset | UUID):
         skip (int | Unset):  Default: 0.
+        is_draft (bool | None | Unset):
         limit (int | Unset):  Default: 100.
 
     Raises:
@@ -211,6 +242,7 @@ async def asyncio(
             client=client,
             contact_id=contact_id,
             skip=skip,
+            is_draft=is_draft,
             limit=limit,
         )
     ).parsed

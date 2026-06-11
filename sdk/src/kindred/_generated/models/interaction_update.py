@@ -10,7 +10,6 @@ from ..types import UNSET, Unset
 
 from ..models.interaction_channel import InteractionChannel
 from ..types import UNSET, Unset
-from dateutil.parser import isoparse
 from typing import cast
 from uuid import UUID
 import datetime
@@ -26,7 +25,6 @@ class InteractionUpdate:
         channel (InteractionChannel | None | Unset):
         occurred_at (datetime.datetime | None | Unset):
         notes (None | str | Unset):
-        mood (None | str | Unset):
         duration_minutes (int | None | Unset):
         attendee_ids (list[UUID] | None | Unset): Replace the attendee set; must have at least one if provided.
     """
@@ -34,7 +32,6 @@ class InteractionUpdate:
     channel: InteractionChannel | None | Unset = UNSET
     occurred_at: datetime.datetime | None | Unset = UNSET
     notes: None | str | Unset = UNSET
-    mood: None | str | Unset = UNSET
     duration_minutes: int | None | Unset = UNSET
     attendee_ids: list[UUID] | None | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
@@ -61,12 +58,6 @@ class InteractionUpdate:
             notes = UNSET
         else:
             notes = self.notes
-
-        mood: None | str | Unset
-        if isinstance(self.mood, Unset):
-            mood = UNSET
-        else:
-            mood = self.mood
 
         duration_minutes: int | None | Unset
         if isinstance(self.duration_minutes, Unset):
@@ -95,8 +86,6 @@ class InteractionUpdate:
             field_dict["occurred_at"] = occurred_at
         if notes is not UNSET:
             field_dict["notes"] = notes
-        if mood is not UNSET:
-            field_dict["mood"] = mood
         if duration_minutes is not UNSET:
             field_dict["duration_minutes"] = duration_minutes
         if attendee_ids is not UNSET:
@@ -133,7 +122,7 @@ class InteractionUpdate:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                occurred_at_type_0 = isoparse(data)
+                occurred_at_type_0 = datetime.datetime.fromisoformat(data)
 
                 return occurred_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -150,15 +139,6 @@ class InteractionUpdate:
             return cast(None | str | Unset, data)
 
         notes = _parse_notes(d.pop("notes", UNSET))
-
-        def _parse_mood(data: object) -> None | str | Unset:
-            if data is None:
-                return data
-            if isinstance(data, Unset):
-                return data
-            return cast(None | str | Unset, data)
-
-        mood = _parse_mood(d.pop("mood", UNSET))
 
         def _parse_duration_minutes(data: object) -> int | None | Unset:
             if data is None:
@@ -195,7 +175,6 @@ class InteractionUpdate:
             channel=channel,
             occurred_at=occurred_at,
             notes=notes,
-            mood=mood,
             duration_minutes=duration_minutes,
             attendee_ids=attendee_ids,
         )

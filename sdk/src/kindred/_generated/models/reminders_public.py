@@ -22,11 +22,9 @@ class RemindersPublic:
     """
     Attributes:
         data (list[ReminderPublic]):
-        count (int):
     """
 
     data: list[ReminderPublic]
-    count: int
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -37,14 +35,11 @@ class RemindersPublic:
             data_item = data_item_data.to_dict()
             data.append(data_item)
 
-        count = self.count
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
             {
                 "data": data,
-                "count": count,
             }
         )
 
@@ -62,11 +57,8 @@ class RemindersPublic:
 
             data.append(data_item)
 
-        count = d.pop("count")
-
         reminders_public = cls(
             data=data,
-            count=count,
         )
 
         reminders_public.additional_properties = d

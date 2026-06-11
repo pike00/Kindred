@@ -10,6 +10,8 @@ from ..types import UNSET, Unset
 
 from ..types import UNSET, Unset
 from typing import cast
+from uuid import UUID
+import datetime
 
 
 T = TypeVar("T", bound="WebhookEndpointPublic")
@@ -17,37 +19,40 @@ T = TypeVar("T", bound="WebhookEndpointPublic")
 
 @_attrs_define
 class WebhookEndpointPublic:
-    """Public representation of a webhook endpoint (without api_key).
-
+    """
     Attributes:
-        id (str):
-        name (str):
-        direction (str):
-        is_active (bool):
-        created_at (str):
-        url (None | str | Unset):
-        event_types (None | str | Unset):
+        name (str): Human-readable endpoint name.
+        direction (str): "inbound" or "outbound".
+        id (UUID):
+        owner_id (UUID):
+        created_at (datetime.datetime):
+        url (None | str | Unset): Target URL for outbound webhooks; null for inbound.
+        event_types (None | str | Unset): Comma-separated event types (e.g. contact.created,interaction.logged).
+        is_active (bool | Unset): Enable or disable without deleting. Default: True.
+        secret (None | str | Unset): HMAC secret for verifying inbound payloads.
     """
 
-    id: str
     name: str
     direction: str
-    is_active: bool
-    created_at: str
+    id: UUID
+    owner_id: UUID
+    created_at: datetime.datetime
     url: None | str | Unset = UNSET
     event_types: None | str | Unset = UNSET
+    is_active: bool | Unset = True
+    secret: None | str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        id = self.id
-
         name = self.name
 
         direction = self.direction
 
-        is_active = self.is_active
+        id = str(self.id)
 
-        created_at = self.created_at
+        owner_id = str(self.owner_id)
+
+        created_at = self.created_at.isoformat()
 
         url: None | str | Unset
         if isinstance(self.url, Unset):
@@ -61,14 +66,22 @@ class WebhookEndpointPublic:
         else:
             event_types = self.event_types
 
+        is_active = self.is_active
+
+        secret: None | str | Unset
+        if isinstance(self.secret, Unset):
+            secret = UNSET
+        else:
+            secret = self.secret
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
             {
-                "id": id,
                 "name": name,
                 "direction": direction,
-                "is_active": is_active,
+                "id": id,
+                "owner_id": owner_id,
                 "created_at": created_at,
             }
         )
@@ -76,21 +89,25 @@ class WebhookEndpointPublic:
             field_dict["url"] = url
         if event_types is not UNSET:
             field_dict["event_types"] = event_types
+        if is_active is not UNSET:
+            field_dict["is_active"] = is_active
+        if secret is not UNSET:
+            field_dict["secret"] = secret
 
         return field_dict
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
-        id = d.pop("id")
-
         name = d.pop("name")
 
         direction = d.pop("direction")
 
-        is_active = d.pop("is_active")
+        id = UUID(d.pop("id"))
 
-        created_at = d.pop("created_at")
+        owner_id = UUID(d.pop("owner_id"))
+
+        created_at = datetime.datetime.fromisoformat(d.pop("created_at"))
 
         def _parse_url(data: object) -> None | str | Unset:
             if data is None:
@@ -110,14 +127,27 @@ class WebhookEndpointPublic:
 
         event_types = _parse_event_types(d.pop("event_types", UNSET))
 
+        is_active = d.pop("is_active", UNSET)
+
+        def _parse_secret(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        secret = _parse_secret(d.pop("secret", UNSET))
+
         webhook_endpoint_public = cls(
-            id=id,
             name=name,
             direction=direction,
-            is_active=is_active,
+            id=id,
+            owner_id=owner_id,
             created_at=created_at,
             url=url,
             event_types=event_types,
+            is_active=is_active,
+            secret=secret,
         )
 
         webhook_endpoint_public.additional_properties = d

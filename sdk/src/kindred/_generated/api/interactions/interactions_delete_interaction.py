@@ -65,7 +65,7 @@ def sync_detailed(
 ) -> Response[HTTPValidationError | Ok]:
     """Delete Interaction
 
-     Delete an interaction and recompute each attendee's last_contacted_at.
+     Soft-delete an interaction by setting deleted_at.
 
     Args:
         interaction_id (UUID):
@@ -96,7 +96,7 @@ def sync(
 ) -> HTTPValidationError | Ok | None:
     """Delete Interaction
 
-     Delete an interaction and recompute each attendee's last_contacted_at.
+     Soft-delete an interaction by setting deleted_at.
 
     Args:
         interaction_id (UUID):
@@ -122,7 +122,7 @@ async def asyncio_detailed(
 ) -> Response[HTTPValidationError | Ok]:
     """Delete Interaction
 
-     Delete an interaction and recompute each attendee's last_contacted_at.
+     Soft-delete an interaction by setting deleted_at.
 
     Args:
         interaction_id (UUID):
@@ -151,7 +151,7 @@ async def asyncio(
 ) -> HTTPValidationError | Ok | None:
     """Delete Interaction
 
-     Delete an interaction and recompute each attendee's last_contacted_at.
+     Soft-delete an interaction by setting deleted_at.
 
     Args:
         interaction_id (UUID):

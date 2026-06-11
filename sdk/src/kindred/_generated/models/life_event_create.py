@@ -9,7 +9,6 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 from ..types import UNSET, Unset
-from dateutil.parser import isoparse
 from typing import cast
 from uuid import UUID
 import datetime
@@ -80,7 +79,7 @@ class LifeEventCreate:
 
         title = d.pop("title")
 
-        occurred_at = isoparse(d.pop("occurred_at")).date()
+        occurred_at = datetime.date.fromisoformat(d.pop("occurred_at"))
 
         contact_id = UUID(d.pop("contact_id"))
 

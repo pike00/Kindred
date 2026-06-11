@@ -65,7 +65,7 @@ def sync_detailed(
 ) -> Response[HTTPValidationError | Ok]:
     """Delete Note
 
-     Delete a note.
+     Soft-delete a note by setting deleted_at.
 
     Args:
         note_id (UUID):
@@ -96,7 +96,7 @@ def sync(
 ) -> HTTPValidationError | Ok | None:
     """Delete Note
 
-     Delete a note.
+     Soft-delete a note by setting deleted_at.
 
     Args:
         note_id (UUID):
@@ -122,7 +122,7 @@ async def asyncio_detailed(
 ) -> Response[HTTPValidationError | Ok]:
     """Delete Note
 
-     Delete a note.
+     Soft-delete a note by setting deleted_at.
 
     Args:
         note_id (UUID):
@@ -151,7 +151,7 @@ async def asyncio(
 ) -> HTTPValidationError | Ok | None:
     """Delete Note
 
-     Delete a note.
+     Soft-delete a note by setting deleted_at.
 
     Args:
         note_id (UUID):

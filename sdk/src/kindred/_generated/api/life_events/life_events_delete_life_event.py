@@ -65,7 +65,7 @@ def sync_detailed(
 ) -> Response[HTTPValidationError | Ok]:
     """Delete Life Event
 
-     Delete a life event.
+     Soft-delete a life event by setting deleted_at.
 
     Args:
         event_id (UUID):
@@ -96,7 +96,7 @@ def sync(
 ) -> HTTPValidationError | Ok | None:
     """Delete Life Event
 
-     Delete a life event.
+     Soft-delete a life event by setting deleted_at.
 
     Args:
         event_id (UUID):
@@ -122,7 +122,7 @@ async def asyncio_detailed(
 ) -> Response[HTTPValidationError | Ok]:
     """Delete Life Event
 
-     Delete a life event.
+     Soft-delete a life event by setting deleted_at.
 
     Args:
         event_id (UUID):
@@ -151,7 +151,7 @@ async def asyncio(
 ) -> HTTPValidationError | Ok | None:
     """Delete Life Event
 
-     Delete a life event.
+     Soft-delete a life event by setting deleted_at.
 
     Args:
         event_id (UUID):

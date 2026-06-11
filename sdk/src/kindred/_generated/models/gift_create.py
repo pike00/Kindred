@@ -10,7 +10,6 @@ from ..types import UNSET, Unset
 
 from ..models.gift_status import GiftStatus
 from ..types import UNSET, Unset
-from dateutil.parser import isoparse
 from typing import cast
 from uuid import UUID
 import datetime
@@ -153,7 +152,7 @@ class GiftCreate:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                gift_date_type_0 = isoparse(data).date()
+                gift_date_type_0 = datetime.date.fromisoformat(data)
 
                 return gift_date_type_0
             except (TypeError, ValueError, AttributeError, KeyError):

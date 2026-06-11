@@ -65,7 +65,7 @@ def sync_detailed(
 ) -> Response[ContactPublic | HTTPValidationError]:
     """Restore Contact
 
-     Restore a soft-deleted contact (clear ``deleted_at``).
+     Restore a soft-deleted contact.
 
     Args:
         contact_id (UUID):
@@ -96,7 +96,7 @@ def sync(
 ) -> ContactPublic | HTTPValidationError | None:
     """Restore Contact
 
-     Restore a soft-deleted contact (clear ``deleted_at``).
+     Restore a soft-deleted contact.
 
     Args:
         contact_id (UUID):
@@ -122,7 +122,7 @@ async def asyncio_detailed(
 ) -> Response[ContactPublic | HTTPValidationError]:
     """Restore Contact
 
-     Restore a soft-deleted contact (clear ``deleted_at``).
+     Restore a soft-deleted contact.
 
     Args:
         contact_id (UUID):
@@ -151,7 +151,7 @@ async def asyncio(
 ) -> ContactPublic | HTTPValidationError | None:
     """Restore Contact
 
-     Restore a soft-deleted contact (clear ``deleted_at``).
+     Restore a soft-deleted contact.
 
     Args:
         contact_id (UUID):

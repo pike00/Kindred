@@ -70,7 +70,7 @@ def sync_detailed(
 ) -> Response[HTTPValidationError | list[MentionPublic]]:
     """List Contact Mentions
 
-     Return notes that @-mention this contact, grouped with the source contact.
+     Get notes where this contact is mentioned.
 
     Args:
         contact_id (UUID):
@@ -101,7 +101,7 @@ def sync(
 ) -> HTTPValidationError | list[MentionPublic] | None:
     """List Contact Mentions
 
-     Return notes that @-mention this contact, grouped with the source contact.
+     Get notes where this contact is mentioned.
 
     Args:
         contact_id (UUID):
@@ -127,7 +127,7 @@ async def asyncio_detailed(
 ) -> Response[HTTPValidationError | list[MentionPublic]]:
     """List Contact Mentions
 
-     Return notes that @-mention this contact, grouped with the source contact.
+     Get notes where this contact is mentioned.
 
     Args:
         contact_id (UUID):
@@ -156,7 +156,7 @@ async def asyncio(
 ) -> HTTPValidationError | list[MentionPublic] | None:
     """List Contact Mentions
 
-     Return notes that @-mention this contact, grouped with the source contact.
+     Get notes where this contact is mentioned.
 
     Args:
         contact_id (UUID):

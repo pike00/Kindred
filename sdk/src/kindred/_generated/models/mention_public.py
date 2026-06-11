@@ -8,7 +8,6 @@ from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
-from dateutil.parser import isoparse
 from typing import cast
 from uuid import UUID
 import datetime
@@ -69,7 +68,7 @@ class MentionPublic:
 
         note_body = d.pop("note_body")
 
-        note_created_at = isoparse(d.pop("note_created_at"))
+        note_created_at = datetime.datetime.fromisoformat(d.pop("note_created_at"))
 
         source_contact = ContactPublic.from_dict(d.pop("source_contact"))
 

@@ -9,7 +9,6 @@ from ...types import Response, UNSET
 from ... import errors
 
 from ...models.http_validation_error import HTTPValidationError
-from ...models.reminder_public import ReminderPublic
 from typing import cast
 from uuid import UUID
 
@@ -30,10 +29,9 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> HTTPValidationError | ReminderPublic | None:
+) -> Any | HTTPValidationError | None:
     if response.status_code == 200:
-        response_200 = ReminderPublic.from_dict(response.json())
-
+        response_200 = response.json()
         return response_200
 
     if response.status_code == 422:
@@ -49,7 +47,7 @@ def _parse_response(
 
 def _build_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Response[HTTPValidationError | ReminderPublic]:
+) -> Response[Any | HTTPValidationError]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -62,15 +60,10 @@ def sync_detailed(
     reminder_id: UUID,
     *,
     client: AuthenticatedClient,
-) -> Response[HTTPValidationError | ReminderPublic]:
+) -> Response[Any | HTTPValidationError]:
     """Dismiss Reminder
 
-     Soft-clear a reminder from the badge.
-
-    Bumps ``snoozed_until`` to a far-future sentinel so the reminder
-    disappears from `/reminders/due` without being deleted. The reminder is
-    still listed by `GET /reminders/` and can be re-enabled by editing it
-    (clearing or shortening ``snoozed_until``).
+     Dismiss a reminder by setting snoozed_until to now (soft-clear from badge).
 
     Args:
         reminder_id (UUID):
@@ -80,7 +73,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[HTTPValidationError | ReminderPublic]
+        Response[Any | HTTPValidationError]
     """
 
     kwargs = _get_kwargs(
@@ -98,15 +91,10 @@ def sync(
     reminder_id: UUID,
     *,
     client: AuthenticatedClient,
-) -> HTTPValidationError | ReminderPublic | None:
+) -> Any | HTTPValidationError | None:
     """Dismiss Reminder
 
-     Soft-clear a reminder from the badge.
-
-    Bumps ``snoozed_until`` to a far-future sentinel so the reminder
-    disappears from `/reminders/due` without being deleted. The reminder is
-    still listed by `GET /reminders/` and can be re-enabled by editing it
-    (clearing or shortening ``snoozed_until``).
+     Dismiss a reminder by setting snoozed_until to now (soft-clear from badge).
 
     Args:
         reminder_id (UUID):
@@ -116,7 +104,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        HTTPValidationError | ReminderPublic
+        Any | HTTPValidationError
     """
 
     return sync_detailed(
@@ -129,15 +117,10 @@ async def asyncio_detailed(
     reminder_id: UUID,
     *,
     client: AuthenticatedClient,
-) -> Response[HTTPValidationError | ReminderPublic]:
+) -> Response[Any | HTTPValidationError]:
     """Dismiss Reminder
 
-     Soft-clear a reminder from the badge.
-
-    Bumps ``snoozed_until`` to a far-future sentinel so the reminder
-    disappears from `/reminders/due` without being deleted. The reminder is
-    still listed by `GET /reminders/` and can be re-enabled by editing it
-    (clearing or shortening ``snoozed_until``).
+     Dismiss a reminder by setting snoozed_until to now (soft-clear from badge).
 
     Args:
         reminder_id (UUID):
@@ -147,7 +130,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[HTTPValidationError | ReminderPublic]
+        Response[Any | HTTPValidationError]
     """
 
     kwargs = _get_kwargs(
@@ -163,15 +146,10 @@ async def asyncio(
     reminder_id: UUID,
     *,
     client: AuthenticatedClient,
-) -> HTTPValidationError | ReminderPublic | None:
+) -> Any | HTTPValidationError | None:
     """Dismiss Reminder
 
-     Soft-clear a reminder from the badge.
-
-    Bumps ``snoozed_until`` to a far-future sentinel so the reminder
-    disappears from `/reminders/due` without being deleted. The reminder is
-    still listed by `GET /reminders/` and can be re-enabled by editing it
-    (clearing or shortening ``snoozed_until``).
+     Dismiss a reminder by setting snoozed_until to now (soft-clear from badge).
 
     Args:
         reminder_id (UUID):
@@ -181,7 +159,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        HTTPValidationError | ReminderPublic
+        Any | HTTPValidationError
     """
 
     return (

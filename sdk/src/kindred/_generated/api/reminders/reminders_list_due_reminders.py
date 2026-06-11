@@ -16,10 +16,13 @@ from typing import cast
 
 def _get_kwargs(
     *,
+    skip: int | Unset = 0,
     limit: int | Unset = 100,
 ) -> dict[str, Any]:
 
     params: dict[str, Any] = {}
+
+    params["skip"] = skip
 
     params["limit"] = limit
 
@@ -67,18 +70,15 @@ def _build_response(
 def sync_detailed(
     *,
     client: AuthenticatedClient,
+    skip: int | Unset = 0,
     limit: int | Unset = 100,
 ) -> Response[HTTPValidationError | RemindersDuePublic]:
-    r"""List Due Reminders
+    """List Due Reminders
 
-     List reminders that are due now for the current user.
-
-    A reminder is \"due\" when it is active, its `remind_at` is in the past,
-    and it is not currently snoozed (`snoozed_until` is null or in the past).
-    Results include the linked contact (when present) so the popover can
-    render contact name without N+1 fetches. Ordered oldest-due first.
+     List reminders due now or overdue for the current user.
 
     Args:
+        skip (int | Unset):  Default: 0.
         limit (int | Unset):  Default: 100.
 
     Raises:
@@ -90,6 +90,7 @@ def sync_detailed(
     """
 
     kwargs = _get_kwargs(
+        skip=skip,
         limit=limit,
     )
 
@@ -103,18 +104,15 @@ def sync_detailed(
 def sync(
     *,
     client: AuthenticatedClient,
+    skip: int | Unset = 0,
     limit: int | Unset = 100,
 ) -> HTTPValidationError | RemindersDuePublic | None:
-    r"""List Due Reminders
+    """List Due Reminders
 
-     List reminders that are due now for the current user.
-
-    A reminder is \"due\" when it is active, its `remind_at` is in the past,
-    and it is not currently snoozed (`snoozed_until` is null or in the past).
-    Results include the linked contact (when present) so the popover can
-    render contact name without N+1 fetches. Ordered oldest-due first.
+     List reminders due now or overdue for the current user.
 
     Args:
+        skip (int | Unset):  Default: 0.
         limit (int | Unset):  Default: 100.
 
     Raises:
@@ -127,6 +125,7 @@ def sync(
 
     return sync_detailed(
         client=client,
+        skip=skip,
         limit=limit,
     ).parsed
 
@@ -134,18 +133,15 @@ def sync(
 async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
+    skip: int | Unset = 0,
     limit: int | Unset = 100,
 ) -> Response[HTTPValidationError | RemindersDuePublic]:
-    r"""List Due Reminders
+    """List Due Reminders
 
-     List reminders that are due now for the current user.
-
-    A reminder is \"due\" when it is active, its `remind_at` is in the past,
-    and it is not currently snoozed (`snoozed_until` is null or in the past).
-    Results include the linked contact (when present) so the popover can
-    render contact name without N+1 fetches. Ordered oldest-due first.
+     List reminders due now or overdue for the current user.
 
     Args:
+        skip (int | Unset):  Default: 0.
         limit (int | Unset):  Default: 100.
 
     Raises:
@@ -157,6 +153,7 @@ async def asyncio_detailed(
     """
 
     kwargs = _get_kwargs(
+        skip=skip,
         limit=limit,
     )
 
@@ -168,18 +165,15 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: AuthenticatedClient,
+    skip: int | Unset = 0,
     limit: int | Unset = 100,
 ) -> HTTPValidationError | RemindersDuePublic | None:
-    r"""List Due Reminders
+    """List Due Reminders
 
-     List reminders that are due now for the current user.
-
-    A reminder is \"due\" when it is active, its `remind_at` is in the past,
-    and it is not currently snoozed (`snoozed_until` is null or in the past).
-    Results include the linked contact (when present) so the popover can
-    render contact name without N+1 fetches. Ordered oldest-due first.
+     List reminders due now or overdue for the current user.
 
     Args:
+        skip (int | Unset):  Default: 0.
         limit (int | Unset):  Default: 100.
 
     Raises:
@@ -193,6 +187,7 @@ async def asyncio(
     return (
         await asyncio_detailed(
             client=client,
+            skip=skip,
             limit=limit,
         )
     ).parsed

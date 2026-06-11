@@ -10,7 +10,6 @@ from ..types import UNSET, Unset
 
 from ..models.reminder_frequency import ReminderFrequency
 from ..types import UNSET, Unset
-from dateutil.parser import isoparse
 from typing import cast
 from uuid import UUID
 import datetime
@@ -88,7 +87,7 @@ class ReminderCreate:
         d = dict(src_dict)
         title = d.pop("title")
 
-        remind_at = isoparse(d.pop("remind_at"))
+        remind_at = datetime.datetime.fromisoformat(d.pop("remind_at"))
 
         def _parse_description(data: object) -> None | str | Unset:
             if data is None:

@@ -21,7 +21,6 @@ def _get_kwargs(
     *,
     body: None | ReminderSnoozeRequest | Unset = UNSET,
     minutes: int | None | Unset = UNSET,
-    reason: None | str | Unset = UNSET,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -33,13 +32,6 @@ def _get_kwargs(
     else:
         json_minutes = minutes
     params["minutes"] = json_minutes
-
-    json_reason: None | str | Unset
-    if isinstance(reason, Unset):
-        json_reason = UNSET
-    else:
-        json_reason = reason
-    params["reason"] = json_reason
 
     params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
 
@@ -98,20 +90,14 @@ def sync_detailed(
     client: AuthenticatedClient,
     body: None | ReminderSnoozeRequest | Unset = UNSET,
     minutes: int | None | Unset = UNSET,
-    reason: None | str | Unset = UNSET,
 ) -> Response[HTTPValidationError | ReminderPublic]:
     """Snooze Reminder
 
-     Snooze a reminder.
-
-    Accepts either a JSON body with ``snoozed_until`` (absolute UTC datetime) or
-    ``minutes`` (relative duration), or a legacy ``?minutes=`` query parameter.
-    Defaults to 30 minutes when nothing is provided. Writes a snooze history row.
+     Snooze a reminder. Accepts JSON body with minutes/snooze_until, or minutes as query param.
 
     Args:
         reminder_id (UUID):
         minutes (int | None | Unset):
-        reason (None | str | Unset):
         body (None | ReminderSnoozeRequest | Unset):
 
     Raises:
@@ -126,7 +112,6 @@ def sync_detailed(
         reminder_id=reminder_id,
         body=body,
         minutes=minutes,
-        reason=reason,
     )
 
     response = client.get_httpx_client().request(
@@ -142,20 +127,14 @@ def sync(
     client: AuthenticatedClient,
     body: None | ReminderSnoozeRequest | Unset = UNSET,
     minutes: int | None | Unset = UNSET,
-    reason: None | str | Unset = UNSET,
 ) -> HTTPValidationError | ReminderPublic | None:
     """Snooze Reminder
 
-     Snooze a reminder.
-
-    Accepts either a JSON body with ``snoozed_until`` (absolute UTC datetime) or
-    ``minutes`` (relative duration), or a legacy ``?minutes=`` query parameter.
-    Defaults to 30 minutes when nothing is provided. Writes a snooze history row.
+     Snooze a reminder. Accepts JSON body with minutes/snooze_until, or minutes as query param.
 
     Args:
         reminder_id (UUID):
         minutes (int | None | Unset):
-        reason (None | str | Unset):
         body (None | ReminderSnoozeRequest | Unset):
 
     Raises:
@@ -171,7 +150,6 @@ def sync(
         client=client,
         body=body,
         minutes=minutes,
-        reason=reason,
     ).parsed
 
 
@@ -181,20 +159,14 @@ async def asyncio_detailed(
     client: AuthenticatedClient,
     body: None | ReminderSnoozeRequest | Unset = UNSET,
     minutes: int | None | Unset = UNSET,
-    reason: None | str | Unset = UNSET,
 ) -> Response[HTTPValidationError | ReminderPublic]:
     """Snooze Reminder
 
-     Snooze a reminder.
-
-    Accepts either a JSON body with ``snoozed_until`` (absolute UTC datetime) or
-    ``minutes`` (relative duration), or a legacy ``?minutes=`` query parameter.
-    Defaults to 30 minutes when nothing is provided. Writes a snooze history row.
+     Snooze a reminder. Accepts JSON body with minutes/snooze_until, or minutes as query param.
 
     Args:
         reminder_id (UUID):
         minutes (int | None | Unset):
-        reason (None | str | Unset):
         body (None | ReminderSnoozeRequest | Unset):
 
     Raises:
@@ -209,7 +181,6 @@ async def asyncio_detailed(
         reminder_id=reminder_id,
         body=body,
         minutes=minutes,
-        reason=reason,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -223,20 +194,14 @@ async def asyncio(
     client: AuthenticatedClient,
     body: None | ReminderSnoozeRequest | Unset = UNSET,
     minutes: int | None | Unset = UNSET,
-    reason: None | str | Unset = UNSET,
 ) -> HTTPValidationError | ReminderPublic | None:
     """Snooze Reminder
 
-     Snooze a reminder.
-
-    Accepts either a JSON body with ``snoozed_until`` (absolute UTC datetime) or
-    ``minutes`` (relative duration), or a legacy ``?minutes=`` query parameter.
-    Defaults to 30 minutes when nothing is provided. Writes a snooze history row.
+     Snooze a reminder. Accepts JSON body with minutes/snooze_until, or minutes as query param.
 
     Args:
         reminder_id (UUID):
         minutes (int | None | Unset):
-        reason (None | str | Unset):
         body (None | ReminderSnoozeRequest | Unset):
 
     Raises:
@@ -253,6 +218,5 @@ async def asyncio(
             client=client,
             body=body,
             minutes=minutes,
-            reason=reason,
         )
     ).parsed

@@ -10,7 +10,6 @@ from ..types import UNSET, Unset
 
 from ..models.interaction_channel import InteractionChannel
 from ..types import UNSET, Unset
-from dateutil.parser import isoparse
 from typing import cast
 from uuid import UUID
 import datetime
@@ -27,16 +26,18 @@ class InteractionCreate:
         occurred_at (datetime.datetime): When the interaction actually took place.
         attendee_ids (list[UUID]): Contacts that attended; must have at least one.
         notes (None | str | Unset): Conversation summary, action items, etc.
-        mood (None | str | Unset): Emoji or keyword capturing the tone.
         duration_minutes (int | None | Unset): Length of the interaction in minutes.
+        is_draft (bool | Unset):  Default: False.
+        draft_source (None | str | Unset):
     """
 
     channel: InteractionChannel
     occurred_at: datetime.datetime
     attendee_ids: list[UUID]
     notes: None | str | Unset = UNSET
-    mood: None | str | Unset = UNSET
     duration_minutes: int | None | Unset = UNSET
+    is_draft: bool | Unset = False
+    draft_source: None | str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -55,17 +56,19 @@ class InteractionCreate:
         else:
             notes = self.notes
 
-        mood: None | str | Unset
-        if isinstance(self.mood, Unset):
-            mood = UNSET
-        else:
-            mood = self.mood
-
         duration_minutes: int | None | Unset
         if isinstance(self.duration_minutes, Unset):
             duration_minutes = UNSET
         else:
             duration_minutes = self.duration_minutes
+
+        is_draft = self.is_draft
+
+        draft_source: None | str | Unset
+        if isinstance(self.draft_source, Unset):
+            draft_source = UNSET
+        else:
+            draft_source = self.draft_source
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -78,10 +81,12 @@ class InteractionCreate:
         )
         if notes is not UNSET:
             field_dict["notes"] = notes
-        if mood is not UNSET:
-            field_dict["mood"] = mood
         if duration_minutes is not UNSET:
             field_dict["duration_minutes"] = duration_minutes
+        if is_draft is not UNSET:
+            field_dict["is_draft"] = is_draft
+        if draft_source is not UNSET:
+            field_dict["draft_source"] = draft_source
 
         return field_dict
 
@@ -90,7 +95,7 @@ class InteractionCreate:
         d = dict(src_dict)
         channel = InteractionChannel(d.pop("channel"))
 
-        occurred_at = isoparse(d.pop("occurred_at"))
+        occurred_at = datetime.datetime.fromisoformat(d.pop("occurred_at"))
 
         attendee_ids = []
         _attendee_ids = d.pop("attendee_ids")
@@ -108,15 +113,6 @@ class InteractionCreate:
 
         notes = _parse_notes(d.pop("notes", UNSET))
 
-        def _parse_mood(data: object) -> None | str | Unset:
-            if data is None:
-                return data
-            if isinstance(data, Unset):
-                return data
-            return cast(None | str | Unset, data)
-
-        mood = _parse_mood(d.pop("mood", UNSET))
-
         def _parse_duration_minutes(data: object) -> int | None | Unset:
             if data is None:
                 return data
@@ -126,13 +122,25 @@ class InteractionCreate:
 
         duration_minutes = _parse_duration_minutes(d.pop("duration_minutes", UNSET))
 
+        is_draft = d.pop("is_draft", UNSET)
+
+        def _parse_draft_source(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        draft_source = _parse_draft_source(d.pop("draft_source", UNSET))
+
         interaction_create = cls(
             channel=channel,
             occurred_at=occurred_at,
             attendee_ids=attendee_ids,
             notes=notes,
-            mood=mood,
             duration_minutes=duration_minutes,
+            is_draft=is_draft,
+            draft_source=draft_source,
         )
 
         interaction_create.additional_properties = d

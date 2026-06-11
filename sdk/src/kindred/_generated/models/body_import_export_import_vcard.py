@@ -10,9 +10,6 @@ from .. import types
 
 from ..types import UNSET, Unset
 
-from ..types import File, FileTypes
-from io import BytesIO
-
 
 T = TypeVar("T", bound="BodyImportExportImportVcard")
 
@@ -21,14 +18,14 @@ T = TypeVar("T", bound="BodyImportExportImportVcard")
 class BodyImportExportImportVcard:
     """
     Attributes:
-        file (File):
+        file (str):
     """
 
-    file: File
+    file: str
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        file = self.file.to_tuple()
+        file = self.file
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -43,7 +40,7 @@ class BodyImportExportImportVcard:
     def to_multipart(self) -> types.RequestFiles:
         files: types.RequestFiles = []
 
-        files.append(("file", self.file.to_tuple()))
+        files.append(("file", (None, str(self.file).encode(), "text/plain")))
 
         for prop_name, prop in self.additional_properties.items():
             files.append((prop_name, (None, str(prop).encode(), "text/plain")))
@@ -53,7 +50,7 @@ class BodyImportExportImportVcard:
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
-        file = File(payload=BytesIO(d.pop("file")))
+        file = d.pop("file")
 
         body_import_export_import_vcard = cls(
             file=file,

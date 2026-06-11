@@ -10,10 +10,12 @@ from ..types import UNSET, Unset
 
 from ..models.debt_direction import DebtDirection
 from ..types import UNSET, Unset
-from dateutil.parser import isoparse
 from typing import cast
 from uuid import UUID
 import datetime
+
+if TYPE_CHECKING:
+    from ..models.debt_payment_public import DebtPaymentPublic
 
 
 T = TypeVar("T", bound="DebtPublic")
@@ -33,6 +35,8 @@ class DebtPublic:
         is_settled (bool | Unset): Marked paid off. Default: False.
         settled_at (datetime.date | None | Unset): Date the debt was settled.
         deleted_at (datetime.datetime | None | Unset):
+        paid_amount (float | Unset):  Default: 0.0.
+        payments (list[DebtPaymentPublic] | Unset):
     """
 
     direction: DebtDirection
@@ -45,9 +49,13 @@ class DebtPublic:
     is_settled: bool | Unset = False
     settled_at: datetime.date | None | Unset = UNSET
     deleted_at: datetime.datetime | None | Unset = UNSET
+    paid_amount: float | Unset = 0.0
+    payments: list[DebtPaymentPublic] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        from ..models.debt_payment_public import DebtPaymentPublic
+
         direction = self.direction.value
 
         amount = self.amount
@@ -84,6 +92,15 @@ class DebtPublic:
         else:
             deleted_at = self.deleted_at
 
+        paid_amount = self.paid_amount
+
+        payments: list[dict[str, Any]] | Unset = UNSET
+        if not isinstance(self.payments, Unset):
+            payments = []
+            for payments_item_data in self.payments:
+                payments_item = payments_item_data.to_dict()
+                payments.append(payments_item)
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -105,11 +122,17 @@ class DebtPublic:
             field_dict["settled_at"] = settled_at
         if deleted_at is not UNSET:
             field_dict["deleted_at"] = deleted_at
+        if paid_amount is not UNSET:
+            field_dict["paid_amount"] = paid_amount
+        if payments is not UNSET:
+            field_dict["payments"] = payments
 
         return field_dict
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+        from ..models.debt_payment_public import DebtPaymentPublic
+
         d = dict(src_dict)
         direction = DebtDirection(d.pop("direction"))
 
@@ -119,7 +142,7 @@ class DebtPublic:
 
         contact_id = UUID(d.pop("contact_id"))
 
-        created_at = isoparse(d.pop("created_at"))
+        created_at = datetime.datetime.fromisoformat(d.pop("created_at"))
 
         currency = d.pop("currency", UNSET)
 
@@ -142,7 +165,7 @@ class DebtPublic:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                settled_at_type_0 = isoparse(data).date()
+                settled_at_type_0 = datetime.date.fromisoformat(data)
 
                 return settled_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -159,7 +182,7 @@ class DebtPublic:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                deleted_at_type_0 = isoparse(data)
+                deleted_at_type_0 = datetime.datetime.fromisoformat(data)
 
                 return deleted_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -167,6 +190,17 @@ class DebtPublic:
             return cast(datetime.datetime | None | Unset, data)
 
         deleted_at = _parse_deleted_at(d.pop("deleted_at", UNSET))
+
+        paid_amount = d.pop("paid_amount", UNSET)
+
+        _payments = d.pop("payments", UNSET)
+        payments: list[DebtPaymentPublic] | Unset = UNSET
+        if _payments is not UNSET:
+            payments = []
+            for payments_item_data in _payments:
+                payments_item = DebtPaymentPublic.from_dict(payments_item_data)
+
+                payments.append(payments_item)
 
         debt_public = cls(
             direction=direction,
@@ -179,6 +213,8 @@ class DebtPublic:
             is_settled=is_settled,
             settled_at=settled_at,
             deleted_at=deleted_at,
+            paid_amount=paid_amount,
+            payments=payments,
         )
 
         debt_public.additional_properties = d

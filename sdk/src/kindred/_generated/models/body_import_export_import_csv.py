@@ -10,9 +10,7 @@ from .. import types
 
 from ..types import UNSET, Unset
 
-from ..types import File, FileTypes
 from ..types import UNSET, Unset
-from io import BytesIO
 from typing import cast
 
 if TYPE_CHECKING:
@@ -28,11 +26,11 @@ T = TypeVar("T", bound="BodyImportExportImportCsv")
 class BodyImportExportImportCsv:
     """
     Attributes:
-        file (File):
+        file (str):
         column_mapping (BodyImportExportImportCsvColumnMappingType0 | None | Unset):
     """
 
-    file: File
+    file: str
     column_mapping: BodyImportExportImportCsvColumnMappingType0 | None | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -41,7 +39,7 @@ class BodyImportExportImportCsv:
             BodyImportExportImportCsvColumnMappingType0,
         )
 
-        file = self.file.to_tuple()
+        file = self.file
 
         column_mapping: dict[str, Any] | None | Unset
         if isinstance(self.column_mapping, Unset):
@@ -70,7 +68,7 @@ class BodyImportExportImportCsv:
 
         files: types.RequestFiles = []
 
-        files.append(("file", self.file.to_tuple()))
+        files.append(("file", (None, str(self.file).encode(), "text/plain")))
 
         if not isinstance(self.column_mapping, Unset):
             if isinstance(self.column_mapping, BodyImportExportImportCsvColumnMappingType0):
@@ -95,7 +93,7 @@ class BodyImportExportImportCsv:
         )
 
         d = dict(src_dict)
-        file = File(payload=BytesIO(d.pop("file")))
+        file = d.pop("file")
 
         def _parse_column_mapping(data: object) -> BodyImportExportImportCsvColumnMappingType0 | None | Unset:
             if data is None:

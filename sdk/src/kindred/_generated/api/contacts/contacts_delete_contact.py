@@ -8,8 +8,10 @@ from ...client import AuthenticatedClient, Client
 from ...types import Response, UNSET
 from ... import errors
 
+from ...models.contacts_delete_contact_response_contacts_delete_contact import (
+    ContactsDeleteContactResponseContactsDeleteContact,
+)
 from ...models.http_validation_error import HTTPValidationError
-from ...models.ok import Ok
 from typing import cast
 from uuid import UUID
 
@@ -30,9 +32,9 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> HTTPValidationError | Ok | None:
+) -> ContactsDeleteContactResponseContactsDeleteContact | HTTPValidationError | None:
     if response.status_code == 200:
-        response_200 = Ok.from_dict(response.json())
+        response_200 = ContactsDeleteContactResponseContactsDeleteContact.from_dict(response.json())
 
         return response_200
 
@@ -49,7 +51,7 @@ def _parse_response(
 
 def _build_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Response[HTTPValidationError | Ok]:
+) -> Response[ContactsDeleteContactResponseContactsDeleteContact | HTTPValidationError]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -62,15 +64,10 @@ def sync_detailed(
     contact_id: UUID,
     *,
     client: AuthenticatedClient,
-) -> Response[HTTPValidationError | Ok]:
+) -> Response[ContactsDeleteContactResponseContactsDeleteContact | HTTPValidationError]:
     """Delete Contact
 
      Soft-delete a contact.
-
-    Sets ``deleted_at`` instead of removing the row, so the contact and its
-    related data (notes, interactions, addresses, etc.) can be restored. Use
-    ``POST /contacts/{id}/restore`` to recover, or pass ``only_deleted=true``
-    to ``GET /contacts/`` to view the trash.
 
     Args:
         contact_id (UUID):
@@ -80,7 +77,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[HTTPValidationError | Ok]
+        Response[ContactsDeleteContactResponseContactsDeleteContact | HTTPValidationError]
     """
 
     kwargs = _get_kwargs(
@@ -98,15 +95,10 @@ def sync(
     contact_id: UUID,
     *,
     client: AuthenticatedClient,
-) -> HTTPValidationError | Ok | None:
+) -> ContactsDeleteContactResponseContactsDeleteContact | HTTPValidationError | None:
     """Delete Contact
 
      Soft-delete a contact.
-
-    Sets ``deleted_at`` instead of removing the row, so the contact and its
-    related data (notes, interactions, addresses, etc.) can be restored. Use
-    ``POST /contacts/{id}/restore`` to recover, or pass ``only_deleted=true``
-    to ``GET /contacts/`` to view the trash.
 
     Args:
         contact_id (UUID):
@@ -116,7 +108,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        HTTPValidationError | Ok
+        ContactsDeleteContactResponseContactsDeleteContact | HTTPValidationError
     """
 
     return sync_detailed(
@@ -129,15 +121,10 @@ async def asyncio_detailed(
     contact_id: UUID,
     *,
     client: AuthenticatedClient,
-) -> Response[HTTPValidationError | Ok]:
+) -> Response[ContactsDeleteContactResponseContactsDeleteContact | HTTPValidationError]:
     """Delete Contact
 
      Soft-delete a contact.
-
-    Sets ``deleted_at`` instead of removing the row, so the contact and its
-    related data (notes, interactions, addresses, etc.) can be restored. Use
-    ``POST /contacts/{id}/restore`` to recover, or pass ``only_deleted=true``
-    to ``GET /contacts/`` to view the trash.
 
     Args:
         contact_id (UUID):
@@ -147,7 +134,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[HTTPValidationError | Ok]
+        Response[ContactsDeleteContactResponseContactsDeleteContact | HTTPValidationError]
     """
 
     kwargs = _get_kwargs(
@@ -163,15 +150,10 @@ async def asyncio(
     contact_id: UUID,
     *,
     client: AuthenticatedClient,
-) -> HTTPValidationError | Ok | None:
+) -> ContactsDeleteContactResponseContactsDeleteContact | HTTPValidationError | None:
     """Delete Contact
 
      Soft-delete a contact.
-
-    Sets ``deleted_at`` instead of removing the row, so the contact and its
-    related data (notes, interactions, addresses, etc.) can be restored. Use
-    ``POST /contacts/{id}/restore`` to recover, or pass ``only_deleted=true``
-    to ``GET /contacts/`` to view the trash.
 
     Args:
         contact_id (UUID):
@@ -181,7 +163,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        HTTPValidationError | Ok
+        ContactsDeleteContactResponseContactsDeleteContact | HTTPValidationError
     """
 
     return (

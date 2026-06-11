@@ -9,7 +9,6 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 from ..types import UNSET, Unset
-from dateutil.parser import isoparse
 from typing import cast
 import datetime
 
@@ -123,7 +122,7 @@ class LifeEventUpdate:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                occurred_at_type_0 = isoparse(data).date()
+                occurred_at_type_0 = datetime.date.fromisoformat(data)
 
                 return occurred_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):

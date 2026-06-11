@@ -10,7 +10,6 @@ from ..types import UNSET, Unset
 
 from ..models.reminder_frequency import ReminderFrequency
 from ..types import UNSET, Unset
-from dateutil.parser import isoparse
 from typing import cast
 from uuid import UUID
 import datetime
@@ -125,7 +124,7 @@ class ReminderPublic:
         d = dict(src_dict)
         title = d.pop("title")
 
-        remind_at = isoparse(d.pop("remind_at"))
+        remind_at = datetime.datetime.fromisoformat(d.pop("remind_at"))
 
         id = UUID(d.pop("id"))
 
@@ -150,7 +149,7 @@ class ReminderPublic:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                last_sent_at_type_0 = isoparse(data)
+                last_sent_at_type_0 = datetime.datetime.fromisoformat(data)
 
                 return last_sent_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -165,7 +164,7 @@ class ReminderPublic:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                snoozed_until_type_0 = isoparse(data)
+                snoozed_until_type_0 = datetime.datetime.fromisoformat(data)
 
                 return snoozed_until_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -174,7 +173,7 @@ class ReminderPublic:
 
         snoozed_until = _parse_snoozed_until(d.pop("snoozed_until"))
 
-        created_at = isoparse(d.pop("created_at"))
+        created_at = datetime.datetime.fromisoformat(d.pop("created_at"))
 
         def _parse_description(data: object) -> None | str | Unset:
             if data is None:
@@ -202,7 +201,7 @@ class ReminderPublic:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                deleted_at_type_0 = isoparse(data)
+                deleted_at_type_0 = datetime.datetime.fromisoformat(data)
 
                 return deleted_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):

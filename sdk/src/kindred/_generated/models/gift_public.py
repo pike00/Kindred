@@ -10,7 +10,6 @@ from ..types import UNSET, Unset
 
 from ..models.gift_status import GiftStatus
 from ..types import UNSET, Unset
-from dateutil.parser import isoparse
 from typing import cast
 from uuid import UUID
 import datetime
@@ -35,10 +34,6 @@ class GiftPublic:
         value_currency (str | Unset): ISO 4217 currency code. Default: 'USD'.
         url (None | str | Unset): Link to the product page (e.g. Amazon).
         deleted_at (datetime.datetime | None | Unset):
-        days_until_occasion (int | None | Unset):
-        contact_birthday (datetime.date | None | Unset):
-        contact_first_name (None | str | Unset):
-        contact_last_name (None | str | Unset):
     """
 
     name: str
@@ -53,10 +48,6 @@ class GiftPublic:
     value_currency: str | Unset = "USD"
     url: None | str | Unset = UNSET
     deleted_at: datetime.datetime | None | Unset = UNSET
-    days_until_occasion: int | None | Unset = UNSET
-    contact_birthday: datetime.date | None | Unset = UNSET
-    contact_first_name: None | str | Unset = UNSET
-    contact_last_name: None | str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -114,32 +105,6 @@ class GiftPublic:
         else:
             deleted_at = self.deleted_at
 
-        days_until_occasion: int | None | Unset
-        if isinstance(self.days_until_occasion, Unset):
-            days_until_occasion = UNSET
-        else:
-            days_until_occasion = self.days_until_occasion
-
-        contact_birthday: None | str | Unset
-        if isinstance(self.contact_birthday, Unset):
-            contact_birthday = UNSET
-        elif isinstance(self.contact_birthday, datetime.date):
-            contact_birthday = self.contact_birthday.isoformat()
-        else:
-            contact_birthday = self.contact_birthday
-
-        contact_first_name: None | str | Unset
-        if isinstance(self.contact_first_name, Unset):
-            contact_first_name = UNSET
-        else:
-            contact_first_name = self.contact_first_name
-
-        contact_last_name: None | str | Unset
-        if isinstance(self.contact_last_name, Unset):
-            contact_last_name = UNSET
-        else:
-            contact_last_name = self.contact_last_name
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -166,14 +131,6 @@ class GiftPublic:
             field_dict["url"] = url
         if deleted_at is not UNSET:
             field_dict["deleted_at"] = deleted_at
-        if days_until_occasion is not UNSET:
-            field_dict["days_until_occasion"] = days_until_occasion
-        if contact_birthday is not UNSET:
-            field_dict["contact_birthday"] = contact_birthday
-        if contact_first_name is not UNSET:
-            field_dict["contact_first_name"] = contact_first_name
-        if contact_last_name is not UNSET:
-            field_dict["contact_last_name"] = contact_last_name
 
         return field_dict
 
@@ -186,7 +143,7 @@ class GiftPublic:
 
         contact_id = UUID(d.pop("contact_id"))
 
-        created_at = isoparse(d.pop("created_at"))
+        created_at = datetime.datetime.fromisoformat(d.pop("created_at"))
 
         def _parse_description(data: object) -> None | str | Unset:
             if data is None:
@@ -221,7 +178,7 @@ class GiftPublic:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                gift_date_type_0 = isoparse(data).date()
+                gift_date_type_0 = datetime.date.fromisoformat(data)
 
                 return gift_date_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -258,7 +215,7 @@ class GiftPublic:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                deleted_at_type_0 = isoparse(data)
+                deleted_at_type_0 = datetime.datetime.fromisoformat(data)
 
                 return deleted_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -266,50 +223,6 @@ class GiftPublic:
             return cast(datetime.datetime | None | Unset, data)
 
         deleted_at = _parse_deleted_at(d.pop("deleted_at", UNSET))
-
-        def _parse_days_until_occasion(data: object) -> int | None | Unset:
-            if data is None:
-                return data
-            if isinstance(data, Unset):
-                return data
-            return cast(int | None | Unset, data)
-
-        days_until_occasion = _parse_days_until_occasion(d.pop("days_until_occasion", UNSET))
-
-        def _parse_contact_birthday(data: object) -> datetime.date | None | Unset:
-            if data is None:
-                return data
-            if isinstance(data, Unset):
-                return data
-            try:
-                if not isinstance(data, str):
-                    raise TypeError()
-                contact_birthday_type_0 = isoparse(data).date()
-
-                return contact_birthday_type_0
-            except (TypeError, ValueError, AttributeError, KeyError):
-                pass
-            return cast(datetime.date | None | Unset, data)
-
-        contact_birthday = _parse_contact_birthday(d.pop("contact_birthday", UNSET))
-
-        def _parse_contact_first_name(data: object) -> None | str | Unset:
-            if data is None:
-                return data
-            if isinstance(data, Unset):
-                return data
-            return cast(None | str | Unset, data)
-
-        contact_first_name = _parse_contact_first_name(d.pop("contact_first_name", UNSET))
-
-        def _parse_contact_last_name(data: object) -> None | str | Unset:
-            if data is None:
-                return data
-            if isinstance(data, Unset):
-                return data
-            return cast(None | str | Unset, data)
-
-        contact_last_name = _parse_contact_last_name(d.pop("contact_last_name", UNSET))
 
         gift_public = cls(
             name=name,
@@ -324,10 +237,6 @@ class GiftPublic:
             value_currency=value_currency,
             url=url,
             deleted_at=deleted_at,
-            days_until_occasion=days_until_occasion,
-            contact_birthday=contact_birthday,
-            contact_first_name=contact_first_name,
-            contact_last_name=contact_last_name,
         )
 
         gift_public.additional_properties = d

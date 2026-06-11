@@ -10,13 +10,13 @@ from ..types import UNSET, Unset
 
 from ..models.contact_source import ContactSource
 from ..types import UNSET, Unset
-from dateutil.parser import isoparse
 from typing import cast
 from uuid import UUID
 import datetime
 
 if TYPE_CHECKING:
     from ..models.contact_public_imessage_profile_type_0 import ContactPublicImessageProfileType0
+    from ..models.contact_stage_event_public import ContactStageEventPublic
     from ..models.tag_public import TagPublic
 
 
@@ -51,10 +51,14 @@ class ContactPublic:
         do_not_contact (bool | Unset):  Default: False.
         do_not_contact_reason (None | str | Unset):
         stage (None | str | Unset): Kanban stage like Active, Dormant, Lost.
-        source (ContactSource | Unset):
+        source (ContactSource | Unset): Source system that created a contact.
         source_external_id (None | str | Unset): Opaque external ID for idempotent upserts from integrations.
+        pronouns (None | str | Unset): Contact's pronouns (e.g. they/them, she/her).
+        timezone (None | str | Unset): IANA timezone string (e.g. America/New_York).
         deleted_at (datetime.datetime | None | Unset):
         tags (list[TagPublic] | Unset):
+        stage_events (list[ContactStageEventPublic] | Unset):
+        vcard_sha256 (None | str | Unset):
         imessage_id (None | str | Unset):
         imessage_synced_at (datetime.datetime | None | Unset):
         imessage_profile (ContactPublicImessageProfileType0 | None | Unset):
@@ -86,8 +90,12 @@ class ContactPublic:
     stage: None | str | Unset = UNSET
     source: ContactSource | Unset = UNSET
     source_external_id: None | str | Unset = UNSET
+    pronouns: None | str | Unset = UNSET
+    timezone: None | str | Unset = UNSET
     deleted_at: datetime.datetime | None | Unset = UNSET
     tags: list[TagPublic] | Unset = UNSET
+    stage_events: list[ContactStageEventPublic] | Unset = UNSET
+    vcard_sha256: None | str | Unset = UNSET
     imessage_id: None | str | Unset = UNSET
     imessage_synced_at: datetime.datetime | None | Unset = UNSET
     imessage_profile: ContactPublicImessageProfileType0 | None | Unset = UNSET
@@ -95,6 +103,7 @@ class ContactPublic:
 
     def to_dict(self) -> dict[str, Any]:
         from ..models.contact_public_imessage_profile_type_0 import ContactPublicImessageProfileType0
+        from ..models.contact_stage_event_public import ContactStageEventPublic
         from ..models.tag_public import TagPublic
 
         first_name = self.first_name
@@ -220,6 +229,18 @@ class ContactPublic:
         else:
             source_external_id = self.source_external_id
 
+        pronouns: None | str | Unset
+        if isinstance(self.pronouns, Unset):
+            pronouns = UNSET
+        else:
+            pronouns = self.pronouns
+
+        timezone: None | str | Unset
+        if isinstance(self.timezone, Unset):
+            timezone = UNSET
+        else:
+            timezone = self.timezone
+
         deleted_at: None | str | Unset
         if isinstance(self.deleted_at, Unset):
             deleted_at = UNSET
@@ -234,6 +255,19 @@ class ContactPublic:
             for tags_item_data in self.tags:
                 tags_item = tags_item_data.to_dict()
                 tags.append(tags_item)
+
+        stage_events: list[dict[str, Any]] | Unset = UNSET
+        if not isinstance(self.stage_events, Unset):
+            stage_events = []
+            for stage_events_item_data in self.stage_events:
+                stage_events_item = stage_events_item_data.to_dict()
+                stage_events.append(stage_events_item)
+
+        vcard_sha256: None | str | Unset
+        if isinstance(self.vcard_sha256, Unset):
+            vcard_sha256 = UNSET
+        else:
+            vcard_sha256 = self.vcard_sha256
 
         imessage_id: None | str | Unset
         if isinstance(self.imessage_id, Unset):
@@ -309,10 +343,18 @@ class ContactPublic:
             field_dict["source"] = source
         if source_external_id is not UNSET:
             field_dict["source_external_id"] = source_external_id
+        if pronouns is not UNSET:
+            field_dict["pronouns"] = pronouns
+        if timezone is not UNSET:
+            field_dict["timezone"] = timezone
         if deleted_at is not UNSET:
             field_dict["deleted_at"] = deleted_at
         if tags is not UNSET:
             field_dict["tags"] = tags
+        if stage_events is not UNSET:
+            field_dict["stage_events"] = stage_events
+        if vcard_sha256 is not UNSET:
+            field_dict["vcard_sha256"] = vcard_sha256
         if imessage_id is not UNSET:
             field_dict["imessage_id"] = imessage_id
         if imessage_synced_at is not UNSET:
@@ -325,6 +367,7 @@ class ContactPublic:
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         from ..models.contact_public_imessage_profile_type_0 import ContactPublicImessageProfileType0
+        from ..models.contact_stage_event_public import ContactStageEventPublic
         from ..models.tag_public import TagPublic
 
         d = dict(src_dict)
@@ -345,7 +388,7 @@ class ContactPublic:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                last_contacted_at_type_0 = isoparse(data)
+                last_contacted_at_type_0 = datetime.datetime.fromisoformat(data)
 
                 return last_contacted_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -354,9 +397,9 @@ class ContactPublic:
 
         last_contacted_at = _parse_last_contacted_at(d.pop("last_contacted_at"))
 
-        created_at = isoparse(d.pop("created_at"))
+        created_at = datetime.datetime.fromisoformat(d.pop("created_at"))
 
-        updated_at = isoparse(d.pop("updated_at"))
+        updated_at = datetime.datetime.fromisoformat(d.pop("updated_at"))
 
         def _parse_last_name(data: object) -> None | str | Unset:
             if data is None:
@@ -438,7 +481,7 @@ class ContactPublic:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                birthday_type_0 = isoparse(data).date()
+                birthday_type_0 = datetime.date.fromisoformat(data)
 
                 return birthday_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -470,7 +513,7 @@ class ContactPublic:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                deceased_at_type_0 = isoparse(data).date()
+                deceased_at_type_0 = datetime.date.fromisoformat(data)
 
                 return deceased_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -524,6 +567,24 @@ class ContactPublic:
 
         source_external_id = _parse_source_external_id(d.pop("source_external_id", UNSET))
 
+        def _parse_pronouns(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        pronouns = _parse_pronouns(d.pop("pronouns", UNSET))
+
+        def _parse_timezone(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        timezone = _parse_timezone(d.pop("timezone", UNSET))
+
         def _parse_deleted_at(data: object) -> datetime.datetime | None | Unset:
             if data is None:
                 return data
@@ -532,7 +593,7 @@ class ContactPublic:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                deleted_at_type_0 = isoparse(data)
+                deleted_at_type_0 = datetime.datetime.fromisoformat(data)
 
                 return deleted_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -549,6 +610,24 @@ class ContactPublic:
                 tags_item = TagPublic.from_dict(tags_item_data)
 
                 tags.append(tags_item)
+
+        _stage_events = d.pop("stage_events", UNSET)
+        stage_events: list[ContactStageEventPublic] | Unset = UNSET
+        if _stage_events is not UNSET:
+            stage_events = []
+            for stage_events_item_data in _stage_events:
+                stage_events_item = ContactStageEventPublic.from_dict(stage_events_item_data)
+
+                stage_events.append(stage_events_item)
+
+        def _parse_vcard_sha256(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        vcard_sha256 = _parse_vcard_sha256(d.pop("vcard_sha256", UNSET))
 
         def _parse_imessage_id(data: object) -> None | str | Unset:
             if data is None:
@@ -567,7 +646,7 @@ class ContactPublic:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                imessage_synced_at_type_0 = isoparse(data)
+                imessage_synced_at_type_0 = datetime.datetime.fromisoformat(data)
 
                 return imessage_synced_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -620,8 +699,12 @@ class ContactPublic:
             stage=stage,
             source=source,
             source_external_id=source_external_id,
+            pronouns=pronouns,
+            timezone=timezone,
             deleted_at=deleted_at,
             tags=tags,
+            stage_events=stage_events,
+            vcard_sha256=vcard_sha256,
             imessage_id=imessage_id,
             imessage_synced_at=imessage_synced_at,
             imessage_profile=imessage_profile,

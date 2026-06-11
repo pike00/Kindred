@@ -10,13 +10,12 @@ from ..types import UNSET, Unset
 
 from ..models.reminder_frequency import ReminderFrequency
 from ..types import UNSET, Unset
-from dateutil.parser import isoparse
 from typing import cast
 from uuid import UUID
 import datetime
 
 if TYPE_CHECKING:
-    from ..models.reminder_contact_summary import ReminderContactSummary
+    from ..models.reminder_contact_info import ReminderContactInfo
 
 
 T = TypeVar("T", bound="ReminderDuePublic")
@@ -24,8 +23,7 @@ T = TypeVar("T", bound="ReminderDuePublic")
 
 @_attrs_define
 class ReminderDuePublic:
-    """Reminder enriched with the linked contact (if any) for the bell popover.
-
+    """
     Attributes:
         title (str): Reminder title.
         remind_at (datetime.datetime): When to fire the reminder.
@@ -38,7 +36,8 @@ class ReminderDuePublic:
         frequency (ReminderFrequency | Unset):
         is_active (bool | Unset): Enable or disable without deleting. Default: True.
         deleted_at (datetime.datetime | None | Unset):
-        contact (None | ReminderContactSummary | Unset):
+        contact_name (None | str | Unset):
+        contact (None | ReminderContactInfo | Unset):
     """
 
     title: str
@@ -52,11 +51,12 @@ class ReminderDuePublic:
     frequency: ReminderFrequency | Unset = UNSET
     is_active: bool | Unset = True
     deleted_at: datetime.datetime | None | Unset = UNSET
-    contact: None | ReminderContactSummary | Unset = UNSET
+    contact_name: None | str | Unset = UNSET
+    contact: None | ReminderContactInfo | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.reminder_contact_summary import ReminderContactSummary
+        from ..models.reminder_contact_info import ReminderContactInfo
 
         title = self.title
 
@@ -104,10 +104,16 @@ class ReminderDuePublic:
         else:
             deleted_at = self.deleted_at
 
+        contact_name: None | str | Unset
+        if isinstance(self.contact_name, Unset):
+            contact_name = UNSET
+        else:
+            contact_name = self.contact_name
+
         contact: dict[str, Any] | None | Unset
         if isinstance(self.contact, Unset):
             contact = UNSET
-        elif isinstance(self.contact, ReminderContactSummary):
+        elif isinstance(self.contact, ReminderContactInfo):
             contact = self.contact.to_dict()
         else:
             contact = self.contact
@@ -133,6 +139,8 @@ class ReminderDuePublic:
             field_dict["is_active"] = is_active
         if deleted_at is not UNSET:
             field_dict["deleted_at"] = deleted_at
+        if contact_name is not UNSET:
+            field_dict["contact_name"] = contact_name
         if contact is not UNSET:
             field_dict["contact"] = contact
 
@@ -140,12 +148,12 @@ class ReminderDuePublic:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.reminder_contact_summary import ReminderContactSummary
+        from ..models.reminder_contact_info import ReminderContactInfo
 
         d = dict(src_dict)
         title = d.pop("title")
 
-        remind_at = isoparse(d.pop("remind_at"))
+        remind_at = datetime.datetime.fromisoformat(d.pop("remind_at"))
 
         id = UUID(d.pop("id"))
 
@@ -170,7 +178,7 @@ class ReminderDuePublic:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                last_sent_at_type_0 = isoparse(data)
+                last_sent_at_type_0 = datetime.datetime.fromisoformat(data)
 
                 return last_sent_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -185,7 +193,7 @@ class ReminderDuePublic:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                snoozed_until_type_0 = isoparse(data)
+                snoozed_until_type_0 = datetime.datetime.fromisoformat(data)
 
                 return snoozed_until_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -194,7 +202,7 @@ class ReminderDuePublic:
 
         snoozed_until = _parse_snoozed_until(d.pop("snoozed_until"))
 
-        created_at = isoparse(d.pop("created_at"))
+        created_at = datetime.datetime.fromisoformat(d.pop("created_at"))
 
         def _parse_description(data: object) -> None | str | Unset:
             if data is None:
@@ -222,7 +230,7 @@ class ReminderDuePublic:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                deleted_at_type_0 = isoparse(data)
+                deleted_at_type_0 = datetime.datetime.fromisoformat(data)
 
                 return deleted_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -231,7 +239,16 @@ class ReminderDuePublic:
 
         deleted_at = _parse_deleted_at(d.pop("deleted_at", UNSET))
 
-        def _parse_contact(data: object) -> None | ReminderContactSummary | Unset:
+        def _parse_contact_name(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        contact_name = _parse_contact_name(d.pop("contact_name", UNSET))
+
+        def _parse_contact(data: object) -> None | ReminderContactInfo | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
@@ -239,12 +256,12 @@ class ReminderDuePublic:
             try:
                 if not isinstance(data, dict):
                     raise TypeError()
-                contact_type_0 = ReminderContactSummary.from_dict(data)
+                contact_type_0 = ReminderContactInfo.from_dict(data)
 
                 return contact_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
-            return cast(None | ReminderContactSummary | Unset, data)
+            return cast(None | ReminderContactInfo | Unset, data)
 
         contact = _parse_contact(d.pop("contact", UNSET))
 
@@ -260,6 +277,7 @@ class ReminderDuePublic:
             frequency=frequency,
             is_active=is_active,
             deleted_at=deleted_at,
+            contact_name=contact_name,
             contact=contact,
         )
 

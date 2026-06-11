@@ -16,15 +16,12 @@ from typing import cast
 
 def _get_kwargs(
     *,
-    limit: int | Unset = 50,
-    offset: int | Unset = 0,
+    days: int | Unset = 30,
 ) -> dict[str, Any]:
 
     params: dict[str, Any] = {}
 
-    params["limit"] = limit
-
-    params["offset"] = offset
+    params["days"] = days
 
     params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
 
@@ -70,19 +67,14 @@ def _build_response(
 def sync_detailed(
     *,
     client: AuthenticatedClient,
-    limit: int | Unset = 50,
-    offset: int | Unset = 0,
+    days: int | Unset = 30,
 ) -> Response[HTTPValidationError | OverdueContactsPublic]:
     """List Overdue Contacts
 
-     Return contacts sorted by days_overdue descending.
-
-    Days overdue = (now - last_contacted_at).days - contact_frequency_days.
-    Contacts with no frequency set or no interactions are excluded.
+     List contacts that are overdue for a follow-up.
 
     Args:
-        limit (int | Unset):  Default: 50.
-        offset (int | Unset):  Default: 0.
+        days (int | Unset):  Default: 30.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -93,8 +85,7 @@ def sync_detailed(
     """
 
     kwargs = _get_kwargs(
-        limit=limit,
-        offset=offset,
+        days=days,
     )
 
     response = client.get_httpx_client().request(
@@ -107,19 +98,14 @@ def sync_detailed(
 def sync(
     *,
     client: AuthenticatedClient,
-    limit: int | Unset = 50,
-    offset: int | Unset = 0,
+    days: int | Unset = 30,
 ) -> HTTPValidationError | OverdueContactsPublic | None:
     """List Overdue Contacts
 
-     Return contacts sorted by days_overdue descending.
-
-    Days overdue = (now - last_contacted_at).days - contact_frequency_days.
-    Contacts with no frequency set or no interactions are excluded.
+     List contacts that are overdue for a follow-up.
 
     Args:
-        limit (int | Unset):  Default: 50.
-        offset (int | Unset):  Default: 0.
+        days (int | Unset):  Default: 30.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -131,27 +117,21 @@ def sync(
 
     return sync_detailed(
         client=client,
-        limit=limit,
-        offset=offset,
+        days=days,
     ).parsed
 
 
 async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
-    limit: int | Unset = 50,
-    offset: int | Unset = 0,
+    days: int | Unset = 30,
 ) -> Response[HTTPValidationError | OverdueContactsPublic]:
     """List Overdue Contacts
 
-     Return contacts sorted by days_overdue descending.
-
-    Days overdue = (now - last_contacted_at).days - contact_frequency_days.
-    Contacts with no frequency set or no interactions are excluded.
+     List contacts that are overdue for a follow-up.
 
     Args:
-        limit (int | Unset):  Default: 50.
-        offset (int | Unset):  Default: 0.
+        days (int | Unset):  Default: 30.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -162,8 +142,7 @@ async def asyncio_detailed(
     """
 
     kwargs = _get_kwargs(
-        limit=limit,
-        offset=offset,
+        days=days,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -174,19 +153,14 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: AuthenticatedClient,
-    limit: int | Unset = 50,
-    offset: int | Unset = 0,
+    days: int | Unset = 30,
 ) -> HTTPValidationError | OverdueContactsPublic | None:
     """List Overdue Contacts
 
-     Return contacts sorted by days_overdue descending.
-
-    Days overdue = (now - last_contacted_at).days - contact_frequency_days.
-    Contacts with no frequency set or no interactions are excluded.
+     List contacts that are overdue for a follow-up.
 
     Args:
-        limit (int | Unset):  Default: 50.
-        offset (int | Unset):  Default: 0.
+        days (int | Unset):  Default: 30.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -199,7 +173,6 @@ async def asyncio(
     return (
         await asyncio_detailed(
             client=client,
-            limit=limit,
-            offset=offset,
+            days=days,
         )
     ).parsed

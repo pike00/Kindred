@@ -10,7 +10,6 @@ from ..types import UNSET, Unset
 
 from ..models.contact_source import ContactSource
 from ..types import UNSET, Unset
-from dateutil.parser import isoparse
 from typing import cast
 from uuid import UUID
 import datetime
@@ -43,8 +42,10 @@ class ContactCreate:
             False.
         do_not_contact_reason (None | str | Unset): Optional reason why the contact was marked do-not-contact.
         stage (None | str | Unset): Kanban stage like Active, Dormant, Lost.
-        source (ContactSource | Unset):
+        source (ContactSource | Unset): Source system that created a contact.
         source_external_id (None | str | Unset): Opaque external ID for idempotent upserts from integrations.
+        pronouns (None | str | Unset): Contact's pronouns (e.g. they/them, she/her).
+        timezone (None | str | Unset): IANA timezone string (e.g. America/New_York).
         tag_ids (list[UUID] | None | Unset):
     """
 
@@ -69,6 +70,8 @@ class ContactCreate:
     stage: None | str | Unset = UNSET
     source: ContactSource | Unset = UNSET
     source_external_id: None | str | Unset = UNSET
+    pronouns: None | str | Unset = UNSET
+    timezone: None | str | Unset = UNSET
     tag_ids: list[UUID] | None | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -181,6 +184,18 @@ class ContactCreate:
         else:
             source_external_id = self.source_external_id
 
+        pronouns: None | str | Unset
+        if isinstance(self.pronouns, Unset):
+            pronouns = UNSET
+        else:
+            pronouns = self.pronouns
+
+        timezone: None | str | Unset
+        if isinstance(self.timezone, Unset):
+            timezone = UNSET
+        else:
+            timezone = self.timezone
+
         tag_ids: list[str] | None | Unset
         if isinstance(self.tag_ids, Unset):
             tag_ids = UNSET
@@ -240,6 +255,10 @@ class ContactCreate:
             field_dict["source"] = source
         if source_external_id is not UNSET:
             field_dict["source_external_id"] = source_external_id
+        if pronouns is not UNSET:
+            field_dict["pronouns"] = pronouns
+        if timezone is not UNSET:
+            field_dict["timezone"] = timezone
         if tag_ids is not UNSET:
             field_dict["tag_ids"] = tag_ids
 
@@ -330,7 +349,7 @@ class ContactCreate:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                birthday_type_0 = isoparse(data).date()
+                birthday_type_0 = datetime.date.fromisoformat(data)
 
                 return birthday_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -362,7 +381,7 @@ class ContactCreate:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                deceased_at_type_0 = isoparse(data).date()
+                deceased_at_type_0 = datetime.date.fromisoformat(data)
 
                 return deceased_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -416,6 +435,24 @@ class ContactCreate:
 
         source_external_id = _parse_source_external_id(d.pop("source_external_id", UNSET))
 
+        def _parse_pronouns(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        pronouns = _parse_pronouns(d.pop("pronouns", UNSET))
+
+        def _parse_timezone(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        timezone = _parse_timezone(d.pop("timezone", UNSET))
+
         def _parse_tag_ids(data: object) -> list[UUID] | None | Unset:
             if data is None:
                 return data
@@ -460,6 +497,8 @@ class ContactCreate:
             stage=stage,
             source=source,
             source_external_id=source_external_id,
+            pronouns=pronouns,
+            timezone=timezone,
             tag_ids=tag_ids,
         )
 
