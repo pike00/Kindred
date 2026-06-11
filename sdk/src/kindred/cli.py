@@ -63,7 +63,17 @@ from ._generated.api.reminders import (
     reminders_snooze_reminder,
 )
 from ._generated.api.tags import tags_list_tags
-from ._generated.api.users import users_read_user_me
+from ._generated.api.users import (
+    users_create_user,
+    users_read_user_by_id,
+    users_read_user_me,
+    users_read_users,
+)
+from ._generated.api.api_keys import (
+    api_keys_create_my_api_key,
+    api_keys_list_my_api_keys,
+    api_keys_revoke_my_api_key,
+)
 from ._generated.api.utils import utils_health_check
 from ._generated.api.webhooks import (
     webhooks_create_webhook,
@@ -81,6 +91,8 @@ from ._generated.models.note_update import NoteUpdate
 from ._generated.models.reminder_create import ReminderCreate
 from ._generated.models.reminder_frequency import ReminderFrequency
 from ._generated.models.webhook_endpoint_base import WebhookEndpointBase
+from ._generated.models.api_key_create import APIKeyCreate
+from ._generated.models.user_create import UserCreate
 from ._generated.types import UNSET
 
 app = typer.Typer(
@@ -95,6 +107,8 @@ tags_app = typer.Typer(no_args_is_help=True, help="Tag operations.")
 webhooks_app = typer.Typer(no_args_is_help=True, help="Webhook endpoint operations.")
 interactions_app = typer.Typer(no_args_is_help=True, help="Interaction operations.")
 journal_app = typer.Typer(no_args_is_help=True, help="Journal operations.")
+users_app = typer.Typer(no_args_is_help=True, help="User operations (superuser).")
+apikeys_app = typer.Typer(no_args_is_help=True, help="API key operations.")
 
 app.add_typer(contacts_app, name="contacts")
 app.add_typer(reminders_app, name="reminders")
@@ -103,6 +117,8 @@ app.add_typer(tags_app, name="tags")
 app.add_typer(interactions_app, name="interactions")
 app.add_typer(journal_app, name="journal")
 app.add_typer(webhooks_app, name="webhooks")
+app.add_typer(users_app, name="users")
+app.add_typer(apikeys_app, name="api-keys")
 
 
 PrettyOpt = Annotated[bool, typer.Option("--pretty", help="Indent JSON output.")]
@@ -649,6 +665,83 @@ def env() -> None:
     key = os.environ.get("KINDRED_API_KEY", "")
     redacted = (key[:8] + "…") if key else "(unset)"
     typer.echo(json.dumps({"base_url": base, "api_key": redacted}))
+
+
+# ── users (superuser) ────────────────────────────────────────────────────────
+
+
+@users_app.command("list")
+def users_list(
+    pretty: PrettyOpt = False,
+    skip: Annotated[int, typer.Option(help="Offset for pagination.")] = 0,
+    limit: Annotated[int, typer.Option(help="Max records.")] = 100,
+) -> None:
+    """List users (superuser only)."""
+    _emit(_run(users_read_users, skip=skip, limit=limit), pretty)
+
+
+@users_app.command("get")
+def users_get(user_id: UUID, pretty: PrettyOpt = False) -> None:
+    """Fetch one user by id."""
+    _emit(_run(users_read_user_by_id, user_id=user_id), pretty)
+
+
+@users_app.command("create")
+def users_create(
+    email: Annotated[str, typer.Option("--email", help="Login email; also the identity Janet maps to.")],
+    password: Annotated[str, typer.Option("--password", help="Initial password (min 8 chars).")],
+    pretty: PrettyOpt = False,
+    full_name: Annotated[Optional[str], typer.Option("--full-name", help="Display name.")] = None,
+    superuser: Annotated[bool, typer.Option("--superuser", help="Grant superuser.")] = False,
+) -> None:
+    """Create a user (superuser only)."""
+    body = UserCreate(
+        email=email,
+        password=password,
+        is_superuser=superuser,
+        full_name=full_name if full_name is not None else UNSET,
+    )
+    _emit(_run(users_create_user, body=body), pretty)
+
+
+# ── api keys ─────────────────────────────────────────────────────────────────
+
+
+@apikeys_app.command("list")
+def apikeys_list(pretty: PrettyOpt = False) -> None:
+    """List the calling owner's API keys (metadata only; no plaintext)."""
+    _emit(_run(api_keys_list_my_api_keys), pretty)
+
+
+@apikeys_app.command("create")
+def apikeys_create(
+    name: Annotated[str, typer.Option("--name", help="Human label for the key.")],
+    pretty: PrettyOpt = False,
+    can_impersonate: Annotated[
+        Optional[list[UUID]],
+        typer.Option(
+            "--can-impersonate",
+            help="User UUID this key may act as via X-On-Behalf-Of; repeat for several.",
+        ),
+    ] = None,
+    expires_at: Annotated[
+        Optional[str],
+        typer.Option("--expires-at", help="ISO-8601 expiry; omit for no expiry."),
+    ] = None,
+) -> None:
+    """Create an API key. The plaintext token is returned ONCE — store it now."""
+    body = APIKeyCreate(
+        name=name,
+        can_impersonate=can_impersonate if can_impersonate else UNSET,
+        expires_at=_parse_occurred_at(expires_at) if expires_at else UNSET,
+    )
+    _emit(_run(api_keys_create_my_api_key, body=body), pretty)
+
+
+@apikeys_app.command("revoke")
+def apikeys_revoke(api_key_id: UUID, pretty: PrettyOpt = False) -> None:
+    """Revoke one of the owner's API keys."""
+    _emit(_run(api_keys_revoke_my_api_key, api_key_id=api_key_id), pretty)
 
 
 def main() -> None:

@@ -356,3 +356,54 @@ def test_no_on_behalf_of_omits_header(httpx_mock: HTTPXMock):
     )
     assert result.exit_code == 0, result.output
     assert "X-On-Behalf-Of" not in httpx_mock.get_request().headers
+
+
+# ── users + api-keys admin ───────────────────────────────────────────────────
+
+
+def _user_resp(**over) -> dict:
+    d = {"id": str(uuid.uuid4()), "email": "a@b.com", "is_active": True, "is_superuser": False}
+    d.update(over)
+    return d
+
+
+def test_users_create_builds_body(httpx_mock: HTTPXMock):
+    httpx_mock.add_response(
+        url=re.compile(rf"{re.escape(BASE)}/api/v1/users/?"),
+        method="POST",
+        json=_user_resp(email="khan.aleisha@gmail.com", full_name="Aleisha Khan"),
+    )
+    result = runner.invoke(
+        app,
+        ["users", "create", "--email", "khan.aleisha@gmail.com",
+         "--password", "s3cret-pw-123", "--full-name", "Aleisha Khan"],
+    )
+    assert result.exit_code == 0, result.output
+    body = _request_json(httpx_mock)
+    assert body["email"] == "khan.aleisha@gmail.com"
+    assert body["password"] == "s3cret-pw-123"
+    assert body["full_name"] == "Aleisha Khan"
+    assert body["is_superuser"] is False
+
+
+def test_apikeys_create_with_impersonation(httpx_mock: HTTPXMock):
+    target = uuid.uuid4()
+    httpx_mock.add_response(
+        url=re.compile(rf"{re.escape(BASE)}/api/v1/users/me/api-keys/?"),
+        method="POST",
+        status_code=201,
+        json={
+            "id": str(uuid.uuid4()), "name": "janet", "key_prefix": "kindred_sk_",
+            "owned_by_user_id": str(uuid.uuid4()), "can_impersonate": [str(target)],
+            "created_at": NOW, "revoked_at": None, "last_used_at": None,
+            "expires_at": None, "plaintext_key": "kindred_sk_xyz",
+        },
+    )
+    result = runner.invoke(
+        app, ["api-keys", "create", "--name", "janet", "--can-impersonate", str(target)]
+    )
+    assert result.exit_code == 0, result.output
+    body = _request_json(httpx_mock)
+    assert body["name"] == "janet"
+    assert body["can_impersonate"] == [str(target)]
+    assert "kindred_sk_xyz" in result.output
