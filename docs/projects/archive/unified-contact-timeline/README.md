@@ -1,9 +1,9 @@
 ---
 title: Unified Contact Timeline
-status: completed
+status: archived
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-06-05
+last_updated: 2026-06-10
 next_step: UnifiedTimeline (interactions+notes+life-events+gifts+debts) live; Log-Interaction dropdown added in v0.2.88.
 ---
 
@@ -22,6 +22,9 @@ Display all contact-related events in a single reverse-chronological feed on the
 - [ ] Frontend: Filter bar (checkboxes by event type) + visual type colors
 
 ## Session Log
+
+### 2026-06-10
+- Project archived.
 
 ### 2026-06-05
 - Housekeeping: UnifiedTimeline (interactions+notes+life-events+gifts+debts) live; Log-Interaction dropdown added in v0.2.88.

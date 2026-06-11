@@ -1,9 +1,9 @@
 ---
 title: Dashboard Metadata Widgets
-status: completed
+status: archived
 repos: [personal-crm]
 started: 2026-05-31
-last_updated: 2026-06-05
+last_updated: 2026-06-10
 next_step: Upcoming-birthdays + due-reminders dashboard widgets shipped.
 ---
 
@@ -23,6 +23,9 @@ Flagged in the 0.2.x feature-verification pass: Dashboard — "missing birthdays
 - [ ] E2E/component coverage: birthdays sort order + links; due reminders sort by due date.
 
 ## Session Log
+
+### 2026-06-10
+- Project archived.
 
 ### 2026-06-05
 - Housekeeping: Upcoming-birthdays + due-reminders dashboard widgets shipped.

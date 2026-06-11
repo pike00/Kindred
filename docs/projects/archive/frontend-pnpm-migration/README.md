@@ -1,9 +1,9 @@
 ---
 title: Frontend Toolchain Migration (bun → pnpm 11)
-status: completed
+status: archived
 repos: [personal-crm]
 started: 2026-06-05
-last_updated: 2026-06-05
+last_updated: 2026-06-10
 next_step: pnpm 11 migration shipped in v0.2.88 — Dockerfiles/compose/justfile/.project-kit/scripts/dependabot migrated, bun.lock removed, full vitest (1869) + prod image build green.
 ---
 
@@ -26,6 +26,9 @@ migration cleanly and make the hardening explicit rather than implicit.
 - [ ] Verify CI + preview + e2e all green on pnpm
 
 ## Session Log
+
+### 2026-06-10
+- Project archived.
 
 ### 2026-06-05
 - Housekeeping: pnpm 11 migration shipped in v0.2.88 — Dockerfiles/compose/justfile/.project-kit/scripts/dependabot migrated, bun.lock removed, full vitest (1869) + prod image build green.

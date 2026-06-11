@@ -1,9 +1,9 @@
 ---
 title: Map View of Contacts
-status: completed
+status: archived
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-06-05
+last_updated: 2026-06-10
 next_step: /contacts/map 422 fixed by registering /contacts/geo ahead of /{contact_id}; shipped v0.2.87.
 bug: /contacts/map returns HTTP 422 on initial load (prod v0.2.84) — 2026-05-31 verification
 ---
@@ -24,6 +24,9 @@ Visualize contacts on an interactive map by their Address.latitude/longitude. En
 - [ ] Privacy & sharing: respect shared-tag visibility rules on map view
 
 ## Session Log
+
+### 2026-06-10
+- Project archived.
 
 ### 2026-06-05
 - Housekeeping: /contacts/map 422 fixed by registering /contacts/geo ahead of /{contact_id}; shipped v0.2.87.

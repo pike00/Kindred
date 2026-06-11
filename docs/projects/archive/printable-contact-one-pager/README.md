@@ -1,9 +1,9 @@
 ---
 title: Printable Contact One-Pager
-status: completed
+status: archived
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-06-05
+last_updated: 2026-06-10
 next_step: Download-PDF 422 fixed (moved /{id}.pdf ahead of /{contact_id}); shipped v0.2.87.
 ---
 
@@ -20,6 +20,9 @@ Generate a printable PDF summary of a single contact for pre-meeting prep. The o
 - [ ] Handle avatar and image embedding in PDF (base64 or fetch)
 
 ## Session Log
+
+### 2026-06-10
+- Project archived.
 
 ### 2026-06-05
 - Housekeeping: Download-PDF 422 fixed (moved /{id}.pdf ahead of /{contact_id}); shipped v0.2.87.
