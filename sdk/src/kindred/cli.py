@@ -35,6 +35,7 @@ from ._generated.api.contacts import (
     contacts_list_contacts,
     contacts_list_losing_touch_contacts,
     contacts_list_overdue_contacts,
+    contacts_update_contact,
 )
 from ._generated.api.interactions import (
     interactions_create_interaction_route,
@@ -80,6 +81,7 @@ from ._generated.api.webhooks import (
 )
 from ._generated.errors import UnexpectedStatus
 from ._generated.models.contact_create import ContactCreate
+from ._generated.models.contact_update import ContactUpdate
 from ._generated.models.interaction_channel import InteractionChannel
 from ._generated.models.interaction_create import InteractionCreate
 from ._generated.models.interaction_update import InteractionUpdate
@@ -252,6 +254,46 @@ def contacts_create(
         contact_frequency_days=contact_frequency_days if contact_frequency_days is not None else UNSET,
     )
     _emit(_run(contacts_create_contact, body=body), pretty)
+
+
+@contacts_app.command("update")
+def contacts_update(
+    contact_id: Annotated[UUID, typer.Argument(help="Contact UUID to update.")],
+    pretty: PrettyOpt = False,
+    first_name: Annotated[str | None, typer.Option("--first-name", help="Given name.")] = None,
+    last_name: Annotated[str | None, typer.Option("--last-name", help="Family name.")] = None,
+    nickname: Annotated[str | None, typer.Option("--nickname", help="Preferred or informal name.")] = None,
+    company: Annotated[str | None, typer.Option("--company", help="Organization name.")] = None,
+    title: Annotated[str | None, typer.Option("--title", help="Job title.")] = None,
+    how_we_met: Annotated[str | None, typer.Option("--how-we-met", help="How you were introduced (stable fact, not a call summary).")] = None,
+    stage: Annotated[str | None, typer.Option("--stage", help="Relationship stage label.")] = None,
+    pronouns: Annotated[str | None, typer.Option("--pronouns", help="Pronouns, e.g. 'she/her'.")] = None,
+    timezone_: Annotated[str | None, typer.Option("--timezone", help="IANA timezone, e.g. 'America/New_York'.")] = None,
+    birthday: Annotated[str | None, typer.Option("--birthday", help="ISO date YYYY-MM-DD.")] = None,
+    contact_frequency_days: Annotated[
+        int | None,
+        typer.Option("--contact-frequency-days", help="Target days between interactions."),
+    ] = None,
+    is_favorite: Annotated[bool | None, typer.Option("--favorite/--no-favorite", help="Mark as favorite.")] = None,
+    do_not_contact: Annotated[bool | None, typer.Option("--dnc/--no-dnc", help="Do-not-contact flag.")] = None,
+) -> None:
+    """Update a contact (PATCH: only the fields you pass are changed)."""
+    body = ContactUpdate(
+        first_name=first_name if first_name is not None else UNSET,
+        last_name=last_name if last_name is not None else UNSET,
+        nickname=nickname if nickname is not None else UNSET,
+        company=company if company is not None else UNSET,
+        title=title if title is not None else UNSET,
+        how_we_met=how_we_met if how_we_met is not None else UNSET,
+        stage=stage if stage is not None else UNSET,
+        pronouns=pronouns if pronouns is not None else UNSET,
+        timezone=timezone_ if timezone_ is not None else UNSET,
+        birthday=datetime.fromisoformat(birthday).date() if birthday is not None else UNSET,
+        contact_frequency_days=contact_frequency_days if contact_frequency_days is not None else UNSET,
+        is_favorite=is_favorite if is_favorite is not None else UNSET,
+        do_not_contact=do_not_contact if do_not_contact is not None else UNSET,
+    )
+    _emit(_run(contacts_update_contact, contact_id=contact_id, body=body), pretty)
 
 
 # ── reminders ───────────────────────────────────────────────────────────────
