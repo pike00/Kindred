@@ -230,7 +230,7 @@ function AddLifeEventDialog({ contactId }: { contactId: string }) {
   )
 }
 
-function EditLifeEventDialog({
+export function EditLifeEventDialog({
   event,
   open,
   onOpenChange,

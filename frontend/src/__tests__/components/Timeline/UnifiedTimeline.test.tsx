@@ -56,6 +56,12 @@ vi.mock("@/lib/icons", () => ({
   CalendarHeart: () => <span data-testid="icon-calendar">Calendar</span>,
 }))
 
+// Per-row edit/delete affordances are covered in TimelineItemActions.test.tsx.
+// Stub them here so this suite stays focused on timeline rendering/filtering.
+vi.mock("@/components/Timeline/TimelineItemActions", () => ({
+  TimelineItemActions: () => null,
+}))
+
 describe("UnifiedTimeline", () => {
   const mockInteractionData = {
     data: [

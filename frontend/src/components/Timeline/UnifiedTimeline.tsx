@@ -17,6 +17,7 @@ import {
   NotesService,
 } from "@/client"
 import { MentionText } from "@/components/Mentions/MentionText"
+import { TimelineItemActions } from "@/components/Timeline/TimelineItemActions"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -31,9 +32,14 @@ import {
 } from "@/lib/icons"
 import { cn, formatDateWithRelative } from "@/lib/utils"
 
-type TimelineEventType = "interaction" | "note" | "gift" | "life_event" | "debt"
+export type TimelineEventType =
+  | "interaction"
+  | "note"
+  | "gift"
+  | "life_event"
+  | "debt"
 
-type TimelineEvent =
+export type TimelineEvent =
   | {
       type: "interaction"
       id: string
@@ -332,6 +338,7 @@ function TimelineRow({
         <div className="min-w-0 flex-1">
           <TimelineRowBody event={event} contactId={contactId} />
         </div>
+        <TimelineItemActions event={event} contactId={contactId} />
       </div>
     </li>
   )
