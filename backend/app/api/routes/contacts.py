@@ -27,6 +27,7 @@ from app.models import (
     Address,
     Contact,
     ContactCreate,
+    ContactField,
     ContactPublic,
     ContactSource,
     ContactsPublic,
@@ -39,6 +40,7 @@ from app.models import (
     Relationship,
     SavedFilter,
     User,
+    derive_handle_contact_field,
 )
 from app.vcard import compute_vcard_hash
 
@@ -872,6 +874,49 @@ class IMessageProfileResponse(SQLModel):
 # ─── iMessage Sync Endpoints ─────────────────────────────────────────────
 
 
+def _ensure_handle_contact_field(
+    session: SessionDep, contact: Contact, handle: str | None
+) -> bool:
+    """Surface an iMessage handle as a dialable phone/email contact field.
+
+    The handle is otherwise only stored in `source_external_id` / `imessage_id`,
+    so it shows in the source badge but not the Contact Information card. This
+    upserts a typed ContactField from it. Idempotent: no-op when a field with
+    the same value already exists. The new field is primary when the contact
+    has no other field of that type. Returns True when a field was created.
+    """
+    derived = derive_handle_contact_field(handle)
+    if derived is None:
+        return False
+    field_type, value = derived
+
+    same_value = session.exec(
+        select(ContactField).where(
+            ContactField.contact_id == contact.id,
+            ContactField.value == value,
+        )
+    ).first()
+    if same_value is not None:
+        return False
+
+    has_same_type = session.exec(
+        select(ContactField).where(
+            ContactField.contact_id == contact.id,
+            ContactField.field_type == field_type,
+        )
+    ).first()
+    session.add(
+        ContactField(
+            contact_id=contact.id,
+            field_type=field_type,
+            label="iMessage",
+            value=value,
+            is_primary=has_same_type is None,
+        )
+    )
+    return True
+
+
 @router.post("/imessage-sync", response_model=IMessageSyncResult)
 def sync_imessage_contacts(
     session: SessionDep,
@@ -945,6 +990,7 @@ def sync_imessage_contacts(
                         existing.last_contacted_at = msg_dt
 
                 session.add(existing)
+                _ensure_handle_contact_field(session, existing, profile.imessage_id)
                 updated += 1
             else:
                 # Create new contact from iMessage profile
@@ -977,6 +1023,10 @@ def sync_imessage_contacts(
                     )
 
                 session.add(new_contact)
+                # Flush so the contact row (and its id) exists before the
+                # contact field references it via FK.
+                session.flush()
+                _ensure_handle_contact_field(session, new_contact, profile.imessage_id)
                 created += 1
 
         except Exception as exc:

@@ -15,6 +15,7 @@ from pydantic import ValidationError
 from app.models import (
     ContactFieldCreate,
     ContactFieldType,
+    derive_handle_contact_field,
     validate_contact_field_value,
 )
 
@@ -67,3 +68,28 @@ def test_contact_field_create_accepts_real_phone() -> None:
         value="+13013518525",
     )
     assert field.value == "+13013518525"
+
+
+@pytest.mark.parametrize(
+    ("handle", "expected"),
+    [
+        # Channel-prefixed handles: the "imessage:"/"sms:" prefix is stripped.
+        ("imessage:+15055544644", (ContactFieldType.PHONE, "+15055544644")),
+        ("imessage:josh@example.com", (ContactFieldType.EMAIL, "josh@example.com")),
+        ("sms:+15055544644", (ContactFieldType.PHONE, "+15055544644")),
+        # Bare handles (what /imessage-sync stores in imessage_id).
+        ("+15055544644", (ContactFieldType.PHONE, "+15055544644")),
+        ("josh@example.com", (ContactFieldType.EMAIL, "josh@example.com")),
+        ("  +1 505 554 4644  ", (ContactFieldType.PHONE, "+1 505 554 4644")),
+        # Not usable as a phone or email → skipped (None) rather than raising.
+        ("imessage:", None),
+        ("Joshua Niforatos", None),
+        ("", None),
+        (None, None),
+    ],
+)
+def test_derive_handle_contact_field(
+    handle: str | None,
+    expected: tuple[ContactFieldType, str] | None,
+) -> None:
+    assert derive_handle_contact_field(handle) == expected

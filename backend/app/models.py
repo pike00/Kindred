@@ -1,4 +1,5 @@
 import enum
+import re
 import uuid
 from datetime import date, datetime, timezone
 from typing import Any
@@ -873,6 +874,29 @@ def validate_contact_field_value(field_type: "ContactFieldType", value: str) -> 
     if field_type == ContactFieldType.EMAIL and "@" not in cleaned:
         raise ValueError("email value must contain '@'")
     return cleaned
+
+
+def derive_handle_contact_field(
+    handle: str | None,
+) -> "tuple[ContactFieldType, str] | None":
+    """Turn a messaging handle into a (field_type, value) for a ContactField.
+
+    Accepts a bare handle ("+15055544644", "josh@example.com") or a
+    channel-prefixed one ("imessage:+15055544644", "sms:..."); the
+    "<channel>:" prefix is stripped. Returns the email/phone field type and the
+    cleaned value, or None when the handle is empty or not a usable phone/email
+    (so callers can skip it rather than raise). Phone requires a digit.
+    """
+    if not handle:
+        return None
+    cleaned = re.sub(r"^[a-z]+:", "", handle.strip(), flags=re.IGNORECASE).strip()
+    if not cleaned:
+        return None
+    if "@" in cleaned:
+        return (ContactFieldType.EMAIL, cleaned)
+    if any(c.isdigit() for c in cleaned):
+        return (ContactFieldType.PHONE, cleaned)
+    return None
 
 
 class ContactFieldBase(SQLModel):
