@@ -5,6 +5,30 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.93] - 2026-06-19
+
+### Added
+- Feat(contacts): surface iMessage handle as a phone/email contact field (d9b9d73)
+- Feat(cli): add contacts update command (4ebbcd8)
+- Feat(sdk): regenerate _generated from current openapi spec (9de88fa)
+- Feat(cli): add users + api-keys admin commands (list/get/create, key create with --can-impersonate) (6f69b82)
+- Feat(cli): add interactions/notes/contacts/reminders write commands + --on-behalf-of impersonation (c8e8955)
+
+### Changed
+- Perf(frontend): preload route data to remove navigation flash (359088e)
+- Refactor(cli): drop pydantic-settings dep; read KINDRED_ON_BEHALF_OF via typer envvar (7ae5024)
+
+### Documentation
+- Docs: migrate agent instructions to AGENTS.md (ce9918f)
+
+### Fixed
+- Fix(contacts): render channel-prefixed source cleanly (d7cd702)
+- Fix(cli): reconcile with regenerated SDK (5bd31fa)
+- Fix(sdk): sync drifted enums to spec (ContactSource lowercase, +InteractionChannel.recommendation, +GiftStatus purchased/wrapped) (d9e99da)
+
+### Other
+- Projects: archive 9 completed projects (contacts-list-render-fix, contact-timezone-pronouns, dashboard-metadata-widgets, frontend-pnpm-migration, interaction-drafts, map-view-contacts, printable-contact-one-pager, unified-contact-timeline, voice-to-text-interaction) (3431f9f)
+
 ## [0.2.92] - 2026-06-07
 
 ### Changed
