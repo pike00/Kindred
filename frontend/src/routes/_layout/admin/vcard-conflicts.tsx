@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
+import { queryClient } from "@/lib/queryClient"
 import { formatDateWithRelative } from "@/lib/utils"
 
 function getConflictsQueryOptions() {
@@ -20,6 +21,7 @@ function getConflictsQueryOptions() {
 
 export const Route = createFileRoute("/_layout/admin/vcard-conflicts")({
   component: VCardConflictsPage,
+  loader: () => queryClient.ensureQueryData(getConflictsQueryOptions()),
 })
 
 function VCardConflictsPage() {

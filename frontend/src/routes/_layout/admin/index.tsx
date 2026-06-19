@@ -8,6 +8,7 @@ import { columns, type UserTableData } from "@/components/Admin/columns"
 import { DataTable } from "@/components/Common/DataTable"
 import PendingUsers from "@/components/Pending/PendingUsers"
 import useAuth from "@/hooks/useAuth"
+import { queryClient } from "@/lib/queryClient"
 
 function getUsersQueryOptions() {
   return {
@@ -18,6 +19,7 @@ function getUsersQueryOptions() {
 
 export const Route = createFileRoute("/_layout/admin/")({
   component: AdminUsers,
+  loader: () => queryClient.ensureQueryData(getUsersQueryOptions()),
 })
 
 function UsersTableContent() {

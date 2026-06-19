@@ -25,6 +25,7 @@ import {
   Trash2,
   Video,
 } from "@/lib/icons"
+import { interactionsQueryOptions } from "@/lib/queries"
 import { useSeedDemo } from "@/lib/seed"
 import { cn, formatDateWithRelative } from "@/lib/utils"
 import { AddInteractionDialog } from "./AddInteractionDialog"
@@ -87,10 +88,7 @@ function groupByDate(
 export const InteractionTimeline = () => {
   const seedMutation = useSeedDemo()
 
-  const { data } = useSuspenseQuery({
-    queryKey: ["interactions"],
-    queryFn: () => InteractionsService.listInteractions({ limit: 200 }),
-  })
+  const { data } = useSuspenseQuery(interactionsQueryOptions())
 
   const interactions = data?.data || []
   const grouped = groupByDate(interactions)

@@ -28,6 +28,8 @@ import { toast } from "sonner"
 import { type GiftPublic, type GiftStatus, GiftsService } from "@/client"
 import { Badge } from "@/components/ui/badge"
 import { Gift, GripVertical } from "@/lib/icons"
+import { giftsKanbanQueryOptions } from "@/lib/queries"
+import { queryClient } from "@/lib/queryClient"
 import { cn } from "@/lib/utils"
 
 type KanbanColumn = {
@@ -50,6 +52,7 @@ type GiftKanbanCard = {
 
 export const Route = createFileRoute("/_layout/gifts/kanban")({
   component: GiftsKanbanPage,
+  loader: () => queryClient.ensureQueryData(giftsKanbanQueryOptions()),
   head: () => ({
     meta: [{ title: "Gifts Kanban · Kindred" }],
   }),
@@ -207,10 +210,9 @@ function GiftsKanbanPage() {
   const [overColumn, setOverColumn] = useState<string | null>(null)
   const queryClient = useQueryClient()
 
-  const { data: rawBoardData, refetch } = useSuspenseQuery({
-    queryKey: ["gifts-kanban"],
-    queryFn: () => GiftsService.getKanbanBoard(),
-  })
+  const { data: rawBoardData, refetch } = useSuspenseQuery(
+    giftsKanbanQueryOptions(),
+  )
   const boardData = rawBoardData as KanbanBoard | undefined
 
   const changeStatusMutation = useMutation({

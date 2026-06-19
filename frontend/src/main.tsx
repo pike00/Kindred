@@ -1,16 +1,12 @@
-import {
-  MutationCache,
-  QueryCache,
-  QueryClient,
-  QueryClientProvider,
-} from "@tanstack/react-query"
+import { QueryClientProvider } from "@tanstack/react-query"
 import { createRouter, RouterProvider } from "@tanstack/react-router"
 import { lazy, StrictMode, Suspense, useEffect, useState } from "react"
 import ReactDOM from "react-dom/client"
-import { ApiError, OpenAPI } from "./client"
+import { OpenAPI } from "./client"
 import { ThemeProvider } from "./components/theme-provider"
 import { ShortcutRegistryProvider } from "./hooks/useKeyboardShortcuts"
 import "./index.css"
+import { queryClient } from "./lib/queryClient"
 import { routeTree } from "./routeTree.gen"
 
 // Deferred off the critical path — neither is needed for first paint, and keeping
@@ -31,34 +27,16 @@ OpenAPI.TOKEN = async () => {
   return localStorage.getItem("access_token") || ""
 }
 
-const handleApiError = (error: Error) => {
-  if (
-    error instanceof ApiError &&
-    (error.status === 401 || error.status === 403)
-  ) {
-    localStorage.removeItem("access_token")
-    window.location.href = "/login"
-  }
-}
-
-const queryClient = new QueryClient({
-  queryCache: new QueryCache({
-    onError: handleApiError,
-  }),
-  mutationCache: new MutationCache({
-    onError: handleApiError,
-  }),
-  defaultOptions: {
-    queries: {
-      staleTime: 30_000,
-      gcTime: 5 * 60_000,
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
-    },
-  },
+const router = createRouter({
+  routeTree,
+  // Preload a route's loader on link hover/focus so its data is warm before the
+  // click commits — the old page stays visible until the new page's data is
+  // ready, then swaps fully-formed. This is what removes the navigation flash.
+  defaultPreload: "intent",
+  // Let React Query own staleness; don't let the router short-circuit loaders
+  // with its own separate preload cache.
+  defaultPreloadStaleTime: 0,
 })
-
-const router = createRouter({ routeTree })
 
 declare module "@tanstack/react-router" {
   interface Register {

@@ -19,7 +19,8 @@ const TileLayer = TileLayerBase as any
 
 import type Supercluster from "supercluster"
 import supercluster from "supercluster"
-import { type ContactGeoPoint, CustomContactsService } from "@/client/custom"
+import type { ContactGeoPoint } from "@/client/custom"
+import { contactsGeoQueryOptions } from "@/lib/queries"
 import "leaflet/dist/leaflet.css"
 import { MapIcon } from "lucide-react"
 import { ContactMapCard } from "@/components/Contacts/ContactMapCard"
@@ -173,16 +174,7 @@ export function ContactsMap({ bounds: initialBounds }: ContactsMapProps) {
   const [bounds, setBounds] = useState<MapBounds>(initialBounds || {})
   const mapRef = useRef<L.Map | null>(null)
 
-  const { data } = useSuspenseQuery({
-    queryKey: ["contactsGeo", bounds],
-    queryFn: () =>
-      CustomContactsService.listContactsGeo({
-        minLat: bounds?.minLat,
-        maxLat: bounds?.maxLat,
-        minLng: bounds?.minLng,
-        maxLng: bounds?.maxLng,
-      }),
-  })
+  const { data } = useSuspenseQuery(contactsGeoQueryOptions(bounds))
 
   const points: ContactGeoPoint[] = data.points || []
 

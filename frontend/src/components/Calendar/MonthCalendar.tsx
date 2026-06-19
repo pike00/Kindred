@@ -3,10 +3,10 @@ import { Link } from "@tanstack/react-router"
 import { useState } from "react"
 
 import type { CalendarEntry } from "@/client"
-import { CalendarService } from "@/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Cake, CalendarHeart, ChevronLeft, ChevronRight } from "@/lib/icons"
+import { calendarMonthQueryOptions } from "@/lib/queries"
 import { cn } from "@/lib/utils"
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
@@ -47,10 +47,7 @@ export function MonthCalendar({ month }: { month: string }) {
   const [year, mo] = parseYM(month)
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
 
-  const { data } = useSuspenseQuery({
-    queryKey: ["calendar", month],
-    queryFn: () => CalendarService.getCalendarMonth({ yyyyMm: month }),
-  })
+  const { data } = useSuspenseQuery(calendarMonthQueryOptions(month))
 
   const today = new Date().toISOString().slice(0, 10)
   const monthName = new Date(year, mo - 1, 1).toLocaleString("default", {

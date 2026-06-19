@@ -13,6 +13,11 @@ import { Badge } from "@/components/ui/badge"
 import useAuth from "@/hooks/useAuth"
 import { Bell, Cake, MessagesSquare } from "@/lib/icons"
 import {
+  dashboardContactsQueryOptions,
+  remindersQueryOptions,
+} from "@/lib/queries"
+import { queryClient } from "@/lib/queryClient"
+import {
   type BirthdayInfo,
   formatBirthday,
   formatDateWithRelative,
@@ -20,6 +25,11 @@ import {
 
 export const Route = createFileRoute("/_layout/")({
   component: Dashboard,
+  loader: () =>
+    Promise.all([
+      queryClient.ensureQueryData(dashboardContactsQueryOptions()),
+      queryClient.ensureQueryData(remindersQueryOptions()),
+    ]),
   head: () => ({
     meta: [
       {
@@ -50,14 +60,8 @@ function milestoneLabel(info: BirthdayInfo): string {
 
 function Dashboard() {
   const { user: currentUser } = useAuth()
-  const { data: contacts } = useSuspenseQuery({
-    queryKey: ["contacts"],
-    queryFn: () => ContactsService.listContacts({ limit: 100 }),
-  })
-  const { data: reminders } = useSuspenseQuery({
-    queryKey: ["reminders"],
-    queryFn: () => RemindersService.listReminders(),
-  })
+  const { data: contacts } = useSuspenseQuery(dashboardContactsQueryOptions())
+  const { data: reminders } = useSuspenseQuery(remindersQueryOptions())
   const { data: losingTouch } = useQuery({
     queryKey: ["losing-touch"],
     queryFn: () => ContactsService.listOverdueContacts({}),

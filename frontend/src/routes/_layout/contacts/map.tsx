@@ -1,8 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { ContactsMap } from "@/components/Contacts/ContactsMap"
+import { contactsGeoQueryOptions } from "@/lib/queries"
+import { queryClient } from "@/lib/queryClient"
 
 export const Route = createFileRoute("/_layout/contacts/map")({
   component: ContactsMapPage,
+  loader: () => queryClient.ensureQueryData(contactsGeoQueryOptions()),
   head: () => ({
     meta: [{ title: "Map · Contacts · Kindred" }],
   }),

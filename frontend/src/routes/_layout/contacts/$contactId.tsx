@@ -2,12 +2,7 @@ import { useQuery, useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { useEffect, useState } from "react"
 import type { DebtPublic, GiftPublic, InteractionPublic } from "@/client"
-import {
-  ContactsService,
-  DebtsService,
-  GiftsService,
-  InteractionsService,
-} from "@/client"
+import { DebtsService, GiftsService, InteractionsService } from "@/client"
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
 import { EmptyState } from "@/components/Common/EmptyState"
 import { AddressesCard } from "@/components/Contacts/AddressesCard"
@@ -59,6 +54,8 @@ import {
   Star,
   UserRoundSearch,
 } from "@/lib/icons"
+import { contactQueryOptions } from "@/lib/queries"
+import { queryClient } from "@/lib/queryClient"
 import {
   describeContactSource,
   formatBirthday,
@@ -133,6 +130,8 @@ function InfoHint({ children }: { children: React.ReactNode }) {
 
 export const Route = createFileRoute("/_layout/contacts/$contactId")({
   component: ContactDetailPage,
+  loader: ({ params }) =>
+    queryClient.ensureQueryData(contactQueryOptions(params.contactId)),
 })
 
 function formatDate(iso: string) {
@@ -169,10 +168,7 @@ function ContactDetailPage() {
     "interaction" | "note" | "gift" | null
   >(null)
   const { contactId } = Route.useParams()
-  const { data: contact } = useSuspenseQuery({
-    queryKey: ["contacts", contactId],
-    queryFn: () => ContactsService.getContact({ contactId }),
-  })
+  const { data: contact } = useSuspenseQuery(contactQueryOptions(contactId))
 
   const { data: giftsData, isLoading: giftsLoading } = useQuery({
     queryKey: ["gifts", contactId],

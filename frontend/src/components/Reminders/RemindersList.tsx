@@ -1,9 +1,9 @@
 import { useSuspenseQuery } from "@tanstack/react-query"
 
-import { RemindersService } from "@/client"
 import { DataTable } from "@/components/Common/DataTable"
 import { EmptyState } from "@/components/Common/EmptyState"
 import { Bell } from "@/lib/icons"
+import { remindersQueryOptions } from "@/lib/queries"
 import { useSeedDemo } from "@/lib/seed"
 import { AddReminderDialog } from "./AddReminderDialog"
 import { columns } from "./columns"
@@ -11,10 +11,7 @@ import { columns } from "./columns"
 export const RemindersList = () => {
   const seedMutation = useSeedDemo()
 
-  const { data } = useSuspenseQuery({
-    queryKey: ["reminders"],
-    queryFn: () => RemindersService.listReminders(),
-  })
+  const { data } = useSuspenseQuery(remindersQueryOptions())
 
   const reminders = data?.data || []
 

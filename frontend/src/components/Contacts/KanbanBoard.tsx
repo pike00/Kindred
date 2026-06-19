@@ -32,6 +32,10 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { GripVertical, Search, Users } from "@/lib/icons"
+import {
+  contactStagesQueryOptions,
+  kanbanBoardQueryOptions,
+} from "@/lib/queries"
 import { cn } from "@/lib/utils"
 import { AddContactDialog } from "./AddContactDialog"
 
@@ -174,10 +178,7 @@ export const KanbanBoard = () => {
   const queryClient = useQueryClient()
 
   // Fetch stages
-  const { data: stagesData } = useSuspenseQuery({
-    queryKey: ["contact-stages"],
-    queryFn: () => ContactsService.getDistinctStages(),
-  })
+  const { data: stagesData } = useSuspenseQuery(contactStagesQueryOptions())
 
   const stages = useMemo(() => {
     const serverStages = stagesData ?? []
@@ -187,13 +188,9 @@ export const KanbanBoard = () => {
   }, [stagesData])
 
   // Fetch kanban board data
-  const { data: boardData, refetch } = useSuspenseQuery({
-    queryKey: ["kanban-board", search],
-    queryFn: () =>
-      ContactsService.getKanbanBoard({
-        search: search || null,
-      }),
-  })
+  const { data: boardData, refetch } = useSuspenseQuery(
+    kanbanBoardQueryOptions(search),
+  )
 
   // Mutation for updating contact stage
   const updateStageMutation = useMutation({

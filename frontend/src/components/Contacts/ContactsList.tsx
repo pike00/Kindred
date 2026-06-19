@@ -3,11 +3,7 @@ import { Link, useNavigate, useSearch } from "@tanstack/react-router"
 import { useCallback, useMemo, useState } from "react"
 import { toast } from "sonner"
 
-import {
-  type ContactPublic,
-  ContactsService,
-  SavedFiltersService,
-} from "@/client"
+import type { ContactPublic } from "@/client"
 import type { SavedFilterPublic } from "@/client/types.gen"
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
 import { EmptyState } from "@/components/Common/EmptyState"
@@ -35,6 +31,10 @@ import {
   Trash2,
   Users,
 } from "@/lib/icons"
+import {
+  contactsListQueryOptions,
+  savedFiltersQueryOptions,
+} from "@/lib/queries"
 import { useSeedDemo } from "@/lib/seed"
 import { cn } from "@/lib/utils"
 
@@ -211,23 +211,14 @@ export const ContactsList = () => {
   const [isLoading, setIsLoading] = useState(false)
 
   // Fetch saved filters to find active filter name
-  const { data: filtersData } = useSuspenseQuery({
-    queryKey: ["saved-filters"],
-    queryFn: () => SavedFiltersService.listSavedFilters(),
-  })
+  const { data: filtersData } = useSuspenseQuery(savedFiltersQueryOptions())
 
   const activeFilterId = urlFilterId
   const activeFilter = filtersData?.data?.find(
     (f: SavedFilterPublic) => f.id === activeFilterId,
   )
 
-  const { data } = useSuspenseQuery({
-    queryKey: ["contacts", activeFilterId],
-    queryFn: () =>
-      ContactsService.listContacts(
-        activeFilterId ? { savedFilterId: activeFilterId } : {},
-      ),
-  })
+  const { data } = useSuspenseQuery(contactsListQueryOptions(activeFilterId))
 
   const allContacts = useMemo(() => data?.data ?? [], [data?.data])
   const filtered = useMemo(
