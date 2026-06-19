@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest"
-import { cn, formatBirthday } from "../../lib/utils"
+import {
+  cn,
+  describeContactSource,
+  formatBirthday,
+  formatPhone,
+} from "../../lib/utils"
 
 describe("cn", () => {
   it("merges simple class names", () => {
@@ -121,5 +126,52 @@ describe("formatBirthday", () => {
 
   it("returns null for unparseable input", () => {
     expect(formatBirthday("not-a-date", now)).toBeNull()
+  })
+})
+
+describe("formatPhone", () => {
+  it("formats a US E.164 number", () => {
+    expect(formatPhone("+15055544644")).toBe("+1 (505) 554-4644")
+  })
+
+  it("leaves non-US / unparseable numbers untouched", () => {
+    expect(formatPhone("+442071838750")).toBe("+442071838750")
+    expect(formatPhone("not-a-number")).toBe("not-a-number")
+  })
+})
+
+describe("describeContactSource", () => {
+  it("surfaces the iMessage channel over the raw webhook source", () => {
+    const src = describeContactSource("webhook", "imessage:+15055544644")
+    expect(src.label).toBe("iMessage")
+    expect(src.detail).toBe("+1 (505) 554-4644")
+    expect(src.isMessagingChannel).toBe(true)
+  })
+
+  it("keeps an email handle as-is for email-based iMessage", () => {
+    const src = describeContactSource("webhook", "imessage:josh@example.com")
+    expect(src.label).toBe("iMessage")
+    expect(src.detail).toBe("josh@example.com")
+    expect(src.isMessagingChannel).toBe(true)
+  })
+
+  it("maps known plain sources to friendly labels", () => {
+    expect(describeContactSource("carddav", "uid-123")).toEqual({
+      label: "CardDAV",
+      detail: "uid-123",
+      isMessagingChannel: false,
+    })
+    expect(describeContactSource("manual").label).toBe("Manual")
+  })
+
+  it("does not treat an unknown channel prefix as messaging", () => {
+    const src = describeContactSource("webhook", "ftp:somewhere")
+    expect(src.label).toBe("Webhook")
+    expect(src.detail).toBe("ftp:somewhere")
+    expect(src.isMessagingChannel).toBe(false)
+  })
+
+  it("falls back to the raw source when unmapped", () => {
+    expect(describeContactSource("mystery").label).toBe("mystery")
   })
 })

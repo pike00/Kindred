@@ -134,3 +134,71 @@ function birthdayCountdown(days: number, nextAge: number | null): string {
     ? `next birthday ${when}`
     : `turning ${nextAge} ${when}`
 }
+
+/** Pretty-print a US E.164 number: "+15055544644" → "+1 (505) 554-4644". */
+export function formatPhone(raw: string): string {
+  const digits = raw.replace(/[^\d+]/g, "")
+  const m = /^\+1(\d{3})(\d{3})(\d{4})$/.exec(digits)
+  return m ? `+1 (${m[1]}) ${m[2]}-${m[3]}` : raw
+}
+
+export interface ContactSourceInfo {
+  /** Human label for the badge, e.g. "iMessage", "Manual", "CardDAV". */
+  label: string
+  /** Secondary handle/detail (formatted phone, UID, …); null when none. */
+  detail: string | null
+  /** True when provenance is a messaging channel (iMessage/SMS/WhatsApp/…). */
+  isMessagingChannel: boolean
+}
+
+const SOURCE_LABELS: Record<string, string> = {
+  manual: "Manual",
+  vcard_import: "vCard Import",
+  carddav: "CardDAV",
+  google: "Google",
+  webhook: "Webhook",
+}
+
+// Channel-prefixed external ids ("imessage:+15055544644") carry the real
+// provenance; the bare "webhook" source is an implementation detail. Surface
+// the channel as the label and the handle as the detail.
+const CHANNEL_LABELS: Record<string, string> = {
+  imessage: "iMessage",
+  sms: "SMS",
+  whatsapp: "WhatsApp",
+  signal: "Signal",
+  telegram: "Telegram",
+}
+
+/**
+ * Resolve a contact's `source` + `source_external_id` into a clean badge.
+ * A recognized "channel:handle" external id (e.g. "imessage:+15055544644")
+ * wins over the raw source, so the badge reads "iMessage +1 (505) 554-4644"
+ * instead of "Webhook (imessage:+15055544644)".
+ */
+export function describeContactSource(
+  source: string,
+  externalId?: string | null,
+): ContactSourceInfo {
+  const channelMatch = externalId
+    ? /^([a-z]+):(.+)$/i.exec(externalId.trim())
+    : null
+  if (channelMatch) {
+    const channel = channelMatch[1].toLowerCase()
+    const label = CHANNEL_LABELS[channel]
+    if (label) {
+      const handle = channelMatch[2].trim()
+      const isPhone = /^\+?\d[\d\s().-]{6,}$/.test(handle)
+      return {
+        label,
+        detail: isPhone ? formatPhone(handle) : handle,
+        isMessagingChannel: true,
+      }
+    }
+  }
+  return {
+    label: SOURCE_LABELS[source] ?? source,
+    detail: externalId?.trim() || null,
+    isMessagingChannel: false,
+  }
+}

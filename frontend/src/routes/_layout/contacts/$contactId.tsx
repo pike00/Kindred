@@ -59,7 +59,11 @@ import {
   Star,
   UserRoundSearch,
 } from "@/lib/icons"
-import { formatBirthday, formatDateWithRelative } from "@/lib/utils"
+import {
+  describeContactSource,
+  formatBirthday,
+  formatDateWithRelative,
+} from "@/lib/utils"
 
 function ContactLocalTime({ timezone }: { timezone: string }) {
   const [localTime, setLocalTime] = useState(() => formatLocalTime(timezone))
@@ -251,28 +255,27 @@ function ContactDetailPage() {
                   <Star className="size-3" /> Favorite
                 </Badge>
               )}
-              {contact.source && (
-                <Badge variant="outline" className="gap-1">
-                  <Clock className="size-3" />
-                  {contact.source === "manual"
-                    ? "Manual"
-                    : contact.source === "vcard_import"
-                      ? "vCard Import"
-                      : contact.source === "carddav"
-                        ? "CardDAV"
-                        : contact.source === "google"
-                          ? "Google"
-                          : contact.source === "webhook"
-                            ? "Webhook"
-                            : contact.source}
-                  {contact.source_external_id && (
-                    <span className="text-muted-foreground text-xs">
-                      {" "}
-                      ({contact.source_external_id})
-                    </span>
-                  )}
-                </Badge>
-              )}
+              {contact.source &&
+                (() => {
+                  const src = describeContactSource(
+                    contact.source,
+                    contact.source_external_id,
+                  )
+                  const SourceIcon = src.isMessagingChannel
+                    ? MessagesSquare
+                    : Clock
+                  return (
+                    <Badge variant="outline" className="gap-1">
+                      <SourceIcon className="size-3" />
+                      {src.label}
+                      {src.detail && (
+                        <span className="text-muted-foreground text-xs">
+                          {src.detail}
+                        </span>
+                      )}
+                    </Badge>
+                  )
+                })()}
               {contact.is_archived && (
                 <Badge variant="outline">
                   <Archive className="size-3" /> Archived
