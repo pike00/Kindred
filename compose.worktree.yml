@@ -166,7 +166,7 @@ services:
       retries: 5
 
   meilisearch:
-    image: getmeili/meilisearch:v1.46
+    image: getmeili/meilisearch:v1.47
     env_file: .env
     environment:
       - MEILI_ENV=development
