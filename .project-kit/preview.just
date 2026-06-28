@@ -58,12 +58,12 @@ env:
             f"refuses to use slug={slug!r}: equals project_prefix, would collide "
             f"with the prod Traefik router. Switch branches or rename project_prefix."
         )
-    host = "kindred.dev.{domain}".replace("{slug}", slug).replace("{domain}", domain)
+    host = "{slug}.kindred.{domain}".replace("{slug}", slug).replace("{domain}", domain)
 
     print(f"SLUG={slug}")
     print(f"COMPOSE_PROJECT_NAME={prefix}-{slug}")
     print(f"WORKTREE_HOST={host}")
-    print("PREVIEW_COMPOSE_FILE=compose.dev.yml")
+    print("PREVIEW_COMPOSE_FILE=compose.worktree.yml")
     print("PREVIEW_HEALTH_PATH=/api/v1/utils/health-check/")
     print("PREVIEW_BASE_BRANCH=main")
     print("PREVIEW_SHELL_SERVICE=backend")

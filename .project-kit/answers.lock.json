@@ -65,10 +65,10 @@
   "managed_subsystems": [],
   "preview": {
     "base": "main",
-    "compose_file": "compose.dev.yml",
+    "compose_file": "compose.worktree.yml",
     "enabled": true,
     "health_path": "/api/v1/utils/health-check/",
-    "host_pattern": "kindred.dev.{domain}",
+    "host_pattern": "{slug}.kindred.{domain}",
     "ports": {},
     "project_prefix": "kindred",
     "shell_service": "backend",
