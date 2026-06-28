@@ -27,11 +27,15 @@ import typer
 PROJECT_NAME = "kindred"
 CLIFF_CONFIG = ".project-kit/cliff.toml"
 BRANCH = "main"
-LITELLM_MODEL = "deepseek-v4-pro"
-# OpenAI-compatible base URL, baked at scaffold time from .project-kit answers
-# (default: the homelab pikellm proxy). release.py appends /chat/completions.
-LITELLM_BASE_URL = "https://pikellm.khanpikehome.com/v1"
+LITELLM_MODEL = "deepseek-v4-pro-cloud"
+# OpenAI-compatible base URL. Read from $LITELLM_BASE_URL at runtime, falling back
+# to the value baked from .project-kit answers (public repos bake nothing here, so
+# set the env var). release.py appends /chat/completions.
+LITELLM_BASE_URL = os.environ.get("LITELLM_BASE_URL") or ""
 INSTALL_COMMAND = None
+# `just version` prod-version resolution (baked from .project-kit answers).
+PROD_SOURCE = "none"
+PROD_HOMELAB_ENV = ""
 
 app = typer.Typer(add_completion=False)
 
@@ -153,7 +157,7 @@ def cut(
         f.write(notes)
         notes_path = f.name
     subprocess.run([editor, notes_path], check=False)
-    final_notes = Path(notes_path).read_text()
+    # notes_path is reused below as --notes-file (the editor wrote in place).
     typer.echo("[6/7] commit + tag + push…")
     _run(["git", "add", "CHANGELOG.md"])
     _run(["git", "commit", "-m", f"chore(release): {version}"])
@@ -165,6 +169,32 @@ def cut(
         cmd.append("--draft")
     _run(cmd)
     typer.echo(f"done. URL: $(gh release view {version} --json url -q .url)")
+
+
+@app.command()
+def version() -> None:
+    """Print the local latest tag and the deployed prod version (per prod_source)."""
+    typer.echo(f"local:  {_latest_tag() or '(none)'}")
+    if PROD_SOURCE == "homelab" and PROD_HOMELAB_ENV:
+        env_path = (
+            Path(os.environ.get("HOME") or str(Path.home()))
+            / "Documents" / "Homelab" / PROD_HOMELAB_ENV
+        )
+        label = f"~/Documents/Homelab/{PROD_HOMELAB_ENV} IMAGE_TAG"
+        if not env_path.is_file():
+            typer.echo(f"prod:   (file not found: {env_path})   [{label}]")
+            return
+        for raw in env_path.read_text().splitlines():
+            line = raw.strip()
+            if line.startswith("IMAGE_TAG="):
+                val = line.split("=", 1)[1].strip().strip('"').strip("'")
+                typer.echo(f"prod:   {val or '(empty)'}   [{label}]")
+                return
+        typer.echo(f"prod:   (IMAGE_TAG not set)   [{label}]")
+    elif PROD_SOURCE == "none":
+        typer.echo("prod:   (not configured — prod_source = none)")
+    else:
+        typer.echo(f"prod:   (prod_source={PROD_SOURCE!r} not supported by this generated release.py)")
 
 
 @app.command()

@@ -109,7 +109,7 @@ def main() -> int:
         warns += 1
     print("\ntest:")
     warns += _check_cmd("backend", "docker compose -f compose.dev.yml exec -T backend pytest")
-    warns += _check_cmd("frontend", "cd frontend \u0026\u0026 bun run test")
+    warns += _check_cmd("frontend", "cd frontend \u0026\u0026 pnpm run test")
     warns += _check_cmd("e2e", "bash scripts/run-e2e-prepush.sh")
     print("\ndeploy:")
     homelab_app = Path.home() / "Documents" / "Homelab" / "apps" / "kindred"

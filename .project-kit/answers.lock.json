@@ -19,6 +19,15 @@
     ],
     "wheel_enabled": false
   },
+  "ci": {
+    "enabled": false,
+    "engine": "none",
+    "gate": [
+      "test-all"
+    ],
+    "on_pr": true,
+    "on_push": true
+  },
   "clean": {
     "enabled": true
   },
@@ -51,22 +60,31 @@
     "output_dir": "site",
     "source_dir": "docs"
   },
-  "domain": "khanpikehome.com",
+  "domain": "",
   "language": "python+ts",
+  "managed_subsystems": [],
   "preview": {
+    "base": "main",
     "compose_file": "compose.dev.yml",
     "enabled": true,
     "health_path": "/api/v1/utils/health-check/",
-    "host_pattern": "kindred.dev.khanpikehome.com",
-    "shell_service": "backend"
+    "host_pattern": "kindred.dev.{domain}",
+    "ports": {},
+    "project_prefix": "kindred",
+    "shell_service": "backend",
+    "test_command": "pytest",
+    "test_service": null
   },
   "project_name": "kindred",
-  "refreshed_at": "2026-05-31",
+  "public": true,
+  "refreshed_at": "2026-06-27",
   "release": {
     "enabled": true,
     "install_command": null,
-    "litellm_base_url": "https://pikellm.khanpikehome.com/v1",
-    "litellm_model": "deepseek-v4-pro-cloud"
+    "litellm_base_url": "",
+    "litellm_model": "deepseek-v4-pro-cloud",
+    "prod_homelab_env": "",
+    "prod_source": "none"
   },
   "setup": {
     "backend": "uv sync --project backend",
