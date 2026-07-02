@@ -17,7 +17,7 @@ dependencies = [
     "sqlmodel<1.0.0,>=0.0.21",
     "sqlalchemy>=2.0.14,<=2.0.45",
     "pydantic-settings<3.0.0,>=2.2.1",
-    "sentry-sdk[fastapi]>=2.0.0,<3.0.0",
+    "sentry-sdk[fastapi]>=2.64.0,<3.0.0",
     "pyjwt<3.0.0,>=2.8.0",
     "pwdlib[argon2,bcrypt]>=0.3.0",
     "vobject>=0.9.9",
