@@ -7,4 +7,4 @@ faster-whisper==1.0.3
 requests>=2.31.0
 # Required by FastAPI for multipart/form-data uploads (the /transcribe
 # UploadFile endpoint); FastAPI raises at startup without it.
-python-multipart>=0.0.9
+python-multipart>=0.0.32
