@@ -1,6 +1,9 @@
 packages:
   - frontend
 
+overrides:
+  rollup: 4.61.1
+
 # pnpm v11 reads these from pnpm-workspace.yaml (not .npmrc).
 # Flat/hoisted node_modules (like npm/bun) so vitest/config + vite plugins
 # resolve without pnpm's strict symlink isolation.
