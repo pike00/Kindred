@@ -1,6 +1,6 @@
 # Stage 0, "build-stage", based on Node + pnpm, to build and compile the frontend
-FROM node:26-slim AS build-stage
-RUN corepack enable
+FROM node:22-slim AS build-stage
+RUN npm install -g pnpm
 
 WORKDIR /app
 
