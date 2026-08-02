@@ -192,7 +192,7 @@ export function QuickCapture({ contactId }: { contactId: string }) {
   )
 }
 
-function EditNoteDialog({
+export function EditNoteDialog({
   note,
   open,
   onOpenChange,
