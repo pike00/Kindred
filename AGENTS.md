@@ -67,6 +67,9 @@ BACKEND_PORT=18001 just dev-tailnet
 The command stays attached to the Vite process; Ctrl-C stops that tailnet
 listener, while `just down` stops the containers.
 
+The worktree compose host ports are loopback-only; tailnet access goes through
+the Vite listener above rather than exposing the backend directly on the LAN.
+
 
 Origin: `pike00/Kindred` (public repo). Scaffolded from `fastapi/full-stack-fastapi-template`.
 

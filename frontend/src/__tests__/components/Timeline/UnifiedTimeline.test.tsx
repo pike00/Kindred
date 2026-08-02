@@ -122,7 +122,7 @@ describe("UnifiedTimeline", () => {
         id: "le1",
         contact_id: "c1",
         title: "Got promoted",
-        occurred_at: "2024-01-08T00:00:00Z",
+        occurred_at: "2024-01-08",
         event_type: "career",
         description: "New job title",
       },

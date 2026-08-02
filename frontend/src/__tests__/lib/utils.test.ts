@@ -3,6 +3,8 @@ import {
   cn,
   describeContactSource,
   formatBirthday,
+  formatDateISO,
+  formatDateWithRelative,
   formatPhone,
 } from "../../lib/utils"
 
@@ -126,6 +128,15 @@ describe("formatBirthday", () => {
 
   it("returns null for unparseable input", () => {
     expect(formatBirthday("not-a-date", now)).toBeNull()
+  })
+})
+
+describe("formatDateISO", () => {
+  it("preserves date-only API values across timezones", () => {
+    expect(formatDateISO("2024-01-08")).toBe("2024-01-08")
+    expect(formatDateWithRelative("2024-01-08", new Date("2024-01-08T12:00:00"))).toContain(
+      "2024-01-08",
+    )
   })
 })
 

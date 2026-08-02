@@ -29,7 +29,7 @@ services:
       - FRONTEND_HOST=https://${WORKTREE_HOST:?run via 'just up' so WORKTREE_HOST is set}
       - GIT_HASH=${GIT_HASH:-}
     ports:
-      - "${BACKEND_PORT:-8000}:8000"
+      - "127.0.0.1:${BACKEND_PORT:-8000}:8000"
     volumes:
       - ./backend/app:/app/backend/app
       - ./backend/scripts:/app/backend/scripts
@@ -82,7 +82,7 @@ services:
       # container. Skip the ~400 MB Chromium/Firefox/WebKit/ffmpeg download.
       - PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
     ports:
-      - "${FRONTEND_PORT:-5173}:5173"
+      - "127.0.0.1:${FRONTEND_PORT:-5173}:5173"
     volumes:
       - ./package.json:/app/package.json:ro
       - ./pnpm-lock.yaml:/app/pnpm-lock.yaml:ro

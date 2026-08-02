@@ -7,6 +7,7 @@ export function cn(...inputs: ClassValue[]) {
 
 /** ISO calendar date (YYYY-MM-DD) from an ISO timestamp or date string. */
 export function formatDateISO(iso: string): string {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return iso
   const y = d.getFullYear()

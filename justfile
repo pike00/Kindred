@@ -59,7 +59,7 @@ dev-tailnet:
         BACKEND_PORT="$BACKEND_PORT" just dev
     fi
 
-    health_url="http://127.0.0.1:${BACKEND_PORT}/api/v1/health"
+    health_url="http://127.0.0.1:${BACKEND_PORT}${PREVIEW_HEALTH_PATH}"
     for _ in $(seq 1 45); do
         if curl -fsS --max-time 2 "$health_url" >/dev/null 2>&1; then
             break
@@ -91,7 +91,7 @@ dev-tailnet:
     TAILNET_HOST="$tailnet_ip" \
     TAILNET_MAGICDNS="$tailnet_host" \
     KINDRED_BACKEND_URL="http://127.0.0.1:${BACKEND_PORT}" \
-        exec bun run dev -- --config vite.tailnet.config.ts --host "$tailnet_ip" --port "$tailnet_port"
+        exec bun run dev -- --config vite.tailnet.config.ts --host "$tailnet_ip" --port "$tailnet_port" --strictPort
 
 # Regenerate docs/db/ from the live Postgres schema using tbls, then render
 # each .md to a standalone .html via pandoc. Open docs/db/index.html in a
