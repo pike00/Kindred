@@ -40,8 +40,17 @@ def main(
         raise typer.Exit(code=1)
     if status:
         subprocess.run(
-            ["docker", "inspect", HOMELAB_APP, "--format", "{{.Config.Image}}"],
-            check=False,
+            [
+                "docker",
+                "compose",
+                "--env-file",
+                ".env",
+                "ps",
+                "--format",
+                "table {{.Name}}\t{{.Image}}\t{{.State}}\t{{.Status}}",
+            ],
+            cwd=HOMELAB_PATH,
+            check=True,
         )
         return
     if rollback:
