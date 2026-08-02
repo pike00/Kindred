@@ -19,7 +19,6 @@ from app.models import (
     ContactFieldType,
 )
 
-
 _NAME_URI_PREFIX_RE = re.compile(r"^\s*(?:tel|mailto|sip|fax):\s*", re.IGNORECASE)
 
 

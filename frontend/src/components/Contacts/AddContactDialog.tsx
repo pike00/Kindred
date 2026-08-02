@@ -256,7 +256,10 @@ export const AddContactDialog = () => {
 
             <Separator />
 
-            <Section title="Tags" hint="Group this contact for quick filtering.">
+            <Section
+              title="Tags"
+              hint="Group this contact for quick filtering."
+            >
               <FormField
                 control={form.control}
                 name="tag_ids"
