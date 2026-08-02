@@ -20,7 +20,6 @@ import { AddGift } from "@/components/Gifts/AddGift"
 import { AddInteractionDialog } from "@/components/Interactions/AddInteractionDialog"
 import { InteractionMap } from "@/components/Interactions/InteractionMap"
 import { AddNoteDialog } from "@/components/Notes/AddNoteDialog"
-import { NotesCard } from "@/components/Notes/NotesCard"
 import { UnifiedTimeline } from "@/components/Timeline/UnifiedTimeline"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -354,7 +353,6 @@ function ContactDetailPage() {
             startDate={heatmapFilter?.startDate ?? null}
             endDate={heatmapFilter?.endDate ?? null}
           />
-          <NotesCard contactId={contactId} />
           <PetsCard contactId={contactId} />
           <LifeEventsCard contactId={contactId} />
           <CustomFieldsCard contactId={contactId} />

@@ -7,6 +7,8 @@ import { UnifiedTimeline } from "@/components/Timeline/UnifiedTimeline"
 // Mock API client services
 const mockListInteractions = vi.hoisted(() => vi.fn())
 const mockListNotes = vi.hoisted(() => vi.fn())
+const mockCreateNote = vi.hoisted(() => vi.fn())
+const mockUpdateNote = vi.hoisted(() => vi.fn())
 const mockListGifts = vi.hoisted(() => vi.fn())
 const mockListLifeEvents = vi.hoisted(() => vi.fn())
 const mockListDebts = vi.hoisted(() => vi.fn())
@@ -17,6 +19,8 @@ vi.mock("@/client", () => ({
   },
   NotesService: {
     listNotes: mockListNotes,
+    createNoteRoute: mockCreateNote,
+    updateNoteRoute: mockUpdateNote,
   },
   GiftsService: {
     listGifts: mockListGifts,
@@ -50,10 +54,16 @@ vi.mock("@tanstack/react-router", () => ({
 // Mock icon import
 vi.mock("@/lib/icons", () => ({
   Clock: () => <span data-testid="icon-clock">Clock</span>,
+  Check: () => <span data-testid="icon-check">Check</span>,
   MessagesSquare: () => <span data-testid="icon-messages">Messages</span>,
   NotebookPen: () => <span data-testid="icon-notebook">Notebook</span>,
   HeartHandshake: () => <span data-testid="icon-gift">Gift</span>,
   CalendarHeart: () => <span data-testid="icon-calendar">Calendar</span>,
+  Pencil: () => <span data-testid="icon-pencil">Pencil</span>,
+  RefreshCw: () => <span data-testid="icon-refresh">Refresh</span>,
+  Trash2: () => <span data-testid="icon-trash">Trash</span>,
+  WifiOff: () => <span data-testid="icon-offline">Offline</span>,
+  X: () => <span data-testid="icon-x">X</span>,
 }))
 
 describe("UnifiedTimeline", () => {
@@ -136,6 +146,8 @@ describe("UnifiedTimeline", () => {
     mockListGifts.mockResolvedValue({ data: [] })
     mockListLifeEvents.mockResolvedValue({ data: [] })
     mockListDebts.mockResolvedValue({ data: [] })
+    mockCreateNote.mockResolvedValue({ id: "n2" })
+    mockUpdateNote.mockResolvedValue({ id: "n1" })
   })
 
   it("renders timeline card with title", () => {
@@ -225,6 +237,42 @@ describe("UnifiedTimeline", () => {
     await waitFor(() => {
       expect(screen.getByText("Note")).toBeInTheDocument()
       expect(screen.getByText("Quick note about Alice")).toBeInTheDocument()
+    })
+  })
+
+  it("adds a note from the timeline", async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<UnifiedTimeline contactId="c1" />)
+
+    const textarea = screen.getByPlaceholderText(/Jot a quick note/i)
+    await user.type(textarea, "A new timeline note")
+    await user.click(screen.getByRole("button", { name: "Save note" }))
+
+    await waitFor(() => {
+      expect(mockCreateNote).toHaveBeenCalledWith({
+        requestBody: { contact_id: "c1", body: "A new timeline note" },
+      })
+    })
+  })
+
+  it("edits a timeline note in place", async () => {
+    const user = userEvent.setup()
+    mockListNotes.mockResolvedValueOnce(mockNoteData)
+    renderWithProviders(<UnifiedTimeline contactId="c1" />)
+
+    await screen.findByText("Quick note about Alice")
+    await user.click(screen.getByRole("button", { name: "Edit note" }))
+
+    const textarea = screen.getByRole("textbox", { name: "Edit note" })
+    await user.clear(textarea)
+    await user.type(textarea, "Updated timeline note")
+    await user.click(screen.getByRole("button", { name: /Save$/ }))
+
+    await waitFor(() => {
+      expect(mockUpdateNote).toHaveBeenCalledWith({
+        noteId: "n1",
+        requestBody: { body: "Updated timeline note" },
+      })
     })
   })
 

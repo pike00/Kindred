@@ -34,7 +34,7 @@ function formatDate(iso: string) {
   return formatDateWithRelative(iso)
 }
 
-function QuickCapture({ contactId }: { contactId: string }) {
+export function QuickCapture({ contactId }: { contactId: string }) {
   const [body, setBody] = useState("")
   const [isOffline, setIsOffline] = useState(!navigator.onLine)
   const [pendingDrafts, setPendingDrafts] = useState<OfflineDraft[]>([])

@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { format, isWithinInterval, parseISO } from "date-fns"
 import { useMemo, useState } from "react"
 
@@ -17,17 +17,24 @@ import {
   NotesService,
 } from "@/client"
 import { MentionText } from "@/components/Mentions/MentionText"
+import { MentionTextarea } from "@/components/Mentions/MentionTextarea"
+import { QuickCapture } from "@/components/Notes/NotesCard"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { LoadingButton } from "@/components/ui/loading-button"
 import { Skeleton } from "@/components/ui/skeleton"
+import useCustomToast from "@/hooks/useCustomToast"
 import {
   CalendarHeart,
+  Check,
   Clock,
   HeartHandshake,
   type LucideIcon,
   MessagesSquare,
   NotebookPen,
+  Pencil,
+  X,
 } from "@/lib/icons"
 import { cn, formatDateWithRelative } from "@/lib/utils"
 
@@ -273,7 +280,8 @@ export function UnifiedTimeline({
           })}
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-5">
+        <QuickCapture contactId={contactId} />
         {isLoading ? (
           <div className="space-y-3">
             <Skeleton className="h-6 w-3/4" />
@@ -392,10 +400,7 @@ function TimelineRowBody({
               <span>edited {formatDate(n.updated_at)}</span>
             )}
           </div>
-          <MentionText
-            text={n.body}
-            className="text-sm mt-1 block whitespace-pre-wrap"
-          />
+          <InlineTimelineNote note={n} />
         </>
       )
     }
@@ -458,4 +463,98 @@ function TimelineRowBody({
       )
     }
   }
+}
+
+function InlineTimelineNote({ note }: { note: NotePublic }) {
+  const [isEditing, setIsEditing] = useState(false)
+  const [body, setBody] = useState(note.body)
+  const queryClient = useQueryClient()
+  const { showErrorToast } = useCustomToast()
+
+  const mutation = useMutation({
+    mutationFn: (text: string) =>
+      NotesService.updateNoteRoute({
+        noteId: note.id,
+        requestBody: { body: text },
+      }),
+    onSuccess: () => {
+      setIsEditing(false)
+      queryClient.invalidateQueries({ queryKey: ["notes", note.contact_id] })
+    },
+    onError: (err) =>
+      showErrorToast(
+        err instanceof Error ? err.message : "Failed to update note",
+      ),
+  })
+
+  const cancel = () => {
+    setBody(note.body)
+    setIsEditing(false)
+  }
+  const trimmed = body.trim()
+  const canSave = trimmed.length > 0 && !mutation.isPending
+
+  if (isEditing) {
+    return (
+      <div className="mt-2 rounded-md border bg-muted/30 p-2">
+        <MentionTextarea
+          aria-label="Edit note"
+          value={body}
+          onChange={setBody}
+          rows={3}
+          autoFocus
+          onKeyDown={(event) => {
+            if (
+              (event.metaKey || event.ctrlKey) &&
+              event.key === "Enter" &&
+              canSave
+            ) {
+              event.preventDefault()
+              mutation.mutate(trimmed)
+            }
+            if (event.key === "Escape" && !mutation.isPending) cancel()
+          }}
+        />
+        <div className="mt-2 flex justify-end gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={cancel}
+            disabled={mutation.isPending}
+          >
+            <X className="size-3.5" /> Cancel
+          </Button>
+          <LoadingButton
+            type="button"
+            size="sm"
+            loading={mutation.isPending}
+            disabled={!canSave}
+            onClick={() => mutation.mutate(trimmed)}
+          >
+            <Check className="size-3.5" /> Save
+          </LoadingButton>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="group relative mt-1 pr-8">
+      <MentionText
+        text={note.body}
+        className="block text-sm whitespace-pre-wrap"
+      />
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="absolute right-0 top-0 size-7 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+        aria-label="Edit note"
+        onClick={() => setIsEditing(true)}
+      >
+        <Pencil className="size-3.5" />
+      </Button>
+    </div>
+  )
 }
