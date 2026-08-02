@@ -40,7 +40,7 @@ def list_gifts(
     statement = (
         select(Gift, Contact.birthday, Contact.first_name, Contact.last_name)
         .join(Contact, Gift.contact_id == Contact.id)
-        .where(Gift.contact_id == contact_id)
+        .where(Gift.contact_id == contact_id, Gift.deleted_at.is_(None))
     )
     results = session.exec(statement).all()
 
@@ -152,7 +152,7 @@ def get_kanban_board(
     statement = (
         select(Gift, Contact.birthday, Contact.first_name, Contact.last_name)
         .join(Contact, Gift.contact_id == Contact.id)
-        .where(Gift.owner_id == current_user.id)
+        .where(Gift.owner_id == current_user.id, Gift.deleted_at.is_(None))
     )
     results = session.exec(statement).all()
 
