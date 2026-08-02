@@ -53,6 +53,20 @@ Re-run the project-kit wizard in chat: ask Claude to "refresh project-kit"
 or "audit project-kit in this repo".
 <!-- END PROJECT-KIT -->
 
+## Fast tailnet development
+
+Use `just dev-tailnet` for the repeat development loop after the stack has
+been bootstrapped. It reuses cached containers, avoids rebuilding images and
+reinstalling frontend dependencies, and serves Vite directly over Tailscale
+with the API proxied to the local backend. If port 8000 is occupied:
+
+```bash
+BACKEND_PORT=18001 just dev-tailnet
+```
+
+The command stays attached to the Vite process; Ctrl-C stops that tailnet
+listener, while `just down` stops the containers.
+
 
 Origin: `pike00/Kindred` (public repo). Scaffolded from `fastapi/full-stack-fastapi-template`.
 

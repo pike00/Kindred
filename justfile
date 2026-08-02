@@ -39,6 +39,60 @@ import '.project-kit/clean.just'
 
 # --- repo-specific ---
 
+# Fast live development over the tailnet. Reuses existing images/containers,
+# starts Vite directly on the machine's Tailscale IP, and proxies /api to the
+# local backend. Use `BACKEND_PORT=18001` when the default port is occupied.
+[group('Dev')]
+dev-tailnet:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    toplevel="$(git rev-parse --show-toplevel)"
+    cd "$toplevel"
+    [ -f .env ] && { set -a; . ./.env; set +a; }
+    eval "$(just env | sed 's/^/export /')"
+    export BACKEND_PORT="${BACKEND_PORT:-8000}"
+
+    compose_log="$(mktemp)"
+    trap 'rm -f "$compose_log"' EXIT
+    if ! docker compose -f "$PREVIEW_COMPOSE_FILE" up -d >"$compose_log" 2>&1; then
+        echo "Cached dev images are unavailable; bootstrapping with the full project-kit dev recipe."
+        BACKEND_PORT="$BACKEND_PORT" just dev
+    fi
+
+    health_url="http://127.0.0.1:${BACKEND_PORT}/api/v1/health"
+    for _ in $(seq 1 45); do
+        if curl -fsS --max-time 2 "$health_url" >/dev/null 2>&1; then
+            break
+        fi
+        sleep 1
+    done
+    if ! curl -fsS --max-time 2 "$health_url" >/dev/null 2>&1; then
+        echo "Backend did not become healthy at $health_url" >&2
+        cat "$compose_log" >&2
+        exit 1
+    fi
+
+    tailnet_ip="$(tailscale ip -4)"
+    tailnet_host="$(tailscale status --self --json | jq -r '.Self.DNSName' | sed 's/\.$//')"
+    tailnet_port="$(python3 -c '
+    import random, socket
+    random.seed()
+    for _ in range(50):
+        port = random.randint(8200, 9000)
+        with socket.socket() as sock:
+            if sock.connect_ex(("127.0.0.1", port)) != 0:
+                print(port)
+                break
+    ')"
+    echo "Tailnet app: http://${tailnet_host}:${tailnet_port}/"
+    cd frontend
+    VITE_API_URL= \
+    VITE_PUBLIC_HOST= \
+    TAILNET_HOST="$tailnet_ip" \
+    TAILNET_MAGICDNS="$tailnet_host" \
+    KINDRED_BACKEND_URL="http://127.0.0.1:${BACKEND_PORT}" \
+        exec bun run dev -- --config vite.tailnet.config.ts --host "$tailnet_ip" --port "$tailnet_port"
+
 # Regenerate docs/db/ from the live Postgres schema using tbls, then render
 # each .md to a standalone .html via pandoc. Open docs/db/index.html in a
 # browser — no server needed. Requires the `db` service to be running.
