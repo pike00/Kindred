@@ -29,9 +29,13 @@ export function formatDateISO(iso: string): string {
 
 /** Coarse relative estimate: "today", "in 3 days", "about 2 weeks ago". */
 export function relativeEstimate(iso: string, now: Date = new Date()): string {
+  const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(iso)
   const d = parseISODate(iso)
   if (Number.isNaN(d.getTime())) return ""
-  const diffMs = d.getTime() - now.getTime()
+  const reference = isDateOnly
+    ? new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    : now
+  const diffMs = d.getTime() - reference.getTime()
   const days = Math.round(Math.abs(diffMs) / 86_400_000)
   if (days === 0) return "today"
   const plural = (n: number, unit: string) =>
