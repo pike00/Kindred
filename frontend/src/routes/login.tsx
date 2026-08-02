@@ -79,6 +79,22 @@ function Login() {
             <h1 className="text-2xl font-bold">Login to your account</h1>
           </div>
 
+          {import.meta.env.DEV && (
+            <div
+              className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2.5 text-sm"
+              data-testid="development-login-hint"
+            >
+              <p className="font-medium">Development login</p>
+              <p className="mt-1 text-muted-foreground">
+                <span className="font-medium text-foreground">Email:</span>{" "}
+                admin@example.com
+                <br />
+                <span className="font-medium text-foreground">Password:</span>{" "}
+                changethis
+              </p>
+            </div>
+          )}
+
           <div className="grid gap-4">
             <FormField
               control={form.control}
