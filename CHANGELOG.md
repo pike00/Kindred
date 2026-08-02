@@ -5,17 +5,6 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.2.98] - 2026-08-02
-
-### Added
-- Feat(timeline): make timeline items editable and deletable (fc97ec7)
-
-### Documentation
-- Docs: trim stale frontend coverage notes (a3d61ef)
-
-### Other
-- Test: silence expected command palette errors (1bd0a74)
-
 ## [0.2.97] - 2026-08-02
 
 ### Fixed
