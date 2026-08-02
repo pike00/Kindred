@@ -5,10 +5,21 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+function parseISODate(iso: string): Date {
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso)
+  if (dateOnly) {
+    return new Date(
+      Number(dateOnly[1]),
+      Number(dateOnly[2]) - 1,
+      Number(dateOnly[3]),
+    )
+  }
+  return new Date(iso)
+}
+
 /** ISO calendar date (YYYY-MM-DD) from an ISO timestamp or date string. */
 export function formatDateISO(iso: string): string {
-  if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso
-  const d = new Date(iso)
+  const d = parseISODate(iso)
   if (Number.isNaN(d.getTime())) return iso
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, "0")
@@ -18,7 +29,7 @@ export function formatDateISO(iso: string): string {
 
 /** Coarse relative estimate: "today", "in 3 days", "about 2 weeks ago". */
 export function relativeEstimate(iso: string, now: Date = new Date()): string {
-  const d = new Date(iso)
+  const d = parseISODate(iso)
   if (Number.isNaN(d.getTime())) return ""
   const diffMs = d.getTime() - now.getTime()
   const days = Math.round(Math.abs(diffMs) / 86_400_000)

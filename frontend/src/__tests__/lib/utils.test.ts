@@ -134,8 +134,8 @@ describe("formatBirthday", () => {
 describe("formatDateISO", () => {
   it("preserves date-only API values across timezones", () => {
     expect(formatDateISO("2024-01-08")).toBe("2024-01-08")
-    expect(formatDateWithRelative("2024-01-08", new Date("2024-01-08T12:00:00"))).toContain(
-      "2024-01-08",
+    expect(formatDateWithRelative("2024-01-08", new Date(2024, 0, 8))).toBe(
+      "2024-01-08 (today)",
     )
   })
 })
