@@ -3,6 +3,7 @@ import {
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query"
+import { Link } from "@tanstack/react-router"
 
 import type { InteractionPublic } from "@/client"
 import { InteractionsService } from "@/client"
@@ -190,11 +191,20 @@ function InteractionCard({
               <>
                 <span>·</span>
                 <span className="text-foreground">
-                  {attendees
-                    .map((a) =>
-                      [a.first_name, a.last_name].filter(Boolean).join(" "),
-                    )
-                    .join(", ")}
+                  {attendees.map((attendee, index) => (
+                    <span key={attendee.id}>
+                      {index > 0 && ", "}
+                      <Link
+                        to="/contacts/$contactId"
+                        params={{ contactId: attendee.id }}
+                        className="font-medium underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      >
+                        {[attendee.first_name, attendee.last_name]
+                          .filter(Boolean)
+                          .join(" ")}
+                      </Link>
+                    </span>
+                  ))}
                 </span>
               </>
             )}
