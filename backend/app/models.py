@@ -523,9 +523,9 @@ class TagSharesPublic(SQLModel):
 
 class ContactBase(SQLModel):
     first_name: str = Field(
-        min_length=1,
+        default="",
         max_length=255,
-        description="Given name; required.",
+        description="Given name, if known.",
     )
     last_name: str | None = Field(
         default=None,
@@ -640,7 +640,7 @@ class ContactCreate(ContactBase):
 
 
 class ContactUpdate(SQLModel):
-    first_name: str | None = Field(default=None, min_length=1, max_length=255)
+    first_name: str | None = Field(default=None, max_length=255)
     last_name: str | None = None
     middle_name: str | None = None
     prefix: str | None = None
@@ -825,6 +825,8 @@ class ContactStageEventsPublic(SQLModel):
 
 
 class ContactPublic(ContactBase):
+    # Database rows always have a string value, even when the given name is blank.
+    first_name: str
     id: uuid.UUID
     avatar_url: str | None
     last_contacted_at: datetime | None

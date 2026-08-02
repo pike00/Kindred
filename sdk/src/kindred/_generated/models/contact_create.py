@@ -22,7 +22,7 @@ T = TypeVar("T", bound="ContactCreate")
 class ContactCreate:
     """
     Attributes:
-        first_name (str): Given name; required.
+        first_name (str | Unset): Given name, if known. Default: ''.
         last_name (None | str | Unset): Family name.
         middle_name (None | str | Unset): Middle name or initial.
         prefix (None | str | Unset): Honorific like Dr., Mr., Ms.
@@ -49,7 +49,7 @@ class ContactCreate:
         tag_ids (list[UUID] | None | Unset):
     """
 
-    first_name: str
+    first_name: str | Unset = ""
     last_name: None | str | Unset = UNSET
     middle_name: None | str | Unset = UNSET
     prefix: None | str | Unset = UNSET
@@ -210,11 +210,9 @@ class ContactCreate:
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update(
-            {
-                "first_name": first_name,
-            }
-        )
+        field_dict.update({})
+        if first_name is not UNSET:
+            field_dict["first_name"] = first_name
         if last_name is not UNSET:
             field_dict["last_name"] = last_name
         if middle_name is not UNSET:
@@ -267,7 +265,7 @@ class ContactCreate:
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
-        first_name = d.pop("first_name")
+        first_name = d.pop("first_name", UNSET)
 
         def _parse_last_name(data: object) -> None | str | Unset:
             if data is None:

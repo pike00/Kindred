@@ -27,7 +27,7 @@ T = TypeVar("T", bound="ContactPublic")
 class ContactPublic:
     """
     Attributes:
-        first_name (str): Given name; required.
+        first_name (str):
         id (UUID):
         avatar_url (None | str):
         last_contacted_at (datetime.datetime | None):

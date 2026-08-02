@@ -1334,9 +1334,9 @@ export const ContactCreateSchema = {
         first_name: {
             type: 'string',
             maxLength: 255,
-            minLength: 1,
             title: 'First Name',
-            description: 'Given name; required.'
+            description: 'Given name, if known.',
+            default: ''
         },
         last_name: {
             anyOf: [
@@ -1606,7 +1606,6 @@ export const ContactCreateSchema = {
         }
     },
     type: 'object',
-    required: ['first_name'],
     title: 'ContactCreate'
 } as const;
 
@@ -1878,10 +1877,7 @@ export const ContactPublicSchema = {
     properties: {
         first_name: {
             type: 'string',
-            maxLength: 255,
-            minLength: 1,
-            title: 'First Name',
-            description: 'Given name; required.'
+            title: 'First Name'
         },
         last_name: {
             anyOf: [
@@ -2409,8 +2405,7 @@ export const ContactUpdateSchema = {
             anyOf: [
                 {
                     type: 'string',
-                    maxLength: 255,
-                    minLength: 1
+                    maxLength: 255
                 },
                 {
                     type: 'null'
@@ -5567,10 +5562,7 @@ export const OverdueContactPublicSchema = {
     properties: {
         first_name: {
             type: 'string',
-            maxLength: 255,
-            minLength: 1,
-            title: 'First Name',
-            description: 'Given name; required.'
+            title: 'First Name'
         },
         last_name: {
             anyOf: [

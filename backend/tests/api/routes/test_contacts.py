@@ -54,16 +54,26 @@ def test_create_contact_with_optional_fields(
     assert content["is_favorite"] is True
 
 
-def test_create_contact_missing_first_name(
+def test_create_contact_allows_missing_or_blank_first_name(
     client: TestClient, superuser_token_headers: dict[str, str]
 ) -> None:
-    data = {"last_name": "NoFirst"}
     r = client.post(
         f"{settings.API_V1_STR}/contacts/",
         headers=superuser_token_headers,
-        json=data,
+        json={"last_name": "KnownFamilyName"},
     )
-    assert r.status_code == 422
+    assert r.status_code == 200
+    assert r.json()["first_name"] == ""
+    assert r.json()["last_name"] == "KnownFamilyName"
+
+    r = client.post(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=superuser_token_headers,
+        json={"first_name": "", "last_name": ""},
+    )
+    assert r.status_code == 200
+    assert r.json()["first_name"] == ""
+    assert r.json()["last_name"] == ""
 
 
 def test_list_contacts(

@@ -30,7 +30,7 @@ import useCustomToast from "@/hooks/useCustomToast"
 import { BellOff, Pencil } from "@/lib/icons"
 
 const contactUpdateSchema = z.object({
-  first_name: z.string().min(1, "First name is required"),
+  first_name: z.string().max(255),
   last_name: z.string().optional(),
   nickname: z.string().optional(),
   birthday: z.string().optional(),
@@ -156,7 +156,7 @@ export const EditContactDialog = ({ contact }: EditContactDialogProps) => {
               name="first_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>First Name *</FormLabel>
+                  <FormLabel>First Name</FormLabel>
                   <FormControl>
                     <Input placeholder="John" {...field} />
                   </FormControl>

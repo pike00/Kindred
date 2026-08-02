@@ -280,9 +280,9 @@ export type CommunicationPreferenceUpdate = {
 
 export type ContactCreate = {
     /**
-     * Given name; required.
+     * Given name, if known.
      */
-    first_name: string;
+    first_name?: string;
     /**
      * Family name.
      */
@@ -458,9 +458,6 @@ export type ContactHeatmapResponse = {
 };
 
 export type ContactPublic = {
-    /**
-     * Given name; required.
-     */
     first_name: string;
     /**
      * Family name.
@@ -1442,9 +1439,6 @@ export type OrganizationUpdate = {
 };
 
 export type OverdueContactPublic = {
-    /**
-     * Given name; required.
-     */
     first_name: string;
     /**
      * Family name.
