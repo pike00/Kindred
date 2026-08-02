@@ -167,6 +167,7 @@ def test_update_life_event(
         json={
             "title": "Joined Acme Corp",
             "description": "Senior engineer",
+            "occurred_at": "2024-02-10",
             "create_annual_reminder": True,
         },
     )
@@ -174,6 +175,7 @@ def test_update_life_event(
     content = r.json()
     assert content["title"] == "Joined Acme Corp"
     assert content["description"] == "Senior engineer"
+    assert content["occurred_at"] == "2024-02-10"
     assert content["create_annual_reminder"] is True
     assert content["event_type"] == "job_change"  # untouched
 

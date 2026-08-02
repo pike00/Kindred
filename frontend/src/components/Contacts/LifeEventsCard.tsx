@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import type { ReactElement } from "react"
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -27,6 +28,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -131,6 +133,9 @@ function LifeEventFormFields({
             <FormControl>
               <Input type="date" {...field} />
             </FormControl>
+            <FormDescription>
+              Use the date the event happened, even if you are adding it now.
+            </FormDescription>
             <FormMessage />
           </FormItem>
         )}
@@ -160,7 +165,13 @@ function LifeEventFormFields({
   )
 }
 
-function AddLifeEventDialog({ contactId }: { contactId: string }) {
+export function AddLifeEventDialog({
+  contactId,
+  trigger,
+}: {
+  contactId: string
+  trigger?: ReactElement
+}) {
   const [open, setOpen] = useState(false)
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
@@ -199,9 +210,11 @@ function AddLifeEventDialog({ contactId }: { contactId: string }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Plus className="mr-1 size-3.5" /> Add
-        </Button>
+        {trigger ?? (
+          <Button variant="outline" size="sm">
+            <Plus className="mr-1 size-3.5" /> Add
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
@@ -230,7 +243,7 @@ function AddLifeEventDialog({ contactId }: { contactId: string }) {
   )
 }
 
-function EditLifeEventDialog({
+export function EditLifeEventDialog({
   event,
   open,
   onOpenChange,

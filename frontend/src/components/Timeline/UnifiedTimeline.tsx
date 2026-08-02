@@ -16,6 +16,10 @@ import {
   LifeEventsService,
   NotesService,
 } from "@/client"
+import {
+  AddLifeEventDialog,
+  EditLifeEventDialog,
+} from "@/components/Contacts/LifeEventsCard"
 import { MentionText } from "@/components/Mentions/MentionText"
 import { MentionTextarea } from "@/components/Mentions/MentionTextarea"
 import { QuickCapture } from "@/components/Notes/NotesCard"
@@ -243,14 +247,24 @@ export function UnifiedTimeline({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Clock className="size-4" /> Timeline
-          {!isLoading && events.length > 0 && (
-            <span className="text-muted-foreground font-normal">
-              ({filtered.length})
-            </span>
-          )}
-        </CardTitle>
+        <div className="flex items-center justify-between gap-3">
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="size-4" /> Timeline
+            {!isLoading && events.length > 0 && (
+              <span className="text-muted-foreground font-normal">
+                ({filtered.length})
+              </span>
+            )}
+          </CardTitle>
+          <AddLifeEventDialog
+            contactId={contactId}
+            trigger={
+              <Button variant="outline" size="sm">
+                <CalendarHeart className="mr-1 size-3.5" /> Add life event
+              </Button>
+            }
+          />
+        </div>
         {startDate && endDate && (
           <p className="text-xs text-muted-foreground">
             Showing events from {format(parseISO(startDate), "MMM d")} -{" "}
@@ -291,7 +305,7 @@ export function UnifiedTimeline({
           <p className="text-sm text-muted-foreground">
             {visible.length === 0
               ? events.length === 0
-                ? "Nothing here yet. Log an interaction or capture a note to get started."
+                ? "Nothing here yet. Log an interaction, capture a note, or add a life event to get started."
                 : "All event types are filtered out."
               : "No events in the selected date range."}
           </p>
@@ -425,20 +439,7 @@ function TimelineRowBody({
       )
     }
     case "life_event": {
-      const le = event.payload
-      return (
-        <>
-          <div className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
-            <span className="font-medium text-foreground">{le.title}</span>
-            <span>·</span>
-            <span>{formatDate(le.occurred_at)}</span>
-            <Badge variant="outline">{le.event_type}</Badge>
-          </div>
-          {le.description && (
-            <p className="text-sm mt-1 whitespace-pre-wrap">{le.description}</p>
-          )}
-        </>
-      )
+      return <TimelineLifeEvent event={event.payload} />
     }
     case "debt": {
       const d = event.payload
@@ -463,6 +464,40 @@ function TimelineRowBody({
       )
     }
   }
+}
+
+function TimelineLifeEvent({ event }: { event: LifeEventPublic }) {
+  const [editOpen, setEditOpen] = useState(false)
+
+  return (
+    <>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+          <span className="font-medium text-foreground">{event.title}</span>
+          <span>·</span>
+          <span>{formatDate(event.occurred_at)}</span>
+          <Badge variant="outline">{event.event_type}</Badge>
+        </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label={`Edit ${event.title}`}
+          onClick={() => setEditOpen(true)}
+        >
+          <Pencil className="size-3.5" />
+        </Button>
+      </div>
+      {event.description && (
+        <p className="text-sm mt-1 whitespace-pre-wrap">{event.description}</p>
+      )}
+      <EditLifeEventDialog
+        event={event}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+      />
+    </>
+  )
 }
 
 function InlineTimelineNote({ note }: { note: NotePublic }) {

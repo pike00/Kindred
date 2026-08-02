@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { screen, waitFor } from "@testing-library/react"
+import { fireEvent, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { renderWithProviders } from "@/test/helpers"
 import { UnifiedTimeline } from "@/components/Timeline/UnifiedTimeline"
@@ -11,6 +11,8 @@ const mockCreateNote = vi.hoisted(() => vi.fn())
 const mockUpdateNote = vi.hoisted(() => vi.fn())
 const mockListGifts = vi.hoisted(() => vi.fn())
 const mockListLifeEvents = vi.hoisted(() => vi.fn())
+const mockCreateLifeEvent = vi.hoisted(() => vi.fn())
+const mockUpdateLifeEvent = vi.hoisted(() => vi.fn())
 const mockListDebts = vi.hoisted(() => vi.fn())
 
 vi.mock("@/client", () => ({
@@ -27,6 +29,8 @@ vi.mock("@/client", () => ({
   },
   LifeEventsService: {
     listLifeEvents: mockListLifeEvents,
+    createLifeEventRoute: mockCreateLifeEvent,
+    updateLifeEvent: mockUpdateLifeEvent,
   },
   DebtsService: {
     listDebts: mockListDebts,
@@ -148,6 +152,8 @@ describe("UnifiedTimeline", () => {
     mockListDebts.mockResolvedValue({ data: [] })
     mockCreateNote.mockResolvedValue({ id: "n2" })
     mockUpdateNote.mockResolvedValue({ id: "n1" })
+    mockCreateLifeEvent.mockResolvedValue({ id: "le2" })
+    mockUpdateLifeEvent.mockResolvedValue({ id: "le1" })
   })
 
   it("renders timeline card with title", () => {
@@ -178,7 +184,7 @@ describe("UnifiedTimeline", () => {
     await waitFor(() => {
       expect(
         screen.getByText(
-          /Nothing here yet. Log an interaction or capture a note/i,
+          /Nothing here yet. Log an interaction, capture a note, or add a life event/i,
         ),
       ).toBeInTheDocument()
     })
@@ -255,6 +261,36 @@ describe("UnifiedTimeline", () => {
     })
   })
 
+  it("adds a life event from the timeline with a custom date", async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<UnifiedTimeline contactId="c1" />)
+
+    await user.click(screen.getByRole("button", { name: /Add life event/ }))
+    const dialog = await screen.findByRole("dialog")
+
+    await user.type(
+      within(dialog).getByLabelText(/^Title/),
+      "Moved to Chicago",
+    )
+    fireEvent.change(within(dialog).getByLabelText(/^Date/), {
+      target: { value: "2012-04-03" },
+    })
+    await user.click(within(dialog).getByRole("button", { name: "Save" }))
+
+    await waitFor(() => {
+      expect(mockCreateLifeEvent).toHaveBeenCalledWith({
+        requestBody: {
+          contact_id: "c1",
+          event_type: "anniversary",
+          title: "Moved to Chicago",
+          occurred_at: "2012-04-03",
+          description: null,
+          create_annual_reminder: false,
+        },
+      })
+    })
+  })
+
   it("edits a timeline note in place", async () => {
     const user = userEvent.setup()
     mockListNotes.mockResolvedValueOnce(mockNoteData)
@@ -296,6 +332,31 @@ describe("UnifiedTimeline", () => {
     await waitFor(() => {
       expect(screen.getByText("Got promoted")).toBeInTheDocument()
       expect(screen.getByText("career")).toBeInTheDocument()
+    })
+  })
+
+  it("edits the date of a prior life event from the timeline", async () => {
+    const user = userEvent.setup()
+    mockListLifeEvents.mockResolvedValueOnce(mockLifeEventData)
+    renderWithProviders(<UnifiedTimeline contactId="c1" />)
+
+    await screen.findByText("Got promoted")
+    await user.click(
+      screen.getByRole("button", { name: "Edit Got promoted" }),
+    )
+
+    const dialog = await screen.findByRole("dialog")
+    expect(within(dialog).getByLabelText(/^Date/)).toHaveValue("2024-01-08")
+    fireEvent.change(within(dialog).getByLabelText(/^Date/), {
+      target: { value: "2001-02-03" },
+    })
+    await user.click(within(dialog).getByRole("button", { name: "Save" }))
+
+    await waitFor(() => {
+      expect(mockUpdateLifeEvent).toHaveBeenCalledWith({
+        eventId: "le1",
+        requestBody: expect.objectContaining({ occurred_at: "2001-02-03" }),
+      })
     })
   })
 
