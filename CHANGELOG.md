@@ -5,6 +5,18 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.96] - 2026-08-02
+
+### Other
+- Chore: fix lint violations (dfd28bd)
+- Db: add recommendation interaction channel enum value (44da73b)
+- Auth: show development login credentials (bfed979)
+- Timeline: add inline note capture and editing (b15880f)
+- ⬆ Bump @radix-ui/react-scroll-area from 1.2.10 to 1.2.18 (#154) (a3e8c62)
+- ⬆ Bump playwright from 1.60.0 to 1.62.0 (#159) (4c0b172)
+- ⬆ Bump rollup from 4.61.1 to 4.62.3 (#157) (61ee0b8)
+- ⬆ Bump @radix-ui/react-label from 2.1.8 to 2.1.15 (#156) (514c486)
+
 ## [0.2.95] - 2026-08-02
 
 ### Other
