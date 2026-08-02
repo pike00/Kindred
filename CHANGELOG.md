@@ -5,6 +5,50 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.94] - 2026-08-02
+
+### Documentation
+- Docs: add CONTRIBUTING.md guide (#165) (cb1a8e7)
+
+### Other
+- Interactions: link attendees to contact pages (e8a293f)
+- Calendar: use current month grid class (1108acd)
+- Frontend: use supported pnpm build image (78886cf)
+- Contacts: allow unknown contact names (d2e17f0)
+- Add release.just task file (159b617)
+- ⬆ Bump brace-expansion from 2.1.1 to 2.1.4 (#175) (fc29278)
+- ⬆ Bump getmeili/meilisearch from v1.50.0 to v1.51.0 (#174) (0e1df3b)
+- ⬆ Bump getmeili/meilisearch from v1.49.0 to v1.50.0 (#170) (8e9a89f)
+- ⬆ Bump icalendar from 7.1.2 to 7.2.2 (#161) (33f74e2)
+- ⬆ Bump pyasn1 from 0.6.3 to 0.6.4 (#167) (6e0db7d)
+- ⬆ Bump node from 22-slim to 26-slim in /frontend (#123) (2debf20)
+- ⬆ Bump getmeili/meilisearch from v1.48 to v1.49 (#160) (7cc4e84)
+- ⬆ Bump sqlmodel from 0.0.38 to 0.0.39 (#155) (4da3d7b)
+- ⬆ Bump pydantic-settings from 2.14.1 to 2.14.2 (#147) (277dab7)
+- ⬆ Bump sqlalchemy from 2.0.45 to 2.0.51 (#153) (9a85000)
+- ⬆ Bump coverage from 7.14.0 to 7.15.0 (#151) (a9e5919)
+- ⬆ Bump @biomejs/biome from 2.4.16 to 2.5.2 (#142) (db0fbfc)
+- ⬆ bump radicale from 3.7.3 to 3.7.5 (#127) (6e5d160)
+- Build(deps-dev): bump @hey-api/openapi-ts in /frontend (#149) (47e9619)
+- ⬆ Bump axios from 1.16.1 to 1.18.1 (#146) (3dc1370)
+- ⬆ Bump python-multipart from 0.0.29 to 0.0.32 (#130) (30fc724)
+- ⬆ Bump getmeili/meilisearch from v1.46 to v1.48 (#148) (d00a9c4)
+- Ci: auto-merge dependabot patch/minor PRs after CI passes (8ecd67c)
+- Update cryptography dev dependency constraint (a7e9d7b)
+- Preview: route per-worktree via compose.worktree.yml with ${SLUG} host (0f1fa7b)
+- Project-kit: remove stale preview-pr.py (baked homelab domain) (19a67b1)
+- Project-kit: refresh + drop homelab domain/litellm URL (public repo) (2c52029)
+- Tooling: finish project-kit consolidation (drop standalone kit remnants) (7f14faa)
+- Add release.just task runner config (da4fe61)
+- ⬆ bump @tanstack/router-plugin from 1.168.14 to 1.168.18 (#134) (7575129)
+- ⬆ bump react-day-picker from 9.14.0 to 10.0.1 (#131) (77f3700)
+- ⬆ bump @types/react from 19.2.16 to 19.2.17 (#129) (7d33f11)
+- Build(deps): bump form-data from 4.0.5 to 4.0.6 in /frontend (#139) (fcd5dc3)
+- ⬆ Bump starlette from 1.1.0 to 1.3.1 (#138) (fc5e60b)
+- ⬆ Bump form-data from 4.0.5 to 4.0.6 (#137) (5c8255f)
+- ⬆ Bump cryptography from 48.0.0 to 48.0.1 (#136) (2705bc6)
+- ⬆ Bump getmeili/meilisearch from v1.45 to v1.46 (#135) (cd3f000)
+
 ## [0.2.93] - 2026-06-19
 
 ### Added
