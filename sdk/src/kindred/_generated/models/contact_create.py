@@ -38,6 +38,7 @@ class ContactCreate:
         is_deceased (bool | Unset): Marks the contact as deceased. Default: False.
         deceased_at (datetime.date | None | Unset): Date the contact passed away.
         contact_frequency_days (int | None | Unset): Target days between interactions; drives losing-touch cadence.
+        auto_log_email (bool | Unset): Automatically create interactions from matching email headers. Default: False.
         do_not_contact (bool | Unset): If True, suppress all contact reminders and actions for this contact. Default:
             False.
         do_not_contact_reason (None | str | Unset): Optional reason why the contact was marked do-not-contact.
@@ -65,6 +66,7 @@ class ContactCreate:
     is_deceased: bool | Unset = False
     deceased_at: datetime.date | None | Unset = UNSET
     contact_frequency_days: int | None | Unset = UNSET
+    auto_log_email: bool | Unset = False
     do_not_contact: bool | Unset = False
     do_not_contact_reason: None | str | Unset = UNSET
     stage: None | str | Unset = UNSET
@@ -160,6 +162,8 @@ class ContactCreate:
         else:
             contact_frequency_days = self.contact_frequency_days
 
+        auto_log_email = self.auto_log_email
+
         do_not_contact = self.do_not_contact
 
         do_not_contact_reason: None | str | Unset
@@ -243,6 +247,8 @@ class ContactCreate:
             field_dict["deceased_at"] = deceased_at
         if contact_frequency_days is not UNSET:
             field_dict["contact_frequency_days"] = contact_frequency_days
+        if auto_log_email is not UNSET:
+            field_dict["auto_log_email"] = auto_log_email
         if do_not_contact is not UNSET:
             field_dict["do_not_contact"] = do_not_contact
         if do_not_contact_reason is not UNSET:
@@ -397,6 +403,8 @@ class ContactCreate:
 
         contact_frequency_days = _parse_contact_frequency_days(d.pop("contact_frequency_days", UNSET))
 
+        auto_log_email = d.pop("auto_log_email", UNSET)
+
         do_not_contact = d.pop("do_not_contact", UNSET)
 
         def _parse_do_not_contact_reason(data: object) -> None | str | Unset:
@@ -490,6 +498,7 @@ class ContactCreate:
             is_deceased=is_deceased,
             deceased_at=deceased_at,
             contact_frequency_days=contact_frequency_days,
+            auto_log_email=auto_log_email,
             do_not_contact=do_not_contact,
             do_not_contact_reason=do_not_contact_reason,
             stage=stage,

@@ -598,6 +598,10 @@ class ContactBase(SQLModel):
         le=3650,
         description="Target days between interactions; drives losing-touch cadence.",
     )
+    auto_log_email: bool = Field(
+        default=False,
+        description="Automatically create interactions from matching email headers.",
+    )
 
     do_not_contact: bool = Field(
         default=False,
@@ -656,6 +660,7 @@ class ContactUpdate(SQLModel):
     is_deceased: bool | None = None
     deceased_at: date | None = None
     contact_frequency_days: int | None = None
+    auto_log_email: bool | None = None
     stage: str | None = None
     do_not_contact: bool | None = None
     do_not_contact_reason: str | None = None

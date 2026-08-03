@@ -1513,6 +1513,12 @@ export const ContactCreateSchema = {
             title: 'Contact Frequency Days',
             description: 'Target days between interactions; drives losing-touch cadence.'
         },
+        auto_log_email: {
+            type: 'boolean',
+            title: 'Auto Log Email',
+            description: 'Automatically create interactions from matching email headers.',
+            default: false
+        },
         do_not_contact: {
             type: 'boolean',
             title: 'Do Not Contact',
@@ -2051,6 +2057,12 @@ export const ContactPublicSchema = {
             ],
             title: 'Contact Frequency Days'
         },
+        auto_log_email: {
+            type: 'boolean',
+            title: 'Auto Log Email',
+            description: 'Automatically create interactions from matching email headers.',
+            default: false
+        },
         do_not_contact: {
             type: 'boolean',
             title: 'Do Not Contact',
@@ -2579,6 +2591,17 @@ export const ContactUpdateSchema = {
                 }
             ],
             title: 'Contact Frequency Days'
+        },
+        auto_log_email: {
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Auto Log Email'
         },
         stage: {
             anyOf: [
@@ -5735,6 +5758,12 @@ export const OverdueContactPublicSchema = {
                 }
             ],
             title: 'Contact Frequency Days'
+        },
+        auto_log_email: {
+            type: 'boolean',
+            title: 'Auto Log Email',
+            description: 'Automatically create interactions from matching email headers.',
+            default: false
         },
         do_not_contact: {
             type: 'boolean',

@@ -29,6 +29,27 @@ def test_create_contact(
     assert "groups" not in content
 
 
+def test_contact_email_auto_logging_can_be_enabled(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
+    create_response = client.post(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=superuser_token_headers,
+        json={"first_name": "Brisa", "auto_log_email": True},
+    )
+    assert create_response.status_code == 200
+    contact_id = create_response.json()["id"]
+    assert create_response.json()["auto_log_email"] is True
+
+    update_response = client.patch(
+        f"{settings.API_V1_STR}/contacts/{contact_id}",
+        headers=superuser_token_headers,
+        json={"auto_log_email": False},
+    )
+    assert update_response.status_code == 200
+    assert update_response.json()["auto_log_email"] is False
+
+
 def test_create_contact_with_optional_fields(
     client: TestClient, superuser_token_headers: dict[str, str]
 ) -> None:

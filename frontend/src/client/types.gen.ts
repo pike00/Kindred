@@ -344,6 +344,10 @@ export type ContactCreate = {
      */
     contact_frequency_days?: (number | null);
     /**
+     * Automatically create interactions from matching email headers.
+     */
+    auto_log_email?: boolean;
+    /**
      * If True, suppress all contact reminders and actions for this contact.
      */
     do_not_contact?: boolean;
@@ -516,6 +520,10 @@ export type ContactPublic = {
      */
     deceased_at?: (string | null);
     contact_frequency_days?: (number | null);
+    /**
+     * Automatically create interactions from matching email headers.
+     */
+    auto_log_email?: boolean;
     do_not_contact?: boolean;
     do_not_contact_reason?: (string | null);
     /**
@@ -637,6 +645,7 @@ export type ContactUpdate = {
     is_deceased?: (boolean | null);
     deceased_at?: (string | null);
     contact_frequency_days?: (number | null);
+    auto_log_email?: (boolean | null);
     stage?: (string | null);
     do_not_contact?: (boolean | null);
     do_not_contact_reason?: (string | null);
@@ -1497,6 +1506,10 @@ export type OverdueContactPublic = {
      */
     deceased_at?: (string | null);
     contact_frequency_days?: (number | null);
+    /**
+     * Automatically create interactions from matching email headers.
+     */
+    auto_log_email?: boolean;
     do_not_contact?: boolean;
     do_not_contact_reason?: (string | null);
     /**
