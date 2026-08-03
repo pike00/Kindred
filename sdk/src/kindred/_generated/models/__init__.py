@@ -10,6 +10,8 @@ from .addresses_geocode_missing_coordinates_response_addresses_geocode_missing_c
     AddressesGeocodeMissingCoordinatesResponseAddressesGeocodeMissingCoordinates,
 )
 from .addresses_public import AddressesPublic
+from .all_contacts_share_public import AllContactsSharePublic
+from .all_contacts_shares_public import AllContactsSharesPublic
 from .api_key_create import APIKeyCreate
 from .api_key_created import APIKeyCreated
 from .api_key_public import APIKeyPublic
@@ -43,6 +45,10 @@ from .contact_geo_point import ContactGeoPoint
 from .contact_heatmap_response import ContactHeatmapResponse
 from .contact_public import ContactPublic
 from .contact_public_imessage_profile_type_0 import ContactPublicImessageProfileType0
+from .contact_share_in import ContactShareIn
+from .contact_shares_delete_contact_share_response_contact_shares_delete_contact_share import (
+    ContactSharesDeleteContactShareResponseContactSharesDeleteContactShare,
+)
 from .contact_source import ContactSource
 from .contact_stage_event_create import ContactStageEventCreate
 from .contact_stage_event_public import ContactStageEventPublic
@@ -182,10 +188,10 @@ from .saved_filters_public import SavedFiltersPublic
 from .search_response import SearchResponse
 from .search_result_item import SearchResultItem
 from .setup_submit import SetupSubmit
-from .share_in import ShareIn
 from .share_preview_entity import SharePreviewEntity
 from .tag_create import TagCreate
 from .tag_public import TagPublic
+from .tag_share_in import TagShareIn
 from .tag_share_preview import TagSharePreview
 from .tag_share_public import TagSharePublic
 from .tag_shares_delete_tag_share_response_tag_shares_delete_tag_share import (
@@ -226,6 +232,8 @@ __all__ = (
     "AddressesPublic",
     "AddressPublic",
     "AddressUpdate",
+    "AllContactsSharePublic",
+    "AllContactsSharesPublic",
     "APIKeyCreate",
     "APIKeyCreated",
     "APIKeyPublic",
@@ -262,6 +270,8 @@ __all__ = (
     "ContactsDeleteContactResponseContactsDeleteContact",
     "ContactsGeoResponse",
     "ContactsGetKanbanBoardResponseContactsGetKanbanBoard",
+    "ContactShareIn",
+    "ContactSharesDeleteContactShareResponseContactSharesDeleteContactShare",
     "ContactSource",
     "ContactsPublic",
     "ContactStageEventCreate",
@@ -378,10 +388,10 @@ __all__ = (
     "SearchResponse",
     "SearchResultItem",
     "SetupSubmit",
-    "ShareIn",
     "SharePreviewEntity",
     "TagCreate",
     "TagPublic",
+    "TagShareIn",
     "TagSharePreview",
     "TagSharePublic",
     "TagSharesDeleteTagShareResponseTagSharesDeleteTagShare",

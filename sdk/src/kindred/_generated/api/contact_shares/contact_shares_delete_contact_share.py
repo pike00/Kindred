@@ -8,36 +8,35 @@ from ...client import AuthenticatedClient, Client
 from ...types import Response, UNSET
 from ... import errors
 
+from ...models.contact_shares_delete_contact_share_response_contact_shares_delete_contact_share import (
+    ContactSharesDeleteContactShareResponseContactSharesDeleteContactShare,
+)
 from ...models.http_validation_error import HTTPValidationError
-from ...models.tag_share_in import TagShareIn
-from ...models.tag_share_public import TagSharePublic
 from typing import cast
+from uuid import UUID
 
 
 def _get_kwargs(
-    *,
-    body: TagShareIn,
+    grantee_id: UUID,
 ) -> dict[str, Any]:
-    headers: dict[str, Any] = {}
 
     _kwargs: dict[str, Any] = {
-        "method": "post",
-        "url": "/api/v1/tag-shares/",
+        "method": "delete",
+        "url": "/api/v1/contact-shares/{grantee_id}".format(
+            grantee_id=quote(str(grantee_id), safe=""),
+        ),
     }
 
-    _kwargs["json"] = body.to_dict()
-
-    headers["Content-Type"] = "application/json"
-
-    _kwargs["headers"] = headers
     return _kwargs
 
 
 def _parse_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> HTTPValidationError | TagSharePublic | None:
+) -> ContactSharesDeleteContactShareResponseContactSharesDeleteContactShare | HTTPValidationError | None:
     if response.status_code == 200:
-        response_200 = TagSharePublic.from_dict(response.json())
+        response_200 = ContactSharesDeleteContactShareResponseContactSharesDeleteContactShare.from_dict(
+            response.json()
+        )
 
         return response_200
 
@@ -54,7 +53,7 @@ def _parse_response(
 
 def _build_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Response[HTTPValidationError | TagSharePublic]:
+) -> Response[ContactSharesDeleteContactShareResponseContactSharesDeleteContactShare | HTTPValidationError]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -64,25 +63,25 @@ def _build_response(
 
 
 def sync_detailed(
+    grantee_id: UUID,
     *,
     client: AuthenticatedClient,
-    body: TagShareIn,
-) -> Response[HTTPValidationError | TagSharePublic]:
-    """Create Tag Share
+) -> Response[ContactSharesDeleteContactShareResponseContactSharesDeleteContactShare | HTTPValidationError]:
+    """Delete Contact Share
 
     Args:
-        body (TagShareIn):
+        grantee_id (UUID):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[HTTPValidationError | TagSharePublic]
+        Response[ContactSharesDeleteContactShareResponseContactSharesDeleteContactShare | HTTPValidationError]
     """
 
     kwargs = _get_kwargs(
-        body=body,
+        grantee_id=grantee_id,
     )
 
     response = client.get_httpx_client().request(
@@ -93,49 +92,49 @@ def sync_detailed(
 
 
 def sync(
+    grantee_id: UUID,
     *,
     client: AuthenticatedClient,
-    body: TagShareIn,
-) -> HTTPValidationError | TagSharePublic | None:
-    """Create Tag Share
+) -> ContactSharesDeleteContactShareResponseContactSharesDeleteContactShare | HTTPValidationError | None:
+    """Delete Contact Share
 
     Args:
-        body (TagShareIn):
+        grantee_id (UUID):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        HTTPValidationError | TagSharePublic
+        ContactSharesDeleteContactShareResponseContactSharesDeleteContactShare | HTTPValidationError
     """
 
     return sync_detailed(
+        grantee_id=grantee_id,
         client=client,
-        body=body,
     ).parsed
 
 
 async def asyncio_detailed(
+    grantee_id: UUID,
     *,
     client: AuthenticatedClient,
-    body: TagShareIn,
-) -> Response[HTTPValidationError | TagSharePublic]:
-    """Create Tag Share
+) -> Response[ContactSharesDeleteContactShareResponseContactSharesDeleteContactShare | HTTPValidationError]:
+    """Delete Contact Share
 
     Args:
-        body (TagShareIn):
+        grantee_id (UUID):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[HTTPValidationError | TagSharePublic]
+        Response[ContactSharesDeleteContactShareResponseContactSharesDeleteContactShare | HTTPValidationError]
     """
 
     kwargs = _get_kwargs(
-        body=body,
+        grantee_id=grantee_id,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -144,26 +143,26 @@ async def asyncio_detailed(
 
 
 async def asyncio(
+    grantee_id: UUID,
     *,
     client: AuthenticatedClient,
-    body: TagShareIn,
-) -> HTTPValidationError | TagSharePublic | None:
-    """Create Tag Share
+) -> ContactSharesDeleteContactShareResponseContactSharesDeleteContactShare | HTTPValidationError | None:
+    """Delete Contact Share
 
     Args:
-        body (TagShareIn):
+        grantee_id (UUID):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        HTTPValidationError | TagSharePublic
+        ContactSharesDeleteContactShareResponseContactSharesDeleteContactShare | HTTPValidationError
     """
 
     return (
         await asyncio_detailed(
+            grantee_id=grantee_id,
             client=client,
-            body=body,
         )
     ).parsed

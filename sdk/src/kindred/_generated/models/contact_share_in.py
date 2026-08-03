@@ -13,26 +13,22 @@ from typing import cast
 from uuid import UUID
 
 
-T = TypeVar("T", bound="ShareIn")
+T = TypeVar("T", bound="ContactShareIn")
 
 
 @_attrs_define
-class ShareIn:
+class ContactShareIn:
     """
     Attributes:
-        tag_id (UUID):
         grantee_id (None | Unset | UUID):
         grantee_email (None | str | Unset):
     """
 
-    tag_id: UUID
     grantee_id: None | Unset | UUID = UNSET
     grantee_email: None | str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        tag_id = str(self.tag_id)
-
         grantee_id: None | str | Unset
         if isinstance(self.grantee_id, Unset):
             grantee_id = UNSET
@@ -49,11 +45,7 @@ class ShareIn:
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update(
-            {
-                "tag_id": tag_id,
-            }
-        )
+        field_dict.update({})
         if grantee_id is not UNSET:
             field_dict["grantee_id"] = grantee_id
         if grantee_email is not UNSET:
@@ -64,7 +56,6 @@ class ShareIn:
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
-        tag_id = UUID(d.pop("tag_id"))
 
         def _parse_grantee_id(data: object) -> None | Unset | UUID:
             if data is None:
@@ -92,14 +83,13 @@ class ShareIn:
 
         grantee_email = _parse_grantee_email(d.pop("grantee_email", UNSET))
 
-        share_in = cls(
-            tag_id=tag_id,
+        contact_share_in = cls(
             grantee_id=grantee_id,
             grantee_email=grantee_email,
         )
 
-        share_in.additional_properties = d
-        return share_in
+        contact_share_in.additional_properties = d
+        return contact_share_in
 
     @property
     def additional_keys(self) -> list[str]:

@@ -7,12 +7,6 @@ export type _MentionPublic = {
     source_contact: ContactPublic;
 };
 
-export type _ShareIn = {
-    tag_id: string;
-    grantee_id?: (string | null);
-    grantee_email?: (string | null);
-};
-
 export type ActivityLogPublic = {
     id: string;
     owner_id: string;
@@ -129,6 +123,17 @@ export type AddressUpdate = {
     longitude?: (number | null);
 };
 
+export type AllContactsSharePublic = {
+    grantee_id: string;
+    grantee_email: string;
+    created_at: string;
+};
+
+export type AllContactsSharesPublic = {
+    data: Array<AllContactsSharePublic>;
+    count: number;
+};
+
 export type APIKeyCreate = {
     name: string;
     can_impersonate?: Array<(string)>;
@@ -166,6 +171,17 @@ export type APIKeyPublic = {
 export type APIKeysPublic = {
     data: Array<APIKeyPublic>;
     count: number;
+};
+
+export type app__api__routes__contact_shares___ShareIn = {
+    grantee_id?: (string | null);
+    grantee_email?: (string | null);
+};
+
+export type app__api__routes__tag_shares___ShareIn = {
+    tag_id: string;
+    grantee_id?: (string | null);
+    grantee_email?: (string | null);
 };
 
 export type Body_ical_upload_ical = {
@@ -2439,6 +2455,22 @@ export type ContactsGetImessageProfileData = {
 
 export type ContactsGetImessageProfileResponse = (IMessageProfileResponse);
 
+export type ContactSharesListContactSharesResponse = (AllContactsSharesPublic);
+
+export type ContactSharesCreateContactShareData = {
+    requestBody: app__api__routes__contact_shares___ShareIn;
+};
+
+export type ContactSharesCreateContactShareResponse = (AllContactsSharePublic);
+
+export type ContactSharesDeleteContactShareData = {
+    granteeId: string;
+};
+
+export type ContactSharesDeleteContactShareResponse = ({
+    [key: string]: (string);
+});
+
 export type ContactStageEventsCreateContactStageEventData = {
     contactId: string;
     requestBody: ContactStageEventCreate;
@@ -3194,7 +3226,7 @@ export type TagSharesPreviewTagShareData = {
 export type TagSharesPreviewTagShareResponse = (TagSharePreview);
 
 export type TagSharesCreateTagShareData = {
-    requestBody: _ShareIn;
+    requestBody: app__api__routes__tag_shares___ShareIn;
 };
 
 export type TagSharesCreateTagShareResponse = (TagSharePublic);

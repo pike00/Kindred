@@ -661,6 +661,47 @@ export const AddressesPublicSchema = {
     title: 'AddressesPublic'
 } as const;
 
+export const AllContactsSharePublicSchema = {
+    properties: {
+        grantee_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Grantee Id'
+        },
+        grantee_email: {
+            type: 'string',
+            title: 'Grantee Email'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        }
+    },
+    type: 'object',
+    required: ['grantee_id', 'grantee_email', 'created_at'],
+    title: 'AllContactsSharePublic'
+} as const;
+
+export const AllContactsSharesPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/AllContactsSharePublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'AllContactsSharesPublic'
+} as const;
+
 export const Body_ical_upload_icalSchema = {
     properties: {
         file: {
@@ -8128,7 +8169,37 @@ export const _MentionPublicSchema = {
     title: '_MentionPublic'
 } as const;
 
-export const _ShareInSchema = {
+export const app__api__routes__contact_shares___ShareInSchema = {
+    properties: {
+        grantee_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'uuid'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Grantee Id'
+        },
+        grantee_email: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Grantee Email'
+        }
+    },
+    type: 'object',
+    title: '_ShareIn'
+} as const;
+
+export const app__api__routes__tag_shares___ShareInSchema = {
     properties: {
         tag_id: {
             type: 'string',

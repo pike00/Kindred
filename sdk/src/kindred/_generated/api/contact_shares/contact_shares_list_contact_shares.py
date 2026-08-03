@@ -8,43 +8,27 @@ from ...client import AuthenticatedClient, Client
 from ...types import Response, UNSET
 from ... import errors
 
-from ...models.http_validation_error import HTTPValidationError
-from ...models.tag_share_in import TagShareIn
-from ...models.tag_share_public import TagSharePublic
+from ...models.all_contacts_shares_public import AllContactsSharesPublic
 from typing import cast
 
 
-def _get_kwargs(
-    *,
-    body: TagShareIn,
-) -> dict[str, Any]:
-    headers: dict[str, Any] = {}
+def _get_kwargs() -> dict[str, Any]:
 
     _kwargs: dict[str, Any] = {
-        "method": "post",
-        "url": "/api/v1/tag-shares/",
+        "method": "get",
+        "url": "/api/v1/contact-shares/",
     }
 
-    _kwargs["json"] = body.to_dict()
-
-    headers["Content-Type"] = "application/json"
-
-    _kwargs["headers"] = headers
     return _kwargs
 
 
 def _parse_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> HTTPValidationError | TagSharePublic | None:
+) -> AllContactsSharesPublic | None:
     if response.status_code == 200:
-        response_200 = TagSharePublic.from_dict(response.json())
+        response_200 = AllContactsSharesPublic.from_dict(response.json())
 
         return response_200
-
-    if response.status_code == 422:
-        response_422 = HTTPValidationError.from_dict(response.json())
-
-        return response_422
 
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
@@ -54,7 +38,7 @@ def _parse_response(
 
 def _build_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Response[HTTPValidationError | TagSharePublic]:
+) -> Response[AllContactsSharesPublic]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -66,24 +50,18 @@ def _build_response(
 def sync_detailed(
     *,
     client: AuthenticatedClient,
-    body: TagShareIn,
-) -> Response[HTTPValidationError | TagSharePublic]:
-    """Create Tag Share
-
-    Args:
-        body (TagShareIn):
+) -> Response[AllContactsSharesPublic]:
+    """List Contact Shares
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[HTTPValidationError | TagSharePublic]
+        Response[AllContactsSharesPublic]
     """
 
-    kwargs = _get_kwargs(
-        body=body,
-    )
+    kwargs = _get_kwargs()
 
     response = client.get_httpx_client().request(
         **kwargs,
@@ -95,48 +73,37 @@ def sync_detailed(
 def sync(
     *,
     client: AuthenticatedClient,
-    body: TagShareIn,
-) -> HTTPValidationError | TagSharePublic | None:
-    """Create Tag Share
-
-    Args:
-        body (TagShareIn):
+) -> AllContactsSharesPublic | None:
+    """List Contact Shares
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        HTTPValidationError | TagSharePublic
+        AllContactsSharesPublic
     """
 
     return sync_detailed(
         client=client,
-        body=body,
     ).parsed
 
 
 async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
-    body: TagShareIn,
-) -> Response[HTTPValidationError | TagSharePublic]:
-    """Create Tag Share
-
-    Args:
-        body (TagShareIn):
+) -> Response[AllContactsSharesPublic]:
+    """List Contact Shares
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[HTTPValidationError | TagSharePublic]
+        Response[AllContactsSharesPublic]
     """
 
-    kwargs = _get_kwargs(
-        body=body,
-    )
+    kwargs = _get_kwargs()
 
     response = await client.get_async_httpx_client().request(**kwargs)
 
@@ -146,24 +113,19 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: AuthenticatedClient,
-    body: TagShareIn,
-) -> HTTPValidationError | TagSharePublic | None:
-    """Create Tag Share
-
-    Args:
-        body (TagShareIn):
+) -> AllContactsSharesPublic | None:
+    """List Contact Shares
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        HTTPValidationError | TagSharePublic
+        AllContactsSharesPublic
     """
 
     return (
         await asyncio_detailed(
             client=client,
-            body=body,
         )
     ).parsed
