@@ -427,6 +427,16 @@ Table "tag_share" {
   }
 }
 
+Table "all_contacts_share" {
+  "owner_id" uuid [not null]
+  "grantee_id" uuid [not null]
+  "created_at" timestamptz [not null, default: `now()`]
+
+  Indexes {
+    (owner_id, grantee_id) [pk, type: btree, name: "all_contacts_share_pkey"]
+  }
+}
+
 Table "media_recommendation" {
   "id" uuid [pk, not null]
   "owner_id" uuid [not null]
@@ -825,6 +835,10 @@ Ref "saved_filter_owner_id_fkey":"user"."id" < "saved_filter"."owner_id" [delete
 Ref "saved_filter_tag_id_fkey":"tag"."id" < "saved_filter"."tag_id" [delete: set null]
 
 Ref "tag_owner_id_fkey":"user"."id" < "tag"."owner_id" [delete: cascade]
+
+Ref "all_contacts_share_owner_id_fkey":"user"."id" < "all_contacts_share"."owner_id" [delete: cascade]
+
+Ref "all_contacts_share_grantee_id_fkey":"user"."id" < "all_contacts_share"."grantee_id" [delete: cascade]
 
 Ref "tag_share_grantee_id_fkey":"user"."id" < "tag_share"."grantee_id" [delete: cascade]
 

@@ -3710,6 +3710,112 @@
       ]
     },
     {
+      "name": "public.all_contacts_share",
+      "type": "BASE TABLE",
+      "comment": "Grants another user access to all current and future contacts by owner.",
+      "columns": [
+        {
+          "name": "owner_id",
+          "type": "uuid",
+          "nullable": false,
+          "comment": "Grantor whose contacts are being shared; cascades on delete."
+        },
+        {
+          "name": "grantee_id",
+          "type": "uuid",
+          "nullable": false,
+          "comment": "User granted access; cascades on delete."
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
+          "comment": "When the all-contacts share was granted (UTC)."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "all_contacts_share_pkey",
+          "def": "CREATE UNIQUE INDEX all_contacts_share_pkey ON public.all_contacts_share USING btree (owner_id, grantee_id)",
+          "table": "public.all_contacts_share",
+          "columns": [
+            "owner_id",
+            "grantee_id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "all_contacts_share_created_at_not_null",
+          "type": "n",
+          "def": "NOT NULL created_at",
+          "table": "public.all_contacts_share",
+          "referenced_table": "",
+          "columns": [
+            "created_at"
+          ]
+        },
+        {
+          "name": "all_contacts_share_grantee_id_not_null",
+          "type": "n",
+          "def": "NOT NULL grantee_id",
+          "table": "public.all_contacts_share",
+          "referenced_table": "",
+          "columns": [
+            "grantee_id"
+          ]
+        },
+        {
+          "name": "all_contacts_share_owner_id_not_null",
+          "type": "n",
+          "def": "NOT NULL owner_id",
+          "table": "public.all_contacts_share",
+          "referenced_table": "",
+          "columns": [
+            "owner_id"
+          ]
+        },
+        {
+          "name": "all_contacts_share_grantee_id_fkey",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (grantee_id) REFERENCES \"user\"(id) ON DELETE CASCADE",
+          "table": "public.all_contacts_share",
+          "referenced_table": "public.user",
+          "columns": [
+            "grantee_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "all_contacts_share_owner_id_fkey",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (owner_id) REFERENCES \"user\"(id) ON DELETE CASCADE",
+          "table": "public.all_contacts_share",
+          "referenced_table": "public.user",
+          "columns": [
+            "owner_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "all_contacts_share_pkey",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (owner_id, grantee_id)",
+          "table": "public.all_contacts_share",
+          "referenced_table": "",
+          "columns": [
+            "owner_id",
+            "grantee_id"
+          ]
+        }
+      ]
+    },
+    {
       "name": "public.media_recommendation",
       "type": "BASE TABLE",
       "comment": "Media (book, show, podcast, etc.) recommended to or by a contact.",
@@ -7048,6 +7154,32 @@
       ],
       "parent_cardinality": "exactly_one",
       "def": "FOREIGN KEY (owner_id) REFERENCES \"user\"(id) ON DELETE CASCADE"
+    },
+    {
+      "table": "public.all_contacts_share",
+      "columns": [
+        "owner_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.user",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (owner_id) REFERENCES \"user\"(id) ON DELETE CASCADE"
+    },
+    {
+      "table": "public.all_contacts_share",
+      "columns": [
+        "grantee_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.user",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (grantee_id) REFERENCES \"user\"(id) ON DELETE CASCADE"
     },
     {
       "table": "public.tag_share",
