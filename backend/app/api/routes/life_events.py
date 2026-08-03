@@ -77,9 +77,6 @@ def update_life_event(
     if event is None:
         raise HTTPException(status_code=404, detail="Life event not found")
 
-    if event.owner_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Life event not found")
-
     _require_contact_visible(session, current_user, event.contact_id)
 
     update_data = event_in.model_dump(exclude_unset=True)

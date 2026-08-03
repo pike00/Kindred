@@ -113,8 +113,6 @@ def delete_debt(
     debt = session.get(Debt, debt_id)
     if debt is None:
         raise HTTPException(status_code=404, detail="Debt not found")
-    if debt.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
     _require_contact_visible(session, current_user, debt.contact_id)
 
     debt.deleted_at = datetime.now(timezone.utc)

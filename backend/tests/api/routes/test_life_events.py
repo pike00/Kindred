@@ -7,6 +7,8 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session
 
 from app.core.config import settings
+from app.models import AllContactsShare
+from tests.utils.user import authentication_token_from_email, create_random_user
 
 
 def _create_contact(
@@ -22,6 +24,11 @@ def _create_contact(
     )
     assert r.status_code == 200
     return r.json()["id"]
+
+
+def _grant_all_contacts_share(db: Session, *, owner_id: str, grantee_id: str) -> None:
+    db.add(AllContactsShare(owner_id=owner_id, grantee_id=grantee_id))
+    db.commit()
 
 
 def test_create_life_event_minimal(
@@ -232,11 +239,6 @@ def test_delete_life_event_not_found(
 
 
 def test_life_event_isolation_between_users(client: TestClient, db: Session) -> None:
-    from tests.utils.user import (
-        authentication_token_from_email,
-        create_random_user,
-    )
-
     alice = create_random_user(db)
     bob = create_random_user(db)
     alice_h = authentication_token_from_email(client=client, email=alice.email, db=db)
@@ -287,12 +289,89 @@ def test_life_event_isolation_between_users(client: TestClient, db: Session) -> 
     assert r.status_code == 404
 
 
-def test_life_event_visible_via_tag_share(client: TestClient, db: Session) -> None:
-    from tests.utils.user import (
-        authentication_token_from_email,
-        create_random_user,
-    )
+def test_shared_grantee_can_update_and_delete_shared_life_event(
+    client: TestClient, db: Session
+) -> None:
+    alice = create_random_user(db)
+    bob = create_random_user(db)
+    alice_h = authentication_token_from_email(client=client, email=alice.email, db=db)
+    bob_h = authentication_token_from_email(client=client, email=bob.email, db=db)
 
+    contact_id = _create_contact(client, alice_h, "Shared Event")
+    response = client.post(
+        f"{settings.API_V1_STR}/life-events/",
+        headers=alice_h,
+        json={
+            "contact_id": contact_id,
+            "event_type": "job_change",
+            "title": "Joined Acme",
+            "occurred_at": "2023-01-09",
+        },
+    )
+    assert response.status_code == 200
+    event_id = response.json()["id"]
+    _grant_all_contacts_share(db, owner_id=alice.id, grantee_id=bob.id)
+
+    response = client.patch(
+        f"{settings.API_V1_STR}/life-events/{event_id}",
+        headers=bob_h,
+        json={"title": "Updated by Bob"},
+    )
+    assert response.status_code == 200
+    assert response.json()["title"] == "Updated by Bob"
+
+    response = client.delete(
+        f"{settings.API_V1_STR}/life-events/{event_id}",
+        headers=bob_h,
+    )
+    assert response.status_code == 200
+    assert response.json()["ok"] is True
+
+    response = client.get(
+        f"{settings.API_V1_STR}/life-events/contact/{contact_id}",
+        headers=bob_h,
+    )
+    assert response.status_code == 200
+    assert event_id not in [event["id"] for event in response.json()["data"]]
+
+
+def test_unshared_user_cannot_update_or_delete_other_users_life_event(
+    client: TestClient, db: Session
+) -> None:
+    alice = create_random_user(db)
+    bob = create_random_user(db)
+    alice_h = authentication_token_from_email(client=client, email=alice.email, db=db)
+    bob_h = authentication_token_from_email(client=client, email=bob.email, db=db)
+
+    contact_id = _create_contact(client, alice_h, "Private Event")
+    response = client.post(
+        f"{settings.API_V1_STR}/life-events/",
+        headers=alice_h,
+        json={
+            "contact_id": contact_id,
+            "event_type": "birthday",
+            "title": "Secret birthday",
+            "occurred_at": "1985-07-04",
+        },
+    )
+    assert response.status_code == 200
+    event_id = response.json()["id"]
+
+    response = client.patch(
+        f"{settings.API_V1_STR}/life-events/{event_id}",
+        headers=bob_h,
+        json={"title": "Hijacked"},
+    )
+    assert response.status_code == 404
+
+    response = client.delete(
+        f"{settings.API_V1_STR}/life-events/{event_id}",
+        headers=bob_h,
+    )
+    assert response.status_code == 404
+
+
+def test_life_event_visible_via_tag_share(client: TestClient, db: Session) -> None:
     alice = create_random_user(db)
     bob = create_random_user(db)
     alice_h = authentication_token_from_email(client=client, email=alice.email, db=db)

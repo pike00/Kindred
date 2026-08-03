@@ -112,9 +112,6 @@ def delete_gift(
     if gift is None:
         raise HTTPException(status_code=404, detail="Gift not found")
 
-    if gift.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
-
     _require_contact_visible(session, current_user, gift.contact_id)
 
     gift.deleted_at = datetime.now(timezone.utc)
