@@ -7,6 +7,8 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session
 
 from app.core.config import settings
+from app.models import AllContactsShare, Interaction, InteractionAttendee, InteractionChannel
+from tests.utils.user import authentication_token_from_email, create_random_user
 
 
 def _create_contact(
@@ -23,6 +25,11 @@ def _create_contact(
     )
     assert r.status_code == 200
     return r.json()["id"]
+
+
+def _grant_all_contacts_share(db: Session, *, owner_id: str, grantee_id: str) -> None:
+    db.add(AllContactsShare(owner_id=owner_id, grantee_id=grantee_id))
+    db.commit()
 
 
 def test_create_interaction_single_attendee(
@@ -298,11 +305,6 @@ def test_delete_interaction_not_found(
 
 
 def test_interaction_isolation_between_users(client: TestClient, db: Session) -> None:
-    from tests.utils.user import (
-        authentication_token_from_email,
-        create_random_user,
-    )
-
     alice = create_random_user(db)
     bob = create_random_user(db)
     alice_h = authentication_token_from_email(client=client, email=alice.email, db=db)
@@ -332,11 +334,6 @@ def test_interaction_isolation_between_users(client: TestClient, db: Session) ->
 
 
 def test_shared_tag_exposes_interaction(client: TestClient, db: Session) -> None:
-    from tests.utils.user import (
-        authentication_token_from_email,
-        create_random_user,
-    )
-
     alice = create_random_user(db)
     bob = create_random_user(db)
     alice_h = authentication_token_from_email(client=client, email=alice.email, db=db)
@@ -379,6 +376,53 @@ def test_shared_tag_exposes_interaction(client: TestClient, db: Session) -> None
     # Bob sees only the shared attendee; private contact is filtered out.
     bob_view = next(i for i in data if i["id"] == ix["id"])
     assert [a["id"] for a in bob_view["attendees"]] == [shared["id"]]
+
+
+def test_all_contacts_share_exposes_interaction_but_filters_private_attendees(
+    client: TestClient, db: Session
+) -> None:
+    alice = create_random_user(db)
+    bob = create_random_user(db)
+    charlie = create_random_user(db)
+    alice_h = authentication_token_from_email(client=client, email=alice.email, db=db)
+    bob_h = authentication_token_from_email(client=client, email=bob.email, db=db)
+
+    shared_contact_id = _create_contact(client, alice_h, "SharedAttendee")
+    charlie_h = authentication_token_from_email(
+        client=client, email=charlie.email, db=db
+    )
+    private_contact_id = _create_contact(client, charlie_h, "PrivateAttendee")
+    _grant_all_contacts_share(db, owner_id=alice.id, grantee_id=bob.id)
+
+    ix = Interaction(
+        owner_id=alice.id,
+        channel=InteractionChannel.CALL,
+        occurred_at=datetime.now(timezone.utc),
+        notes="Mixed visibility",
+    )
+    db.add(ix)
+    db.flush()
+    db.add_all(
+        [
+            InteractionAttendee(
+                interaction_id=ix.id,
+                contact_id=shared_contact_id,
+            ),
+            InteractionAttendee(
+                interaction_id=ix.id,
+                contact_id=private_contact_id,
+            ),
+        ]
+    )
+    db.commit()
+
+    r = client.get(f"{settings.API_V1_STR}/interactions/", headers=bob_h)
+    assert r.status_code == 200
+    data = r.json()["data"]
+    assert str(ix.id) in [item["id"] for item in data]
+
+    bob_view = next(item for item in data if item["id"] == str(ix.id))
+    assert [attendee["id"] for attendee in bob_view["attendees"]] == [shared_contact_id]
 
 
 def test_create_draft_interaction(
