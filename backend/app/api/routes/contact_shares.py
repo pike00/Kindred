@@ -1,7 +1,7 @@
 import uuid
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
@@ -19,6 +19,14 @@ router = APIRouter(prefix="/contact-shares", tags=["contact-shares"])
 class _ShareIn(BaseModel):
     grantee_id: uuid.UUID | None = None
     grantee_email: str | None = None
+
+    @model_validator(mode="after")
+    def validate_grantee_selector(self) -> "_ShareIn":
+        has_grantee_id = self.grantee_id is not None
+        has_grantee_email = self.grantee_email is not None
+        if has_grantee_id == has_grantee_email:
+            raise ValueError("Provide exactly one of grantee_id or grantee_email")
+        return self
 
 
 def _resolve_grantee(session: SessionDep, body: _ShareIn) -> User | None:
