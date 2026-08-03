@@ -2295,6 +2295,36 @@ export const ContactPublicSchema = {
     title: 'ContactPublic'
 } as const;
 
+export const ContactShareInSchema = {
+    properties: {
+        grantee_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'uuid'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Grantee Id'
+        },
+        grantee_email: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Grantee Email'
+        }
+    },
+    type: 'object',
+    title: 'ContactShareIn'
+} as const;
+
 export const ContactSourceSchema = {
     type: 'string',
     enum: ['manual', 'vcard_import', 'carddav', 'google', 'webhook'],
@@ -8169,37 +8199,7 @@ export const _MentionPublicSchema = {
     title: '_MentionPublic'
 } as const;
 
-export const app__api__routes__contact_shares___ShareInSchema = {
-    properties: {
-        grantee_id: {
-            anyOf: [
-                {
-                    type: 'string',
-                    format: 'uuid'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Grantee Id'
-        },
-        grantee_email: {
-            anyOf: [
-                {
-                    type: 'string'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Grantee Email'
-        }
-    },
-    type: 'object',
-    title: '_ShareIn'
-} as const;
-
-export const app__api__routes__tag_shares___ShareInSchema = {
+export const _ShareInSchema = {
     properties: {
         tag_id: {
             type: 'string',

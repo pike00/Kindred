@@ -10,18 +10,19 @@ from app.models import (
     AllContactsShare,
     AllContactsSharePublic,
     AllContactsSharesPublic,
+    Message,
     User,
 )
 
 router = APIRouter(prefix="/contact-shares", tags=["contact-shares"])
 
 
-class _ShareIn(BaseModel):
+class ContactShareIn(BaseModel):
     grantee_id: uuid.UUID | None = None
     grantee_email: str | None = None
 
     @model_validator(mode="after")
-    def validate_grantee_selector(self) -> "_ShareIn":
+    def validate_grantee_selector(self) -> "ContactShareIn":
         has_grantee_id = self.grantee_id is not None
         has_grantee_email = self.grantee_email is not None
         if has_grantee_id == has_grantee_email:
@@ -29,7 +30,7 @@ class _ShareIn(BaseModel):
         return self
 
 
-def _resolve_grantee(session: SessionDep, body: _ShareIn) -> User | None:
+def _resolve_grantee(session: SessionDep, body: ContactShareIn) -> User | None:
     if body.grantee_id is not None:
         return session.get(User, body.grantee_id)
     if body.grantee_email is not None:
@@ -42,7 +43,7 @@ def create_contact_share(
     *,
     session: SessionDep,
     current_user: CurrentUser,
-    body: _ShareIn,
+    body: ContactShareIn,
 ) -> AllContactsSharePublic:
     grantee = _resolve_grantee(session, body)
     if grantee is None or not grantee.is_active:
@@ -106,13 +107,13 @@ def list_contact_shares(
     return AllContactsSharesPublic(data=data, count=len(data))
 
 
-@router.delete("/{grantee_id}")
+@router.delete("/{grantee_id}", response_model=Message)
 def delete_contact_share(
     *,
     session: SessionDep,
     current_user: CurrentUser,
     grantee_id: uuid.UUID,
-) -> dict[str, str]:
+) -> Message:
     share = session.get(AllContactsShare, (current_user.id, grantee_id))
     if share is None:
         raise HTTPException(status_code=404, detail="Share not found")
@@ -134,4 +135,4 @@ def delete_contact_share(
         )
     )
     session.commit()
-    return {"message": "Share removed"}
+    return Message(message="Share removed")

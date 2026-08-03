@@ -7,6 +7,12 @@ export type _MentionPublic = {
     source_contact: ContactPublic;
 };
 
+export type _ShareIn = {
+    tag_id: string;
+    grantee_id?: (string | null);
+    grantee_email?: (string | null);
+};
+
 export type ActivityLogPublic = {
     id: string;
     owner_id: string;
@@ -171,17 +177,6 @@ export type APIKeyPublic = {
 export type APIKeysPublic = {
     data: Array<APIKeyPublic>;
     count: number;
-};
-
-export type app__api__routes__contact_shares___ShareIn = {
-    grantee_id?: (string | null);
-    grantee_email?: (string | null);
-};
-
-export type app__api__routes__tag_shares___ShareIn = {
-    tag_id: string;
-    grantee_id?: (string | null);
-    grantee_email?: (string | null);
 };
 
 export type Body_ical_upload_ical = {
@@ -584,6 +579,11 @@ export type ContactPublic = {
 export type ContactsGeoResponse = {
     points: Array<ContactGeoPoint>;
     count: number;
+};
+
+export type ContactShareIn = {
+    grantee_id?: (string | null);
+    grantee_email?: (string | null);
 };
 
 /**
@@ -2458,7 +2458,7 @@ export type ContactsGetImessageProfileResponse = (IMessageProfileResponse);
 export type ContactSharesListContactSharesResponse = (AllContactsSharesPublic);
 
 export type ContactSharesCreateContactShareData = {
-    requestBody: app__api__routes__contact_shares___ShareIn;
+    requestBody: ContactShareIn;
 };
 
 export type ContactSharesCreateContactShareResponse = (AllContactsSharePublic);
@@ -2467,9 +2467,7 @@ export type ContactSharesDeleteContactShareData = {
     granteeId: string;
 };
 
-export type ContactSharesDeleteContactShareResponse = ({
-    [key: string]: (string);
-});
+export type ContactSharesDeleteContactShareResponse = (Message);
 
 export type ContactStageEventsCreateContactStageEventData = {
     contactId: string;
@@ -3226,7 +3224,7 @@ export type TagSharesPreviewTagShareData = {
 export type TagSharesPreviewTagShareResponse = (TagSharePreview);
 
 export type TagSharesCreateTagShareData = {
-    requestBody: app__api__routes__tag_shares___ShareIn;
+    requestBody: _ShareIn;
 };
 
 export type TagSharesCreateTagShareResponse = (TagSharePublic);

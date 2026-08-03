@@ -9,14 +9,14 @@ from ...types import Response, UNSET
 from ... import errors
 
 from ...models.http_validation_error import HTTPValidationError
-from ...models.tag_share_in import TagShareIn
+from ...models.share_in import ShareIn
 from ...models.tag_share_public import TagSharePublic
 from typing import cast
 
 
 def _get_kwargs(
     *,
-    body: TagShareIn,
+    body: ShareIn,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -66,12 +66,12 @@ def _build_response(
 def sync_detailed(
     *,
     client: AuthenticatedClient,
-    body: TagShareIn,
+    body: ShareIn,
 ) -> Response[HTTPValidationError | TagSharePublic]:
     """Create Tag Share
 
     Args:
-        body (TagShareIn):
+        body (ShareIn):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -95,12 +95,12 @@ def sync_detailed(
 def sync(
     *,
     client: AuthenticatedClient,
-    body: TagShareIn,
+    body: ShareIn,
 ) -> HTTPValidationError | TagSharePublic | None:
     """Create Tag Share
 
     Args:
-        body (TagShareIn):
+        body (ShareIn):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -119,12 +119,12 @@ def sync(
 async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
-    body: TagShareIn,
+    body: ShareIn,
 ) -> Response[HTTPValidationError | TagSharePublic]:
     """Create Tag Share
 
     Args:
-        body (TagShareIn):
+        body (ShareIn):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -146,12 +146,12 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: AuthenticatedClient,
-    body: TagShareIn,
+    body: ShareIn,
 ) -> HTTPValidationError | TagSharePublic | None:
     """Create Tag Share
 
     Args:
-        body (TagShareIn):
+        body (ShareIn):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

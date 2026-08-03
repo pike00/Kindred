@@ -8,10 +8,8 @@ from ...client import AuthenticatedClient, Client
 from ...types import Response, UNSET
 from ... import errors
 
-from ...models.contact_shares_delete_contact_share_response_contact_shares_delete_contact_share import (
-    ContactSharesDeleteContactShareResponseContactSharesDeleteContactShare,
-)
 from ...models.http_validation_error import HTTPValidationError
+from ...models.message import Message
 from typing import cast
 from uuid import UUID
 
@@ -32,11 +30,9 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> ContactSharesDeleteContactShareResponseContactSharesDeleteContactShare | HTTPValidationError | None:
+) -> HTTPValidationError | Message | None:
     if response.status_code == 200:
-        response_200 = ContactSharesDeleteContactShareResponseContactSharesDeleteContactShare.from_dict(
-            response.json()
-        )
+        response_200 = Message.from_dict(response.json())
 
         return response_200
 
@@ -53,7 +49,7 @@ def _parse_response(
 
 def _build_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Response[ContactSharesDeleteContactShareResponseContactSharesDeleteContactShare | HTTPValidationError]:
+) -> Response[HTTPValidationError | Message]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -66,7 +62,7 @@ def sync_detailed(
     grantee_id: UUID,
     *,
     client: AuthenticatedClient,
-) -> Response[ContactSharesDeleteContactShareResponseContactSharesDeleteContactShare | HTTPValidationError]:
+) -> Response[HTTPValidationError | Message]:
     """Delete Contact Share
 
     Args:
@@ -77,7 +73,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[ContactSharesDeleteContactShareResponseContactSharesDeleteContactShare | HTTPValidationError]
+        Response[HTTPValidationError | Message]
     """
 
     kwargs = _get_kwargs(
@@ -95,7 +91,7 @@ def sync(
     grantee_id: UUID,
     *,
     client: AuthenticatedClient,
-) -> ContactSharesDeleteContactShareResponseContactSharesDeleteContactShare | HTTPValidationError | None:
+) -> HTTPValidationError | Message | None:
     """Delete Contact Share
 
     Args:
@@ -106,7 +102,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        ContactSharesDeleteContactShareResponseContactSharesDeleteContactShare | HTTPValidationError
+        HTTPValidationError | Message
     """
 
     return sync_detailed(
@@ -119,7 +115,7 @@ async def asyncio_detailed(
     grantee_id: UUID,
     *,
     client: AuthenticatedClient,
-) -> Response[ContactSharesDeleteContactShareResponseContactSharesDeleteContactShare | HTTPValidationError]:
+) -> Response[HTTPValidationError | Message]:
     """Delete Contact Share
 
     Args:
@@ -130,7 +126,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[ContactSharesDeleteContactShareResponseContactSharesDeleteContactShare | HTTPValidationError]
+        Response[HTTPValidationError | Message]
     """
 
     kwargs = _get_kwargs(
@@ -146,7 +142,7 @@ async def asyncio(
     grantee_id: UUID,
     *,
     client: AuthenticatedClient,
-) -> ContactSharesDeleteContactShareResponseContactSharesDeleteContactShare | HTTPValidationError | None:
+) -> HTTPValidationError | Message | None:
     """Delete Contact Share
 
     Args:
@@ -157,7 +153,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        ContactSharesDeleteContactShareResponseContactSharesDeleteContactShare | HTTPValidationError
+        HTTPValidationError | Message
     """
 
     return (

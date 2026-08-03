@@ -925,7 +925,7 @@ export class ContactSharesService {
      * Delete Contact Share
      * @param data The data for the request.
      * @param data.granteeId
-     * @returns string Successful Response
+     * @returns Message Successful Response
      * @throws ApiError
      */
     public static deleteContactShare(data: ContactSharesDeleteContactShareData): CancelablePromise<ContactSharesDeleteContactShareResponse> {

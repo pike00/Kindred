@@ -13,11 +13,11 @@ from typing import cast
 from uuid import UUID
 
 
-T = TypeVar("T", bound="TagShareIn")
+T = TypeVar("T", bound="ShareIn")
 
 
 @_attrs_define
-class TagShareIn:
+class ShareIn:
     """
     Attributes:
         tag_id (UUID):
@@ -92,14 +92,14 @@ class TagShareIn:
 
         grantee_email = _parse_grantee_email(d.pop("grantee_email", UNSET))
 
-        tag_share_in = cls(
+        share_in = cls(
             tag_id=tag_id,
             grantee_id=grantee_id,
             grantee_email=grantee_email,
         )
 
-        tag_share_in.additional_properties = d
-        return tag_share_in
+        share_in.additional_properties = d
+        return share_in
 
     @property
     def additional_keys(self) -> list[str]:
