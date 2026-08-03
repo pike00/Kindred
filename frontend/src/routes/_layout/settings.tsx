@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router"
 
+import { ContactSharingPanel } from "@/components/Sharing/ContactSharingPanel"
 import ApiKeys from "@/components/UserSettings/ApiKeys"
 import ChangePassword from "@/components/UserSettings/ChangePassword"
 import CustomFieldDefinitions from "@/components/UserSettings/CustomFieldDefinitions"
@@ -17,6 +18,7 @@ const tabsConfig = [
     component: CustomFieldDefinitions,
   },
   { value: "api-keys", title: "API keys", component: ApiKeys },
+  { value: "sharing", title: "Sharing", component: ContactSharingPanel },
   { value: "danger-zone", title: "Danger zone", component: DeleteAccount },
 ]
 
