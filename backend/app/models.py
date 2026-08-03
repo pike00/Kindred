@@ -544,6 +544,17 @@ class AllContactsShare(SQLModel, table=True):
     )
 
 
+class AllContactsSharePublic(SQLModel):
+    grantee_id: uuid.UUID
+    grantee_email: str
+    created_at: datetime
+
+
+class AllContactsSharesPublic(SQLModel):
+    data: list[AllContactsSharePublic]
+    count: int
+
+
 # ─── Contact ─────────────────────────────────────────────────────────────────
 
 
