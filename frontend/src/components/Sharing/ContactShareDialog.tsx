@@ -6,6 +6,7 @@ import { z } from "zod"
 import { ContactSharesService } from "@/client"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogContent,
@@ -131,17 +132,17 @@ export function ContactShareDialog({
                   render={({ field }) => (
                     <FormItem>
                       <label className="flex items-start gap-2 text-sm">
-                        <input
+                        <Checkbox
                           checked={field.value}
                           className="mt-0.5"
-                          onChange={(event) =>
-                            field.onChange(event.target.checked)
+                          onCheckedChange={(checked) =>
+                            field.onChange(checked === true)
                           }
-                          type="checkbox"
                         />
                         <span>
                           I understand this grants read and write access to all
-                          of my current and future contacts.
+                          of my current and future contacts, their
+                          contact-related records, and their interactions.
                         </span>
                       </label>
                       <FormMessage />
@@ -159,7 +160,12 @@ export function ContactShareDialog({
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={createShareMutation.isPending}>
+              <Button
+                type="submit"
+                disabled={
+                  createShareMutation.isPending || !form.watch("confirmed")
+                }
+              >
                 {createShareMutation.isPending
                   ? "Sharing..."
                   : "Share all contacts"}

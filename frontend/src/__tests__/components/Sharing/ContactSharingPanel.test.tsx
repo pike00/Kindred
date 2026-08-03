@@ -49,6 +49,29 @@ vi.mock("@/components/ui/dialog", async () => {
   }
 })
 
+vi.mock("@/components/ui/alert-dialog", async () => {
+  const React = await import("react")
+
+  return {
+    AlertDialog: ({ children, open }: any) =>
+      React.createElement("div", null, open ? children : null),
+    AlertDialogContent: ({ children }: any) =>
+      React.createElement("div", { role: "alertdialog" }, children),
+    AlertDialogHeader: ({ children }: any) =>
+      React.createElement("div", null, children),
+    AlertDialogTitle: ({ children }: any) =>
+      React.createElement("h2", null, children),
+    AlertDialogDescription: ({ children }: any) =>
+      React.createElement("p", null, children),
+    AlertDialogFooter: ({ children }: any) =>
+      React.createElement("div", null, children),
+    AlertDialogCancel: ({ children, onClick }: any) =>
+      React.createElement("button", { onClick, type: "button" }, children),
+    AlertDialogAction: ({ children, onClick }: any) =>
+      React.createElement("button", { onClick, type: "button" }, children),
+  }
+})
+
 describe("ContactSharingPanel", () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -140,7 +163,7 @@ describe("ContactSharingPanel", () => {
     })
   })
 
-  it("shows the full scope warning in the share dialog", async () => {
+  it("shows the full scope acknowledgment text and disables submit until checked", async () => {
     mockListContactShares.mockResolvedValue({ data: [], count: 0 })
 
     const user = userEvent.setup()
@@ -150,17 +173,57 @@ describe("ContactSharingPanel", () => {
       await screen.findByRole("button", { name: "Share all contacts" }),
     )
 
+    const dialog = screen.getByRole("dialog")
+    const submitButton = within(dialog).getByRole("button", {
+      name: /^Share all contacts$/,
+    })
+
+    expect(within(dialog).getByText("Sharing scope")).toBeInTheDocument()
     expect(
-      within(screen.getByRole("dialog")).getByText("Sharing scope"),
-    ).toBeInTheDocument()
-    expect(
-      within(screen.getByRole("dialog")).getByText(
-        /I understand this grants read and write access/,
+      within(dialog).getByText(
+        /I understand this grants read and write access to all of my current and future contacts, their contact-related records, and their interactions\./,
       ),
     ).toBeInTheDocument()
+    expect(submitButton).toBeDisabled()
+
+    await user.click(within(dialog).getByRole("checkbox"))
+
+    await waitFor(() => {
+      expect(submitButton).toBeEnabled()
+    })
   })
 
-  it("requires revoke confirmation before deleting a grant", async () => {
+  it("does nothing when revoke is declined", async () => {
+    mockListContactShares.mockResolvedValue({
+      data: [
+        {
+          grantee_id: "user-9",
+          grantee_email: "remove-me@example.com",
+          created_at: "2026-06-15T00:00:00Z",
+        },
+      ],
+      count: 1,
+    })
+
+    const user = userEvent.setup()
+    renderWithProviders(<ContactSharingPanel />)
+
+    await user.click(
+      await screen.findByRole("button", { name: "Revoke access" }),
+    )
+    await user.click(
+      within(screen.getByRole("alertdialog")).getByRole("button", {
+        name: "Cancel",
+      }),
+    )
+
+    await waitFor(() => {
+      expect(mockDeleteContactShare).not.toHaveBeenCalled()
+      expect(mockShowSuccessToast).not.toHaveBeenCalled()
+    })
+  })
+
+  it("revokes a grant after confirmation", async () => {
     mockListContactShares.mockResolvedValue({
       data: [
         {
@@ -176,16 +239,17 @@ describe("ContactSharingPanel", () => {
     const user = userEvent.setup()
     const { queryClient } = renderWithProviders(<ContactSharingPanel />)
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries")
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValueOnce(true)
 
     await user.click(
       await screen.findByRole("button", { name: "Revoke access" }),
     )
+    await user.click(
+      within(screen.getByRole("alertdialog")).getByRole("button", {
+        name: "Revoke access",
+      }),
+    )
 
     await waitFor(() => {
-      expect(confirmSpy).toHaveBeenCalledWith(
-        "Revoke all-contact sharing for remove-me@example.com? They will lose access immediately.",
-      )
       expect(mockDeleteContactShare).toHaveBeenCalledWith({
         granteeId: "user-9",
       })
