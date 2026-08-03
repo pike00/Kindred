@@ -518,6 +518,32 @@ class TagSharesPublic(SQLModel):
     count: int
 
 
+# ─── AllContactsShare (grant access to all of an owner's contacts) ───────────
+
+
+class AllContactsShare(SQLModel, table=True):
+    """Grants another user access to all current and future contacts by owner."""
+
+    __tablename__ = "all_contacts_share"
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id",
+        primary_key=True,
+        ondelete="CASCADE",
+        description="Grantor whose contacts are being shared; cascades on delete.",
+    )
+    grantee_id: uuid.UUID = Field(
+        foreign_key="user.id",
+        primary_key=True,
+        ondelete="CASCADE",
+        description="User granted access; cascades on delete.",
+    )
+    created_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+        description="When the all-contacts share was granted (UTC).",
+    )
+
+
 # ─── Contact ─────────────────────────────────────────────────────────────────
 
 
