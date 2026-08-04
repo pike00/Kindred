@@ -28,11 +28,13 @@ export function ContactSharingPanel() {
               and interactions.
             </p>
             <p className="text-sm text-muted-foreground">
-              This is separate from tag sharing and applies to every contact
-              you own.
+              This is separate from tag sharing and applies to every contact you
+              own.
             </p>
           </div>
-          <Button onClick={() => setDialogOpen(true)}>Share all contacts</Button>
+          <Button onClick={() => setDialogOpen(true)}>
+            Share all contacts
+          </Button>
         </div>
 
         {isLoading ? (

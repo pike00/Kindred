@@ -29,11 +29,9 @@ import { AlertTriangle } from "@/lib/icons"
 
 const contactShareSchema = z.object({
   granteeEmail: z.string().email("Please enter a valid email address"),
-  confirmed: z
-    .boolean()
-    .refine((value) => value, {
-      message: "You must confirm the full sharing scope before continuing",
-    }),
+  confirmed: z.boolean().refine((value) => value, {
+    message: "You must confirm the full sharing scope before continuing",
+  }),
 })
 
 type ContactShareFormData = z.infer<typeof contactShareSchema>
@@ -52,6 +50,7 @@ export function ContactShareDialog({
   open,
   onOpenChange,
 }: ContactShareDialogProps) {
+  const confirmCheckboxId = "contact-share-confirmed"
   const queryClient = useQueryClient()
   const { showErrorToast, showSuccessToast } = useCustomToast()
 
@@ -131,20 +130,21 @@ export function ContactShareDialog({
                   name="confirmed"
                   render={({ field }) => (
                     <FormItem>
-                      <label className="flex items-start gap-2 text-sm">
+                      <div className="flex items-start gap-2 text-sm">
                         <Checkbox
+                          id={confirmCheckboxId}
                           checked={field.value}
                           className="mt-0.5"
                           onCheckedChange={(checked) =>
                             field.onChange(checked === true)
                           }
                         />
-                        <span>
+                        <label htmlFor={confirmCheckboxId}>
                           I understand this grants read and write access to all
                           of my current and future contacts, their
                           contact-related records, and their interactions.
-                        </span>
-                      </label>
+                        </label>
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
