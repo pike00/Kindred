@@ -5,6 +5,25 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.100] - 2026-08-04
+
+### Documentation
+- Docs: add all_contacts_share database docs (565fa3a)
+
+### Other
+- Email: fix interaction deduplication lookup (b916580)
+- Test: cover all-contact sharing flow (05fc807)
+- Tags: fix email share submission and scope copy (f152f35)
+- Sharing: tighten contact share confirmation flows (32aefec)
+- Sharing: add all-contacts settings UI (69db50a)
+- Contact shares: type delete response and regenerate clients (98cec83)
+- Client: regenerate contact-share APIs (442aa32)
+- Backend: validate all-contact share grantee input (25740f2)
+- Backend: add all-contact share routes (6b24c52)
+- Backend: allow shared grantees to write contact records (acc86e2)
+- Backend: cover all-contact share route visibility (9e0063f)
+- Backend: add all-contacts sharing visibility scaffolding (6fda42f)
+
 ## [0.2.99] - 2026-08-03
 
 ### Fixed
