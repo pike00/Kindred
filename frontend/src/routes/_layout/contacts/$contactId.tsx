@@ -12,8 +12,7 @@ import { CustomFieldsCard } from "@/components/Contacts/CustomFieldsCard"
 import { EditContactDialog } from "@/components/Contacts/EditContactDialog"
 import { InteractionHeatmap } from "@/components/Contacts/InteractionHeatmap"
 import { LifeEventsCard } from "@/components/Contacts/LifeEventsCard"
-import { PetsCard } from "@/components/Contacts/PetsCard"
-import { RelationshipsCard } from "@/components/Contacts/RelationshipsCard"
+import { PeopleAndPetsCard } from "@/components/Contacts/PeopleAndPetsCard"
 import { formatLocalTime } from "@/components/Contacts/TimezoneInput"
 import { AddDebt } from "@/components/Debts/AddDebt"
 import { AddGift } from "@/components/Gifts/AddGift"
@@ -353,7 +352,10 @@ function ContactDetailPage() {
             startDate={heatmapFilter?.startDate ?? null}
             endDate={heatmapFilter?.endDate ?? null}
           />
-          <PetsCard contactId={contactId} />
+          <PeopleAndPetsCard
+            contactId={contactId}
+            contactName={contact.first_name ?? ""}
+          />
           <LifeEventsCard contactId={contactId} />
           <CustomFieldsCard contactId={contactId} />
         </div>
@@ -447,11 +449,6 @@ function ContactDetailPage() {
               <InteractionMap interactions={interactions} />
             </CardContent>
           </Card>
-
-          <RelationshipsCard
-            contactId={contactId}
-            contactName={contact.first_name ?? ""}
-          />
         </div>
       </div>
 
