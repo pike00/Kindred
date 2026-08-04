@@ -999,4 +999,63 @@ describe("AddressesCard", () => {
     })
   })
 
+  it("renders Google Maps link and action when address details exist", async () => {
+    const mockAddresses = [
+      {
+        id: "addr-1",
+        contact_id: contactId,
+        label: "Home",
+        street: "1724 Maple Ave",
+        extended: null,
+        city: "Philadelphia",
+        region: "PA",
+        postal_code: "55656",
+        country: "USA",
+      },
+    ]
+
+    mockAddressService.listAddresses.mockResolvedValue({
+      data: mockAddresses,
+    })
+
+    renderWithProviders(<AddressesCard contactId={contactId} />)
+
+    await waitFor(() => {
+      const mapsLink = screen.getByRole("link", { name: /open in google maps/i })
+      expect(mapsLink).toBeInTheDocument()
+      expect(mapsLink).toHaveAttribute(
+        "href",
+        "https://www.google.com/maps/search/?api=1&query=1724%20Maple%20Ave%2C%20Philadelphia%2C%20PA%2C%2055656%2C%20USA",
+      )
+      expect(screen.getByTestId("action-open in google maps")).toBeInTheDocument()
+    })
+  })
+
+  it("prioritizes latitude and longitude for Google Maps link if available", async () => {
+    const mockAddresses = [
+      {
+        id: "addr-1",
+        contact_id: contactId,
+        label: "Work",
+        street: "1724 Maple Ave",
+        latitude: 39.9526,
+        longitude: -75.1652,
+      },
+    ]
+
+    mockAddressService.listAddresses.mockResolvedValue({
+      data: mockAddresses,
+    })
+
+    renderWithProviders(<AddressesCard contactId={contactId} />)
+
+    await waitFor(() => {
+      const mapsLink = screen.getByRole("link", { name: /open in google maps/i })
+      expect(mapsLink).toHaveAttribute(
+        "href",
+        "https://www.google.com/maps/search/?api=1&query=39.9526,-75.1652",
+      )
+    })
+  })
 })
+
