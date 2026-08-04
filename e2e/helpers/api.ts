@@ -1,7 +1,6 @@
 import type { APIRequestContext } from "@playwright/test"
-
-const BASE_URL = process.env.E2E_BASE_URL ?? "http://localhost:5173"
-export const API_URL = BASE_URL.replace(":5173", ":8001")
+export { API_URL } from "./urls.js"
+import { API_URL } from "./urls.js"
 
 export async function getToken(request: APIRequestContext): Promise<string> {
   let lastErr: unknown = null

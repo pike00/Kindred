@@ -5,6 +5,7 @@ import {
   deleteContact,
   createInteraction,
   deleteInteraction,
+  API_URL,
 } from "./helpers/api.js"
 
 // `/interactions` shows the `InteractionTimeline` (and a `Drafts` tab). There is
@@ -122,11 +123,7 @@ test.describe("Interactions timeline", () => {
     await expect(page.getByText(noteText)).toBeVisible({ timeout: 10_000 })
 
     // Track for teardown
-    const baseUrl = (process.env.E2E_BASE_URL ?? "http://localhost:5173").replace(
-      ":5173",
-      ":8001",
-    )
-    const res = await request.get(`${baseUrl}/api/v1/interactions/?limit=20`, {
+    const res = await request.get(`${API_URL}/api/v1/interactions/?limit=20`, {
       headers: { Authorization: `Bearer ${token}` },
     })
     const body = await res.json()

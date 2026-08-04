@@ -29,8 +29,8 @@
 | Name | Definition |
 | ---- | ---------- |
 | contact_merge_pkey | CREATE UNIQUE INDEX contact_merge_pkey ON public.contact_merge USING btree (id) |
-| ix_contact_merge_surviving_id | CREATE INDEX ix_contact_merge_surviving_id ON public.contact_merge USING btree (surviving_id) |
 | ix_contact_merge_absorbed_id | CREATE UNIQUE INDEX ix_contact_merge_absorbed_id ON public.contact_merge USING btree (absorbed_id) |
+| ix_contact_merge_surviving_id | CREATE INDEX ix_contact_merge_surviving_id ON public.contact_merge USING btree (surviving_id) |
 | ix_contact_merge_merged_at | CREATE INDEX ix_contact_merge_merged_at ON public.contact_merge USING btree (merged_at) |
 | ix_contact_merge_surviving_absorbed | CREATE INDEX ix_contact_merge_surviving_absorbed ON public.contact_merge USING btree (surviving_id, absorbed_id) |
 

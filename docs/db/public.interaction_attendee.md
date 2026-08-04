@@ -46,7 +46,6 @@ erDiagram
   interactionchannel channel
   timestamp_with_time_zone occurred_at
   varchar_10000_ notes
-  varchar_50_ mood
   integer duration_minutes
   timestamp_with_time_zone created_at
   timestamp_without_time_zone deleted_at

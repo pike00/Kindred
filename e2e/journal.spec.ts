@@ -4,6 +4,7 @@ import {
   createJournalEntry,
   deleteJournalEntry,
   updateJournalEntry,
+  API_URL,
 } from "./helpers/api.js"
 
 // `/journal` shows a DataTable of entries via JournalList. The model uses
@@ -87,11 +88,7 @@ test.describe("Journal", () => {
     await expect(page.getByText(body)).toBeVisible({ timeout: 10_000 })
 
     // Track for teardown
-    const baseUrl = (process.env.E2E_BASE_URL ?? "http://localhost:5173").replace(
-      ":5173",
-      ":8001",
-    )
-    const res = await request.get(`${baseUrl}/api/v1/journal/?limit=20`, {
+    const res = await request.get(`${API_URL}/api/v1/journal/?limit=20`, {
       headers: { Authorization: `Bearer ${token}` },
     })
     const list = await res.json()

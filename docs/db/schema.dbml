@@ -33,6 +33,8 @@ Enum "interactionchannel" {
   "SOCIAL"
   "OTHER"
   "SKIP"
+  "recommendation"
+  "RECOMMENDATION"
 }
 
 Enum "mediacategory" {
@@ -248,7 +250,6 @@ Table "interaction" {
   "channel" interactionchannel [not null]
   "occurred_at" timestamptz [not null]
   "notes" varchar(10000)
-  "mood" varchar(50)
   "duration_minutes" int4
   "created_at" timestamptz [not null]
   "deleted_at" timestamp
@@ -382,23 +383,6 @@ Table "note" {
   }
 }
 
-Table "journal_entry" {
-  "id" uuid [pk, not null]
-  "owner_id" uuid [not null]
-  "body" varchar(50000) [not null]
-  "mood" varchar(50)
-  "entry_date" date [not null]
-  "created_at" timestamptz [not null]
-  "updated_at" timestamptz [not null]
-  "search_vector" tsvector
-
-  Indexes {
-    entry_date [type: btree, name: "ix_journal_entry_entry_date"]
-    owner_id [type: btree, name: "ix_journal_entry_owner_id"]
-    search_vector [type: gin, name: "ix_journal_entry_search_vector"]
-  }
-}
-
 Table "webhook_endpoint" {
   "id" uuid [pk, not null]
   "owner_id" uuid [not null]
@@ -424,16 +408,6 @@ Table "tag_share" {
 
   Indexes {
     (tag_id, grantee_id) [pk, type: btree, name: "tag_share_pkey"]
-  }
-}
-
-Table "all_contacts_share" {
-  "owner_id" uuid [not null]
-  "grantee_id" uuid [not null]
-  "created_at" timestamptz [not null, default: `now()`]
-
-  Indexes {
-    (owner_id, grantee_id) [pk, type: btree, name: "all_contacts_share_pkey"]
   }
 }
 
@@ -586,17 +560,6 @@ Table "inverse_relationship_map" {
   }
 }
 
-Table "journal_entry_contact" {
-  "journal_entry_id" uuid [not null]
-  "contact_id" uuid [not null]
-
-  Indexes {
-    (journal_entry_id, contact_id) [pk, type: btree, name: "journal_entry_contact_pkey"]
-    contact_id [type: btree, name: "ix_journal_entry_contact_contact_id"]
-    journal_entry_id [type: btree, name: "ix_journal_entry_contact_journal_entry_id"]
-  }
-}
-
 Table "debt_payment" {
   "id" uuid [pk, not null]
   "debt_id" uuid [not null]
@@ -724,6 +687,16 @@ Table "vcard_conflict" {
   }
 }
 
+Table "all_contacts_share" {
+  "owner_id" uuid [not null]
+  "grantee_id" uuid [not null]
+  "created_at" timestamptz [not null, default: `now()`]
+
+  Indexes {
+    (owner_id, grantee_id) [pk, type: btree, name: "all_contacts_share_pkey"]
+  }
+}
+
 Ref "activity_log_actor_id_fkey":"user"."id" < "activity_log"."actor_id" [delete: set null]
 
 Ref "activity_log_owner_id_fkey":"user"."id" < "activity_log"."owner_id" [delete: cascade]
@@ -731,6 +704,10 @@ Ref "activity_log_owner_id_fkey":"user"."id" < "activity_log"."owner_id" [delete
 Ref "fk_activity_log_acting_api_key_id":"api_key"."id" < "activity_log"."acting_api_key_id" [delete: set null]
 
 Ref "address_contact_id_fkey":"contact"."id" < "address"."contact_id" [delete: cascade]
+
+Ref "all_contacts_share_grantee_id_fkey":"user"."id" < "all_contacts_share"."grantee_id" [delete: cascade]
+
+Ref "all_contacts_share_owner_id_fkey":"user"."id" < "all_contacts_share"."owner_id" [delete: cascade]
 
 Ref "api_key_owned_by_user_id_fkey":"user"."id" < "api_key"."owned_by_user_id" [delete: cascade]
 
@@ -792,12 +769,6 @@ Ref "interaction_attendee_contact_id_fkey":"contact"."id" < "interaction_attende
 
 Ref "interaction_attendee_interaction_id_fkey":"interaction"."id" < "interaction_attendee"."interaction_id" [delete: cascade]
 
-Ref "journal_entry_owner_id_fkey":"user"."id" < "journal_entry"."owner_id" [delete: cascade]
-
-Ref "journal_entry_contact_contact_id_fkey":"contact"."id" < "journal_entry_contact"."contact_id" [delete: cascade]
-
-Ref "journal_entry_contact_journal_entry_id_fkey":"journal_entry"."id" < "journal_entry_contact"."journal_entry_id" [delete: cascade]
-
 Ref "life_event_contact_id_fkey":"contact"."id" < "life_event"."contact_id" [delete: cascade]
 
 Ref "life_event_owner_id_fkey":"user"."id" < "life_event"."owner_id" [delete: cascade]
@@ -835,10 +806,6 @@ Ref "saved_filter_owner_id_fkey":"user"."id" < "saved_filter"."owner_id" [delete
 Ref "saved_filter_tag_id_fkey":"tag"."id" < "saved_filter"."tag_id" [delete: set null]
 
 Ref "tag_owner_id_fkey":"user"."id" < "tag"."owner_id" [delete: cascade]
-
-Ref "all_contacts_share_owner_id_fkey":"user"."id" < "all_contacts_share"."owner_id" [delete: cascade]
-
-Ref "all_contacts_share_grantee_id_fkey":"user"."id" < "all_contacts_share"."grantee_id" [delete: cascade]
 
 Ref "tag_share_grantee_id_fkey":"user"."id" < "tag_share"."grantee_id" [delete: cascade]
 

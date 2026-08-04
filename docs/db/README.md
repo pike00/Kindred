@@ -15,13 +15,12 @@
 | [public.pet](public.pet.md) | 6 | Pet owned by a contact; useful for memorable conversation hooks. | BASE TABLE |
 | [public.custom_field_definition](public.custom_field_definition.md) | 8 | User-defined custom field schema, scoped to one owner. | BASE TABLE |
 | [public.custom_field_value](public.custom_field_value.md) | 4 | Value of a custom field for a specific contact (one per contact per definition). | BASE TABLE |
-| [public.interaction](public.interaction.md) | 20 | Logged touchpoint with one or more contacts (call, meeting, text, etc.). Attendees are attached via interaction_attendee. | BASE TABLE |
+| [public.interaction](public.interaction.md) | 19 | Logged touchpoint with one or more contacts (call, meeting, text, etc.). Attendees are attached via interaction_attendee. | BASE TABLE |
 | [public.reminder](public.reminder.md) | 12 | Scheduled reminder; contact-specific or standalone. | BASE TABLE |
 | [public.gift](public.gift.md) | 13 | Gift idea or record for a contact. | BASE TABLE |
 | [public.debt](public.debt.md) | 11 | Money owed to or from a contact. | BASE TABLE |
 | [public.life_event](public.life_event.md) | 10 | Milestone on a contact's timeline (job change, wedding, move, etc.). | BASE TABLE |
 | [public.note](public.note.md) | 9 | Timestamped freeform note attached to a specific contact. | BASE TABLE |
-| [public.journal_entry](public.journal_entry.md) | 8 | Personal journal entry, not tied to a specific contact. | BASE TABLE |
 | [public.webhook_endpoint](public.webhook_endpoint.md) | 10 | Inbound or outbound webhook configuration. | BASE TABLE |
 | [public.tag_share](public.tag_share.md) | 3 | Grants another user read access to all rows bearing a given tag. | BASE TABLE |
 | [public.media_recommendation](public.media_recommendation.md) | 10 | Media (book, show, podcast, etc.) recommended to or by a contact. | BASE TABLE |
@@ -34,7 +33,6 @@
 | [public.reminder_snooze](public.reminder_snooze.md) | 6 |  | BASE TABLE |
 | [public.contact_merge](public.contact_merge.md) | 6 |  | BASE TABLE |
 | [public.inverse_relationship_map](public.inverse_relationship_map.md) | 5 |  | BASE TABLE |
-| [public.journal_entry_contact](public.journal_entry_contact.md) | 2 |  | BASE TABLE |
 | [public.debt_payment](public.debt_payment.md) | 6 |  | BASE TABLE |
 | [public.communication_preference](public.communication_preference.md) | 8 |  | BASE TABLE |
 | [public.setup_state](public.setup_state.md) | 3 |  | BASE TABLE |
@@ -44,6 +42,7 @@
 | [public.email_oauth_token](public.email_oauth_token.md) | 10 |  | BASE TABLE |
 | [public.saved_filter](public.saved_filter.md) | 7 |  | BASE TABLE |
 | [public.vcard_conflict](public.vcard_conflict.md) | 8 |  | BASE TABLE |
+| [public.all_contacts_share](public.all_contacts_share.md) | 3 | Grants another user access to all current and future contacts by owner. | BASE TABLE |
 
 ## Stored procedures and functions
 
@@ -62,7 +61,6 @@
 | public.update_contact_search_vector | trigger |  | FUNCTION |
 | public.update_note_search_vector | trigger |  | FUNCTION |
 | public.update_interaction_search_vector | trigger |  | FUNCTION |
-| public.update_journal_entry_search_vector | trigger |  | FUNCTION |
 
 ## Enums
 
@@ -72,7 +70,7 @@
 | public.contactsource | CARDDAV, GOOGLE, MANUAL, VCARD_IMPORT, WEBHOOK |
 | public.debtdirection | I_OWE, THEY_OWE |
 | public.giftstatus | GIVEN, IDEA, PURCHASED, RECEIVED, WRAPPED |
-| public.interactionchannel | CALL, EMAIL, IN_PERSON, OTHER, SKIP, SOCIAL, TEXT, VIDEO |
+| public.interactionchannel | CALL, EMAIL, IN_PERSON, OTHER, RECOMMENDATION, SKIP, SOCIAL, TEXT, VIDEO, recommendation |
 | public.mediacategory | BOOK, MOVIE, MUSICIAN, OTHER, PODCAST, TV_SHOW |
 | public.reminderfrequency | DAILY, MONTHLY, ONCE, WEEKLY, YEARLY |
 
@@ -106,7 +104,6 @@ erDiagram
 "public.life_event" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.note" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.note" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
-"public.journal_entry" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.webhook_endpoint" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.tag_share" }o--|| "public.user" : "FOREIGN KEY (grantee_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.tag_share" }o--|| "public.tag" : "FOREIGN KEY (tag_id) REFERENCES tag(id) ON DELETE CASCADE"
@@ -127,8 +124,6 @@ erDiagram
 "public.contact_merge" }o--o| "public.user" : "FOREIGN KEY (merged_by) REFERENCES #quot;user#quot;(id) ON DELETE SET NULL"
 "public.contact_merge" }o--|| "public.contact" : "FOREIGN KEY (absorbed_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.contact_merge" }o--|| "public.contact" : "FOREIGN KEY (surviving_id) REFERENCES contact(id) ON DELETE CASCADE"
-"public.journal_entry_contact" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
-"public.journal_entry_contact" }o--|| "public.journal_entry" : "FOREIGN KEY (journal_entry_id) REFERENCES journal_entry(id) ON DELETE CASCADE"
 "public.debt_payment" }o--|| "public.debt" : "FOREIGN KEY (debt_id) REFERENCES debt(id) ON DELETE CASCADE"
 "public.communication_preference" |o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.ical_import_log" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
@@ -141,6 +136,8 @@ erDiagram
 "public.saved_filter" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.saved_filter" }o--o| "public.tag" : "FOREIGN KEY (tag_id) REFERENCES tag(id) ON DELETE SET NULL"
 "public.vcard_conflict" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
+"public.all_contacts_share" }o--|| "public.user" : "FOREIGN KEY (grantee_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
+"public.all_contacts_share" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 
 "public.alembic_version" {
   varchar_32_ version_num
@@ -271,7 +268,6 @@ erDiagram
   interactionchannel channel
   timestamp_with_time_zone occurred_at
   varchar_10000_ notes
-  varchar_50_ mood
   integer duration_minutes
   timestamp_with_time_zone created_at
   timestamp_without_time_zone deleted_at
@@ -350,16 +346,6 @@ erDiagram
   timestamp_with_time_zone updated_at
   timestamp_without_time_zone deleted_at
   varchar_36_ client_id
-  tsvector search_vector
-}
-"public.journal_entry" {
-  uuid id
-  uuid owner_id FK
-  varchar_50000_ body
-  varchar_50_ mood
-  date entry_date
-  timestamp_with_time_zone created_at
-  timestamp_with_time_zone updated_at
   tsvector search_vector
 }
 "public.webhook_endpoint" {
@@ -467,10 +453,6 @@ erDiagram
   boolean is_symmetric
   timestamp_with_time_zone created_at
 }
-"public.journal_entry_contact" {
-  uuid journal_entry_id FK
-  uuid contact_id FK
-}
 "public.debt_payment" {
   uuid id
   uuid debt_id FK
@@ -551,6 +533,11 @@ erDiagram
   varchar_64_ local_hash
   timestamp_with_time_zone resolved_at
   varchar_50_ resolution_type
+  timestamp_with_time_zone created_at
+}
+"public.all_contacts_share" {
+  uuid owner_id FK
+  uuid grantee_id FK
   timestamp_with_time_zone created_at
 }
 ```
