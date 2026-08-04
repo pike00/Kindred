@@ -5,6 +5,12 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.104] - 2026-08-04
+
+### Other
+- E2e: pass test mode to preview server (ca9dd44)
+- Contacts: simplify contact detail layout (81e74bc)
+
 ## [0.2.103] - 2026-08-04
 
 ### Other
