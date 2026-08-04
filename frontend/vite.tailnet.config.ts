@@ -10,6 +10,10 @@ export default {
     ...baseConfig.server,
     host: tailnetHost,
     allowedHosts: [tailnetMagicDns],
+    watch: {
+      usePolling: true,
+      interval: 500,
+    },
     proxy: {
       "/api": {
         target: backendUrl,
