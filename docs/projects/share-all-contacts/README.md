@@ -19,3 +19,10 @@ Current limitations:
 - Tags, groups, journal entries, and other owner-only data remain private.
 - Owners can create/list/revoke their grants; grantees cannot manage grants granted to them.
 - The feature follows the existing shared-write model. There is no read-only mode yet.
+
+
+## Session Log
+
+### 2026-08-04
+- Housekeeping: Bump last_updated after repo releases and updates.
+

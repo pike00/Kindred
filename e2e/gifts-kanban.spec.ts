@@ -5,6 +5,7 @@ import {
   deleteContact,
   createGift,
   deleteGift,
+  API_URL,
 } from "./helpers/api.js"
 
 let token: string
@@ -102,9 +103,7 @@ test.describe("Gifts Kanban", () => {
 
     // Update status via API directly (drag is exercised below; this verifies the
     // board updates in response to backend state changes).
-    const apiUrl =
-      process.env.E2E_BASE_URL?.replace(":5173", ":8001") ??
-      "http://localhost:8001"
+    const apiUrl = API_URL
     const res = await request.post(
       `${apiUrl}/api/v1/gifts/${g.id}/change-status?new_status=given`,
       { headers: { Authorization: `Bearer ${token}` } },

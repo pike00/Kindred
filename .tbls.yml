@@ -26,6 +26,12 @@ lint:
       - alembic_version.version_num
 
 comments:
+- table: all_contacts_share
+  tableComment: Grants another user access to all current and future contacts by owner.
+  columnComments:
+    owner_id: Grantor whose contacts are being shared; cascades on delete.
+    grantee_id: User granted access; cascades on delete.
+    created_at: When the all-contacts share was granted (UTC).
 - table: address
   tableComment: Physical address attached to a contact.
   columnComments:
@@ -135,7 +141,6 @@ comments:
     channel: How the interaction happened (call, in_person, text, etc.).
     occurred_at: When the interaction actually took place.
     notes: Conversation summary, action items, etc.
-    mood: Emoji or keyword capturing the tone.
     duration_minutes: Length of the interaction in minutes.
     id: Primary key.
     owner_id: Owner user; cascades on delete.
@@ -145,16 +150,6 @@ comments:
   columnComments:
     interaction_id: Interaction side of the link; cascades on delete.
     contact_id: Contact side of the link; cascades on delete.
-- table: journal_entry
-  tableComment: Personal journal entry, not tied to a specific contact.
-  columnComments:
-    body: Entry body, 1-50000 chars.
-    mood: Emoji or keyword capturing the mood.
-    entry_date: Date the entry is about (may differ from created_at).
-    id: Primary key.
-    owner_id: Owner user; cascades on delete.
-    created_at: When the entry was logged (UTC).
-    updated_at: Auto-bumped on edit (UTC).
 - table: life_event
   tableComment: Milestone on a contact's timeline (job change, wedding, move, etc.).
   columnComments:

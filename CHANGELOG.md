@@ -5,6 +5,11 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.101] - 2026-08-04
+
+### Other
+- Fix Playwright pre-push and DB docs validation (#176) (c46006e)
+
 ## [0.2.100] - 2026-08-04
 
 ### Documentation
@@ -1152,5 +1157,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Frontend: use refetchQueries instead of invalidateQueries for reminders (d13c12a)
 - Docker-compose: add explicit DNS server for backend and frontend (010f2d4)
 - Chore: flatten app/ subdirectory to project root (97b7694)
-
 

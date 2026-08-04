@@ -6,6 +6,7 @@ import {
   updateTag,
   createContact,
   deleteContact,
+  API_URL,
 } from "./helpers/api.js"
 
 // `/tags` shows a DataTable of tags with a row-actions menu that exposes
@@ -86,11 +87,7 @@ test.describe("Tags", () => {
     await expect(page.getByText(name)).toBeVisible({ timeout: 10_000 })
 
     // Track for teardown
-    const baseUrl = (process.env.E2E_BASE_URL ?? "http://localhost:5173").replace(
-      ":5173",
-      ":8001",
-    )
-    const res = await request.get(`${baseUrl}/api/v1/tags/?limit=500`, {
+    const res = await request.get(`${API_URL}/api/v1/tags/?limit=500`, {
       headers: { Authorization: `Bearer ${token}` },
     })
     const body = await res.json()

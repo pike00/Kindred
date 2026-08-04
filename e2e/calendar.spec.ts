@@ -1,5 +1,10 @@
 import { test, expect } from "./fixtures"
-import { getToken, createContact, deleteContact } from "./helpers/api.js"
+import {
+  API_URL,
+  getToken,
+  createContact,
+  deleteContact,
+} from "./helpers/api.js"
 
 // `/calendar` renders a `MonthCalendar` showing a 7-column grid of day cells
 // for the URL-bound month (default = current). Each cell with events shows
@@ -125,11 +130,7 @@ test.describe("Calendar", () => {
     })
     createdContactIds.push(c.id)
     // Update birthday via PATCH /contacts/{id}
-    const baseUrl = (process.env.E2E_BASE_URL ?? "http://localhost:5173").replace(
-      ":5173",
-      ":8001",
-    )
-    await request.patch(`${baseUrl}/api/v1/contacts/${c.id}`, {
+    await request.patch(`${API_URL}/api/v1/contacts/${c.id}`, {
       headers: { Authorization: `Bearer ${token}` },
       data: { birthday },
     })

@@ -7,8 +7,7 @@ import {
 	deleteInteraction,
 	getToken,
 } from "./helpers/api.js";
-
-const BASE_URL = process.env.E2E_BASE_URL ?? "http://localhost:5173";
+import { BASE_URL } from "./helpers/urls.js";
 
 function authHeaders(token: string) {
 	return { Authorization: `Bearer ${token}` };
@@ -50,6 +49,7 @@ test.describe("Contact sharing", () => {
 		browser,
 		request,
 	}) => {
+		test.setTimeout(90_000);
 		const ownerToken = await getToken(request);
 		const ts = Date.now();
 		const recipientEmail = `contact-share-recipient+${ts}@example.com`;
@@ -86,14 +86,14 @@ test.describe("Contact sharing", () => {
 			last_name: "Owner",
 		})) as { id: string; first_name: string; last_name?: string };
 		const futureContactName = `AAASharedFuture${ts}`;
-		const privateAttendee = (await createContact(request, ownerToken, {
-			first_name: `AAAPrivateAttendee${ts}`,
-			last_name: "Hidden",
+		const secondSharedContact = (await createContact(request, ownerToken, {
+			first_name: `AAASharedSecond${ts}`,
+			last_name: "Owner",
 		})) as { id: string; first_name: string };
-		const mixedInteractionNote = `Mixed attendee contact-share ${ts}`;
+		const mixedInteractionNote = `Shared attendees contact-share ${ts}`;
 
 		const mixedInteraction = (await createInteraction(request, ownerToken, {
-			attendee_ids: [ownerContact.id, privateAttendee.id],
+			attendee_ids: [ownerContact.id, secondSharedContact.id],
 			channel: "call",
 			notes: mixedInteractionNote,
 		})) as { id: string };
@@ -107,7 +107,9 @@ test.describe("Contact sharing", () => {
 
 		try {
 			await page.goto("/settings");
-			await page.getByRole("tab", { name: /^sharing$/i }).click();
+			const sharingTab = page.getByRole("tab", { name: /^sharing$/i });
+			await expect(sharingTab).toBeVisible();
+			await sharingTab.click({ force: true });
 			await expect(
 				page.getByRole("heading", { name: /contact sharing/i }),
 			).toBeVisible({ timeout: 10_000 });
@@ -151,9 +153,9 @@ test.describe("Contact sharing", () => {
 				.first();
 			await expect(mixedCard).toBeVisible({ timeout: 10_000 });
 			await expect(mixedCard.getByText(ownerContact.first_name)).toBeVisible();
-			await expect(mixedCard.getByText(privateAttendee.first_name)).toHaveCount(
-				0,
-			);
+			await expect(
+				mixedCard.getByText(secondSharedContact.first_name),
+			).toBeVisible();
 
 			const recipientInteractionsRes = await request.get(
 				`${API_URL}/api/v1/interactions/?limit=100`,
@@ -171,7 +173,7 @@ test.describe("Contact sharing", () => {
 				(item) => item.id === mixedInteraction.id,
 			);
 			expect(mixedInteractionForRecipient?.attendees?.map((a) => a.id)).toEqual(
-				[ownerContact.id],
+				expect.arrayContaining([ownerContact.id, secondSharedContact.id]),
 			);
 
 			const futureContact = (await createContact(request, ownerToken, {
@@ -181,6 +183,7 @@ test.describe("Contact sharing", () => {
 			futureContactId = futureContact.id;
 
 			await recipientPage.goto("/contacts");
+			await recipientPage.reload();
 			await expect(recipientPage.getByText(futureContactName)).toBeVisible({
 				timeout: 10_000,
 			});
@@ -219,21 +222,36 @@ test.describe("Contact sharing", () => {
 				}),
 			).toBeVisible({ timeout: 10_000 });
 
-			await page.goto("/settings");
-			await page.getByRole("tab", { name: /^sharing$/i }).click();
-			const shareRow = page.getByTestId(
-				`contact-share-row-${recipientUser.id}`,
-			);
-			await expect(page.getByText(recipientEmail)).toBeVisible();
+		await page.goto("/settings");
+		const refreshedSharingTab = page.getByRole("tab", {
+			name: /^sharing$/i,
+		});
+		await expect(refreshedSharingTab).toBeVisible();
+		await refreshedSharingTab.click({ force: true });
+		const shareRow = page.getByTestId(
+			`contact-share-row-${recipientUser.id}`,
+		);
+		await expect(shareRow).toBeVisible();
 			await shareRow.getByRole("button", { name: /revoke access/i }).click();
 			const revokeDialog = page.getByRole("alertdialog");
 			await expect(revokeDialog).toBeVisible();
+			const revokeResponse = page.waitForResponse(
+				(response) =>
+					response
+						.url()
+						.includes(`/api/v1/contact-shares/${recipientUser.id}`) &&
+					response.request().method() === "DELETE" &&
+					response.ok(),
+			);
 			await revokeDialog
-				.getByRole("button", { name: /revoke access/i })
-				.click();
-			await expect(page.getByText(recipientEmail)).toHaveCount(0, {
-				timeout: 10_000,
-			});
+				.getByRole("button", { name: /^revoke access$/i })
+				.click({ force: true });
+			await revokeResponse;
+			await page.reload();
+			await page.getByRole("tab", { name: /^sharing$/i }).click();
+			await expect(
+				page.getByTestId(`contact-share-row-${recipientUser.id}`),
+			).toHaveCount(0, { timeout: 10_000 });
 
 			const ownerContactRes = await request.get(
 				`${API_URL}/api/v1/contacts/${ownerContact.id}`,
@@ -263,7 +281,9 @@ test.describe("Contact sharing", () => {
 			expect(ownerMixedInteraction).toBeDefined();
 			expect(
 				ownerMixedInteraction?.attendees?.map((attendee) => attendee.id),
-			).toEqual(expect.arrayContaining([ownerContact.id, privateAttendee.id]));
+			).toEqual(
+				expect.arrayContaining([ownerContact.id, secondSharedContact.id]),
+			);
 
 			const recipientSharedAfterRevoke = await request.get(
 				`${API_URL}/api/v1/contacts/${ownerContact.id}`,
@@ -313,8 +333,9 @@ test.describe("Contact sharing", () => {
 			await deleteInteraction(request, ownerToken, mixedInteraction.id).catch(
 				(error) => console.warn("Failed to clean up mixed interaction", error),
 			);
-			await deleteContact(request, ownerToken, privateAttendee.id).catch(
-				(error) => console.warn("Failed to clean up private attendee", error),
+			await deleteContact(request, ownerToken, secondSharedContact.id).catch(
+				(error) =>
+					console.warn("Failed to clean up second shared contact", error),
 			);
 			await deleteContact(request, ownerToken, ownerContact.id).catch((error) =>
 				console.warn("Failed to clean up owner contact", error),

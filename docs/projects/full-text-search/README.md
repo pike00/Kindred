@@ -3,7 +3,7 @@ title: Full-Text Search
 status: active
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-06-05
+last_updated: 2026-08-04
 next_step: Create Alembic migration adding tsvector columns to Contact, Note, Interaction, JournalEntry
 ---
 
@@ -22,6 +22,9 @@ Implement postgres full-text search over Contact names/company/how_we_met, Note.
 - [ ] Pair with item 29 (command palette) for keyboard invocation
 
 ## Session Log
+
+### 2026-08-04
+- Housekeeping: Bump last_updated after repo releases and updates.
 
 ### 2026-06-05
 - Housekeeping: State reconciled during the tofix-remaining ship (v0.2.87 + v0.2.88 deployed to prod). No scope change to this project.
