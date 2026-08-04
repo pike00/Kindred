@@ -3,7 +3,7 @@ title: E2E Coverage for Contact CRUD Flows
 status: active
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-06-05
+last_updated: 2026-08-04
 next_step: Set up Playwright with Bun runner and scaffold test structure
 ---
 
@@ -21,6 +21,9 @@ Add end-to-end test coverage for all contact card add/edit/delete dialogs using 
 - [ ] Run full suite against docker compose stack and document test commands
 
 ## Session Log
+
+### 2026-08-04
+- Housekeeping: Bump last_updated after repo releases and updates.
 
 ### 2026-06-05
 - Housekeeping: State reconciled during the tofix-remaining ship (v0.2.87 + v0.2.88 deployed to prod). No scope change to this project.

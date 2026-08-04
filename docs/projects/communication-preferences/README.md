@@ -3,7 +3,7 @@ title: Communication Preferences
 status: paused
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-06-05
+last_updated: 2026-08-04
 progress: 0/6
 next_step: Create Alembic migration for communication_preference table with preferred_channel, best_time_local, do_not_contact fields
 ---
@@ -22,6 +22,9 @@ Replace free-text `how_we_met` narrative with structured communication metadata:
 - [ ] Update reminder suppression logic to skip reminders when contact.communication_preference.do_not_contact is true and reason is logged
 
 ## Session Log
+
+### 2026-08-04
+- Housekeeping: Bump last_updated after repo releases and updates.
 
 ### 2026-06-05
 - Housekeeping: State reconciled during the tofix-remaining ship (v0.2.87 + v0.2.88 deployed to prod). No scope change to this project.

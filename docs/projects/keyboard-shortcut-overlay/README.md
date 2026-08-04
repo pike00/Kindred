@@ -3,7 +3,7 @@ title: Keyboard Shortcut Help Overlay
 status: active
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-06-05
+last_updated: 2026-08-04
 next_step: Create hotkey registry hook and global Cmd+/ (or ?) keybinding
 ---
 
@@ -22,6 +22,9 @@ Implement a modal cheat sheet that opens via Cmd+/ or ? and displays all active 
 - [ ] Pair with command-palette and global-shortcuts (Cmd+Shift+N, Cmd+Shift+I) so overlay auto-updates
 
 ## Session Log
+
+### 2026-08-04
+- Housekeeping: Bump last_updated after repo releases and updates.
 
 ### 2026-06-05
 - Housekeeping: State reconciled during the tofix-remaining ship (v0.2.87 + v0.2.88 deployed to prod). No scope change to this project.

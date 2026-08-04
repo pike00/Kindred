@@ -3,7 +3,7 @@ title: Avatar Cropper with Face-Aware Crop
 status: to_review
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-06-05
+last_updated: 2026-08-04
 next_step: Choose face detection library (MediaPipe TFJS vs face-api.js) and create avatar upload component with face-aware crop UI
 ---
 
@@ -21,6 +21,9 @@ Add a face-detection-powered avatar uploader to the contact form. When a user up
 - [ ] Add ContactAvatar integration: display placeholder fallback during upload, show uploaded photo in circular frame
 
 ## Session Log
+
+### 2026-08-04
+- Housekeeping: Bump last_updated after repo releases and updates.
 
 ### 2026-06-05
 - Housekeeping: State reconciled during the tofix-remaining ship (v0.2.87 + v0.2.88 deployed to prod). No scope change to this project.

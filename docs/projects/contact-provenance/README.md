@@ -3,7 +3,7 @@ title: Contact Provenance
 status: active
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-06-05
+last_updated: 2026-08-04
 next_step: Implement upsert logic in create_contact() checking (owner_id, source, source_external_id); wire into CardDAV, vCard, and webhook sync paths
 progress: 4/7
 ---
@@ -23,6 +23,9 @@ Track where each contact came from by adding a source enum (manual, vcard_import
 - [ ] Write tests for upsert paths (CardDAV re-sync, Google import retry), unique constraint violation, and manual contact creation
 
 ## Session Log
+
+### 2026-08-04
+- Housekeeping: Bump last_updated after repo releases and updates.
 
 ### 2026-06-05
 - Housekeeping: State reconciled during the tofix-remaining ship (v0.2.87 + v0.2.88 deployed to prod). No scope change to this project.
