@@ -78,6 +78,26 @@ if [ "$mode" = "check" ]; then
     -e TBLS_DSN="$dsn" \
     "$tbls_image" \
     diff -c /work/.tbls.yml "$dsn" docs/db
+
+  dbml_check_dir="$(mktemp -d)"
+  dbml_cid="$(docker create \
+    "${docker_workspace_args[@]}" \
+    -v "$dbml_check_dir":/output \
+    -e HOME=/tmp \
+    node:22-alpine \
+    npx -y -p @dbml/cli@7.1.1 db2dbml postgres "$dsn" -o /output/schema.dbml)"
+  cleanup_check() {
+    docker rm -f "$dbml_cid" >/dev/null 2>&1 || true
+    rm -rf "$dbml_check_dir"
+  }
+  trap cleanup_check EXIT
+  docker network connect "$db_network" "$dbml_cid"
+  docker start -a "$dbml_cid"
+  if ! cmp -s docs/db/schema.dbml "$dbml_check_dir/schema.dbml"; then
+    echo "DB docs: docs/db/schema.dbml is out of date with the live database." >&2
+    echo "DB docs: regenerate with 'just db-docs' and commit the result." >&2
+    exit 1
+  fi
   exit 0
 fi
 

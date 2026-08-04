@@ -15,4 +15,14 @@ export default {
       },
     },
   },
+  preview: {
+    ...baseConfig.preview,
+    host: "127.0.0.1",
+    proxy: {
+      "/api": {
+        target: backendTarget,
+        changeOrigin: true,
+      },
+    },
+  },
 }

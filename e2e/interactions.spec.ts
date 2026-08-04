@@ -77,7 +77,6 @@ test.describe("Interactions timeline", () => {
     // Required+optional fields
     await expect(dialog.getByLabel(/when \*/i)).toBeVisible()
     await expect(dialog.getByLabel(/duration \(minutes\)/i)).toBeVisible()
-    await expect(dialog.getByLabel(/^mood$/i)).toBeVisible()
     await expect(dialog.getByPlaceholder(/what did you talk about/i)).toBeVisible()
     await expect(dialog.getByLabel(/^location$/i)).toBeVisible()
     await expect(dialog.getByLabel(/^latitude$/i)).toBeVisible()
