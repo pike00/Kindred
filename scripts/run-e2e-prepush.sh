@@ -154,9 +154,11 @@ start_preview_e2e_frontend() {
         env \
             VITE_API_URL="" \
             VITE_AUTH_MODE="${AUTH_MODE:-local}" \
+            VITE_E2E="true" \
             E2E_API_TARGET="$backend_target" \
                 pnpm build >/dev/null && \
             exec setsid env \
+                VITE_E2E="true" \
                 E2E_API_TARGET="$backend_target" \
                 pnpm exec vite preview --config vite.e2e.config.ts \
                     --host 127.0.0.1 --port "$port" --strictPort
