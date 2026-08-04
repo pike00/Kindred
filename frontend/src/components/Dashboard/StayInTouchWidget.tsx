@@ -87,6 +87,12 @@ export function StayInTouchWidget() {
               .join(" ")
             const daysOverdue = contact.days_overdue ?? 0
             const isDoNotContact = contact.do_not_contact
+            const contactContext = [
+              contact.company,
+              isDoNotContact ? "Do not contact" : null,
+            ]
+              .filter(Boolean)
+              .join(", ")
 
             return (
               <div
@@ -99,7 +105,7 @@ export function StayInTouchWidget() {
                   to="/contacts/$contactId"
                   params={{ contactId: contact.id }}
                   className="flex min-w-0 flex-1 items-center gap-3 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  aria-label={`View ${fullName || "Unnamed contact"}`}
+                  aria-label={`View ${fullName || "Unnamed contact"}${contactContext ? `, ${contactContext}` : ""}`}
                 >
                   <ContactAvatar contact={contact} size="sm" />
                   <div className="min-w-0 flex-1">
