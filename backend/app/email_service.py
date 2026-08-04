@@ -36,6 +36,7 @@ from app.models import (
     ContactFieldType,
     EmailOAuthToken,
     Interaction,
+    InteractionAttendee,
     InteractionChannel,
 )
 
@@ -377,9 +378,16 @@ def interaction_exists(
     """Check if an interaction with this Message-ID already exists for the contact."""
     if not message_id:
         return False
-    stmt = select(Interaction).where(
-        Interaction.contact_id == contact_id,
-        Interaction.message_id == message_id,
+    stmt = (
+        select(Interaction)
+        .join(
+            InteractionAttendee,
+            InteractionAttendee.interaction_id == Interaction.id,  # type: ignore[arg-type]
+        )
+        .where(
+            InteractionAttendee.contact_id == contact_id,
+            Interaction.message_id == message_id,
+        )
     )
     return session.exec(stmt).first() is not None
 
