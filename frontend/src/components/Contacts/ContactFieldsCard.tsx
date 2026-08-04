@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import type {
@@ -34,6 +34,11 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import { Skeleton } from "@/components/ui/skeleton"
 import useCustomToast from "@/hooks/useCustomToast"
 import { Mail, Pencil, Phone, Plus, Trash2 } from "@/lib/icons"
@@ -317,7 +322,13 @@ function EditContactFieldDialog({
   )
 }
 
-function FieldRow({ field: cf }: { field: ContactFieldPublic }) {
+function FieldRow({
+  field: cf,
+  onMenuOpenChange,
+}: {
+  field: ContactFieldPublic
+  onMenuOpenChange?: (open: boolean) => void
+}) {
   const [editOpen, setEditOpen] = useState(false)
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
@@ -339,10 +350,10 @@ function FieldRow({ field: cf }: { field: ContactFieldPublic }) {
 
   return (
     <>
-      <div className="flex items-center gap-2 text-sm">
+      <div className="flex min-w-0 items-center gap-2 text-sm">
         {fieldTypeIcon[cf.field_type]}
-        <span className="text-muted-foreground">{cf.label}:</span>
-        <span className="truncate">{renderFieldValue(cf)}</span>
+        <span className="shrink-0 text-muted-foreground">{cf.label}:</span>
+        <span className="min-w-0 truncate">{renderFieldValue(cf)}</span>
         {cf.is_primary && (
           <Badge variant="secondary" className="text-[10px]">
             primary
@@ -350,6 +361,7 @@ function FieldRow({ field: cf }: { field: ContactFieldPublic }) {
         )}
         <div className="ml-auto">
           <RowActionsMenu
+            onOpenChange={onMenuOpenChange}
             items={[
               {
                 label: "Edit",
@@ -422,5 +434,128 @@ export function ContactFieldsCard({ contactId }: { contactId: string }) {
         )}
       </CardContent>
     </Card>
+  )
+}
+
+export function ContactFieldsPopover({ contactId }: { contactId: string }) {
+  const [open, setOpen] = useState(false)
+  const [pinned, setPinned] = useState(false)
+  const [contentHovered, setContentHovered] = useState(false)
+  const closeTimer = useRef<number | null>(null)
+  const { data, isLoading } = useQuery({
+    queryKey: ["contact-fields", contactId],
+    queryFn: () => ContactFieldsService.listContactFields({ contactId }),
+  })
+  const fields =
+    (data as { data?: ContactFieldPublic[] } | undefined)?.data ?? []
+
+  const clearCloseTimer = () => {
+    if (closeTimer.current !== null) {
+      window.clearTimeout(closeTimer.current)
+      closeTimer.current = null
+    }
+  }
+
+  const scheduleClose = (force = false) => {
+    clearCloseTimer()
+    if (pinned || (contentHovered && !force)) return
+    closeTimer.current = window.setTimeout(() => setOpen(false), 160)
+  }
+
+  useEffect(() => {
+    return () => {
+      if (closeTimer.current !== null) {
+        window.clearTimeout(closeTimer.current)
+      }
+    }
+  }, [])
+
+  return (
+    <Popover
+      open={open}
+      onOpenChange={(nextOpen) => {
+        setOpen(nextOpen)
+        if (!nextOpen) setPinned(false)
+      }}
+    >
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="shrink-0"
+          aria-label="Contact information"
+          onPointerEnter={() => {
+            clearCloseTimer()
+            setOpen(true)
+          }}
+          onPointerLeave={() => scheduleClose()}
+          onFocus={() => setOpen(true)}
+          onClick={() => setPinned((current) => !current)}
+        >
+          <Phone className="mr-1.5 size-3.5" />
+          Contact info
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        className="w-[min(22rem,calc(100vw-2rem))]"
+        onPointerEnter={() => {
+          setContentHovered(true)
+          clearCloseTimer()
+        }}
+        onPointerLeave={() => {
+          setContentHovered(false)
+          scheduleClose(true)
+        }}
+      >
+        <div className="space-y-4">
+          <div>
+            <p className="font-medium">Contact information</p>
+            <p className="text-sm text-muted-foreground">
+              Quick ways to reach them
+            </p>
+          </div>
+          <AddContactFieldDialog contactId={contactId} />
+          {isLoading ? (
+            <Skeleton className="h-5 w-2/3" />
+          ) : fields.length > 0 ? (
+            <div className="space-y-3">
+              {FIELD_DISPLAY_ORDER.map((type) => {
+                const typeFields = fields.filter(
+                  (field) => field.field_type === type,
+                )
+                if (typeFields.length === 0) return null
+                return (
+                  <div key={type} className="space-y-1.5">
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      {type}
+                    </p>
+                    <div className="space-y-1.5">
+                      {typeFields.map((field) => (
+                        <FieldRow
+                          key={field.id}
+                          field={field}
+                          onMenuOpenChange={(menuOpen) => {
+                            clearCloseTimer()
+                            setOpen(true)
+                            setPinned(menuOpen)
+                            if (!menuOpen) scheduleClose()
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              No phone numbers or email addresses yet.
+            </p>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
   )
 }
