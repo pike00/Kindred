@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
+import { Link } from "@tanstack/react-router"
 import type { ContactPublic } from "@/client"
 import { ContactsService } from "@/client"
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
@@ -86,6 +87,12 @@ export function StayInTouchWidget() {
               .join(" ")
             const daysOverdue = contact.days_overdue ?? 0
             const isDoNotContact = contact.do_not_contact
+            const contactContext = [
+              contact.company,
+              isDoNotContact ? "Do not contact" : null,
+            ]
+              .filter(Boolean)
+              .join(", ")
 
             return (
               <div
@@ -94,24 +101,31 @@ export function StayInTouchWidget() {
                   isDoNotContact ? "opacity-60" : "hover:bg-accent/50"
                 }`}
               >
-                <ContactAvatar contact={contact} size="sm" />
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium text-sm truncate">
-                    {fullName || "Unnamed contact"}
-                  </p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    {contact.company && (
-                      <span className="text-xs text-muted-foreground truncate">
-                        {contact.company}
-                      </span>
-                    )}
-                    {isDoNotContact && (
-                      <Badge variant="secondary" className="text-xs">
-                        Do not contact
-                      </Badge>
-                    )}
+                <Link
+                  to="/contacts/$contactId"
+                  params={{ contactId: contact.id }}
+                  className="flex min-w-0 flex-1 items-center gap-3 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-label={`View ${fullName || "Unnamed contact"}${contactContext ? `, ${contactContext}` : ""}`}
+                >
+                  <ContactAvatar contact={contact} size="sm" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium text-sm">
+                      {fullName || "Unnamed contact"}
+                    </p>
+                    <div className="mt-0.5 flex items-center gap-2">
+                      {contact.company && (
+                        <span className="truncate text-xs text-muted-foreground">
+                          {contact.company}
+                        </span>
+                      )}
+                      {isDoNotContact && (
+                        <Badge variant="secondary" className="text-xs">
+                          Do not contact
+                        </Badge>
+                      )}
+                    </div>
                   </div>
-                </div>
+                </Link>
                 <div className="flex items-center gap-1.5 shrink-0">
                   <Badge
                     className={`text-xs ${
