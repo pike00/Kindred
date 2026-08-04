@@ -20,15 +20,17 @@ interface RowActionsMenuProps {
   items: RowActionItem[]
   ariaLabel?: string
   triggerClassName?: string
+  onOpenChange?: (open: boolean) => void
 }
 
 export function RowActionsMenu({
   items,
   ariaLabel = "Open actions menu",
   triggerClassName,
+  onOpenChange,
 }: RowActionsMenuProps) {
   return (
-    <DropdownMenu>
+    <DropdownMenu onOpenChange={onOpenChange}>
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
