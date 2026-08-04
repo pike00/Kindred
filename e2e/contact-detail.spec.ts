@@ -8,6 +8,7 @@ import {
   deleteInteraction,
   deleteTag,
   getToken,
+  API_URL,
 } from "./helpers/api.js"
 
 // ─── Shared fixture: one contact per file ────────────────────────────────────
@@ -496,10 +497,7 @@ test.describe("Tags display", () => {
     createdContactIds.push(c.id)
 
     // Attach the tag via PATCH /contacts/{id} with tag_ids
-    const apiBase = (
-      process.env.E2E_BASE_URL ?? "http://localhost:5173"
-    ).replace(":5173", ":8001")
-    await request.patch(`${apiBase}/api/v1/contacts/${c.id}`, {
+    await request.patch(`${API_URL}/api/v1/contacts/${c.id}`, {
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",

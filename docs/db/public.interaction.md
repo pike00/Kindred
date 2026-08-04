@@ -13,7 +13,6 @@ Logged touchpoint with one or more contacts (call, meeting, text, etc.). Attende
 | channel | interactionchannel |  | false |  |  | How the interaction happened (call, in_person, text, etc.). |
 | occurred_at | timestamp with time zone |  | false |  |  | When the interaction actually took place. |
 | notes | varchar(10000) |  | true |  |  | Conversation summary, action items, etc. |
-| mood | varchar(50) |  | true |  |  | Emoji or keyword capturing the tone. |
 | duration_minutes | integer |  | true |  |  | Length of the interaction in minutes. |
 | created_at | timestamp with time zone |  | false |  |  | When the row was inserted (may be after occurred_at; UTC). |
 | deleted_at | timestamp without time zone |  | true |  |  |  |
@@ -74,7 +73,6 @@ erDiagram
   interactionchannel channel
   timestamp_with_time_zone occurred_at
   varchar_10000_ notes
-  varchar_50_ mood
   integer duration_minutes
   timestamp_with_time_zone created_at
   timestamp_without_time_zone deleted_at

@@ -1,5 +1,5 @@
 import { test, expect } from "./fixtures"
-import { getToken } from "./helpers/api.js"
+import { API_URL, getToken } from "./helpers/api.js"
 
 let token: string
 
@@ -78,9 +78,7 @@ test.describe("Settings · My profile tab", () => {
     request,
   }) => {
     const newName = `E2E Probe ${Date.now()}`
-    const apiUrl =
-      process.env.E2E_BASE_URL?.replace(":5173", ":8001") ??
-      "http://localhost:8001"
+    const apiUrl = API_URL
 
     // Snapshot the original full_name to restore later.
     const meRes = await request.get(`${apiUrl}/api/v1/users/me`, {
@@ -250,9 +248,7 @@ test.describe("Settings · Custom fields tab", () => {
     await expect(page.getByText(name)).toBeVisible({ timeout: 5000 })
 
     // Clean up: list + delete via API to avoid the window.confirm() prompt.
-    const apiUrl =
-      process.env.E2E_BASE_URL?.replace(":5173", ":8001") ??
-      "http://localhost:8001"
+    const apiUrl = API_URL
     const list = await request.get(
       `${apiUrl}/api/v1/custom-fields/definitions/`,
       { headers: { Authorization: `Bearer ${token}` } },

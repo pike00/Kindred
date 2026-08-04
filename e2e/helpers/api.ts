@@ -1,7 +1,6 @@
 import type { APIRequestContext } from "@playwright/test"
-
-const BASE_URL = process.env.E2E_BASE_URL ?? "http://localhost:5173"
-export const API_URL = BASE_URL.replace(":5173", ":8001")
+export { API_URL } from "./urls.js"
+import { API_URL } from "./urls.js"
 
 export async function getToken(request: APIRequestContext): Promise<string> {
   let lastErr: unknown = null
@@ -152,7 +151,6 @@ export async function createInteraction(
     channel?: string
     notes?: string
     occurred_at?: string
-    mood?: string | null
     duration_minutes?: number | null
     location_label?: string | null
     is_draft?: boolean
@@ -165,7 +163,6 @@ export async function createInteraction(
     occurred_at: data.occurred_at ?? new Date().toISOString(),
     notes: data.notes ?? null,
   }
-  if (data.mood !== undefined) payload.mood = data.mood
   if (data.duration_minutes !== undefined) payload.duration_minutes = data.duration_minutes
   if (data.location_label !== undefined) payload.location_label = data.location_label
   if (data.is_draft !== undefined) payload.is_draft = data.is_draft
@@ -230,80 +227,6 @@ export async function deleteAllInteractions(
 ) {
   const items = await listInteractions(request, token)
   await Promise.all(items.map((i) => deleteInteraction(request, token, i.id)))
-}
-
-// ─── Journal ─────────────────────────────────────────────────────────────────
-
-export async function createJournalEntry(
-  request: APIRequestContext,
-  token: string,
-  data: { body?: string; title?: string; mood?: string | null; entry_date?: string },
-) {
-  // Legacy callers pass `title`; map to body.
-  const body = data.body ?? data.title ?? ""
-  const payload: Record<string, unknown> = {
-    body,
-    entry_date: data.entry_date ?? new Date().toISOString().slice(0, 10),
-  }
-  if (data.mood !== undefined) payload.mood = data.mood
-
-  const res = await request.post(`${API_URL}/api/v1/journal/`, {
-    headers: authHeaders(token),
-    data: payload,
-  })
-  if (!res.ok()) {
-    throw new Error(
-      `createJournalEntry failed ${res.status()}: ${await res.text()}`,
-    )
-  }
-  return res.json()
-}
-
-export async function updateJournalEntry(
-  request: APIRequestContext,
-  token: string,
-  entryId: string,
-  data: Record<string, unknown>,
-) {
-  const res = await request.patch(`${API_URL}/api/v1/journal/${entryId}`, {
-    headers: authHeaders(token),
-    data,
-  })
-  if (!res.ok()) {
-    throw new Error(
-      `updateJournalEntry failed ${res.status()}: ${await res.text()}`,
-    )
-  }
-  return res.json()
-}
-
-export async function deleteJournalEntry(
-  request: APIRequestContext,
-  token: string,
-  entryId: string,
-) {
-  await request.delete(`${API_URL}/api/v1/journal/${entryId}`, {
-    headers: authHeaders(token),
-  })
-}
-
-export async function listJournalEntries(
-  request: APIRequestContext,
-  token: string,
-) {
-  const res = await request.get(`${API_URL}/api/v1/journal/?limit=500`, {
-    headers: authHeaders(token),
-  })
-  const body = await res.json()
-  return body.data as Array<{ id: string }>
-}
-
-export async function deleteAllJournalEntries(
-  request: APIRequestContext,
-  token: string,
-) {
-  const items = await listJournalEntries(request, token)
-  await Promise.all(items.map((i) => deleteJournalEntry(request, token, i.id)))
 }
 
 // ─── Reminders ───────────────────────────────────────────────────────────────

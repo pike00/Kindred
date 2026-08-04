@@ -43,7 +43,7 @@ test.beforeEach(async ({ page }, testInfo) => {
     }
   })
   // Use /tags instead of "/" — the dashboard's index route fans out 6+
-  // independent API queries on mount (contacts, reminders, journal,
+  // independent API queries on mount (contacts, reminders,
   // interactions, saved-filters, contact losing-touch, environment), and
   // running ~20 tests serially against the dev backend saturates its 15-
   // connection SQLAlchemy pool. /tags renders the same global UI surface
@@ -102,9 +102,6 @@ test.describe("Sidebar", () => {
       sidebar.getByRole("link", { name: /^reminders$/i }),
     ).toBeVisible()
     await expect(sidebar.getByRole("link", { name: /^tags$/i })).toBeVisible()
-    await expect(
-      sidebar.getByRole("link", { name: /^journal$/i }),
-    ).toBeVisible()
   })
 })
 
@@ -337,11 +334,6 @@ test.describe("Chord navigation shortcuts", () => {
   test("g i → /interactions", async ({ page }) => {
     await chord(page, "i")
     await expect(page).toHaveURL(/\/interactions$/, { timeout: 5000 })
-  })
-
-  test("g j → /journal", async ({ page }) => {
-    await chord(page, "j")
-    await expect(page).toHaveURL(/\/journal$/, { timeout: 5000 })
   })
 
   test("g t → /tags", async ({ page }) => {

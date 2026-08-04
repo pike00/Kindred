@@ -1,5 +1,5 @@
 import { test, expect } from "./fixtures"
-import { getToken } from "./helpers/api.js"
+import { API_URL, getToken } from "./helpers/api.js"
 
 let token: string
 
@@ -202,9 +202,7 @@ test.describe("Admin · Webhooks", () => {
     await expect(page.getByText(name)).toBeVisible({ timeout: 15000 })
 
     // Clean up via the API to avoid relying on confirm() dialogs.
-    const apiUrl =
-      process.env.E2E_BASE_URL?.replace(":5173", ":8001") ??
-      "http://localhost:8001"
+    const apiUrl = API_URL
     const list = await request.get(`${apiUrl}/api/v1/webhooks/`, {
       headers: { Authorization: `Bearer ${token}` },
     })

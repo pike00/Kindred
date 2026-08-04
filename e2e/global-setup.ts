@@ -1,8 +1,6 @@
 import { mkdir, writeFile } from "node:fs/promises"
 import { request } from "@playwright/test"
-
-const BASE_URL = process.env.E2E_BASE_URL ?? "http://localhost:5173"
-const API_URL = BASE_URL.replace(":5173", ":8001")
+import { API_URL, BASE_URL } from "./helpers/urls.js"
 
 async function globalSetup() {
   const ctx = await request.newContext({ baseURL: API_URL })

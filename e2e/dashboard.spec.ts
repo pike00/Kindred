@@ -48,7 +48,6 @@ test.describe("Dashboard", () => {
       /reminders/i,
       /calendar/i,
       /gift kanban/i,
-      /journal/i,
     ]) {
       await expect(
         sidebar.getByRole("link", { name: label }).first(),
