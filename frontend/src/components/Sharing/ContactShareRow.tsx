@@ -46,7 +46,10 @@ export function ContactShareRow({ share }: ContactShareRowProps) {
 
   return (
     <>
-      <div className="flex items-start justify-between gap-4 rounded-lg border p-4">
+      <div
+        data-testid={`contact-share-row-${share.grantee_id}`}
+        className="flex items-start justify-between gap-4 rounded-lg border p-4"
+      >
         <div className="space-y-1">
           <p className="font-medium">{share.grantee_email}</p>
           <p className="text-sm text-muted-foreground">

@@ -123,13 +123,9 @@ test.describe("Contact sharing", () => {
 				.getByRole("button", { name: /^share all contacts$/i })
 				.click();
 
-			const activeShareRow = page
-				.locator("div")
-				.filter({ hasText: recipientEmail })
-				.filter({
-					has: page.getByRole("button", { name: /revoke access/i }),
-				})
-				.first();
+			const activeShareRow = page.getByTestId(
+				`contact-share-row-${recipientUser.id}`,
+			);
 			await expect(activeShareRow).toBeVisible({ timeout: 10_000 });
 			await expect(
 				activeShareRow.getByRole("button", { name: /revoke access/i }),
@@ -225,11 +221,9 @@ test.describe("Contact sharing", () => {
 
 			await page.goto("/settings");
 			await page.getByRole("tab", { name: /^sharing$/i }).click();
-			const shareRow = page
-				.locator("div")
-				.filter({ hasText: recipientEmail })
-				.filter({ hasText: /revoke access/i })
-				.first();
+			const shareRow = page.getByTestId(
+				`contact-share-row-${recipientUser.id}`,
+			);
 			await expect(page.getByText(recipientEmail)).toBeVisible();
 			await shareRow.getByRole("button", { name: /revoke access/i }).click();
 			const revokeDialog = page.getByRole("alertdialog");
@@ -306,7 +300,11 @@ test.describe("Contact sharing", () => {
 				0,
 			);
 		} finally {
-			await recipientContext.close().catch(() => {});
+			await recipientContext
+				.close()
+				.catch((error) =>
+					console.warn("Failed to close recipient context", error),
+				);
 			if (futureContactId) {
 				await deleteContact(request, ownerToken, futureContactId).catch(
 					(error) => console.warn("Failed to clean up future contact", error),
