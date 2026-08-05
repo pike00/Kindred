@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
 import type { ContactPublic } from "@/client"
@@ -13,7 +14,10 @@ interface OverdueContact extends ContactPublic {
   days_overdue?: number
 }
 
+const DISPLAY_LIMIT = 2
+
 export function StayInTouchWidget() {
+  const [isExpanded, setIsExpanded] = useState(false)
   const { data: overdueData, isLoading } = useQuery({
     queryKey: ["overdue-contacts"],
     queryFn: () => ContactsService.listOverdueContacts({}),
@@ -21,6 +25,10 @@ export function StayInTouchWidget() {
 
   const contacts = (overdueData?.data || []) as OverdueContact[]
   const count = overdueData?.count || 0
+  const displayedContacts = isExpanded
+    ? contacts
+    : contacts.slice(0, DISPLAY_LIMIT)
+  const remainingCount = contacts.length - DISPLAY_LIMIT
 
   const handleSkip = async (contactId: string) => {
     try {
@@ -81,7 +89,7 @@ export function StayInTouchWidget() {
         </div>
       ) : (
         <div className="space-y-2">
-          {contacts.map((contact) => {
+          {displayedContacts.map((contact) => {
             const fullName = [contact.first_name, contact.last_name]
               .filter(Boolean)
               .join(" ")
@@ -156,6 +164,30 @@ export function StayInTouchWidget() {
               </div>
             )
           })}
+          {!isExpanded && remainingCount > 0 && (
+            <div className="pt-1 text-center">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs text-muted-foreground hover:text-foreground"
+                onClick={() => setIsExpanded(true)}
+              >
+                + {remainingCount} more overdue
+              </Button>
+            </div>
+          )}
+          {isExpanded && contacts.length > DISPLAY_LIMIT && (
+            <div className="pt-1 text-center">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs text-muted-foreground hover:text-foreground"
+                onClick={() => setIsExpanded(false)}
+              >
+                Show less
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>
