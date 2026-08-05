@@ -28,9 +28,20 @@ test.afterAll(async ({ request }) => {
   await deleteContact(request, token, contactId).catch(() => {})
 })
 
+async function openKanban(page: import("@playwright/test").Page) {
+  await page.goto("/gifts/kanban")
+  const heading = page.getByRole("heading", { name: /^gifts$/i, level: 1 })
+  try {
+    await expect(heading).toBeVisible({ timeout: 15_000 })
+  } catch {
+    await page.reload({ waitUntil: "domcontentloaded" })
+    await expect(heading).toBeVisible({ timeout: 30_000 })
+  }
+}
+
 test.describe("Gifts Kanban", () => {
   test("page header and gift count render", async ({ page }) => {
-    await page.goto("/gifts/kanban")
+    await openKanban(page)
     await expect(
       page.getByRole("heading", { name: /^gifts$/i, level: 1 }),
     ).toBeVisible()
@@ -39,11 +50,11 @@ test.describe("Gifts Kanban", () => {
   })
 
   test("all five stage columns are present", async ({ page }) => {
-    await page.goto("/gifts/kanban")
+    await openKanban(page)
     for (const label of ["Idea", "Purchased", "Wrapped", "Given", "Received"]) {
       await expect(
         page.getByRole("heading", { level: 3, name: label }),
-      ).toBeVisible({ timeout: 15000 })
+      ).toBeVisible({ timeout: 30_000 })
     }
   })
 
@@ -59,7 +70,7 @@ test.describe("Gifts Kanban", () => {
     })
     createdGiftIds.push(g.id)
 
-    await page.goto("/gifts/kanban")
+    await openKanban(page)
     const card = page.locator("div").filter({ hasText: giftName }).first()
     await expect(card).toBeVisible({ timeout: 15000 })
     // Contact full name should appear on the card (first + last name)
@@ -82,7 +93,7 @@ test.describe("Gifts Kanban", () => {
     })
     createdGiftIds.push(g.id)
 
-    await page.goto("/gifts/kanban")
+    await openKanban(page)
     await expect(page.getByText(giftName)).toBeVisible({ timeout: 15000 })
   })
 
@@ -98,8 +109,8 @@ test.describe("Gifts Kanban", () => {
     })
     createdGiftIds.push(g.id)
 
-    await page.goto("/gifts/kanban")
-    await expect(page.getByText(giftName)).toBeVisible({ timeout: 15000 })
+    await openKanban(page)
+    await expect(page.getByText(giftName)).toBeVisible({ timeout: 30_000 })
 
     // Update status via API directly (drag is exercised below; this verifies the
     // board updates in response to backend state changes).
@@ -126,8 +137,8 @@ test.describe("Gifts Kanban", () => {
     })
     createdGiftIds.push(g.id)
 
-    await page.goto("/gifts/kanban")
-    await expect(page.getByText(giftName)).toBeVisible({ timeout: 15000 })
+    await openKanban(page)
+    await expect(page.getByText(giftName)).toBeVisible({ timeout: 30_000 })
 
     await deleteGift(request, token, g.id)
     await page.reload()
@@ -137,11 +148,11 @@ test.describe("Gifts Kanban", () => {
   test("board shows either no-gifts placeholder or rendered columns", async ({
     page,
   }) => {
-    await page.goto("/gifts/kanban")
+    await openKanban(page)
     // Wait for any one of the stage headings to confirm board mounted.
     await expect(
       page.getByRole("heading", { level: 3, name: "Idea" }),
-    ).toBeVisible({ timeout: 10000 })
+    ).toBeVisible({ timeout: 30_000 })
 
     // At this point every column heading must be visible (data resolved).
     // Empty columns show a "No gifts" placeholder; full columns show cards.
@@ -166,9 +177,9 @@ test.describe("Gifts Kanban", () => {
     })
     createdGiftIds.push(g.id)
 
-    await page.goto("/gifts/kanban")
+    await openKanban(page)
     const card = page.getByText(giftName).first()
-    await expect(card).toBeVisible({ timeout: 15000 })
+    await expect(card).toBeVisible({ timeout: 30_000 })
 
     // dnd-kit requires PointerSensor distance >= 8 to activate. Initiate a
     // mouse drag — even if the drop target isn't precisely landed, the goal

@@ -13,6 +13,7 @@ services:
   frontend:
     environment:
       - VITE_API_URL=http://localhost:8001
+      - VITE_E2E=true
       - VITE_PUBLIC_HOST=localhost
       - VITE_AUTH_MODE=${AUTH_MODE:-local}
       - VITE_CF_LOGOUT_URL=${VITE_CF_LOGOUT_URL:-}

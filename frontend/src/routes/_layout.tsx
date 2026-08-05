@@ -15,6 +15,7 @@ import {
 import ErrorComponent from "@/components/Common/ErrorComponent"
 import { Footer } from "@/components/Common/Footer"
 import { QuickLogFAB } from "@/components/Common/QuickLogFAB"
+import KeyboardShortcutOverlay from "@/components/KeyboardShortcutOverlay"
 import { ReminderBell } from "@/components/Reminders/ReminderBell"
 import AppSidebar from "@/components/Sidebar/AppSidebar"
 import { Button } from "@/components/ui/button"
@@ -113,6 +114,7 @@ function Layout() {
       </SidebarProvider>
       <QuickLogFAB />
       <CommandPalette />
+      <KeyboardShortcutOverlay />
     </CommandPaletteProvider>
   )
 }
