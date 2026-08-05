@@ -33,9 +33,13 @@ test.afterAll(async ({ request }) => {
 
 async function openTags(page: import("@playwright/test").Page) {
   await page.goto("/tags", { waitUntil: "domcontentloaded" })
-  await expect(page.getByRole("heading", { name: /^tags$/i })).toBeVisible({
-    timeout: 30_000,
-  })
+  const heading = page.getByRole("heading", { name: /^tags$/i })
+  try {
+    await expect(heading).toBeVisible({ timeout: 15_000 })
+  } catch {
+    await page.reload({ waitUntil: "domcontentloaded" })
+    await expect(heading).toBeVisible({ timeout: 30_000 })
+  }
 }
 
 // The DataTable defaults to pageSize=10 but the demo DB has more tags than

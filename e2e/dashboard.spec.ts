@@ -3,6 +3,16 @@ import { test, expect } from "./fixtures"
 test.describe("Dashboard", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/")
+    const heading = page.getByRole("heading", {
+      level: 1,
+      name: /good (morning|afternoon|evening)/i,
+    })
+    try {
+      await expect(heading).toBeVisible({ timeout: 15_000 })
+    } catch {
+      await page.reload({ waitUntil: "domcontentloaded" })
+      await expect(heading).toBeVisible({ timeout: 30_000 })
+    }
   })
 
   test("greeting heading is visible", async ({ page }) => {

@@ -28,9 +28,13 @@ test.afterAll(async ({ request }) => {
 
 async function openReminders(page: import("@playwright/test").Page) {
   await page.goto("/reminders", { waitUntil: "domcontentloaded" })
-  await expect(
-    page.getByRole("heading", { name: /^reminders$/i }),
-  ).toBeVisible({ timeout: 30_000 })
+  const heading = page.getByRole("heading", { name: /^reminders$/i })
+  try {
+    await expect(heading).toBeVisible({ timeout: 15_000 })
+  } catch {
+    await page.reload({ waitUntil: "domcontentloaded" })
+    await expect(heading).toBeVisible({ timeout: 30_000 })
+  }
 }
 
 function plusHours(h: number): string {

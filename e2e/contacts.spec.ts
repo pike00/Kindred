@@ -19,11 +19,25 @@ test.afterAll(async ({ request }) => {
   }
 })
 
+async function openContacts(page: import("@playwright/test").Page) {
+  await page.goto("/contacts")
+  const heading = page.getByRole("heading", { name: "Contacts", level: 1 })
+  const search = page.getByPlaceholder(/search by name/i)
+  try {
+    await expect(heading).toBeVisible({ timeout: 15_000 })
+    await expect(search).toBeVisible({ timeout: 15_000 })
+  } catch {
+    await page.reload({ waitUntil: "domcontentloaded" })
+    await expect(heading).toBeVisible({ timeout: 30_000 })
+    await expect(search).toBeVisible({ timeout: 30_000 })
+  }
+}
+
 // ─── /contacts (list view) ───────────────────────────────────────────────────
 
 test.describe("Contacts list", () => {
   test("page renders with Contacts heading", async ({ page }) => {
-    await page.goto("/contacts")
+    await openContacts(page)
     await expect(
       page.getByRole("heading", { name: "Contacts", level: 1 }),
     ).toBeVisible()
@@ -32,16 +46,19 @@ test.describe("Contacts list", () => {
   test("Map View button is present and links to /contacts/map", async ({
     page,
   }) => {
-    await page.goto("/contacts")
+    await openContacts(page)
+    await expect(
+      page.getByRole("heading", { name: "Contacts", level: 1 }),
+    ).toBeVisible({ timeout: 30_000 })
     const mapLink = page.getByRole("link", { name: /map view/i })
-    await expect(mapLink).toBeVisible()
+    await expect(mapLink).toBeVisible({ timeout: 15_000 })
     await expect(mapLink).toHaveAttribute("href", /\/contacts\/map/)
   })
 
   test("Add Contact button opens the dialog with all expected fields", async ({
     page,
   }) => {
-    await page.goto("/contacts")
+    await openContacts(page)
     await page
       .getByRole("button", { name: /^add contact$/i })
       .first()
@@ -76,7 +93,7 @@ test.describe("Contacts list", () => {
     // beyond the visible window and search returns "No matches" because
     // search is client-side over the loaded slice).
     const firstName = `AAAUICreate${Date.now()}`
-    await page.goto("/contacts")
+    await openContacts(page)
     await page
       .getByRole("button", { name: /^add contact$/i })
       .first()
@@ -106,9 +123,8 @@ test.describe("Contacts list", () => {
     const c = await createContact(request, token, { first_name: unique })
     createdIds.push(c.id)
 
-    await page.goto("/contacts")
+    await openContacts(page)
     const search = page.getByPlaceholder(/search by name/i)
-    await expect(search).toBeVisible()
     await search.fill(unique)
     await expect(page.getByText(unique).first()).toBeVisible({ timeout: 8000 })
 
@@ -117,7 +133,7 @@ test.describe("Contacts list", () => {
   })
 
   test("search showing no matches shows the empty state", async ({ page }) => {
-    await page.goto("/contacts")
+    await openContacts(page)
     await page
       .getByPlaceholder(/search by name/i)
       .fill(`nope-${Date.now()}-nothingmatches`)
@@ -134,8 +150,13 @@ test.describe("Contacts list", () => {
     const c = await createContact(request, token, { first_name: name })
     createdIds.push(c.id)
 
-    await page.goto("/contacts")
-    await page.getByPlaceholder(/search by name/i).fill(name)
+    await openContacts(page)
+    await expect(
+      page.getByRole("heading", { name: "Contacts", level: 1 }),
+    ).toBeVisible({ timeout: 30_000 })
+    const search = page.getByPlaceholder(/search by name/i)
+    await expect(search).toBeVisible({ timeout: 30_000 })
+    await search.fill(name)
     await expect(page.getByText(name).first()).toBeVisible({ timeout: 8000 })
 
     await page
@@ -158,7 +179,7 @@ test.describe("Contacts list", () => {
     const c = await createContact(request, token, { first_name: name })
     createdIds.push(c.id)
 
-    await page.goto("/contacts")
+    await openContacts(page)
     await page.getByPlaceholder(/search by name/i).fill(name)
     await expect(page.getByText(name).first()).toBeVisible({ timeout: 8000 })
 
@@ -179,7 +200,7 @@ test.describe("Contacts list", () => {
   test("pagination controls appear when there are many contacts", async ({
     page,
   }) => {
-    await page.goto("/contacts")
+    await openContacts(page)
     await expect(
       page.getByRole("heading", { name: "Contacts", level: 1 }),
     ).toBeVisible()
@@ -205,7 +226,7 @@ test.describe("Contacts list", () => {
     const c = await createContact(request, token, { first_name: name })
     createdIds.push(c.id)
 
-    await page.goto("/contacts")
+    await openContacts(page)
     await page.getByPlaceholder(/search by name/i).fill(name)
     await expect(page.getByText(name).first()).toBeVisible({ timeout: 8000 })
     await page.getByText(name).first().click()

@@ -2,10 +2,11 @@ import { test, expect } from "./fixtures"
 
 // The deployed dev SPA can take 5–15s to hydrate on a cold route load,
 // especially when several specs hit it in parallel. Vite JIT-compiles
-// chunks on demand which dominates first-test latency. Bump per-test
-// timeout and allow one retry to absorb cold-cache cases.
+// chunks on demand which dominates first-test latency. Bump the per-test
+// timeout; retries remain opt-in through E2E_RETRIES.
 test.beforeEach(({}, info) => info.setTimeout(60_000))
-test.describe.configure({ retries: 2 })
+const e2eRetries = Math.max(0, Number.parseInt(process.env.E2E_RETRIES ?? "0", 10) || 0)
+test.describe.configure({ retries: e2eRetries })
 
 // All tests in this file run against a logged-in session (default storage state).
 // The dashboard at "/" is a safe page to assert global UI surface area against.
@@ -51,10 +52,15 @@ test.beforeEach(async ({ page }, testInfo) => {
   // shortcut overlay) with far fewer API calls.
   await page.goto("/tags")
   // Anchor on the sidebar trigger button — it's rendered as soon as the
-  // _layout route mounts, so this guard is cheap.
-  await expect(page.locator('[data-sidebar="trigger"]')).toBeVisible({
-    timeout: 20_000,
-  })
+  // _layout route mounts. A route reload is a bounded recovery for occasional
+  // cold-load chunk/API races; a second failure still fails the test.
+  const sidebarTrigger = page.locator('[data-sidebar="trigger"]')
+  try {
+    await expect(sidebarTrigger).toBeVisible({ timeout: 15_000 })
+  } catch {
+    await page.reload({ waitUntil: "domcontentloaded" })
+    await expect(sidebarTrigger).toBeVisible({ timeout: 45_000 })
+  }
 })
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────

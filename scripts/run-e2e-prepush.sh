@@ -227,6 +227,7 @@ start_preview_e2e_frontend
 echo "e2e: stack ready on frontend=${frontend_base_url%/}, backend=${api_base_url%/}; running Playwright specs..."
 
 playwright_args=(--reporter=list)
+e2e_retries="${E2E_RETRIES:-0}"
 if [ -n "${E2E_PLAYWRIGHT_ARGS:-}" ]; then
     # Keep the escape hatch for focused runs and explicit Playwright options.
     read -r -a extra_playwright_args <<< "$E2E_PLAYWRIGHT_ARGS"
@@ -237,21 +238,25 @@ else
     # timeouts and cascading route-load failures. Opt into two workers when
     # the environment has enough database capacity.
     playwright_args+=("--workers=${E2E_WORKERS:-1}")
-    # One retry absorbs transient browser/route-load failures during the long
-    # serial suite while still surfacing a test that fails consistently.
-    playwright_args+=("--retries=${E2E_RETRIES:-1}")
+    # Keep retries opt-in so a green pre-push gate cannot hide a first-attempt
+    # regression. CI or a local diagnostic run can still set E2E_RETRIES.
+    playwright_args+=("--retries=$e2e_retries")
 fi
 
 # Chromium creates a temporary profile for every Playwright worker. Prefer the
 # host's tmpfs so a long suite does not consume the root filesystem and crash
 # the browser or the dev database with ENOSPC.
-e2e_tmp_dir="${E2E_TMPDIR:-${TMPDIR:-}}"
-if [ -z "$e2e_tmp_dir" ] && [ -d /dev/shm ] && [ -w /dev/shm ]; then
+if [ -n "${E2E_TMPDIR:-}" ]; then
+    e2e_tmp_dir="$E2E_TMPDIR"
+elif [ -d /dev/shm ] && [ -w /dev/shm ]; then
     e2e_tmp_dir=/dev/shm
+else
+    e2e_tmp_dir="${TMPDIR:-}"
 fi
 
 if ! E2E_BASE_URL="${E2E_BASE_URL:-$frontend_base_url}" \
     E2E_API_URL="$api_base_url" \
+    E2E_RETRIES="$e2e_retries" \
     TMPDIR="$e2e_tmp_dir" \
     pnpm exec playwright test "${playwright_args[@]}"; then
     echo

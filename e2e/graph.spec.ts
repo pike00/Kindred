@@ -14,9 +14,23 @@ test.afterAll(async ({ request }) => {
   }
 })
 
+async function openGraph(page: import("@playwright/test").Page) {
+  await page.goto("/graph")
+  const heading = page.getByRole("heading", {
+    name: /relationship graph/i,
+    level: 1,
+  })
+  try {
+    await expect(heading).toBeVisible({ timeout: 15_000 })
+  } catch {
+    await page.reload({ waitUntil: "domcontentloaded" })
+    await expect(heading).toBeVisible({ timeout: 30_000 })
+  }
+}
+
 test.describe("Relationship Graph", () => {
   test("page header renders", async ({ page }) => {
-    await page.goto("/graph")
+    await openGraph(page)
     await expect(
       page.getByRole("heading", { name: /relationship graph/i, level: 1 }),
     ).toBeVisible()
@@ -28,8 +42,13 @@ test.describe("Relationship Graph", () => {
   test("controls card shows depth select and root contact input", async ({
     page,
   }) => {
-    await page.goto("/graph")
-    await expect(page.getByText(/graph controls/i).first()).toBeVisible()
+    await openGraph(page)
+    await expect(
+      page.getByRole("heading", { name: /relationship graph/i, level: 1 }),
+    ).toBeVisible({ timeout: 30_000 })
+    await expect(page.getByText(/graph controls/i).first()).toBeVisible({
+      timeout: 15_000,
+    })
     const depthSelect = page.locator("select#depth")
     await expect(depthSelect).toBeVisible()
     // Each select option (1-hop / 2-hop / 3-hop) exists.
@@ -43,7 +62,7 @@ test.describe("Relationship Graph", () => {
   })
 
   test("changing depth selector triggers a refetch", async ({ page }) => {
-    await page.goto("/graph")
+    await openGraph(page)
     const depthSelect = page.locator("select#depth")
     await expect(depthSelect).toBeVisible({ timeout: 10000 })
     await depthSelect.selectOption("1")
@@ -60,7 +79,7 @@ test.describe("Relationship Graph", () => {
   })
 
   test("graph viewport renders SVG or empty-state", async ({ page }) => {
-    await page.goto("/graph")
+    await openGraph(page)
     // Wait for the graph container (CardContent inside the visualization Card).
     // We don't depend on the data being loaded — either an SVG or the empty
     // state must eventually appear.
@@ -82,7 +101,7 @@ test.describe("Relationship Graph", () => {
   test("zoom in / zoom out / reset buttons are clickable when SVG exists", async ({
     page,
   }) => {
-    await page.goto("/graph")
+    await openGraph(page)
     // Wait for either zoom controls OR an empty/loading state.
     await expect(async () => {
       const zoomIn = page.locator('button[title="Zoom In"]')
@@ -105,11 +124,9 @@ test.describe("Relationship Graph", () => {
   test("legend card lists contact / favorite / relationship entries", async ({
     page,
   }) => {
-    await page.goto("/graph")
+    await openGraph(page)
     // CardTitle renders as a div with the text "Legend".
-    await expect(page.getByText(/^legend$/i).first()).toBeVisible({
-      timeout: 5000,
-    })
+    await expect(page.getByText(/^legend$/i).first()).toBeVisible({ timeout: 15_000 })
     await expect(page.getByText(/^contact$/i).first()).toBeVisible()
     await expect(page.getByText(/^favorite$/i).first()).toBeVisible()
     await expect(page.getByText(/^relationship$/i).first()).toBeVisible()
@@ -118,7 +135,7 @@ test.describe("Relationship Graph", () => {
   test("entering a bogus root contact ID does not crash the page", async ({
     page,
   }) => {
-    await page.goto("/graph")
+    await openGraph(page)
     await page.locator("input#root").fill("00000000-0000-0000-0000-000000000000")
     await page.waitForTimeout(1500)
     // Either the empty state shows OR the page still renders cleanly.
@@ -128,7 +145,7 @@ test.describe("Relationship Graph", () => {
   })
 
   test("show-all button clears root contact filter", async ({ page }) => {
-    await page.goto("/graph")
+    await openGraph(page)
     const rootInput = page.locator("input#root")
     await rootInput.fill("test-uuid")
     await expect(rootInput).toHaveValue("test-uuid")

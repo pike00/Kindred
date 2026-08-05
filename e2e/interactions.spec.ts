@@ -35,9 +35,13 @@ test.afterAll(async ({ request }) => {
 
 async function openTimeline(page: import("@playwright/test").Page) {
   await page.goto("/interactions")
-  await expect(page.getByRole("heading", { name: /^interactions$/i })).toBeVisible({
-    timeout: 10_000,
-  })
+  const heading = page.getByRole("heading", { name: /^interactions$/i })
+  try {
+    await expect(heading).toBeVisible({ timeout: 15_000 })
+  } catch {
+    await page.reload({ waitUntil: "domcontentloaded" })
+    await expect(heading).toBeVisible({ timeout: 30_000 })
+  }
 }
 
 test.describe("Interactions timeline", () => {
