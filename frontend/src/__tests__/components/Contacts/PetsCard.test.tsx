@@ -83,6 +83,24 @@ describe("PetsCard", () => {
     vi.clearAllMocks()
   })
 
+  it("renders as a labeled section when embedded", async () => {
+    mockPetsService.listPets.mockResolvedValue({ data: [] })
+    const EmbeddedPetsCard = PetsCard as React.ComponentType<{
+      contactId: string
+      embedded: boolean
+    }>
+
+    renderWithProviders(
+      <EmbeddedPetsCard contactId={contactId} embedded={true} />,
+    )
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("region", { name: "Pets" }),
+      ).toBeInTheDocument()
+    })
+  })
+
   it("shows loading skeleton when data is loading", () => {
     mockPetsService.listPets.mockReturnValue(
       new Promise(() => {}), // Never resolves

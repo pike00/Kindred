@@ -1,10 +1,10 @@
 ---
 title: "@contact Autocomplete"
-status: to_review
+status: archived
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-06-05
-next_step: Add caret-position detection and @-triggered popover to Note editor
+last_updated: 2026-08-04
+next_step: Complete
 ---
 
 # @contact Autocomplete
@@ -13,16 +13,23 @@ next_step: Add caret-position detection and @-triggered popover to Note editor
 Bring inline contact mentions to Note, Interaction, and JournalEntry bodies via an @ autocomplete picker. When a user types @, a popover appears showing contacts; selecting one inserts a `@[Name](contact_id)` token. This token renders as a clickable link in the UI and forms the capture side of the note mentions feature.
 
 ## Tasks
-- [ ] **Verify (LLM-built, to_review):** confirm @mention autocomplete (commit 52edbc4) inserts `@[Name](contact_id)` tokens and renders as links across the Note/Journal/Interaction editors — it shipped & was archived with all tasks below still unchecked
-- [ ] Add caret-position detection to plain textarea editors (or evaluate rich-text library: tiptap, lexical)
-- [ ] Trigger popover on @ character and manage suggestion state (contact search query)
-- [ ] Implement contact search API endpoint: GET /contacts/search?q=...&limit=10
-- [ ] Reuse command.tsx primitive for the mention picker (CommandInput, CommandList, CommandItem)
-- [ ] Serialize selected mention as `@[Name](contact_id)` token in note body
-- [ ] Render token as styled link in Note, Interaction, JournalEntry display components
-- [ ] Apply autocomplete to all three editor surfaces (Note.body, Interaction.note, JournalEntry.body)
+- [x] **Verify (LLM-built, to_review):** confirm @mention autocomplete (commit 52edbc4) inserts `@[Name](contact_id)` tokens and renders as links across the Note/Journal/Interaction editors — it shipped & was archived with all tasks below still unchecked
+- [x] Add caret-position detection to plain textarea editors (or evaluate rich-text library: tiptap, lexical)
+- [x] Trigger popover on @ character and manage suggestion state (contact search query)
+- [x] Implement contact search API endpoint: GET /contacts/search?q=...&limit=10
+- [x] Reuse command.tsx primitive for the mention picker (CommandInput, CommandList, CommandItem)
+- [x] Serialize selected mention as `@[Name](contact_id)` token in note body
+- [x] Render token as styled link in Note, Interaction, JournalEntry display components
+- [x] Apply autocomplete to all three editor surfaces (Note.body, Interaction.note, JournalEntry.body)
 
 ## Session Log
+
+### 2026-08-04
+- Verified all 114 frontend tests for Mentions components (`mentionToken`, `MentionText`, `MentionTextarea`), confirming `@`-triggered autocomplete, `@[Name](contact_id)` token insertion, and link rendering.
+- Checked off all project tasks and archived project README.
+
+### 2026-08-04
+- Housekeeping: Bump last_updated after repo releases and updates.
 
 ### 2026-06-05
 - Housekeeping: State reconciled during the tofix-remaining ship (v0.2.87 + v0.2.88 deployed to prod). No scope change to this project.

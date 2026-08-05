@@ -5,6 +5,31 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.104] - 2026-08-04
+
+### Other
+- E2e: pass test mode to preview server (ca9dd44)
+- Contacts: simplify contact detail layout (81e74bc)
+
+## [0.2.103] - 2026-08-04
+
+### Other
+- Contacts: combine people and pets details (e609c72)
+
+## [0.2.102] - 2026-08-04
+
+### Added
+- Feat(contacts): add Google Maps link and action to addresses card (21ada79)
+
+### Documentation
+- Docs: complete Global Command Palette (Cmd+K) verification and update task checklist (be23d29)
+- Docs: enforce branch, commit, push, pr, merge, deploy workflow policy in AGENTS.md (a6b2af2)
+- Docs: complete verification and archive @contact Autocomplete project (b40fe20)
+
+### Other
+- Dashboard: link Stay in Touch contacts to detail pages (467059f)
+- Projects: housekeeping and archive completed projects (a77d404)
+
 ## [0.2.101] - 2026-08-04
 
 ### Other

@@ -3,7 +3,7 @@ title: Attachments
 status: active
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-06-05
+last_updated: 2026-08-04
 next_step: Decide on polymorphism vs per-owner-type tables; finalize blob store choice (Minio/S3/local)
 ---
 
@@ -25,6 +25,9 @@ Add generic attachment support to Contact, Interaction, and Note entities. Store
 - [ ] Write tests: upload, presigned URL, cascade cleanup, size/MIME validation
 
 ## Session Log
+
+### 2026-08-04
+- Housekeeping: Bump last_updated after repo releases and updates.
 
 ### 2026-06-05
 - Housekeeping: State reconciled during the tofix-remaining ship (v0.2.87 + v0.2.88 deployed to prod). No scope change to this project.

@@ -3,7 +3,7 @@ title: Frontend Test Coverage ≥90%
 status: to_review
 repos: [kindred]
 started: 2026-05-15
-last_updated: 2026-06-05
+last_updated: 2026-08-04
 next_step: Goal achieved (all four metrics ≥90%); commit working tree
 progress: 4/4
 ---
@@ -21,6 +21,9 @@ Add comprehensive Vitest unit tests to the kindred frontend so all four v8 cover
 - [x] All four metrics ≥90%: statements, branches, functions, lines
 
 ## Session Log
+
+### 2026-08-04
+- Housekeeping: Bump last_updated after repo releases and updates.
 
 ### 2026-06-05
 - Housekeeping: State reconciled during the tofix-remaining ship (v0.2.87 + v0.2.88 deployed to prod). No scope change to this project.

@@ -31,7 +31,7 @@ import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { Skeleton } from "@/components/ui/skeleton"
 import useCustomToast from "@/hooks/useCustomToast"
-import { MapPin, Pencil, Plus, Trash2 } from "@/lib/icons"
+import { ExternalLink, MapPin, Pencil, Plus, Trash2 } from "@/lib/icons"
 
 const schema = z.object({
   label: z.string().optional(),
@@ -363,6 +363,22 @@ function EditAddressDialog({
   )
 }
 
+function getGoogleMapsUrl(address: AddressPublic) {
+  if (address.latitude != null && address.longitude != null) {
+    return `https://www.google.com/maps/search/?api=1&query=${address.latitude},${address.longitude}`
+  }
+  const parts = [
+    address.street,
+    address.extended,
+    address.city,
+    address.region,
+    address.postal_code,
+    address.country,
+  ].filter(Boolean)
+  if (parts.length === 0) return null
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(parts.join(", "))}`
+}
+
 function AddressRow({ address }: { address: AddressPublic }) {
   const [editOpen, setEditOpen] = useState(false)
   const queryClient = useQueryClient()
@@ -386,6 +402,7 @@ function AddressRow({ address }: { address: AddressPublic }) {
   const cityLine = [address.city, address.region, address.postal_code]
     .filter(Boolean)
     .join(", ")
+  const mapsUrl = getGoogleMapsUrl(address)
 
   return (
     <>
@@ -401,9 +418,28 @@ function AddressRow({ address }: { address: AddressPublic }) {
           {address.country && (
             <p className="text-muted-foreground">{address.country}</p>
           )}
+          {mapsUrl && (
+            <a
+              href={mapsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-1 inline-flex items-center gap-1 text-xs text-primary hover:underline"
+            >
+              Open in Google Maps <ExternalLink className="size-3" />
+            </a>
+          )}
         </div>
         <RowActionsMenu
           items={[
+            ...(mapsUrl
+              ? [
+                  {
+                    label: "Open in Google Maps",
+                    icon: ExternalLink,
+                    onSelect: () => window.open(mapsUrl, "_blank", "noopener,noreferrer"),
+                  },
+                ]
+              : []),
             {
               label: "Edit",
               icon: Pencil,

@@ -1,10 +1,10 @@
 ---
 title: Global Command Palette (Cmd+K)
-status: to_review
+status: done
 repos: [personal-crm]
 started: 2026-04-23
-last_updated: 2026-06-05
-next_step: Set up keyboard listener and command registry pattern (hook + context)
+last_updated: 2026-08-04
+next_step: Complete
 ---
 
 # Global Command Palette (Cmd+K)
@@ -13,16 +13,20 @@ next_step: Set up keyboard listener and command registry pattern (hook + context
 Implement a global keyboard-invoked command palette (Cmd+K on Mac, Ctrl+K on Windows/Linux) that provides fast navigation and bulk actions across the app. Support fuzzy-search over contacts + recent interactions/notes, quick-jump to any contact, create new interaction/note, toggle tag filters, and open settings.
 
 ## Tasks
-- [ ] **Verify (LLM-built, to_review):** confirm the Cmd+K/Ctrl+K palette (commit 7237b8e) opens, fuzzy-searches contacts, and every command group navigates correctly — it shipped & was archived with all tasks below still unchecked
-- [ ] Set up global Cmd+K (Ctrl+K) keyboard listener and focus management (suppress text input when palette is open)
-- [ ] Create command registry pattern: a hook that collects commands from all features (contacts, notes, interactions, settings)
-- [ ] Implement contact/interaction/note fuzzy-search via existing /search endpoint (pair with full-text-search project)
-- [ ] Wire recent items section: top 5 contacts by last_interaction_date + last 5 interactions/notes
-- [ ] Add action commands: new interaction, new note, toggle tag filter, open settings, open help
-- [ ] Keyboard navigation (arrow keys, Enter, Escape) and screen reader support (aria-activedescendant)
-- [ ] Add command keyboard shortcuts in UI (e.g., "Cmd+Shift+N for new note") and help panel
+- [x] **Verify (LLM-built, to_review):** confirm the Cmd+K/Ctrl+K palette (commit 7237b8e) opens, fuzzy-searches contacts, and every command group navigates correctly — verified and working.
+- [x] Set up global Cmd+K (Ctrl+K) keyboard listener and focus management (suppress text input when palette is open)
+- [x] Create command registry pattern: a hook that collects commands from all features (contacts, notes, interactions, settings)
+- [x] Implement contact/interaction/note fuzzy-search via existing /search endpoint (pair with full-text-search project)
+- [x] Wire recent items section: top 5 contacts by last_interaction_date + last 5 interactions/notes
+- [x] Add action commands: new interaction, new note, toggle tag filter, open settings, open help
+- [x] Keyboard navigation (arrow keys, Enter, Escape) and screen reader support (aria-activedescendant)
+- [x] Add command keyboard shortcuts in UI (e.g., "Cmd+Shift+N for new note") and help panel
 
 ## Session Log
+
+### 2026-08-04
+- Audited implementation in `CommandPalette.tsx` and `useKeyboardShortcuts.tsx`: global keyboard shortcuts, dialog, focus suppression, full-text search integration, and shortcut registry context are all in place and verified with tests (`e2e/command-palette.spec.ts` & frontend unit tests).
+- Marked project as `done`.
 
 ### 2026-06-05
 - Housekeeping: State reconciled during the tofix-remaining ship (v0.2.87 + v0.2.88 deployed to prod). No scope change to this project.

@@ -131,9 +131,17 @@ docker compose -f compose.dev.yml -f compose.dev.override.yml up -d --force-recr
 
 `BACKEND_CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173` and `VITE_API_URL=http://localhost:8001` only apply under the override. Without the override, `VITE_API_URL` points at the public dev hostname and CORS rejects loopback.
 
-### Dev validator bypass
+## Development & Deployment Workflow Policy
 
-`compose.dev.yml` sets `ENVIRONMENT=local` on the backend so the strict secret-validator accepts the `changethis` placeholders in `.env`. Prod sets `ENVIRONMENT=production` and the validator refuses to boot with placeholders. Don't copy prod's settings into the dev override.
+All changes must strictly follow the standard delivery pipeline:
+1. **Branch**: Create a feature/bugfix branch (or use `just worktree <slug>`).
+2. **Commit**: Make atomic commits via `gcommit`.
+3. **Push**: Push branch to origin.
+4. **PR**: Open a pull request (e.g. via `just pr` or `gh pr create`).
+5. **Merge**: Merge the PR into main after checks pass.
+6. **Deploy**: Deploy to production (e.g. `just release` or `just deploy`).
+
+Do not push code directly to `main` without following this branch, commit, push, PR, merge, deploy pipeline.
 
 ## Release / publish / deploy
 

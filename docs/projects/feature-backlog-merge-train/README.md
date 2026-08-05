@@ -3,7 +3,7 @@ title: Feature Backlog Merge Train
 status: to_review
 repos: [personal-crm]
 started: 2026-05-15
-last_updated: 2026-06-05
+last_updated: 2026-08-04
 next_step: Human QA of all 29 merged features -- see docs/projects/merge-train-v0270-qa/README.md
 progress: 46/46
 ---
@@ -86,6 +86,9 @@ Land 46 unmerged feature branches into main, sequentially, with one squash commi
 - [ ] Smoke test UI (login, create contact, search, log interaction)
 
 ## Session Log
+
+### 2026-08-04
+- Housekeeping: Bump last_updated after repo releases and updates.
 
 ### 2026-06-05
 - Housekeeping: State reconciled during the tofix-remaining ship (v0.2.87 + v0.2.88 deployed to prod). No scope change to this project.

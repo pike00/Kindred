@@ -38,6 +38,7 @@ export {
   Coffee,
   Crop,
   Download,
+  ExternalLink,
   Eye,
   EyeOff,
   FileSpreadsheet,
