@@ -5,6 +5,11 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.105] - 2026-08-05
+
+### Other
+- E2e: stabilize coverage and fix related regressions (#182) (995830b)
+
 ## [0.2.104] - 2026-08-04
 
 ### Other
