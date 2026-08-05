@@ -3,7 +3,7 @@
 # loopback ports published. Brings the stack up if it isn't already.
 #
 # Behavior:
-#   - Stack reachable on localhost:8001/5173 → run tests, fail on red.
+#   - Stack reachable on localhost:8001/5173 → build an E2E preview and run.
 #   - An existing preview stack is also supported; its backend port is detected
 #     from the frontend container (for example, main uses 18001).
 #   - Stack down + Docker available → bring it up with the override file, run.
@@ -133,6 +133,7 @@ configure_backend_port() {
 # requests same-origin and avoids dev-server JIT/import races under Playwright.
 start_preview_e2e_frontend() {
     [ -n "${E2E_BASE_URL:-}" ] && return
+    [ -n "$e2e_server_pid" ] && return
 
     local port="" candidate found_port=""
     for candidate in $(seq 5174 5199); do
@@ -149,18 +150,23 @@ start_preview_e2e_frontend() {
 
     e2e_server_log="$(mktemp)"
     local backend_target="${E2E_API_URL:-http://127.0.0.1:${backend_port}}"
-    (
+    setsid bash -c '
+        repo_root="$1"
+        backend_target="$2"
+        port="$3"
         cd "$repo_root/frontend"
         env \
             VITE_API_URL="" \
+            VITE_E2E="true" \
             VITE_AUTH_MODE="${AUTH_MODE:-local}" \
             E2E_API_TARGET="$backend_target" \
                 pnpm build >/dev/null && \
-            exec setsid env \
+            exec env \
+                VITE_E2E="true" \
                 E2E_API_TARGET="$backend_target" \
                 pnpm exec vite preview --config vite.e2e.config.ts \
                     --host 127.0.0.1 --port "$port" --strictPort
-    ) >"$e2e_server_log" 2>&1 &
+    ' _ "$repo_root" "$backend_target" "$port" >"$e2e_server_log" 2>&1 &
     e2e_server_pid=$!
     frontend_base_url="http://127.0.0.1:${port}"
     frontend_url="${frontend_base_url%/}/"
@@ -214,6 +220,10 @@ if ! stack_up; then
     fi
 fi
 
+# Always test the built SPA. A running Vite dev server can retain stale lazy
+# chunks or register the PWA service worker, which makes unrelated specs fail.
+start_preview_e2e_frontend
+
 echo "e2e: stack ready on frontend=${frontend_base_url%/}, backend=${api_base_url%/}; running Playwright specs..."
 
 playwright_args=(--reporter=list)
@@ -222,14 +232,27 @@ if [ -n "${E2E_PLAYWRIGHT_ARGS:-}" ]; then
     read -r -a extra_playwright_args <<< "$E2E_PLAYWRIGHT_ARGS"
     playwright_args+=("${extra_playwright_args[@]}")
 else
-    # The backend's SQLAlchemy pool is intentionally small; the full suite
-    # otherwise launches enough workers to turn harmless setup calls into
-    # connection timeouts and cascading skipped tests.
-    playwright_args+=("--workers=${E2E_WORKERS:-2}")
+    # The backend's SQLAlchemy pool is intentionally small; one worker keeps
+    # data-heavy specs from turning harmless setup calls into connection
+    # timeouts and cascading route-load failures. Opt into two workers when
+    # the environment has enough database capacity.
+    playwright_args+=("--workers=${E2E_WORKERS:-1}")
+    # One retry absorbs transient browser/route-load failures during the long
+    # serial suite while still surfacing a test that fails consistently.
+    playwright_args+=("--retries=${E2E_RETRIES:-1}")
+fi
+
+# Chromium creates a temporary profile for every Playwright worker. Prefer the
+# host's tmpfs so a long suite does not consume the root filesystem and crash
+# the browser or the dev database with ENOSPC.
+e2e_tmp_dir="${E2E_TMPDIR:-${TMPDIR:-}}"
+if [ -z "$e2e_tmp_dir" ] && [ -d /dev/shm ] && [ -w /dev/shm ]; then
+    e2e_tmp_dir=/dev/shm
 fi
 
 if ! E2E_BASE_URL="${E2E_BASE_URL:-$frontend_base_url}" \
     E2E_API_URL="$api_base_url" \
+    TMPDIR="$e2e_tmp_dir" \
     pnpm exec playwright test "${playwright_args[@]}"; then
     echo
     echo "ERROR: Playwright e2e specs failed." >&2

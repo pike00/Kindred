@@ -235,18 +235,31 @@ test.describe("Contact sharing", () => {
 			await shareRow.getByRole("button", { name: /revoke access/i }).click();
 			const revokeDialog = page.getByRole("alertdialog");
 			await expect(revokeDialog).toBeVisible();
-			const revokeResponse = page.waitForResponse(
-				(response) =>
-					response
-						.url()
-						.includes(`/api/v1/contact-shares/${recipientUser.id}`) &&
-					response.request().method() === "DELETE" &&
-					response.ok(),
-			);
 			await revokeDialog
 				.getByRole("button", { name: /^revoke access$/i })
 				.click({ force: true });
-			await revokeResponse;
+			await expect(revokeDialog).not.toBeVisible({ timeout: 10_000 });
+			// Poll the owner API instead of coupling the assertion to the browser's
+			// response-event timing. This still verifies that the UI mutation took
+			// effect and fails quickly if the request was never sent.
+			await expect
+				.poll(
+					async () => {
+						const sharesResponse = await request.get(
+							`${API_URL}/api/v1/contact-shares/`,
+							{ headers: authHeaders(ownerToken) },
+						);
+						if (!sharesResponse.ok()) return true;
+						const shares = (await sharesResponse.json()) as {
+							data?: Array<{ recipient_id: string }>;
+						};
+						return (shares.data ?? []).some(
+							(share) => share.recipient_id === recipientUser.id,
+						);
+					},
+					{ timeout: 10_000 },
+				)
+				.toBe(false);
 			await page.reload();
 			await page.getByRole("tab", { name: /^sharing$/i }).click();
 			await expect(

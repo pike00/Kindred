@@ -72,7 +72,7 @@ export function ShortcutRegistryProvider({
     // Register Help group shortcuts for the overlay itself
     const helpShortcuts: ShortcutDefinition[] = [
       {
-        keys: "?",
+        keys: "Shift+?",
         description: "Open keyboard shortcut help",
         group: "Help",
         enabled: true,
@@ -111,7 +111,7 @@ export function ShortcutRegistryProvider({
     const unsubscribe = tinykeys(
       window,
       {
-        "?": (event: KeyboardEvent) => {
+        "Shift+?": (event: KeyboardEvent) => {
           // Only trigger if not in input/textarea/contenteditable
           if (shouldSuppress(event)) return
           event.preventDefault()

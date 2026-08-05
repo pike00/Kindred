@@ -57,7 +57,9 @@ test.describe("Contacts list", () => {
     await expect(dialog.getByLabel(/first name/i)).toBeVisible()
     await expect(dialog.getByLabel(/last name/i)).toBeVisible()
     await expect(dialog.getByLabel(/birthday/i)).toBeVisible()
-    await expect(dialog.getByLabel(/timezone/i)).toBeVisible()
+    // TimezoneInput is a searchable combobox button, not a native labelled
+    // input. Its accessible name exposes the empty-state placeholder.
+    await expect(dialog.getByText(/search city or timezone/i)).toBeVisible()
     await expect(dialog.getByLabel(/pronouns/i)).toBeVisible()
     await expect(
       dialog.getByRole("button", { name: /create contact/i }),
@@ -143,7 +145,7 @@ test.describe("Contacts list", () => {
     // Bulk action bar surfaces archive / favorite / delete / export buttons
     await expect(page.getByRole("button", { name: /^archive$/i })).toBeVisible()
     await expect(
-      page.getByRole("button", { name: /add to favorites/i }),
+      page.getByRole("button", { name: /^favorite$/i }),
     ).toBeVisible()
     await expect(page.getByRole("button", { name: /^delete$/i })).toBeVisible()
     await expect(

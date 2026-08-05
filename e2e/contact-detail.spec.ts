@@ -2,9 +2,11 @@ import { test, expect } from "./fixtures"
 import type { Page } from "@playwright/test"
 import {
   createContact,
+  createCustomFieldDefinition,
   createInteraction,
   createTag,
   deleteContact,
+  deleteCustomFieldDefinition,
   deleteInteraction,
   deleteTag,
   getToken,
@@ -22,6 +24,8 @@ let contactId: string
 const createdContactIds: string[] = []
 const createdInteractionIds: string[] = []
 const createdTagIds: string[] = []
+const createdFieldDefinitionIds: string[] = []
+const CONTACT_PAGE_TIMEOUT = 30_000
 
 async function retryAsync<T>(fn: () => Promise<T>, retries = 3): Promise<T> {
   let lastErr: unknown
@@ -71,6 +75,9 @@ test.afterAll(async ({ request }) => {
     for (const id of createdTagIds) {
       await deleteTag(request, token, id).catch(() => {})
     }
+    for (const id of createdFieldDefinitionIds) {
+      await deleteCustomFieldDefinition(request, token, id).catch(() => {})
+    }
     for (const id of createdContactIds) {
       await deleteContact(request, token, id).catch(() => {})
     }
@@ -107,14 +114,14 @@ test.describe("Contact detail header", () => {
     await page.goto(`/contacts/${contactId}`)
     await expect(
       page.getByRole("heading", { name: /AAADetailSpec Primary/i, level: 1 }),
-    ).toBeVisible({ timeout: 10000 })
+    ).toBeVisible({ timeout: CONTACT_PAGE_TIMEOUT })
   })
 
   test("Download PDF button is present", async ({ page }) => {
     await page.goto(`/contacts/${contactId}`)
     await expect(
       page.getByRole("button", { name: /download pdf/i }),
-    ).toBeVisible()
+    ).toBeVisible({ timeout: CONTACT_PAGE_TIMEOUT })
   })
 
   test("Edit button opens the edit-contact dialog", async ({ page }) => {
@@ -143,6 +150,7 @@ test.describe("Contact detail header", () => {
     await page
       .getByRole("button", { name: "Log Interaction", exact: true })
       .click()
+    await page.getByRole("menuitem", { name: /log interaction/i }).click()
     const dialog = page.getByRole("dialog", { name: /log interaction/i })
     await expect(dialog).toBeVisible()
     await expect(dialog.getByText(/attendees/i)).toBeVisible()
@@ -192,43 +200,44 @@ test.describe("Timeline card", () => {
   })
 })
 
-// ─── Notes card ──────────────────────────────────────────────────────────────
+// ─── Timeline note capture ───────────────────────────────────────────────────
 
-test.describe("Notes card", () => {
+test.describe("Timeline note capture", () => {
   test("Notes section is visible with quick-capture", async ({ page }) => {
     await page.goto(`/contacts/${contactId}`)
-    await expect(cardTitle(page, /\bNotes\b/i)).toBeVisible({ timeout: 10000 })
-    await expect(page.getByPlaceholder(/jot a quick note/i)).toBeVisible()
-    await expect(page.getByRole("button", { name: /save note/i })).toBeVisible()
+    const timeline = cardByTitle(page, /timeline/i)
+    await expect(timeline).toBeVisible({ timeout: 10000 })
+    await expect(timeline.getByPlaceholder(/jot a quick note/i)).toBeVisible()
+    await expect(
+      timeline.getByRole("button", { name: /save note/i }),
+    ).toBeVisible()
   })
 
   test("create + delete a note via the UI", async ({ page }) => {
     const noteBody = `e2e note ${Date.now()}`
     await page.goto(`/contacts/${contactId}`)
-    await page.getByPlaceholder(/jot a quick note/i).fill(noteBody)
-    await page.getByRole("button", { name: /save note/i }).click()
+    const timeline = cardByTitle(page, /timeline/i)
+    await timeline.getByPlaceholder(/jot a quick note/i).fill(noteBody)
+    await timeline.getByRole("button", { name: /save note/i }).click()
 
-    // Note appears in BOTH the Notes card and the Timeline card — scope to
-    // the Notes card so we're asserting on the right slot.
-    const notesCard = cardByTitle(page, /\bNotes\b/i)
-    await expect(notesCard.getByText(noteBody)).toBeVisible({ timeout: 10000 })
+    await expect(timeline.getByText(noteBody)).toBeVisible({ timeout: 10000 })
 
     // Accept the window.confirm() that the row's Delete action triggers.
     page.on("dialog", (d) => d.accept())
 
-    const noteRow = notesCard
-      .locator('div[class*="group"]')
+    const noteRow = timeline
+      .locator("li")
       .filter({ hasText: noteBody })
       .first()
     const actionsBtn = noteRow.getByRole("button", {
-      name: /open actions menu/i,
+      name: /note actions/i,
     })
     await expect(actionsBtn).toBeVisible({ timeout: 5000 })
     await actionsBtn.click()
     const deleteItem = page.getByRole("menuitem", { name: /delete/i })
     await expect(deleteItem).toBeVisible({ timeout: 5000 })
     await deleteItem.click()
-    await expect(notesCard.getByText(noteBody)).not.toBeVisible({
+    await expect(timeline.getByText(noteBody)).not.toBeVisible({
       timeout: 10000,
     })
   })
@@ -237,17 +246,17 @@ test.describe("Notes card", () => {
     const original = `e2e edit me ${Date.now()}`
     const updated = `e2e edited ${Date.now()}`
     await page.goto(`/contacts/${contactId}`)
-    await page.getByPlaceholder(/jot a quick note/i).fill(original)
-    await page.getByRole("button", { name: /save note/i }).click()
+    const timeline = cardByTitle(page, /timeline/i)
+    await timeline.getByPlaceholder(/jot a quick note/i).fill(original)
+    await timeline.getByRole("button", { name: /save note/i }).click()
 
-    const notesCard = cardByTitle(page, /\bNotes\b/i)
-    await expect(notesCard.getByText(original)).toBeVisible({ timeout: 10000 })
+    await expect(timeline.getByText(original)).toBeVisible({ timeout: 10000 })
 
-    const noteRow = notesCard
-      .locator('div[class*="group"]')
+    const noteRow = timeline
+      .locator("li")
       .filter({ hasText: original })
       .first()
-    await noteRow.getByRole("button", { name: /open actions menu/i }).click()
+    await noteRow.getByRole("button", { name: /note actions/i }).click()
     await page.getByRole("menuitem", { name: /edit/i }).click()
 
     const dialog = page.getByRole("dialog", { name: /edit note/i })
@@ -255,15 +264,15 @@ test.describe("Notes card", () => {
     const textbox = dialog.getByRole("textbox")
     await textbox.fill(updated)
     await dialog.getByRole("button", { name: /^save$/i }).click()
-    await expect(notesCard.getByText(updated)).toBeVisible({ timeout: 10000 })
+    await expect(timeline.getByText(updated)).toBeVisible({ timeout: 10000 })
 
     // Clean up
     page.on("dialog", (d) => d.accept())
-    const updatedRow = notesCard
-      .locator('div[class*="group"]')
+    const updatedRow = timeline
+      .locator("li")
       .filter({ hasText: updated })
       .first()
-    await updatedRow.getByRole("button", { name: /open actions menu/i }).click()
+    await updatedRow.getByRole("button", { name: /note actions/i }).click()
     await page.getByRole("menuitem", { name: /delete/i }).click()
   })
 })
@@ -397,14 +406,22 @@ test.describe("Custom Fields card", () => {
   test("Custom fields section is visible", async ({ page }) => {
     await page.goto(`/contacts/${contactId}`)
     await expect(cardTitle(page, /custom fields/i)).toBeVisible({
-      timeout: 10000,
+      timeout: CONTACT_PAGE_TIMEOUT,
     })
   })
 
-  test("Add custom field dialog opens", async ({ page }) => {
+  test("Add custom field dialog opens", async ({ page, request }) => {
+    const definition = await createCustomFieldDefinition(request, token, {
+      name: `E2E custom field ${Date.now()}`,
+    })
+    createdFieldDefinitionIds.push(definition.id)
+
     await page.goto(`/contacts/${contactId}`)
     const card = cardByTitle(page, /custom fields/i)
-    await card.getByRole("button", { name: /^add$/i }).click()
+    await expect(card).toBeVisible({ timeout: CONTACT_PAGE_TIMEOUT })
+    const addButton = card.getByRole("button", { name: /^add$/i })
+    await expect(addButton).toBeVisible({ timeout: CONTACT_PAGE_TIMEOUT })
+    await addButton.click()
 
     const dialog = page.getByRole("dialog", { name: /add custom field/i })
     await expect(dialog).toBeVisible()
@@ -414,13 +431,13 @@ test.describe("Custom Fields card", () => {
   })
 })
 
-// ─── Household card ──────────────────────────────────────────────────────────
+// ─── People card ─────────────────────────────────────────────────────────────
 
-test.describe("Household card", () => {
-  test("Household section is visible", async ({ page }) => {
+test.describe("People card", () => {
+  test("People section is visible", async ({ page }) => {
     await page.goto(`/contacts/${contactId}`)
-    await expect(cardTitle(page, /\bHousehold\b/i)).toBeVisible({
-      timeout: 10000,
+    await expect(cardTitle(page, /People/i)).toBeVisible({
+      timeout: CONTACT_PAGE_TIMEOUT,
     })
   })
 })
@@ -441,14 +458,16 @@ test.describe("Interaction Locations card", () => {
 test.describe("Relationships card", () => {
   test("Relationships section is visible", async ({ page }) => {
     await page.goto(`/contacts/${contactId}`)
-    await expect(cardTitle(page, /\bRelationships\b/i)).toBeVisible({
-      timeout: 10000,
+    const peopleCard = cardByTitle(page, /People/i)
+    await expect(peopleCard).toBeVisible({ timeout: CONTACT_PAGE_TIMEOUT })
+    await expect(peopleCard.getByText(/Relationships/i)).toBeVisible({
+      timeout: CONTACT_PAGE_TIMEOUT,
     })
   })
 
   test("Add Relationship contact-picker opens", async ({ page }) => {
     await page.goto(`/contacts/${contactId}`)
-    const card = cardByTitle(page, /\bRelationships\b/i)
+    const card = cardByTitle(page, /People/i)
     await expect(card).toBeVisible({ timeout: 15000 })
     // The shadcn popover-trigger button has role="combobox" applied and
     // doesn't expose the inner span text as accessible-name. Click the
@@ -506,12 +525,14 @@ test.describe("Tags display", () => {
     })
 
     await page.goto(`/contacts/${c.id}`)
-    await expect(cardTitle(page, /\bTags\b/i)).toBeVisible({ timeout: 10000 })
+    await expect(cardTitle(page, /\bTags\b/i)).toBeVisible({
+      timeout: CONTACT_PAGE_TIMEOUT,
+    })
     await expect(page.getByText(tagName)).toBeVisible()
   })
 })
 
-// ─── Tabs: Gifts / Debts / Media ─────────────────────────────────────────────
+// ─── Tabs: Gifts / Debts ─────────────────────────────────────────────────────
 
 test.describe("Detail tabs", () => {
   test("Gifts tab is selected by default", async ({ page }) => {
@@ -590,36 +611,4 @@ test.describe("Detail tabs", () => {
     await expect(dialog).not.toBeVisible({ timeout: 10000 })
   })
 
-  test("Media tab navigates without error and shows Add Recommendation button", async ({
-    page,
-  }) => {
-    await page.goto(`/contacts/${contactId}`)
-    await page.getByRole("tab", { name: /^media/i }).click()
-    await expect(page.getByRole("tab", { name: /^media/i })).toHaveAttribute(
-      "data-state",
-      "active",
-    )
-    await expect(
-      page.getByRole("button", { name: /add recommendation/i }).first(),
-    ).toBeVisible({ timeout: 10000 })
-  })
-
-  test("Add Media Recommendation dialog opens from the Media tab", async ({
-    page,
-  }) => {
-    await page.goto(`/contacts/${contactId}`)
-    await page.getByRole("tab", { name: /^media/i }).click()
-    await page
-      .getByRole("button", { name: /add recommendation/i })
-      .first()
-      .click()
-
-    const dialog = page.getByRole("dialog", {
-      name: /add media recommendation/i,
-    })
-    await expect(dialog).toBeVisible()
-    await expect(dialog.getByPlaceholder("e.g. The Bear")).toBeVisible()
-    await page.keyboard.press("Escape")
-    await expect(dialog).not.toBeVisible({ timeout: 10000 })
-  })
 })

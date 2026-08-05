@@ -124,6 +124,35 @@ export async function deleteAllTags(
   await Promise.all(tags.map((t) => deleteTag(request, token, t.id)))
 }
 
+// ─── Custom field definitions ──────────────────────────────────────────────
+
+export async function createCustomFieldDefinition(
+  request: APIRequestContext,
+  token: string,
+  data: { name: string; field_type?: string },
+) {
+  const res = await request.post(`${API_URL}/api/v1/custom-fields/definitions/`, {
+    headers: authHeaders(token),
+    data: { field_type: "text", ...data },
+  })
+  if (!res.ok()) {
+    throw new Error(
+      `createCustomFieldDefinition failed ${res.status()}: ${await res.text()}`,
+    )
+  }
+  return res.json()
+}
+
+export async function deleteCustomFieldDefinition(
+  request: APIRequestContext,
+  token: string,
+  definitionId: string,
+) {
+  await request.delete(`${API_URL}/api/v1/custom-fields/definitions/${definitionId}`, {
+    headers: authHeaders(token),
+  })
+}
+
 export async function updateTag(
   request: APIRequestContext,
   token: string,

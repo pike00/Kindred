@@ -128,8 +128,8 @@ function lastContactTone(days: number | null): string {
 
 function ContactRow({
   contact,
-  selected: _selected,
-  onToggle: _onToggle,
+  selected,
+  onToggle,
 }: {
   contact: ContactPublic
   selected: boolean
@@ -141,53 +141,61 @@ function ContactRow({
   const extraTags = tags.length - visibleTags.length
 
   return (
-    <Link
-      to="/contacts/$contactId"
-      params={{ contactId: contact.id }}
-      className="group flex items-center gap-4 rounded-2xl border bg-card p-4 shadow-xs transition-all hover:-translate-y-px hover:border-primary/30 hover:shadow-sm"
-    >
-      <ContactAvatar contact={contact} size="md" />
-      <div className="min-w-0 flex-1">
-        <div className="flex items-baseline gap-2">
-          <span className="font-display text-base font-semibold tracking-tight truncate">
-            {fullName(contact)}
-          </span>
-          {titleLine(contact) && (
-            <span className="text-xs text-muted-foreground truncate hidden sm:inline">
-              · {titleLine(contact)}
+    <div className="group flex items-center gap-3 rounded-2xl border bg-card p-3 shadow-xs transition-all hover:-translate-y-px hover:border-primary/30 hover:shadow-sm">
+      <Checkbox
+        checked={selected}
+        onCheckedChange={() => onToggle(contact.id)}
+        aria-label={`Select ${fullName(contact)}`}
+        onClick={(event) => event.stopPropagation()}
+      />
+      <Link
+        to="/contacts/$contactId"
+        params={{ contactId: contact.id }}
+        className="flex min-w-0 flex-1 items-center gap-4"
+      >
+        <ContactAvatar contact={contact} size="md" />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline gap-2">
+            <span className="font-display text-base font-semibold tracking-tight truncate">
+              {fullName(contact)}
             </span>
-          )}
-          {contact.is_favorite && (
-            <Star className="size-3.5 shrink-0 fill-amber-400 text-amber-400" />
-          )}
-        </div>
-        <div className="mt-1 flex items-center gap-2 text-xs">
-          <span
-            className={cn(
-              "inline-flex items-center gap-1",
-              lastContactTone(days),
+            {titleLine(contact) && (
+              <span className="text-xs text-muted-foreground truncate hidden sm:inline">
+                · {titleLine(contact)}
+              </span>
             )}
-          >
-            <Clock className="size-3" />
-            {days == null
-              ? "No interactions yet"
-              : `${days}d since last contact`}
-          </span>
+            {contact.is_favorite && (
+              <Star className="size-3.5 shrink-0 fill-amber-400 text-amber-400" />
+            )}
+          </div>
+          <div className="mt-1 flex items-center gap-2 text-xs">
+            <span
+              className={cn(
+                "inline-flex items-center gap-1",
+                lastContactTone(days),
+              )}
+            >
+              <Clock className="size-3" />
+              {days == null
+                ? "No interactions yet"
+                : `${days}d since last contact`}
+            </span>
+          </div>
         </div>
-      </div>
-      <div className="hidden md:flex shrink-0 items-center gap-1.5">
-        {visibleTags.map((tag) => (
-          <Badge key={tag.id} variant="secondary" className="text-xs">
-            {tag.name}
-          </Badge>
-        ))}
-        {extraTags > 0 && (
-          <Badge variant="outline" className="text-xs">
-            +{extraTags}
-          </Badge>
-        )}
-      </div>
-    </Link>
+        <div className="hidden md:flex shrink-0 items-center gap-1.5">
+          {visibleTags.map((tag) => (
+            <Badge key={tag.id} variant="secondary" className="text-xs">
+              {tag.name}
+            </Badge>
+          ))}
+          {extraTags > 0 && (
+            <Badge variant="outline" className="text-xs">
+              +{extraTags}
+            </Badge>
+          )}
+        </div>
+      </Link>
+    </div>
   )
 }
 

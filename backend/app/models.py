@@ -2005,6 +2005,10 @@ class GiftPublic(GiftBase):
     contact_id: uuid.UUID
     created_at: datetime
     deleted_at: datetime | None = None
+    contact_birthday: date | None = None
+    contact_first_name: str | None = None
+    contact_last_name: str | None = None
+    days_until_occasion: int | None = None
 
 
 class GiftsPublic(SQLModel):

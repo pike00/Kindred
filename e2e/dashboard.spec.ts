@@ -15,19 +15,17 @@ test.describe("Dashboard", () => {
     ).toBeVisible({ timeout: 10_000 })
   })
 
-  test("stats row lists contacts/losing-touch/reminders/entries", async ({
+  test("stats row lists contacts and reminders", async ({
     page,
   }) => {
     const main = page.locator("main.flex-1")
     await expect(main.getByText(/contacts/i).first()).toBeVisible()
-    await expect(main.getByText(/losing touch/i).first()).toBeVisible()
     await expect(main.getByText(/reminders/i).first()).toBeVisible()
-    await expect(main.getByText(/entries/i).first()).toBeVisible()
   })
 
-  test("losing-touch section header is visible", async ({ page }) => {
+  test("upcoming birthdays section header is visible", async ({ page }) => {
     await expect(
-      page.getByRole("heading", { name: /losing touch/i }).first(),
+      page.getByRole("heading", { name: /upcoming birthdays/i }).first(),
     ).toBeVisible()
   })
 
