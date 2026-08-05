@@ -39,7 +39,7 @@ dev = [
     "ruff<1.0.0,>=0.2.2",
     "prek>=0.2.24,<1.0.0",
     "coverage>=7.15.0,<8.0.0",
-    "cryptography>=46.0.7",
+    "cryptography>=50.0.0",
 ]
 
 [build-system]
