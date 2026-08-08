@@ -208,26 +208,6 @@ function ContactDetailPage() {
           </div>
         </div>
         <div className="flex-1 min-w-0 space-y-2">
-          {/* Heatmap */}
-          <InteractionHeatmap onWeekClick={handleWeekClick} />
-          {heatmapFilter && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span>
-                Filtered to week of{" "}
-                {new Date(heatmapFilter.startDate).toLocaleDateString(
-                  undefined,
-                  { month: "short", day: "numeric" },
-                )}
-              </span>
-              <button
-                type="button"
-                onClick={clearHeatmapFilter}
-                className="underline hover:text-foreground"
-              >
-                Clear filter
-              </button>
-            </div>
-          )}
           <div className="flex items-start justify-between gap-3">
             <div className="flex flex-wrap items-center gap-3 min-w-0">
               <h1 className="font-display text-4xl font-bold tracking-tight">
@@ -297,7 +277,7 @@ function ContactDetailPage() {
           {!contact.company && contact.title && (
             <p className="text-lg text-muted-foreground">{contact.title}</p>
           )}
-          <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground items-center">
             {contact.birthday && (
               <ContactBirthday birthday={contact.birthday} />
             )}
@@ -324,6 +304,13 @@ function ContactDetailPage() {
               </span>
             )}
           </div>
+
+          {/* Interaction Heatmap (Compact & Expandable) */}
+          <InteractionHeatmap
+            onWeekClick={handleWeekClick}
+            heatmapFilter={heatmapFilter}
+            clearHeatmapFilter={clearHeatmapFilter}
+          />
         </div>
       </div>
 
