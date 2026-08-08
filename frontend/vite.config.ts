@@ -29,6 +29,13 @@ function appVersion(): string {
 
 const isE2E = process.env.VITE_E2E === "true"
 
+// Build guard: prevent example.com placeholders from contaminating production bundles
+if (process.env.NODE_ENV === "production" && process.env.VITE_API_URL?.includes("example.com")) {
+  throw new Error(
+    "[Vite Build Error] Invalid VITE_API_URL: 'example.com' placeholder detected. Use '' for same-origin relative URLs or a valid production origin.",
+  )
+}
+
 // https://vitejs.dev/config/
 export default defineConfig({
   define: {
