@@ -27,6 +27,16 @@ if ! command -v docker >/dev/null 2>&1; then
     exit 0
 fi
 
+pkg_cmd="bun"
+pkg_exec="bun run"
+if command -v pnpm >/dev/null 2>&1; then
+    pkg_cmd="pnpm"
+    pkg_exec="pnpm exec"
+elif command -v npm >/dev/null 2>&1; then
+    pkg_cmd="npm"
+    pkg_exec="npx"
+fi
+
 frontend_port="${E2E_FRONTEND_PORT:-5173}"
 backend_port="${E2E_BACKEND_PORT:-8001}"
 frontend_base_url="${E2E_BASE_URL:-http://localhost:${frontend_port}}"
@@ -154,20 +164,23 @@ start_preview_e2e_frontend() {
         repo_root="$1"
         backend_target="$2"
         port="$3"
+        pkg_cmd="$4"
+        pkg_exec="$5"
         cd "$repo_root/frontend"
         env \
             VITE_API_URL="" \
             VITE_E2E="true" \
             VITE_AUTH_MODE="${AUTH_MODE:-local}" \
             E2E_API_TARGET="$backend_target" \
-                pnpm build >/dev/null && \
+                $pkg_cmd run build >/dev/null && \
             exec env \
                 VITE_E2E="true" \
                 E2E_API_TARGET="$backend_target" \
-                pnpm exec vite preview --config vite.e2e.config.ts \
+                $pkg_exec vite preview --config vite.e2e.config.ts \
                     --host 127.0.0.1 --port "$port" --strictPort
-    ' _ "$repo_root" "$backend_target" "$port" >"$e2e_server_log" 2>&1 &
+    ' _ "$repo_root" "$backend_target" "$port" "$pkg_cmd" "$pkg_exec" >"$e2e_server_log" 2>&1 &
     e2e_server_pid=$!
+
     frontend_base_url="http://127.0.0.1:${port}"
     frontend_url="${frontend_base_url%/}/"
 
@@ -258,10 +271,10 @@ if ! E2E_BASE_URL="${E2E_BASE_URL:-$frontend_base_url}" \
     E2E_API_URL="$api_base_url" \
     E2E_RETRIES="$e2e_retries" \
     TMPDIR="$e2e_tmp_dir" \
-    pnpm exec playwright test "${playwright_args[@]}"; then
+    $pkg_exec playwright test "${playwright_args[@]}"; then
     echo
     echo "ERROR: Playwright e2e specs failed." >&2
-    echo "Run 'pnpm exec playwright show-report e2e/report' to view the HTML report." >&2
+    echo "Run '$pkg_exec playwright show-report e2e/report' to view the HTML report." >&2
     echo "Bypass intentionally with: PERSONAL_CRM_SKIP_E2E=1 git push" >&2
     exit 1
 fi

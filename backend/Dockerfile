@@ -12,9 +12,8 @@ RUN apt-get update && \
       build-essential libpq-dev curl ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
-# Install uv
-# Ref: https://docs.astral.sh/uv/guides/integration/docker/#installing-uv
-COPY --from=ghcr.io/astral-sh/uv:0.9.26 /uv /uvx /bin/
+# Install uv from PyPI (avoids ghcr.io TLS timeout)
+RUN pip install --no-cache-dir uv==0.9.26
 
 WORKDIR /app/
 
