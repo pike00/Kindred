@@ -173,6 +173,7 @@ start_preview_e2e_frontend() {
             VITE_AUTH_MODE="${AUTH_MODE:-local}" \
             E2E_API_TARGET="$backend_target" \
                 $pkg_cmd run build >/dev/null && \
+            uv run "$repo_root/scripts/check-bundle-placeholders.py" && \
             exec env \
                 VITE_E2E="true" \
                 E2E_API_TARGET="$backend_target" \
