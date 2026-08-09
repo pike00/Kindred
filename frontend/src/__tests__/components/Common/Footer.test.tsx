@@ -60,8 +60,10 @@ describe("Footer", () => {
       ;(globalThis as Record<string, unknown>).__APP_HASH__ = ""
       try {
         render(<Footer />)
-        const link = screen.getByRole("link", { name: /^vtest$/ })
+        const link = screen.getByRole("link", { name: /vtest/ })
         expect(link).toBeInTheDocument()
+        expect(link.textContent).toContain("vtest")
+        expect(link.textContent).not.toContain("·")
         expect(link).toHaveAttribute("href", "https://github.com/pike00/Kindred")
       } finally {
         ;(globalThis as Record<string, unknown>).__APP_HASH__ = originalHash
