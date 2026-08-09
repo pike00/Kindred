@@ -5,6 +5,19 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.94] - 2026-08-09
+
+### Fixed
+- Fix(version): resolve version and commit hash fallbacks durably (45409f4)
+
+### Other
+- Test(footer): fix link role regex match for Footer test (2008962)
+- Add bundle placeholder verification scanner and integrate into prepush gate (7a839f9)
+- Add build-time validation guard in vite.config.ts against placeholder API URLs (0c988dd)
+- Fix VITE_API_URL default in Dockerfile.prod for same-origin production requests (8bdd1be)
+- Fix prepush gate and backend Dockerfile dependencies (7064f1b)
+- Make Interaction Activity compact and expandable below contact metadata (eec918a)
+
 ## [0.2.93] - 2026-08-05
 
 ### Added
