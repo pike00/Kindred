@@ -5,7 +5,7 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.2.94] - 2026-08-09
+## [0.2.106] - 2026-08-09
 
 ### Fixed
 - Fix(version): resolve version and commit hash fallbacks durably (45409f4)
@@ -17,50 +17,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix VITE_API_URL default in Dockerfile.prod for same-origin production requests (8bdd1be)
 - Fix prepush gate and backend Dockerfile dependencies (7064f1b)
 - Make Interaction Activity compact and expandable below contact metadata (eec918a)
+- Limit Stay in Touch widget to 2 contacts with expandable toggle (86329a8)
 
-## [0.2.93] - 2026-08-05
+## [0.2.105] - 2026-08-05
+
+### Other
+- E2e: stabilize coverage and fix related regressions (#182) (995830b)
+
+## [0.2.104] - 2026-08-04
+
+### Other
+- E2e: pass test mode to preview server (ca9dd44)
+- Contacts: simplify contact detail layout (81e74bc)
+
+## [0.2.103] - 2026-08-04
+
+### Other
+- Contacts: combine people and pets details (e609c72)
+
+## [0.2.102] - 2026-08-04
 
 ### Added
 - Feat(contacts): add Google Maps link and action to addresses card (21ada79)
-- Feat(timeline): make timeline items editable and deletable (fc97ec7)
-- Feat(contacts): surface iMessage handle as a phone/email contact field (d9b9d73)
-- Feat(cli): add contacts update command (4ebbcd8)
-- Feat(sdk): regenerate _generated from current openapi spec (9de88fa)
-- Feat(cli): add users + api-keys admin commands (list/get/create, key create with --can-impersonate) (6f69b82)
-- Feat(cli): add interactions/notes/contacts/reminders write commands + --on-behalf-of impersonation (c8e8955)
-
-### Changed
-- Perf(frontend): preload route data to remove navigation flash (359088e)
-- Refactor(cli): drop pydantic-settings dep; read KINDRED_ON_BEHALF_OF via typer envvar (7ae5024)
 
 ### Documentation
 - Docs: complete Global Command Palette (Cmd+K) verification and update task checklist (be23d29)
 - Docs: enforce branch, commit, push, pr, merge, deploy workflow policy in AGENTS.md (a6b2af2)
 - Docs: complete verification and archive @contact Autocomplete project (b40fe20)
-- Docs: add all_contacts_share database docs (565fa3a)
-- Docs: trim stale frontend coverage notes (a3d61ef)
-- Docs: add CONTRIBUTING.md guide (#165) (cb1a8e7)
-- Docs: migrate agent instructions to AGENTS.md (ce9918f)
-
-### Fixed
-- Fix: report homelab compose status (233ccbf)
-- Fix: hide deleted gifts from listings (605a440)
-- Fix: compare date-only events by calendar day (1d9ce4c)
-- Fix: isolate dev ports and calendar date math (917c06c)
-- Fix: harden date and tailnet dev workflow (d2ab25a)
-- Fix(contacts): render channel-prefixed source cleanly (d7cd702)
-- Fix(cli): reconcile with regenerated SDK (5bd31fa)
-- Fix(sdk): sync drifted enums to spec (ContactSource lowercase, +InteractionChannel.recommendation, +GiftStatus purchased/wrapped) (d9e99da)
 
 ### Other
-- Limit Stay in Touch widget to 2 contacts with expandable toggle (86329a8)
-- E2e: stabilize coverage and fix related regressions (#182) (995830b)
-- E2e: pass test mode to preview server (ca9dd44)
-- Contacts: simplify contact detail layout (81e74bc)
-- Contacts: combine people and pets details (e609c72)
 - Dashboard: link Stay in Touch contacts to detail pages (467059f)
 - Projects: housekeeping and archive completed projects (a77d404)
+
+## [0.2.101] - 2026-08-04
+
+### Other
 - Fix Playwright pre-push and DB docs validation (#176) (c46006e)
+
+## [0.2.100] - 2026-08-04
+
+### Documentation
+- Docs: add all_contacts_share database docs (565fa3a)
+
+### Other
 - Email: fix interaction deduplication lookup (b916580)
 - Test: cover all-contact sharing flow (05fc807)
 - Tags: fix email share submission and scope copy (f152f35)
@@ -73,11 +72,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Backend: allow shared grantees to write contact records (acc86e2)
 - Backend: cover all-contact share route visibility (9e0063f)
 - Backend: add all-contacts sharing visibility scaffolding (6fda42f)
+
+## [0.2.99] - 2026-08-03
+
+### Fixed
+- Fix: report homelab compose status (233ccbf)
+
+### Other
 - Email: ingest matching Gmail interactions (954c431)
+
+## [0.2.98] - 2026-08-02
+
+### Added
+- Feat(timeline): make timeline items editable and deletable (fc97ec7)
+
+### Documentation
+- Docs: trim stale frontend coverage notes (a3d61ef)
+
+### Fixed
+- Fix: hide deleted gifts from listings (605a440)
+
+### Other
 - Revert "chore(release): v0.2.98" (953c4cf)
 - Test: silence expected command palette errors (1bd0a74)
+
+## [0.2.97] - 2026-08-02
+
+### Fixed
+- Fix: compare date-only events by calendar day (1d9ce4c)
+- Fix: isolate dev ports and calendar date math (917c06c)
+- Fix: harden date and tailnet dev workflow (d2ab25a)
+
+### Other
 - Dev: add fast tailnet workflow (9bd1bdb)
 - Timeline: support backdated life events (ca0a807)
+
+## [0.2.96] - 2026-08-02
+
+### Other
 - Chore: fix lint violations (dfd28bd)
 - Db: add recommendation interaction channel enum value (44da73b)
 - Auth: show development login credentials (bfed979)
@@ -86,7 +118,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ⬆ Bump playwright from 1.60.0 to 1.62.0 (#159) (4c0b172)
 - ⬆ Bump rollup from 4.61.1 to 4.62.3 (#157) (61ee0b8)
 - ⬆ Bump @radix-ui/react-label from 2.1.8 to 2.1.15 (#156) (514c486)
+
+## [0.2.95] - 2026-08-02
+
+### Other
 - Build: pin Rollup below release-age policy (c674413)
+
+## [0.2.94] - 2026-08-02
+
+### Documentation
+- Docs: add CONTRIBUTING.md guide (#165) (cb1a8e7)
+
+### Other
 - Interactions: link attendees to contact pages (e8a293f)
 - Calendar: use current month grid class (1108acd)
 - Frontend: use supported pnpm build image (78886cf)
@@ -124,6 +167,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ⬆ Bump form-data from 4.0.5 to 4.0.6 (#137) (5c8255f)
 - ⬆ Bump cryptography from 48.0.0 to 48.0.1 (#136) (2705bc6)
 - ⬆ Bump getmeili/meilisearch from v1.45 to v1.46 (#135) (cd3f000)
+
+## [0.2.93] - 2026-06-19
+
+### Added
+- Feat(contacts): surface iMessage handle as a phone/email contact field (d9b9d73)
+- Feat(cli): add contacts update command (4ebbcd8)
+- Feat(sdk): regenerate _generated from current openapi spec (9de88fa)
+- Feat(cli): add users + api-keys admin commands (list/get/create, key create with --can-impersonate) (6f69b82)
+- Feat(cli): add interactions/notes/contacts/reminders write commands + --on-behalf-of impersonation (c8e8955)
+
+### Changed
+- Perf(frontend): preload route data to remove navigation flash (359088e)
+- Refactor(cli): drop pydantic-settings dep; read KINDRED_ON_BEHALF_OF via typer envvar (7ae5024)
+
+### Documentation
+- Docs: migrate agent instructions to AGENTS.md (ce9918f)
+
+### Fixed
+- Fix(contacts): render channel-prefixed source cleanly (d7cd702)
+- Fix(cli): reconcile with regenerated SDK (5bd31fa)
+- Fix(sdk): sync drifted enums to spec (ContactSource lowercase, +InteractionChannel.recommendation, +GiftStatus purchased/wrapped) (d9e99da)
+
+### Other
 - Projects: archive 9 completed projects (contacts-list-render-fix, contact-timezone-pronouns, dashboard-metadata-widgets, frontend-pnpm-migration, interaction-drafts, map-view-contacts, printable-contact-one-pager, unified-contact-timeline, voice-to-text-interaction) (3431f9f)
 
 ## [0.2.92] - 2026-06-07
