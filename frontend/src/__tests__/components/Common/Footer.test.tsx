@@ -54,6 +54,19 @@ describe("Footer", () => {
       expect(link).toHaveAttribute("target", "_blank")
       expect(link).toHaveAttribute("rel", "noopener noreferrer")
     })
+
+    it("handles empty or unknown commit hash gracefully without trailing dot", () => {
+      const originalHash = (globalThis as Record<string, unknown>).__APP_HASH__
+      ;(globalThis as Record<string, unknown>).__APP_HASH__ = ""
+      try {
+        render(<Footer />)
+        const link = screen.getByRole("link", { name: /^vtest$/ })
+        expect(link).toBeInTheDocument()
+        expect(link).toHaveAttribute("href", "https://github.com/pike00/Kindred")
+      } finally {
+        ;(globalThis as Record<string, unknown>).__APP_HASH__ = originalHash
+      }
+    })
   })
 
   describe("content", () => {

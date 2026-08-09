@@ -9,22 +9,35 @@ import { VitePWA } from "vite-plugin-pwa"
 
 function gitHash(): string {
   try {
-    return execSync("git rev-parse --short HEAD", { encoding: "utf8" }).trim()
+    const hash = execSync("git rev-parse --short HEAD", { encoding: "utf8" }).trim()
+    if (hash) return hash
   } catch {
-    return process.env.GIT_HASH ?? "unknown"
+    // Ignore error when .git directory is absent (e.g. Docker build context)
   }
+  const fromEnv = process.env.GIT_HASH?.trim()
+  if (fromEnv) return fromEnv
+  return ""
 }
 
 function appVersion(): string {
-  // Prod builds inject the release tag via the APP_VERSION build-arg (the git
-  // tag is the source of truth). Strip the leading "v" since the footer renders
-  // `v{__APP_VERSION__}`. Fall back to package.json for local dev.
+  // 1. Check APP_VERSION build-arg / environment variable
   const fromEnv = process.env.APP_VERSION?.trim()
   if (fromEnv) return fromEnv.replace(/^v/, "")
+
+  // 2. Fall back to latest git tag if git repository is available
+  try {
+    const tag = execSync("git describe --tags --abbrev=0", { encoding: "utf8" }).trim()
+    if (tag) return tag.replace(/^v/, "")
+  } catch {
+    // Ignore error when git command fails or repository is absent
+  }
+
+  // 3. Fall back to frontend/package.json
   const pkg = JSON.parse(
     readFileSync(new URL("./package.json", import.meta.url), "utf-8"),
   )
-  return pkg.version as string
+  const ver = (pkg.version as string | undefined)?.trim() || "0.0.0"
+  return ver.replace(/^v/, "")
 }
 
 const isE2E = process.env.VITE_E2E === "true"

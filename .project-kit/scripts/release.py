@@ -159,6 +159,12 @@ def cut(
     subprocess.run([editor, notes_path], check=False)
     # notes_path is reused below as --notes-file (the editor wrote in place).
     typer.echo("[6/7] commit + tag + push…")
+    pkg_path = Path("frontend/package.json")
+    if pkg_path.is_file():
+        pkg_data = json.loads(pkg_path.read_text())
+        pkg_data["version"] = version.lstrip("v")
+        pkg_path.write_text(json.dumps(pkg_data, indent=2) + "\n")
+        _run(["git", "add", "frontend/package.json"])
     _run(["git", "add", "CHANGELOG.md"])
     _run(["git", "commit", "-m", f"chore(release): {version}"])
     _run(["git", "tag", "-a", version, "-m", f"release {version}"])
