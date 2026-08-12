@@ -76,6 +76,7 @@ services:
       - VITE_API_URL=https://${WORKTREE_HOST}
       - VITE_PUBLIC_HOST=${WORKTREE_HOST}
       - GIT_HASH=${GIT_HASH:-}
+      - APP_VERSION=${APP_VERSION:-}
       - VITE_AUTH_MODE=${AUTH_MODE:-local}
       - VITE_CF_LOGOUT_URL=${VITE_CF_LOGOUT_URL:-}
       # Playwright runs on the host (scripts/run-e2e-prepush.sh), not in this

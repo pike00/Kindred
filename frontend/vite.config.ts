@@ -1,5 +1,5 @@
 import { execSync } from "node:child_process"
-import { readFileSync } from "node:fs"
+import { existsSync, readFileSync } from "node:fs"
 import path from "node:path"
 import tailwindcss from "@tailwindcss/vite"
 import { tanstackRouter } from "@tanstack/router-plugin/vite"
@@ -32,12 +32,30 @@ function appVersion(): string {
     // Ignore error when git command fails or repository is absent
   }
 
-  // 3. Fall back to frontend/package.json
-  const pkg = JSON.parse(
-    readFileSync(new URL("./package.json", import.meta.url), "utf-8"),
-  )
-  const ver = (pkg.version as string | undefined)?.trim() || "0.0.0"
-  return ver.replace(/^v/, "")
+  // 3. Fall back to package.json files
+  const candidatePaths = [
+    path.resolve(__dirname, "./package.json"),
+    path.resolve(__dirname, "../package.json"),
+    path.resolve(process.cwd(), "frontend/package.json"),
+    path.resolve(process.cwd(), "package.json"),
+  ]
+
+  for (const pkgPath of candidatePaths) {
+    try {
+      if (existsSync(pkgPath)) {
+        const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"))
+        const ver = (pkg.version as string | undefined)?.trim()
+        if (ver && ver !== "0.0.0") {
+          return ver.replace(/^v/, "")
+        }
+      }
+    } catch {
+      // Continue checking next candidate path
+    }
+  }
+
+  // 4. Default fallback version
+  return "0.2.106"
 }
 
 const isE2E = process.env.VITE_E2E === "true"
