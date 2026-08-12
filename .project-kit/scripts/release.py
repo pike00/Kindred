@@ -165,6 +165,13 @@ def cut(
             pkg_data["version"] = version.lstrip("v")
             pkg_file.write_text(json.dumps(pkg_data, indent=2) + "\n")
             _run(["git", "add", str(pkg_file)])
+    pyproj = Path("backend/pyproject.toml")
+    if pyproj.is_file():
+        import re
+        content = pyproj.read_text()
+        new_content = re.sub(r'version = "[^"]+"', f'version = "{version.lstrip("v")}"', content, count=1)
+        pyproj.write_text(new_content)
+        _run(["git", "add", str(pyproj)])
     _run(["git", "add", "CHANGELOG.md"])
     _run(["git", "commit", "-m", f"chore(release): {version}"])
     _run(["git", "tag", "-a", version, "-m", f"release {version}"])
