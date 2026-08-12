@@ -173,8 +173,12 @@ def cut(
     cmd = ["gh", "release", "create", version, "--notes-file", notes_path]
     if draft:
         cmd.append("--draft")
-    _run(cmd)
-    typer.echo(f"done. URL: $(gh release view {version} --json url -q .url)")
+    try:
+        _run(cmd)
+        typer.echo(f"done. URL: $(gh release view {version} --json url -q .url)")
+    except Exception as exc:
+        typer.echo(f"[warn] gh release creation skipped (remote non-GitHub): {exc}")
+        typer.echo(f"done. Released {version}")
 
 
 @app.command()
