@@ -1,3 +1,7 @@
+import importlib.metadata
+import os
+import subprocess
+
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from pydantic.networks import EmailStr
@@ -12,6 +16,11 @@ router = APIRouter(prefix="/utils", tags=["utils"])
 
 class EnvironmentInfo(BaseModel):
     environment: str
+
+
+class VersionInfo(BaseModel):
+    version: str
+    git_hash: str
 
 
 @router.post(
@@ -40,3 +49,20 @@ async def health_check() -> bool:
 @router.get("/environment/")
 async def environment() -> EnvironmentInfo:
     return EnvironmentInfo(environment=settings.ENVIRONMENT)
+
+
+@router.get("/info/")
+async def version_info() -> VersionInfo:
+    try:
+        ver = importlib.metadata.version("app")
+    except Exception:
+        ver = "0.2.106"
+    try:
+        git_hash = subprocess.check_output(
+            ["git", "rev-parse", "--short", "HEAD"],
+            stderr=subprocess.DEVNULL,
+            text=True,
+        ).strip()
+    except Exception:
+        git_hash = os.environ.get("GIT_HASH", "unknown")
+    return VersionInfo(version=ver, git_hash=git_hash)
