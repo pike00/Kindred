@@ -8,7 +8,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import type { LucideIcon } from "@/lib/icons"
+import { Loader2, type LucideIcon } from "@/lib/icons"
 
 export type Item = {
   icon: LucideIcon
@@ -24,6 +24,7 @@ export function Main({ items }: MainProps) {
   const { isMobile, setOpenMobile } = useSidebar()
   const router = useRouterState()
   const currentPath = router.location.pathname
+  const isRouterPending = router.status === "pending"
 
   const handleMenuClick = () => {
     if (isMobile) {
@@ -36,7 +37,10 @@ export function Main({ items }: MainProps) {
       <SidebarGroupContent>
         <SidebarMenu>
           {items.map((item) => {
-            const isActive = currentPath === item.path
+            const isMatch = currentPath === item.path
+            const isPending = isRouterPending && isMatch
+            const isActive = isMatch
+            const Icon = isPending ? Loader2 : item.icon
 
             return (
               <SidebarMenuItem key={item.title}>
@@ -46,7 +50,7 @@ export function Main({ items }: MainProps) {
                   asChild
                 >
                   <RouterLink to={item.path} onClick={handleMenuClick}>
-                    <item.icon />
+                    <Icon className={isPending ? "animate-spin" : undefined} />
                     <span>{item.title}</span>
                   </RouterLink>
                 </SidebarMenuButton>
@@ -58,3 +62,5 @@ export function Main({ items }: MainProps) {
     </SidebarGroup>
   )
 }
+
+
