@@ -77,6 +77,7 @@ vi.mock("@/lib/icons", () => ({
   Bell: () => <span>BellIcon</span>,
   CalendarHeart: () => <span>CalendarIcon</span>,
   NotebookPen: () => <span>NotebookIcon</span>,
+  Loader2: () => <span>LoaderIcon</span>,
 }))
 
 describe("Main", () => {
@@ -166,6 +167,22 @@ describe("Main", () => {
 
     expect(dashboardButton).toHaveAttribute("data-active", "false")
     expect(contactsButton).toHaveAttribute("data-active", "true")
+  })
+
+  it("marks pending target path as pending and active during router transition", () => {
+    mockUseRouterState.mockReturnValue({
+      status: "pending",
+      location: { pathname: "/contacts" },
+      resolvedLocation: { pathname: "/" },
+    } as any)
+
+    renderWithProviders(<Main items={mockItems} />)
+
+    const contactsButton = screen.getByText("Contacts").closest("button")
+    const dashboardButton = screen.getByText("Dashboard").closest("button")
+
+    expect(contactsButton).toHaveAttribute("data-active", "true")
+    expect(dashboardButton).toHaveAttribute("data-active", "true")
   })
 
   it("does not call setOpenMobile on desktop when clicking item", async () => {
