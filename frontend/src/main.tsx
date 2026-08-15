@@ -23,7 +23,7 @@ const PwaInstallPrompt = lazy(() =>
 )
 const isE2E = import.meta.env.VITE_E2E === "true"
 
-OpenAPI.BASE = import.meta.env.VITE_API_URL
+OpenAPI.BASE = import.meta.env.VITE_API_URL || ""
 OpenAPI.WITH_CREDENTIALS = true
 OpenAPI.TOKEN = async () => {
   return localStorage.getItem("access_token") || ""
