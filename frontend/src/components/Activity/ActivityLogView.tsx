@@ -31,7 +31,8 @@ function changedFields(changes: Record<string, unknown> | null): string[] {
 }
 
 function ActivityRow({ entry }: { entry: ActivityLogPublic }) {
-  const tone = ACTION_TONE[entry.action.toLowerCase()] ?? "bg-muted text-foreground"
+  const tone =
+    ACTION_TONE[entry.action.toLowerCase()] ?? "bg-muted text-foreground"
   const fields = changedFields(entry.changes_json)
   const isContact = entry.entity_type === "contact"
 
@@ -87,7 +88,9 @@ export function ActivityLogView() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="font-display text-4xl font-bold tracking-tight">Activity</h1>
+        <h1 className="font-display text-4xl font-bold tracking-tight">
+          Activity
+        </h1>
         <p className="text-muted-foreground">
           A running log of changes across your contacts and records.
         </p>
@@ -96,7 +99,6 @@ export function ActivityLogView() {
       {isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 8 }).map((_, i) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton list
             <Skeleton key={i} className="h-12 w-full" />
           ))}
         </div>

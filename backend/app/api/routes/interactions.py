@@ -283,24 +283,33 @@ def confirm_draft_interaction(
 @router.post("/{interaction_id}/restore")
 def restore_interaction(
     session: SessionDep,
+    current_user: CurrentUser,
     interaction_id: uuid.UUID,
 ) -> Any:
     """Restore a soft-deleted interaction by clearing deleted_at."""
-    from sqlalchemy import text, update
-
-    # Bypass the soft-delete filter
-    result = session.exec(
-        text("SELECT id FROM interaction WHERE id = :id AND deleted_at IS NOT NULL"),
-        params={"id": str(interaction_id)},
-    ).first()
-    if result is None:
+    interaction = session.get(Interaction, interaction_id)
+    if interaction is None or interaction.deleted_at is None:
         raise HTTPException(
             status_code=404, detail="Interaction not found or not deleted"
         )
-    session.exec(
-        update(Interaction)
-        .where(Interaction.id == interaction_id)
-        .values(deleted_at=None)
+
+    visible_ids = _resolve_visible_contact_ids(session, current_user)
+    attendee_ids = set(
+        session.exec(
+            select(InteractionAttendee.contact_id).where(
+                InteractionAttendee.interaction_id == interaction_id
+            )
+        ).all()
     )
+    if not (attendee_ids & visible_ids):
+        raise HTTPException(
+            status_code=404, detail="Interaction not found or not deleted"
+        )
+
+    interaction.deleted_at = None
+    session.add(interaction)
+    session.flush()
+    for aid in attendee_ids:
+        recompute_last_contacted_at(session=session, contact_id=aid)
     session.commit()
     return {"ok": True}

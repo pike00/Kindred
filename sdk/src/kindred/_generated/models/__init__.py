@@ -10,6 +10,8 @@ from .addresses_geocode_missing_coordinates_response_addresses_geocode_missing_c
     AddressesGeocodeMissingCoordinatesResponseAddressesGeocodeMissingCoordinates,
 )
 from .addresses_public import AddressesPublic
+from .all_contacts_share_public import AllContactsSharePublic
+from .all_contacts_shares_public import AllContactsSharesPublic
 from .api_key_create import APIKeyCreate
 from .api_key_created import APIKeyCreated
 from .api_key_public import APIKeyPublic
@@ -43,6 +45,7 @@ from .contact_geo_point import ContactGeoPoint
 from .contact_heatmap_response import ContactHeatmapResponse
 from .contact_public import ContactPublic
 from .contact_public_imessage_profile_type_0 import ContactPublicImessageProfileType0
+from .contact_share_in import ContactShareIn
 from .contact_source import ContactSource
 from .contact_stage_event_create import ContactStageEventCreate
 from .contact_stage_event_public import ContactStageEventPublic
@@ -226,6 +229,8 @@ __all__ = (
     "AddressesPublic",
     "AddressPublic",
     "AddressUpdate",
+    "AllContactsSharePublic",
+    "AllContactsSharesPublic",
     "APIKeyCreate",
     "APIKeyCreated",
     "APIKeyPublic",
@@ -262,6 +267,7 @@ __all__ = (
     "ContactsDeleteContactResponseContactsDeleteContact",
     "ContactsGeoResponse",
     "ContactsGetKanbanBoardResponseContactsGetKanbanBoard",
+    "ContactShareIn",
     "ContactSource",
     "ContactsPublic",
     "ContactStageEventCreate",

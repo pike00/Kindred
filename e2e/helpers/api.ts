@@ -1,7 +1,6 @@
 import type { APIRequestContext } from "@playwright/test"
-
-const BASE_URL = process.env.E2E_BASE_URL ?? "http://localhost:5173"
-export const API_URL = BASE_URL.replace(":5173", ":8001")
+export { API_URL } from "./urls.js"
+import { API_URL } from "./urls.js"
 
 export async function getToken(request: APIRequestContext): Promise<string> {
   let lastErr: unknown = null
@@ -56,6 +55,61 @@ export async function createContact(
   return res.json()
 }
 
+type ContactSummary = { id: string; first_name: string; last_name?: string }
+
+/**
+ * Create a contact without duplicating it when the response is lost after a
+ * successful POST. This is used by suite setup, where a retry must first look
+ * up contacts created by the previous attempt and return every new ID for
+ * cleanup.
+ */
+export async function createContactWithRecovery(
+  request: APIRequestContext,
+  token: string,
+  data: { first_name: string; last_name?: string },
+) {
+  const matches = (contact: ContactSummary) =>
+    contact.first_name === data.first_name &&
+    (contact.last_name ?? "") === (data.last_name ?? "")
+  const existingIds = new Set((await listContacts(request, token)).filter(matches).map((c) => c.id))
+  let lastErr: unknown
+
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const res = await request.post(`${API_URL}/api/v1/contacts/`, {
+        headers: authHeaders(token),
+        data,
+      })
+      const text = await res.text()
+      if (!res.ok()) {
+        throw new Error(`createContact failed ${res.status()}: ${text.slice(0, 120)}`)
+      }
+      if (!text) {
+        throw new Error(`createContact returned an empty body, status=${res.status()}`)
+      }
+      const contact = JSON.parse(text) as ContactSummary
+      return {
+        contact,
+        newlyCreatedIds: [contact.id],
+      }
+    } catch (error) {
+      lastErr = error
+      const newlyCreated = (await listContacts(request, token)).filter(
+        (contact) => matches(contact) && !existingIds.has(contact.id),
+      )
+      if (newlyCreated.length > 0) {
+        return {
+          contact: newlyCreated[0],
+          newlyCreatedIds: newlyCreated.map((contact) => contact.id),
+        }
+      }
+      if (attempt < 3) await new Promise((resolve) => setTimeout(resolve, 1000 * attempt))
+    }
+  }
+
+  throw lastErr
+}
+
 export async function deleteContact(
   request: APIRequestContext,
   token: string,
@@ -74,7 +128,7 @@ export async function listContacts(
     headers: authHeaders(token),
   })
   const body = await res.json()
-  return body.data as Array<{ id: string; first_name: string; last_name?: string }>
+  return body.data as ContactSummary[]
 }
 
 export async function deleteAllContacts(
@@ -125,6 +179,35 @@ export async function deleteAllTags(
   await Promise.all(tags.map((t) => deleteTag(request, token, t.id)))
 }
 
+// ─── Custom field definitions ──────────────────────────────────────────────
+
+export async function createCustomFieldDefinition(
+  request: APIRequestContext,
+  token: string,
+  data: { name: string; field_type?: string },
+) {
+  const res = await request.post(`${API_URL}/api/v1/custom-fields/definitions/`, {
+    headers: authHeaders(token),
+    data: { field_type: "text", ...data },
+  })
+  if (!res.ok()) {
+    throw new Error(
+      `createCustomFieldDefinition failed ${res.status()}: ${await res.text()}`,
+    )
+  }
+  return res.json()
+}
+
+export async function deleteCustomFieldDefinition(
+  request: APIRequestContext,
+  token: string,
+  definitionId: string,
+) {
+  await request.delete(`${API_URL}/api/v1/custom-fields/definitions/${definitionId}`, {
+    headers: authHeaders(token),
+  })
+}
+
 export async function updateTag(
   request: APIRequestContext,
   token: string,
@@ -152,7 +235,6 @@ export async function createInteraction(
     channel?: string
     notes?: string
     occurred_at?: string
-    mood?: string | null
     duration_minutes?: number | null
     location_label?: string | null
     is_draft?: boolean
@@ -165,7 +247,6 @@ export async function createInteraction(
     occurred_at: data.occurred_at ?? new Date().toISOString(),
     notes: data.notes ?? null,
   }
-  if (data.mood !== undefined) payload.mood = data.mood
   if (data.duration_minutes !== undefined) payload.duration_minutes = data.duration_minutes
   if (data.location_label !== undefined) payload.location_label = data.location_label
   if (data.is_draft !== undefined) payload.is_draft = data.is_draft
@@ -230,80 +311,6 @@ export async function deleteAllInteractions(
 ) {
   const items = await listInteractions(request, token)
   await Promise.all(items.map((i) => deleteInteraction(request, token, i.id)))
-}
-
-// ─── Journal ─────────────────────────────────────────────────────────────────
-
-export async function createJournalEntry(
-  request: APIRequestContext,
-  token: string,
-  data: { body?: string; title?: string; mood?: string | null; entry_date?: string },
-) {
-  // Legacy callers pass `title`; map to body.
-  const body = data.body ?? data.title ?? ""
-  const payload: Record<string, unknown> = {
-    body,
-    entry_date: data.entry_date ?? new Date().toISOString().slice(0, 10),
-  }
-  if (data.mood !== undefined) payload.mood = data.mood
-
-  const res = await request.post(`${API_URL}/api/v1/journal/`, {
-    headers: authHeaders(token),
-    data: payload,
-  })
-  if (!res.ok()) {
-    throw new Error(
-      `createJournalEntry failed ${res.status()}: ${await res.text()}`,
-    )
-  }
-  return res.json()
-}
-
-export async function updateJournalEntry(
-  request: APIRequestContext,
-  token: string,
-  entryId: string,
-  data: Record<string, unknown>,
-) {
-  const res = await request.patch(`${API_URL}/api/v1/journal/${entryId}`, {
-    headers: authHeaders(token),
-    data,
-  })
-  if (!res.ok()) {
-    throw new Error(
-      `updateJournalEntry failed ${res.status()}: ${await res.text()}`,
-    )
-  }
-  return res.json()
-}
-
-export async function deleteJournalEntry(
-  request: APIRequestContext,
-  token: string,
-  entryId: string,
-) {
-  await request.delete(`${API_URL}/api/v1/journal/${entryId}`, {
-    headers: authHeaders(token),
-  })
-}
-
-export async function listJournalEntries(
-  request: APIRequestContext,
-  token: string,
-) {
-  const res = await request.get(`${API_URL}/api/v1/journal/?limit=500`, {
-    headers: authHeaders(token),
-  })
-  const body = await res.json()
-  return body.data as Array<{ id: string }>
-}
-
-export async function deleteAllJournalEntries(
-  request: APIRequestContext,
-  token: string,
-) {
-  const items = await listJournalEntries(request, token)
-  await Promise.all(items.map((i) => deleteJournalEntry(request, token, i.id)))
 }
 
 // ─── Reminders ───────────────────────────────────────────────────────────────

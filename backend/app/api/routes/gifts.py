@@ -40,7 +40,7 @@ def list_gifts(
     statement = (
         select(Gift, Contact.birthday, Contact.first_name, Contact.last_name)
         .join(Contact, Gift.contact_id == Contact.id)
-        .where(Gift.contact_id == contact_id)
+        .where(Gift.contact_id == contact_id, Gift.deleted_at.is_(None))
     )
     results = session.exec(statement).all()
 
@@ -112,9 +112,6 @@ def delete_gift(
     if gift is None:
         raise HTTPException(status_code=404, detail="Gift not found")
 
-    if gift.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
-
     _require_contact_visible(session, current_user, gift.contact_id)
 
     gift.deleted_at = datetime.now(timezone.utc)
@@ -126,18 +123,17 @@ def delete_gift(
 @router.post("/{gift_id}/restore")
 def restore_gift(
     session: SessionDep,
+    current_user: CurrentUser,
     gift_id: uuid.UUID,
 ) -> Any:
     """Restore a soft-deleted gift by clearing deleted_at."""
-    from sqlalchemy import text, update
-
-    result = session.exec(
-        text("SELECT id FROM gift WHERE id = :id AND deleted_at IS NOT NULL"),
-        params={"id": str(gift_id)},
-    ).first()
-    if result is None:
+    gift = session.get(Gift, gift_id)
+    if gift is None or gift.deleted_at is None:
         raise HTTPException(status_code=404, detail="Gift not found or not deleted")
-    session.exec(update(Gift).where(Gift.id == gift_id).values(deleted_at=None))
+
+    _require_contact_visible(session, current_user, gift.contact_id)
+    gift.deleted_at = None
+    session.add(gift)
     session.commit()
     return {"ok": True}
 
@@ -152,7 +148,7 @@ def get_kanban_board(
     statement = (
         select(Gift, Contact.birthday, Contact.first_name, Contact.last_name)
         .join(Contact, Gift.contact_id == Contact.id)
-        .where(Gift.owner_id == current_user.id)
+        .where(Gift.owner_id == current_user.id, Gift.deleted_at.is_(None))
     )
     results = session.exec(statement).all()
 

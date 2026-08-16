@@ -3,7 +3,7 @@ title: Stay in Touch Dashboard Widget
 status: to_review
 repos: [personal-crm]
 started: 2026-04-23
-last_updated: 2026-06-05
+last_updated: 2026-08-04
 progress: 0/6
 blocker: Communication Preferences project (do_not_contact field) must ship first; user chose full-scope prerequisite path on 2026-04-28
 next_step: After comm-prefs ships, resume brainstorm at the design-decisions checkpoint (endpoint scope=new /overdue, skip=SkipEntry table, log UI=AddInteractionDialog modal, FAB=dashboard-only)
@@ -23,6 +23,9 @@ Enrich the dashboard's overdue contacts section with visibility into how long ea
 - [ ] Wire up quick-log FAB (floating action button) on dashboard to trigger interaction log for currently selected contact
 
 ## Session Log
+
+### 2026-08-04
+- Housekeeping: Bump last_updated after repo releases and updates.
 
 ### 2026-06-05
 - Housekeeping: State reconciled during the tofix-remaining ship (v0.2.87 + v0.2.88 deployed to prod). No scope change to this project.

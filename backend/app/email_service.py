@@ -36,6 +36,7 @@ from app.models import (
     ContactFieldType,
     EmailOAuthToken,
     Interaction,
+    InteractionAttendee,
     InteractionChannel,
 )
 
@@ -167,8 +168,18 @@ def parse_email_addresses(header_val: str | None) -> list[str]:
     return addresses
 
 
+def build_gmail_contact_query(addresses: set[str]) -> str | None:
+    """Build a Gmail query matching messages from or to any contact address."""
+    normalized = sorted({address.strip().lower() for address in addresses if address.strip()})
+    if not normalized:
+        return None
+    return "{" + " ".join(f"from:{address} to:{address}" for address in normalized) + "}"
+
+
 def fetch_gmail_messages(
-    creds: Credentials, max_results: int = 50
+    creds: Credentials,
+    query: str | None = None,
+    max_results: int | None = None,
 ) -> list[dict[str, Any]]:
     """Fetch recent messages from Gmail API.
 
@@ -179,39 +190,52 @@ def fetch_gmail_messages(
 
         service = build("gmail", "v1", credentials=creds)
 
-        # List recent messages
-        result = (
-            service.users()
-            .messages()
-            .list(userId="me", maxResults=max_results, q="in:inbox OR in:sent")
-            .execute()
-        )
-        messages = result.get("messages", [])
-
         parsed = []
-        for msg in messages:
-            msg_data = (
-                service.users()
-                .messages()
-                .get(userId="me", id=msg["id"], format="metadata")
-                .execute()
+        page_token: str | None = None
+        fetched = 0
+        while True:
+            page_size = min(100, max_results - fetched) if max_results else 100
+            request = service.users().messages().list(
+                userId="me",
+                maxResults=page_size,
+                q=query,
+                pageToken=page_token,
             )
+            result = request.execute()
+            messages = result.get("messages", [])
 
-            headers = {
-                h["name"].lower(): h["value"]
-                for h in msg_data.get("payload", {}).get("headers", [])
-            }
+            for msg in messages:
+                msg_data = (
+                    service.users()
+                    .messages()
+                    .get(userId="me", id=msg["id"], format="metadata")
+                    .execute()
+                )
 
-            parsed.append(
-                {
-                    "message_id": headers.get("message-id", ""),
-                    "from": decode_email_header(headers.get("from", "")),
-                    "to": decode_email_header(headers.get("to", "")),
-                    "subject": decode_email_header(headers.get("subject", "")),
-                    "date": headers.get("date", ""),
-                    "thread_id": msg_data.get("threadId", ""),
+                headers = {
+                    h["name"].lower(): h["value"]
+                    for h in msg_data.get("payload", {}).get("headers", [])
                 }
-            )
+
+                parsed.append(
+                    {
+                        "message_id": headers.get("message-id", ""),
+                        "from": decode_email_header(headers.get("from", "")),
+                        "to": decode_email_header(headers.get("to", "")),
+                        "cc": decode_email_header(headers.get("cc", "")),
+                        "bcc": decode_email_header(headers.get("bcc", "")),
+                        "subject": decode_email_header(headers.get("subject", "")),
+                        "date": headers.get("date", ""),
+                        "thread_id": msg_data.get("threadId", ""),
+                    }
+                )
+                fetched += 1
+                if max_results and fetched >= max_results:
+                    return parsed
+
+            page_token = result.get("nextPageToken")
+            if not page_token or not messages:
+                break
 
         return parsed
     except Exception as e:
@@ -301,7 +325,12 @@ def find_contact_by_email(
 
 
 def find_contacts_for_message(
-    session: Session, owner_id: uuid.UUID, from_header: str, to_header: str
+    session: Session,
+    owner_id: uuid.UUID,
+    from_header: str,
+    to_header: str,
+    cc_header: str = "",
+    bcc_header: str = "",
 ) -> list[Contact]:
     """Find all contacts referenced in an email message.
 
@@ -310,7 +339,9 @@ def find_contacts_for_message(
     """
     from_addrs = parse_email_addresses(from_header)
     to_addrs = parse_email_addresses(to_header)
-    all_addrs = set(from_addrs + to_addrs)
+    cc_addrs = parse_email_addresses(cc_header)
+    bcc_addrs = parse_email_addresses(bcc_header)
+    all_addrs = set(from_addrs + to_addrs + cc_addrs + bcc_addrs)
 
     if not all_addrs:
         return []
@@ -347,9 +378,16 @@ def interaction_exists(
     """Check if an interaction with this Message-ID already exists for the contact."""
     if not message_id:
         return False
-    stmt = select(Interaction).where(
-        Interaction.contact_id == contact_id,
-        Interaction.message_id == message_id,
+    stmt = (
+        select(Interaction)
+        .join(
+            InteractionAttendee,
+            InteractionAttendee.interaction_id == Interaction.id,  # type: ignore[arg-type]
+        )
+        .where(
+            InteractionAttendee.contact_id == contact_id,
+            Interaction.message_id == message_id,
+        )
     )
     return session.exec(stmt).first() is not None
 
@@ -455,7 +493,19 @@ def _process_gmail(
                 f"Failed to update tokens for {token_row.email_address}: {e}"
             )
 
-    messages = fetch_gmail_messages(creds, max_results=50)
+    contact = session.get(Contact, token_row.contact_id)
+    query = None
+    if contact:
+        email_fields = session.exec(
+            select(ContactField).where(
+                ContactField.contact_id == contact.id,
+                ContactField.field_type == ContactFieldType.EMAIL,
+            )
+        ).all()
+        addresses = {field.value for field in email_fields if field.value}
+        query = build_gmail_contact_query(addresses)
+
+    messages = fetch_gmail_messages(creds, query=query)
     return _process_messages(session, owner_id, messages)
 
 
@@ -472,6 +522,8 @@ def _process_messages(
             owner_id,
             msg_data.get("from", ""),
             msg_data.get("to", ""),
+            msg_data.get("cc", ""),
+            msg_data.get("bcc", ""),
         )
         for contact in contacts:
             if not contact.auto_log_email:

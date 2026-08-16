@@ -86,9 +86,11 @@ describe("CommandPaletteContext", () => {
         return <div>Test</div>
       }
 
+      const spy = vi.spyOn(console, "error").mockImplementation(() => {})
       expect(() => {
         render(<TestComponentWithoutProvider />)
       }).toThrow("useCommandPalette must be used inside <CommandPaletteProvider>")
+      spy.mockRestore()
     })
 
     it("throws correct error message", () => {
@@ -97,9 +99,11 @@ describe("CommandPaletteContext", () => {
         return <div>Test</div>
       }
 
+      const spy = vi.spyOn(console, "error").mockImplementation(() => {})
       expect(() => {
         render(<TestComponentWithoutProvider />)
       }).toThrow("useCommandPalette must be used inside <CommandPaletteProvider>")
+      spy.mockRestore()
     })
   })
 

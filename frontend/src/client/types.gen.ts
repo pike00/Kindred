@@ -129,6 +129,17 @@ export type AddressUpdate = {
     longitude?: (number | null);
 };
 
+export type AllContactsSharePublic = {
+    grantee_id: string;
+    grantee_email: string;
+    created_at: string;
+};
+
+export type AllContactsSharesPublic = {
+    data: Array<AllContactsSharePublic>;
+    count: number;
+};
+
 export type APIKeyCreate = {
     name: string;
     can_impersonate?: Array<(string)>;
@@ -280,9 +291,9 @@ export type CommunicationPreferenceUpdate = {
 
 export type ContactCreate = {
     /**
-     * Given name; required.
+     * Given name, if known.
      */
-    first_name: string;
+    first_name?: string;
     /**
      * Family name.
      */
@@ -343,6 +354,10 @@ export type ContactCreate = {
      * Target days between interactions; drives losing-touch cadence.
      */
     contact_frequency_days?: (number | null);
+    /**
+     * Automatically create interactions from matching email headers.
+     */
+    auto_log_email?: boolean;
     /**
      * If True, suppress all contact reminders and actions for this contact.
      */
@@ -458,9 +473,6 @@ export type ContactHeatmapResponse = {
 };
 
 export type ContactPublic = {
-    /**
-     * Given name; required.
-     */
     first_name: string;
     /**
      * Family name.
@@ -519,6 +531,10 @@ export type ContactPublic = {
      */
     deceased_at?: (string | null);
     contact_frequency_days?: (number | null);
+    /**
+     * Automatically create interactions from matching email headers.
+     */
+    auto_log_email?: boolean;
     do_not_contact?: boolean;
     do_not_contact_reason?: (string | null);
     /**
@@ -563,6 +579,11 @@ export type ContactPublic = {
 export type ContactsGeoResponse = {
     points: Array<ContactGeoPoint>;
     count: number;
+};
+
+export type ContactShareIn = {
+    grantee_id?: (string | null);
+    grantee_email?: (string | null);
 };
 
 /**
@@ -640,6 +661,7 @@ export type ContactUpdate = {
     is_deceased?: (boolean | null);
     deceased_at?: (string | null);
     contact_frequency_days?: (number | null);
+    auto_log_email?: (boolean | null);
     stage?: (string | null);
     do_not_contact?: (boolean | null);
     do_not_contact_reason?: (string | null);
@@ -959,6 +981,10 @@ export type GiftPublic = {
     contact_id: string;
     created_at: string;
     deleted_at?: (string | null);
+    contact_birthday?: (string | null);
+    contact_first_name?: (string | null);
+    contact_last_name?: (string | null);
+    days_until_occasion?: (number | null);
 };
 
 export type GiftsPublic = {
@@ -1442,9 +1468,6 @@ export type OrganizationUpdate = {
 };
 
 export type OverdueContactPublic = {
-    /**
-     * Given name; required.
-     */
     first_name: string;
     /**
      * Family name.
@@ -1503,6 +1526,10 @@ export type OverdueContactPublic = {
      */
     deceased_at?: (string | null);
     contact_frequency_days?: (number | null);
+    /**
+     * Automatically create interactions from matching email headers.
+     */
+    auto_log_email?: boolean;
     do_not_contact?: boolean;
     do_not_contact_reason?: (string | null);
     /**
@@ -2431,6 +2458,20 @@ export type ContactsGetImessageProfileData = {
 };
 
 export type ContactsGetImessageProfileResponse = (IMessageProfileResponse);
+
+export type ContactSharesListContactSharesResponse = (AllContactsSharesPublic);
+
+export type ContactSharesCreateContactShareData = {
+    requestBody: ContactShareIn;
+};
+
+export type ContactSharesCreateContactShareResponse = (AllContactsSharePublic);
+
+export type ContactSharesDeleteContactShareData = {
+    granteeId: string;
+};
+
+export type ContactSharesDeleteContactShareResponse = (Message);
 
 export type ContactStageEventsCreateContactStageEventData = {
     contactId: string;

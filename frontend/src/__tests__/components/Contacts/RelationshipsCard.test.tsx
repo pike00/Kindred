@@ -199,6 +199,31 @@ describe("RelationshipsCard", () => {
     mockGetContactHousehold.mockResolvedValue({ data: [] })
   })
 
+  it("renders as a labeled section when embedded", async () => {
+    mockListContacts.mockResolvedValue({ data: [] })
+    mockListRelationships.mockResolvedValue({ data: [] })
+    const EmbeddedRelationshipsCard =
+      RelationshipsCard as React.ComponentType<{
+        contactId: string
+        contactName: string
+        embedded: boolean
+      }>
+
+    renderWithProviders(
+      <EmbeddedRelationshipsCard
+        contactId={contactId}
+        contactName={contactName}
+        embedded={true}
+      />,
+    )
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("region", { name: "People" }),
+      ).toBeInTheDocument()
+    })
+  })
+
   describe("RelationshipsCard main component", () => {
     it("shows loading skeleton when relationships are loading", () => {
       mockListContacts.mockResolvedValue({ data: [] })

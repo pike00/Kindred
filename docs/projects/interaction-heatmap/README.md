@@ -3,7 +3,7 @@ title: Interaction Heatmap per Contact
 status: to_review
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-06-05
+last_updated: 2026-08-04
 next_step: Implement /contacts/{id}/heatmap endpoint returning week buckets grouped by ISO week
 ---
 
@@ -20,6 +20,9 @@ Display a GitHub-style 52-week grid on the contact detail page, with each cell's
 - [ ] Intensity color scale (white -> light gray -> medium gray -> dark gray -> black)
 
 ## Session Log
+
+### 2026-08-04
+- Housekeeping: Bump last_updated after repo releases and updates.
 
 ### 2026-06-05
 - Housekeeping: State reconciled during the tofix-remaining ship (v0.2.87 + v0.2.88 deployed to prod). No scope change to this project.

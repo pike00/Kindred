@@ -6,6 +6,7 @@ from app.api.routes import (
     api_keys,
     calendar,
     communication_preferences,
+    contact_shares,
     contact_fields,
     contact_pdf,
     contact_stage_events,
@@ -67,6 +68,7 @@ api_router.include_router(contacts.router)
 api_router.include_router(contact_stage_events.router)
 api_router.include_router(tags.router)
 api_router.include_router(tag_shares.router)
+api_router.include_router(contact_shares.router)
 api_router.include_router(saved_filters.router)
 api_router.include_router(contact_fields.router)
 api_router.include_router(addresses.router)

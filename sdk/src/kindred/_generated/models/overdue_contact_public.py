@@ -29,7 +29,7 @@ T = TypeVar("T", bound="OverdueContactPublic")
 class OverdueContactPublic:
     """
     Attributes:
-        first_name (str): Given name; required.
+        first_name (str):
         id (UUID):
         avatar_url (None | str):
         last_contacted_at (datetime.datetime | None):
@@ -50,6 +50,7 @@ class OverdueContactPublic:
         is_deceased (bool | Unset): Marks the contact as deceased. Default: False.
         deceased_at (datetime.date | None | Unset): Date the contact passed away.
         contact_frequency_days (int | None | Unset):
+        auto_log_email (bool | Unset): Automatically create interactions from matching email headers. Default: False.
         do_not_contact (bool | Unset):  Default: False.
         do_not_contact_reason (None | str | Unset):
         stage (None | str | Unset): Kanban stage like Active, Dormant, Lost.
@@ -88,6 +89,7 @@ class OverdueContactPublic:
     is_deceased: bool | Unset = False
     deceased_at: datetime.date | None | Unset = UNSET
     contact_frequency_days: int | None | Unset = UNSET
+    auto_log_email: bool | Unset = False
     do_not_contact: bool | Unset = False
     do_not_contact_reason: None | str | Unset = UNSET
     stage: None | str | Unset = UNSET
@@ -210,6 +212,8 @@ class OverdueContactPublic:
             contact_frequency_days = UNSET
         else:
             contact_frequency_days = self.contact_frequency_days
+
+        auto_log_email = self.auto_log_email
 
         do_not_contact = self.do_not_contact
 
@@ -345,6 +349,8 @@ class OverdueContactPublic:
             field_dict["deceased_at"] = deceased_at
         if contact_frequency_days is not UNSET:
             field_dict["contact_frequency_days"] = contact_frequency_days
+        if auto_log_email is not UNSET:
+            field_dict["auto_log_email"] = auto_log_email
         if do_not_contact is not UNSET:
             field_dict["do_not_contact"] = do_not_contact
         if do_not_contact_reason is not UNSET:
@@ -547,6 +553,8 @@ class OverdueContactPublic:
 
         contact_frequency_days = _parse_contact_frequency_days(d.pop("contact_frequency_days", UNSET))
 
+        auto_log_email = d.pop("auto_log_email", UNSET)
+
         do_not_contact = d.pop("do_not_contact", UNSET)
 
         def _parse_do_not_contact_reason(data: object) -> None | str | Unset:
@@ -719,6 +727,7 @@ class OverdueContactPublic:
             is_deceased=is_deceased,
             deceased_at=deceased_at,
             contact_frequency_days=contact_frequency_days,
+            auto_log_email=auto_log_email,
             do_not_contact=do_not_contact,
             do_not_contact_reason=do_not_contact_reason,
             stage=stage,

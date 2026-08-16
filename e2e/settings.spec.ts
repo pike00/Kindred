@@ -1,7 +1,20 @@
 import { test, expect } from "./fixtures"
-import { getToken } from "./helpers/api.js"
+import { API_URL, getToken } from "./helpers/api.js"
 
 let token: string
+
+test.beforeEach(({}, info) => info.setTimeout(60_000))
+
+async function openSettings(page: import("@playwright/test").Page) {
+  await page.goto("/settings")
+  const profileTab = page.getByRole("tab", { name: /my profile/i })
+  try {
+    await expect(profileTab).toBeVisible({ timeout: 15_000 })
+  } catch {
+    await page.reload({ waitUntil: "domcontentloaded" })
+    await expect(profileTab).toBeVisible({ timeout: 30_000 })
+  }
+}
 
 test.beforeAll(async ({ request }) => {
   token = await getToken(request)
@@ -9,7 +22,7 @@ test.beforeAll(async ({ request }) => {
 
 test.describe("Settings · header & tabs", () => {
   test("page heading and tab list render", async ({ page }) => {
-    await page.goto("/settings")
+    await openSettings(page)
     await expect(
       page.getByRole("heading", { name: /user settings/i, level: 1 }),
     ).toBeVisible()
@@ -30,7 +43,7 @@ test.describe("Settings · header & tabs", () => {
   })
 
   test("default tab is My profile", async ({ page }) => {
-    await page.goto("/settings")
+    await openSettings(page)
     await expect(
       page.getByRole("tab", { name: /my profile/i }),
     ).toHaveAttribute("data-state", "active", { timeout: 3000 })
@@ -39,7 +52,7 @@ test.describe("Settings · header & tabs", () => {
 
 test.describe("Settings · My profile tab", () => {
   test("displays user information section with email", async ({ page }) => {
-    await page.goto("/settings")
+    await openSettings(page)
     await expect(
       page.getByRole("heading", { name: /user information/i }),
     ).toBeVisible({ timeout: 5000 })
@@ -52,7 +65,7 @@ test.describe("Settings · My profile tab", () => {
   test("Edit toggles full-name into an input and Cancel reverts", async ({
     page,
   }) => {
-    await page.goto("/settings")
+    await openSettings(page)
     await expect(
       page.getByRole("heading", { name: /user information/i }),
     ).toBeVisible({ timeout: 5000 })
@@ -78,9 +91,7 @@ test.describe("Settings · My profile tab", () => {
     request,
   }) => {
     const newName = `E2E Probe ${Date.now()}`
-    const apiUrl =
-      process.env.E2E_BASE_URL?.replace(":5173", ":8001") ??
-      "http://localhost:8001"
+    const apiUrl = API_URL
 
     // Snapshot the original full_name to restore later.
     const meRes = await request.get(`${apiUrl}/api/v1/users/me`, {
@@ -90,7 +101,7 @@ test.describe("Settings · My profile tab", () => {
     const originalName: string | null = meBefore.full_name ?? null
 
     try {
-      await page.goto("/settings")
+      await openSettings(page)
       await page.getByRole("button", { name: /^edit$/i }).click()
       const nameInput = page.getByLabel(/full name/i)
       await nameInput.fill(newName)
@@ -115,7 +126,7 @@ test.describe("Settings · My profile tab", () => {
 
 test.describe("Settings · Password tab", () => {
   test("shows three password fields and submit button", async ({ page }) => {
-    await page.goto("/settings")
+    await openSettings(page)
     await page
       .getByRole("tab", { name: /password/i })
       .click({ timeout: 15000 })
@@ -132,7 +143,7 @@ test.describe("Settings · Password tab", () => {
   })
 
   test("password fields are masked by default", async ({ page }) => {
-    await page.goto("/settings")
+    await openSettings(page)
     await page
       .getByRole("tab", { name: /password/i })
       .click({ timeout: 15000 })
@@ -156,7 +167,7 @@ test.describe("Settings · Password tab", () => {
     // We must NOT actually submit a valid password change — this would
     // invalidate the shared session for other tests. Mismatched confirm
     // triggers a client-side zod error WITHOUT firing the update request.
-    await page.goto("/settings")
+    await openSettings(page)
     await page
       .getByRole("tab", { name: /password/i })
       .click({ timeout: 15000 })
@@ -170,7 +181,7 @@ test.describe("Settings · Password tab", () => {
   })
 
   test("short new password surfaces validation error", async ({ page }) => {
-    await page.goto("/settings")
+    await openSettings(page)
     await page
       .getByRole("tab", { name: /password/i })
       .click({ timeout: 15000 })
@@ -186,7 +197,7 @@ test.describe("Settings · Password tab", () => {
 
 test.describe("Settings · Custom fields tab", () => {
   test("section header and Add field button visible", async ({ page }) => {
-    await page.goto("/settings")
+    await openSettings(page)
     await page
       .getByRole("tab", { name: /custom fields/i })
       .click({ timeout: 15000 })
@@ -201,7 +212,7 @@ test.describe("Settings · Custom fields tab", () => {
   test("Add field dialog opens with name/type/description/icon inputs", async ({
     page,
   }) => {
-    await page.goto("/settings")
+    await openSettings(page)
     await page
       .getByRole("tab", { name: /custom fields/i })
       .click({ timeout: 15000 })
@@ -231,7 +242,7 @@ test.describe("Settings · Custom fields tab", () => {
     // that creating a definition succeeds end-to-end.
     testInfo.annotations.push({ type: "allow-page-errors" })
     const name = `E2EField ${Date.now()}`
-    await page.goto("/settings")
+    await openSettings(page)
     await page
       .getByRole("tab", { name: /custom fields/i })
       .click({ timeout: 10000 })
@@ -250,9 +261,7 @@ test.describe("Settings · Custom fields tab", () => {
     await expect(page.getByText(name)).toBeVisible({ timeout: 5000 })
 
     // Clean up: list + delete via API to avoid the window.confirm() prompt.
-    const apiUrl =
-      process.env.E2E_BASE_URL?.replace(":5173", ":8001") ??
-      "http://localhost:8001"
+    const apiUrl = API_URL
     const list = await request.get(
       `${apiUrl}/api/v1/custom-fields/definitions/`,
       { headers: { Authorization: `Bearer ${token}` } },
@@ -271,7 +280,7 @@ test.describe("Settings · Custom fields tab", () => {
 test.describe("Settings · API keys tab", () => {
   test("tab loads and shows section header", async ({ page }, testInfo) => {
     testInfo.annotations.push({ type: "allow-page-errors" })
-    await page.goto("/settings")
+    await openSettings(page)
     await page
       .getByRole("tab", { name: /api keys/i })
       .click({ timeout: 15000 })

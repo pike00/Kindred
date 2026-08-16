@@ -11,6 +11,7 @@ from app.core.security import get_password_hash, verify_password
 
 # Import relationship-specific CRUD functions
 from app.models import (
+    AllContactsShare,
     Address,
     AddressCreate,
     APIKey,
@@ -463,7 +464,7 @@ def update_saved_filter(
 
 
 def visible_contact_ids(user: User, *, include_deleted: bool = False) -> Any:
-    """Subquery: contact IDs visible to user (owned OR tag-shared).
+    """Subquery: contact IDs visible to user (owned OR tag-shared OR owner-shared).
 
     Soft-deleted contacts (`deleted_at` set) are hidden by default. Pass
     ``include_deleted=True`` to surface them — used by the trash/restore flow.
@@ -475,10 +476,16 @@ def visible_contact_ids(user: User, *, include_deleted: bool = False) -> Any:
         .join(Contact, Contact.id == ContactTag.contact_id)  # type: ignore[arg-type]
         .where(TagShare.grantee_id == user.id)
     )
+    all_shared = (
+        select(Contact.id)
+        .join(AllContactsShare, AllContactsShare.owner_id == Contact.owner_id)  # type: ignore[arg-type]
+        .where(AllContactsShare.grantee_id == user.id)
+    )
     if not include_deleted:
         owned = owned.where(Contact.deleted_at.is_(None))
         shared = shared.where(Contact.deleted_at.is_(None))
-    return union(owned, shared)
+        all_shared = all_shared.where(Contact.deleted_at.is_(None))
+    return union(owned, shared, all_shared)
 
 
 def contact_visible(

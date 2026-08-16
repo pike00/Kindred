@@ -344,19 +344,19 @@ def delete_reminder(
 @router.post("/{reminder_id}/restore")
 def restore_reminder(
     session: SessionDep,
+    current_user: CurrentUser,
     reminder_id: uuid.UUID,
 ) -> Any:
     """Restore a soft-deleted reminder by clearing deleted_at."""
-    from sqlalchemy import text, update
-
-    result = session.exec(
-        text("SELECT id FROM reminder WHERE id = :id AND deleted_at IS NOT NULL"),
-        params={"id": str(reminder_id)},
-    ).first()
-    if result is None:
+    reminder = session.get(Reminder, reminder_id)
+    if (
+        reminder is None
+        or reminder.deleted_at is None
+        or not _reminder_accessible(current_user, reminder, session)
+    ):
         raise HTTPException(status_code=404, detail="Reminder not found or not deleted")
-    session.exec(
-        update(Reminder).where(Reminder.id == reminder_id).values(deleted_at=None)
-    )
+
+    reminder.deleted_at = None
+    session.add(reminder)
     session.commit()
     return Ok()

@@ -518,14 +518,51 @@ class TagSharesPublic(SQLModel):
     count: int
 
 
+# ─── AllContactsShare (grant access to all of an owner's contacts) ───────────
+
+
+class AllContactsShare(SQLModel, table=True):
+    """Grants another user access to all current and future contacts by owner."""
+
+    __tablename__ = "all_contacts_share"
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id",
+        primary_key=True,
+        ondelete="CASCADE",
+        description="Grantor whose contacts are being shared; cascades on delete.",
+    )
+    grantee_id: uuid.UUID = Field(
+        foreign_key="user.id",
+        primary_key=True,
+        ondelete="CASCADE",
+        description="User granted access; cascades on delete.",
+    )
+    created_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+        description="When the all-contacts share was granted (UTC).",
+    )
+
+
+class AllContactsSharePublic(SQLModel):
+    grantee_id: uuid.UUID
+    grantee_email: str
+    created_at: datetime
+
+
+class AllContactsSharesPublic(SQLModel):
+    data: list[AllContactsSharePublic]
+    count: int
+
+
 # ─── Contact ─────────────────────────────────────────────────────────────────
 
 
 class ContactBase(SQLModel):
     first_name: str = Field(
-        min_length=1,
+        default="",
         max_length=255,
-        description="Given name; required.",
+        description="Given name, if known.",
     )
     last_name: str | None = Field(
         default=None,
@@ -598,6 +635,10 @@ class ContactBase(SQLModel):
         le=3650,
         description="Target days between interactions; drives losing-touch cadence.",
     )
+    auto_log_email: bool = Field(
+        default=False,
+        description="Automatically create interactions from matching email headers.",
+    )
 
     do_not_contact: bool = Field(
         default=False,
@@ -640,7 +681,7 @@ class ContactCreate(ContactBase):
 
 
 class ContactUpdate(SQLModel):
-    first_name: str | None = Field(default=None, min_length=1, max_length=255)
+    first_name: str | None = Field(default=None, max_length=255)
     last_name: str | None = None
     middle_name: str | None = None
     prefix: str | None = None
@@ -656,6 +697,7 @@ class ContactUpdate(SQLModel):
     is_deceased: bool | None = None
     deceased_at: date | None = None
     contact_frequency_days: int | None = None
+    auto_log_email: bool | None = None
     stage: str | None = None
     do_not_contact: bool | None = None
     do_not_contact_reason: str | None = None
@@ -825,6 +867,8 @@ class ContactStageEventsPublic(SQLModel):
 
 
 class ContactPublic(ContactBase):
+    # Database rows always have a string value, even when the given name is blank.
+    first_name: str
     id: uuid.UUID
     avatar_url: str | None
     last_contacted_at: datetime | None
@@ -1961,6 +2005,10 @@ class GiftPublic(GiftBase):
     contact_id: uuid.UUID
     created_at: datetime
     deleted_at: datetime | None = None
+    contact_birthday: date | None = None
+    contact_first_name: str | None = None
+    contact_last_name: str | None = None
+    days_until_occasion: int | None = None
 
 
 class GiftsPublic(SQLModel):

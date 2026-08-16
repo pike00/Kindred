@@ -1,7 +1,7 @@
 # Personal CRM — TODOs & Planned Improvements
 
 Status: draft — review & edit freely.
-Last updated: 2026-05-16
+Last updated: 2026-08-03
 
 ## How to use this file
 
@@ -132,7 +132,7 @@ Grounded in the current schema ([backend/app/models.py](backend/app/models.py)) 
 
 50. **Activity log view** `[ui]` — `ActivityLogsService.listActivityLogs` is fully implemented (supports filtering by `entity_type`, `entity_id`, `tag_id`) but has no frontend consumer. Add to the contact detail page as a collapsible "History" section, or as a global activity feed accessible from the sidebar. The backend already scopes shared-tag visibility correctly.
 
-51. **Tag share management UI** `[ui]` — All three tag share SDK methods (`TagSharesService.createTagShare`, `listTagShares`, `deleteTagShare`) are unused. Users can't manage who they've shared tags with. Add a panel to the Tags settings or tag detail view listing active grants with a revoke button. Item 46 (scope-warning modal on the grant) builds on top of this.
+51. **Tag share management UI** `[ui]` — Broad all-contact sharing now has a dedicated Settings panel (`ContactSharesService` is in use), so the remaining gap is tag-share management specifically. `TagSharesService.createTagShare`, `listTagShares`, and `deleteTagShare` still have no UI for listing and revoking active per-tag grants. Add that panel on the Tags settings or tag detail view; item 46 (scope-warning modal on the grant) builds on top of this.
 
 52. **Reminder snooze analytics** `[ui]` — Three backend endpoints surface snooze patterns but are uncalled: `RemindersService.getSnoozeHistory` (per-reminder log), `getSnoozeStats` (aggregate counts), `getChronicSnoozers` (contacts you keep deferring). Surface on the reminders list or contact detail page — "you've snoozed calling Mom 4 times" is a meaningful signal for the stay-in-touch workflow.
 

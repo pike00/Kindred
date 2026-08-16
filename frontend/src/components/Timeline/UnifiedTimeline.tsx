@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { format, isWithinInterval, parseISO } from "date-fns"
 import { useMemo, useState } from "react"
 
@@ -16,24 +16,41 @@ import {
   LifeEventsService,
   NotesService,
 } from "@/client"
+import {
+  AddLifeEventDialog,
+  EditLifeEventDialog,
+} from "@/components/Contacts/LifeEventsCard"
 import { MentionText } from "@/components/Mentions/MentionText"
+import { MentionTextarea } from "@/components/Mentions/MentionTextarea"
+import { QuickCapture } from "@/components/Notes/NotesCard"
+import { TimelineItemActions } from "@/components/Timeline/TimelineItemActions"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { LoadingButton } from "@/components/ui/loading-button"
 import { Skeleton } from "@/components/ui/skeleton"
+import useCustomToast from "@/hooks/useCustomToast"
 import {
   CalendarHeart,
+  Check,
   Clock,
   HeartHandshake,
   type LucideIcon,
   MessagesSquare,
   NotebookPen,
+  Pencil,
+  X,
 } from "@/lib/icons"
 import { cn, formatDateWithRelative } from "@/lib/utils"
 
-type TimelineEventType = "interaction" | "note" | "gift" | "life_event" | "debt"
+export type TimelineEventType =
+  | "interaction"
+  | "note"
+  | "gift"
+  | "life_event"
+  | "debt"
 
-type TimelineEvent =
+export type TimelineEvent =
   | {
       type: "interaction"
       id: string
@@ -236,14 +253,24 @@ export function UnifiedTimeline({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Clock className="size-4" /> Timeline
-          {!isLoading && events.length > 0 && (
-            <span className="text-muted-foreground font-normal">
-              ({filtered.length})
-            </span>
-          )}
-        </CardTitle>
+        <div className="flex items-center justify-between gap-3">
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="size-4" /> Timeline
+            {!isLoading && events.length > 0 && (
+              <span className="text-muted-foreground font-normal">
+                ({filtered.length})
+              </span>
+            )}
+          </CardTitle>
+          <AddLifeEventDialog
+            contactId={contactId}
+            trigger={
+              <Button variant="outline" size="sm">
+                <CalendarHeart className="mr-1 size-3.5" /> Add life event
+              </Button>
+            }
+          />
+        </div>
         {startDate && endDate && (
           <p className="text-xs text-muted-foreground">
             Showing events from {format(parseISO(startDate), "MMM d")} -{" "}
@@ -273,7 +300,8 @@ export function UnifiedTimeline({
           })}
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-5">
+        <QuickCapture contactId={contactId} />
         {isLoading ? (
           <div className="space-y-3">
             <Skeleton className="h-6 w-3/4" />
@@ -283,7 +311,7 @@ export function UnifiedTimeline({
           <p className="text-sm text-muted-foreground">
             {visible.length === 0
               ? events.length === 0
-                ? "Nothing here yet. Log an interaction or capture a note to get started."
+                ? "Nothing here yet. Log an interaction, capture a note, or add a life event to get started."
                 : "All event types are filtered out."
               : "No events in the selected date range."}
           </p>
@@ -332,6 +360,7 @@ function TimelineRow({
         <div className="min-w-0 flex-1">
           <TimelineRowBody event={event} contactId={contactId} />
         </div>
+        <TimelineItemActions event={event} contactId={contactId} />
       </div>
     </li>
   )
@@ -392,10 +421,7 @@ function TimelineRowBody({
               <span>edited {formatDate(n.updated_at)}</span>
             )}
           </div>
-          <MentionText
-            text={n.body}
-            className="text-sm mt-1 block whitespace-pre-wrap"
-          />
+          <InlineTimelineNote note={n} />
         </>
       )
     }
@@ -420,20 +446,7 @@ function TimelineRowBody({
       )
     }
     case "life_event": {
-      const le = event.payload
-      return (
-        <>
-          <div className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
-            <span className="font-medium text-foreground">{le.title}</span>
-            <span>·</span>
-            <span>{formatDate(le.occurred_at)}</span>
-            <Badge variant="outline">{le.event_type}</Badge>
-          </div>
-          {le.description && (
-            <p className="text-sm mt-1 whitespace-pre-wrap">{le.description}</p>
-          )}
-        </>
-      )
+      return <TimelineLifeEvent event={event.payload} />
     }
     case "debt": {
       const d = event.payload
@@ -458,4 +471,132 @@ function TimelineRowBody({
       )
     }
   }
+}
+
+function TimelineLifeEvent({ event }: { event: LifeEventPublic }) {
+  const [editOpen, setEditOpen] = useState(false)
+
+  return (
+    <>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+          <span className="font-medium text-foreground">{event.title}</span>
+          <span>·</span>
+          <span>{formatDate(event.occurred_at)}</span>
+          <Badge variant="outline">{event.event_type}</Badge>
+        </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label={`Edit ${event.title}`}
+          onClick={() => setEditOpen(true)}
+        >
+          <Pencil className="size-3.5" />
+        </Button>
+      </div>
+      {event.description && (
+        <p className="text-sm mt-1 whitespace-pre-wrap">{event.description}</p>
+      )}
+      <EditLifeEventDialog
+        event={event}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+      />
+    </>
+  )
+}
+
+function InlineTimelineNote({ note }: { note: NotePublic }) {
+  const [isEditing, setIsEditing] = useState(false)
+  const [body, setBody] = useState(note.body)
+  const queryClient = useQueryClient()
+  const { showErrorToast } = useCustomToast()
+
+  const mutation = useMutation({
+    mutationFn: (text: string) =>
+      NotesService.updateNoteRoute({
+        noteId: note.id,
+        requestBody: { body: text },
+      }),
+    onSuccess: () => {
+      setIsEditing(false)
+      queryClient.invalidateQueries({ queryKey: ["notes", note.contact_id] })
+    },
+    onError: (err) =>
+      showErrorToast(
+        err instanceof Error ? err.message : "Failed to update note",
+      ),
+  })
+
+  const cancel = () => {
+    setBody(note.body)
+    setIsEditing(false)
+  }
+  const trimmed = body.trim()
+  const canSave = trimmed.length > 0 && !mutation.isPending
+
+  if (isEditing) {
+    return (
+      <div className="mt-2 rounded-md border bg-muted/30 p-2">
+        <MentionTextarea
+          aria-label="Edit note"
+          value={body}
+          onChange={setBody}
+          rows={3}
+          autoFocus
+          onKeyDown={(event) => {
+            if (
+              (event.metaKey || event.ctrlKey) &&
+              event.key === "Enter" &&
+              canSave
+            ) {
+              event.preventDefault()
+              mutation.mutate(trimmed)
+            }
+            if (event.key === "Escape" && !mutation.isPending) cancel()
+          }}
+        />
+        <div className="mt-2 flex justify-end gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={cancel}
+            disabled={mutation.isPending}
+          >
+            <X className="size-3.5" /> Cancel
+          </Button>
+          <LoadingButton
+            type="button"
+            size="sm"
+            loading={mutation.isPending}
+            disabled={!canSave}
+            onClick={() => mutation.mutate(trimmed)}
+          >
+            <Check className="size-3.5" /> Save
+          </LoadingButton>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="group relative mt-1 pr-8">
+      <MentionText
+        text={note.body}
+        className="block text-sm whitespace-pre-wrap"
+      />
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="absolute right-0 top-0 size-7 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+        aria-label="Edit note"
+        onClick={() => setIsEditing(true)}
+      >
+        <Pencil className="size-3.5" />
+      </Button>
+    </div>
+  )
 }

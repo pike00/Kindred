@@ -20,8 +20,9 @@ const PwaInstallPrompt = lazy(() =>
     default: m.PwaInstallPrompt,
   })),
 )
+const isE2E = import.meta.env.VITE_E2E === "true"
 
-OpenAPI.BASE = import.meta.env.VITE_API_URL
+OpenAPI.BASE = import.meta.env.VITE_API_URL || ""
 OpenAPI.WITH_CREDENTIALS = true
 OpenAPI.TOKEN = async () => {
   return localStorage.getItem("access_token") || ""
@@ -48,6 +49,7 @@ function ServiceWorkerUpdatePrompt() {
   const [needRefresh, setNeedRefresh] = useState(false)
 
   useEffect(() => {
+    if (isE2E) return
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.ready.then((registration) => {
         registration.addEventListener("updatefound", () => {
@@ -71,7 +73,7 @@ function ServiceWorkerUpdatePrompt() {
     }
   }, [])
 
-  if (!needRefresh) return null
+  if (isE2E || !needRefresh) return null
 
   return (
     <div className="fixed bottom-4 left-4 right-4 z-50 mx-auto max-w-md rounded-lg bg-primary p-4 text-primary-foreground shadow-lg md:left-auto md:right-4 md:max-w-sm">
@@ -96,7 +98,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           <RouterProvider router={router} />
           <Suspense fallback={null}>
             <Toaster richColors closeButton />
-            <PwaInstallPrompt />
+            {!isE2E && <PwaInstallPrompt />}
           </Suspense>
           <ServiceWorkerUpdatePrompt />
         </ShortcutRegistryProvider>

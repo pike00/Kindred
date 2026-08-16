@@ -321,12 +321,51 @@ function PetRow({ pet }: { pet: PetPublic }) {
   )
 }
 
-export function PetsCard({ contactId }: { contactId: string }) {
+export function PetsCard({
+  contactId,
+  embedded = false,
+}: {
+  contactId: string
+  embedded?: boolean
+}) {
   const { data, isLoading } = useQuery({
     queryKey: ["pets", contactId],
     queryFn: () => PetsService.listPets({ contactId }),
   })
   const pets = (data as { data?: PetPublic[] } | undefined)?.data ?? []
+
+  const content = isLoading ? (
+    <Skeleton className="h-4 w-2/3" />
+  ) : pets.length > 0 ? (
+    <div className="space-y-2">
+      {pets.map((p) => (
+        <PetRow key={p.id} pet={p} />
+      ))}
+    </div>
+  ) : (
+    <EmptyState
+      icon={PawPrint}
+      title="No pets"
+      description="Track furry, feathered, or scaly companions for this contact."
+    />
+  )
+
+  if (embedded) {
+    return (
+      <section aria-labelledby="pets-section-title" className="space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <h3
+            id="pets-section-title"
+            className="font-display flex items-center gap-2 font-semibold"
+          >
+            <PawPrint className="size-4" /> Pets
+          </h3>
+          <AddPetDialog contactId={contactId} />
+        </div>
+        {content}
+      </section>
+    )
+  }
 
   return (
     <Card>
@@ -336,23 +375,7 @@ export function PetsCard({ contactId }: { contactId: string }) {
         </CardTitle>
         <AddPetDialog contactId={contactId} />
       </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <Skeleton className="h-4 w-2/3" />
-        ) : pets.length > 0 ? (
-          <div className="space-y-2">
-            {pets.map((p) => (
-              <PetRow key={p.id} pet={p} />
-            ))}
-          </div>
-        ) : (
-          <EmptyState
-            icon={PawPrint}
-            title="No pets"
-            description="Track furry, feathered, or scaly companions for this contact."
-          />
-        )}
-      </CardContent>
+      <CardContent>{content}</CardContent>
     </Card>
   )
 }

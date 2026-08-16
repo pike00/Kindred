@@ -40,12 +40,7 @@ type KanbanColumn = {
 type KanbanBoard = Record<GiftStatus, KanbanColumn>
 
 type GiftKanbanCard = {
-  gift: GiftPublic & {
-    contact_first_name?: string | null
-    contact_last_name?: string | null
-    days_until_occasion?: number | null
-    contact_birthday?: string | null
-  }
+  gift: GiftPublic
   is_overdue: boolean
   days_until_occasion?: number | null
 }

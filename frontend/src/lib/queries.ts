@@ -76,7 +76,7 @@ export const tagsQueryOptions = () =>
 export const interactionsQueryOptions = () =>
   queryOptions({
     queryKey: ["interactions"],
-    queryFn: () => InteractionsService.listInteractions({ limit: 200 }),
+    queryFn: () => InteractionsService.listInteractions({ limit: 1000 }),
   })
 
 // --- Calendar (`/_layout/calendar`) ------------------------------------------

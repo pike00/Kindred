@@ -231,7 +231,7 @@ def contacts_overdue(
 
 @contacts_app.command("create")
 def contacts_create(
-    first_name: Annotated[str, typer.Option("--first-name", help="Given name (required).")],
+    first_name: Annotated[str, typer.Option("--first-name", help="Given name.")] = "",
     pretty: PrettyOpt = False,
     last_name: Annotated[str | None, typer.Option("--last-name", help="Family name.")] = None,
     nickname: Annotated[str | None, typer.Option("--nickname", help="Preferred or informal name.")] = None,
@@ -243,7 +243,7 @@ def contacts_create(
         typer.Option("--contact-frequency-days", help="Target days between interactions."),
     ] = None,
 ) -> None:
-    """Create a new contact (only --first-name is required)."""
+    """Create a new contact (given and family names are optional)."""
     body = ContactCreate(
         first_name=first_name,
         last_name=last_name if last_name is not None else UNSET,

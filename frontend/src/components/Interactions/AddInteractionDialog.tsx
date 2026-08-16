@@ -41,12 +41,12 @@ import {
 import useCustomToast from "@/hooks/useCustomToast"
 import { Plus, X } from "@/lib/icons"
 
-const toLocalDateTimeInput = (d: Date) => {
+export const toLocalDateTimeInput = (d: Date) => {
   const pad = (n: number) => String(n).padStart(2, "0")
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
-const channels = [
+export const channels = [
   { value: "call", label: "Call" },
   { value: "in_person", label: "In Person" },
   { value: "text", label: "Text" },
@@ -57,7 +57,7 @@ const channels = [
   { value: "other", label: "Other" },
 ]
 
-const interactionCreateSchema = z.object({
+export const interactionCreateSchema = z.object({
   attendee_ids: z.array(z.string().uuid()).min(1, "Pick at least one attendee"),
   channel: z.string().min(1, "Select a channel"),
   occurred_at: z.string().min(1, "Date is required"),
@@ -65,7 +65,7 @@ const interactionCreateSchema = z.object({
   duration_minutes: z.string().optional(),
   location_label: z.string().max(500).optional(),
 })
-type InteractionCreateFormData = z.infer<typeof interactionCreateSchema>
+export type InteractionCreateFormData = z.infer<typeof interactionCreateSchema>
 
 interface OsmResult {
   lat: string
@@ -364,7 +364,7 @@ export const AddInteractionDialog = ({
   )
 }
 
-function AttendeePicker({
+export function AttendeePicker({
   control,
   seedContact,
 }: {
