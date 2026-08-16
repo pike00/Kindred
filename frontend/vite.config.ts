@@ -77,6 +77,12 @@ export default defineConfig({
           protocol: "wss",
         }
       : undefined,
+    proxy: {
+      "/api": {
+        target: process.env.KINDRED_BACKEND_URL || "http://127.0.0.1:8000",
+        changeOrigin: true,
+      },
+    },
   },
   plugins: [
     tanstackRouter({
