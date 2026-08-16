@@ -3,48 +3,30 @@
 A self-hosted personal CRM for tracking your relationships — contacts, interactions, reminders, gifts, debts, journal entries — with CardDAV sync, full-text search, and a React frontend. Built on the
 [FastAPI full-stack template](https://github.com/fastapi/full-stack-fastapi-template) and deployed to a homelab via Docker Compose behind Traefik.
 
-## Stack
+## Why Kindred?
+We meet so many people, but keeping track of those connections isn't always easy. Kindred is built to help you stay in touch, remember the little things, and cultivate meaningful relationships. Whether you want to recall a past interaction, track a gift idea, or just get a reminder to text an old friend, Kindred provides a private, self-hosted space to keep your personal network organized without compromising your data privacy.
 
-| Layer | What |
+## Quick Start
+Get up and running in under 30 seconds using Docker:
+
+```bash
+docker compose up -d --build
+```
+
+That's it! Your Kindred instance and all necessary services (PostgreSQL, Meilisearch, Redis) will spin up automatically.
+
+## Features Showcase
+| Feature | Description |
 | --- | --- |
-| Backend | FastAPI + SQLModel + Alembic, Python 3.12, `uv` |
-| Database | PostgreSQL 18 |
-| Search | Meilisearch (indexed via ARQ background tasks) |
-| Queue | Redis + [arq](https://arq-docs.helpmanual.io/) worker |
-| CardDAV | [Radicale](https://radicale.org/) mounted into the FastAPI app |
-| Frontend | React + TanStack Router + TanStack Query + Vite + Bun + Tailwind + shadcn/ui |
-| Auth | JWT access tokens, first-superuser bootstrap, password recovery via SMTP |
-| E2E | Puppeteer (in `e2e/`) |
-| Deploy | Docker Compose + Traefik; secrets via [sops](https://getsops.io/) + age |
+| **Contacts & Groups** | Keep everyone organized with tagging, favoriting, and relationship maps. |
+| **Interactions Log** | Never forget a conversation. Log calls, texts, emails, and meetings. |
+| **Smart Reminders** | Set up scheduled nudges so you don't lose touch with the people who matter. |
+| **Gifts & Debts** | Track gifts given/received and easily manage "who owes who" scenarios. |
+| **Daily Journal** | Maintain a freeform personal journal to reflect on your days. |
+| **CardDAV Sync** | Native support for standard contacts syncing to your mobile devices. |
 
-## Features
-
-### Shipped (frontend + backend)
-
-- **Contacts** — CRUD, favorites, archive, tagging, groups, list/detail views, inline editing
-- **Interactions** — Log calls, texts, emails, in-person meetings, notes per interaction
-- **Reminders** — Scheduled reminders with date/time, per-contact linking
-- **Tags & Groups** — Organize contacts, many-to-many relationships
-- **Journal** — Freeform personal journaling with entries
-- **Gifts** — Track gifts given/received per contact
-- **Debts** — "I owe them" / "they owe me" tracking per contact
-- **Notes** — Freeform notes attached to a contact
-- **Users & Admin** — Signup, login, logout, password recovery, superuser-gated user management
-- **Dashboard** — Stats, "losing touch" suggestions, recent interactions
-
-### Backend-only (no UI yet)
-
-These routes are registered and tested at the API level, but have no frontend pages. Either build the UI or remove them when you decide the feature is out of scope.
-
-- `addresses`, `pets`, `relationships`, `contact_fields` — read-only rendering on the contact detail page, no add/edit UI
-- `custom_fields` — per-contact arbitrary fields
-- `life_events` — birthdays, anniversaries, major events
-- `import_export` — bulk contact import/export (CSV / vCard)
-- `webhooks` — outbound webhook registrations
-
-The Copier template's `items` module has been **removed from the API router** (the model + Alembic table remain for now — drop with a dedicated migration if/when desired).
-
-## Screenshots
+## Demo & Screenshots
+<!-- PLACEHOLDER: Add demo GIF here -->
 
 > Captured against the seeded fake-data fixture (`just seed-fixed`), 1440×900.
 
@@ -80,8 +62,57 @@ Tags:
 
 ![Tags](docs/screenshots/tags.png)
 
-## Layout
+## Tech Stack
+| Layer | What |
+| --- | --- |
+| Backend | FastAPI + SQLModel + Alembic, Python 3.12, `uv` |
+| Database | PostgreSQL 18 |
+| Search | Meilisearch (indexed via ARQ background tasks) |
+| Queue | Redis + [arq](https://arq-docs.helpmanual.io/) worker |
+| CardDAV | [Radicale](https://radicale.org/) mounted into the FastAPI app |
+| Frontend | React + TanStack Router + TanStack Query + Vite + Bun + Tailwind + shadcn/ui |
+| Auth | JWT access tokens, first-superuser bootstrap, password recovery via SMTP |
+| E2E | Puppeteer (in `e2e/`) |
+| Deploy | Docker Compose + Traefik; secrets via [sops](https://getsops.io/) + age |
 
+## Comparison to other tools
+### Kindred vs. Monica
+Monica is a fantastic and feature-rich personal CRM. However, it can feel heavy to host and navigate. Kindred aims for a lighter, faster, and more modern experience with a streamlined React frontend, native mobile-friendly UI, and fewer external dependencies.
+
+### Kindred vs. Notion / Obsidian
+While note-taking tools are extremely flexible, they lack the structured reminders, CardDAV syncing, and specialized relationship views (like decaying contact indicators or dedicated interaction timelines) that a purpose-built CRM like Kindred provides out of the box.
+
+---
+
+# Technical Documentation
+
+## Detailed Features
+### Shipped (frontend + backend)
+
+- **Contacts** — CRUD, favorites, archive, tagging, groups, list/detail views, inline editing
+- **Interactions** — Log calls, texts, emails, in-person meetings, notes per interaction
+- **Reminders** — Scheduled reminders with date/time, per-contact linking
+- **Tags & Groups** — Organize contacts, many-to-many relationships
+- **Journal** — Freeform personal journaling with entries
+- **Gifts** — Track gifts given/received per contact
+- **Debts** — "I owe them" / "they owe me" tracking per contact
+- **Notes** — Freeform notes attached to a contact
+- **Users & Admin** — Signup, login, logout, password recovery, superuser-gated user management
+- **Dashboard** — Stats, "losing touch" suggestions, recent interactions
+
+### Backend-only (no UI yet)
+
+These routes are registered and tested at the API level, but have no frontend pages. Either build the UI or remove them when you decide the feature is out of scope.
+
+- `addresses`, `pets`, `relationships`, `contact_fields` — read-only rendering on the contact detail page, no add/edit UI
+- `custom_fields` — per-contact arbitrary fields
+- `life_events` — birthdays, anniversaries, major events
+- `import_export` — bulk contact import/export (CSV / vCard)
+- `webhooks` — outbound webhook registrations
+
+The Copier template's `items` module has been **removed from the API router** (the model + Alembic table remain for now — drop with a dedicated migration if/when desired).
+
+## Layout
 ```
 backend/       FastAPI app, Alembic migrations, pytest suite, Radicale CardDAV bridge
 frontend/      React app (Vite), generated OpenAPI client in src/client/
@@ -94,7 +125,6 @@ compose.dev.yml Dev-against-homelab overlay (bind-mounted source, --reload, fron
 ```
 
 ## Running the stack
-
 Production (homelab default):
 
 ```bash
@@ -110,7 +140,6 @@ docker compose -f compose.dev.yml up -d --build
 First boot runs Alembic migrations and creates the admin user from `FIRST_SUPERUSER` / `FIRST_SUPERUSER_PASSWORD` in `.env`.
 
 ## Testing
-
 Backend (inside the running stack):
 
 ```bash
@@ -126,7 +155,6 @@ pnpm run e2e
 ```
 
 ## Secrets
-
 Production secrets live in `.env.sops`, encrypted with age. Rotate with:
 
 ```bash
@@ -138,7 +166,6 @@ EDITOR=vim sops .env.sops
 After rotating `FIRST_SUPERUSER_PASSWORD`, the change only takes effect on fresh deployments. Existing homelab databases retain the old superuser password until you manually update it (or delete and recreate the user via `initial_data.py`).
 
 ## Release & deploy
-
 The release flow is fully local (no GitHub Actions). Run on ares:
 
 ```bash
@@ -158,7 +185,6 @@ What each step does:
 `CHANGELOG.md` is generated by `git-cliff` per `cliff.toml`; do not hand-edit it. Preview the next release section with `just changelog-preview` or `just notes-dry-run`.
 
 ## Deployment tiers
-
 Three isolated environments. Each has its own credentials, database, and Docker volumes — nothing is shared across tiers.
 
 | Tier | Where | Domain | Stack | Database | Backups |
@@ -176,11 +202,9 @@ Three isolated environments. Each has its own credentials, database, and Docker 
 - Traefik label pinning — prod compose has the domain hard-coded, dev compose has its own hard-coded dev hostname; neither uses a `${DOMAIN}` variable that could claim the other's hostname
 
 ## Origin
-
 This project was scaffolded from the [FastAPI full-stack template](https://github.com/fastapi/full-stack-fastapi-template) via Copier. The `backend/README.md` and `frontend/README.md` files are still mostly upstream template content — treat them as reference, not project-specific docs.
 
 ## License
-
 Kindred is source-available under the [Elastic License 2.0](LICENSE) (ELv2).
 
 **You can:** self-host for personal use, fork, modify, contribute, and run it for your own contacts.
