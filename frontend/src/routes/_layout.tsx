@@ -4,6 +4,7 @@ import {
   Outlet,
   redirect,
   useNavigate,
+  useRouterState,
 } from "@tanstack/react-router"
 import { useEffect, useMemo } from "react"
 import { ApiError } from "@/client"
@@ -28,6 +29,23 @@ import { VoiceRecordButton } from "@/components/VoiceRecorder/VoiceRecordButton"
 import { isLoggedIn } from "@/hooks/useAuth"
 import { useRegisterShortcuts } from "@/hooks/useKeyboardShortcuts"
 import { Search } from "@/lib/icons"
+
+export function NavigationProgressBar() {
+  const isPending = useRouterState({ select: (s) => s.status === "pending" })
+
+  if (!isPending) return null
+
+  return (
+    <div
+      className="fixed top-0 left-0 right-0 z-50 h-1 bg-primary/20 overflow-hidden pointer-events-none"
+      aria-label="Loading page"
+      aria-busy="true"
+      role="progressbar"
+    >
+      <div className="h-full w-full bg-primary animate-indeterminate origin-left" />
+    </div>
+  )
+}
 
 function AuthGuardError({ error }: { error: unknown }) {
   const navigate = useNavigate()
@@ -90,6 +108,7 @@ function Layout() {
 
   return (
     <CommandPaletteProvider>
+      <NavigationProgressBar />
       <LayoutShortcuts />
       <SidebarProvider>
         <AppSidebar />
