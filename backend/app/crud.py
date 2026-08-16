@@ -11,9 +11,9 @@ from app.core.security import get_password_hash, verify_password
 
 # Import relationship-specific CRUD functions
 from app.models import (
-    AllContactsShare,
     Address,
     AddressCreate,
+    AllContactsShare,
     APIKey,
     APIKeyCreate,
     APIKeyImpersonate,

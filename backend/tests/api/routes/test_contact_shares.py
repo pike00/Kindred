@@ -1,8 +1,8 @@
 from fastapi.testclient import TestClient
 from sqlmodel import Session, select
 
-from app.crud import create_user
 from app.core.config import settings
+from app.crud import create_user
 from app.models import AllContactsShare, UserCreate
 from tests.utils.user import authentication_token_from_email, create_random_user
 from tests.utils.utils import random_email, random_lower_string

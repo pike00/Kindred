@@ -7,7 +7,12 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session
 
 from app.core.config import settings
-from app.models import AllContactsShare, Interaction, InteractionAttendee, InteractionChannel
+from app.models import (
+    AllContactsShare,
+    Interaction,
+    InteractionAttendee,
+    InteractionChannel,
+)
 from tests.utils.user import authentication_token_from_email, create_random_user
 
 
