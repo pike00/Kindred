@@ -37,12 +37,12 @@ export function NavigationProgressBar() {
 
   return (
     <div
-      className="fixed top-0 left-0 right-0 z-50 h-1 bg-primary/20 overflow-hidden"
+      className="fixed top-0 left-0 right-0 z-50 h-1 bg-primary/20 overflow-hidden pointer-events-none"
       aria-label="Loading page"
       aria-busy="true"
       role="progressbar"
     >
-      <div className="h-full w-full bg-primary animate-pulse origin-left transition-all duration-300" />
+      <div className="h-full w-full bg-primary animate-indeterminate origin-left" />
     </div>
   )
 }

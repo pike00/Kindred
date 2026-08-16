@@ -24,11 +24,11 @@ export function Main({ items }: MainProps) {
   const { isMobile, setOpenMobile } = useSidebar()
   const router = useRouterState()
   const isRouterPending = router.status === "pending"
-  const currentPath =
-    (isRouterPending
-      ? router.resolvedLocation?.pathname
-      : router.location.pathname) ?? router.location.pathname
-  const pendingPath = isRouterPending ? router.location.pathname : null
+  const currentPath = router.location.pathname
+  const pendingPath = isRouterPending
+    ? ((router as unknown as { pendingLocation?: { pathname: string } })
+        .pendingLocation?.pathname ?? router.location.pathname)
+    : null
 
   const handleMenuClick = () => {
     if (isMobile) {
@@ -41,8 +41,15 @@ export function Main({ items }: MainProps) {
       <SidebarGroupContent>
         <SidebarMenu>
           {items.map((item) => {
-            const isPending = pendingPath === item.path
-            const isActive = currentPath === item.path || isPending
+            const isPending = Boolean(
+              pendingPath &&
+                (pendingPath === item.path ||
+                  (item.path !== "/" && pendingPath.startsWith(item.path)))
+            )
+            const isActive =
+              currentPath === item.path ||
+              (item.path !== "/" && currentPath.startsWith(item.path)) ||
+              isPending
             const Icon = isPending ? Loader2 : item.icon
 
             return (
