@@ -159,6 +159,19 @@ def cut(
     subprocess.run([editor, notes_path], check=False)
     # notes_path is reused below as --notes-file (the editor wrote in place).
     typer.echo("[6/7] commit + tag + push…")
+    for pkg_file in [Path("frontend/package.json"), Path("package.json")]:
+        if pkg_file.is_file():
+            pkg_data = json.loads(pkg_file.read_text())
+            pkg_data["version"] = version.lstrip("v")
+            pkg_file.write_text(json.dumps(pkg_data, indent=2) + "\n")
+            _run(["git", "add", str(pkg_file)])
+    pyproj = Path("backend/pyproject.toml")
+    if pyproj.is_file():
+        import re
+        content = pyproj.read_text()
+        new_content = re.sub(r'version = "[^"]+"', f'version = "{version.lstrip("v")}"', content, count=1)
+        pyproj.write_text(new_content)
+        _run(["git", "add", str(pyproj)])
     _run(["git", "add", "CHANGELOG.md"])
     _run(["git", "commit", "-m", f"chore(release): {version}"])
     _run(["git", "tag", "-a", version, "-m", f"release {version}"])
@@ -167,8 +180,12 @@ def cut(
     cmd = ["gh", "release", "create", version, "--notes-file", notes_path]
     if draft:
         cmd.append("--draft")
-    _run(cmd)
-    typer.echo(f"done. URL: $(gh release view {version} --json url -q .url)")
+    try:
+        _run(cmd)
+        typer.echo(f"done. URL: $(gh release view {version} --json url -q .url)")
+    except Exception as exc:
+        typer.echo(f"[warn] gh release creation skipped (remote non-GitHub): {exc}")
+        typer.echo(f"done. Released {version}")
 
 
 @app.command()

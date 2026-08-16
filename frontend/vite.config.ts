@@ -1,5 +1,5 @@
 import { execSync } from "node:child_process"
-import { readFileSync } from "node:fs"
+import { existsSync, readFileSync } from "node:fs"
 import path from "node:path"
 import tailwindcss from "@tailwindcss/vite"
 import { tanstackRouter } from "@tanstack/router-plugin/vite"
@@ -9,25 +9,63 @@ import { VitePWA } from "vite-plugin-pwa"
 
 function gitHash(): string {
   try {
-    return execSync("git rev-parse --short HEAD", { encoding: "utf8" }).trim()
+    const hash = execSync("git rev-parse --short HEAD", { encoding: "utf8" }).trim()
+    if (hash) return hash
   } catch {
-    return process.env.GIT_HASH ?? "unknown"
+    // Ignore error when .git directory is absent (e.g. Docker build context)
   }
+  const fromEnv = process.env.GIT_HASH?.trim()
+  if (fromEnv) return fromEnv
+  return ""
 }
 
 function appVersion(): string {
-  // Prod builds inject the release tag via the APP_VERSION build-arg (the git
-  // tag is the source of truth). Strip the leading "v" since the footer renders
-  // `v{__APP_VERSION__}`. Fall back to package.json for local dev.
+  // 1. Check APP_VERSION build-arg / environment variable
   const fromEnv = process.env.APP_VERSION?.trim()
   if (fromEnv) return fromEnv.replace(/^v/, "")
-  const pkg = JSON.parse(
-    readFileSync(new URL("./package.json", import.meta.url), "utf-8"),
-  )
-  return pkg.version as string
+
+  // 2. Fall back to latest git tag if git repository is available
+  try {
+    const tag = execSync("git describe --tags --abbrev=0", { encoding: "utf8" }).trim()
+    if (tag) return tag.replace(/^v/, "")
+  } catch {
+    // Ignore error when git command fails or repository is absent
+  }
+
+  // 3. Fall back to package.json files
+  const candidatePaths = [
+    path.resolve(__dirname, "./package.json"),
+    path.resolve(__dirname, "../package.json"),
+    path.resolve(process.cwd(), "frontend/package.json"),
+    path.resolve(process.cwd(), "package.json"),
+  ]
+
+  for (const pkgPath of candidatePaths) {
+    try {
+      if (existsSync(pkgPath)) {
+        const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"))
+        const ver = (pkg.version as string | undefined)?.trim()
+        if (ver && ver !== "0.0.0") {
+          return ver.replace(/^v/, "")
+        }
+      }
+    } catch {
+      // Continue checking next candidate path
+    }
+  }
+
+  // 4. Default fallback version
+  return "0.2.106"
 }
 
 const isE2E = process.env.VITE_E2E === "true"
+
+// Build guard: prevent example.com placeholders from contaminating production bundles
+if (process.env.NODE_ENV === "production" && process.env.VITE_API_URL?.includes("example.com")) {
+  throw new Error(
+    "[Vite Build Error] Invalid VITE_API_URL: 'example.com' placeholder detected. Use '' for same-origin relative URLs or a valid production origin.",
+  )
+}
 
 // https://vitejs.dev/config/
 export default defineConfig({
