@@ -5,6 +5,14 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.108] - 2026-08-16
+
+### Fixed
+- Fix(frontend): default OpenAPI.BASE to empty string and configure dev server API proxying (b42a336)
+- Fix(frontend): eliminate sidebar navigation delay and add loading feedback (439df96)
+- Fix(version): sync backend pyproject.toml version during releases (1d2e49a)
+- Fix(release): handle non-GitHub origin remotes gracefully in release script (88b2bff)
+
 ## [0.2.107] - 2026-08-12
 
 ### Added
