@@ -77,6 +77,7 @@ vi.mock("@/lib/icons", () => ({
   Bell: () => <span>BellIcon</span>,
   CalendarHeart: () => <span>CalendarIcon</span>,
   NotebookPen: () => <span>NotebookIcon</span>,
+  Loader2: () => <span>LoaderIcon</span>,
 }))
 
 describe("Main", () => {
@@ -168,6 +169,23 @@ describe("Main", () => {
     expect(contactsButton).toHaveAttribute("data-active", "true")
   })
 
+  it("marks pending target path as pending and active during router transition", () => {
+    mockUseRouterState.mockReturnValue({
+      status: "pending",
+      location: { pathname: "/" },
+      pendingLocation: { pathname: "/contacts" },
+    } as any)
+
+    renderWithProviders(<Main items={mockItems} />)
+
+    const contactsButton = screen.getByText("Contacts").closest("button")
+    const dashboardButton = screen.getByText("Dashboard").closest("button")
+
+    expect(contactsButton).toHaveAttribute("data-active", "true")
+    expect(screen.getByText("LoaderIcon")).toBeInTheDocument()
+    expect(dashboardButton).toHaveAttribute("data-active", "true")
+  })
+
   it("does not call setOpenMobile on desktop when clicking item", async () => {
     const user = userEvent.setup()
     renderWithProviders(<Main items={mockItems} />)
@@ -223,7 +241,7 @@ describe("Main", () => {
     expect(interactionsButton).toHaveAttribute("data-active", "true")
   })
 
-  it("only marks exact path matches as active (not partial)", () => {
+  it("marks parent menu item as active when navigating to sub-path", () => {
     mockUseRouterState.mockReturnValue({
       location: { pathname: "/contacts/detail" },
     } as any)
@@ -231,8 +249,7 @@ describe("Main", () => {
     renderWithProviders(<Main items={mockItems} />)
 
     const contactsButton = screen.getByText("Contacts").closest("button")
-    // Should not be active since /contacts/detail !== /contacts
-    expect(contactsButton).toHaveAttribute("data-active", "false")
+    expect(contactsButton).toHaveAttribute("data-active", "true")
   })
 
   it("handles items with special characters in titles", () => {

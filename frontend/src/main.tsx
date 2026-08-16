@@ -6,6 +6,7 @@ import { OpenAPI } from "./client"
 import { ThemeProvider } from "./components/theme-provider"
 import { ShortcutRegistryProvider } from "./hooks/useKeyboardShortcuts"
 import "./index.css"
+import PagePending from "./components/Common/PagePending"
 import { queryClient } from "./lib/queryClient"
 import { routeTree } from "./routeTree.gen"
 
@@ -32,11 +33,17 @@ const router = createRouter({
   routeTree,
   // Preload a route's loader on link hover/focus so its data is warm before the
   // click commits — the old page stays visible until the new page's data is
-  // ready, then swaps fully-formed. This is what removes the navigation flash.
+  // ready, then swaps fully-formed.
   defaultPreload: "intent",
   // Let React Query own staleness; don't let the router short-circuit loaders
   // with its own separate preload cache.
   defaultPreloadStaleTime: 0,
+  // Trigger pending transitions after 50ms so clicks don't feel frozen waiting on loaders
+  defaultPendingMs: 50,
+  // Ensure pending UI stays visible for at least 200ms to avoid flashing layout
+  defaultPendingMinMs: 200,
+  // Default loading screen component during route transitions
+  defaultPendingComponent: PagePending,
 })
 
 declare module "@tanstack/react-router" {
