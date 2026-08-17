@@ -18,8 +18,22 @@ describe("lookupCities", () => {
     expect(lookupCities("HONG KONG")[0]?.tz).toBe("Asia/Hong_Kong")
   })
 
-  it("returns nothing for too-short queries", () => {
-    expect(lookupCities("n")).toEqual([])
+  it("resolves country names and aliases (paki/pakistan -> Asia/Karachi)", () => {
+    expect(lookupCities("paki").some((h) => h.tz === "Asia/Karachi")).toBe(true)
+    expect(lookupCities("pakistan").some((h) => h.tz === "Asia/Karachi")).toBe(true)
+    expect(lookupCities("india").some((h) => h.tz === "Asia/Kolkata")).toBe(true)
+    expect(lookupCities("uk").some((h) => h.tz === "Europe/London")).toBe(true)
+    expect(lookupCities("japan").some((h) => h.tz === "Asia/Tokyo")).toBe(true)
+  })
+
+  it("handles single-character prefix searches", () => {
+    const hits = lookupCities("p")
+    expect(hits.length).toBeGreaterThan(0)
+    expect(hits.some((h) => h.tz === "Asia/Karachi" || h.tz === "Europe/Paris")).toBe(true)
+  })
+
+  it("returns empty array for empty search queries", () => {
+    expect(lookupCities("")).toEqual([])
   })
 
   it("ranks prefix matches before substring matches", () => {

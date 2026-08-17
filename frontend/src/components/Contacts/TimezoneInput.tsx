@@ -87,6 +87,7 @@ export function TimezoneInput({
     if (!q) return BASE_OPTIONS.slice(0, 60).map((o) => ({ ...o, key: o.tz }))
 
     const out: RenderOption[] = []
+    const seenTz = new Set<string>()
 
     // 1) UTC offset synthetic (e.g. "UTC-5", "+05:30")
     const resolved = parseUtcOffset(search)
@@ -97,20 +98,49 @@ export function TimezoneInput({
         city: "UTC offset",
         offset: getOffset(resolved),
       })
+      seenTz.add(resolved)
     }
 
-    // 2) Broad city-name matches (e.g. "New Orleans" -> America/Chicago)
+    // 2) Broad city-name / country / region matches (e.g. "Pakistan" -> Asia/Karachi)
     for (const { city, tz } of lookupCities(search)) {
-      out.push({ key: `city-${city}`, tz, city, offset: getOffset(tz) })
+      if (!seenTz.has(tz)) {
+        out.push({ key: `city-${city}`, tz, city, offset: getOffset(tz) })
+        seenTz.add(tz)
+      }
     }
 
-    // 3) IANA zone id / zone-city matches
+    // Parse potential numeric offset query (e.g. "GMT+5", "UTC+5", "+5", "+05:00")
+    const normSearch = search.trim().toLowerCase()
+    const offsetMatch = normSearch.match(
+      /^(?:gmt|utc)?\s*([+-]?\d{1,2}(?::?\d{2})?)$/i,
+    )
+    const rawOffsetQuery = offsetMatch ? offsetMatch[1] : null
+    const signedOffsetQuery = rawOffsetQuery
+      ? rawOffsetQuery.startsWith("+") || rawOffsetQuery.startsWith("-")
+        ? rawOffsetQuery
+        : `+${rawOffsetQuery}`
+      : null
+
+    // 3) IANA zone id / zone-city / offset matches
     for (const m of BASE_OPTIONS) {
       if (out.length >= 60) break
+      if (seenTz.has(m.tz)) continue
+
       const tzNorm = m.tz.toLowerCase().replace(/[\s_/]/g, "")
       const cityNorm = m.city.toLowerCase().replace(/\s/g, "")
-      if (tzNorm.includes(q) || cityNorm.includes(q)) {
+      const offsetNorm = m.offset.toLowerCase().replace(/\s/g, "") // e.g. "gmt+5"
+
+      const matchesTz = tzNorm.includes(q)
+      const matchesCity = cityNorm.includes(q)
+      const matchesOffset =
+        offsetNorm.includes(q) ||
+        (signedOffsetQuery !== null &&
+          (offsetNorm.replace(/^(gmt|utc)/, "") === signedOffsetQuery ||
+            offsetNorm.replace(/^(gmt|utc)/, "").startsWith(signedOffsetQuery)))
+
+      if (matchesTz || matchesCity || matchesOffset) {
         out.push({ ...m, key: `tz-${m.tz}` })
+        seenTz.add(m.tz)
       }
     }
 

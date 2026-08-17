@@ -14,6 +14,93 @@ export interface CityZone {
 }
 
 const RAW: Array<[string, string]> = [
+  // ── Country & Region Aliases (maps countries to primary/major timezones) ──
+  ["Pakistan", "Asia/Karachi"],
+  ["Paki", "Asia/Karachi"],
+  ["Islamabad", "Asia/Karachi"],
+  ["Rawalpindi", "Asia/Karachi"],
+  ["Faisalabad", "Asia/Karachi"],
+  ["Peshawar", "Asia/Karachi"],
+  ["Quetta", "Asia/Karachi"],
+  ["United States", "America/New_York"],
+  ["USA", "America/New_York"],
+  ["US", "America/New_York"],
+  ["America", "America/New_York"],
+  ["NYC", "America/New_York"],
+  ["LA", "America/Los_Angeles"],
+  ["SF", "America/Los_Angeles"],
+  ["DC", "America/New_York"],
+  ["Canada", "America/Toronto"],
+  ["Mexico", "America/Mexico_City"],
+  ["United Kingdom", "Europe/London"],
+  ["UK", "Europe/London"],
+  ["Britain", "Europe/London"],
+  ["Great Britain", "Europe/London"],
+  ["England", "Europe/London"],
+  ["Ireland", "Europe/Dublin"],
+  ["France", "Europe/Paris"],
+  ["Germany", "Europe/Berlin"],
+  ["Deutschland", "Europe/Berlin"],
+  ["Spain", "Europe/Madrid"],
+  ["Espana", "Europe/Madrid"],
+  ["Portugal", "Europe/Lisbon"],
+  ["Italy", "Europe/Rome"],
+  ["Italia", "Europe/Rome"],
+  ["Netherlands", "Europe/Amsterdam"],
+  ["Holland", "Europe/Amsterdam"],
+  ["Belgium", "Europe/Brussels"],
+  ["Switzerland", "Europe/Zurich"],
+  ["Austria", "Europe/Vienna"],
+  ["Denmark", "Europe/Copenhagen"],
+  ["Sweden", "Europe/Stockholm"],
+  ["Norway", "Europe/Oslo"],
+  ["Finland", "Europe/Helsinki"],
+  ["Poland", "Europe/Warsaw"],
+  ["Czech Republic", "Europe/Prague"],
+  ["Czechia", "Europe/Prague"],
+  ["Hungary", "Europe/Budapest"],
+  ["Greece", "Europe/Athens"],
+  ["Turkey", "Europe/Istanbul"],
+  ["Turkiye", "Europe/Istanbul"],
+  ["Russia", "Europe/Moscow"],
+  ["Ukraine", "Europe/Kyiv"],
+  ["Romania", "Europe/Bucharest"],
+  ["India", "Asia/Kolkata"],
+  ["Bharat", "Asia/Kolkata"],
+  ["Bangladesh", "Asia/Dhaka"],
+  ["Sri Lanka", "Asia/Colombo"],
+  ["Nepal", "Asia/Kathmandu"],
+  ["Thailand", "Asia/Bangkok"],
+  ["Indonesia", "Asia/Jakarta"],
+  ["Singapore", "Asia/Singapore"],
+  ["Malaysia", "Asia/Kuala_Lumpur"],
+  ["Philippines", "Asia/Manila"],
+  ["Vietnam", "Asia/Ho_Chi_Minh"],
+  ["China", "Asia/Shanghai"],
+  ["Taiwan", "Asia/Taipei"],
+  ["Japan", "Asia/Tokyo"],
+  ["Nippon", "Asia/Tokyo"],
+  ["South Korea", "Asia/Seoul"],
+  ["Korea", "Asia/Seoul"],
+  ["Australia", "Australia/Sydney"],
+  ["New Zealand", "Pacific/Auckland"],
+  ["UAE", "Asia/Dubai"],
+  ["United Arab Emirates", "Asia/Dubai"],
+  ["Saudi Arabia", "Asia/Riyadh"],
+  ["Qatar", "Asia/Qatar"],
+  ["Israel", "Asia/Jerusalem"],
+  ["Egypt", "Africa/Cairo"],
+  ["Morocco", "Africa/Casablanca"],
+  ["Nigeria", "Africa/Lagos"],
+  ["Kenya", "Africa/Nairobi"],
+  ["South Africa", "Africa/Johannesburg"],
+  ["Brazil", "America/Sao_Paulo"],
+  ["Brasil", "America/Sao_Paulo"],
+  ["Argentina", "America/Argentina/Buenos_Aires"],
+  ["Colombia", "America/Bogota"],
+  ["Chile", "America/Santiago"],
+  ["Peru", "America/Lima"],
+
   // ── United States (cities whose zone id does NOT contain the city name) ──
   ["New Orleans", "America/Chicago"],
   ["Houston", "America/Chicago"],
@@ -231,16 +318,24 @@ const CITY_INDEX: Array<{ key: string; city: string; tz: string }> = RAW.map(
 
 /**
  * Return city matches for a free-text query (prefix/substring match on the
- * normalized city name). Deduped by tz+city. Capped for UI.
+ * normalized city or country name). Deduped by tz. Capped for UI.
  */
 export function lookupCities(query: string, limit = 8): CityZone[] {
   const q = normalize(query)
-  if (q.length < 2) return []
+  if (q.length < 1) return []
   const starts: CityZone[] = []
   const contains: CityZone[] = []
   for (const { key, city, tz } of CITY_INDEX) {
     if (key.startsWith(q)) starts.push({ city, tz })
     else if (key.includes(q)) contains.push({ city, tz })
   }
-  return [...starts, ...contains].slice(0, limit)
+  const result: CityZone[] = []
+  const seenTz = new Set<string>()
+  for (const item of [...starts, ...contains]) {
+    if (!seenTz.has(item.tz)) {
+      seenTz.add(item.tz)
+      result.push(item)
+    }
+  }
+  return result.slice(0, limit)
 }
