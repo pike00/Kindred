@@ -139,7 +139,9 @@ export function TimezoneInput({
             offsetNorm.replace(/^(gmt|utc)/, "").startsWith(signedOffsetQuery)))
 
       if (matchesTz || matchesCity || matchesOffset) {
-        out.push({ ...m, key: `tz-${m.tz}` })
+        const matchedCity = lookupCities(m.tz, 1)[0]
+        const cityDisplayName = matchedCity?.tz === m.tz ? matchedCity.city : m.city
+        out.push({ ...m, city: cityDisplayName, key: `tz-${m.tz}` })
         seenTz.add(m.tz)
       }
     }
@@ -147,9 +149,13 @@ export function TimezoneInput({
     return out
   }, [search])
 
-  const displayLabel = value
-    ? `${cityLabel(value)} (${getOffset(value)})`
-    : (placeholder ?? "Search city or timezone…")
+  const displayLabel = useMemo(() => {
+    if (!value) return placeholder ?? "Search city or timezone…"
+    const matched = lookupCities(value, 1)[0]
+    const label = matched?.tz === value ? matched.city : cityLabel(value)
+    const offset = getOffset(value)
+    return offset ? `${label} (${offset})` : label
+  }, [value, placeholder])
 
   function handleSelect(tz: string) {
     onChange(tz)
@@ -177,35 +183,54 @@ export function TimezoneInput({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="start">
+      <PopoverContent className="w-96 p-0" align="start">
         <Command shouldFilter={false}>
           <CommandInput
-            placeholder="City, America/New_York, UTC-5…"
+            placeholder="Search city, country, Asia/Tokyo, UTC+5…"
             value={search}
             onValueChange={setSearch}
           />
-          <CommandList>
+          <CommandList className="max-h-72">
             <CommandEmpty>No timezone found.</CommandEmpty>
             <CommandGroup>
-              {filtered.map(({ key, tz, city, offset }) => (
-                <CommandItem
-                  key={key}
-                  value={`${key} ${city} ${tz}`}
-                  onSelect={() => handleSelect(tz)}
-                  className="flex items-center gap-2"
-                >
-                  <Check
-                    className={cn(
-                      "h-4 w-4 shrink-0",
-                      value === tz ? "opacity-100" : "opacity-0",
-                    )}
-                  />
-                  <span className="flex-1 truncate">{city}</span>
-                  <span className="text-xs text-muted-foreground shrink-0">
-                    {offset}
-                  </span>
-                </CommandItem>
-              ))}
+              {filtered.map(({ key, tz, city, offset }) => {
+                const localTime = formatLocalTime(tz)
+                return (
+                  <CommandItem
+                    key={key}
+                    value={`${key} ${city} ${tz}`}
+                    onSelect={() => handleSelect(tz)}
+                    className="flex items-center justify-between gap-3 py-2 px-2.5 cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <Check
+                        className={cn(
+                          "h-4 w-4 shrink-0 text-primary transition-opacity",
+                          value === tz ? "opacity-100" : "opacity-0",
+                        )}
+                      />
+                      <div className="flex flex-col min-w-0 flex-1">
+                        <span className="truncate text-sm font-medium leading-snug">
+                          {city}
+                        </span>
+                        <span className="truncate text-[11px] text-muted-foreground font-mono opacity-75">
+                          {tz}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end shrink-0 text-right">
+                      {localTime && (
+                        <span className="text-xs font-mono font-medium text-foreground">
+                          {localTime}
+                        </span>
+                      )}
+                      <span className="text-[10px] font-mono text-muted-foreground">
+                        {offset}
+                      </span>
+                    </div>
+                  </CommandItem>
+                )
+              })}
             </CommandGroup>
           </CommandList>
         </Command>
