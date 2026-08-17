@@ -30,7 +30,7 @@ import useCustomToast from "@/hooks/useCustomToast"
 import { BellOff, Mail, Pencil } from "@/lib/icons"
 
 const contactUpdateSchema = z.object({
-  first_name: z.string().max(255),
+  first_name: z.string().min(1, "First name is required").max(255),
   last_name: z.string().optional(),
   nickname: z.string().optional(),
   birthday: z.string().optional(),

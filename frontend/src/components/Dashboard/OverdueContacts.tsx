@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { type ContactPublic, ContactsService } from "@/client"
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
@@ -6,6 +6,7 @@ import { AddInteractionDialog } from "@/components/Interactions/AddInteractionDi
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import useCustomToast from "@/hooks/useCustomToast"
 import { Clock, SkipForward } from "@/lib/icons"
 
 interface OverdueContact extends ContactPublic {
@@ -16,6 +17,9 @@ const DISPLAY_LIMIT = 2
 
 export function OverdueContacts() {
   const [isExpanded, setIsExpanded] = useState(false)
+  const queryClient = useQueryClient()
+  const { showSuccessToast, showErrorToast } = useCustomToast()
+
   const { data: contactsData, isLoading } = useQuery({
     queryKey: ["overdue-contacts"],
     queryFn: () =>
@@ -24,12 +28,31 @@ export function OverdueContacts() {
       ),
   })
 
+  const skipMutation = useMutation({
+    mutationFn: (contactId: string) =>
+      ContactsService.skipContact({ contactId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["overdue-contacts"] })
+      queryClient.invalidateQueries({ queryKey: ["contacts"] })
+      queryClient.invalidateQueries({ queryKey: ["interactions-recent"] })
+      showSuccessToast("Skipped contact check-in for this week")
+    },
+    onError: (error) => {
+      showErrorToast("Failed to skip contact check-in")
+      console.error("Failed to skip contact:", error)
+    },
+  })
+
   const contacts = (contactsData?.data || []) as OverdueContact[]
   const count = contactsData?.count || 0
   const displayedContacts = isExpanded
     ? contacts
     : contacts.slice(0, DISPLAY_LIMIT)
   const remainingCount = contacts.length - DISPLAY_LIMIT
+
+  const handleSkip = (contactId: string) => {
+    skipMutation.mutate(contactId)
+  }
 
   if (isLoading) {
     return (
@@ -49,22 +72,6 @@ export function OverdueContacts() {
         ))}
       </div>
     )
-  }
-
-  const handleSkip = async (contactId: string) => {
-    try {
-      await fetch(`/api/v1/contacts/${contactId}/skip`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({}),
-      })
-      // Refresh the list
-      window.location.reload()
-    } catch (error) {
-      console.error("Failed to skip contact:", error)
-    }
   }
 
   return (
@@ -141,6 +148,7 @@ export function OverdueContacts() {
                         size="sm"
                         variant="ghost"
                         className="h-8 w-8 p-0"
+                        disabled={skipMutation.isPending}
                         onClick={() => handleSkip(contact.id)}
                         title="Skip this week"
                       >
