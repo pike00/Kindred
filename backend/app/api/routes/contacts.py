@@ -311,17 +311,20 @@ def list_overdue_contacts(
     )
     contacts = session.exec(stmt).all()
     now = datetime.now(timezone.utc)
-    res = [
-        OverdueContactPublic.model_validate(
-            c,
-            update={
-                "days_overdue": (now - c.last_contacted_at).days
-                if c.last_contacted_at
-                else None
-            },
+    res = []
+    for c in contacts:
+        last_dt = (
+            c.last_contacted_at.replace(tzinfo=timezone.utc)
+            if c.last_contacted_at and c.last_contacted_at.tzinfo is None
+            else c.last_contacted_at
         )
-        for c in contacts
-    ]
+        days_overdue = (now - last_dt).days if last_dt else None
+        res.append(
+            OverdueContactPublic.model_validate(
+                c,
+                update={"days_overdue": days_overdue},
+            )
+        )
     return OverdueContactsPublic(data=res, count=len(res))
 
 

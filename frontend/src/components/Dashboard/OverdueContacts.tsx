@@ -148,7 +148,10 @@ export function OverdueContacts() {
                         size="sm"
                         variant="ghost"
                         className="h-8 w-8 p-0"
-                        disabled={skipMutation.isPending}
+                        disabled={
+                          skipMutation.isPending &&
+                          skipMutation.variables === contact.id
+                        }
                         onClick={() => handleSkip(contact.id)}
                         title="Skip this week"
                       >
