@@ -69,8 +69,8 @@ export function renderWithProviders(
 
 /** Factory for a minimal ContactPublic object. Typed so it stays in sync. */
 export function makeContact(
-  overrides: Partial<ContactPublic> = {},
-): ContactPublic {
+  overrides: Partial<ContactPublic & { days_overdue?: number }> = {},
+): ContactPublic & { days_overdue?: number } {
   return {
     id: "test-contact-id",
     first_name: "Alice",
