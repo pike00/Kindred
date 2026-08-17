@@ -36,6 +36,8 @@ from app.models import (
     ContactUpdate,
     Interaction,
     InteractionAttendee,
+    InteractionChannel,
+    OverdueContactPublic,
     OverdueContactsPublic,
     Relationship,
     SavedFilter,
@@ -308,7 +310,19 @@ def list_overdue_contacts(
         .order_by(Contact.last_contacted_at.asc())
     )
     contacts = session.exec(stmt).all()
-    return OverdueContactsPublic(data=contacts, count=len(contacts))
+    now = datetime.now(timezone.utc)
+    res = [
+        OverdueContactPublic.model_validate(
+            c,
+            update={
+                "days_overdue": (now - c.last_contacted_at).days
+                if c.last_contacted_at
+                else None
+            },
+        )
+        for c in contacts
+    ]
+    return OverdueContactsPublic(data=res, count=len(res))
 
 
 @router.get("/losing-touch", response_model=ContactsPublic)
@@ -332,6 +346,47 @@ def list_losing_touch_contacts(
         or (now - c.last_contacted_at).days >= c.contact_frequency_days
     ]
     return ContactsPublic(data=losing, count=len(losing))
+
+
+@router.patch(
+    "/{contact_id}/skip",
+    response_model=ContactPublic,
+    operation_id="skip_contact",
+)
+def skip_contact(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    contact_id: uuid.UUID,
+) -> Any:
+    """Skip follow-up for a contact this week by creating a SKIP interaction."""
+    contact = session.exec(
+        select(Contact).where(
+            Contact.id == contact_id,
+            Contact.id.in_(visible_contact_ids(current_user, include_deleted=False)),
+        )
+    ).first()
+    if not contact:
+        raise HTTPException(status_code=404, detail="Contact not found")
+
+    now = datetime.now(timezone.utc)
+    interaction = Interaction(
+        notes="Skipped check-in",
+        channel=InteractionChannel.SKIP,
+        occurred_at=now,
+        owner_id=current_user.id,
+    )
+    session.add(interaction)
+    session.flush()
+    session.add(
+        InteractionAttendee(interaction_id=interaction.id, contact_id=contact.id)
+    )
+
+    contact.last_contacted_at = now
+    session.add(contact)
+    session.commit()
+    session.refresh(contact)
+    return contact
 
 
 @router.patch("/bulk", response_model=BulkUpdateResponse)
