@@ -11,5 +11,11 @@ cd backend
 uv run python -c "import app.main; import json; print(json.dumps(app.main.app.openapi()))" > ../openapi.json
 cd ..
 mv openapi.json frontend/
-pnpm --filter frontend generate-client
-pnpm run lint
+if command -v bun >/dev/null 2>&1; then
+  bun run --cwd frontend generate-client
+  bun run --cwd frontend lint
+else
+  pnpm --filter frontend generate-client
+  pnpm run lint
+fi
+
