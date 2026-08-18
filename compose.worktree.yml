@@ -214,9 +214,11 @@ volumes:
 networks:
   default:
   pikenet-private:
+<<<<<<< HEAD
+=======
     name: pikenet-private
+>>>>>>> github/main
     external: true
-
 
   kindred-internal-crm:
     name: kindred-internal-crm

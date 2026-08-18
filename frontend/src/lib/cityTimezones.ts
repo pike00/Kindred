@@ -7,240 +7,227 @@
 // spellings (e.g. "saintlouis"/"stlouis") can map to the same zone.
 
 export interface CityZone {
-  /** Display name for the city. */
+  /** Display name for the city/region (e.g. "Karachi, Pakistan", "New Orleans, USA"). */
   city: string
-  /** IANA timezone id. */
+  /** IANA timezone ID (e.g. "Asia/Karachi"). */
   tz: string
+  /** Country or territory name for enhanced search and display. */
+  country?: string
+  /** Extra search aliases and alternate names. */
+  aliases?: string[]
 }
 
-const RAW: Array<[string, string]> = [
-  // ── United States (cities whose zone id does NOT contain the city name) ──
-  ["New Orleans", "America/Chicago"],
-  ["Houston", "America/Chicago"],
-  ["San Antonio", "America/Chicago"],
-  ["Dallas", "America/Chicago"],
-  ["Austin", "America/Chicago"],
-  ["Fort Worth", "America/Chicago"],
-  ["Memphis", "America/Chicago"],
-  ["Nashville", "America/Chicago"],
-  ["Milwaukee", "America/Chicago"],
-  ["Kansas City", "America/Chicago"],
-  ["Saint Louis", "America/Chicago"],
-  ["St Louis", "America/Chicago"],
-  ["Minneapolis", "America/Chicago"],
-  ["Saint Paul", "America/Chicago"],
-  ["Oklahoma City", "America/Chicago"],
-  ["Tulsa", "America/Chicago"],
-  ["Omaha", "America/Chicago"],
-  ["Madison", "America/Chicago"],
-  ["Baton Rouge", "America/Chicago"],
-  ["Birmingham", "America/Chicago"],
-  ["Little Rock", "America/Chicago"],
-  ["Des Moines", "America/Chicago"],
-  ["Jackson", "America/Chicago"],
-  ["New York", "America/New_York"],
-  ["New York City", "America/New_York"],
-  ["Brooklyn", "America/New_York"],
-  ["Manhattan", "America/New_York"],
-  ["Boston", "America/New_York"],
-  ["Philadelphia", "America/New_York"],
-  ["Washington", "America/New_York"],
-  ["Washington DC", "America/New_York"],
-  ["Atlanta", "America/New_York"],
-  ["Miami", "America/New_York"],
-  ["Orlando", "America/New_York"],
-  ["Tampa", "America/New_York"],
-  ["Jacksonville", "America/New_York"],
-  ["Charlotte", "America/New_York"],
-  ["Raleigh", "America/New_York"],
-  ["Pittsburgh", "America/New_York"],
-  ["Cleveland", "America/New_York"],
-  ["Columbus", "America/New_York"],
-  ["Cincinnati", "America/New_York"],
-  ["Buffalo", "America/New_York"],
-  ["Baltimore", "America/New_York"],
-  ["Richmond", "America/New_York"],
-  ["Virginia Beach", "America/New_York"],
-  ["Newark", "America/New_York"],
-  ["Providence", "America/New_York"],
-  ["Hartford", "America/New_York"],
-  ["Portland Maine", "America/New_York"],
-  ["Tallahassee", "America/New_York"],
-  ["Savannah", "America/New_York"],
-  ["Denver", "America/Denver"],
-  ["Boulder", "America/Denver"],
-  ["Colorado Springs", "America/Denver"],
-  ["Albuquerque", "America/Denver"],
-  ["Santa Fe", "America/Denver"],
-  ["Salt Lake City", "America/Denver"],
-  ["Cheyenne", "America/Denver"],
-  ["Billings", "America/Denver"],
-  ["El Paso", "America/Denver"],
-  ["Phoenix", "America/Phoenix"],
-  ["Tucson", "America/Phoenix"],
-  ["Mesa", "America/Phoenix"],
-  ["Scottsdale", "America/Phoenix"],
-  ["Los Angeles", "America/Los_Angeles"],
-  ["San Francisco", "America/Los_Angeles"],
-  ["San Diego", "America/Los_Angeles"],
-  ["San Jose", "America/Los_Angeles"],
-  ["Sacramento", "America/Los_Angeles"],
-  ["Oakland", "America/Los_Angeles"],
-  ["Fresno", "America/Los_Angeles"],
-  ["Long Beach", "America/Los_Angeles"],
-  ["Seattle", "America/Los_Angeles"],
-  ["Portland", "America/Los_Angeles"],
-  ["Portland Oregon", "America/Los_Angeles"],
-  ["Las Vegas", "America/Los_Angeles"],
-  ["Reno", "America/Los_Angeles"],
-  ["Spokane", "America/Los_Angeles"],
-  ["Tacoma", "America/Los_Angeles"],
-  ["Anchorage", "America/Anchorage"],
-  ["Honolulu", "Pacific/Honolulu"],
-  ["Detroit", "America/Detroit"],
-  ["Indianapolis", "America/Indiana/Indianapolis"],
+type RawZoneEntry = [string, string, string?, string[]?]
 
-  // ── Canada ──
-  ["Toronto", "America/Toronto"],
-  ["Ottawa", "America/Toronto"],
-  ["Montreal", "America/Toronto"],
-  ["Quebec City", "America/Toronto"],
-  ["Vancouver", "America/Vancouver"],
-  ["Victoria", "America/Vancouver"],
-  ["Calgary", "America/Edmonton"],
-  ["Edmonton", "America/Edmonton"],
-  ["Winnipeg", "America/Winnipeg"],
-  ["Halifax", "America/Halifax"],
+const RAW: RawZoneEntry[] = [
+  // ── Asia / Pacific ──
+  ["Karachi, Pakistan", "Asia/Karachi", "Pakistan", ["paki", "pk", "lahore", "islamabad", "rawalpindi", "faisalabad", "peshawar", "quetta"]],
+  ["Kolkata, India", "Asia/Kolkata", "India", ["bharat", "hindustan", "delhi", "new delhi", "mumbai", "bangalore", "bengaluru", "hyderabad", "chennai", "ahmedabad", "pune"]],
+  ["Tokyo, Japan", "Asia/Tokyo", "Japan", ["jp", "nippon", "nihon", "osaka", "kyoto", "yokohama", "nagoya", "sapporo"]],
+  ["Seoul, South Korea", "Asia/Seoul", "South Korea", ["kr", "korea", "s korea", "rok", "busan", "incheon"]],
+  ["Beijing / Shanghai, China", "Asia/Shanghai", "China", ["cn", "prc", "zhongguo", "beijing", "shanghai", "shenzhen", "guangzhou", "chengdu", "wuhan", "hangzhou"]],
+  ["Taipei, Taiwan", "Asia/Taipei", "Taiwan", ["tw", "kaohsiung"]],
+  ["Hong Kong", "Asia/Hong_Kong", "Hong Kong", ["hk"]],
+  ["Singapore", "Asia/Singapore", "Singapore", ["sg", "spore"]],
+  ["Bangkok, Thailand", "Asia/Bangkok", "Thailand", ["th", "chiang mai"]],
+  ["Jakarta, Indonesia", "Asia/Jakarta", "Indonesia", ["id", "surabaya", "bali"]],
+  ["Kuala Lumpur, Malaysia", "Asia/Kuala_Lumpur", "Malaysia", ["my", "penang"]],
+  ["Manila, Philippines", "Asia/Manila", "Philippines", ["ph", "cebu"]],
+  ["Ho Chi Minh City, Vietnam", "Asia/Ho_Chi_Minh", "Vietnam", ["vn", "saigon", "hanoi"]],
+  ["Dhaka, Bangladesh", "Asia/Dhaka", "Bangladesh", ["bd", "chittagong"]],
+  ["Colombo, Sri Lanka", "Asia/Colombo", "Sri Lanka", ["lk"]],
+  ["Kathmandu, Nepal", "Asia/Kathmandu", "Nepal", ["np"]],
+  ["Sydney, Australia", "Australia/Sydney", "Australia", ["au", "aussie", "canberra", "nsw"]],
+  ["Melbourne, Australia", "Australia/Melbourne", "Australia", ["au", "aussie", "vic"]],
+  ["Brisbane, Australia", "Australia/Brisbane", "Australia", ["au", "qld"]],
+  ["Perth, Australia", "Australia/Perth", "Australia", ["au", "wa"]],
+  ["Adelaide, Australia", "Australia/Adelaide", "Australia", ["au", "sa"]],
+  ["Auckland, New Zealand", "Pacific/Auckland", "New Zealand", ["nz", "aotearoa", "wellington", "christchurch"]],
 
-  // ── Latin America ──
-  ["Mexico City", "America/Mexico_City"],
-  ["Guadalajara", "America/Mexico_City"],
-  ["Monterrey", "America/Monterrey"],
-  ["Bogota", "America/Bogota"],
-  ["Lima", "America/Lima"],
-  ["Santiago", "America/Santiago"],
-  ["Buenos Aires", "America/Argentina/Buenos_Aires"],
-  ["Sao Paulo", "America/Sao_Paulo"],
-  ["Rio de Janeiro", "America/Sao_Paulo"],
-  ["Brasilia", "America/Sao_Paulo"],
+  // ── Middle East & Africa ──
+  ["Dubai, UAE", "Asia/Dubai", "United Arab Emirates", ["uae", "emirates", "abu dhabi"]],
+  ["Riyadh, Saudi Arabia", "Asia/Riyadh", "Saudi Arabia", ["ksa", "saudi", "jeddah", "mecca"]],
+  ["Doha, Qatar", "Asia/Qatar", "Qatar", ["qa"]],
+  ["Tel Aviv / Jerusalem, Israel", "Asia/Jerusalem", "Israel", ["il", "tel aviv", "jerusalem"]],
+  ["Cairo, Egypt", "Africa/Cairo", "Egypt", ["eg", "alexandria"]],
+  ["Casablanca, Morocco", "Africa/Casablanca", "Morocco", ["ma", "marrakech", "rabat"]],
+  ["Lagos, Nigeria", "Africa/Lagos", "Nigeria", ["ng", "abuja"]],
+  ["Nairobi, Kenya", "Africa/Nairobi", "Kenya", ["ke"]],
+  ["Johannesburg, South Africa", "Africa/Johannesburg", "South Africa", ["za", "s africa", "cape town", "durban", "pretoria"]],
+
+  // ── United States ──
+  ["New York, USA", "America/New_York", "United States", ["us", "usa", "america", "nyc", "manhattan", "brooklyn", "queens", "bronx", "boston", "philadelphia", "washington", "dc", "atlanta", "miami", "orlando", "tampa", "charlotte", "raleigh", "pittsburgh", "cleveland", "columbus", "cincinnati", "buffalo", "baltimore", "richmond", "newark", "hartford", "providence"]],
+  ["Chicago, USA", "America/Chicago", "United States", ["us", "usa", "america", "new orleans", "houston", "san antonio", "dallas", "austin", "fort worth", "memphis", "nashville", "milwaukee", "kansas city", "st louis", "saint louis", "minneapolis", "st paul", "saint paul", "oklahoma city", "tulsa", "omaha", "madison", "baton rouge", "birmingham", "little rock", "des moines", "jackson"]],
+  ["Denver, USA", "America/Denver", "United States", ["us", "usa", "america", "boulder", "colorado springs", "albuquerque", "santa fe", "salt lake city", "slc", "cheyenne", "billings", "el paso"]],
+  ["Phoenix, USA", "America/Phoenix", "United States", ["us", "usa", "america", "arizona", "tucson", "mesa", "scottsdale"]],
+  ["Los Angeles, USA", "America/Los_Angeles", "United States", ["us", "usa", "america", "la", "sf", "san francisco", "bay area", "san diego", "san jose", "sacramento", "oakland", "fresno", "long beach", "seattle", "portland", "las vegas", "reno", "spokane", "tacoma"]],
+  ["Detroit, USA", "America/Detroit", "United States", ["us", "usa", "michigan"]],
+  ["Indianapolis, USA", "America/Indiana/Indianapolis", "United States", ["us", "usa", "indiana"]],
+  ["Anchorage, USA", "America/Anchorage", "United States", ["us", "usa", "alaska"]],
+  ["Honolulu, USA", "Pacific/Honolulu", "United States", ["us", "usa", "hawaii"]],
+
+  // ── Canada & Latin America ──
+  ["Toronto, Canada", "America/Toronto", "Canada", ["ca", "canada", "ottawa", "montreal", "quebec"]],
+  ["Vancouver, Canada", "America/Vancouver", "Canada", ["ca", "canada", "victoria"]],
+  ["Calgary, Canada", "America/Edmonton", "Canada", ["ca", "canada", "edmonton"]],
+  ["Winnipeg, Canada", "America/Winnipeg", "Canada", ["ca", "canada"]],
+  ["Halifax, Canada", "America/Halifax", "Canada", ["ca", "canada"]],
+  ["Mexico City, Mexico", "America/Mexico_City", "Mexico", ["mx", "mexico", "guadalajara", "monterrey", "puebla", "cancun"]],
+  ["São Paulo, Brazil", "America/Sao_Paulo", "Brazil", ["br", "brasil", "rio", "rio de janeiro", "brasilia"]],
+  ["Buenos Aires, Argentina", "America/Argentina/Buenos_Aires", "Argentina", ["ar"]],
+  ["Bogotá, Colombia", "America/Bogota", "Colombia", ["co"]],
+  ["Lima, Peru", "America/Lima", "Peru", ["pe"]],
+  ["Santiago, Chile", "America/Santiago", "Chile", ["cl"]],
 
   // ── Europe ──
-  ["London", "Europe/London"],
-  ["Manchester", "Europe/London"],
-  ["Birmingham UK", "Europe/London"],
-  ["Edinburgh", "Europe/London"],
-  ["Glasgow", "Europe/London"],
-  ["Dublin", "Europe/Dublin"],
-  ["Paris", "Europe/Paris"],
-  ["Marseille", "Europe/Paris"],
-  ["Lyon", "Europe/Paris"],
-  ["Madrid", "Europe/Madrid"],
-  ["Barcelona", "Europe/Madrid"],
-  ["Lisbon", "Europe/Lisbon"],
-  ["Porto", "Europe/Lisbon"],
-  ["Berlin", "Europe/Berlin"],
-  ["Munich", "Europe/Berlin"],
-  ["Hamburg", "Europe/Berlin"],
-  ["Frankfurt", "Europe/Berlin"],
-  ["Cologne", "Europe/Berlin"],
-  ["Amsterdam", "Europe/Amsterdam"],
-  ["Rotterdam", "Europe/Amsterdam"],
-  ["Brussels", "Europe/Brussels"],
-  ["Zurich", "Europe/Zurich"],
-  ["Geneva", "Europe/Zurich"],
-  ["Vienna", "Europe/Vienna"],
-  ["Rome", "Europe/Rome"],
-  ["Milan", "Europe/Rome"],
-  ["Naples", "Europe/Rome"],
-  ["Copenhagen", "Europe/Copenhagen"],
-  ["Stockholm", "Europe/Stockholm"],
-  ["Oslo", "Europe/Oslo"],
-  ["Helsinki", "Europe/Helsinki"],
-  ["Warsaw", "Europe/Warsaw"],
-  ["Prague", "Europe/Prague"],
-  ["Budapest", "Europe/Budapest"],
-  ["Athens", "Europe/Athens"],
-  ["Istanbul", "Europe/Istanbul"],
-  ["Moscow", "Europe/Moscow"],
-  ["Kyiv", "Europe/Kyiv"],
-  ["Kiev", "Europe/Kyiv"],
-
-  // ── Middle East / Africa ──
-  ["Dubai", "Asia/Dubai"],
-  ["Abu Dhabi", "Asia/Dubai"],
-  ["Tel Aviv", "Asia/Jerusalem"],
-  ["Jerusalem", "Asia/Jerusalem"],
-  ["Riyadh", "Asia/Riyadh"],
-  ["Doha", "Asia/Qatar"],
-  ["Cairo", "Africa/Cairo"],
-  ["Lagos", "Africa/Lagos"],
-  ["Nairobi", "Africa/Nairobi"],
-  ["Johannesburg", "Africa/Johannesburg"],
-  ["Cape Town", "Africa/Johannesburg"],
-  ["Casablanca", "Africa/Casablanca"],
-
-  // ── Asia / Pacific ──
-  ["Mumbai", "Asia/Kolkata"],
-  ["Delhi", "Asia/Kolkata"],
-  ["New Delhi", "Asia/Kolkata"],
-  ["Bangalore", "Asia/Kolkata"],
-  ["Bengaluru", "Asia/Kolkata"],
-  ["Hyderabad", "Asia/Kolkata"],
-  ["Chennai", "Asia/Kolkata"],
-  ["Kolkata", "Asia/Kolkata"],
-  ["Karachi", "Asia/Karachi"],
-  ["Lahore", "Asia/Karachi"],
-  ["Dhaka", "Asia/Dhaka"],
-  ["Bangkok", "Asia/Bangkok"],
-  ["Jakarta", "Asia/Jakarta"],
-  ["Singapore", "Asia/Singapore"],
-  ["Kuala Lumpur", "Asia/Kuala_Lumpur"],
-  ["Manila", "Asia/Manila"],
-  ["Hong Kong", "Asia/Hong_Kong"],
-  ["Shanghai", "Asia/Shanghai"],
-  ["Beijing", "Asia/Shanghai"],
-  ["Shenzhen", "Asia/Shanghai"],
-  ["Guangzhou", "Asia/Shanghai"],
-  ["Taipei", "Asia/Taipei"],
-  ["Seoul", "Asia/Seoul"],
-  ["Tokyo", "Asia/Tokyo"],
-  ["Osaka", "Asia/Tokyo"],
-  ["Kyoto", "Asia/Tokyo"],
-  ["Sydney", "Australia/Sydney"],
-  ["Melbourne", "Australia/Melbourne"],
-  ["Brisbane", "Australia/Brisbane"],
-  ["Perth", "Australia/Perth"],
-  ["Adelaide", "Australia/Adelaide"],
-  ["Auckland", "Pacific/Auckland"],
-  ["Wellington", "Pacific/Auckland"],
+  ["London, United Kingdom", "Europe/London", "United Kingdom", ["uk", "britain", "great britain", "england", "scotland", "wales", "manchester", "birmingham", "edinburgh", "glasgow", "belfast"]],
+  ["Dublin, Ireland", "Europe/Dublin", "Ireland", ["ie"]],
+  ["Paris, France", "Europe/Paris", "France", ["fr", "marseille", "lyon", "toulouse", "nice"]],
+  ["Berlin, Germany", "Europe/Berlin", "Germany", ["de", "deutschland", "munich", "hamburg", "frankfurt", "cologne", "stuttgart", "dusseldorf"]],
+  ["Madrid, Spain", "Europe/Madrid", "Spain", ["es", "espana", "barcelona", "valencia", "seville"]],
+  ["Lisbon, Portugal", "Europe/Lisbon", "Portugal", ["pt", "porto"]],
+  ["Rome, Italy", "Europe/Rome", "Italy", ["it", "italia", "milan", "naples", "turin", "florence"]],
+  ["Amsterdam, Netherlands", "Europe/Amsterdam", "Netherlands", ["nl", "holland", "rotterdam", "the hague", "utrecht"]],
+  ["Brussels, Belgium", "Europe/Brussels", "Belgium", ["be", "antwerp"]],
+  ["Zurich, Switzerland", "Europe/Zurich", "Switzerland", ["ch", "geneva", "basel", "bern"]],
+  ["Vienna, Austria", "Europe/Vienna", "Austria", ["at", "salzburg"]],
+  ["Copenhagen, Denmark", "Europe/Copenhagen", "Denmark", ["dk"]],
+  ["Stockholm, Sweden", "Europe/Stockholm", "Sweden", ["se", "gothenburg"]],
+  ["Oslo, Norway", "Europe/Oslo", "Norway", ["no", "bergen"]],
+  ["Helsinki, Finland", "Europe/Helsinki", "Finland", ["fi", "espoo"]],
+  ["Warsaw, Poland", "Europe/Warsaw", "Poland", ["pl", "krakow", "gdansk"]],
+  ["Prague, Czech Republic", "Europe/Prague", "Czech Republic", ["cz", "czechia", "brno"]],
+  ["Budapest, Hungary", "Europe/Budapest", "Hungary", ["hu"]],
+  ["Athens, Greece", "Europe/Athens", "Greece", ["gr", "thessaloniki"]],
+  ["Istanbul, Turkey", "Europe/Istanbul", "Turkey", ["tr", "turkiye", "ankara", "izmir"]],
+  ["Moscow, Russia", "Europe/Moscow", "Russia", ["ru", "saint petersburg"]],
+  ["Kyiv, Ukraine", "Europe/Kyiv", "Ukraine", ["ua", "kiev", "lviv", "odesa"]],
+  ["Bucharest, Romania", "Europe/Bucharest", "Romania", ["ro"]],
 ]
 
-function normalize(s: string): string {
+export const CITY_ZONES: CityZone[] = RAW.map(([city, tz, country, aliases]) => ({
+  city,
+  tz,
+  country,
+  aliases,
+}))
+
+function normalizeString(s: string): string {
   return s
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "") // strip diacritics: "são" -> "sao"
+    .replace(/[\u0300-\u036f]/g, "") // strip diacritics
     .toLowerCase()
-    .replace(/[^a-z0-9]/g, "")
+    .replace(/[^a-z0-9\s]/g, "") // keep letters, numbers, spaces
+    .trim()
 }
 
-export const CITY_ZONES: CityZone[] = RAW.map(([city, tz]) => ({ city, tz }))
+function tokenize(s: string): string[] {
+  return normalizeString(s).split(/\s+/).filter(Boolean)
+}
 
-const CITY_INDEX: Array<{ key: string; city: string; tz: string }> = RAW.map(
-  ([city, tz]) => ({ key: normalize(city), city, tz }),
-)
+const ABBREVIATIONS: Record<string, string> = {
+  st: "saint",
+  ft: "fort",
+  n: "north",
+  s: "south",
+  e: "east",
+  w: "west",
+  us: "united states",
+  usa: "united states",
+  uk: "united kingdom",
+  uae: "united arab emirates",
+  nz: "new zealand",
+  ksa: "saudi arabia",
+}
 
 /**
- * Return city matches for a free-text query (prefix/substring match on the
- * normalized city name). Deduped by tz+city. Capped for UI.
+ * Return city matches for a free-text query (multi-tier exact, prefix, tokenized,
+ * and substring search). Deduped by tz. Capped for UI.
  */
-export function lookupCities(query: string, limit = 8): CityZone[] {
-  const q = normalize(query)
-  if (q.length < 2) return []
-  const starts: CityZone[] = []
-  const contains: CityZone[] = []
-  for (const { key, city, tz } of CITY_INDEX) {
-    if (key.startsWith(q)) starts.push({ city, tz })
-    else if (key.includes(q)) contains.push({ city, tz })
+export function lookupCities(query: string, limit = 12): CityZone[] {
+  const normQuery = normalizeString(query)
+  if (!normQuery) return []
+  const compactQuery = normQuery.replace(/\s+/g, "")
+  const queryTokens = tokenize(query)
+
+  const exactMatches: CityZone[] = []
+  const prefixMatches: CityZone[] = []
+  const tokenMatches: CityZone[] = []
+  const substringMatches: CityZone[] = []
+
+  const seenTz = new Set<string>()
+
+  for (const entry of CITY_ZONES) {
+    if (seenTz.has(entry.tz)) continue
+
+    const cityNorm = normalizeString(entry.city)
+    const cityCompact = cityNorm.replace(/\s+/g, "")
+    const countryNorm = entry.country ? normalizeString(entry.country) : ""
+    const countryCompact = countryNorm.replace(/\s+/g, "")
+    const tzNorm = normalizeString(entry.tz)
+    const tzCompact = tzNorm.replace(/\s+/g, "")
+
+    const aliasNorms = (entry.aliases ?? []).map(normalizeString)
+    const aliasCompacts = aliasNorms.map((a) => a.replace(/\s+/g, ""))
+
+    // 1) Exact match on compact city, country, alias, or tz
+    const isExact =
+      cityCompact === compactQuery ||
+      countryCompact === compactQuery ||
+      aliasCompacts.includes(compactQuery) ||
+      tzCompact === compactQuery
+
+    if (isExact) {
+      exactMatches.push(entry)
+      seenTz.add(entry.tz)
+      continue
+    }
+
+    // 2) Prefix match on city, country, alias, or tz
+    const isPrefix =
+      cityCompact.startsWith(compactQuery) ||
+      countryCompact.startsWith(compactQuery) ||
+      aliasCompacts.some((a) => a.startsWith(compactQuery)) ||
+      tzCompact.startsWith(compactQuery)
+
+    if (isPrefix) {
+      prefixMatches.push(entry)
+      seenTz.add(entry.tz)
+      continue
+    }
+
+    // 3) Tokenized match: every token in query matches some token in target
+    const targetText = `${cityNorm} ${countryNorm} ${entry.tz} ${(entry.aliases ?? []).join(" ")}`
+    const targetTokens = tokenize(targetText)
+
+    const matchesAllTokens = queryTokens.every((qToken) => {
+      const expandedQ = ABBREVIATIONS[qToken] ?? qToken
+      return targetTokens.some(
+        (tToken) =>
+          tToken.startsWith(qToken) ||
+          tToken.startsWith(expandedQ) ||
+          (qToken.length >= 3 && tToken.includes(qToken)),
+      )
+    })
+
+    if (matchesAllTokens) {
+      tokenMatches.push(entry)
+      seenTz.add(entry.tz)
+      continue
+    }
+
+    // 4) Substring match
+    const isSubstring =
+      cityCompact.includes(compactQuery) ||
+      countryCompact.includes(compactQuery) ||
+      aliasCompacts.some((a) => a.includes(compactQuery)) ||
+      tzCompact.includes(compactQuery)
+
+    if (isSubstring) {
+      substringMatches.push(entry)
+      seenTz.add(entry.tz)
+    }
   }
-  return [...starts, ...contains].slice(0, limit)
+
+  return [...exactMatches, ...prefixMatches, ...tokenMatches, ...substringMatches].slice(0, limit)
 }
