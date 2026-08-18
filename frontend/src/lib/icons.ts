@@ -59,6 +59,7 @@ export {
   // Contact field types
   Mail,
   Map,
+  Globe,
   // Card section icons
   MapPin,
   MessageSquare,

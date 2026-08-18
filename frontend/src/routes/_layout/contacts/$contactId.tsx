@@ -1,18 +1,14 @@
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute, Link } from "@tanstack/react-router"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import type { DebtPublic, GiftPublic } from "@/client"
 import { DebtsService, GiftsService } from "@/client"
-import { ContactAvatar } from "@/components/Common/ContactAvatar"
 import { EmptyState } from "@/components/Common/EmptyState"
 import { AddressesCard } from "@/components/Contacts/AddressesCard"
-import { AvatarUploadDialog } from "@/components/Contacts/AvatarUploadDialog"
-import { ContactFieldsPopover } from "@/components/Contacts/ContactFieldsCard"
 import { CustomFieldsCard } from "@/components/Contacts/CustomFieldsCard"
-import { EditContactDialog } from "@/components/Contacts/EditContactDialog"
-import { InteractionHeatmap } from "@/components/Contacts/InteractionHeatmap"
+import { InlineContactDetailsCard } from "@/components/Contacts/InlineContactDetailsCard"
+import { InlineContactHeader } from "@/components/Contacts/InlineContactHeader"
 import { PeopleAndPetsCard } from "@/components/Contacts/PeopleAndPetsCard"
-import { formatLocalTime } from "@/components/Contacts/TimezoneInput"
 import { AddDebt } from "@/components/Debts/AddDebt"
 import { AddGift } from "@/components/Gifts/AddGift"
 import { AddInteractionDialog } from "@/components/Interactions/AddInteractionDialog"
@@ -35,78 +31,15 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import {
-  Archive,
-  BellOff,
-  Cake,
-  Camera,
   ChevronDown,
-  Clock,
-  Download,
   Gift as GiftIcon,
   Info,
   MessagesSquare,
   NotebookPen,
-  Star,
-  UserRoundSearch,
 } from "@/lib/icons"
 import { contactQueryOptions } from "@/lib/queries"
 import { queryClient } from "@/lib/queryClient"
-import {
-  describeContactSource,
-  formatBirthday,
-  formatDateWithRelative,
-} from "@/lib/utils"
-
-function ContactLocalTime({ timezone }: { timezone: string }) {
-  const [localTime, setLocalTime] = useState(() =>
-    formatLocalTime(timezone, { includeDayName: true }),
-  )
-
-  useEffect(() => {
-    const id = setInterval(
-      () => setLocalTime(formatLocalTime(timezone, { includeDayName: true })),
-      60_000,
-    )
-    return () => clearInterval(id)
-  }, [timezone])
-
-  if (!localTime) return null
-
-  return (
-    <span className="flex items-center gap-1">
-      <Clock className="size-3.5" />
-      {localTime} their time
-      <span className="text-muted-foreground text-xs">({timezone})</span>
-    </span>
-  )
-}
-
-function ContactBirthday({ birthday }: { birthday: string }) {
-  const info = formatBirthday(birthday)
-  if (!info) return null
-
-  const imminent = info.daysUntil <= 14
-
-  return (
-    <span className="flex items-center gap-1">
-      <Cake className="size-3.5" />
-      <span>
-        Born {info.formatted}
-        {info.age != null && <> · {info.age} years old</>}
-        {info.upcoming && (
-          <>
-            {" · "}
-            <span
-              className={imminent ? "font-medium text-foreground" : undefined}
-            >
-              {info.upcoming}
-            </span>
-          </>
-        )}
-      </span>
-    </span>
-  )
-}
+import { formatDateWithRelative } from "@/lib/utils"
 
 function InfoHint({ children }: { children: React.ReactNode }) {
   return (
@@ -177,144 +110,17 @@ function ContactDetailPage() {
     queryFn: () => DebtsService.listDebts({ contactId }),
   })
 
-  const fullName = [
-    contact.prefix,
-    contact.first_name,
-    contact.middle_name,
-    contact.last_name,
-    contact.suffix,
-  ]
-    .filter(Boolean)
-    .join(" ")
-
   const gifts = giftsData?.data ?? []
   const debts = debtsData?.data ?? []
   return (
     <div className="space-y-6 max-w-5xl">
-      {/* Header */}
-      <div className="flex items-start gap-5">
-        <div className="relative group">
-          <ContactAvatar contact={contact} size="lg" />
-          <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-            <AvatarUploadDialog
-              contact={contact}
-              trigger={
-                <button
-                  type="button"
-                  className="text-white hover:text-white/80"
-                >
-                  <Camera className="size-6" />
-                </button>
-              }
-            />
-          </div>
-        </div>
-        <div className="flex-1 min-w-0 space-y-2">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-3 min-w-0">
-              <h1 className="font-display text-4xl font-bold tracking-tight">
-                {fullName}
-              </h1>
-              <ContactFieldsPopover contactId={contactId} />
-              {contact.is_favorite && (
-                <Badge variant="secondary">
-                  <Star className="size-3" /> Favorite
-                </Badge>
-              )}
-              {contact.source &&
-                (() => {
-                  const src = describeContactSource(
-                    contact.source,
-                    contact.source_external_id,
-                  )
-                  const SourceIcon = src.isMessagingChannel
-                    ? MessagesSquare
-                    : Clock
-                  return (
-                    <Badge variant="outline" className="gap-1">
-                      <SourceIcon className="size-3" />
-                      {src.label}
-                      {src.detail && (
-                        <span className="text-muted-foreground text-xs">
-                          {src.detail}
-                        </span>
-                      )}
-                    </Badge>
-                  )
-                })()}
-              {contact.is_archived && (
-                <Badge variant="outline">
-                  <Archive className="size-3" /> Archived
-                </Badge>
-              )}
-              {contact.do_not_contact && (
-                <Badge
-                  variant="outline"
-                  title={contact.do_not_contact_reason || undefined}
-                >
-                  <BellOff className="size-3" /> No reminders
-                </Badge>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  window.open(`/api/v1/contacts/${contactId}.pdf`, "_blank")
-                }}
-              >
-                <Download className="size-4 mr-2" />
-                Download PDF
-              </Button>
-              <EditContactDialog contact={contact} />
-            </div>
-          </div>
-          {contact.company && (
-            <p className="text-lg text-muted-foreground">
-              {contact.title ? `${contact.title} at ` : ""}
-              {contact.company}
-            </p>
-          )}
-          {!contact.company && contact.title && (
-            <p className="text-lg text-muted-foreground">{contact.title}</p>
-          )}
-          <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground items-center">
-            {contact.birthday && (
-              <ContactBirthday birthday={contact.birthday} />
-            )}
-            {contact.how_we_met && (
-              <span className="flex items-center gap-1">
-                <UserRoundSearch className="size-3.5" /> How we met:{" "}
-                {contact.how_we_met}
-              </span>
-            )}
-            {contact.pronouns && (
-              <span className="flex items-center gap-1">
-                <UserRoundSearch className="size-3.5" /> Pronouns:{" "}
-                {contact.pronouns}
-              </span>
-            )}
-
-            {contact.timezone && (
-              <ContactLocalTime timezone={contact.timezone} />
-            )}
-            {contact.last_contacted_at && (
-              <span className="flex items-center gap-1">
-                <Clock className="size-3.5" /> Last contacted:{" "}
-                {formatDate(contact.last_contacted_at)}
-              </span>
-            )}
-          </div>
-
-          {/* Interaction Heatmap (Compact & Expandable) */}
-          <InteractionHeatmap
-            onWeekClick={handleWeekClick}
-            heatmapFilter={heatmapFilter}
-            clearHeatmapFilter={clearHeatmapFilter}
-          />
-        </div>
-      </div>
+      {/* Inline Editable Header */}
+      <InlineContactHeader
+        contact={contact}
+        onWeekClick={handleWeekClick}
+        heatmapFilter={heatmapFilter}
+        clearHeatmapFilter={clearHeatmapFilter}
+      />
 
       {/* Grid: left + right columns */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -373,6 +179,9 @@ function ContactDetailPage() {
             open={addOpen === "gift"}
             onOpenChange={(o) => setAddOpen(o ? "gift" : null)}
           />
+
+          {/* Inline Editable Contact Properties Card */}
+          <InlineContactDetailsCard contact={contact} />
 
           <AddressesCard contactId={contactId} />
 
