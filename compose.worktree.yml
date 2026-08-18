@@ -47,7 +47,7 @@ services:
       - "traefik.http.routers.${SLUG}-api.entrypoints=websecure"
       - "traefik.http.routers.${SLUG}-api.tls=true"
       - "traefik.http.routers.${SLUG}-api.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.${SLUG}-api.tls.domains[0].main=*.dev.kindred.${DOMAIN}"
+      - "traefik.http.routers.${SLUG}-api.tls.domains[0].main=*.dev.${DOMAIN}"
       - "traefik.http.services.${SLUG}-api.loadbalancer.server.port=8000"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/utils/health-check/"]
@@ -107,7 +107,7 @@ services:
       - "traefik.http.routers.${SLUG}.entrypoints=websecure"
       - "traefik.http.routers.${SLUG}.tls=true"
       - "traefik.http.routers.${SLUG}.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.${SLUG}.tls.domains[0].main=*.dev.kindred.${DOMAIN}"
+      - "traefik.http.routers.${SLUG}.tls.domains[0].main=*.dev.${DOMAIN}"
       - "traefik.http.services.${SLUG}.loadbalancer.server.port=5173"
 
   db:
