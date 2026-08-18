@@ -5,6 +5,26 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.110] - 2026-08-18
+
+### Added
+- Feat(contacts): flexible timezone search and identification (#197) (1943465)
+
+### Changed
+- Refactor(dev): update router rules in compose.dev.yml (f52e6ef)
+- Refactor(project-kit): update preview.just script (3ee0829)
+- Refactor: integrate preview domain & DNS checks into canonical project-kit doctor script (d5c2a44)
+
+### Fixed
+- Fix(worktree): update compose.worktree.yml network, middleware, and backend proxy settings (eaf4892)
+- Fix(deps): clean up pnpm-lock.yaml on main (ff55870)
+- Fix(docker): set UV_COMPILE_BYTECODE=0 to fix buildx QEMU compilation timeout (5a9d179)
+
+### Other
+- Revert "fix(dashboard): format badge as 'due' when check-in is due within [-2, 2] days (#199)" (061d7a9)
+- Test: add automated test-dev-routing recipe and verification script (aa7a102)
+- Config: update dev worktree deployment URL pattern to <branch-slug>.dev.kindred.khanpikehome.com (9518be5)
+
 ## [0.2.109] - 2026-08-18
 
 ### Fixed
