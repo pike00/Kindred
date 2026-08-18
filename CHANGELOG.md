@@ -5,6 +5,14 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.109] - 2026-08-18
+
+### Fixed
+- Fix(dashboard): format badge as 'due' when check-in is due within [-2, 2] days (#199) (741a464)
+
+### Other
+- Merge: sync main with gitea/main (97530f2)
+
 ## [0.2.108] - 2026-08-16
 
 ### Fixed
@@ -26,6 +34,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.106] - 2026-08-09
 
+### Added
+- Feat(frontend): eliminate sidebar navigation click delay and add loading feedback (#196) (673cd5e)
+
+### Documentation
+- Docs: revamp README for a public audience (#166) (2c9c74e)
+
 ### Fixed
 - Fix(version): resolve version and commit hash fallbacks durably (45409f4)
 
@@ -36,6 +50,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix VITE_API_URL default in Dockerfile.prod for same-origin production requests (8bdd1be)
 - Fix prepush gate and backend Dockerfile dependencies (7064f1b)
 - Make Interaction Activity compact and expandable below contact metadata (eec918a)
+- Merge: sync dependabot/combine-all with github/main (7fa2e5c)
+- Style: format code according to ruff 0.16.0 and biome linter rules (008a32c)
+- Deps(frontend): bump @tanstack/router-plugin to 1.168.24 (82182da)
+- ⬆ bump @tanstack/router-plugin from 1.168.18 to 1.168.24 (ad83202)
+- Deps(frontend): bump react-dom and @types/react-dom (9b1326b)
+- ⬆ bump react-dom and @types/react-dom (52b357e)
+- Deps(frontend): bump @radix-ui/react-radio-group to 1.4.7 (9e1550f)
+- ⬆ bump @radix-ui/react-radio-group from 1.3.8 to 1.4.7 (e8bc5d1)
+- Deps(frontend): bump @radix-ui/react-switch to 1.3.7 (f22d927)
+- ⬆ bump @radix-ui/react-switch from 1.2.6 to 1.3.7 (ff3a591)
+- Deps(frontend): bump lucide-react to 1.28.0 (ac4c93a)
+- ⬆ bump lucide-react from 0.563.0 to 1.28.0 (f84d02c)
+- Deps(backend): bump emails to 1.1.2 (03541f2)
+- ⬆ Bump emails from 0.6 to 1.1.2 (0b69489)
+- Deps(backend): update psycopg[binary] requirement (700fc41)
+- ⬆ Update psycopg[binary] requirement (038fd8d)
+- Deps(backend): bump ruff to 0.16.0 (0c07f70)
+- ⬆ Bump ruff from 0.15.15 to 0.16.0 (aa9754f)
+- Deps(backend): update sentry-sdk requirement (886f5b9)
+- ⬆ Update sentry-sdk[fastapi] requirement (cfd0e0e)
+- Deps(backend): bump cryptography to 50.0.0 (1a4961e)
+- ⬆ bump cryptography from 48.0.1 to 50.0.0 (186d988)
+- Build: bump node base images in Dockerfile and compose files (29fcbb7)
+- ⬆ bump node from 22-slim to 26-slim (06edb49)
+- ⬆ bump node from 22-slim to 26-slim in /frontend (ad7cb2d)
+- Ci: bump GitHub Actions setup-python, checkout, and fetch-metadata (b1bee99)
+- ⬆ Bump dependabot/fetch-metadata from 2.3.0 to 3.1.0 (d851922)
+- ⬆ Bump actions/setup-python from 6 to 7 (c866f33)
+- ⬆ Bump actions/checkout from 6 to 7 (2f777b8)
+- ⬆ bump getmeili/meilisearch from v1.52.0 to v1.53.0 (#192) (a4ab48f)
+- ⬆ bump getmeili/meilisearch from v1.51.0 to v1.52.0 (#185) (c5cea78)
 - Limit Stay in Touch widget to 2 contacts with expandable toggle (86329a8)
 
 ## [0.2.105] - 2026-08-05
