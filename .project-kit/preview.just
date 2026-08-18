@@ -292,3 +292,8 @@ pr:
     echo
     echo "✓ PR created: $pr_url"
     echo "  Preview:    $preview_url"
+
+# Automated test for <branch-slug>.dev.kindred.khanpikehome.com URL resolution, DNS, and Traefik routing.
+test-dev-routing:
+    @uv run .project-kit/scripts/test-dev-routing.py
+
