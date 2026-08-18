@@ -97,7 +97,7 @@ services:
       - sh
       - -c
       - |
-        corepack enable &&
+        npm install -g pnpm &&
         pnpm install --frozen-lockfile &&
         pnpm dev -- --host 0.0.0.0 --port 5173
     networks:

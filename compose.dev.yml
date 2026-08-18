@@ -27,7 +27,7 @@ services:
       # Hard-coded kindred.dev.khanpikehome.com (tailnet-only via admin-ipallowlist)
       # so a misset DOMAIN can never claim the prod hostname.
       - "traefik.enable=true"
-      - "traefik.http.routers.crm-api.rule=Host(`kindred.dev.khanpikehome.com`) && (PathPrefix(`/api`) || PathPrefix(`/docs`) || PathPrefix(`/redoc`) || PathPrefix(`/openapi.json`) || PathPrefix(`/dav`) || PathPrefix(`/.well-known`))"
+      - "traefik.http.routers.crm-api.rule=(Host(`kindred.dev.khanpikehome.com`) || Host(`flexible-timezone.kindred.khanpikehome.com`)) && (PathPrefix(`/api`) || PathPrefix(`/docs`) || PathPrefix(`/redoc`) || PathPrefix(`/openapi.json`) || PathPrefix(`/dav`) || PathPrefix(`/.well-known`))"
       - "traefik.http.routers.crm-api.entrypoints=websecure"
       - "traefik.http.routers.crm-api.tls=true"
       - "traefik.http.routers.crm-api.tls.certresolver=letsencrypt"
@@ -74,7 +74,7 @@ services:
       - sh
       - -c
       - |
-        corepack enable &&
+        npm install -g pnpm &&
         pnpm install --frozen-lockfile &&
         pnpm dev -- --host 0.0.0.0 --port 5173
     networks:
@@ -86,7 +86,7 @@ services:
       - "127.0.0.1:5173:5173"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.crm.rule=Host(`kindred.dev.khanpikehome.com`)"
+      - "traefik.http.routers.crm.rule=Host(`kindred.dev.khanpikehome.com`) || Host(`flexible-timezone.kindred.khanpikehome.com`)"
       - "traefik.http.routers.crm.entrypoints=websecure"
       - "traefik.http.routers.crm.tls=true"
       - "traefik.http.routers.crm.tls.certresolver=letsencrypt"
