@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refactor(project-kit): update preview.just script (3ee0829)
 - Refactor: integrate preview domain & DNS checks into canonical project-kit doctor script (d5c2a44)
 
+### Documentation
+- Docs: update CHANGELOG.md for v0.2.110 release (3cdf2f6)
+
 ### Fixed
 - Fix(worktree): update compose.worktree.yml network, middleware, and backend proxy settings (eaf4892)
 - Fix(deps): clean up pnpm-lock.yaml on main (ff55870)
