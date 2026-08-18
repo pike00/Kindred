@@ -117,7 +117,7 @@ After any backend schema change, also run `just sdk-regen` to update `sdk/src/ki
 |---|---|---|---|---|
 | Prod | `~/Documents/Homelab/apps/kindred/` on ares | `kindred.<DOMAIN>` | plain `docker compose` against pinned `ghcr.io/pike00/kindred:vX.Y.Z` | `kindred_db_data` volume, db `kindred` |
 | Dev (against homelab Traefik) | this repo | `kindred.dev.<DOMAIN>` | `compose.dev.yml` | project-local `crm-db` volume, db `crm` |
-| Per-worktree | `.worktrees/<slug>/` | `<slug>.kindred.<DOMAIN>` | `compose.worktree.yml` | project-local per-worktree volume |
+| Per-worktree | `.worktrees/<slug>/` | `<slug>.dev.kindred.<DOMAIN>` | `compose.worktree.yml` | project-local per-worktree volume |
 
 Tier isolation is hard: distinct credentials, volumes, networks, db names, and hard-coded Traefik labels (no `${DOMAIN}` interpolation on the prod hostname rule). Don't introduce shared `external: true` volumes across tiers.
 
@@ -173,7 +173,7 @@ CI mirror: `.github/workflows/release.yml` runs on tag push via the **self-hoste
 Terraform for this project lives in `~/Documents/Homelab/`:
 
 - DNS / Cloudflare / cert SANs: `infra/gateway/cloudflare/`
-- Tailnet DNS rewrites for worktree split-horizon (`<slug>.kindred.<DOMAIN>`): `infra/gateway/nextdns/` (unapplied; gated on NextDNS API key)
+- Tailnet DNS rewrites for worktree split-horizon (`<slug>.dev.kindred.<DOMAIN>`): `infra/gateway/nextdns/` (unapplied; gated on NextDNS API key)
 
 Run via `just tf-plan` / `just tf-apply` from those directories. Never run `terraform` directly.
 

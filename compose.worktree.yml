@@ -1,6 +1,6 @@
 # Per-worktree dev stack — Traefik-routed by default, fresh DB per worktree.
 #
-# Each worktree gets its own URL: https://${SLUG}.kindred.${DOMAIN}, where
+# Each worktree gets its own URL: https://${SLUG}.dev.kindred.${DOMAIN}, where
 # ${SLUG} is the worktree directory name (e.g. audit-log-shared-data).
 # Routing happens via the homelab Traefik on kindred-private, exactly like
 # the prod stack at kindred.${DOMAIN}.
@@ -36,7 +36,7 @@ services:
       - ./backend/tests:/app/backend/tests
       - ./backend/alembic.ini:/app/backend/alembic.ini:ro
     working_dir: /app/backend
-    command: ["bash", "-c", "bash scripts/prestart.sh && fastapi run --reload app/main.py"]
+    command: ["bash", "-c", "bash scripts/prestart.sh && fastapi run app/main.py"]
     networks:
       - default
       - pikenet-private
@@ -44,10 +44,15 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=pikenet-private"
       - "traefik.http.routers.${SLUG:?}-api.rule=Host(`${WORKTREE_HOST}`) && (PathPrefix(`/api`) || PathPrefix(`/docs`) || PathPrefix(`/redoc`) || PathPrefix(`/openapi.json`) || PathPrefix(`/dav`) || PathPrefix(`/.well-known`))"
+      - "traefik.http.routers.${SLUG}-api.priority=1000"
       - "traefik.http.routers.${SLUG}-api.entrypoints=websecure"
       - "traefik.http.routers.${SLUG}-api.tls=true"
+      # Force Traefik to obtain *.dev.kindred.${DOMAIN} via DNS-01 the first time
+      # any worktree starts. Once minted, all worktree subdomains share the
+      # same wildcard cert.
       - "traefik.http.routers.${SLUG}-api.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.${SLUG}-api.tls.domains[0].main=*.dev.${DOMAIN}"
+      - "traefik.http.routers.${SLUG}-api.tls.domains[0].main=*.dev.kindred.khanpikehome.com"
+      - "traefik.http.routers.${SLUG}-api.middlewares=admin-ipallowlist@file"
       - "traefik.http.services.${SLUG}-api.loadbalancer.server.port=8000"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/utils/health-check/"]
@@ -72,6 +77,7 @@ services:
       # HMR over wss connects back through Traefik instead of localhost.
       - VITE_API_URL=https://${WORKTREE_HOST}
       - VITE_PUBLIC_HOST=${WORKTREE_HOST}
+      - KINDRED_BACKEND_URL=http://backend:8000
       - GIT_HASH=${GIT_HASH:-}
       - APP_VERSION=${APP_VERSION:-}
       - VITE_AUTH_MODE=${AUTH_MODE:-local}
@@ -104,10 +110,12 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=pikenet-private"
       - "traefik.http.routers.${SLUG}.rule=Host(`${WORKTREE_HOST}`)"
+      - "traefik.http.routers.${SLUG}.priority=10"
       - "traefik.http.routers.${SLUG}.entrypoints=websecure"
       - "traefik.http.routers.${SLUG}.tls=true"
       - "traefik.http.routers.${SLUG}.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.${SLUG}.tls.domains[0].main=*.dev.${DOMAIN}"
+      - "traefik.http.routers.${SLUG}.tls.domains[0].main=*.dev.kindred.khanpikehome.com"
+      - "traefik.http.routers.${SLUG}.middlewares=admin-ipallowlist@file"
       - "traefik.http.services.${SLUG}.loadbalancer.server.port=5173"
 
   db:
@@ -206,6 +214,10 @@ volumes:
 networks:
   default:
   pikenet-private:
+<<<<<<< HEAD
+=======
+    name: pikenet-private
+>>>>>>> github/main
     external: true
 
   kindred-internal-crm:

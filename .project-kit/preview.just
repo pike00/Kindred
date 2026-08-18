@@ -3,7 +3,7 @@
 # Last refreshed: 2026-06-27
 #
 # Per-worktree dev stacks with Traefik routing. Each branch/worktree gets its
-# own FQDN at <slug>.<project>.<domain>. Config is baked from the preview
+# own FQDN at <slug>.dev.kindred.<domain>. Config is baked from the preview
 # answers; recipes are stubs when preview is disabled.
 #
 # SLUG derivation: linked worktree -> dir basename; main clone -> current branch
@@ -71,6 +71,11 @@ env:
     print("PREVIEW_TEST_COMMAND=pytest")
 
     _ports = {
+        "BACKEND_PORT": 28000,
+        "FRONTEND_PORT": 25173,
+        "DB_PORT": 25432,
+        "REDIS_PORT": 26379,
+        "MEILI_PORT": 27700,
     }
     for _name, _base in _ports.items():
         print(f"{_name}={_base + offset}")
@@ -287,3 +292,4 @@ pr:
     echo
     echo "✓ PR created: $pr_url"
     echo "  Preview:    $preview_url"
+
