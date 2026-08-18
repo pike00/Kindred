@@ -39,7 +39,7 @@ build-image tag="":
     [[ "$IS_RELEASE" == 1 ]] && tags+=(--tag "${image}:latest")
     echo "==> building ${image} (version ${VERSION}, sha-${SHA})"
     docker buildx build \
-        --platform linux/amd64 \
+        --platform linux/amd64,linux/arm64 \
         --file "Dockerfile.prod" \
         "${tags[@]}" \
         --build-arg "APP_VERSION=${VERSION}" \
