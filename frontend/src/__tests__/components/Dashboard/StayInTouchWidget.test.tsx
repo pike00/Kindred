@@ -60,6 +60,23 @@ describe("StayInTouchWidget", () => {
     })
   })
 
+  it("displays 'due' for contacts with days_overdue between -2 and 2", async () => {
+    const contacts = [
+      makeContact({ id: "1", first_name: "Alice", last_name: "", days_overdue: 0 }),
+      makeContact({ id: "2", first_name: "Bob", last_name: "", days_overdue: 5 }),
+    ]
+    mockListOverdueContacts.mockReturnValue(
+      cancelable({ data: contacts, count: 2 }),
+    )
+
+    renderWithProviders(<StayInTouchWidget />)
+
+    await waitFor(() => {
+      expect(screen.getByText("due")).toBeInTheDocument()
+      expect(screen.getByText("5d overdue")).toBeInTheDocument()
+    })
+  })
+
   it("limits displayed contacts to 2 and shows +X more overdue button when count > 2", async () => {
     const contacts = [
       makeContact({ id: "1", first_name: "Alice", last_name: "", days_overdue: 5 }),

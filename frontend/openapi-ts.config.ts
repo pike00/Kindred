@@ -24,9 +24,7 @@ export default defineConfig({
             return camel
           }
         }
-        return opStr.replace(/_([a-z])/gi, (_, letter) =>
-          letter.toUpperCase(),
-        )
+        return opStr.replace(/_([a-z])/gi, (_, letter) => letter.toUpperCase())
       },
     },
     {

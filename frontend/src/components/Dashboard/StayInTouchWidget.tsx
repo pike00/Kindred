@@ -151,7 +151,11 @@ export function StayInTouchWidget() {
                           : "bg-amber-100 text-amber-700 border-amber-200"
                     }`}
                   >
-                    {daysOverdue}d overdue
+                    {daysOverdue >= -2 && daysOverdue <= 2
+                      ? "due"
+                      : daysOverdue < -2
+                        ? `in ${Math.abs(daysOverdue)}d`
+                        : `${daysOverdue}d overdue`}
                   </Badge>
                   {!isDoNotContact && (
                     <>
