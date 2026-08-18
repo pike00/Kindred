@@ -25,7 +25,7 @@ test-watch:
     @just _skip "backend watch"
 
 lint:
-    @cd frontend && pnpm exec biome check src && cd ../backend && uvx ruff check app
+    @cd frontend && bun run biome check src && cd ../backend && uvx ruff check app
 
 typecheck:
-    @cd frontend && pnpm exec tsc --noEmit
+    @cd frontend && bun run tsc --noEmit
