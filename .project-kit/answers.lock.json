@@ -68,7 +68,7 @@
     "compose_file": "compose.worktree.yml",
     "enabled": true,
     "health_path": "/api/v1/utils/health-check/",
-    "host_pattern": "{slug}.kindred.{domain}",
+    "host_pattern": "{slug}.dev.kindred.{domain}",
     "ports": {},
     "project_prefix": "kindred",
     "shell_service": "backend",

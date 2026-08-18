@@ -1,6 +1,6 @@
 # Per-worktree dev stack — Traefik-routed by default, fresh DB per worktree.
 #
-# Each worktree gets its own URL: https://${SLUG}.kindred.${DOMAIN}, where
+# Each worktree gets its own URL: https://${SLUG}.dev.kindred.${DOMAIN}, where
 # ${SLUG} is the worktree directory name (e.g. audit-log-shared-data).
 # Routing happens via the homelab Traefik on kindred-private, exactly like
 # the prod stack at kindred.${DOMAIN}.
@@ -43,14 +43,15 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=kindred-private"
-      - "traefik.http.routers.${SLUG:?}-api.rule=Host(`${WORKTREE_HOST}`) && (PathPrefix(`/api`) || PathPrefix(`/docs`) || PathPrefix(`/redoc`) || PathPrefix(`/openapi.json`) || PathPrefix(`/dav`) || PathPrefix(`/.well-known`))"
+      - "traefik.http.routers.${SLUG:?}-api.rule=(Host(`${WORKTREE_HOST}`) || Host(`${SLUG}.dev.kindred.khanpikehome.com`)) && (PathPrefix(`/api`) || PathPrefix(`/docs`) || PathPrefix(`/redoc`) || PathPrefix(`/openapi.json`) || PathPrefix(`/dav`) || PathPrefix(`/.well-known`))"
       - "traefik.http.routers.${SLUG}-api.entrypoints=websecure"
       - "traefik.http.routers.${SLUG}-api.tls=true"
-      # Force Traefik to obtain *.kindred.${DOMAIN} via DNS-01 the first time
+      # Force Traefik to obtain *.dev.kindred.${DOMAIN} via DNS-01 the first time
       # any worktree starts. Once minted, all worktree subdomains share the
       # same wildcard cert.
       - "traefik.http.routers.${SLUG}-api.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.${SLUG}-api.tls.domains[0].main=*.kindred.${DOMAIN}"
+      - "traefik.http.routers.${SLUG}-api.tls.domains[0].main=*.dev.kindred.khanpikehome.com"
+      - "traefik.http.routers.${SLUG}-api.middlewares=tailnet-ipallowlist@file"
       - "traefik.http.services.${SLUG}-api.loadbalancer.server.port=8000"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/utils/health-check/"]
@@ -97,7 +98,7 @@ services:
       - sh
       - -c
       - |
-        corepack enable &&
+        npm install -g pnpm &&
         pnpm install --frozen-lockfile &&
         pnpm dev -- --host 0.0.0.0 --port 5173
     networks:
@@ -106,11 +107,12 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=kindred-private"
-      - "traefik.http.routers.${SLUG}.rule=Host(`${WORKTREE_HOST}`)"
+      - "traefik.http.routers.${SLUG}.rule=Host(`${WORKTREE_HOST}`) || Host(`${SLUG}.dev.kindred.khanpikehome.com`)"
       - "traefik.http.routers.${SLUG}.entrypoints=websecure"
       - "traefik.http.routers.${SLUG}.tls=true"
       - "traefik.http.routers.${SLUG}.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.${SLUG}.tls.domains[0].main=*.kindred.${DOMAIN}"
+      - "traefik.http.routers.${SLUG}.tls.domains[0].main=*.dev.kindred.khanpikehome.com"
+      - "traefik.http.routers.${SLUG}.middlewares=tailnet-ipallowlist@file"
       - "traefik.http.services.${SLUG}.loadbalancer.server.port=5173"
 
   db:
