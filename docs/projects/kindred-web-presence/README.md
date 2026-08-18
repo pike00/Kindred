@@ -3,7 +3,7 @@ title: Kindred Web Presence
 status: active
 repos: [kindred]
 started: 2026-05-22
-last_updated: 2026-06-05
+last_updated: 2026-08-04
 next_step: Choose hosting target (Cloudflare Pages or GitHub Pages) and deploy
 ---
 
@@ -26,6 +26,9 @@ Build two public-facing sites for Kindred: (1) a marketing/info landing page tha
 - [ ] Verify version + git hash visible in demo UI footer
 
 ## Session Log
+
+### 2026-08-04
+- Housekeeping: Bump last_updated after repo releases and updates.
 
 ### 2026-06-05
 - Housekeeping: State reconciled during the tofix-remaining ship (v0.2.87 + v0.2.88 deployed to prod). No scope change to this project.

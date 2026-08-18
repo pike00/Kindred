@@ -113,8 +113,6 @@ def delete_debt(
     debt = session.get(Debt, debt_id)
     if debt is None:
         raise HTTPException(status_code=404, detail="Debt not found")
-    if debt.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
     _require_contact_visible(session, current_user, debt.contact_id)
 
     debt.deleted_at = datetime.now(timezone.utc)
@@ -126,17 +124,16 @@ def delete_debt(
 @router.post("/{debt_id}/restore")
 def restore_debt(
     session: SessionDep,
+    current_user: CurrentUser,
     debt_id: uuid.UUID,
 ) -> Any:
     """Restore a soft-deleted debt by clearing deleted_at."""
-    from sqlalchemy import text, update
-
-    result = session.exec(
-        text("SELECT id FROM debt WHERE id = :id AND deleted_at IS NOT NULL"),
-        params={"id": str(debt_id)},
-    ).first()
-    if result is None:
+    debt = session.get(Debt, debt_id)
+    if debt is None or debt.deleted_at is None:
         raise HTTPException(status_code=404, detail="Debt not found or not deleted")
-    session.exec(update(Debt).where(Debt.id == debt_id).values(deleted_at=None))
+
+    _require_contact_visible(session, current_user, debt.contact_id)
+    debt.deleted_at = None
+    session.add(debt)
     session.commit()
     return {"ok": True}

@@ -1,6 +1,6 @@
 # Per-worktree dev stack — Traefik-routed by default, fresh DB per worktree.
 #
-# Each worktree gets its own URL: https://${SLUG}.kindred.${DOMAIN}, where
+# Each worktree gets its own URL: https://${SLUG}.dev.kindred.${DOMAIN}, where
 # ${SLUG} is the worktree directory name (e.g. audit-log-shared-data).
 # Routing happens via the homelab Traefik on kindred-private, exactly like
 # the prod stack at kindred.${DOMAIN}.
@@ -29,28 +29,30 @@ services:
       - FRONTEND_HOST=https://${WORKTREE_HOST:?run via 'just up' so WORKTREE_HOST is set}
       - GIT_HASH=${GIT_HASH:-}
     ports:
-      - "${BACKEND_PORT:-8000}:8000"
+      - "127.0.0.1:${BACKEND_PORT:-8000}:8000"
     volumes:
       - ./backend/app:/app/backend/app
       - ./backend/scripts:/app/backend/scripts
       - ./backend/tests:/app/backend/tests
       - ./backend/alembic.ini:/app/backend/alembic.ini:ro
     working_dir: /app/backend
-    command: ["bash", "-c", "bash scripts/prestart.sh && fastapi run --reload app/main.py"]
+    command: ["bash", "-c", "bash scripts/prestart.sh && fastapi run app/main.py"]
     networks:
       - default
-      - kindred-private
+      - pikenet-private
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=kindred-private"
+      - "traefik.docker.network=pikenet-private"
       - "traefik.http.routers.${SLUG:?}-api.rule=Host(`${WORKTREE_HOST}`) && (PathPrefix(`/api`) || PathPrefix(`/docs`) || PathPrefix(`/redoc`) || PathPrefix(`/openapi.json`) || PathPrefix(`/dav`) || PathPrefix(`/.well-known`))"
+      - "traefik.http.routers.${SLUG}-api.priority=1000"
       - "traefik.http.routers.${SLUG}-api.entrypoints=websecure"
       - "traefik.http.routers.${SLUG}-api.tls=true"
-      # Force Traefik to obtain *.kindred.${DOMAIN} via DNS-01 the first time
+      # Force Traefik to obtain *.dev.kindred.${DOMAIN} via DNS-01 the first time
       # any worktree starts. Once minted, all worktree subdomains share the
       # same wildcard cert.
       - "traefik.http.routers.${SLUG}-api.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.${SLUG}-api.tls.domains[0].main=*.kindred.${DOMAIN}"
+      - "traefik.http.routers.${SLUG}-api.tls.domains[0].main=*.dev.kindred.khanpikehome.com"
+      - "traefik.http.routers.${SLUG}-api.middlewares=admin-ipallowlist@file"
       - "traefik.http.services.${SLUG}-api.loadbalancer.server.port=8000"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/utils/health-check/"]
@@ -65,7 +67,7 @@ services:
         condition: service_healthy
 
   frontend:
-    image: node:22-slim
+    image: node:26-slim
     working_dir: /app/frontend
     env_file: .env
     environment:
@@ -75,14 +77,16 @@ services:
       # HMR over wss connects back through Traefik instead of localhost.
       - VITE_API_URL=https://${WORKTREE_HOST}
       - VITE_PUBLIC_HOST=${WORKTREE_HOST}
+      - KINDRED_BACKEND_URL=http://backend:8000
       - GIT_HASH=${GIT_HASH:-}
+      - APP_VERSION=${APP_VERSION:-}
       - VITE_AUTH_MODE=${AUTH_MODE:-local}
       - VITE_CF_LOGOUT_URL=${VITE_CF_LOGOUT_URL:-}
       # Playwright runs on the host (scripts/run-e2e-prepush.sh), not in this
       # container. Skip the ~400 MB Chromium/Firefox/WebKit/ffmpeg download.
       - PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
     ports:
-      - "${FRONTEND_PORT:-5173}:5173"
+      - "127.0.0.1:${FRONTEND_PORT:-5173}:5173"
     volumes:
       - ./package.json:/app/package.json:ro
       - ./pnpm-lock.yaml:/app/pnpm-lock.yaml:ro
@@ -96,20 +100,22 @@ services:
       - sh
       - -c
       - |
-        corepack enable &&
+        npm install -g pnpm &&
         pnpm install --frozen-lockfile &&
         pnpm dev -- --host 0.0.0.0 --port 5173
     networks:
       - default
-      - kindred-private
+      - pikenet-private
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=kindred-private"
+      - "traefik.docker.network=pikenet-private"
       - "traefik.http.routers.${SLUG}.rule=Host(`${WORKTREE_HOST}`)"
+      - "traefik.http.routers.${SLUG}.priority=10"
       - "traefik.http.routers.${SLUG}.entrypoints=websecure"
       - "traefik.http.routers.${SLUG}.tls=true"
       - "traefik.http.routers.${SLUG}.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.${SLUG}.tls.domains[0].main=*.kindred.${DOMAIN}"
+      - "traefik.http.routers.${SLUG}.tls.domains[0].main=*.dev.kindred.khanpikehome.com"
+      - "traefik.http.routers.${SLUG}.middlewares=admin-ipallowlist@file"
       - "traefik.http.services.${SLUG}.loadbalancer.server.port=5173"
 
   db:
@@ -120,7 +126,7 @@ services:
     volumes:
       - db-data:/var/lib/postgresql/data
     ports:
-      - "${DB_PORT:-15432}:5432"
+      - "127.0.0.1:${DB_PORT:-15432}:5432"
     networks:
       - default
     healthcheck:
@@ -156,7 +162,7 @@ services:
     volumes:
       - redis-data:/data
     ports:
-      - "${REDIS_PORT:-16379}:6379"
+      - "127.0.0.1:${REDIS_PORT:-16379}:6379"
     networks:
       - default
     healthcheck:
@@ -166,7 +172,7 @@ services:
       retries: 5
 
   meilisearch:
-    image: getmeili/meilisearch:v1.49
+    image: getmeili/meilisearch:v1.52
     env_file: .env
     environment:
       - MEILI_ENV=development
@@ -175,7 +181,7 @@ services:
     volumes:
       - meili-data:/meili_data
     ports:
-      - "${MEILI_PORT:-17700}:7700"
+      - "127.0.0.1:${MEILI_PORT:-17700}:7700"
     networks:
       - default
     healthcheck:
@@ -207,8 +213,8 @@ volumes:
 
 networks:
   default:
-  kindred-private:
-    name: kindred-private
+  pikenet-private:
+    name: pikenet-private
     external: true
 
 

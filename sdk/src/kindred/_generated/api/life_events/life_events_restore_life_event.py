@@ -59,7 +59,7 @@ def _build_response(
 def sync_detailed(
     event_id: UUID,
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
 ) -> Response[Any | HTTPValidationError]:
     """Restore Life Event
 
@@ -90,7 +90,7 @@ def sync_detailed(
 def sync(
     event_id: UUID,
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
 ) -> Any | HTTPValidationError | None:
     """Restore Life Event
 
@@ -116,7 +116,7 @@ def sync(
 async def asyncio_detailed(
     event_id: UUID,
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
 ) -> Response[Any | HTTPValidationError]:
     """Restore Life Event
 
@@ -145,7 +145,7 @@ async def asyncio_detailed(
 async def asyncio(
     event_id: UUID,
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
 ) -> Any | HTTPValidationError | None:
     """Restore Life Event
 

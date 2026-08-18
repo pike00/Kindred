@@ -6,6 +6,7 @@ import {
   updateTag,
   createContact,
   deleteContact,
+  API_URL,
 } from "./helpers/api.js"
 
 // `/tags` shows a DataTable of tags with a row-actions menu that exposes
@@ -32,9 +33,13 @@ test.afterAll(async ({ request }) => {
 
 async function openTags(page: import("@playwright/test").Page) {
   await page.goto("/tags", { waitUntil: "domcontentloaded" })
-  await expect(page.getByRole("heading", { name: /^tags$/i })).toBeVisible({
-    timeout: 30_000,
-  })
+  const heading = page.getByRole("heading", { name: /^tags$/i })
+  try {
+    await expect(heading).toBeVisible({ timeout: 15_000 })
+  } catch {
+    await page.reload({ waitUntil: "domcontentloaded" })
+    await expect(heading).toBeVisible({ timeout: 30_000 })
+  }
 }
 
 // The DataTable defaults to pageSize=10 but the demo DB has more tags than
@@ -86,11 +91,7 @@ test.describe("Tags", () => {
     await expect(page.getByText(name)).toBeVisible({ timeout: 10_000 })
 
     // Track for teardown
-    const baseUrl = (process.env.E2E_BASE_URL ?? "http://localhost:5173").replace(
-      ":5173",
-      ":8001",
-    )
-    const res = await request.get(`${baseUrl}/api/v1/tags/?limit=500`, {
+    const res = await request.get(`${API_URL}/api/v1/tags/?limit=500`, {
       headers: { Authorization: `Bearer ${token}` },
     })
     const body = await res.json()

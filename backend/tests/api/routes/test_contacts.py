@@ -6,6 +6,20 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session
 
 from app.core.config import settings
+from app.models import AllContactsShare
+from tests.utils.user import authentication_token_from_email, create_random_user
+
+
+def _grant_all_contacts_share(db: Session, *, owner_id: str, grantee_id: str) -> None:
+    db.add(AllContactsShare(owner_id=owner_id, grantee_id=grantee_id))
+    db.commit()
+
+
+def _revoke_all_contacts_share(db: Session, *, owner_id: str, grantee_id: str) -> None:
+    share = db.get(AllContactsShare, (owner_id, grantee_id))
+    assert share is not None
+    db.delete(share)
+    db.commit()
 
 
 def test_create_contact(
@@ -27,6 +41,27 @@ def test_create_contact(
     # Regression: Group was merged into Tag on 2026-05-06; the response
     # must not carry a `groups` field — frontends call .map on it.
     assert "groups" not in content
+
+
+def test_contact_email_auto_logging_can_be_enabled(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
+    create_response = client.post(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=superuser_token_headers,
+        json={"first_name": "Brisa", "auto_log_email": True},
+    )
+    assert create_response.status_code == 200
+    contact_id = create_response.json()["id"]
+    assert create_response.json()["auto_log_email"] is True
+
+    update_response = client.patch(
+        f"{settings.API_V1_STR}/contacts/{contact_id}",
+        headers=superuser_token_headers,
+        json={"auto_log_email": False},
+    )
+    assert update_response.status_code == 200
+    assert update_response.json()["auto_log_email"] is False
 
 
 def test_create_contact_with_optional_fields(
@@ -54,16 +89,26 @@ def test_create_contact_with_optional_fields(
     assert content["is_favorite"] is True
 
 
-def test_create_contact_missing_first_name(
+def test_create_contact_allows_missing_or_blank_first_name(
     client: TestClient, superuser_token_headers: dict[str, str]
 ) -> None:
-    data = {"last_name": "NoFirst"}
     r = client.post(
         f"{settings.API_V1_STR}/contacts/",
         headers=superuser_token_headers,
-        json=data,
+        json={"last_name": "KnownFamilyName"},
     )
-    assert r.status_code == 422
+    assert r.status_code == 200
+    assert r.json()["first_name"] == ""
+    assert r.json()["last_name"] == "KnownFamilyName"
+
+    r = client.post(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=superuser_token_headers,
+        json={"first_name": "", "last_name": ""},
+    )
+    assert r.status_code == 200
+    assert r.json()["first_name"] == ""
+    assert r.json()["last_name"] == ""
 
 
 def test_list_contacts(
@@ -290,11 +335,6 @@ def test_losing_touch(
 
 
 def test_contact_isolation_between_users(client: TestClient, db: Session) -> None:
-    from tests.utils.user import (
-        authentication_token_from_email,
-        create_random_user,
-    )
-
     alice = create_random_user(db)
     bob = create_random_user(db)
     alice_h = authentication_token_from_email(client=client, email=alice.email, db=db)
@@ -318,11 +358,6 @@ def test_contact_isolation_between_users(client: TestClient, db: Session) -> Non
 
 
 def test_shared_tag_exposes_contact(client: TestClient, db: Session) -> None:
-    from tests.utils.user import (
-        authentication_token_from_email,
-        create_random_user,
-    )
-
     alice = create_random_user(db)
     bob = create_random_user(db)
     alice_h = authentication_token_from_email(client=client, email=alice.email, db=db)
@@ -352,6 +387,103 @@ def test_shared_tag_exposes_contact(client: TestClient, db: Session) -> None:
 
     r = client.get(f"{settings.API_V1_STR}/contacts/{contact['id']}", headers=bob_h)
     assert r.status_code == 200
+
+
+def test_all_contacts_share_exposes_existing_contact_without_tags(
+    client: TestClient, db: Session
+) -> None:
+    alice = create_random_user(db)
+    bob = create_random_user(db)
+    alice_h = authentication_token_from_email(client=client, email=alice.email, db=db)
+    bob_h = authentication_token_from_email(client=client, email=bob.email, db=db)
+
+    contact = client.post(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=alice_h,
+        json={"first_name": "ExistingShared"},
+    ).json()
+    _grant_all_contacts_share(db, owner_id=alice.id, grantee_id=bob.id)
+
+    r = client.get(f"{settings.API_V1_STR}/contacts/", headers=bob_h)
+    assert r.status_code == 200
+    assert contact["id"] in [item["id"] for item in r.json()["data"]]
+
+    r = client.get(f"{settings.API_V1_STR}/contacts/{contact['id']}", headers=bob_h)
+    assert r.status_code == 200
+    assert r.json()["first_name"] == "ExistingShared"
+
+
+def test_all_contacts_share_exposes_future_contact_and_child_resource(
+    client: TestClient, db: Session
+) -> None:
+    alice = create_random_user(db)
+    bob = create_random_user(db)
+    alice_h = authentication_token_from_email(client=client, email=alice.email, db=db)
+    bob_h = authentication_token_from_email(client=client, email=bob.email, db=db)
+
+    _grant_all_contacts_share(db, owner_id=alice.id, grantee_id=bob.id)
+
+    contact = client.post(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=alice_h,
+        json={"first_name": "FutureShared"},
+    ).json()
+    address = client.post(
+        f"{settings.API_V1_STR}/addresses/",
+        headers=alice_h,
+        json={"contact_id": contact["id"], "label": "home", "city": "SharedTown"},
+    ).json()
+
+    r = client.get(f"{settings.API_V1_STR}/contacts/", headers=bob_h)
+    assert r.status_code == 200
+    assert contact["id"] in [item["id"] for item in r.json()["data"]]
+
+    r = client.get(f"{settings.API_V1_STR}/contacts/{contact['id']}", headers=bob_h)
+    assert r.status_code == 200
+    assert r.json()["first_name"] == "FutureShared"
+
+    r = client.get(
+        f"{settings.API_V1_STR}/addresses/contact/{contact['id']}",
+        headers=bob_h,
+    )
+    assert r.status_code == 200
+    assert [item["id"] for item in r.json()["data"]] == [address["id"]]
+
+    r = client.post(
+        f"{settings.API_V1_STR}/addresses/",
+        headers=bob_h,
+        json={"contact_id": contact["id"], "label": "work", "city": "BobTown"},
+    )
+    assert r.status_code == 200
+    assert r.json()["city"] == "BobTown"
+
+
+def test_revoking_all_contacts_share_removes_contact_access(
+    client: TestClient, db: Session
+) -> None:
+    alice = create_random_user(db)
+    bob = create_random_user(db)
+    alice_h = authentication_token_from_email(client=client, email=alice.email, db=db)
+    bob_h = authentication_token_from_email(client=client, email=bob.email, db=db)
+
+    contact = client.post(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=alice_h,
+        json={"first_name": "RevokedShared"},
+    ).json()
+    _grant_all_contacts_share(db, owner_id=alice.id, grantee_id=bob.id)
+
+    r = client.get(f"{settings.API_V1_STR}/contacts/{contact['id']}", headers=bob_h)
+    assert r.status_code == 200
+
+    _revoke_all_contacts_share(db, owner_id=alice.id, grantee_id=bob.id)
+
+    r = client.get(f"{settings.API_V1_STR}/contacts/", headers=bob_h)
+    assert r.status_code == 200
+    assert contact["id"] not in [item["id"] for item in r.json()["data"]]
+
+    r = client.get(f"{settings.API_V1_STR}/contacts/{contact['id']}", headers=bob_h)
+    assert r.status_code == 404
 
 
 def test_delete_contact_is_soft_delete(

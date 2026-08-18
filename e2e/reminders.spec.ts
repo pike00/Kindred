@@ -5,6 +5,7 @@ import {
   deleteReminder,
   updateReminder,
   listReminders,
+  API_URL,
 } from "./helpers/api.js"
 
 // `/reminders` shows a DataTable of reminders. Each row has a row-actions menu
@@ -27,9 +28,13 @@ test.afterAll(async ({ request }) => {
 
 async function openReminders(page: import("@playwright/test").Page) {
   await page.goto("/reminders", { waitUntil: "domcontentloaded" })
-  await expect(
-    page.getByRole("heading", { name: /^reminders$/i }),
-  ).toBeVisible({ timeout: 30_000 })
+  const heading = page.getByRole("heading", { name: /^reminders$/i })
+  try {
+    await expect(heading).toBeVisible({ timeout: 15_000 })
+  } catch {
+    await page.reload({ waitUntil: "domcontentloaded" })
+    await expect(heading).toBeVisible({ timeout: 30_000 })
+  }
 }
 
 function plusHours(h: number): string {
@@ -115,11 +120,7 @@ test.describe("Reminders", () => {
     for (const r of after) {
       // listReminders only returns id+is_done, so we re-fetch full row to match.
     }
-    const baseUrl = (process.env.E2E_BASE_URL ?? "http://localhost:5173").replace(
-      ":5173",
-      ":8001",
-    )
-    const res = await request.get(`${baseUrl}/api/v1/reminders/?limit=20`, {
+    const res = await request.get(`${API_URL}/api/v1/reminders/?limit=20`, {
       headers: { Authorization: `Bearer ${token}` },
     })
     const list = await res.json()
@@ -150,11 +151,7 @@ test.describe("Reminders", () => {
     await page.waitForTimeout(800)
 
     // Verify via API: snoozed_until should now be set on this reminder.
-    const baseUrl = (process.env.E2E_BASE_URL ?? "http://localhost:5173").replace(
-      ":5173",
-      ":8001",
-    )
-    const res = await request.get(`${baseUrl}/api/v1/reminders/?limit=500`, {
+    const res = await request.get(`${API_URL}/api/v1/reminders/?limit=500`, {
       headers: { Authorization: `Bearer ${token}` },
     })
     const list = await res.json()

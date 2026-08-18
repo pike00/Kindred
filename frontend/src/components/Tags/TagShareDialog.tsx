@@ -94,7 +94,10 @@ export const TagShareDialog = ({
   const shareMutation = useMutation({
     mutationFn: (data: { tagId: string; granteeEmail: string }) =>
       TagSharesService.createTagShare({
-        requestBody: { tag_id: data.tagId, grantee_id: "" as any },
+        requestBody: {
+          tag_id: data.tagId,
+          grantee_email: data.granteeEmail,
+        },
       }),
     onSuccess: () => {
       showSuccessToast(`Tag "${tag.name}" shared successfully`)
@@ -137,7 +140,8 @@ export const TagShareDialog = ({
         <DialogHeader>
           <DialogTitle>Share Tag: {tag.name}</DialogTitle>
           <DialogDescription>
-            Grant another user read access to all contacts with this tag.
+            Grant another user read and write access to all contacts with this
+            tag.
           </DialogDescription>
         </DialogHeader>
 
@@ -192,7 +196,7 @@ export const TagShareDialog = ({
               <AlertTitle>Sharing Scope Warning</AlertTitle>
               <AlertDescription>
                 You are about to share the tag <strong>"{tag.name}"</strong>.
-                This will grant the selected user read access to:
+                This will grant the selected user read and write access to:
               </AlertDescription>
             </Alert>
 

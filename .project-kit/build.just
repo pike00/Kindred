@@ -19,6 +19,9 @@ build-image tag="":
     #!/usr/bin/env bash
     set -euo pipefail
     REF="{{tag}}"
+    if [[ -z "$REF" ]]; then
+        REF="$(git describe --tags --abbrev=0 2>/dev/null || true)"
+    fi
     SHA=$(git rev-parse --short HEAD)
     IS_RELEASE=0
     if [[ "$REF" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$ ]]; then

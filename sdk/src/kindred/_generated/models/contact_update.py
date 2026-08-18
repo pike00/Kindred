@@ -37,6 +37,7 @@ class ContactUpdate:
         is_deceased (bool | None | Unset):
         deceased_at (datetime.date | None | Unset):
         contact_frequency_days (int | None | Unset):
+        auto_log_email (bool | None | Unset):
         stage (None | str | Unset):
         do_not_contact (bool | None | Unset):
         do_not_contact_reason (None | str | Unset):
@@ -61,6 +62,7 @@ class ContactUpdate:
     is_deceased: bool | None | Unset = UNSET
     deceased_at: datetime.date | None | Unset = UNSET
     contact_frequency_days: int | None | Unset = UNSET
+    auto_log_email: bool | None | Unset = UNSET
     stage: None | str | Unset = UNSET
     do_not_contact: bool | None | Unset = UNSET
     do_not_contact_reason: None | str | Unset = UNSET
@@ -170,6 +172,12 @@ class ContactUpdate:
         else:
             contact_frequency_days = self.contact_frequency_days
 
+        auto_log_email: bool | None | Unset
+        if isinstance(self.auto_log_email, Unset):
+            auto_log_email = UNSET
+        else:
+            auto_log_email = self.auto_log_email
+
         stage: None | str | Unset
         if isinstance(self.stage, Unset):
             stage = UNSET
@@ -247,6 +255,8 @@ class ContactUpdate:
             field_dict["deceased_at"] = deceased_at
         if contact_frequency_days is not UNSET:
             field_dict["contact_frequency_days"] = contact_frequency_days
+        if auto_log_email is not UNSET:
+            field_dict["auto_log_email"] = auto_log_email
         if stage is not UNSET:
             field_dict["stage"] = stage
         if do_not_contact is not UNSET:
@@ -426,6 +436,15 @@ class ContactUpdate:
 
         contact_frequency_days = _parse_contact_frequency_days(d.pop("contact_frequency_days", UNSET))
 
+        def _parse_auto_log_email(data: object) -> bool | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(bool | None | Unset, data)
+
+        auto_log_email = _parse_auto_log_email(d.pop("auto_log_email", UNSET))
+
         def _parse_stage(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -510,6 +529,7 @@ class ContactUpdate:
             is_deceased=is_deceased,
             deceased_at=deceased_at,
             contact_frequency_days=contact_frequency_days,
+            auto_log_email=auto_log_email,
             stage=stage,
             do_not_contact=do_not_contact,
             do_not_contact_reason=do_not_contact_reason,

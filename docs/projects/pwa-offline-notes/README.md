@@ -3,7 +3,7 @@ title: PWA Installability and Offline Note Drafting
 status: to_review
 repos: [personal-crm]
 started: 2026-04-21
-last_updated: 2026-06-05
+last_updated: 2026-08-04
 next_step: Integrate vite-plugin-pwa into Vite config
 ---
 
@@ -25,6 +25,9 @@ Make the personal-crm React frontend installable as a PWA on iOS (A2HS) and Andr
 - [ ] Cache-busting on deploy to prevent stale service workers
 
 ## Session Log
+
+### 2026-08-04
+- Housekeeping: Bump last_updated after repo releases and updates.
 
 ### 2026-06-05
 - Housekeeping: State reconciled during the tofix-remaining ship (v0.2.87 + v0.2.88 deployed to prod). No scope change to this project.

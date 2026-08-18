@@ -482,9 +482,11 @@ function RelationshipRow({ rel }: { rel: RelationshipPublic }) {
 export function RelationshipsCard({
   contactId,
   contactName,
+  embedded = false,
 }: {
   contactId: string
   contactName: string
+  embedded?: boolean
 }) {
   const { data, isLoading } = useQuery({
     queryKey: ["relationships", contactId],
@@ -493,6 +495,50 @@ export function RelationshipsCard({
   const relationships =
     (data as { data?: RelationshipPublic[] } | undefined)?.data ?? []
 
+  const content = (
+    <>
+      <HouseholdCard contactId={contactId} contactName={contactName} embedded />
+      <div className="space-y-2 pt-3 border-t">
+        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+          <HeartHandshake className="size-4" /> Relationships
+        </div>
+        <AddRelationshipInline
+          contactId={contactId}
+          contactName={contactName}
+        />
+        {isLoading ? (
+          <Skeleton className="h-4 w-2/3" />
+        ) : relationships.length > 0 ? (
+          <div className="space-y-2">
+            {relationships.map((r) => (
+              <RelationshipRow key={r.id} rel={r} />
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            icon={HeartHandshake}
+            title="No relationships"
+            description="Link this contact to family members, partners, friends, or coworkers."
+          />
+        )}
+      </div>
+    </>
+  )
+
+  if (embedded) {
+    return (
+      <section aria-labelledby="people-section-title" className="space-y-4">
+        <h3
+          id="people-section-title"
+          className="font-display flex items-center gap-2 font-semibold"
+        >
+          <Users className="size-4" /> People
+        </h3>
+        <div className="space-y-3">{content}</div>
+      </section>
+    )
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -500,37 +546,7 @@ export function RelationshipsCard({
           <Users className="size-4" /> People
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <HouseholdCard
-          contactId={contactId}
-          contactName={contactName}
-          embedded
-        />
-        <div className="space-y-2 pt-3 border-t">
-          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-            <HeartHandshake className="size-4" /> Relationships
-          </div>
-          <AddRelationshipInline
-            contactId={contactId}
-            contactName={contactName}
-          />
-          {isLoading ? (
-            <Skeleton className="h-4 w-2/3" />
-          ) : relationships.length > 0 ? (
-            <div className="space-y-2">
-              {relationships.map((r) => (
-                <RelationshipRow key={r.id} rel={r} />
-              ))}
-            </div>
-          ) : (
-            <EmptyState
-              icon={HeartHandshake}
-              title="No relationships"
-              description="Link this contact to family members, partners, friends, or coworkers."
-            />
-          )}
-        </div>
-      </CardContent>
+      <CardContent className="space-y-3">{content}</CardContent>
     </Card>
   )
 }

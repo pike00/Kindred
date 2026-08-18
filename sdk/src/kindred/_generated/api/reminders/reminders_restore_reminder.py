@@ -59,7 +59,7 @@ def _build_response(
 def sync_detailed(
     reminder_id: UUID,
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
 ) -> Response[Any | HTTPValidationError]:
     """Restore Reminder
 
@@ -90,7 +90,7 @@ def sync_detailed(
 def sync(
     reminder_id: UUID,
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
 ) -> Any | HTTPValidationError | None:
     """Restore Reminder
 
@@ -116,7 +116,7 @@ def sync(
 async def asyncio_detailed(
     reminder_id: UUID,
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
 ) -> Response[Any | HTTPValidationError]:
     """Restore Reminder
 
@@ -145,7 +145,7 @@ async def asyncio_detailed(
 async def asyncio(
     reminder_id: UUID,
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
 ) -> Any | HTTPValidationError | None:
     """Restore Reminder
 

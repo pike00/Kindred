@@ -3,7 +3,7 @@
 # Last refreshed: 2026-06-27
 #
 # Per-worktree dev stacks with Traefik routing. Each branch/worktree gets its
-# own FQDN at <slug>.<project>.<domain>. Config is baked from the preview
+# own FQDN at <slug>.dev.kindred.<domain>. Config is baked from the preview
 # answers; recipes are stubs when preview is disabled.
 #
 # SLUG derivation: linked worktree -> dir basename; main clone -> current branch
@@ -58,7 +58,7 @@ env:
             f"refuses to use slug={slug!r}: equals project_prefix, would collide "
             f"with the prod Traefik router. Switch branches or rename project_prefix."
         )
-    host = "{slug}.kindred.{domain}".replace("{slug}", slug).replace("{domain}", domain)
+    host = "{slug}.dev.{domain}".replace("{slug}", slug).replace("{domain}", domain)
 
     print(f"SLUG={slug}")
     print(f"COMPOSE_PROJECT_NAME={prefix}-{slug}")
@@ -71,6 +71,11 @@ env:
     print("PREVIEW_TEST_COMMAND=pytest")
 
     _ports = {
+        "BACKEND_PORT": 28000,
+        "FRONTEND_PORT": 25173,
+        "DB_PORT": 25432,
+        "REDIS_PORT": 26379,
+        "MEILI_PORT": 27700,
     }
     for _name, _base in _ports.items():
         print(f"{_name}={_base + offset}")
@@ -287,3 +292,4 @@ pr:
     echo
     echo "✓ PR created: $pr_url"
     echo "  Preview:    $preview_url"
+

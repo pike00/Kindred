@@ -661,6 +661,47 @@ export const AddressesPublicSchema = {
     title: 'AddressesPublic'
 } as const;
 
+export const AllContactsSharePublicSchema = {
+    properties: {
+        grantee_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Grantee Id'
+        },
+        grantee_email: {
+            type: 'string',
+            title: 'Grantee Email'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        }
+    },
+    type: 'object',
+    required: ['grantee_id', 'grantee_email', 'created_at'],
+    title: 'AllContactsSharePublic'
+} as const;
+
+export const AllContactsSharesPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/AllContactsSharePublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'AllContactsSharesPublic'
+} as const;
+
 export const Body_ical_upload_icalSchema = {
     properties: {
         file: {
@@ -1334,9 +1375,9 @@ export const ContactCreateSchema = {
         first_name: {
             type: 'string',
             maxLength: 255,
-            minLength: 1,
             title: 'First Name',
-            description: 'Given name; required.'
+            description: 'Given name, if known.',
+            default: ''
         },
         last_name: {
             anyOf: [
@@ -1513,6 +1554,12 @@ export const ContactCreateSchema = {
             title: 'Contact Frequency Days',
             description: 'Target days between interactions; drives losing-touch cadence.'
         },
+        auto_log_email: {
+            type: 'boolean',
+            title: 'Auto Log Email',
+            description: 'Automatically create interactions from matching email headers.',
+            default: false
+        },
         do_not_contact: {
             type: 'boolean',
             title: 'Do Not Contact',
@@ -1606,7 +1653,6 @@ export const ContactCreateSchema = {
         }
     },
     type: 'object',
-    required: ['first_name'],
     title: 'ContactCreate'
 } as const;
 
@@ -1878,10 +1924,7 @@ export const ContactPublicSchema = {
     properties: {
         first_name: {
             type: 'string',
-            maxLength: 255,
-            minLength: 1,
-            title: 'First Name',
-            description: 'Given name; required.'
+            title: 'First Name'
         },
         last_name: {
             anyOf: [
@@ -2054,6 +2097,12 @@ export const ContactPublicSchema = {
                 }
             ],
             title: 'Contact Frequency Days'
+        },
+        auto_log_email: {
+            type: 'boolean',
+            title: 'Auto Log Email',
+            description: 'Automatically create interactions from matching email headers.',
+            default: false
         },
         do_not_contact: {
             type: 'boolean',
@@ -2246,6 +2295,36 @@ export const ContactPublicSchema = {
     title: 'ContactPublic'
 } as const;
 
+export const ContactShareInSchema = {
+    properties: {
+        grantee_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'uuid'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Grantee Id'
+        },
+        grantee_email: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Grantee Email'
+        }
+    },
+    type: 'object',
+    title: 'ContactShareIn'
+} as const;
+
 export const ContactSourceSchema = {
     type: 'string',
     enum: ['manual', 'vcard_import', 'carddav', 'google', 'webhook'],
@@ -2409,8 +2488,7 @@ export const ContactUpdateSchema = {
             anyOf: [
                 {
                     type: 'string',
-                    maxLength: 255,
-                    minLength: 1
+                    maxLength: 255
                 },
                 {
                     type: 'null'
@@ -2584,6 +2662,17 @@ export const ContactUpdateSchema = {
                 }
             ],
             title: 'Contact Frequency Days'
+        },
+        auto_log_email: {
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Auto Log Email'
         },
         stage: {
             anyOf: [
@@ -5567,10 +5656,7 @@ export const OverdueContactPublicSchema = {
     properties: {
         first_name: {
             type: 'string',
-            maxLength: 255,
-            minLength: 1,
-            title: 'First Name',
-            description: 'Given name; required.'
+            title: 'First Name'
         },
         last_name: {
             anyOf: [
@@ -5743,6 +5829,12 @@ export const OverdueContactPublicSchema = {
                 }
             ],
             title: 'Contact Frequency Days'
+        },
+        auto_log_email: {
+            type: 'boolean',
+            title: 'Auto Log Email',
+            description: 'Automatically create interactions from matching email headers.',
+            default: false
         },
         do_not_contact: {
             type: 'boolean',

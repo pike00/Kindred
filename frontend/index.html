@@ -32,7 +32,7 @@
     <script>
       (function () {
         try {
-          var t = localStorage.getItem("vite-ui-theme") || "dark"
+          let t = localStorage.getItem("vite-ui-theme") || "dark"
           if (t === "system") {
             t = window.matchMedia("(prefers-color-scheme: dark)").matches
               ? "dark"

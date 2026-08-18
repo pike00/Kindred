@@ -312,3 +312,62 @@ def test_tag_id_filter_forbidden_for_non_grantee(
         f"{API}/activity-logs/", headers=charlie_h, params={"tag_id": tag["id"]}
     )
     assert r.status_code == 403
+
+
+def test_grantor_sees_all_contacts_share_create_and_delete_logs(
+    client: TestClient, db: Session
+) -> None:
+    alice = create_random_user(db)
+    bob = create_random_user(db)
+    alice_h = authentication_token_from_email(client=client, email=alice.email, db=db)
+
+    create_response = client.post(
+        f"{API}/contact-shares/",
+        headers=alice_h,
+        json={"grantee_id": str(bob.id)},
+    )
+    assert create_response.status_code == 200
+
+    delete_response = client.delete(f"{API}/contact-shares/{bob.id}", headers=alice_h)
+    assert delete_response.status_code == 200
+
+    logs = _get_logs(
+        client,
+        alice_h,
+        entity_type="AllContactsShare",
+        entity_id=bob.id,
+    )
+    actions = [entry["action"] for entry in logs]
+    assert actions.count("create") == 1
+    assert actions.count("delete") == 1
+    for entry in logs:
+        assert entry["changes_json"]["scope"] == "all_contacts"
+        assert entry["changes_json"]["grantee_id"] == str(bob.id)
+        assert entry["changes_json"]["grantee_email"] == bob.email
+
+
+def test_other_user_cannot_inspect_grantors_all_contacts_share_logs(
+    client: TestClient, db: Session
+) -> None:
+    alice = create_random_user(db)
+    bob = create_random_user(db)
+    charlie = create_random_user(db)
+    alice_h = authentication_token_from_email(client=client, email=alice.email, db=db)
+    charlie_h = authentication_token_from_email(
+        client=client, email=charlie.email, db=db
+    )
+
+    create_response = client.post(
+        f"{API}/contact-shares/",
+        headers=alice_h,
+        json={"grantee_id": str(bob.id)},
+    )
+    assert create_response.status_code == 200
+
+    r = client.get(
+        f"{API}/activity-logs/",
+        headers=charlie_h,
+        params={"entity_type": "AllContactsShare", "entity_id": str(bob.id)},
+    )
+    assert r.status_code == 200
+    assert r.json()["count"] == 0

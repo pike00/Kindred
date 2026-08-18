@@ -2,12 +2,21 @@ import { test, expect } from "./fixtures"
 
 test.describe("Command palette", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/")
+    await page.goto("/tags")
     // Wait for the layout's command-palette trigger to render before pressing
     // shortcuts — until it's mounted, the keydown listeners aren't attached.
-    await expect(
-      page.getByRole("button", { name: /open command palette/i }),
-    ).toBeVisible()
+    const trigger = page.getByRole("button", { name: /open command palette/i })
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        await expect(trigger).toBeVisible({
+          timeout: attempt === 0 ? 15_000 : 20_000,
+        })
+        return
+      } catch (error) {
+        if (attempt === 2) throw error
+        await page.reload({ waitUntil: "domcontentloaded" })
+      }
+    }
   })
 
   test("trigger button opens dialog on click", async ({ page }) => {

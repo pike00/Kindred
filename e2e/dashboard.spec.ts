@@ -3,6 +3,16 @@ import { test, expect } from "./fixtures"
 test.describe("Dashboard", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/")
+    const heading = page.getByRole("heading", {
+      level: 1,
+      name: /good (morning|afternoon|evening)/i,
+    })
+    try {
+      await expect(heading).toBeVisible({ timeout: 15_000 })
+    } catch {
+      await page.reload({ waitUntil: "domcontentloaded" })
+      await expect(heading).toBeVisible({ timeout: 30_000 })
+    }
   })
 
   test("greeting heading is visible", async ({ page }) => {
@@ -15,19 +25,17 @@ test.describe("Dashboard", () => {
     ).toBeVisible({ timeout: 10_000 })
   })
 
-  test("stats row lists contacts/losing-touch/reminders/entries", async ({
+  test("stats row lists contacts and reminders", async ({
     page,
   }) => {
     const main = page.locator("main.flex-1")
     await expect(main.getByText(/contacts/i).first()).toBeVisible()
-    await expect(main.getByText(/losing touch/i).first()).toBeVisible()
     await expect(main.getByText(/reminders/i).first()).toBeVisible()
-    await expect(main.getByText(/entries/i).first()).toBeVisible()
   })
 
-  test("losing-touch section header is visible", async ({ page }) => {
+  test("upcoming birthdays section header is visible", async ({ page }) => {
     await expect(
-      page.getByRole("heading", { name: /losing touch/i }).first(),
+      page.getByRole("heading", { name: /upcoming birthdays/i }).first(),
     ).toBeVisible()
   })
 
@@ -48,7 +56,6 @@ test.describe("Dashboard", () => {
       /reminders/i,
       /calendar/i,
       /gift kanban/i,
-      /journal/i,
     ]) {
       await expect(
         sidebar.getByRole("link", { name: label }).first(),

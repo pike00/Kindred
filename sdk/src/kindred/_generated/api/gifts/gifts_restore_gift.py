@@ -59,7 +59,7 @@ def _build_response(
 def sync_detailed(
     gift_id: UUID,
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
 ) -> Response[Any | HTTPValidationError]:
     """Restore Gift
 
@@ -90,7 +90,7 @@ def sync_detailed(
 def sync(
     gift_id: UUID,
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
 ) -> Any | HTTPValidationError | None:
     """Restore Gift
 
@@ -116,7 +116,7 @@ def sync(
 async def asyncio_detailed(
     gift_id: UUID,
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
 ) -> Response[Any | HTTPValidationError]:
     """Restore Gift
 
@@ -145,7 +145,7 @@ async def asyncio_detailed(
 async def asyncio(
     gift_id: UUID,
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
 ) -> Any | HTTPValidationError | None:
     """Restore Gift
 

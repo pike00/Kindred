@@ -27,15 +27,16 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import useCustomToast from "@/hooks/useCustomToast"
-import { BellOff, Pencil } from "@/lib/icons"
+import { BellOff, Mail, Pencil } from "@/lib/icons"
 
 const contactUpdateSchema = z.object({
-  first_name: z.string().min(1, "First name is required"),
+  first_name: z.string().max(255),
   last_name: z.string().optional(),
   nickname: z.string().optional(),
   birthday: z.string().optional(),
   how_we_met: z.string().optional(),
   contact_frequency_days: z.number().optional(),
+  auto_log_email: z.boolean().optional(),
   is_favorite: z.boolean().optional(),
   is_archived: z.boolean().optional(),
   do_not_contact: z.boolean().optional(),
@@ -69,6 +70,7 @@ export const EditContactDialog = ({ contact }: EditContactDialogProps) => {
       birthday: toDateInputValue(contact.birthday),
       how_we_met: contact.how_we_met || "",
       contact_frequency_days: contact.contact_frequency_days || 0,
+      auto_log_email: contact.auto_log_email ?? false,
       is_favorite: contact.is_favorite,
       is_archived: contact.is_archived,
       do_not_contact: contact.do_not_contact ?? false,
@@ -91,6 +93,7 @@ export const EditContactDialog = ({ contact }: EditContactDialogProps) => {
         nickname: contact.nickname || "",
         how_we_met: contact.how_we_met || "",
         contact_frequency_days: contact.contact_frequency_days || 0,
+        auto_log_email: contact.auto_log_email ?? false,
         is_favorite: contact.is_favorite,
         is_archived: contact.is_archived,
         do_not_contact: contact.do_not_contact ?? false,
@@ -126,6 +129,7 @@ export const EditContactDialog = ({ contact }: EditContactDialogProps) => {
       birthday: data.birthday || null,
       how_we_met: data.how_we_met || null,
       contact_frequency_days: data.contact_frequency_days || null,
+      auto_log_email: data.auto_log_email ?? false,
       is_favorite: data.is_favorite,
       is_archived: data.is_archived,
       do_not_contact: data.do_not_contact ?? false,
@@ -156,7 +160,7 @@ export const EditContactDialog = ({ contact }: EditContactDialogProps) => {
               name="first_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>First Name *</FormLabel>
+                  <FormLabel>First Name</FormLabel>
                   <FormControl>
                     <Input placeholder="John" {...field} />
                   </FormControl>
@@ -282,6 +286,23 @@ export const EditContactDialog = ({ contact }: EditContactDialogProps) => {
                 />
                 <span>Archived</span>
               </label>
+            </div>
+            <div className="space-y-2 rounded-md border p-3">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  {...form.register("auto_log_email")}
+                  className="rounded border-input"
+                />
+                <Mail className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">
+                  Log email interactions automatically
+                </span>
+              </label>
+              <p className="text-xs text-muted-foreground pl-6">
+                Matches this contact&apos;s saved email addresses and records
+                email headers.
+              </p>
             </div>
             <div className="space-y-2 rounded-md border p-3">
               <label className="flex items-center gap-2">

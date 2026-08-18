@@ -23,6 +23,14 @@ vi.mock("@/client", () => ({
   },
 }))
 
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({ children, params, ...props }: any) => (
+    <a href={`/contacts/${params.contactId}`} {...props}>
+      {children}
+    </a>
+  ),
+}))
+
 // Mock AddInteractionDialog
 vi.mock("@/components/Interactions/AddInteractionDialog", () => ({
   AddInteractionDialog: () => (
@@ -241,7 +249,7 @@ describe("InteractionTimeline", () => {
     })
   })
 
-  it("displays attendee names", async () => {
+  it("links attendee names to their contact pages", async () => {
     const interactions = [
       makeInteraction({
         id: "i1",
@@ -256,7 +264,10 @@ describe("InteractionTimeline", () => {
     renderWithProviders(<InteractionTimeline />)
 
     await waitFor(() => {
-      expect(screen.getByText("Alice Smith")).toBeInTheDocument()
+      expect(screen.getByRole("link", { name: "Alice Smith" })).toHaveAttribute(
+        "href",
+        "/contacts/c1",
+      )
     })
   })
 
@@ -394,7 +405,7 @@ describe("InteractionTimeline", () => {
     })
   })
 
-  it("displays multiple attendees separated by comma", async () => {
+  it("links each attendee when multiple contacts attended", async () => {
     const interactions = [
       makeInteraction({
         id: "i1",
@@ -410,7 +421,14 @@ describe("InteractionTimeline", () => {
     renderWithProviders(<InteractionTimeline />)
 
     await waitFor(() => {
-      expect(screen.getByText(/Alice Smith, Bob Jones/)).toBeInTheDocument()
+      expect(screen.getByRole("link", { name: "Alice Smith" })).toHaveAttribute(
+        "href",
+        "/contacts/c1",
+      )
+      expect(screen.getByRole("link", { name: "Bob Jones" })).toHaveAttribute(
+        "href",
+        "/contacts/c2",
+      )
     })
   })
 

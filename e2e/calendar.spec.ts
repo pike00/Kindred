@@ -1,5 +1,10 @@
 import { test, expect } from "./fixtures"
-import { getToken, createContact, deleteContact } from "./helpers/api.js"
+import {
+  API_URL,
+  getToken,
+  createContact,
+  deleteContact,
+} from "./helpers/api.js"
 
 // `/calendar` renders a `MonthCalendar` showing a 7-column grid of day cells
 // for the URL-bound month (default = current). Each cell with events shows
@@ -20,6 +25,8 @@ test.afterAll(async ({ request }) => {
   }
 })
 
+test.beforeEach(({}, info) => info.setTimeout(60_000))
+
 const MONTH_RE =
   /january|february|march|april|may|june|july|august|september|october|november|december/i
 
@@ -32,12 +39,17 @@ function currentYear(): number {
 }
 
 async function openCalendar(page: import("@playwright/test").Page) {
-  await page.goto("/calendar", { waitUntil: "domcontentloaded" })
-  await expect(
-    page
-      .getByRole("heading")
-      .filter({ hasText: new RegExp(`${currentMonthName()} ${currentYear()}`, "i") }),
-  ).toBeVisible({ timeout: 30_000 })
+  const month = `${currentYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`
+  await page.goto(`/calendar?month=${month}`, { waitUntil: "domcontentloaded" })
+  const heading = page
+    .getByRole("heading")
+    .filter({ hasText: new RegExp(`${currentMonthName()} ${currentYear()}`, "i") })
+  try {
+    await expect(heading).toBeVisible({ timeout: 20_000 })
+  } catch {
+    await page.reload({ waitUntil: "domcontentloaded" })
+    await expect(heading).toBeVisible({ timeout: 30_000 })
+  }
 }
 
 test.describe("Calendar", () => {
@@ -60,7 +72,7 @@ test.describe("Calendar", () => {
     const initial = await initialHeading.textContent()
 
     await page.getByRole("button", { name: /next month/i }).click()
-    // Header should change to the next month
+    await expect(page).toHaveURL(/month=\d{4}-\d{2}/)
     await expect(initialHeading).not.toHaveText(initial ?? "")
     await expect(initialHeading).toHaveText(MONTH_RE)
   })
@@ -73,6 +85,7 @@ test.describe("Calendar", () => {
     const initial = await heading.textContent()
 
     await page.getByRole("button", { name: /previous month/i }).click()
+    await expect(page).toHaveURL(/month=\d{4}-\d{2}/)
     await expect(heading).not.toHaveText(initial ?? "")
     await expect(heading).toHaveText(MONTH_RE)
   })
@@ -85,6 +98,7 @@ test.describe("Calendar", () => {
     const original = await heading.textContent()
 
     await page.getByRole("button", { name: /next month/i }).click()
+    await expect(page).toHaveURL(/month=\d{4}-\d{2}/)
     await expect(heading).not.toHaveText(original ?? "")
     await page.getByRole("button", { name: /previous month/i }).click()
     await expect(heading).toHaveText(original ?? "")
@@ -125,11 +139,7 @@ test.describe("Calendar", () => {
     })
     createdContactIds.push(c.id)
     // Update birthday via PATCH /contacts/{id}
-    const baseUrl = (process.env.E2E_BASE_URL ?? "http://localhost:5173").replace(
-      ":5173",
-      ":8001",
-    )
-    await request.patch(`${baseUrl}/api/v1/contacts/${c.id}`, {
+    await request.patch(`${API_URL}/api/v1/contacts/${c.id}`, {
       headers: { Authorization: `Bearer ${token}` },
       data: { birthday },
     })
@@ -152,8 +162,14 @@ test.describe("Calendar", () => {
     await page.goto("/calendar?month=2030-01", {
       waitUntil: "domcontentloaded",
     })
-    await expect(
-      page.getByRole("heading").filter({ hasText: /january 2030/i }),
-    ).toBeVisible({ timeout: 30_000 })
+    const heading = page
+      .getByRole("heading")
+      .filter({ hasText: /january 2030/i })
+    try {
+      await expect(heading).toBeVisible({ timeout: 20_000 })
+    } catch {
+      await page.reload({ waitUntil: "domcontentloaded" })
+      await expect(heading).toBeVisible({ timeout: 30_000 })
+    }
   })
 })

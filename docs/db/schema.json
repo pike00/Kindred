@@ -1860,12 +1860,6 @@
           "comment": "Conversation summary, action items, etc."
         },
         {
-          "name": "mood",
-          "type": "varchar(50)",
-          "nullable": true,
-          "comment": "Emoji or keyword capturing the tone."
-        },
-        {
           "name": "duration_minutes",
           "type": "integer",
           "nullable": true,
@@ -3233,185 +3227,6 @@
         {
           "name": "tsvectorupdate_note",
           "def": "CREATE TRIGGER tsvectorupdate_note BEFORE INSERT OR UPDATE ON public.note FOR EACH ROW EXECUTE FUNCTION update_note_search_vector()"
-        }
-      ]
-    },
-    {
-      "name": "public.journal_entry",
-      "type": "BASE TABLE",
-      "comment": "Personal journal entry, not tied to a specific contact.",
-      "columns": [
-        {
-          "name": "id",
-          "type": "uuid",
-          "nullable": false,
-          "comment": "Primary key."
-        },
-        {
-          "name": "owner_id",
-          "type": "uuid",
-          "nullable": false,
-          "comment": "Owner user; cascades on delete."
-        },
-        {
-          "name": "body",
-          "type": "varchar(50000)",
-          "nullable": false,
-          "comment": "Entry body, 1-50000 chars."
-        },
-        {
-          "name": "mood",
-          "type": "varchar(50)",
-          "nullable": true,
-          "comment": "Emoji or keyword capturing the mood."
-        },
-        {
-          "name": "entry_date",
-          "type": "date",
-          "nullable": false,
-          "comment": "Date the entry is about (may differ from created_at)."
-        },
-        {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "nullable": false,
-          "comment": "When the entry was logged (UTC)."
-        },
-        {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "nullable": false,
-          "comment": "Auto-bumped on edit (UTC)."
-        },
-        {
-          "name": "search_vector",
-          "type": "tsvector",
-          "nullable": true
-        }
-      ],
-      "indexes": [
-        {
-          "name": "journal_entry_pkey",
-          "def": "CREATE UNIQUE INDEX journal_entry_pkey ON public.journal_entry USING btree (id)",
-          "table": "public.journal_entry",
-          "columns": [
-            "id"
-          ]
-        },
-        {
-          "name": "ix_journal_entry_owner_id",
-          "def": "CREATE INDEX ix_journal_entry_owner_id ON public.journal_entry USING btree (owner_id)",
-          "table": "public.journal_entry",
-          "columns": [
-            "owner_id"
-          ]
-        },
-        {
-          "name": "ix_journal_entry_entry_date",
-          "def": "CREATE INDEX ix_journal_entry_entry_date ON public.journal_entry USING btree (entry_date)",
-          "table": "public.journal_entry",
-          "columns": [
-            "entry_date"
-          ]
-        },
-        {
-          "name": "ix_journal_entry_search_vector",
-          "def": "CREATE INDEX ix_journal_entry_search_vector ON public.journal_entry USING gin (search_vector)",
-          "table": "public.journal_entry",
-          "columns": [
-            "search_vector"
-          ]
-        }
-      ],
-      "constraints": [
-        {
-          "name": "journal_entry_body_not_null",
-          "type": "n",
-          "def": "NOT NULL body",
-          "table": "public.journal_entry",
-          "referenced_table": "",
-          "columns": [
-            "body"
-          ]
-        },
-        {
-          "name": "journal_entry_created_at_not_null",
-          "type": "n",
-          "def": "NOT NULL created_at",
-          "table": "public.journal_entry",
-          "referenced_table": "",
-          "columns": [
-            "created_at"
-          ]
-        },
-        {
-          "name": "journal_entry_entry_date_not_null",
-          "type": "n",
-          "def": "NOT NULL entry_date",
-          "table": "public.journal_entry",
-          "referenced_table": "",
-          "columns": [
-            "entry_date"
-          ]
-        },
-        {
-          "name": "journal_entry_id_not_null",
-          "type": "n",
-          "def": "NOT NULL id",
-          "table": "public.journal_entry",
-          "referenced_table": "",
-          "columns": [
-            "id"
-          ]
-        },
-        {
-          "name": "journal_entry_owner_id_not_null",
-          "type": "n",
-          "def": "NOT NULL owner_id",
-          "table": "public.journal_entry",
-          "referenced_table": "",
-          "columns": [
-            "owner_id"
-          ]
-        },
-        {
-          "name": "journal_entry_updated_at_not_null",
-          "type": "n",
-          "def": "NOT NULL updated_at",
-          "table": "public.journal_entry",
-          "referenced_table": "",
-          "columns": [
-            "updated_at"
-          ]
-        },
-        {
-          "name": "journal_entry_owner_id_fkey",
-          "type": "FOREIGN KEY",
-          "def": "FOREIGN KEY (owner_id) REFERENCES \"user\"(id) ON DELETE CASCADE",
-          "table": "public.journal_entry",
-          "referenced_table": "public.user",
-          "columns": [
-            "owner_id"
-          ],
-          "referenced_columns": [
-            "id"
-          ]
-        },
-        {
-          "name": "journal_entry_pkey",
-          "type": "PRIMARY KEY",
-          "def": "PRIMARY KEY (id)",
-          "table": "public.journal_entry",
-          "referenced_table": "",
-          "columns": [
-            "id"
-          ]
-        }
-      ],
-      "triggers": [
-        {
-          "name": "tsvectorupdate_journal_entry",
-          "def": "CREATE TRIGGER tsvectorupdate_journal_entry BEFORE INSERT OR UPDATE ON public.journal_entry FOR EACH ROW EXECUTE FUNCTION update_journal_entry_search_vector()"
         }
       ]
     },
@@ -4959,19 +4774,19 @@
           ]
         },
         {
-          "name": "ix_contact_merge_surviving_id",
-          "def": "CREATE INDEX ix_contact_merge_surviving_id ON public.contact_merge USING btree (surviving_id)",
-          "table": "public.contact_merge",
-          "columns": [
-            "surviving_id"
-          ]
-        },
-        {
           "name": "ix_contact_merge_absorbed_id",
           "def": "CREATE UNIQUE INDEX ix_contact_merge_absorbed_id ON public.contact_merge USING btree (absorbed_id)",
           "table": "public.contact_merge",
           "columns": [
             "absorbed_id"
+          ]
+        },
+        {
+          "name": "ix_contact_merge_surviving_id",
+          "def": "CREATE INDEX ix_contact_merge_surviving_id ON public.contact_merge USING btree (surviving_id)",
+          "table": "public.contact_merge",
+          "columns": [
+            "surviving_id"
           ]
         },
         {
@@ -5210,108 +5025,6 @@
           "referenced_table": "",
           "columns": [
             "relationship_type"
-          ]
-        }
-      ]
-    },
-    {
-      "name": "public.journal_entry_contact",
-      "type": "BASE TABLE",
-      "columns": [
-        {
-          "name": "journal_entry_id",
-          "type": "uuid",
-          "nullable": false
-        },
-        {
-          "name": "contact_id",
-          "type": "uuid",
-          "nullable": false
-        }
-      ],
-      "indexes": [
-        {
-          "name": "journal_entry_contact_pkey",
-          "def": "CREATE UNIQUE INDEX journal_entry_contact_pkey ON public.journal_entry_contact USING btree (journal_entry_id, contact_id)",
-          "table": "public.journal_entry_contact",
-          "columns": [
-            "journal_entry_id",
-            "contact_id"
-          ]
-        },
-        {
-          "name": "ix_journal_entry_contact_contact_id",
-          "def": "CREATE INDEX ix_journal_entry_contact_contact_id ON public.journal_entry_contact USING btree (contact_id)",
-          "table": "public.journal_entry_contact",
-          "columns": [
-            "contact_id"
-          ]
-        },
-        {
-          "name": "ix_journal_entry_contact_journal_entry_id",
-          "def": "CREATE INDEX ix_journal_entry_contact_journal_entry_id ON public.journal_entry_contact USING btree (journal_entry_id)",
-          "table": "public.journal_entry_contact",
-          "columns": [
-            "journal_entry_id"
-          ]
-        }
-      ],
-      "constraints": [
-        {
-          "name": "journal_entry_contact_contact_id_not_null",
-          "type": "n",
-          "def": "NOT NULL contact_id",
-          "table": "public.journal_entry_contact",
-          "referenced_table": "",
-          "columns": [
-            "contact_id"
-          ]
-        },
-        {
-          "name": "journal_entry_contact_journal_entry_id_not_null",
-          "type": "n",
-          "def": "NOT NULL journal_entry_id",
-          "table": "public.journal_entry_contact",
-          "referenced_table": "",
-          "columns": [
-            "journal_entry_id"
-          ]
-        },
-        {
-          "name": "journal_entry_contact_contact_id_fkey",
-          "type": "FOREIGN KEY",
-          "def": "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE",
-          "table": "public.journal_entry_contact",
-          "referenced_table": "public.contact",
-          "columns": [
-            "contact_id"
-          ],
-          "referenced_columns": [
-            "id"
-          ]
-        },
-        {
-          "name": "journal_entry_contact_journal_entry_id_fkey",
-          "type": "FOREIGN KEY",
-          "def": "FOREIGN KEY (journal_entry_id) REFERENCES journal_entry(id) ON DELETE CASCADE",
-          "table": "public.journal_entry_contact",
-          "referenced_table": "public.journal_entry",
-          "columns": [
-            "journal_entry_id"
-          ],
-          "referenced_columns": [
-            "id"
-          ]
-        },
-        {
-          "name": "journal_entry_contact_pkey",
-          "type": "PRIMARY KEY",
-          "def": "PRIMARY KEY (journal_entry_id, contact_id)",
-          "table": "public.journal_entry_contact",
-          "referenced_table": "",
-          "columns": [
-            "journal_entry_id",
-            "contact_id"
           ]
         }
       ]
@@ -6695,6 +6408,112 @@
           ]
         }
       ]
+    },
+    {
+      "name": "public.all_contacts_share",
+      "type": "BASE TABLE",
+      "comment": "Grants another user access to all current and future contacts by owner.",
+      "columns": [
+        {
+          "name": "owner_id",
+          "type": "uuid",
+          "nullable": false,
+          "comment": "Grantor whose contacts are being shared; cascades on delete."
+        },
+        {
+          "name": "grantee_id",
+          "type": "uuid",
+          "nullable": false,
+          "comment": "User granted access; cascades on delete."
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
+          "comment": "When the all-contacts share was granted (UTC)."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "all_contacts_share_pkey",
+          "def": "CREATE UNIQUE INDEX all_contacts_share_pkey ON public.all_contacts_share USING btree (owner_id, grantee_id)",
+          "table": "public.all_contacts_share",
+          "columns": [
+            "owner_id",
+            "grantee_id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "all_contacts_share_created_at_not_null",
+          "type": "n",
+          "def": "NOT NULL created_at",
+          "table": "public.all_contacts_share",
+          "referenced_table": "",
+          "columns": [
+            "created_at"
+          ]
+        },
+        {
+          "name": "all_contacts_share_grantee_id_not_null",
+          "type": "n",
+          "def": "NOT NULL grantee_id",
+          "table": "public.all_contacts_share",
+          "referenced_table": "",
+          "columns": [
+            "grantee_id"
+          ]
+        },
+        {
+          "name": "all_contacts_share_owner_id_not_null",
+          "type": "n",
+          "def": "NOT NULL owner_id",
+          "table": "public.all_contacts_share",
+          "referenced_table": "",
+          "columns": [
+            "owner_id"
+          ]
+        },
+        {
+          "name": "all_contacts_share_grantee_id_fkey",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (grantee_id) REFERENCES \"user\"(id) ON DELETE CASCADE",
+          "table": "public.all_contacts_share",
+          "referenced_table": "public.user",
+          "columns": [
+            "grantee_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "all_contacts_share_owner_id_fkey",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (owner_id) REFERENCES \"user\"(id) ON DELETE CASCADE",
+          "table": "public.all_contacts_share",
+          "referenced_table": "public.user",
+          "columns": [
+            "owner_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "all_contacts_share_pkey",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (owner_id, grantee_id)",
+          "table": "public.all_contacts_share",
+          "referenced_table": "",
+          "columns": [
+            "owner_id",
+            "grantee_id"
+          ]
+        }
+      ]
     }
   ],
   "relations": [
@@ -7024,19 +6843,6 @@
       "def": "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
     },
     {
-      "table": "public.journal_entry",
-      "columns": [
-        "owner_id"
-      ],
-      "cardinality": "zero_or_more",
-      "parent_table": "public.user",
-      "parent_columns": [
-        "id"
-      ],
-      "parent_cardinality": "exactly_one",
-      "def": "FOREIGN KEY (owner_id) REFERENCES \"user\"(id) ON DELETE CASCADE"
-    },
-    {
       "table": "public.webhook_endpoint",
       "columns": [
         "owner_id"
@@ -7297,32 +7103,6 @@
       "def": "FOREIGN KEY (surviving_id) REFERENCES contact(id) ON DELETE CASCADE"
     },
     {
-      "table": "public.journal_entry_contact",
-      "columns": [
-        "contact_id"
-      ],
-      "cardinality": "zero_or_more",
-      "parent_table": "public.contact",
-      "parent_columns": [
-        "id"
-      ],
-      "parent_cardinality": "exactly_one",
-      "def": "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
-    },
-    {
-      "table": "public.journal_entry_contact",
-      "columns": [
-        "journal_entry_id"
-      ],
-      "cardinality": "zero_or_more",
-      "parent_table": "public.journal_entry",
-      "parent_columns": [
-        "id"
-      ],
-      "parent_cardinality": "exactly_one",
-      "def": "FOREIGN KEY (journal_entry_id) REFERENCES journal_entry(id) ON DELETE CASCADE"
-    },
-    {
       "table": "public.debt_payment",
       "columns": [
         "debt_id"
@@ -7477,6 +7257,32 @@
       ],
       "parent_cardinality": "exactly_one",
       "def": "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
+    },
+    {
+      "table": "public.all_contacts_share",
+      "columns": [
+        "grantee_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.user",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (grantee_id) REFERENCES \"user\"(id) ON DELETE CASCADE"
+    },
+    {
+      "table": "public.all_contacts_share",
+      "columns": [
+        "owner_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.user",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (owner_id) REFERENCES \"user\"(id) ON DELETE CASCADE"
     }
   ],
   "functions": [
@@ -7557,12 +7363,6 @@
       "return_type": "trigger",
       "arguments": "",
       "type": "FUNCTION"
-    },
-    {
-      "name": "public.update_journal_entry_search_vector",
-      "return_type": "trigger",
-      "arguments": "",
-      "type": "FUNCTION"
     }
   ],
   "enums": [
@@ -7607,10 +7407,12 @@
         "EMAIL",
         "IN_PERSON",
         "OTHER",
+        "RECOMMENDATION",
         "SKIP",
         "SOCIAL",
         "TEXT",
-        "VIDEO"
+        "VIDEO",
+        "recommendation"
       ]
     },
     {

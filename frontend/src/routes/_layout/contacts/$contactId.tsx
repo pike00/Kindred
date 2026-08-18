@@ -1,26 +1,22 @@
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { useEffect, useState } from "react"
-import type { DebtPublic, GiftPublic, InteractionPublic } from "@/client"
-import { DebtsService, GiftsService, InteractionsService } from "@/client"
+import type { DebtPublic, GiftPublic } from "@/client"
+import { DebtsService, GiftsService } from "@/client"
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
 import { EmptyState } from "@/components/Common/EmptyState"
 import { AddressesCard } from "@/components/Contacts/AddressesCard"
 import { AvatarUploadDialog } from "@/components/Contacts/AvatarUploadDialog"
-import { ContactFieldsCard } from "@/components/Contacts/ContactFieldsCard"
+import { ContactFieldsPopover } from "@/components/Contacts/ContactFieldsCard"
 import { CustomFieldsCard } from "@/components/Contacts/CustomFieldsCard"
 import { EditContactDialog } from "@/components/Contacts/EditContactDialog"
 import { InteractionHeatmap } from "@/components/Contacts/InteractionHeatmap"
-import { LifeEventsCard } from "@/components/Contacts/LifeEventsCard"
-import { PetsCard } from "@/components/Contacts/PetsCard"
-import { RelationshipsCard } from "@/components/Contacts/RelationshipsCard"
+import { PeopleAndPetsCard } from "@/components/Contacts/PeopleAndPetsCard"
 import { formatLocalTime } from "@/components/Contacts/TimezoneInput"
 import { AddDebt } from "@/components/Debts/AddDebt"
 import { AddGift } from "@/components/Gifts/AddGift"
 import { AddInteractionDialog } from "@/components/Interactions/AddInteractionDialog"
-import { InteractionMap } from "@/components/Interactions/InteractionMap"
 import { AddNoteDialog } from "@/components/Notes/AddNoteDialog"
-import { NotesCard } from "@/components/Notes/NotesCard"
 import { UnifiedTimeline } from "@/components/Timeline/UnifiedTimeline"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -48,7 +44,6 @@ import {
   Download,
   Gift as GiftIcon,
   Info,
-  MapPin,
   MessagesSquare,
   NotebookPen,
   Star,
@@ -180,12 +175,6 @@ function ContactDetailPage() {
     queryFn: () => DebtsService.listDebts({ contactId }),
   })
 
-  const { data: interactionsData } = useQuery({
-    queryKey: ["interactions", contactId],
-    queryFn: () =>
-      InteractionsService.listInteractions({ contactId, limit: 500 }),
-  })
-
   const fullName = [
     contact.prefix,
     contact.first_name,
@@ -198,8 +187,6 @@ function ContactDetailPage() {
 
   const gifts = giftsData?.data ?? []
   const debts = debtsData?.data ?? []
-  const interactions: InteractionPublic[] = interactionsData?.data ?? []
-
   return (
     <div className="space-y-6 max-w-5xl">
       {/* Header */}
@@ -221,31 +208,12 @@ function ContactDetailPage() {
           </div>
         </div>
         <div className="flex-1 min-w-0 space-y-2">
-          {/* Heatmap */}
-          <InteractionHeatmap onWeekClick={handleWeekClick} />
-          {heatmapFilter && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span>
-                Filtered to week of{" "}
-                {new Date(heatmapFilter.startDate).toLocaleDateString(
-                  undefined,
-                  { month: "short", day: "numeric" },
-                )}
-              </span>
-              <button
-                type="button"
-                onClick={clearHeatmapFilter}
-                className="underline hover:text-foreground"
-              >
-                Clear filter
-              </button>
-            </div>
-          )}
           <div className="flex items-start justify-between gap-3">
             <div className="flex flex-wrap items-center gap-3 min-w-0">
               <h1 className="font-display text-4xl font-bold tracking-tight">
                 {fullName}
               </h1>
+              <ContactFieldsPopover contactId={contactId} />
               {contact.is_favorite && (
                 <Badge variant="secondary">
                   <Star className="size-3" /> Favorite
@@ -309,7 +277,7 @@ function ContactDetailPage() {
           {!contact.company && contact.title && (
             <p className="text-lg text-muted-foreground">{contact.title}</p>
           )}
-          <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground items-center">
             {contact.birthday && (
               <ContactBirthday birthday={contact.birthday} />
             )}
@@ -336,13 +304,14 @@ function ContactDetailPage() {
               </span>
             )}
           </div>
-        </div>
-      </div>
 
-      {/* Contact info + addresses, surfaced at the top under the header (item23) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <ContactFieldsCard contactId={contactId} />
-        <AddressesCard contactId={contactId} />
+          {/* Interaction Heatmap (Compact & Expandable) */}
+          <InteractionHeatmap
+            onWeekClick={handleWeekClick}
+            heatmapFilter={heatmapFilter}
+            clearHeatmapFilter={clearHeatmapFilter}
+          />
+        </div>
       </div>
 
       {/* Grid: left + right columns */}
@@ -354,9 +323,10 @@ function ContactDetailPage() {
             startDate={heatmapFilter?.startDate ?? null}
             endDate={heatmapFilter?.endDate ?? null}
           />
-          <NotesCard contactId={contactId} />
-          <PetsCard contactId={contactId} />
-          <LifeEventsCard contactId={contactId} />
+          <PeopleAndPetsCard
+            contactId={contactId}
+            contactName={contact.first_name ?? ""}
+          />
           <CustomFieldsCard contactId={contactId} />
         </div>
 
@@ -402,6 +372,8 @@ function ContactDetailPage() {
             onOpenChange={(o) => setAddOpen(o ? "gift" : null)}
           />
 
+          <AddressesCard contactId={contactId} />
+
           {/* Tags */}
           {contact.tags && contact.tags.length > 0 && (
             <Card>
@@ -436,24 +408,6 @@ function ContactDetailPage() {
               </CardContent>
             </Card>
           )}
-
-          {/* Interaction Map */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin className="size-4" />
-                Interaction Locations
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <InteractionMap interactions={interactions} />
-            </CardContent>
-          </Card>
-
-          <RelationshipsCard
-            contactId={contactId}
-            contactName={contact.first_name ?? ""}
-          />
         </div>
       </div>
 

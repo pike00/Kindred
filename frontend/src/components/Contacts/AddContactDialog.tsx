@@ -29,7 +29,7 @@ import { Separator } from "@/components/ui/separator"
 import useCustomToast from "@/hooks/useCustomToast"
 
 const contactCreateSchema = z.object({
-  first_name: z.string().min(1, "First name is required"),
+  first_name: z.string().max(255),
   last_name: z.string().optional(),
   nickname: z.string().max(255).optional(),
   company: z.string().max(255).optional(),
@@ -123,8 +123,7 @@ export const AddContactDialog = () => {
         <DialogHeader>
           <DialogTitle>Add New Contact</DialogTitle>
           <DialogDescription>
-            Only a first name is required — fill in as much as you like now and
-            add the rest later.
+            Add any details you know now and fill in the rest later.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -136,7 +135,7 @@ export const AddContactDialog = () => {
                   name="first_name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>First name *</FormLabel>
+                      <FormLabel>First name</FormLabel>
                       <FormControl>
                         <Input placeholder="John" {...field} />
                       </FormControl>
@@ -257,7 +256,10 @@ export const AddContactDialog = () => {
 
             <Separator />
 
-            <Section title="Tags" hint="Group this contact for quick filtering.">
+            <Section
+              title="Tags"
+              hint="Group this contact for quick filtering."
+            >
               <FormField
                 control={form.control}
                 name="tag_ids"

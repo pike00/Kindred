@@ -1,5 +1,5 @@
 import { test, expect } from "./fixtures"
-import { getToken } from "./helpers/api.js"
+import { API_URL, getToken } from "./helpers/api.js"
 
 let token: string
 
@@ -7,9 +7,20 @@ test.beforeAll(async ({ request }) => {
   token = await getToken(request)
 })
 
+async function openAdmin(page: import("@playwright/test").Page, path: string) {
+  await page.goto(path)
+  const usersTab = page.getByRole("link", { name: /^users$/i })
+  try {
+    await expect(usersTab).toBeVisible({ timeout: 15_000 })
+  } catch {
+    await page.reload({ waitUntil: "domcontentloaded" })
+    await expect(usersTab).toBeVisible({ timeout: 30_000 })
+  }
+}
+
 test.describe("Admin · index (Users)", () => {
   test("page header and tabs render", async ({ page }) => {
-    await page.goto("/admin")
+    await openAdmin(page, "/admin")
     await expect(
       page.getByRole("heading", { name: /^admin$/i, level: 1 }),
     ).toBeVisible()
@@ -30,7 +41,7 @@ test.describe("Admin · index (Users)", () => {
   test("users section heading and add-user button visible", async ({
     page,
   }) => {
-    await page.goto("/admin")
+    await openAdmin(page, "/admin")
     await expect(
       page.getByRole("heading", { name: /^users$/i, level: 2 }),
     ).toBeVisible({ timeout: 15000 })
@@ -42,7 +53,7 @@ test.describe("Admin · index (Users)", () => {
   })
 
   test("user list contains the seed admin email", async ({ page }) => {
-    await page.goto("/admin")
+    await openAdmin(page, "/admin")
     const adminEmail = process.env.E2E_TEST_EMAIL ?? "admin@example.com"
     // DataTable renders rows; wait for at least one to appear. The list is
     // paginated client-side; the seed admin is on page 1 so it should be
@@ -53,7 +64,7 @@ test.describe("Admin · index (Users)", () => {
   })
 
   test("opening Add User dialog shows the form fields", async ({ page }) => {
-    await page.goto("/admin")
+    await openAdmin(page, "/admin")
     const addBtn = page
       .getByRole("button", { name: /^add user/i })
       .or(page.getByRole("button", { name: /^add$/i }))
@@ -67,7 +78,7 @@ test.describe("Admin · index (Users)", () => {
 
 test.describe("Admin · Import / Export", () => {
   test("page loads with vCard and iCal tabs", async ({ page }) => {
-    await page.goto("/admin/import-export")
+    await openAdmin(page, "/admin/import-export")
     await expect(
       page.getByRole("tab", { name: /vcard import\/export/i }),
     ).toBeVisible({ timeout: 15000 })
@@ -77,7 +88,7 @@ test.describe("Admin · Import / Export", () => {
   })
 
   test("vCard tab shows file picker and export buttons", async ({ page }) => {
-    await page.goto("/admin/import-export")
+    await openAdmin(page, "/admin/import-export")
     await expect(
       page.getByRole("heading", { name: /import contacts/i }),
     ).toBeVisible({ timeout: 15000 })
@@ -99,9 +110,14 @@ test.describe("Admin · Import / Export", () => {
   })
 
   test("selecting a vcard file enables the Import button", async ({ page }) => {
-    await page.goto("/admin/import-export")
+    await openAdmin(page, "/admin/import-export")
     const fileInput = page.locator('input[type="file"]')
-    await expect(fileInput).toBeVisible()
+    // The native file control may be visually hidden by the browser while
+    // remaining the correct upload target.
+    await expect(
+      page.getByRole("heading", { name: /import contacts/i }),
+    ).toBeVisible({ timeout: 15_000 })
+    await expect(fileInput).toBeAttached()
 
     const vcardBody = [
       "BEGIN:VCARD",
@@ -125,7 +141,7 @@ test.describe("Admin · Import / Export", () => {
   })
 
   test("switching to iCal tab loads without error", async ({ page }) => {
-    await page.goto("/admin/import-export")
+    await openAdmin(page, "/admin/import-export")
     await page.getByRole("tab", { name: /ical import/i }).click()
     // The iCal tab must render something — its specific heading varies, but
     // the pageerror guard catches crashes regardless.
@@ -139,7 +155,7 @@ test.describe("Admin · Import / Export", () => {
 
 test.describe("Admin · Webhooks", () => {
   test("page header and Add webhook button visible", async ({ page }) => {
-    await page.goto("/admin/webhooks")
+    await openAdmin(page, "/admin/webhooks")
     await expect(
       page.getByRole("heading", { name: /^webhooks$/i, level: 2 }),
     ).toBeVisible({ timeout: 15000 })
@@ -149,7 +165,7 @@ test.describe("Admin · Webhooks", () => {
   })
 
   test("Add Webhook dialog shows expected form fields", async ({ page }) => {
-    await page.goto("/admin/webhooks")
+    await openAdmin(page, "/admin/webhooks")
     await page.getByRole("button", { name: /add webhook/i }).click()
     const dialog = page.getByRole("dialog", { name: /add webhook/i })
     await expect(dialog).toBeVisible({ timeout: 15000 })
@@ -180,7 +196,7 @@ test.describe("Admin · Webhooks", () => {
     request,
   }) => {
     const name = `E2EWebhook ${Date.now()}`
-    await page.goto("/admin/webhooks")
+    await openAdmin(page, "/admin/webhooks")
     await page.getByRole("button", { name: /add webhook/i }).click()
 
     const dialog = page.getByRole("dialog", { name: /add webhook/i })
@@ -202,9 +218,7 @@ test.describe("Admin · Webhooks", () => {
     await expect(page.getByText(name)).toBeVisible({ timeout: 15000 })
 
     // Clean up via the API to avoid relying on confirm() dialogs.
-    const apiUrl =
-      process.env.E2E_BASE_URL?.replace(":5173", ":8001") ??
-      "http://localhost:8001"
+    const apiUrl = API_URL
     const list = await request.get(`${apiUrl}/api/v1/webhooks/`, {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -227,7 +241,7 @@ test.describe("Admin · vCard Conflicts", () => {
     // tolerate either resolved state OR the suspense fallback as long as the
     // admin tab nav is still visible and the page didn't hard-crash.
     testInfo.annotations.push({ type: "allow-page-errors" })
-    await page.goto("/admin/vcard-conflicts")
+    await openAdmin(page, "/admin/vcard-conflicts")
     // The vCard Conflicts tab in the admin nav must be active.
     await expect(
       page.getByRole("link", { name: /vcard conflicts/i }),

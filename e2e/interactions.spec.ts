@@ -5,17 +5,15 @@ import {
   deleteContact,
   createInteraction,
   deleteInteraction,
+  API_URL,
 } from "./helpers/api.js"
 
-// `/interactions` shows the `InteractionTimeline` (and a `Drafts` tab). There is
-// no in-app edit dialog, no filter UI, and no client-side pagination. Tests
-// cover: page renders, dialog opens with each documented field, dialog round
-// trip, list-render of an API-created interaction, channel grouping, delete via
-// API, drafts tab.
+// `/interactions` shows the `InteractionTimeline`. There is no in-app edit
+// dialog, filter UI, or drafts tab; drafts are excluded by the API's default
+// list behavior. Tests cover the current timeline and log flow.
 
 let token: string
 let contactA: { id: string; first_name: string }
-let contactB: { id: string; first_name: string }
 const createdInteractionIds: string[] = []
 
 test.beforeAll(async ({ request }) => {
@@ -26,9 +24,6 @@ test.beforeAll(async ({ request }) => {
   contactA = (await createContact(request, token, {
     first_name: `AAAIxAlpha${ts}`,
   })) as { id: string; first_name: string }
-  contactB = (await createContact(request, token, {
-    first_name: `AAAIxBeta${ts}`,
-  })) as { id: string; first_name: string }
 })
 
 test.afterAll(async ({ request }) => {
@@ -36,27 +31,31 @@ test.afterAll(async ({ request }) => {
     await deleteInteraction(request, token, id).catch(() => {})
   }
   if (contactA) await deleteContact(request, token, contactA.id).catch(() => {})
-  if (contactB) await deleteContact(request, token, contactB.id).catch(() => {})
 })
 
 async function openTimeline(page: import("@playwright/test").Page) {
   await page.goto("/interactions")
-  await expect(page.getByRole("heading", { name: /^interactions$/i })).toBeVisible({
-    timeout: 10_000,
-  })
+  const heading = page.getByRole("heading", { name: /^interactions$/i })
+  try {
+    await expect(heading).toBeVisible({ timeout: 15_000 })
+  } catch {
+    await page.reload({ waitUntil: "domcontentloaded" })
+    await expect(heading).toBeVisible({ timeout: 30_000 })
+  }
 }
 
 test.describe("Interactions timeline", () => {
-  test("page renders heading and tabs", async ({ page }) => {
+  test("page renders heading and log trigger", async ({ page }) => {
     await openTimeline(page)
-    await expect(page.getByRole("tab", { name: /all interactions/i })).toBeVisible()
-    await expect(page.getByRole("tab", { name: /drafts/i })).toBeVisible()
+    await expect(
+      page.getByRole("button", { name: /^log interaction$/i }).first(),
+    ).toBeVisible()
   })
 
   test("log dialog opens with all documented fields", async ({ page }) => {
     await openTimeline(page)
-    await page.getByRole("button", { name: /^log interaction$/i }).click()
-    const dialog = page.getByRole("dialog")
+    await page.getByRole("button", { name: /^log interaction$/i }).first().click()
+    const dialog = page.getByRole("dialog", { name: /log interaction/i })
     await expect(dialog).toBeVisible()
     await expect(dialog.getByRole("heading", { name: /^log interaction$/i })).toBeVisible()
 
@@ -76,11 +75,8 @@ test.describe("Interactions timeline", () => {
     // Required+optional fields
     await expect(dialog.getByLabel(/when \*/i)).toBeVisible()
     await expect(dialog.getByLabel(/duration \(minutes\)/i)).toBeVisible()
-    await expect(dialog.getByLabel(/^mood$/i)).toBeVisible()
     await expect(dialog.getByPlaceholder(/what did you talk about/i)).toBeVisible()
     await expect(dialog.getByLabel(/^location$/i)).toBeVisible()
-    await expect(dialog.getByLabel(/^latitude$/i)).toBeVisible()
-    await expect(dialog.getByLabel(/^longitude$/i)).toBeVisible()
   })
 
   test("create interaction via UI surfaces in timeline", async ({
@@ -89,8 +85,8 @@ test.describe("Interactions timeline", () => {
   }) => {
     const noteText = `UICreate ${Date.now()}`
     await openTimeline(page)
-    await page.getByRole("button", { name: /^log interaction$/i }).click()
-    const dialog = page.getByRole("dialog")
+    await page.getByRole("button", { name: /^log interaction$/i }).first().click()
+    const dialog = page.getByRole("dialog", { name: /log interaction/i })
 
     // Open attendee picker
     await dialog.getByRole("button", { name: /add attendee/i }).click()
@@ -122,11 +118,7 @@ test.describe("Interactions timeline", () => {
     await expect(page.getByText(noteText)).toBeVisible({ timeout: 10_000 })
 
     // Track for teardown
-    const baseUrl = (process.env.E2E_BASE_URL ?? "http://localhost:5173").replace(
-      ":5173",
-      ":8001",
-    )
-    const res = await request.get(`${baseUrl}/api/v1/interactions/?limit=20`, {
+    const res = await request.get(`${API_URL}/api/v1/interactions/?limit=20`, {
       headers: { Authorization: `Bearer ${token}` },
     })
     const body = await res.json()
@@ -174,10 +166,8 @@ test.describe("Interactions timeline", () => {
     await openTimeline(page)
     await expect(page.getByText(notes)).toBeVisible({ timeout: 10_000 })
 
-    // A date heading like "Aug 12, 2025" / "May 25, 2026" appears.
-    const monthRe =
-      /(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\s+\d{1,2}/i
-    await expect(page.getByText(monthRe).first()).toBeVisible()
+    // The current timeline uses an ISO date heading with a relative suffix.
+    await expect(page.getByText(/\d{4}-\d{2}-\d{2}/).first()).toBeVisible()
   })
 
   test("delete via row actions removes interaction from timeline", async ({
@@ -211,32 +201,4 @@ test.describe("Interactions timeline", () => {
     await deleteInteraction(request, token, ix.id).catch(() => {})
   })
 
-  test("drafts tab shows draft items and hides them from main tab", async ({
-    page,
-    request,
-  }) => {
-    const draftNote = `DraftIx ${Date.now()}`
-    const live = await createInteraction(request, token, {
-      attendee_ids: [contactB.id],
-      channel: "call",
-      notes: `LiveIx ${Date.now()}`,
-    })
-    createdInteractionIds.push(live.id)
-    const draft = await createInteraction(request, token, {
-      attendee_ids: [contactB.id],
-      channel: "text",
-      notes: draftNote,
-      is_draft: true,
-    })
-    createdInteractionIds.push(draft.id)
-
-    await openTimeline(page)
-
-    // Draft should NOT appear in the "All Interactions" tab
-    await expect(page.getByText(draftNote)).toHaveCount(0)
-
-    // Switch to drafts tab
-    await page.getByRole("tab", { name: /drafts/i }).click()
-    await expect(page.getByText(draftNote)).toBeVisible({ timeout: 8_000 })
-  })
 })

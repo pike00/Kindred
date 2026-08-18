@@ -3,7 +3,7 @@ title: PR Sweep Orchestrator
 status: active
 repos: [personal-crm]
 started: 2026-05-07
-last_updated: 2026-06-05
+last_updated: 2026-08-04
 next_step: Task 12 in progress — 7 PRs ready (#36, #48, #26, #40, #54, #62, #37); ~25+ unprocessed; PRs #63/#66/#72 fast-fail in <0.2s (import errors, LLM declined repair) — need manual fix like #37
 progress: 11/12
 ---
@@ -39,6 +39,9 @@ Land the 50 open `[dirac]` draft PRs on this repo by iterating through them sequ
 See [plan.md](plan.md) for the full implementation steps.
 
 ## Session Log
+
+### 2026-08-04
+- Housekeeping: Bump last_updated after repo releases and updates.
 
 ### 2026-06-05
 - Housekeeping: State reconciled during the tofix-remaining ship (v0.2.87 + v0.2.88 deployed to prod). No scope change to this project.

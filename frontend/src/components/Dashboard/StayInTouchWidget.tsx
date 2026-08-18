@@ -1,4 +1,6 @@
+import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
+import { Link } from "@tanstack/react-router"
 import type { ContactPublic } from "@/client"
 import { ContactsService } from "@/client"
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
@@ -12,7 +14,10 @@ interface OverdueContact extends ContactPublic {
   days_overdue?: number
 }
 
+const DISPLAY_LIMIT = 2
+
 export function StayInTouchWidget() {
+  const [isExpanded, setIsExpanded] = useState(false)
   const { data: overdueData, isLoading } = useQuery({
     queryKey: ["overdue-contacts"],
     queryFn: () => ContactsService.listOverdueContacts({}),
@@ -20,6 +25,10 @@ export function StayInTouchWidget() {
 
   const contacts = (overdueData?.data || []) as OverdueContact[]
   const count = overdueData?.count || 0
+  const displayedContacts = isExpanded
+    ? contacts
+    : contacts.slice(0, DISPLAY_LIMIT)
+  const remainingCount = contacts.length - DISPLAY_LIMIT
 
   const handleSkip = async (contactId: string) => {
     try {
@@ -80,12 +89,18 @@ export function StayInTouchWidget() {
         </div>
       ) : (
         <div className="space-y-2">
-          {contacts.map((contact) => {
+          {displayedContacts.map((contact) => {
             const fullName = [contact.first_name, contact.last_name]
               .filter(Boolean)
               .join(" ")
             const daysOverdue = contact.days_overdue ?? 0
             const isDoNotContact = contact.do_not_contact
+            const contactContext = [
+              contact.company,
+              isDoNotContact ? "Do not contact" : null,
+            ]
+              .filter(Boolean)
+              .join(", ")
 
             return (
               <div
@@ -94,24 +109,31 @@ export function StayInTouchWidget() {
                   isDoNotContact ? "opacity-60" : "hover:bg-accent/50"
                 }`}
               >
-                <ContactAvatar contact={contact} size="sm" />
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium text-sm truncate">
-                    {fullName || "Unnamed contact"}
-                  </p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    {contact.company && (
-                      <span className="text-xs text-muted-foreground truncate">
-                        {contact.company}
-                      </span>
-                    )}
-                    {isDoNotContact && (
-                      <Badge variant="secondary" className="text-xs">
-                        Do not contact
-                      </Badge>
-                    )}
+                <Link
+                  to="/contacts/$contactId"
+                  params={{ contactId: contact.id }}
+                  className="flex min-w-0 flex-1 items-center gap-3 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-label={`View ${fullName || "Unnamed contact"}${contactContext ? `, ${contactContext}` : ""}`}
+                >
+                  <ContactAvatar contact={contact} size="sm" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium text-sm">
+                      {fullName || "Unnamed contact"}
+                    </p>
+                    <div className="mt-0.5 flex items-center gap-2">
+                      {contact.company && (
+                        <span className="truncate text-xs text-muted-foreground">
+                          {contact.company}
+                        </span>
+                      )}
+                      {isDoNotContact && (
+                        <Badge variant="secondary" className="text-xs">
+                          Do not contact
+                        </Badge>
+                      )}
+                    </div>
                   </div>
-                </div>
+                </Link>
                 <div className="flex items-center gap-1.5 shrink-0">
                   <Badge
                     className={`text-xs ${
@@ -142,6 +164,30 @@ export function StayInTouchWidget() {
               </div>
             )
           })}
+          {!isExpanded && remainingCount > 0 && (
+            <div className="pt-1 text-center">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs text-muted-foreground hover:text-foreground"
+                onClick={() => setIsExpanded(true)}
+              >
+                + {remainingCount} more overdue
+              </Button>
+            </div>
+          )}
+          {isExpanded && contacts.length > DISPLAY_LIMIT && (
+            <div className="pt-1 text-center">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs text-muted-foreground hover:text-foreground"
+                onClick={() => setIsExpanded(false)}
+              >
+                Show less
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>

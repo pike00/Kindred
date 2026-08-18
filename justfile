@@ -39,79 +39,70 @@ import '.project-kit/clean.just'
 
 # --- repo-specific ---
 
-# Regenerate docs/db/ from the live Postgres schema using tbls, then render
-# each .md to a standalone .html via pandoc. Open docs/db/index.html in a
-# browser — no server needed. Requires the `db` service to be running.
-db-docs:
+# Fast live development over the tailnet. Reuses existing images/containers,
+# starts Vite directly on the machine's Tailscale IP, and proxies /api to the
+# local backend. Use `BACKEND_PORT=18001` when the default port is occupied.
+[group('Dev')]
+dev-tailnet:
     #!/usr/bin/env bash
     set -euo pipefail
-    set -a; source .env; set +a
-    DSN="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable"
-    # 1) Live DB schema → Markdown (tbls).
-    docker run --rm \
-        --user "$(id -u):$(id -g)" \
-        --network "kindred-internal-crm" \
-        -v "$(pwd)":/work -w /work \
-        -e TBLS_DSN="$DSN" \
-        ghcr.io/k1low/tbls \
-        doc -c /work/.tbls.yml "$DSN" docs/db --force --rm-dist
-    # 2) Live DB schema → DBML (@dbml/cli). npm needs registry.npmjs.org
-    # (default bridge), the DB only answers on the project network (no internet).
-    # Create on bridge, attach project network, then start.
-    DBML_CID=$(docker create \
-        --user "$(id -u):$(id -g)" \
-        -v "$(pwd)":/work -w /work \
-        -e HOME=/tmp \
-        node:22-alpine \
-        npx -y -p @dbml/cli@7.1.1 db2dbml postgres "$DSN" -o docs/db/schema.dbml)
-    trap 'docker rm -f "$DBML_CID" >/dev/null 2>&1 || true' EXIT
-    docker network connect "kindred-internal-crm" "$DBML_CID"
-    docker start -a "$DBML_CID"
-    docker rm -f "$DBML_CID" >/dev/null
-    trap - EXIT
-    # 3) Markdown → standalone HTML (pandoc). One docker run, loop inside.
-    docker run --rm \
-        --user "$(id -u):$(id -g)" \
-        -v "$(pwd)":/work -w /work \
-        --entrypoint sh \
-        pandoc/core:latest \
-        -c '
-            for md in docs/db/*.md; do
-                title=$(basename "$md" .md)
-                pandoc "$md" -f gfm -t html5 --standalone \
-                    --template scripts/db-docs-html.template \
-                    -M title="$title" \
-                    -o "${md%.md}.html"
-            done
-        '
-    # 4) Rewrite Markdown cross-links to HTML so the pages navigate to each other.
-    find docs/db -name "*.html" -exec sed -i -E 's/\.md([#"])/.html\1/g' {} +
-    # 5) Mirror README.html → index.html so `open docs/db/` lands on the home page.
-    cp docs/db/README.html docs/db/index.html
-    echo "Generated docs/db/index.html — open it in a browser."
+    toplevel="$(git rev-parse --show-toplevel)"
+    cd "$toplevel"
+    [ -f .env ] && { set -a; . ./.env; set +a; }
+    eval "$(just env | sed 's/^/export /')"
+    export BACKEND_PORT="${BACKEND_PORT:-8000}"
+
+    compose_log="$(mktemp)"
+    trap 'rm -f "$compose_log"' EXIT
+    if ! docker compose -f "$PREVIEW_COMPOSE_FILE" up -d >"$compose_log" 2>&1; then
+        echo "Cached dev images are unavailable; bootstrapping with the full project-kit dev recipe."
+        BACKEND_PORT="$BACKEND_PORT" just dev
+    fi
+
+    health_url="http://127.0.0.1:${BACKEND_PORT}${PREVIEW_HEALTH_PATH}"
+    for _ in $(seq 1 45); do
+        if curl -fsS --max-time 2 "$health_url" >/dev/null 2>&1; then
+            break
+        fi
+        sleep 1
+    done
+    if ! curl -fsS --max-time 2 "$health_url" >/dev/null 2>&1; then
+        echo "Backend did not become healthy at $health_url" >&2
+        cat "$compose_log" >&2
+        exit 1
+    fi
+
+    tailnet_ip="$(tailscale ip -4)"
+    tailnet_host="$(tailscale status --self --json | jq -r '.Self.DNSName' | sed 's/\.$//')"
+    tailnet_port="$(python3 -c '
+    import random, socket
+    random.seed()
+    for _ in range(50):
+        port = random.randint(8200, 9000)
+        with socket.socket() as sock:
+            if sock.connect_ex(("127.0.0.1", port)) != 0:
+                print(port)
+                break
+    ')"
+    echo "Tailnet app: http://${tailnet_host}:${tailnet_port}/"
+    cd frontend
+    VITE_API_URL= \
+    VITE_PUBLIC_HOST= \
+    TAILNET_HOST="$tailnet_ip" \
+    TAILNET_MAGICDNS="$tailnet_host" \
+    KINDRED_BACKEND_URL="http://127.0.0.1:${BACKEND_PORT}" \
+        exec bun run dev -- --config vite.tailnet.config.ts --host "$tailnet_ip" --port "$tailnet_port" --strictPort
+
+# Regenerate docs/db/ from the live Postgres schema using tbls, then render
+# each .md to a standalone .html via pandoc. The helper follows the active
+# preview stack and reads credentials from its running DB container. Open
+# docs/db/index.html in a browser — no server needed.
+db-docs:
+    @bash scripts/db-docs.sh generate
 
 # Fail if docs/db/ is out of date with the live DB. Runs in the pre-push hook.
 db-docs-check:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    set -a; source .env; set +a
-    DSN="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable"
-    if ! docker run --rm \
-        --user "$(id -u):$(id -g)" \
-        --network "kindred-internal-crm" \
-        -v "$(pwd)":/work -w /work \
-        -e TBLS_DSN="$DSN" \
-        ghcr.io/k1low/tbls \
-        diff -c /work/.tbls.yml "$DSN" docs/db; then
-        echo "" >&2
-        echo "  error: docs/db/ is out of date with the live database." >&2
-        echo "" >&2
-        echo "  Regenerate and commit the result:" >&2
-        echo "      just db-docs" >&2
-        echo "      git add docs/db" >&2
-        echo "" >&2
-        exit 1
-    fi
+    @bash scripts/db-docs.sh check
 
 # Run frontend Vitest with v8 coverage. Writes report to frontend/coverage/.
 frontend-coverage *args:

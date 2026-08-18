@@ -1,6 +1,7 @@
-import { render, screen } from "@testing-library/react"
+import { screen } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { Footer } from "@/components/Common/Footer"
+import { renderWithProviders } from "@/test/helpers"
 
 // Mock EnvironmentChip
 vi.mock("@/components/Common/EnvironmentChip", () => ({
@@ -16,35 +17,35 @@ describe("Footer", () => {
 
   describe("rendering", () => {
     it("renders footer element", () => {
-      const { container } = render(<Footer />)
+      const { container } = renderWithProviders(<Footer />)
       const footer = container.querySelector("footer")
       expect(footer).toBeInTheDocument()
     })
 
     it("renders Kindred brand name", () => {
-      render(<Footer />)
+      renderWithProviders(<Footer />)
       expect(screen.getByText(/Kindred/)).toBeInTheDocument()
     })
 
     it("renders current year", () => {
       const currentYear = new Date().getFullYear()
-      const { container } = render(<Footer />)
+      const { container } = renderWithProviders(<Footer />)
       const span = container.querySelector("span")
       expect(span?.textContent).toContain(String(currentYear))
     })
 
     it("renders year after the dot separator", () => {
-      render(<Footer />)
+      renderWithProviders(<Footer />)
       expect(screen.getByText(/Kindred · \d+/)).toBeInTheDocument()
     })
 
     it("renders EnvironmentChip component", () => {
-      render(<Footer />)
+      renderWithProviders(<Footer />)
       expect(screen.getByTestId("environment-chip")).toBeInTheDocument()
     })
 
     it("renders version + commit hash linking to GitHub", () => {
-      render(<Footer />)
+      renderWithProviders(<Footer />)
       const link = screen.getByRole("link", { name: /vtest · testhash/ })
       expect(link).toBeInTheDocument()
       expect(link).toHaveAttribute(
@@ -54,23 +55,38 @@ describe("Footer", () => {
       expect(link).toHaveAttribute("target", "_blank")
       expect(link).toHaveAttribute("rel", "noopener noreferrer")
     })
+
+    it("handles empty or unknown commit hash gracefully without trailing dot", () => {
+      const originalHash = (globalThis as Record<string, unknown>).__APP_HASH__
+      ;(globalThis as Record<string, unknown>).__APP_HASH__ = ""
+      try {
+        renderWithProviders(<Footer />)
+        const link = screen.getByRole("link", { name: /vtest/ })
+        expect(link).toBeInTheDocument()
+        expect(link.textContent).toContain("vtest")
+        expect(link.textContent).not.toContain("·")
+        expect(link).toHaveAttribute("href", "https://github.com/pike00/Kindred")
+      } finally {
+        ;(globalThis as Record<string, unknown>).__APP_HASH__ = originalHash
+      }
+    })
   })
 
   describe("content", () => {
     it("displays the correct copyright text format", () => {
-      render(<Footer />)
+      renderWithProviders(<Footer />)
       const footerText = screen.getByText(/Kindred · \d+/)
       expect(footerText).toBeInTheDocument()
     })
 
     it("updates year when year changes", () => {
-      render(<Footer />)
+      renderWithProviders(<Footer />)
       expect(screen.getByText(/Kindred · \d+/)).toBeInTheDocument()
     })
 
     it("uses getFullYear() for year calculation", () => {
       const expectedYear = new Date().getFullYear()
-      const { container } = render(<Footer />)
+      const { container } = renderWithProviders(<Footer />)
       const span = container.querySelector("span")
       expect(span?.textContent).toContain(String(expectedYear))
     })
@@ -78,33 +94,33 @@ describe("Footer", () => {
 
   describe("styling", () => {
     it("applies footer semantic HTML element", () => {
-      const { container } = render(<Footer />)
+      const { container } = renderWithProviders(<Footer />)
       const footer = container.querySelector("footer")
       expect(footer?.tagName).toBe("FOOTER")
     })
 
     it("applies border-t class", () => {
-      const { container } = render(<Footer />)
+      const { container } = renderWithProviders(<Footer />)
       const footer = container.querySelector("footer")
       expect(footer).toHaveClass("border-t")
     })
 
     it("applies padding classes", () => {
-      const { container } = render(<Footer />)
+      const { container } = renderWithProviders(<Footer />)
       const footer = container.querySelector("footer")
       expect(footer).toHaveClass("py-4")
       expect(footer).toHaveClass("px-6")
     })
 
     it("applies text styling classes", () => {
-      const { container } = render(<Footer />)
+      const { container } = renderWithProviders(<Footer />)
       const footer = container.querySelector("footer")
       expect(footer).toHaveClass("text-sm")
       expect(footer).toHaveClass("text-muted-foreground")
     })
 
     it("applies flex layout to content container", () => {
-      const { container } = render(<Footer />)
+      const { container } = renderWithProviders(<Footer />)
       const contentDiv = container.querySelector("footer > div")
       expect(contentDiv).toHaveClass("flex")
       expect(contentDiv).toHaveClass("items-center")
@@ -112,7 +128,7 @@ describe("Footer", () => {
     })
 
     it("applies gap between flex items", () => {
-      const { container } = render(<Footer />)
+      const { container } = renderWithProviders(<Footer />)
       const contentDiv = container.querySelector("footer > div")
       expect(contentDiv).toHaveClass("gap-3")
     })
@@ -120,25 +136,25 @@ describe("Footer", () => {
 
   describe("layout", () => {
     it("centers footer content", () => {
-      const { container } = render(<Footer />)
+      const { container } = renderWithProviders(<Footer />)
       const contentDiv = container.querySelector("footer > div")
       expect(contentDiv).toHaveClass("justify-center")
     })
 
     it("vertically aligns footer items", () => {
-      const { container } = render(<Footer />)
+      const { container } = renderWithProviders(<Footer />)
       const contentDiv = container.querySelector("footer > div")
       expect(contentDiv).toHaveClass("items-center")
     })
 
     it("creates flex layout for side-by-side content", () => {
-      const { container } = render(<Footer />)
+      const { container } = renderWithProviders(<Footer />)
       const contentDiv = container.querySelector("footer > div")
       expect(contentDiv).toHaveClass("flex")
     })
 
     it("maintains spacing between text and chip", () => {
-      const { container } = render(<Footer />)
+      const { container } = renderWithProviders(<Footer />)
       const contentDiv = container.querySelector("footer > div")
       expect(contentDiv).toHaveClass("gap-3")
     })
@@ -146,13 +162,13 @@ describe("Footer", () => {
 
   describe("component integration", () => {
     it("renders both text and EnvironmentChip together", () => {
-      render(<Footer />)
+      renderWithProviders(<Footer />)
       expect(screen.getByText(/Kindred · \d+/)).toBeInTheDocument()
       expect(screen.getByTestId("environment-chip")).toBeInTheDocument()
     })
 
     it("positions EnvironmentChip after text content", () => {
-      const { container } = render(<Footer />)
+      const { container } = renderWithProviders(<Footer />)
       const children = container.querySelector("footer > div")?.children
       expect(children?.length).toBe(3)
       expect(children?.[0]).toContainElement(screen.getByText(/Kindred/))
@@ -164,18 +180,18 @@ describe("Footer", () => {
 
   describe("accessibility", () => {
     it("uses semantic footer element", () => {
-      const { container } = render(<Footer />)
+      const { container } = renderWithProviders(<Footer />)
       expect(container.querySelector("footer")).toBeInTheDocument()
     })
 
     it("maintains readable text contrast with muted-foreground class", () => {
-      const { container } = render(<Footer />)
+      const { container } = renderWithProviders(<Footer />)
       const footer = container.querySelector("footer")
       expect(footer).toHaveClass("text-muted-foreground")
     })
 
     it("uses readable text size", () => {
-      const { container } = render(<Footer />)
+      const { container } = renderWithProviders(<Footer />)
       const footer = container.querySelector("footer")
       expect(footer).toHaveClass("text-sm")
     })
@@ -183,14 +199,14 @@ describe("Footer", () => {
 
   describe("responsive behavior", () => {
     it("applies consistent padding for all viewport sizes", () => {
-      const { container } = render(<Footer />)
+      const { container } = renderWithProviders(<Footer />)
       const footer = container.querySelector("footer")
       expect(footer).toHaveClass("py-4")
       expect(footer).toHaveClass("px-6")
     })
 
     it("maintains centered layout across viewports", () => {
-      const { container } = render(<Footer />)
+      const { container } = renderWithProviders(<Footer />)
       const contentDiv = container.querySelector("footer > div")
       expect(contentDiv).toHaveClass("justify-center")
     })
@@ -198,7 +214,7 @@ describe("Footer", () => {
 
   describe("edge cases", () => {
     it("handles mounting and unmounting", () => {
-      const { unmount } = render(<Footer />)
+      const { unmount } = renderWithProviders(<Footer />)
       expect(screen.getByText(/Kindred · \d+/)).toBeInTheDocument()
 
       unmount()
@@ -207,7 +223,7 @@ describe("Footer", () => {
     })
 
     it("renders multiple footers on same page", () => {
-      render(
+      renderWithProviders(
         <>
           <Footer />
           <Footer />
@@ -218,7 +234,7 @@ describe("Footer", () => {
     })
 
     it("handles re-render without issues", () => {
-      const { rerender } = render(<Footer />)
+      const { rerender } = renderWithProviders(<Footer />)
       expect(screen.getByText(/Kindred · \d+/)).toBeInTheDocument()
 
       rerender(<Footer />)
@@ -230,13 +246,13 @@ describe("Footer", () => {
     it("always uses current date for year", () => {
       const now = new Date()
       const year = now.getFullYear()
-      const { container } = render(<Footer />)
+      const { container } = renderWithProviders(<Footer />)
       const span = container.querySelector("span")
       expect(span?.textContent).toContain(String(year))
     })
 
     it("calls getFullYear() on new Date instance", () => {
-      const { container } = render(<Footer />)
+      const { container } = renderWithProviders(<Footer />)
       const yearText = new Date().getFullYear()
       const span = container.querySelector("span")
       expect(span?.textContent).toContain(String(yearText))

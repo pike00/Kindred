@@ -5,6 +5,233 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.109] - 2026-08-18
+
+### Fixed
+- Fix(dashboard): format badge as 'due' when check-in is due within [-2, 2] days (#199) (741a464)
+
+### Other
+- Merge: sync main with gitea/main (97530f2)
+
+## [0.2.108] - 2026-08-16
+
+### Fixed
+- Fix(frontend): default OpenAPI.BASE to empty string and configure dev server API proxying (b42a336)
+- Fix(frontend): eliminate sidebar navigation delay and add loading feedback (439df96)
+- Fix(version): sync backend pyproject.toml version during releases (1d2e49a)
+- Fix(release): handle non-GitHub origin remotes gracefully in release script (88b2bff)
+
+## [0.2.107] - 2026-08-12
+
+### Added
+- Feat(version): add runtime /utils/info API endpoint and dynamic query fallback in Footer (64f5101)
+
+### Fixed
+- Fix(version): fix fallback version resolution to prevent 0.0.0 footer (0993a85)
+
+### Other
+- Build(docker): use BUILDPLATFORM in Dockerfile.prod for frontend-builder (9b13b96)
+
+## [0.2.106] - 2026-08-09
+
+### Added
+- Feat(frontend): eliminate sidebar navigation click delay and add loading feedback (#196) (673cd5e)
+
+### Documentation
+- Docs: revamp README for a public audience (#166) (2c9c74e)
+
+### Fixed
+- Fix(version): resolve version and commit hash fallbacks durably (45409f4)
+
+### Other
+- Test(footer): fix link role regex match for Footer test (2008962)
+- Add bundle placeholder verification scanner and integrate into prepush gate (7a839f9)
+- Add build-time validation guard in vite.config.ts against placeholder API URLs (0c988dd)
+- Fix VITE_API_URL default in Dockerfile.prod for same-origin production requests (8bdd1be)
+- Fix prepush gate and backend Dockerfile dependencies (7064f1b)
+- Make Interaction Activity compact and expandable below contact metadata (eec918a)
+- Merge: sync dependabot/combine-all with github/main (7fa2e5c)
+- Style: format code according to ruff 0.16.0 and biome linter rules (008a32c)
+- Deps(frontend): bump @tanstack/router-plugin to 1.168.24 (82182da)
+- ⬆ bump @tanstack/router-plugin from 1.168.18 to 1.168.24 (ad83202)
+- Deps(frontend): bump react-dom and @types/react-dom (9b1326b)
+- ⬆ bump react-dom and @types/react-dom (52b357e)
+- Deps(frontend): bump @radix-ui/react-radio-group to 1.4.7 (9e1550f)
+- ⬆ bump @radix-ui/react-radio-group from 1.3.8 to 1.4.7 (e8bc5d1)
+- Deps(frontend): bump @radix-ui/react-switch to 1.3.7 (f22d927)
+- ⬆ bump @radix-ui/react-switch from 1.2.6 to 1.3.7 (ff3a591)
+- Deps(frontend): bump lucide-react to 1.28.0 (ac4c93a)
+- ⬆ bump lucide-react from 0.563.0 to 1.28.0 (f84d02c)
+- Deps(backend): bump emails to 1.1.2 (03541f2)
+- ⬆ Bump emails from 0.6 to 1.1.2 (0b69489)
+- Deps(backend): update psycopg[binary] requirement (700fc41)
+- ⬆ Update psycopg[binary] requirement (038fd8d)
+- Deps(backend): bump ruff to 0.16.0 (0c07f70)
+- ⬆ Bump ruff from 0.15.15 to 0.16.0 (aa9754f)
+- Deps(backend): update sentry-sdk requirement (886f5b9)
+- ⬆ Update sentry-sdk[fastapi] requirement (cfd0e0e)
+- Deps(backend): bump cryptography to 50.0.0 (1a4961e)
+- ⬆ bump cryptography from 48.0.1 to 50.0.0 (186d988)
+- Build: bump node base images in Dockerfile and compose files (29fcbb7)
+- ⬆ bump node from 22-slim to 26-slim (06edb49)
+- ⬆ bump node from 22-slim to 26-slim in /frontend (ad7cb2d)
+- Ci: bump GitHub Actions setup-python, checkout, and fetch-metadata (b1bee99)
+- ⬆ Bump dependabot/fetch-metadata from 2.3.0 to 3.1.0 (d851922)
+- ⬆ Bump actions/setup-python from 6 to 7 (c866f33)
+- ⬆ Bump actions/checkout from 6 to 7 (2f777b8)
+- ⬆ bump getmeili/meilisearch from v1.52.0 to v1.53.0 (#192) (a4ab48f)
+- ⬆ bump getmeili/meilisearch from v1.51.0 to v1.52.0 (#185) (c5cea78)
+- Limit Stay in Touch widget to 2 contacts with expandable toggle (86329a8)
+
+## [0.2.105] - 2026-08-05
+
+### Other
+- E2e: stabilize coverage and fix related regressions (#182) (995830b)
+
+## [0.2.104] - 2026-08-04
+
+### Other
+- E2e: pass test mode to preview server (ca9dd44)
+- Contacts: simplify contact detail layout (81e74bc)
+
+## [0.2.103] - 2026-08-04
+
+### Other
+- Contacts: combine people and pets details (e609c72)
+
+## [0.2.102] - 2026-08-04
+
+### Added
+- Feat(contacts): add Google Maps link and action to addresses card (21ada79)
+
+### Documentation
+- Docs: complete Global Command Palette (Cmd+K) verification and update task checklist (be23d29)
+- Docs: enforce branch, commit, push, pr, merge, deploy workflow policy in AGENTS.md (a6b2af2)
+- Docs: complete verification and archive @contact Autocomplete project (b40fe20)
+
+### Other
+- Dashboard: link Stay in Touch contacts to detail pages (467059f)
+- Projects: housekeeping and archive completed projects (a77d404)
+
+## [0.2.101] - 2026-08-04
+
+### Other
+- Fix Playwright pre-push and DB docs validation (#176) (c46006e)
+
+## [0.2.100] - 2026-08-04
+
+### Documentation
+- Docs: add all_contacts_share database docs (565fa3a)
+
+### Other
+- Email: fix interaction deduplication lookup (b916580)
+- Test: cover all-contact sharing flow (05fc807)
+- Tags: fix email share submission and scope copy (f152f35)
+- Sharing: tighten contact share confirmation flows (32aefec)
+- Sharing: add all-contacts settings UI (69db50a)
+- Contact shares: type delete response and regenerate clients (98cec83)
+- Client: regenerate contact-share APIs (442aa32)
+- Backend: validate all-contact share grantee input (25740f2)
+- Backend: add all-contact share routes (6b24c52)
+- Backend: allow shared grantees to write contact records (acc86e2)
+- Backend: cover all-contact share route visibility (9e0063f)
+- Backend: add all-contacts sharing visibility scaffolding (6fda42f)
+
+## [0.2.99] - 2026-08-03
+
+### Fixed
+- Fix: report homelab compose status (233ccbf)
+
+### Other
+- Email: ingest matching Gmail interactions (954c431)
+
+## [0.2.98] - 2026-08-02
+
+### Added
+- Feat(timeline): make timeline items editable and deletable (fc97ec7)
+
+### Documentation
+- Docs: trim stale frontend coverage notes (a3d61ef)
+
+### Fixed
+- Fix: hide deleted gifts from listings (605a440)
+
+### Other
+- Revert "chore(release): v0.2.98" (953c4cf)
+- Test: silence expected command palette errors (1bd0a74)
+
+## [0.2.97] - 2026-08-02
+
+### Fixed
+- Fix: compare date-only events by calendar day (1d9ce4c)
+- Fix: isolate dev ports and calendar date math (917c06c)
+- Fix: harden date and tailnet dev workflow (d2ab25a)
+
+### Other
+- Dev: add fast tailnet workflow (9bd1bdb)
+- Timeline: support backdated life events (ca0a807)
+
+## [0.2.96] - 2026-08-02
+
+### Other
+- Chore: fix lint violations (dfd28bd)
+- Db: add recommendation interaction channel enum value (44da73b)
+- Auth: show development login credentials (bfed979)
+- Timeline: add inline note capture and editing (b15880f)
+- ⬆ Bump @radix-ui/react-scroll-area from 1.2.10 to 1.2.18 (#154) (a3e8c62)
+- ⬆ Bump playwright from 1.60.0 to 1.62.0 (#159) (4c0b172)
+- ⬆ Bump rollup from 4.61.1 to 4.62.3 (#157) (61ee0b8)
+- ⬆ Bump @radix-ui/react-label from 2.1.8 to 2.1.15 (#156) (514c486)
+
+## [0.2.95] - 2026-08-02
+
+### Other
+- Build: pin Rollup below release-age policy (c674413)
+
+## [0.2.94] - 2026-08-02
+
+### Documentation
+- Docs: add CONTRIBUTING.md guide (#165) (cb1a8e7)
+
+### Other
+- Interactions: link attendees to contact pages (e8a293f)
+- Calendar: use current month grid class (1108acd)
+- Frontend: use supported pnpm build image (78886cf)
+- Contacts: allow unknown contact names (d2e17f0)
+- Add release.just task file (159b617)
+- ⬆ Bump brace-expansion from 2.1.1 to 2.1.4 (#175) (fc29278)
+- ⬆ Bump getmeili/meilisearch from v1.50.0 to v1.51.0 (#174) (0e1df3b)
+- ⬆ Bump getmeili/meilisearch from v1.49.0 to v1.50.0 (#170) (8e9a89f)
+- ⬆ Bump icalendar from 7.1.2 to 7.2.2 (#161) (33f74e2)
+- ⬆ Bump pyasn1 from 0.6.3 to 0.6.4 (#167) (6e0db7d)
+- ⬆ Bump node from 22-slim to 26-slim in /frontend (#123) (2debf20)
+- ⬆ Bump getmeili/meilisearch from v1.48 to v1.49 (#160) (7cc4e84)
+- ⬆ Bump sqlmodel from 0.0.38 to 0.0.39 (#155) (4da3d7b)
+- ⬆ Bump pydantic-settings from 2.14.1 to 2.14.2 (#147) (277dab7)
+- ⬆ Bump sqlalchemy from 2.0.45 to 2.0.51 (#153) (9a85000)
+- ⬆ Bump coverage from 7.14.0 to 7.15.0 (#151) (a9e5919)
+- ⬆ Bump @biomejs/biome from 2.4.16 to 2.5.2 (#142) (db0fbfc)
+- ⬆ bump radicale from 3.7.3 to 3.7.5 (#127) (6e5d160)
+- Build(deps-dev): bump @hey-api/openapi-ts in /frontend (#149) (47e9619)
+- ⬆ Bump axios from 1.16.1 to 1.18.1 (#146) (3dc1370)
+- ⬆ Bump python-multipart from 0.0.29 to 0.0.32 (#130) (30fc724)
+- ⬆ Bump getmeili/meilisearch from v1.46 to v1.48 (#148) (d00a9c4)
+- Ci: auto-merge dependabot patch/minor PRs after CI passes (8ecd67c)
+- Update cryptography dev dependency constraint (a7e9d7b)
+- Preview: route per-worktree via compose.worktree.yml with ${SLUG} host (0f1fa7b)
+- Project-kit: remove stale preview-pr.py (baked homelab domain) (19a67b1)
+- Project-kit: refresh + drop homelab domain/litellm URL (public repo) (2c52029)
+- Tooling: finish project-kit consolidation (drop standalone kit remnants) (7f14faa)
+- Add release.just task runner config (da4fe61)
+- ⬆ bump @tanstack/router-plugin from 1.168.14 to 1.168.18 (#134) (7575129)
+- ⬆ bump react-day-picker from 9.14.0 to 10.0.1 (#131) (77f3700)
+- ⬆ bump @types/react from 19.2.16 to 19.2.17 (#129) (7d33f11)
+- Build(deps): bump form-data from 4.0.5 to 4.0.6 in /frontend (#139) (fcd5dc3)
+- ⬆ Bump starlette from 1.1.0 to 1.3.1 (#138) (fc5e60b)
+- ⬆ Bump form-data from 4.0.5 to 4.0.6 (#137) (5c8255f)
+- ⬆ Bump cryptography from 48.0.0 to 48.0.1 (#136) (2705bc6)
+- ⬆ Bump getmeili/meilisearch from v1.45 to v1.46 (#135) (cd3f000)
+
 ## [0.2.93] - 2026-06-19
 
 ### Added
