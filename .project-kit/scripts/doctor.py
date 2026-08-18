@@ -96,6 +96,31 @@ def main() -> int:
     else:
         _fail("compose.dev.yml missing")
         fails += 1
+    if (repo / "compose.worktree.yml").is_file():
+        _ok("compose.worktree.yml present")
+    else:
+        _warn("compose.worktree.yml missing")
+    if shutil.which("just"):
+        try:
+            proc = subprocess.run(["just", "env"], capture_output=True, text=True, cwd=str(repo), check=True)
+            env_dict = dict(line.split("=", 1) for line in proc.stdout.strip().splitlines() if "=" in line)
+            host = env_dict.get("WORKTREE_HOST", "").strip()
+            if ".dev.kindred." in host:
+                _ok(f"WORKTREE_HOST: {host}")
+            else:
+                _warn(f"WORKTREE_HOST unexpected format: {host!r}")
+                warns += 1
+            if host and shutil.which("dig"):
+                dig_p = subprocess.run(["dig", "+short", "+time=2", "+tries=1", host], capture_output=True, text=True)
+                ips = [l.strip() for l in dig_p.stdout.strip().splitlines() if l.strip()]
+                if ips:
+                    _ok(f"DNS resolution: {host} -> {ips[0]}")
+                else:
+                    _warn(f"DNS resolution: {host} returned no records")
+                    warns += 1
+        except Exception:
+            _warn("could not resolve WORKTREE_HOST via 'just env'")
+            warns += 1
     print("\nrelease:")
     if (repo / ".project-kit" / "cliff.toml").is_file():
         _ok(".project-kit/cliff.toml present")
