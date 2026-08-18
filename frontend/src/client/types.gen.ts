@@ -2379,12 +2379,6 @@ export type ContactsListOverdueContactsData = {
 
 export type ContactsListOverdueContactsResponse = (OverdueContactsPublic);
 
-export type ContactsSkipContactData = {
-    contactId: string;
-};
-
-export type ContactsSkipContactResponse = (ContactPublic);
-
 export type ContactsListLosingTouchContactsResponse = (ContactsPublic);
 
 export type ContactsBulkUpdateContactsData = {

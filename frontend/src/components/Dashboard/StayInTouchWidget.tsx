@@ -1,6 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Link } from "@tanstack/react-router"
 import { useState } from "react"
+import { useQuery } from "@tanstack/react-query"
+import { Link } from "@tanstack/react-router"
 import type { ContactPublic } from "@/client"
 import { ContactsService } from "@/client"
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
@@ -8,7 +8,6 @@ import { AddInteractionDialog } from "@/components/Interactions/AddInteractionDi
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import useCustomToast from "@/hooks/useCustomToast"
 import { Clock, SkipForward } from "@/lib/icons"
 
 interface OverdueContact extends ContactPublic {
@@ -19,27 +18,9 @@ const DISPLAY_LIMIT = 2
 
 export function StayInTouchWidget() {
   const [isExpanded, setIsExpanded] = useState(false)
-  const queryClient = useQueryClient()
-  const { showSuccessToast, showErrorToast } = useCustomToast()
-
   const { data: overdueData, isLoading } = useQuery({
     queryKey: ["overdue-contacts"],
     queryFn: () => ContactsService.listOverdueContacts({}),
-  })
-
-  const skipMutation = useMutation({
-    mutationFn: (contactId: string) =>
-      ContactsService.skipContact({ contactId }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["overdue-contacts"] })
-      queryClient.invalidateQueries({ queryKey: ["contacts"] })
-      queryClient.invalidateQueries({ queryKey: ["interactions-recent"] })
-      showSuccessToast("Skipped contact check-in for this week")
-    },
-    onError: (error) => {
-      showErrorToast("Failed to skip contact check-in")
-      console.error("Failed to skip contact:", error)
-    },
   })
 
   const contacts = (overdueData?.data || []) as OverdueContact[]
@@ -49,8 +30,20 @@ export function StayInTouchWidget() {
     : contacts.slice(0, DISPLAY_LIMIT)
   const remainingCount = contacts.length - DISPLAY_LIMIT
 
-  const handleSkip = (contactId: string) => {
-    skipMutation.mutate(contactId)
+  const handleSkip = async (contactId: string) => {
+    try {
+      await fetch(`/api/v1/contacts/${contactId}/skip`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({}),
+      })
+      // Refresh the list
+      window.location.reload()
+    } catch (error) {
+      console.error("Failed to skip contact:", error)
+    }
   }
 
   if (isLoading) {
@@ -151,11 +144,7 @@ export function StayInTouchWidget() {
                           : "bg-amber-100 text-amber-700 border-amber-200"
                     }`}
                   >
-                    {daysOverdue >= -2 && daysOverdue <= 2
-                      ? "due"
-                      : daysOverdue < -2
-                        ? `in ${Math.abs(daysOverdue)}d`
-                        : `${daysOverdue}d overdue`}
+                    {daysOverdue}d overdue
                   </Badge>
                   {!isDoNotContact && (
                     <>
@@ -164,10 +153,6 @@ export function StayInTouchWidget() {
                         size="sm"
                         variant="ghost"
                         className="h-8 w-8 p-0"
-                        disabled={
-                          skipMutation.isPending &&
-                          skipMutation.variables === contact.id
-                        }
                         onClick={() => handleSkip(contact.id)}
                         title="Skip this week"
                       >

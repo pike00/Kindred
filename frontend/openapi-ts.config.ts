@@ -1,30 +1,48 @@
 import { defineConfig } from "@hey-api/openapi-ts"
 
 export default defineConfig({
-  client: "@hey-api/client-axios",
   input: "./openapi.json",
   output: "./src/client",
   plugins: [
+    "legacy/axios",
     {
       name: "@hey-api/sdk",
       // NOTE: this doesn't allow tree-shaking
       asClass: true,
       operationId: true,
-      response: "body",
       classNameBuilder: "{{name}}Service",
       methodNameBuilder: (operation) => {
-        const opStr = String(operation)
-        if (opStr.includes("-")) {
-          const parts = opStr.split("-")
-          const action = parts.slice(1).join("-")
-          const camel = action.replace(/_([a-z])/gi, (_, letter) =>
-            letter.toUpperCase(),
+        // @ts-expect-error
+        const name: string = operation.name
+
+        // The operation.name is in camelCase like "listContactsContactsGet"
+        // We want to extract just the action part (e.g., "list", "create", "update", "delete")
+        // by finding the service name and removing it along with the HTTP method suffix
+
+        // @ts-expect-error
+        const service: string = operation.service // e.g., "Contacts"
+
+        if (service) {
+          // Convert service to camelCase for matching
+          const serviceCamel =
+            service.charAt(0).toLowerCase() + service.slice(1)
+
+          // Remove the service name from the middle of the operation name
+          // e.g., "listContactsContactsGet" -> remove "Contacts" -> "listContactsGet"
+          const withoutService = name.replace(serviceCamel, "")
+
+          // Now remove the HTTP method suffix (Get, Post, Patch, Delete)
+          const result = withoutService.replace(
+            /(Get|Post|Patch|Delete|Put)$/,
+            "",
           )
-          if (camel && camel.length > 0) {
-            return camel
+
+          if (result && result.length > 0) {
+            return result.charAt(0).toLowerCase() + result.slice(1)
           }
         }
-        return opStr.replace(/_([a-z])/gi, (_, letter) => letter.toUpperCase())
+
+        return name.charAt(0).toLowerCase() + name.slice(1)
       },
     },
     {

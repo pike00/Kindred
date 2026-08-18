@@ -9,9 +9,7 @@ import { VitePWA } from "vite-plugin-pwa"
 
 function gitHash(): string {
   try {
-    const hash = execSync("git rev-parse --short HEAD", {
-      encoding: "utf8",
-    }).trim()
+    const hash = execSync("git rev-parse --short HEAD", { encoding: "utf8" }).trim()
     if (hash) return hash
   } catch {
     // Ignore error when .git directory is absent (e.g. Docker build context)
@@ -28,9 +26,7 @@ function appVersion(): string {
 
   // 2. Fall back to latest git tag if git repository is available
   try {
-    const tag = execSync("git describe --tags --abbrev=0", {
-      encoding: "utf8",
-    }).trim()
+    const tag = execSync("git describe --tags --abbrev=0", { encoding: "utf8" }).trim()
     if (tag) return tag.replace(/^v/, "")
   } catch {
     // Ignore error when git command fails or repository is absent
@@ -65,10 +61,7 @@ function appVersion(): string {
 const isE2E = process.env.VITE_E2E === "true"
 
 // Build guard: prevent example.com placeholders from contaminating production bundles
-if (
-  process.env.NODE_ENV === "production" &&
-  process.env.VITE_API_URL?.includes("example.com")
-) {
+if (process.env.NODE_ENV === "production" && process.env.VITE_API_URL?.includes("example.com")) {
   throw new Error(
     "[Vite Build Error] Invalid VITE_API_URL: 'example.com' placeholder detected. Use '' for same-origin relative URLs or a valid production origin.",
   )

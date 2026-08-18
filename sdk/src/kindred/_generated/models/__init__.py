@@ -213,7 +213,6 @@ from .v_card_conflicts_public import VCardConflictsPublic
 from .v_card_import_response import VCardImportResponse
 from .validation_error import ValidationError
 from .validation_error_context import ValidationErrorContext
-from .version_info import VersionInfo
 from .webhook_endpoint_base import WebhookEndpointBase
 from .webhook_endpoint_created import WebhookEndpointCreated
 from .webhook_endpoint_public import WebhookEndpointPublic
@@ -409,7 +408,6 @@ __all__ = (
     "VCardConflictPublic",
     "VCardConflictsPublic",
     "VCardImportResponse",
-    "VersionInfo",
     "WebhookEndpointBase",
     "WebhookEndpointCreated",
     "WebhookEndpointPublic",

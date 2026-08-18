@@ -28,7 +28,9 @@ export function Footer() {
   const displayVersion = rawVersion === "0.0.0" ? "0.2.106" : rawVersion
   const rawHash = data?.git_hash || __APP_HASH__
   const hasHash = Boolean(
-    typeof rawHash === "string" && rawHash.trim() && rawHash !== "unknown",
+    typeof rawHash === "string" &&
+      rawHash.trim() &&
+      rawHash !== "unknown",
   )
 
   const commitUrl = hasHash

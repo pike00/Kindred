@@ -30,7 +30,7 @@
     <!-- Apply the persisted theme before first paint to avoid a light->dark flash.
          Mirrors ThemeProvider (storageKey "vite-ui-theme", defaultTheme "dark"). -->
     <script>
-      (() => {
+      (function () {
         try {
           let t = localStorage.getItem("vite-ui-theme") || "dark"
           if (t === "system") {
@@ -39,7 +39,7 @@
               : "light"
           }
           document.documentElement.classList.add(t)
-        } catch (_e) {
+        } catch (e) {
           document.documentElement.classList.add("dark")
         }
       })()

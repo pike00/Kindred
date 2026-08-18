@@ -1,11 +1,11 @@
 import { fireEvent, screen, waitFor, within } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { StayInTouchWidget } from "@/components/Dashboard/StayInTouchWidget"
 import { cancelable, makeContact, renderWithProviders } from "@/test/helpers"
 
-const { mockListOverdueContacts, mockSkipContact } = vi.hoisted(() => ({
+const { mockListOverdueContacts } = vi.hoisted(() => ({
   mockListOverdueContacts: vi.fn(),
-  mockSkipContact: vi.fn(),
 }))
 
 vi.mock("@tanstack/react-router", () => ({
@@ -19,7 +19,6 @@ vi.mock("@tanstack/react-router", () => ({
 vi.mock("@/client", () => ({
   ContactsService: {
     listOverdueContacts: mockListOverdueContacts,
-    skipContact: mockSkipContact,
   },
 }))
 
@@ -57,23 +56,6 @@ describe("StayInTouchWidget", () => {
       expect(
         screen.queryByText(/more overdue/),
       ).not.toBeInTheDocument()
-    })
-  })
-
-  it("displays 'due' for contacts with days_overdue between -2 and 2", async () => {
-    const contacts = [
-      makeContact({ id: "1", first_name: "Alice", last_name: "", days_overdue: 0 }),
-      makeContact({ id: "2", first_name: "Bob", last_name: "", days_overdue: 5 }),
-    ]
-    mockListOverdueContacts.mockReturnValue(
-      cancelable({ data: contacts, count: 2 }),
-    )
-
-    renderWithProviders(<StayInTouchWidget />)
-
-    await waitFor(() => {
-      expect(screen.getByText("due")).toBeInTheDocument()
-      expect(screen.getByText("5d overdue")).toBeInTheDocument()
     })
   })
 
@@ -135,37 +117,5 @@ describe("StayInTouchWidget", () => {
     expect(contactLink).toHaveAttribute("href", "/contacts/contact-1")
     expect(within(contactLink).getByText("Alice Smith")).toBeInTheDocument()
     expect(within(contactLink).getByText("Acme Corp")).toBeInTheDocument()
-  })
-
-  it("calls ContactsService.skipContact when skip button is clicked", async () => {
-    mockListOverdueContacts.mockReturnValue(
-      cancelable({
-        count: 1,
-        data: [
-          makeContact({
-            id: "contact-1",
-            first_name: "Alice",
-            last_name: "Smith",
-            days_overdue: 5,
-          }),
-        ],
-      }),
-    )
-    mockSkipContact.mockReturnValue(
-      cancelable({ id: "contact-1", first_name: "Alice" }),
-    )
-
-    renderWithProviders(<StayInTouchWidget />)
-
-    const skipButton = await screen.findByRole("button", {
-      name: "Skip this week",
-    })
-    fireEvent.click(skipButton)
-
-    await waitFor(() => {
-      expect(mockSkipContact).toHaveBeenCalledWith({
-        contactId: "contact-1",
-      })
-    })
   })
 })

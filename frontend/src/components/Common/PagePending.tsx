@@ -2,10 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 export function PagePending() {
   return (
-    <div
-      className="space-y-6 p-1 animate-in fade-in-50 duration-200"
-      data-testid="page-pending"
-    >
+    <div className="space-y-6 p-1 animate-in fade-in-50 duration-200" data-testid="page-pending">
       {/* Header skeleton */}
       <div className="space-y-2">
         <Skeleton className="h-8 w-48" />

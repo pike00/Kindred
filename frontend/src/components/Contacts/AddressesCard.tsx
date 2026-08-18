@@ -436,8 +436,7 @@ function AddressRow({ address }: { address: AddressPublic }) {
                   {
                     label: "Open in Google Maps",
                     icon: ExternalLink,
-                    onSelect: () =>
-                      window.open(mapsUrl, "_blank", "noopener,noreferrer"),
+                    onSelect: () => window.open(mapsUrl, "_blank", "noopener,noreferrer"),
                   },
                 ]
               : []),

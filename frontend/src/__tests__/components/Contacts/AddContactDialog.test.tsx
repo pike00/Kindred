@@ -68,7 +68,7 @@ describe("AddContactDialog", () => {
 
     expect(screen.getByText("Add New Contact")).toBeInTheDocument()
     expect(
-      screen.getByText(/add any details you know now/i),
+      screen.getByText(/only a first name is required/i),
     ).toBeInTheDocument()
   })
 
