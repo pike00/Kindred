@@ -39,18 +39,15 @@ services:
     command: ["bash", "-c", "bash scripts/prestart.sh && fastapi run --reload app/main.py"]
     networks:
       - default
-      - kindred-private
+      - pikenet-private
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=kindred-private"
+      - "traefik.docker.network=pikenet-private"
       - "traefik.http.routers.${SLUG:?}-api.rule=Host(`${WORKTREE_HOST}`) && (PathPrefix(`/api`) || PathPrefix(`/docs`) || PathPrefix(`/redoc`) || PathPrefix(`/openapi.json`) || PathPrefix(`/dav`) || PathPrefix(`/.well-known`))"
       - "traefik.http.routers.${SLUG}-api.entrypoints=websecure"
       - "traefik.http.routers.${SLUG}-api.tls=true"
-      # Force Traefik to obtain *.kindred.${DOMAIN} via DNS-01 the first time
-      # any worktree starts. Once minted, all worktree subdomains share the
-      # same wildcard cert.
       - "traefik.http.routers.${SLUG}-api.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.${SLUG}-api.tls.domains[0].main=*.kindred.${DOMAIN}"
+      - "traefik.http.routers.${SLUG}-api.tls.domains[0].main=*.dev.kindred.${DOMAIN}"
       - "traefik.http.services.${SLUG}-api.loadbalancer.server.port=8000"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/utils/health-check/"]
@@ -102,15 +99,15 @@ services:
         pnpm dev -- --host 0.0.0.0 --port 5173
     networks:
       - default
-      - kindred-private
+      - pikenet-private
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=kindred-private"
+      - "traefik.docker.network=pikenet-private"
       - "traefik.http.routers.${SLUG}.rule=Host(`${WORKTREE_HOST}`)"
       - "traefik.http.routers.${SLUG}.entrypoints=websecure"
       - "traefik.http.routers.${SLUG}.tls=true"
       - "traefik.http.routers.${SLUG}.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.${SLUG}.tls.domains[0].main=*.kindred.${DOMAIN}"
+      - "traefik.http.routers.${SLUG}.tls.domains[0].main=*.dev.kindred.${DOMAIN}"
       - "traefik.http.services.${SLUG}.loadbalancer.server.port=5173"
 
   db:
@@ -208,10 +205,8 @@ volumes:
 
 networks:
   default:
-  kindred-private:
-    name: kindred-private
+  pikenet-private:
     external: true
-
 
   kindred-internal-crm:
     name: kindred-internal-crm

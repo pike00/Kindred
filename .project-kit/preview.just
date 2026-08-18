@@ -58,7 +58,7 @@ env:
             f"refuses to use slug={slug!r}: equals project_prefix, would collide "
             f"with the prod Traefik router. Switch branches or rename project_prefix."
         )
-    host = "{slug}.kindred.{domain}".replace("{slug}", slug).replace("{domain}", domain)
+    host = "{slug}.dev.kindred.{domain}".replace("{slug}", slug).replace("{domain}", domain)
 
     print(f"SLUG={slug}")
     print(f"COMPOSE_PROJECT_NAME={prefix}-{slug}")
