@@ -59,6 +59,46 @@ function parseUtcOffset(input: string): string | null {
   }
 }
 
+// Utility: format current time in a given IANA timezone
+export function formatLocalTime(tz: string): string | null {
+  try {
+    return new Intl.DateTimeFormat("en-US", {
+      timeZone: tz,
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    }).format(new Date())
+  } catch {
+    return null
+  }
+}
+
+// Utility: get full timezone name (e.g. "Central Daylight Time", "Pakistan Standard Time")
+export function getTimezoneLongName(tz: string): string {
+  try {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: tz,
+      timeZoneName: "long",
+    }).formatToParts(new Date())
+    return parts.find((p) => p.type === "timeZoneName")?.value ?? ""
+  } catch {
+    return ""
+  }
+}
+
+// Utility: get timezone abbreviation (e.g. "CDT", "PKT", "EDT")
+export function getTimezoneAbbreviation(tz: string): string {
+  try {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: tz,
+      timeZoneName: "short",
+    }).formatToParts(new Date())
+    return parts.find((p) => p.type === "timeZoneName")?.value ?? ""
+  } catch {
+    return ""
+  }
+}
+
 type TzOption = { tz: string; city: string; offset: string }
 type RenderOption = TzOption & { key: string }
 
@@ -121,24 +161,28 @@ export function TimezoneInput({
         : `+${rawOffsetQuery}`
       : null
 
-    // 3) IANA zone id / zone-city / offset matches
+    // 3) IANA zone id / zone-city / offset / abbreviation / long name matches
     for (const m of BASE_OPTIONS) {
       if (out.length >= 60) break
       if (seenTz.has(m.tz)) continue
 
       const tzNorm = m.tz.toLowerCase().replace(/[\s_/]/g, "")
       const cityNorm = m.city.toLowerCase().replace(/\s/g, "")
-      const offsetNorm = m.offset.toLowerCase().replace(/\s/g, "") // e.g. "gmt+5"
+      const offsetNorm = m.offset.toLowerCase().replace(/\s/g, "")
+      const abbrNorm = getTimezoneAbbreviation(m.tz).toLowerCase()
+      const longNameNorm = getTimezoneLongName(m.tz).toLowerCase().replace(/\s/g, "")
 
       const matchesTz = tzNorm.includes(q)
       const matchesCity = cityNorm.includes(q)
+      const matchesAbbr = abbrNorm.includes(q)
+      const matchesLong = longNameNorm.includes(q)
       const matchesOffset =
         offsetNorm.includes(q) ||
         (signedOffsetQuery !== null &&
           (offsetNorm.replace(/^(gmt|utc)/, "") === signedOffsetQuery ||
             offsetNorm.replace(/^(gmt|utc)/, "").startsWith(signedOffsetQuery)))
 
-      if (matchesTz || matchesCity || matchesOffset) {
+      if (matchesTz || matchesCity || matchesAbbr || matchesLong || matchesOffset) {
         const matchedCity = lookupCities(m.tz, 1)[0]
         const cityDisplayName = matchedCity?.tz === m.tz ? matchedCity.city : m.city
         out.push({ ...m, city: cityDisplayName, key: `tz-${m.tz}` })
@@ -152,9 +196,14 @@ export function TimezoneInput({
   const displayLabel = useMemo(() => {
     if (!value) return placeholder ?? "Search city or timezone…"
     const matched = lookupCities(value, 1)[0]
-    const label = matched?.tz === value ? matched.city : cityLabel(value)
-    const offset = getOffset(value)
-    return offset ? `${label} (${offset})` : label
+    const locationName = matched?.tz === value ? matched.city : cityLabel(value)
+    const tzLong = getTimezoneLongName(value)
+    const tzShort = getTimezoneAbbreviation(value)
+    const tzDescriptor = tzLong || tzShort
+
+    return tzDescriptor
+      ? `${locationName} (${tzDescriptor})`
+      : `${locationName} (${getOffset(value)})`
   }, [value, placeholder])
 
   function handleSelect(tz: string) {
@@ -183,10 +232,10 @@ export function TimezoneInput({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-96 p-0" align="start">
+      <PopoverContent className="w-[420px] p-0" align="start">
         <Command shouldFilter={false}>
           <CommandInput
-            placeholder="Search city, country, Asia/Tokyo, UTC+5…"
+            placeholder="Search city, country, CDT, Central, Asia/Tokyo…"
             value={search}
             onValueChange={setSearch}
           />
@@ -195,10 +244,12 @@ export function TimezoneInput({
             <CommandGroup>
               {filtered.map(({ key, tz, city, offset }) => {
                 const localTime = formatLocalTime(tz)
+                const abbr = getTimezoneAbbreviation(tz)
+                const longName = getTimezoneLongName(tz)
                 return (
                   <CommandItem
                     key={key}
-                    value={`${key} ${city} ${tz}`}
+                    value={`${key} ${city} ${tz} ${abbr} ${longName}`}
                     onSelect={() => handleSelect(tz)}
                     className="flex items-center justify-between gap-3 py-2 px-2.5 cursor-pointer"
                   >
@@ -213,18 +264,25 @@ export function TimezoneInput({
                         <span className="truncate text-sm font-medium leading-snug">
                           {city}
                         </span>
-                        <span className="truncate text-[11px] text-muted-foreground font-mono opacity-75">
-                          {tz}
+                        <span className="truncate text-[11px] text-muted-foreground font-mono opacity-75 mt-0.5">
+                          {longName ? `${longName} (${tz})` : tz}
                         </span>
                       </div>
                     </div>
                     <div className="flex flex-col items-end shrink-0 text-right">
-                      {localTime && (
-                        <span className="text-xs font-mono font-medium text-foreground">
-                          {localTime}
-                        </span>
-                      )}
-                      <span className="text-[10px] font-mono text-muted-foreground">
+                      <div className="flex items-center gap-1.5">
+                        {abbr && (
+                          <span className="text-xs font-mono font-semibold text-primary">
+                            {abbr}
+                          </span>
+                        )}
+                        {localTime && (
+                          <span className="text-xs font-mono font-medium text-foreground">
+                            {localTime}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[10px] font-mono text-muted-foreground mt-0.5">
                         {offset}
                       </span>
                     </div>
@@ -237,18 +295,4 @@ export function TimezoneInput({
       </PopoverContent>
     </Popover>
   )
-}
-
-// Utility: format current time in a given IANA timezone
-export function formatLocalTime(tz: string): string | null {
-  try {
-    return new Intl.DateTimeFormat("en-US", {
-      timeZone: tz,
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    }).format(new Date())
-  } catch {
-    return null
-  }
 }

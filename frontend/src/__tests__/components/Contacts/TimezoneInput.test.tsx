@@ -25,7 +25,7 @@ describe("TimezoneInput", () => {
     const button = screen.getByRole("combobox")
     await user.click(button)
 
-    const input = screen.getByPlaceholderText("Search city, country, Asia/Tokyo, UTC+5…")
+    const input = screen.getByPlaceholderText(/Search city/i)
     await user.type(input, "paki")
 
     const option = await screen.findByText("Karachi, Pakistan")
@@ -43,7 +43,7 @@ describe("TimezoneInput", () => {
     const button = screen.getByRole("combobox")
     await user.click(button)
 
-    const input = screen.getByPlaceholderText("Search city, country, Asia/Tokyo, UTC+5…")
+    const input = screen.getByPlaceholderText(/Search city/i)
     await user.type(input, "GMT+5")
 
     const option = await screen.findByText("Karachi, Pakistan")
