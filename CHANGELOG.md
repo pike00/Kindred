@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Feat(contacts): flexible timezone search and relative day context (#201) (a25809c)
 
+### Documentation
+- Docs: update CHANGELOG.md for v0.2.111 release (f5f4b0e)
+
 ### Fixed
 - Fix(deps): sync pnpm-lock.yaml with frontend package.json (f6117b1)
 
