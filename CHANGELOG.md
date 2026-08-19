@@ -5,6 +5,14 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.111] - 2026-08-19
+
+### Added
+- Feat(contacts): flexible timezone search and relative day context (#201) (a25809c)
+
+### Fixed
+- Fix(deps): sync pnpm-lock.yaml with frontend package.json (f6117b1)
+
 ## [0.2.110] - 2026-08-18
 
 ### Added
