@@ -73,12 +73,11 @@ export function formatLocalTime(
       hour12: true,
     }).format(now)
 
-    // Compute day difference relative to local viewer time
-    const localDateStr = new Intl.DateTimeFormat("en-CA", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }).format(now)
+    // Compute day difference relative to local viewer wall-clock date
+    const y = now.getFullYear()
+    const m = String(now.getMonth() + 1).padStart(2, "0")
+    const d = String(now.getDate()).padStart(2, "0")
+    const localDateStr = `${y}-${m}-${d}`
 
     const targetDateStr = new Intl.DateTimeFormat("en-CA", {
       timeZone: tz,

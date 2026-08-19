@@ -66,4 +66,15 @@ describe("formatLocalTime", () => {
     })
     expect(result).not.toBeNull()
   })
+
+  it("appends (Tomorrow) when local time is evening and target timezone is next day", () => {
+    vi.useFakeTimers()
+    // Set local time to 8:15 PM CDT (Aug 18, 2026 20:15:21)
+    vi.setSystemTime(new Date("2026-08-18T20:15:21-05:00"))
+
+    const result = formatLocalTime("Asia/Karachi")
+    expect(result).toBe("6:15 AM (Tomorrow)")
+
+    vi.useRealTimers()
+  })
 })
