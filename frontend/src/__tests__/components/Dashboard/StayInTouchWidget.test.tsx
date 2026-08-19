@@ -4,8 +4,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { StayInTouchWidget } from "@/components/Dashboard/StayInTouchWidget"
 import { cancelable, makeContact, renderWithProviders } from "@/test/helpers"
 
-const { mockListOverdueContacts } = vi.hoisted(() => ({
+const { mockListOverdueContacts, mockSnoozeContact } = vi.hoisted(() => ({
   mockListOverdueContacts: vi.fn(),
+  mockSnoozeContact: vi.fn(),
 }))
 
 vi.mock("@tanstack/react-router", () => ({
@@ -19,6 +20,7 @@ vi.mock("@tanstack/react-router", () => ({
 vi.mock("@/client", () => ({
   ContactsService: {
     listOverdueContacts: mockListOverdueContacts,
+    snoozeContact: mockSnoozeContact,
   },
 }))
 
@@ -118,4 +120,37 @@ describe("StayInTouchWidget", () => {
     expect(within(contactLink).getByText("Alice Smith")).toBeInTheDocument()
     expect(within(contactLink).getByText("Acme Corp")).toBeInTheDocument()
   })
+
+  it("calls ContactsService.snoozeContact when a snooze option is selected", async () => {
+    const user = userEvent.setup()
+    mockListOverdueContacts.mockReturnValue(
+      cancelable({
+        count: 1,
+        data: [
+          makeContact({
+            id: "contact-1",
+            first_name: "Alice",
+            last_name: "Smith",
+          }),
+        ],
+      }),
+    )
+    mockSnoozeContact.mockReturnValue(cancelable(makeContact({ id: "contact-1" })))
+
+    renderWithProviders(<StayInTouchWidget />)
+
+    const snoozeButton = await screen.findByRole("button", {
+      name: "Snooze Alice Smith",
+    })
+    await user.click(snoozeButton)
+
+    const option1w = await screen.findByRole("menuitem", { name: "1w" })
+    await user.click(option1w)
+
+    expect(mockSnoozeContact).toHaveBeenCalledWith({
+      contactId: "contact-1",
+      requestBody: { duration: "1w" },
+    })
+  })
 })
+

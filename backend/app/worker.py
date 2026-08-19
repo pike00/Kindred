@@ -137,6 +137,10 @@ async def check_cadences(ctx: dict) -> None:
             if pref and pref.do_not_contact:
                 continue
 
+            if contact.snoozed_until and contact.snoozed_until > now:
+                continue
+
+
             if contact.last_contacted_at is None:
                 overdue = True
             else:

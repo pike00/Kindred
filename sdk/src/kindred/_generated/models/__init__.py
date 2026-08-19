@@ -46,6 +46,7 @@ from .contact_heatmap_response import ContactHeatmapResponse
 from .contact_public import ContactPublic
 from .contact_public_imessage_profile_type_0 import ContactPublicImessageProfileType0
 from .contact_share_in import ContactShareIn
+from .contact_snooze_request import ContactSnoozeRequest
 from .contact_source import ContactSource
 from .contact_stage_event_create import ContactStageEventCreate
 from .contact_stage_event_public import ContactStageEventPublic
@@ -213,6 +214,7 @@ from .v_card_conflicts_public import VCardConflictsPublic
 from .v_card_import_response import VCardImportResponse
 from .validation_error import ValidationError
 from .validation_error_context import ValidationErrorContext
+from .version_info import VersionInfo
 from .webhook_endpoint_base import WebhookEndpointBase
 from .webhook_endpoint_created import WebhookEndpointCreated
 from .webhook_endpoint_public import WebhookEndpointPublic
@@ -268,6 +270,7 @@ __all__ = (
     "ContactsGeoResponse",
     "ContactsGetKanbanBoardResponseContactsGetKanbanBoard",
     "ContactShareIn",
+    "ContactSnoozeRequest",
     "ContactSource",
     "ContactsPublic",
     "ContactStageEventCreate",
@@ -408,6 +411,7 @@ __all__ = (
     "VCardConflictPublic",
     "VCardConflictsPublic",
     "VCardImportResponse",
+    "VersionInfo",
     "WebhookEndpointBase",
     "WebhookEndpointCreated",
     "WebhookEndpointPublic",

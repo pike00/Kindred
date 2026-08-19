@@ -1,12 +1,20 @@
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { type ContactPublic, ContactsService } from "@/client"
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
 import { AddInteractionDialog } from "@/components/Interactions/AddInteractionDialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Clock, SkipForward } from "@/lib/icons"
+import { Clock } from "@/lib/icons"
 
 interface OverdueContact extends ContactPublic {
   days_overdue?: number
@@ -16,6 +24,7 @@ const DISPLAY_LIMIT = 2
 
 export function OverdueContacts() {
   const [isExpanded, setIsExpanded] = useState(false)
+  const queryClient = useQueryClient()
   const { data: contactsData, isLoading } = useQuery({
     queryKey: ["overdue-contacts"],
     queryFn: () =>
@@ -51,19 +60,16 @@ export function OverdueContacts() {
     )
   }
 
-  const handleSkip = async (contactId: string) => {
+  const handleSnooze = async (contactId: string, duration: string) => {
     try {
-      await fetch(`/api/v1/contacts/${contactId}/skip`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({}),
+      await ContactsService.snoozeContact({
+        contactId,
+        requestBody: { duration },
       })
-      // Refresh the list
-      window.location.reload()
+      queryClient.invalidateQueries({ queryKey: ["overdue-contacts"] })
+      queryClient.invalidateQueries({ queryKey: ["losing-touch"] })
     } catch (error) {
-      console.error("Failed to skip contact:", error)
+      console.error("Failed to snooze contact:", error)
     }
   }
 
@@ -137,15 +143,58 @@ export function OverdueContacts() {
                   {!isDoNotContact && (
                     <>
                       <AddInteractionDialog seedContact={contact} />
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-8 w-8 p-0"
-                        onClick={() => handleSkip(contact.id)}
-                        title="Skip this week"
-                      >
-                        <SkipForward className="h-4 w-4" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0"
+                            title="Snooze contact"
+                            aria-label={`Snooze ${fullName || "contact"}`}
+                          >
+                            <Clock className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-36">
+                          <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+                            Snooze for...
+                          </DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => handleSnooze(contact.id, "1w")}
+                          >
+                            1w
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleSnooze(contact.id, "2w")}
+                          >
+                            2w
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleSnooze(contact.id, "1m")}
+                          >
+                            1 month
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleSnooze(contact.id, "3m")}
+                          >
+                            3 months
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleSnooze(contact.id, "6m")}
+                          >
+                            6 months
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() =>
+                              handleSnooze(contact.id, "indefinitely")
+                            }
+                          >
+                            indefinitely
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </>
                   )}
                 </div>

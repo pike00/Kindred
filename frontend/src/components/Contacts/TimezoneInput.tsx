@@ -91,7 +91,9 @@ export function formatLocalTime(
     }
 
     const localDays = Math.floor(new Date(localDateStr).getTime() / 86_400_000)
-    const targetDays = Math.floor(new Date(targetDateStr).getTime() / 86_400_000)
+    const targetDays = Math.floor(
+      new Date(targetDateStr).getTime() / 86_400_000,
+    )
     const diff = targetDays - localDays
 
     if (options?.includeDayDiff) {
@@ -209,7 +211,9 @@ export function TimezoneInput({
       const cityNorm = m.city.toLowerCase().replace(/\s/g, "")
       const offsetNorm = m.offset.toLowerCase().replace(/\s/g, "")
       const abbrNorm = getTimezoneAbbreviation(m.tz).toLowerCase()
-      const longNameNorm = getTimezoneLongName(m.tz).toLowerCase().replace(/\s/g, "")
+      const longNameNorm = getTimezoneLongName(m.tz)
+        .toLowerCase()
+        .replace(/\s/g, "")
 
       const matchesTz = tzNorm.includes(q)
       const matchesCity = cityNorm.includes(q)
@@ -221,9 +225,16 @@ export function TimezoneInput({
           (offsetNorm.replace(/^(gmt|utc)/, "") === signedOffsetQuery ||
             offsetNorm.replace(/^(gmt|utc)/, "").startsWith(signedOffsetQuery)))
 
-      if (matchesTz || matchesCity || matchesAbbr || matchesLong || matchesOffset) {
+      if (
+        matchesTz ||
+        matchesCity ||
+        matchesAbbr ||
+        matchesLong ||
+        matchesOffset
+      ) {
         const matchedCity = lookupCities(m.tz, 1)[0]
-        const cityDisplayName = matchedCity?.tz === m.tz ? matchedCity.city : m.city
+        const cityDisplayName =
+          matchedCity?.tz === m.tz ? matchedCity.city : m.city
         out.push({ ...m, city: cityDisplayName, key: `tz-${m.tz}` })
         seenTz.add(m.tz)
       }

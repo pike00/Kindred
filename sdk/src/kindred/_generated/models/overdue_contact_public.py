@@ -58,6 +58,7 @@ class OverdueContactPublic:
         source_external_id (None | str | Unset): Opaque external ID for idempotent upserts from integrations.
         pronouns (None | str | Unset): Contact's pronouns (e.g. they/them, she/her).
         timezone (None | str | Unset): IANA timezone string (e.g. America/New_York).
+        snoozed_until (datetime.datetime | None | Unset): If set, suppress stay-in-touch reminders until this date/time.
         deleted_at (datetime.datetime | None | Unset):
         tags (list[TagPublic] | Unset):
         stage_events (list[ContactStageEventPublic] | Unset):
@@ -97,6 +98,7 @@ class OverdueContactPublic:
     source_external_id: None | str | Unset = UNSET
     pronouns: None | str | Unset = UNSET
     timezone: None | str | Unset = UNSET
+    snoozed_until: datetime.datetime | None | Unset = UNSET
     deleted_at: datetime.datetime | None | Unset = UNSET
     tags: list[TagPublic] | Unset = UNSET
     stage_events: list[ContactStageEventPublic] | Unset = UNSET
@@ -251,6 +253,14 @@ class OverdueContactPublic:
         else:
             timezone = self.timezone
 
+        snoozed_until: None | str | Unset
+        if isinstance(self.snoozed_until, Unset):
+            snoozed_until = UNSET
+        elif isinstance(self.snoozed_until, datetime.datetime):
+            snoozed_until = self.snoozed_until.isoformat()
+        else:
+            snoozed_until = self.snoozed_until
+
         deleted_at: None | str | Unset
         if isinstance(self.deleted_at, Unset):
             deleted_at = UNSET
@@ -365,6 +375,8 @@ class OverdueContactPublic:
             field_dict["pronouns"] = pronouns
         if timezone is not UNSET:
             field_dict["timezone"] = timezone
+        if snoozed_until is not UNSET:
+            field_dict["snoozed_until"] = snoozed_until
         if deleted_at is not UNSET:
             field_dict["deleted_at"] = deleted_at
         if tags is not UNSET:
@@ -609,6 +621,23 @@ class OverdueContactPublic:
 
         timezone = _parse_timezone(d.pop("timezone", UNSET))
 
+        def _parse_snoozed_until(data: object) -> datetime.datetime | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, str):
+                    raise TypeError()
+                snoozed_until_type_0 = datetime.datetime.fromisoformat(data)
+
+                return snoozed_until_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(datetime.datetime | None | Unset, data)
+
+        snoozed_until = _parse_snoozed_until(d.pop("snoozed_until", UNSET))
+
         def _parse_deleted_at(data: object) -> datetime.datetime | None | Unset:
             if data is None:
                 return data
@@ -735,6 +764,7 @@ class OverdueContactPublic:
             source_external_id=source_external_id,
             pronouns=pronouns,
             timezone=timezone,
+            snoozed_until=snoozed_until,
             deleted_at=deleted_at,
             tags=tags,
             stage_events=stage_events,

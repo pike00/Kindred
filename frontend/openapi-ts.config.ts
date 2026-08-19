@@ -3,8 +3,8 @@ import { defineConfig } from "@hey-api/openapi-ts"
 export default defineConfig({
   input: "./openapi.json",
   output: "./src/client",
+  client: "legacy/axios",
   plugins: [
-    "legacy/axios",
     {
       name: "@hey-api/sdk",
       // NOTE: this doesn't allow tree-shaking
@@ -13,16 +13,16 @@ export default defineConfig({
       classNameBuilder: "{{name}}Service",
       methodNameBuilder: (operation) => {
         // @ts-expect-error
-        const name: string = operation.name
+        const name: string = operation.name || operation.id || ""
 
         // The operation.name is in camelCase like "listContactsContactsGet"
         // We want to extract just the action part (e.g., "list", "create", "update", "delete")
         // by finding the service name and removing it along with the HTTP method suffix
 
         // @ts-expect-error
-        const service: string = operation.service // e.g., "Contacts"
+        const service: string = operation.service || ""
 
-        if (service) {
+        if (service && name) {
           // Convert service to camelCase for matching
           const serviceCamel =
             service.charAt(0).toLowerCase() + service.slice(1)
@@ -42,7 +42,7 @@ export default defineConfig({
           }
         }
 
-        return name.charAt(0).toLowerCase() + name.slice(1)
+        return name ? name.charAt(0).toLowerCase() + name.slice(1) : "operation"
       },
     },
     {
