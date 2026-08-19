@@ -5,7 +5,7 @@ import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 
-import { TimezoneInput } from "@/components/Contacts/TimezoneInput"
+import { formatLocalTime, TimezoneInput } from "@/components/Contacts/TimezoneInput"
 
 describe("TimezoneInput", () => {
   it("renders with placeholder and opens combobox", async () => {
@@ -48,5 +48,22 @@ describe("TimezoneInput", () => {
 
     const option = await screen.findByText("Karachi, Pakistan")
     expect(option).toBeInTheDocument()
+  })
+})
+
+describe("formatLocalTime", () => {
+  it("formats time without day tag when target date matches local date", () => {
+    // Current timezone local time should not append +1d/-1d
+    const result = formatLocalTime(Intl.DateTimeFormat().resolvedOptions().timeZone)
+    expect(result).not.toBeNull()
+    expect(result).not.toContain("+1d")
+    expect(result).not.toContain("-1d")
+  })
+
+  it("supports day name option for contact detail context", () => {
+    const result = formatLocalTime(Intl.DateTimeFormat().resolvedOptions().timeZone, {
+      includeDayName: true,
+    })
+    expect(result).not.toBeNull()
   })
 })

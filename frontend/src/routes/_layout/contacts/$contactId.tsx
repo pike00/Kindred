@@ -58,11 +58,14 @@ import {
 } from "@/lib/utils"
 
 function ContactLocalTime({ timezone }: { timezone: string }) {
-  const [localTime, setLocalTime] = useState(() => formatLocalTime(timezone))
+  const [localTime, setLocalTime] = useState(() =>
+    formatLocalTime(timezone, { includeDayName: true }),
+  )
 
   useEffect(() => {
     const id = setInterval(
-      () => setLocalTime(formatLocalTime(timezone)),
+      () =>
+        setLocalTime(formatLocalTime(timezone, { includeDayName: true })),
       60_000,
     )
     return () => clearInterval(id)

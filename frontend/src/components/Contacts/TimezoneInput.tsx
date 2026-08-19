@@ -59,15 +59,60 @@ function parseUtcOffset(input: string): string | null {
   }
 }
 
-// Utility: format current time in a given IANA timezone
-export function formatLocalTime(tz: string): string | null {
+// Utility: format current time in a given IANA timezone with smart day context
+export function formatLocalTime(
+  tz: string,
+  options?: { includeDayDiff?: boolean; includeDayName?: boolean },
+): string | null {
   try {
-    return new Intl.DateTimeFormat("en-US", {
+    const now = new Date()
+    const timeStr = new Intl.DateTimeFormat("en-US", {
       timeZone: tz,
       hour: "numeric",
       minute: "2-digit",
       hour12: true,
-    }).format(new Date())
+    }).format(now)
+
+    // Compute day difference relative to local viewer time
+    const localDateStr = new Intl.DateTimeFormat("en-CA", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(now)
+
+    const targetDateStr = new Intl.DateTimeFormat("en-CA", {
+      timeZone: tz,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(now)
+
+    if (localDateStr === targetDateStr) {
+      return timeStr
+    }
+
+    const localDays = Math.floor(new Date(localDateStr).getTime() / 86_400_000)
+    const targetDays = Math.floor(new Date(targetDateStr).getTime() / 86_400_000)
+    const diff = targetDays - localDays
+
+    if (options?.includeDayName) {
+      const targetDayName = new Intl.DateTimeFormat("en-US", {
+        timeZone: tz,
+        weekday: "short",
+      }).format(now)
+      if (diff === 1) return `${timeStr} (Tomorrow)`
+      if (diff === -1) return `${timeStr} (Yesterday)`
+      return `${timeStr} (${targetDayName})`
+    }
+
+    if (options?.includeDayDiff) {
+      const diffTag = diff > 0 ? `+${diff}d` : `${diff}d`
+      return `${timeStr} ${diffTag}`
+    }
+
+    // Default compact indicator when days differ
+    const diffTag = diff > 0 ? `+${diff}d` : `${diff}d`
+    return `${timeStr} ${diffTag}`
   } catch {
     return null
   }
