@@ -20,7 +20,7 @@ export function Footer() {
   const { data } = useQuery({
     queryKey: ["version-info"],
     queryFn: fetchVersionInfo,
-    staleTime: Infinity,
+    staleTime: 60 * 1000,
     retry: false,
   })
 

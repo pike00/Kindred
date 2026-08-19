@@ -132,7 +132,7 @@ export default defineConfig({
     ...(!isE2E
       ? [
           VitePWA({
-            registerType: "prompt",
+            registerType: "autoUpdate",
             includeAssets: [
               "/assets/icons/android-chrome-192x192.png",
               "/assets/icons/android-chrome-512x512.png",
