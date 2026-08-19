@@ -36,7 +36,7 @@ services:
       - ./backend/tests:/app/backend/tests
       - ./backend/alembic.ini:/app/backend/alembic.ini:ro
     working_dir: /app/backend
-    command: ["bash", "-c", "bash scripts/prestart.sh && fastapi run app/main.py"]
+    command: ["bash", "-c", "bash scripts/prestart.sh && fastapi run --host 0.0.0.0 --port 8000 --reload app/main.py"]
     networks:
       - default
       - pikenet-private
@@ -67,7 +67,7 @@ services:
         condition: service_healthy
 
   frontend:
-    image: node:26-slim
+    image: oven/bun:1-slim
     working_dir: /app/frontend
     env_file: .env
     environment:
@@ -89,20 +89,14 @@ services:
       - "127.0.0.1:${FRONTEND_PORT:-5173}:5173"
     volumes:
       - ./package.json:/app/package.json:ro
-      - ./pnpm-lock.yaml:/app/pnpm-lock.yaml:ro
-      - ./pnpm-workspace.yaml:/app/pnpm-workspace.yaml:ro
       - ./frontend:/app/frontend
-      # pnpm's hoisted node_modules lives at the workspace root (/app), not
-      # /app/frontend. Persist that and mask the host's frontend/node_modules.
-      - frontend-node-modules:/app/node_modules
-      - /app/frontend/node_modules
+      - frontend-node-modules:/app/frontend/node_modules
     command:
       - sh
       - -c
       - |
-        npm install -g pnpm &&
-        pnpm install --frozen-lockfile &&
-        pnpm dev -- --host 0.0.0.0 --port 5173
+        bun install &&
+        bun run dev --host 0.0.0.0 --port 5173
     networks:
       - default
       - pikenet-private

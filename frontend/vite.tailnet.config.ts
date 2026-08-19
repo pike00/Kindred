@@ -9,7 +9,7 @@ export default {
   server: {
     ...baseConfig.server,
     host: tailnetHost,
-    allowedHosts: [tailnetMagicDns],
+    allowedHosts: true,
     watch: {
       usePolling: true,
       interval: 500,
