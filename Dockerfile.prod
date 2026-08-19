@@ -84,4 +84,4 @@ WORKDIR /app/backend
 EXPOSE 8000
 
 # Default to web mode. compose.yml's worker service overrides this with arq.
-CMD ["bash", "-c", "bash scripts/prestart.sh && fastapi run --workers 4 app/main.py --host 0.0.0.0 --port 8000"]
+CMD ["bash", "-c", "bash scripts/prestart.sh && fastapi run --workers ${WEB_CONCURRENCY:-2} app/main.py --host 0.0.0.0 --port 8000"]
