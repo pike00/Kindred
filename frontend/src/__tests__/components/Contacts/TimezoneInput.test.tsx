@@ -5,7 +5,7 @@ import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 
-import { TimezoneInput } from "@/components/Contacts/TimezoneInput"
+import { formatLocalTime, TimezoneInput } from "@/components/Contacts/TimezoneInput"
 
 describe("TimezoneInput", () => {
   it("renders with placeholder and opens combobox", async () => {
@@ -48,5 +48,33 @@ describe("TimezoneInput", () => {
 
     const option = await screen.findByText("Karachi, Pakistan")
     expect(option).toBeInTheDocument()
+  })
+})
+
+describe("formatLocalTime", () => {
+  it("formats time without day tag when target date matches local date", () => {
+    // Current timezone local time should not append +1d/-1d
+    const result = formatLocalTime(Intl.DateTimeFormat().resolvedOptions().timeZone)
+    expect(result).not.toBeNull()
+    expect(result).not.toContain("+1d")
+    expect(result).not.toContain("-1d")
+  })
+
+  it("supports day name option for contact detail context", () => {
+    const result = formatLocalTime(Intl.DateTimeFormat().resolvedOptions().timeZone, {
+      includeDayName: true,
+    })
+    expect(result).not.toBeNull()
+  })
+
+  it("appends (Tomorrow) when local time is evening and target timezone is next day", () => {
+    vi.useFakeTimers()
+    // Set local time to 8:15 PM CDT (Aug 18, 2026 20:15:21)
+    vi.setSystemTime(new Date("2026-08-18T20:15:21-05:00"))
+
+    const result = formatLocalTime("Asia/Karachi")
+    expect(result).toBe("6:15 AM (Tomorrow)")
+
+    vi.useRealTimers()
   })
 })

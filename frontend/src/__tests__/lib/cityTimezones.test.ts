@@ -6,7 +6,13 @@ describe("lookupCities", () => {
   it("resolves a broad city name to its IANA zone (New Orleans -> America/Chicago)", () => {
     const hits = lookupCities("New Orleans")
     expect(hits[0].tz).toBe("America/Chicago")
-    expect(hits[0].city).toContain("Chicago")
+    expect(hits[0].city).toContain("New Orleans")
+  })
+
+  it("resolves alias cities to formatted city names (Lahore -> Lahore, Pakistan)", () => {
+    const hits = lookupCities("Lahore")
+    expect(hits[0].tz).toBe("Asia/Karachi")
+    expect(hits[0].city).toBe("Lahore, Pakistan")
   })
 
   it("matches a prefix", () => {

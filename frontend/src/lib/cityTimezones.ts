@@ -140,26 +140,53 @@ const ABBREVIATIONS: Record<string, string> = {
   ksa: "saudi arabia",
 }
 
+const SHORT_COUNTRY: Record<string, string> = {
+  "United States": "USA",
+  "United Kingdom": "UK",
+  "United Arab Emirates": "UAE",
+}
+
+const SKIP_ALIAS_FORMAT = new Set([
+  "us", "usa", "america", "uk", "britain", "great britain", "england", "scotland", "wales",
+  "uae", "emirates", "ksa", "saudi", "ca", "canada", "mx", "mexico", "br", "brasil", "ar",
+  "co", "pe", "cl", "ie", "fr", "de", "deutschland", "es", "espana", "pt", "it", "italia",
+  "nl", "holland", "be", "ch", "at", "dk", "se", "no", "fi", "pl", "cz", "czechia", "hu",
+  "gr", "tr", "turkiye", "ru", "ua", "ro", "pk", "paki", "in", "bharat", "hindustan",
+  "jp", "nippon", "nihon", "kr", "korea", "s korea", "rok", "cn", "prc", "zhongguo", "tw",
+  "hk", "sg", "spore", "th", "id", "my", "ph", "vn", "bd", "lk", "np", "au", "aussie", "nz",
+  "aotearoa", "eg", "ma", "ng", "ke", "za", "s africa"
+])
+
+function formatAliasCity(alias: string, entry: CityZone): string {
+  const lowerAlias = alias.toLowerCase()
+  if (SKIP_ALIAS_FORMAT.has(lowerAlias)) return entry.city
+
+  const cityName = lowerAlias
+    .split(/\s+/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ")
+
+  const country = entry.country ? (SHORT_COUNTRY[entry.country] ?? entry.country) : ""
+  return country ? `${cityName}, ${country}` : cityName
+}
+
 /**
  * Return city matches for a free-text query (multi-tier exact, prefix, tokenized,
- * and substring search). Deduped by tz. Capped for UI.
+ * and substring search). Deduped by city name. Capped for UI.
  */
 export function lookupCities(query: string, limit = 12): CityZone[] {
   const normQuery = normalizeString(query)
   if (!normQuery) return []
   const compactQuery = normQuery.replace(/\s+/g, "")
-  const queryTokens = tokenize(query)
 
   const exactMatches: CityZone[] = []
   const prefixMatches: CityZone[] = []
   const tokenMatches: CityZone[] = []
   const substringMatches: CityZone[] = []
 
-  const seenTz = new Set<string>()
+  const seenCity = new Set<string>()
 
   for (const entry of CITY_ZONES) {
-    if (seenTz.has(entry.tz)) continue
-
     const cityNorm = normalizeString(entry.city)
     const cityCompact = cityNorm.replace(/\s+/g, "")
     const countryNorm = entry.country ? normalizeString(entry.country) : ""
@@ -167,67 +194,64 @@ export function lookupCities(query: string, limit = 12): CityZone[] {
     const tzNorm = normalizeString(entry.tz)
     const tzCompact = tzNorm.replace(/\s+/g, "")
 
-    const aliasNorms = (entry.aliases ?? []).map(normalizeString)
-    const aliasCompacts = aliasNorms.map((a) => a.replace(/\s+/g, ""))
-
-    // 1) Exact match on compact city, country, alias, or tz
-    const isExact =
+    // 1) Primary city, country name, or IANA tz match
+    if (
       cityCompact === compactQuery ||
       countryCompact === compactQuery ||
-      aliasCompacts.includes(compactQuery) ||
       tzCompact === compactQuery
-
-    if (isExact) {
-      exactMatches.push(entry)
-      seenTz.add(entry.tz)
-      continue
-    }
-
-    // 2) Prefix match on city, country, alias, or tz
-    const isPrefix =
+    ) {
+      if (!seenCity.has(entry.city)) {
+        exactMatches.push(entry)
+        seenCity.add(entry.city)
+      }
+    } else if (
       cityCompact.startsWith(compactQuery) ||
       countryCompact.startsWith(compactQuery) ||
-      aliasCompacts.some((a) => a.startsWith(compactQuery)) ||
       tzCompact.startsWith(compactQuery)
-
-    if (isPrefix) {
-      prefixMatches.push(entry)
-      seenTz.add(entry.tz)
-      continue
-    }
-
-    // 3) Tokenized match: every token in query matches some token in target
-    const targetText = `${cityNorm} ${countryNorm} ${entry.tz} ${(entry.aliases ?? []).join(" ")}`
-    const targetTokens = tokenize(targetText)
-
-    const matchesAllTokens = queryTokens.every((qToken) => {
-      const expandedQ = ABBREVIATIONS[qToken] ?? qToken
-      return targetTokens.some(
-        (tToken) =>
-          tToken.startsWith(qToken) ||
-          tToken.startsWith(expandedQ) ||
-          (qToken.length >= 3 && tToken.includes(qToken)),
-      )
-    })
-
-    if (matchesAllTokens) {
-      tokenMatches.push(entry)
-      seenTz.add(entry.tz)
-      continue
-    }
-
-    // 4) Substring match
-    const isSubstring =
+    ) {
+      if (!seenCity.has(entry.city)) {
+        prefixMatches.push(entry)
+        seenCity.add(entry.city)
+      }
+    } else if (
       cityCompact.includes(compactQuery) ||
       countryCompact.includes(compactQuery) ||
-      aliasCompacts.some((a) => a.includes(compactQuery)) ||
       tzCompact.includes(compactQuery)
+    ) {
+      if (!seenCity.has(entry.city)) {
+        substringMatches.push(entry)
+        seenCity.add(entry.city)
+      }
+    }
 
-    if (isSubstring) {
-      substringMatches.push(entry)
-      seenTz.add(entry.tz)
+    // 2) Alias matches
+    for (const alias of entry.aliases ?? []) {
+      const aliasNorm = normalizeString(alias)
+      const aliasCompact = aliasNorm.replace(/\s+/g, "")
+      if (!aliasCompact) continue
+
+      if (
+        aliasCompact.startsWith(compactQuery) ||
+        (compactQuery.length >= 3 && aliasCompact.includes(compactQuery))
+      ) {
+        const displayCity = formatAliasCity(alias, entry)
+        if (!seenCity.has(displayCity)) {
+          const matchedItem: CityZone = { ...entry, city: displayCity }
+          if (aliasCompact === compactQuery) {
+            exactMatches.push(matchedItem)
+          } else if (aliasCompact.startsWith(compactQuery)) {
+            prefixMatches.push(matchedItem)
+          } else {
+            substringMatches.push(matchedItem)
+          }
+          seenCity.add(displayCity)
+        }
+      }
     }
   }
 
-  return [...exactMatches, ...prefixMatches, ...tokenMatches, ...substringMatches].slice(0, limit)
+  return [...exactMatches, ...prefixMatches, ...tokenMatches, ...substringMatches].slice(
+    0,
+    limit,
+  )
 }
