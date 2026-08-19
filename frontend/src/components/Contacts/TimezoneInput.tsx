@@ -95,24 +95,19 @@ export function formatLocalTime(
     const targetDays = Math.floor(new Date(targetDateStr).getTime() / 86_400_000)
     const diff = targetDays - localDays
 
-    if (options?.includeDayName) {
-      const targetDayName = new Intl.DateTimeFormat("en-US", {
-        timeZone: tz,
-        weekday: "short",
-      }).format(now)
-      if (diff === 1) return `${timeStr} (Tomorrow)`
-      if (diff === -1) return `${timeStr} (Yesterday)`
-      return `${timeStr} (${targetDayName})`
-    }
-
     if (options?.includeDayDiff) {
       const diffTag = diff > 0 ? `+${diff}d` : `${diff}d`
       return `${timeStr} ${diffTag}`
     }
 
-    // Default compact indicator when days differ
-    const diffTag = diff > 0 ? `+${diff}d` : `${diff}d`
-    return `${timeStr} ${diffTag}`
+    // Default indicator when days differ: show Day Name or Tomorrow/Yesterday
+    const targetDayName = new Intl.DateTimeFormat("en-US", {
+      timeZone: tz,
+      weekday: "short",
+    }).format(now)
+    if (diff === 1) return `${timeStr} (Tomorrow)`
+    if (diff === -1) return `${timeStr} (Yesterday)`
+    return `${timeStr} (${targetDayName})`
   } catch {
     return null
   }
