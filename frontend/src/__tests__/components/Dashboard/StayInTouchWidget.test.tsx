@@ -144,13 +144,14 @@ describe("StayInTouchWidget", () => {
     })
     await user.click(snoozeButton)
 
-    const option1w = await screen.findByRole("menuitem", { name: "1w" })
+    const option1w = await screen.findByRole("menuitem", { name: "1 week" })
     await user.click(option1w)
 
     expect(mockSnoozeContact).toHaveBeenCalledWith({
       contactId: "contact-1",
-      requestBody: { duration: "1w" },
+      requestBody: { duration: "1 week" },
     })
   })
+
 })
 

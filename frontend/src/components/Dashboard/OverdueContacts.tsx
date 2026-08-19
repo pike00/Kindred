@@ -24,6 +24,7 @@ const DISPLAY_LIMIT = 2
 
 export function OverdueContacts() {
   const [isExpanded, setIsExpanded] = useState(false)
+  const [snoozingId, setSnoozingId] = useState<string | null>(null)
   const queryClient = useQueryClient()
   const { data: contactsData, isLoading } = useQuery({
     queryKey: ["overdue-contacts"],
@@ -61,15 +62,20 @@ export function OverdueContacts() {
   }
 
   const handleSnooze = async (contactId: string, duration: string) => {
+    setSnoozingId(contactId)
     try {
       await ContactsService.snoozeContact({
         contactId,
         requestBody: { duration },
       })
-      queryClient.invalidateQueries({ queryKey: ["overdue-contacts"] })
-      queryClient.invalidateQueries({ queryKey: ["losing-touch"] })
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["overdue-contacts"] })
+        queryClient.invalidateQueries({ queryKey: ["losing-touch"] })
+        setSnoozingId(null)
+      }, 300)
     } catch (error) {
       console.error("Failed to snooze contact:", error)
+      setSnoozingId(null)
     }
   }
 
@@ -102,12 +108,17 @@ export function OverdueContacts() {
               .join(" ")
             const daysOverdue = contact.days_overdue ?? 0
             const isDoNotContact = contact.do_not_contact
+            const isSnoozing = snoozingId === contact.id
 
             return (
               <div
                 key={contact.id}
-                className={`flex items-center gap-3 rounded-2xl border bg-card p-3 shadow-xs transition-colors ${
-                  isDoNotContact ? "opacity-60" : "hover:bg-accent/50"
+                className={`flex items-center gap-3 rounded-2xl border bg-card p-3 shadow-xs transition-all duration-300 ease-out ${
+                  isSnoozing
+                    ? "opacity-0 -translate-x-4 scale-95 pointer-events-none"
+                    : isDoNotContact
+                      ? "opacity-60"
+                      : "hover:bg-accent/50"
                 }`}
               >
                 <ContactAvatar contact={contact} size="sm" />
@@ -152,7 +163,7 @@ export function OverdueContacts() {
                             title="Snooze contact"
                             aria-label={`Snooze ${fullName || "contact"}`}
                           >
-                            <Clock className="h-4 w-4" />
+                            <Clock className={`h-4 w-4 ${isSnoozing ? "animate-spin" : ""}`} />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-36">
@@ -161,14 +172,14 @@ export function OverdueContacts() {
                           </DropdownMenuLabel>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
-                            onClick={() => handleSnooze(contact.id, "1w")}
+                            onClick={() => handleSnooze(contact.id, "1 week")}
                           >
-                            1w
+                            1 week
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={() => handleSnooze(contact.id, "2w")}
+                            onClick={() => handleSnooze(contact.id, "2 weeks")}
                           >
-                            2w
+                            2 weeks
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => handleSnooze(contact.id, "1m")}
