@@ -121,24 +121,7 @@ function normalizeString(s: string): string {
     .trim()
 }
 
-function tokenize(s: string): string[] {
-  return normalizeString(s).split(/\s+/).filter(Boolean)
-}
 
-const ABBREVIATIONS: Record<string, string> = {
-  st: "saint",
-  ft: "fort",
-  n: "north",
-  s: "south",
-  e: "east",
-  w: "west",
-  us: "united states",
-  usa: "united states",
-  uk: "united kingdom",
-  uae: "united arab emirates",
-  nz: "new zealand",
-  ksa: "saudi arabia",
-}
 
 const SHORT_COUNTRY: Record<string, string> = {
   "United States": "USA",
