@@ -68,8 +68,15 @@ def main(
     if dry_run:
         typer.echo(f"[dry-run] would cd {HOMELAB_PATH} && just deploy {target_tag}")
         return
-    typer.echo(f"deploying {HOMELAB_APP} tag={target_tag} env={env}…")
-    subprocess.run(["just", "deploy", target_tag], cwd=HOMELAB_PATH, check=True)
+    import socket
+    current_host = socket.gethostname().split(".")[0].lower()
+    target_host = "ares"
+    if current_host != target_host:
+        typer.echo(f"deploying {HOMELAB_APP} tag={target_tag} env={env} on host {target_host} via SSH…")
+        subprocess.run(["ssh", target_host, f"cd {HOMELAB_PATH} && just deploy {target_tag}"], check=True)
+    else:
+        typer.echo(f"deploying {HOMELAB_APP} tag={target_tag} env={env}…")
+        subprocess.run(["just", "deploy", target_tag], cwd=HOMELAB_PATH, check=True)
 
 
 if __name__ == "__main__":
