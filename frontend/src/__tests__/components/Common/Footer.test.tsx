@@ -34,17 +34,23 @@ describe("Footer", () => {
       expect(screen.queryByText(/Kindred/)).not.toBeInTheDocument()
     })
 
-    it("renders EnvironmentChip component", () => {
+    it("renders EnvironmentChip component in dev", () => {
       renderWithProviders(<Footer />)
       expect(screen.getByTestId("environment-chip")).toBeInTheDocument()
     })
 
-    it("renders nothing in production environment", () => {
+    it("renders version link in dev environment", () => {
+      renderWithProviders(<Footer />)
+      expect(screen.getByRole("link", { name: /vtest/ })).toBeInTheDocument()
+    })
+
+    it("renders subtle version link in production environment without environment chip", () => {
       vi.mocked(useEnvironment).mockReturnValue({
         data: { environment: "production" },
       } as ReturnType<typeof useEnvironment>)
-      const { container } = renderWithProviders(<Footer />)
-      expect(container.querySelector("footer")).not.toBeInTheDocument()
+      renderWithProviders(<Footer />)
+      expect(screen.queryByTestId("environment-chip")).not.toBeInTheDocument()
+      expect(screen.getByRole("link", { name: /vtest/ })).toBeInTheDocument()
     })
   })
 
@@ -72,7 +78,7 @@ describe("Footer", () => {
     it("applies padding classes", () => {
       const { container } = renderWithProviders(<Footer />)
       const footer = container.querySelector("footer")
-      expect(footer).toHaveClass("py-3")
+      expect(footer).toHaveClass("py-2.5")
       expect(footer).toHaveClass("px-6")
     })
 
