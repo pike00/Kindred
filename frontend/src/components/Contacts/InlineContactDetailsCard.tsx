@@ -75,6 +75,7 @@ export function InlineContactDetailsCard({
             placeholder="+ Add nickname"
             onSave={(val) => handleUpdate({ nickname: val || null })}
             className="sm:max-w-[220px]"
+            inputClassName="w-full"
           />
         </div>
 
@@ -89,6 +90,7 @@ export function InlineContactDetailsCard({
             placeholder="+ Add pronouns (e.g. they/them)"
             onSave={(val) => handleUpdate({ pronouns: val || null })}
             className="sm:max-w-[220px]"
+            inputClassName="w-full"
           />
         </div>
 
@@ -109,6 +111,7 @@ export function InlineContactDetailsCard({
             }}
             onSave={(val) => handleUpdate({ birthday: val })}
             className="sm:max-w-[240px]"
+            inputClassName="w-full"
           />
         </div>
 
@@ -146,6 +149,7 @@ export function InlineContactDetailsCard({
                 return handleUpdate({ contact_frequency_days: num })
               }}
               className="sm:max-w-[120px]"
+              inputClassName="w-full"
             />
             <span className="text-xs text-muted-foreground">days</span>
           </div>

@@ -139,27 +139,34 @@ export function InlineContactHeader({
       <div className="flex-1 min-w-0 space-y-2">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div className="flex flex-wrap items-center gap-2 min-w-0">
-            {/* Inline First & Last Name */}
-            <div className="flex items-center gap-1 font-display text-3xl sm:text-4xl font-bold tracking-tight">
-              <InlineText
-                value={contact.first_name || ""}
-                placeholder="First Name"
-                onSave={async (val) => {
-                  await handleUpdate({ first_name: val })
-                }}
-                valueClassName="font-display text-3xl sm:text-4xl font-bold tracking-tight"
-                inputClassName="text-2xl font-bold"
-              />
-              <InlineText
-                value={contact.last_name || ""}
-                placeholder="+ Add Last Name"
-                onSave={async (val) => {
-                  await handleUpdate({ last_name: val || null })
-                }}
-                valueClassName="font-display text-3xl sm:text-4xl font-bold tracking-tight"
-                inputClassName="text-2xl font-bold"
-              />
-            </div>
+            {/* Inline Full Name */}
+            <InlineText
+              value={[contact.first_name, contact.last_name]
+                .filter(Boolean)
+                .join(" ")}
+              placeholder="First and Last Name"
+              onSave={async (val) => {
+                const trimmed = val.trim()
+                if (!trimmed) return
+                const spaceIdx = trimmed.indexOf(" ")
+                if (spaceIdx === -1) {
+                  await handleUpdate({
+                    first_name: trimmed,
+                    last_name: null,
+                  })
+                } else {
+                  const first = trimmed.slice(0, spaceIdx).trim()
+                  const last = trimmed.slice(spaceIdx + 1).trim()
+                  await handleUpdate({
+                    first_name: first,
+                    last_name: last || null,
+                  })
+                }
+              }}
+              className="px-1.5 py-0.5"
+              valueClassName="font-display text-3xl sm:text-4xl font-bold tracking-tight text-foreground"
+              inputClassName="font-display text-2xl sm:text-3xl font-bold min-w-[200px]"
+            />
 
             <ContactFieldsPopover contactId={contact.id} />
 
@@ -242,23 +249,27 @@ export function InlineContactHeader({
         </div>
 
         {/* Title and Company inline */}
-        <div className="flex flex-wrap items-center gap-1 text-lg text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-1.5 text-base text-muted-foreground">
           <InlineText
             value={contact.title || ""}
             placeholder="+ Add title (e.g. Software Engineer)"
             onSave={async (val) => {
               await handleUpdate({ title: val || null })
             }}
-            valueClassName="text-lg text-muted-foreground font-normal"
+            className="px-1.5 py-0.5"
+            valueClassName="text-base text-muted-foreground font-normal"
+            inputClassName="text-sm min-w-[200px]"
           />
-          <span className="text-muted-foreground/60">at</span>
+          <span className="text-muted-foreground/60 text-sm">at</span>
           <InlineText
             value={contact.company || ""}
             placeholder="+ Add company"
             onSave={async (val) => {
               await handleUpdate({ company: val || null })
             }}
-            valueClassName="text-lg text-muted-foreground font-medium"
+            className="px-1.5 py-0.5"
+            valueClassName="text-base text-muted-foreground font-medium"
+            inputClassName="text-sm min-w-[160px]"
           />
         </div>
 

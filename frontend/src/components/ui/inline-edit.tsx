@@ -85,7 +85,7 @@ export function InlineText({
 
   if (isEditing) {
     return (
-      <div className={cn("inline-flex items-center gap-1.5 min-w-0 w-full", className)}>
+      <div className={cn("inline-flex items-center gap-1.5 min-w-0", className)}>
         <input
           ref={inputRef}
           type={type}
@@ -95,7 +95,7 @@ export function InlineText({
           onBlur={handleSave}
           disabled={isSaving}
           className={cn(
-            "w-full bg-background border border-primary/50 rounded-lg px-2.5 py-1 text-sm shadow-sm outline-none transition-all focus:ring-2 focus:ring-primary/20 dark:bg-zinc-900/90",
+            "bg-background border border-primary/50 rounded-lg px-2.5 py-1 text-sm shadow-sm outline-none transition-all focus:ring-2 focus:ring-primary/20 dark:bg-zinc-900/90",
             inputClassName
           )}
         />
