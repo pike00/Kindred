@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
 import { OpenAPI } from "@/client"
-import { EnvironmentChip } from "@/components/Common/EnvironmentChip"
 
 type VersionInfo = {
   version: string
@@ -41,7 +40,7 @@ export function SidebarVersion() {
   return (
     <div
       data-testid="sidebar-version"
-      className="px-2 py-1 text-xs text-muted-foreground flex items-center justify-between gap-2 group-data-[collapsible=icon]:hidden"
+      className="px-2 py-1 text-xs text-muted-foreground flex items-center gap-2 group-data-[collapsible=icon]:hidden"
     >
       <a
         href={commitUrl}
@@ -59,7 +58,6 @@ export function SidebarVersion() {
         />
         <span className="truncate">{versionLabel}</span>
       </a>
-      <EnvironmentChip />
     </div>
   )
 }

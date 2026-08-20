@@ -39,9 +39,9 @@ describe("SidebarVersion", () => {
     expect(img).toHaveAttribute("src", "/assets/github-mark.svg")
   })
 
-  it("renders EnvironmentChip component", () => {
+  it("does not render EnvironmentChip component in sidebar", () => {
     renderWithProviders(<SidebarVersion />)
-    expect(screen.getByTestId("environment-chip")).toBeInTheDocument()
+    expect(screen.queryByTestId("environment-chip")).not.toBeInTheDocument()
   })
 
   it("handles empty or unknown commit hash gracefully without trailing dot", () => {

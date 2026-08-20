@@ -1,6 +1,7 @@
 import { screen } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { Footer } from "@/components/Common/Footer"
+import { useEnvironment } from "@/components/Common/EnvironmentChip"
 import { renderWithProviders } from "@/test/helpers"
 
 // Mock EnvironmentChip
@@ -8,6 +9,9 @@ vi.mock("@/components/Common/EnvironmentChip", () => ({
   EnvironmentChip: () => (
     <div data-testid="environment-chip">Environment Chip</div>
   ),
+  useEnvironment: vi.fn(() => ({
+    data: { environment: "production" },
+  })),
 }))
 
 describe("Footer", () => {
@@ -229,6 +233,29 @@ describe("Footer", () => {
       const yearText = new Date().getFullYear()
       const span = container.querySelector("span")
       expect(span?.textContent).toContain(String(yearText))
+    })
+  })
+
+  describe("environment-based styling", () => {
+    it("applies red background in non-production environment", () => {
+      vi.mocked(useEnvironment).mockReturnValueOnce({
+        data: { environment: "local" },
+      } as ReturnType<typeof useEnvironment>)
+      const { container } = renderWithProviders(<Footer />)
+      const footer = container.querySelector("footer")
+      expect(footer).toHaveClass("bg-red-600")
+      expect(footer).toHaveClass("text-white")
+      expect(footer).toHaveClass("border-red-700")
+    })
+
+    it("applies default styling in production environment", () => {
+      vi.mocked(useEnvironment).mockReturnValueOnce({
+        data: { environment: "production" },
+      } as ReturnType<typeof useEnvironment>)
+      const { container } = renderWithProviders(<Footer />)
+      const footer = container.querySelector("footer")
+      expect(footer).toHaveClass("text-muted-foreground")
+      expect(footer).not.toHaveClass("bg-red-600")
     })
   })
 })

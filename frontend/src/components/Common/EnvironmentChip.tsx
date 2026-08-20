@@ -2,9 +2,9 @@ import { useQuery } from "@tanstack/react-query"
 
 import { OpenAPI } from "@/client"
 
-type EnvironmentInfo = { environment: string }
+export type EnvironmentInfo = { environment: string }
 
-async function fetchEnvironment(): Promise<EnvironmentInfo> {
+export async function fetchEnvironment(): Promise<EnvironmentInfo> {
   const res = await fetch(`${OpenAPI.BASE}/api/v1/utils/environment/`, {
     credentials: "include",
   })
@@ -12,13 +12,17 @@ async function fetchEnvironment(): Promise<EnvironmentInfo> {
   return res.json()
 }
 
-export function EnvironmentChip() {
-  const { data } = useQuery({
+export function useEnvironment() {
+  return useQuery({
     queryKey: ["environment"],
     queryFn: fetchEnvironment,
     staleTime: Infinity,
     retry: false,
   })
+}
+
+export function EnvironmentChip() {
+  const { data } = useEnvironment()
 
   if (!data?.environment || data.environment === "production") return null
 
