@@ -8,8 +8,8 @@
 # ---- Stage 1: build the frontend with pnpm ---------------------------------
 FROM --platform=$BUILDPLATFORM node:22-slim AS frontend-builder
 WORKDIR /build
-# Activate the pnpm version pinned in package.json's "packageManager" field.
-RUN corepack enable
+# Install pnpm directly
+RUN npm install -g pnpm@11.3.0
 
 # pnpm workspace files first for layer caching
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
