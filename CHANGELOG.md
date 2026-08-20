@@ -5,15 +5,29 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.112] - 2026-08-20
+
+### Fixed
+- Fix(build): add linux/arm64 to buildx platform in build.just (3feeecc)
+- Fix(deploy): route homelab deploy to host ares via SSH when run from local dev host (31cf560)
+
+### Other
+- Add snooze dropdown options to Stay in Touch widget (#202) (fc14bfd)
+
 ## [0.2.111] - 2026-08-19
 
 ### Added
 - Feat(contacts): flexible timezone search and relative day context (#201) (a25809c)
 
+### Changed
+- Perf(prod): configure WEB_CONCURRENCY default to 2 workers in Dockerfile.prod (dadfb11)
+
 ### Documentation
 - Docs: update CHANGELOG.md for v0.2.111 release (f5f4b0e)
 
 ### Fixed
+- Fix(pwa): set autoUpdate registerType and reduce version-info query staleTime (8152c66)
+- Fix(contacts): remove unused helper variables in cityTimezones.ts (130fb4f)
 - Fix(deps): sync pnpm-lock.yaml with frontend package.json (f6117b1)
 
 ## [0.2.110] - 2026-08-18
