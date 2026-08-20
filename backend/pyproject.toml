@@ -1,6 +1,6 @@
 [project]
 name = "app"
-version = "0.2.113"
+version = "0.2.114"
 description = ""
 requires-python = ">=3.10,<4.0"
 dependencies = [
