@@ -19,13 +19,18 @@ async function fetchVersionInfo(): Promise<VersionInfo> {
   return res.json()
 }
 
-export function Footer() {
+interface FooterProps {
+  showVersion?: boolean
+}
+
+export function Footer({ showVersion = false }: FooterProps) {
   const { data: envData } = useEnvironment()
   const { data: versionData } = useQuery({
     queryKey: ["version-info"],
     queryFn: fetchVersionInfo,
     staleTime: 60 * 1000,
     retry: false,
+    enabled: showVersion,
   })
 
   const isDev = Boolean(
@@ -47,6 +52,8 @@ export function Footer() {
     : `v${displayVersion}`
 
   if (!isDev) {
+    if (!showVersion) return null
+
     return (
       <footer
         data-testid="app-footer"
@@ -79,22 +86,24 @@ export function Footer() {
     >
       <div className="flex flex-col items-center justify-center gap-1">
         <EnvironmentChip />
-        <a
-          href={commitUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          title={versionLabel}
-          className="flex items-center gap-1.5 text-[11px] font-normal text-white/80 hover:text-white transition-colors"
-        >
-          <img
-            src="/assets/github-mark.svg"
-            alt="GitHub"
-            width={11}
-            height={11}
-            className="brightness-200 shrink-0 opacity-80"
-          />
-          <span>{versionLabel}</span>
-        </a>
+        {showVersion && (
+          <a
+            href={commitUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={versionLabel}
+            className="flex items-center gap-1.5 text-[11px] font-normal text-white/80 hover:text-white transition-colors"
+          >
+            <img
+              src="/assets/github-mark.svg"
+              alt="GitHub"
+              width={11}
+              height={11}
+              className="brightness-200 shrink-0 opacity-80"
+            />
+            <span>{versionLabel}</span>
+          </a>
+        )}
       </div>
     </footer>
   )

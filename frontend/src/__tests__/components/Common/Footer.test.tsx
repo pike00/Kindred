@@ -34,23 +34,33 @@ describe("Footer", () => {
       expect(screen.queryByText(/Kindred/)).not.toBeInTheDocument()
     })
 
-    it("renders EnvironmentChip component in dev", () => {
+    it("renders EnvironmentChip component in dev and hides version link by default", () => {
       renderWithProviders(<Footer />)
       expect(screen.getByTestId("environment-chip")).toBeInTheDocument()
+      expect(screen.queryByRole("link", { name: /vtest/ })).not.toBeInTheDocument()
     })
 
-    it("renders version link in dev environment", () => {
-      renderWithProviders(<Footer />)
+    it("renders version link in dev when showVersion is true", () => {
+      renderWithProviders(<Footer showVersion />)
+      expect(screen.getByTestId("environment-chip")).toBeInTheDocument()
       expect(screen.getByRole("link", { name: /vtest/ })).toBeInTheDocument()
     })
 
-    it("renders subtle version link in production environment without environment chip", () => {
+    it("renders subtle version link in production when showVersion is true", () => {
       vi.mocked(useEnvironment).mockReturnValue({
         data: { environment: "production" },
       } as ReturnType<typeof useEnvironment>)
-      renderWithProviders(<Footer />)
+      renderWithProviders(<Footer showVersion />)
       expect(screen.queryByTestId("environment-chip")).not.toBeInTheDocument()
       expect(screen.getByRole("link", { name: /vtest/ })).toBeInTheDocument()
+    })
+
+    it("renders nothing in production when showVersion is false", () => {
+      vi.mocked(useEnvironment).mockReturnValue({
+        data: { environment: "production" },
+      } as ReturnType<typeof useEnvironment>)
+      const { container } = renderWithProviders(<Footer />)
+      expect(container.querySelector("footer")).not.toBeInTheDocument()
     })
   })
 
