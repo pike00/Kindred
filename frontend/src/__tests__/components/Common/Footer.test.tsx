@@ -10,62 +10,41 @@ vi.mock("@/components/Common/EnvironmentChip", () => ({
     <div data-testid="environment-chip">Environment Chip</div>
   ),
   useEnvironment: vi.fn(() => ({
-    data: { environment: "production" },
+    data: { environment: "local" },
   })),
 }))
 
 describe("Footer", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(useEnvironment).mockReturnValue({
+      data: { environment: "local" },
+    } as ReturnType<typeof useEnvironment>)
   })
 
   describe("rendering", () => {
-    it("renders footer element", () => {
+    it("renders footer element in dev environment", () => {
       const { container } = renderWithProviders(<Footer />)
       const footer = container.querySelector("footer")
       expect(footer).toBeInTheDocument()
     })
 
-    it("renders Kindred brand name", () => {
+    it("does not render Kindred brand text", () => {
       renderWithProviders(<Footer />)
-      expect(screen.getByText(/Kindred/)).toBeInTheDocument()
-    })
-
-    it("renders current year", () => {
-      const currentYear = new Date().getFullYear()
-      const { container } = renderWithProviders(<Footer />)
-      const span = container.querySelector("span")
-      expect(span?.textContent).toContain(String(currentYear))
-    })
-
-    it("renders year after the dot separator", () => {
-      renderWithProviders(<Footer />)
-      expect(screen.getByText(/Kindred · \d+/)).toBeInTheDocument()
+      expect(screen.queryByText(/Kindred/)).not.toBeInTheDocument()
     })
 
     it("renders EnvironmentChip component", () => {
       renderWithProviders(<Footer />)
       expect(screen.getByTestId("environment-chip")).toBeInTheDocument()
     })
-  })
 
-  describe("content", () => {
-    it("displays the correct copyright text format", () => {
-      renderWithProviders(<Footer />)
-      const footerText = screen.getByText(/Kindred · \d+/)
-      expect(footerText).toBeInTheDocument()
-    })
-
-    it("updates year when year changes", () => {
-      renderWithProviders(<Footer />)
-      expect(screen.getByText(/Kindred · \d+/)).toBeInTheDocument()
-    })
-
-    it("uses getFullYear() for year calculation", () => {
-      const expectedYear = new Date().getFullYear()
+    it("renders nothing in production environment", () => {
+      vi.mocked(useEnvironment).mockReturnValue({
+        data: { environment: "production" },
+      } as ReturnType<typeof useEnvironment>)
       const { container } = renderWithProviders(<Footer />)
-      const span = container.querySelector("span")
-      expect(span?.textContent).toContain(String(expectedYear))
+      expect(container.querySelector("footer")).not.toBeInTheDocument()
     })
   })
 
@@ -76,24 +55,25 @@ describe("Footer", () => {
       expect(footer?.tagName).toBe("FOOTER")
     })
 
-    it("applies border-t class", () => {
+    it("applies border-t and border-red-700 classes in dev", () => {
       const { container } = renderWithProviders(<Footer />)
       const footer = container.querySelector("footer")
       expect(footer).toHaveClass("border-t")
+      expect(footer).toHaveClass("border-red-700")
+    })
+
+    it("applies bg-red-600 in dev", () => {
+      const { container } = renderWithProviders(<Footer />)
+      const footer = container.querySelector("footer")
+      expect(footer).toHaveClass("bg-red-600")
+      expect(footer).toHaveClass("text-white")
     })
 
     it("applies padding classes", () => {
       const { container } = renderWithProviders(<Footer />)
       const footer = container.querySelector("footer")
-      expect(footer).toHaveClass("py-4")
+      expect(footer).toHaveClass("py-3")
       expect(footer).toHaveClass("px-6")
-    })
-
-    it("applies text styling classes", () => {
-      const { container } = renderWithProviders(<Footer />)
-      const footer = container.querySelector("footer")
-      expect(footer).toHaveClass("text-sm")
-      expect(footer).toHaveClass("text-muted-foreground")
     })
 
     it("applies flex layout to content container", () => {
@@ -103,68 +83,12 @@ describe("Footer", () => {
       expect(contentDiv).toHaveClass("items-center")
       expect(contentDiv).toHaveClass("justify-center")
     })
-
-    it("applies gap between flex items", () => {
-      const { container } = renderWithProviders(<Footer />)
-      const contentDiv = container.querySelector("footer > div")
-      expect(contentDiv).toHaveClass("gap-3")
-    })
-  })
-
-  describe("layout", () => {
-    it("centers footer content", () => {
-      const { container } = renderWithProviders(<Footer />)
-      const contentDiv = container.querySelector("footer > div")
-      expect(contentDiv).toHaveClass("justify-center")
-    })
-
-    it("vertically aligns footer items", () => {
-      const { container } = renderWithProviders(<Footer />)
-      const contentDiv = container.querySelector("footer > div")
-      expect(contentDiv).toHaveClass("items-center")
-    })
-
-    it("creates flex layout for side-by-side content", () => {
-      const { container } = renderWithProviders(<Footer />)
-      const contentDiv = container.querySelector("footer > div")
-      expect(contentDiv).toHaveClass("flex")
-    })
-
-    it("maintains spacing between text and chip", () => {
-      const { container } = renderWithProviders(<Footer />)
-      const contentDiv = container.querySelector("footer > div")
-      expect(contentDiv).toHaveClass("gap-3")
-    })
-  })
-
-  describe("component integration", () => {
-    it("renders both text and EnvironmentChip together", () => {
-      renderWithProviders(<Footer />)
-      expect(screen.getByText(/Kindred · \d+/)).toBeInTheDocument()
-      expect(screen.getByTestId("environment-chip")).toBeInTheDocument()
-    })
-
-    it("positions EnvironmentChip after text content", () => {
-      const { container } = renderWithProviders(<Footer />)
-      const children = container.querySelector("footer > div")?.children
-      expect(children?.length).toBe(2)
-      expect(children?.[0]).toContainElement(screen.getByText(/Kindred/))
-      expect(children?.[1]).toContainElement(
-        screen.getByTestId("environment-chip"),
-      )
-    })
   })
 
   describe("accessibility", () => {
     it("uses semantic footer element", () => {
       const { container } = renderWithProviders(<Footer />)
       expect(container.querySelector("footer")).toBeInTheDocument()
-    })
-
-    it("maintains readable text contrast with muted-foreground class", () => {
-      const { container } = renderWithProviders(<Footer />)
-      const footer = container.querySelector("footer")
-      expect(footer).toHaveClass("text-muted-foreground")
     })
 
     it("uses readable text size", () => {
@@ -174,88 +98,22 @@ describe("Footer", () => {
     })
   })
 
-  describe("responsive behavior", () => {
-    it("applies consistent padding for all viewport sizes", () => {
-      const { container } = renderWithProviders(<Footer />)
-      const footer = container.querySelector("footer")
-      expect(footer).toHaveClass("py-4")
-      expect(footer).toHaveClass("px-6")
-    })
-
-    it("maintains centered layout across viewports", () => {
-      const { container } = renderWithProviders(<Footer />)
-      const contentDiv = container.querySelector("footer > div")
-      expect(contentDiv).toHaveClass("justify-center")
-    })
-  })
-
   describe("edge cases", () => {
     it("handles mounting and unmounting", () => {
       const { unmount } = renderWithProviders(<Footer />)
-      expect(screen.getByText(/Kindred · \d+/)).toBeInTheDocument()
+      expect(screen.getByTestId("environment-chip")).toBeInTheDocument()
 
       unmount()
 
-      expect(screen.queryByText(/Kindred · \d+/)).not.toBeInTheDocument()
-    })
-
-    it("renders multiple footers on same page", () => {
-      renderWithProviders(
-        <>
-          <Footer />
-          <Footer />
-        </>,
-      )
-      const yearTexts = screen.getAllByText(/Kindred · \d+/)
-      expect(yearTexts).toHaveLength(2)
+      expect(screen.queryByTestId("environment-chip")).not.toBeInTheDocument()
     })
 
     it("handles re-render without issues", () => {
       const { rerender } = renderWithProviders(<Footer />)
-      expect(screen.getByText(/Kindred · \d+/)).toBeInTheDocument()
+      expect(screen.getByTestId("environment-chip")).toBeInTheDocument()
 
       rerender(<Footer />)
-      expect(screen.getByText(/Kindred · \d+/)).toBeInTheDocument()
-    })
-  })
-
-  describe("year accuracy", () => {
-    it("always uses current date for year", () => {
-      const now = new Date()
-      const year = now.getFullYear()
-      const { container } = renderWithProviders(<Footer />)
-      const span = container.querySelector("span")
-      expect(span?.textContent).toContain(String(year))
-    })
-
-    it("calls getFullYear() on new Date instance", () => {
-      const { container } = renderWithProviders(<Footer />)
-      const yearText = new Date().getFullYear()
-      const span = container.querySelector("span")
-      expect(span?.textContent).toContain(String(yearText))
-    })
-  })
-
-  describe("environment-based styling", () => {
-    it("applies red background in non-production environment", () => {
-      vi.mocked(useEnvironment).mockReturnValueOnce({
-        data: { environment: "local" },
-      } as ReturnType<typeof useEnvironment>)
-      const { container } = renderWithProviders(<Footer />)
-      const footer = container.querySelector("footer")
-      expect(footer).toHaveClass("bg-red-600")
-      expect(footer).toHaveClass("text-white")
-      expect(footer).toHaveClass("border-red-700")
-    })
-
-    it("applies default styling in production environment", () => {
-      vi.mocked(useEnvironment).mockReturnValueOnce({
-        data: { environment: "production" },
-      } as ReturnType<typeof useEnvironment>)
-      const { container } = renderWithProviders(<Footer />)
-      const footer = container.querySelector("footer")
-      expect(footer).toHaveClass("text-muted-foreground")
-      expect(footer).not.toHaveClass("bg-red-600")
+      expect(screen.getByTestId("environment-chip")).toBeInTheDocument()
     })
   })
 })
