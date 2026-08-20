@@ -10,7 +10,7 @@ import { InteractionHeatmap } from "@/components/Contacts/InteractionHeatmap"
 import { formatLocalTime } from "@/components/Contacts/TimezoneInput"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { InlineText } from "@/components/ui/inline-edit"
+import { InlineContactName, InlineText } from "@/components/ui/inline-edit"
 import useCustomToast from "@/hooks/useCustomToast"
 import {
   Archive,
@@ -139,33 +139,13 @@ export function InlineContactHeader({
       <div className="flex-1 min-w-0 space-y-2">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div className="flex flex-wrap items-center gap-2 min-w-0">
-            {/* Inline Full Name */}
-            <InlineText
-              value={[contact.first_name, contact.last_name]
-                .filter(Boolean)
-                .join(" ")}
-              placeholder="First and Last Name"
-              onSave={async (val) => {
-                const trimmed = val.trim()
-                if (!trimmed) return
-                const spaceIdx = trimmed.indexOf(" ")
-                if (spaceIdx === -1) {
-                  await handleUpdate({
-                    first_name: trimmed,
-                    last_name: null,
-                  })
-                } else {
-                  const first = trimmed.slice(0, spaceIdx).trim()
-                  const last = trimmed.slice(spaceIdx + 1).trim()
-                  await handleUpdate({
-                    first_name: first,
-                    last_name: last || null,
-                  })
-                }
+            {/* Inline First & Last Name */}
+            <InlineContactName
+              firstName={contact.first_name || ""}
+              lastName={contact.last_name}
+              onSave={async ({ first_name, last_name }) => {
+                await handleUpdate({ first_name, last_name })
               }}
-              className="px-1.5 py-0.5"
-              valueClassName="font-display text-3xl sm:text-4xl font-bold tracking-tight text-foreground"
-              inputClassName="font-display text-2xl sm:text-3xl font-bold min-w-[200px]"
             />
 
             <ContactFieldsPopover contactId={contact.id} />
