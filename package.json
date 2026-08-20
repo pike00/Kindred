@@ -1,7 +1,7 @@
 {
   "name": "personal-crm",
   "private": true,
-  "version": "0.2.116",
+  "version": "0.2.117",
   "packageManager": "pnpm@11.3.0",
   "scripts": {
     "dev": "pnpm --filter frontend dev",
