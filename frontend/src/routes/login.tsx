@@ -10,6 +10,7 @@ import { z } from "zod"
 import { cfEnabled } from "@/auth/cf"
 import type { Body_login_login_access_token as AccessToken } from "@/client"
 import { AuthLayout } from "@/components/Common/AuthLayout"
+import { Button } from "@/components/ui/button"
 import {
   Form,
   FormControl,
@@ -51,7 +52,7 @@ export const Route = createFileRoute("/login")({
   }),
 })
 
-function Login() {
+export function Login() {
   const { loginMutation } = useAuth()
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -66,6 +67,19 @@ function Login() {
   const onSubmit = (data: FormData) => {
     if (loginMutation.isPending) return
     loginMutation.mutate(data)
+  }
+
+  const handleFillDemoCredentials = () => {
+    form.setValue("username", "admin@example.com", {
+      shouldValidate: true,
+      shouldDirty: true,
+      shouldTouch: true,
+    })
+    form.setValue("password", "changethis", {
+      shouldValidate: true,
+      shouldDirty: true,
+      shouldTouch: true,
+    })
   }
 
   return (
@@ -84,7 +98,18 @@ function Login() {
               className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2.5 text-sm"
               data-testid="development-login-hint"
             >
-              <p className="font-medium">Development login</p>
+              <div className="flex items-center justify-between gap-2">
+                <p className="font-medium">Development login</p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleFillDemoCredentials}
+                  data-testid="fill-demo-credentials-button"
+                >
+                  Fill demo credentials
+                </Button>
+              </div>
               <p className="mt-1 text-muted-foreground">
                 <span className="font-medium text-foreground">Email:</span>{" "}
                 admin@example.com
