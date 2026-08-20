@@ -5,6 +5,11 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.113] - 2026-08-20
+
+### Other
+- Add fill demo credentials button on local dev (#203) (719904d)
+
 ## [0.2.112] - 2026-08-20
 
 ### Fixed
