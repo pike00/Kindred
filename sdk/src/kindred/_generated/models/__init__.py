@@ -188,6 +188,7 @@ from .search_result_item import SearchResultItem
 from .setup_submit import SetupSubmit
 from .share_in import ShareIn
 from .share_preview_entity import SharePreviewEntity
+from .status_info import StatusInfo
 from .tag_create import TagCreate
 from .tag_public import TagPublic
 from .tag_share_preview import TagSharePreview
@@ -389,6 +390,7 @@ __all__ = (
     "SetupSubmit",
     "ShareIn",
     "SharePreviewEntity",
+    "StatusInfo",
     "TagCreate",
     "TagPublic",
     "TagSharePreview",

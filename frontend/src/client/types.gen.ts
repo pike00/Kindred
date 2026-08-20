@@ -910,6 +910,19 @@ export type EnvironmentInfo = {
     environment: string;
 };
 
+export type StatusInfo = {
+    status?: string;
+    version: string;
+    git_hash: string;
+    hash: string;
+};
+
+export type VersionInfo = {
+    version: string;
+    git_hash: string;
+    hash: string;
+};
+
 export type GiftCreate = {
     /**
      * Gift name.
@@ -3344,6 +3357,10 @@ export type UtilsTestEmailResponse = (Message);
 export type UtilsHealthCheckResponse = (boolean);
 
 export type UtilsEnvironmentResponse = (EnvironmentInfo);
+
+export type UtilsStatusResponse = (StatusInfo);
+
+export type UtilsVersionInfoResponse = (VersionInfo);
 
 export type VCardConflictsListVcardConflictsData = {
     limit?: number;

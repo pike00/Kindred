@@ -14,7 +14,7 @@ from kindred._generated.api.contacts import (
     contacts_get_contact,
     contacts_list_contacts,
 )
-from kindred._generated.api.utils import utils_health_check
+from kindred._generated.api.utils import utils_health_check, utils_status
 from kindred._generated.errors import UnexpectedStatus
 
 BASE = "https://kindred.example.com"
@@ -112,6 +112,20 @@ def test_health_check_sync(httpx_mock: HTTPXMock, client):
         json=True,
     )
     assert utils_health_check.sync(client=client.raw) is True
+
+
+def test_status_sync(httpx_mock: HTTPXMock, client):
+    httpx_mock.add_response(
+        url=re.compile(rf"{re.escape(BASE)}/api/v1/utils/status/?"),
+        json={"status": "ok", "version": "0.2.106", "git_hash": "abc1234", "hash": "abc1234"},
+    )
+    result = utils_status.sync(client=client.raw)
+    assert result is not None
+    assert result.status == "ok"
+    assert result.version == "0.2.106"
+    assert result.git_hash == "abc1234"
+    assert result.hash_ == "abc1234"
+    assert result.to_dict()["hash"] == "abc1234"
 
 
 def test_contacts_list_parses_envelope(httpx_mock: HTTPXMock, client):

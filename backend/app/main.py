@@ -143,6 +143,16 @@ if uploads_dir.exists():
 app.include_router(api_router, prefix=settings.API_V1_STR)
 app.include_router(setup_router)
 
+
+@app.get("/status", tags=["utils"], include_in_schema=False)
+async def root_status():
+    from app.api.routes import utils as utils_routes
+
+    ver = utils_routes.get_version()
+    h = utils_routes.get_git_hash()
+    return utils_routes.StatusInfo(status="ok", version=ver, git_hash=h, hash=h)
+
+
 # SPA mount. In prod (Dockerfile.prod) STATIC_DIR=/app/static contains the
 # vite build output; in dev STATIC_DIR is unset and the SPA is served by
 # `bun run dev` on port 5173 via Traefik (compose.dev.yml).

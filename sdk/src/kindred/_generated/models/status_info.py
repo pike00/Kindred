@@ -8,22 +8,26 @@ from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
+from ..types import UNSET, Unset
 
-T = TypeVar("T", bound="VersionInfo")
+
+T = TypeVar("T", bound="StatusInfo")
 
 
 @_attrs_define
-class VersionInfo:
+class StatusInfo:
     """
     Attributes:
         version (str):
         git_hash (str):
         hash_ (str):
+        status (str | Unset):  Default: 'ok'.
     """
 
     version: str
     git_hash: str
     hash_: str
+    status: str | Unset = "ok"
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -32,6 +36,8 @@ class VersionInfo:
         git_hash = self.git_hash
 
         hash_ = self.hash_
+
+        status = self.status
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -42,6 +48,8 @@ class VersionInfo:
                 "hash": hash_,
             }
         )
+        if status is not UNSET:
+            field_dict["status"] = status
 
         return field_dict
 
@@ -54,14 +62,17 @@ class VersionInfo:
 
         hash_ = d.pop("hash")
 
-        version_info = cls(
+        status = d.pop("status", UNSET)
+
+        status_info = cls(
             version=version,
             git_hash=git_hash,
             hash_=hash_,
+            status=status,
         )
 
-        version_info.additional_properties = d
-        return version_info
+        status_info.additional_properties = d
+        return status_info
 
     @property
     def additional_keys(self) -> list[str]:

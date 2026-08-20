@@ -1,4 +1,4 @@
-"""A client library for accessing Personal CRM"""
+"""A client library for accessing Kindred"""
 
 from .client import AuthenticatedClient, Client
 

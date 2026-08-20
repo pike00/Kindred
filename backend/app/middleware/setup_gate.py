@@ -24,7 +24,15 @@ from app.core.setup_state import get_state
 _GATE_ALLOW_EXACT = frozenset(
     {
         "/setup",
+        "/status",
+        f"{settings.API_V1_STR}/status",
         f"{settings.API_V1_STR}/health",
+        f"{settings.API_V1_STR}/utils/status",
+        f"{settings.API_V1_STR}/utils/status/",
+        f"{settings.API_V1_STR}/utils/info",
+        f"{settings.API_V1_STR}/utils/info/",
+        f"{settings.API_V1_STR}/utils/health-check",
+        f"{settings.API_V1_STR}/utils/health-check/",
         # FastAPI docs surfaces — handy for an operator poking around.
         "/docs",
         "/redoc",

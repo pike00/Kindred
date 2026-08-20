@@ -18,6 +18,7 @@ import {
   Users,
 } from "@/lib/icons"
 import { type Item, Main } from "./Main"
+import { SidebarVersion } from "./SidebarVersion"
 import { SmartLists } from "./SmartLists"
 import { User } from "./User"
 
@@ -51,6 +52,7 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarAppearance />
         <User user={currentUser} />
+        <SidebarVersion />
       </SidebarFooter>
     </Sidebar>
   )

@@ -1,10 +1,14 @@
 import { useQuery } from "@tanstack/react-query"
 import { OpenAPI } from "@/client"
-import { EnvironmentChip } from "@/components/Common/EnvironmentChip"
+import {
+  EnvironmentChip,
+  useEnvironment,
+} from "@/components/Common/EnvironmentChip"
 
 type VersionInfo = {
   version: string
   git_hash: string
+  hash?: string
 }
 
 async function fetchVersionInfo(): Promise<VersionInfo> {
@@ -15,18 +19,27 @@ async function fetchVersionInfo(): Promise<VersionInfo> {
   return res.json()
 }
 
-export function Footer() {
-  const currentYear = new Date().getFullYear()
-  const { data } = useQuery({
+interface FooterProps {
+  showVersion?: boolean
+}
+
+export function Footer({ showVersion = false }: FooterProps) {
+  const { data: envData } = useEnvironment()
+  const { data: versionData } = useQuery({
     queryKey: ["version-info"],
     queryFn: fetchVersionInfo,
     staleTime: 60 * 1000,
     retry: false,
+    enabled: showVersion,
   })
 
-  const rawVersion = data?.version || __APP_VERSION__
+  const isDev = Boolean(
+    envData?.environment && envData.environment !== "production",
+  )
+
+  const rawVersion = versionData?.version || __APP_VERSION__
   const displayVersion = rawVersion === "0.0.0" ? "0.2.106" : rawVersion
-  const rawHash = data?.git_hash || __APP_HASH__
+  const rawHash = versionData?.git_hash || versionData?.hash || __APP_HASH__
   const hasHash = Boolean(
     typeof rawHash === "string" && rawHash.trim() && rawHash !== "unknown",
   )
@@ -38,27 +51,59 @@ export function Footer() {
     ? `v${displayVersion} · ${rawHash}`
     : `v${displayVersion}`
 
-  return (
-    <footer className="border-t py-4 px-6 text-sm text-muted-foreground">
-      <div className="flex items-center justify-center gap-3">
-        <span>Kindred · {currentYear}</span>
+  if (!isDev) {
+    if (!showVersion) return null
+
+    return (
+      <footer
+        data-testid="app-footer"
+        className="py-3 px-6 text-xs text-muted-foreground flex items-center justify-center"
+      >
         <a
           href={commitUrl}
           target="_blank"
           rel="noopener noreferrer"
           title={versionLabel}
-          className="flex items-center gap-1.5 hover:underline"
+          className="flex items-center gap-1.5 hover:text-foreground transition-colors opacity-75 hover:opacity-100"
         >
           <img
             src="/assets/github-mark.svg"
             alt="GitHub"
-            width={14}
-            height={14}
-            className="opacity-60 dark:invert"
+            width={12}
+            height={12}
+            className="opacity-60 dark:invert shrink-0"
           />
-          {versionLabel}
+          <span>{versionLabel}</span>
         </a>
+      </footer>
+    )
+  }
+
+  return (
+    <footer
+      data-testid="app-footer"
+      className="border-t border-red-700 bg-red-600 py-2.5 px-6 text-sm font-medium text-white shadow-inner transition-colors"
+    >
+      <div className="flex flex-col items-center justify-center gap-1">
         <EnvironmentChip />
+        {showVersion && (
+          <a
+            href={commitUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={versionLabel}
+            className="flex items-center gap-1.5 text-[11px] font-normal text-white/80 hover:text-white transition-colors"
+          >
+            <img
+              src="/assets/github-mark.svg"
+              alt="GitHub"
+              width={11}
+              height={11}
+              className="brightness-200 shrink-0 opacity-80"
+            />
+            <span>{versionLabel}</span>
+          </a>
+        )}
       </div>
     </footer>
   )
