@@ -44,7 +44,7 @@ export function Main({ items }: MainProps) {
             const isPending = Boolean(
               pendingPath &&
                 (pendingPath === item.path ||
-                  (item.path !== "/" && pendingPath.startsWith(item.path)))
+                  (item.path !== "/" && pendingPath.startsWith(item.path))),
             )
             const isActive =
               currentPath === item.path ||
@@ -72,5 +72,3 @@ export function Main({ items }: MainProps) {
     </SidebarGroup>
   )
 }
-
-

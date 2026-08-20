@@ -29,7 +29,8 @@ import { Separator } from "@/components/ui/separator"
 import useCustomToast from "@/hooks/useCustomToast"
 
 const contactCreateSchema = z.object({
-  first_name: z.string().max(255),
+  first_name: z.string().min(1, "First name is required").max(255),
+
   last_name: z.string().optional(),
   nickname: z.string().max(255).optional(),
   company: z.string().max(255).optional(),

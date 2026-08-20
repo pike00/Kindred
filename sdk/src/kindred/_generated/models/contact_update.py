@@ -43,6 +43,7 @@ class ContactUpdate:
         do_not_contact_reason (None | str | Unset):
         pronouns (None | str | Unset):
         timezone (None | str | Unset):
+        snoozed_until (datetime.datetime | None | Unset):
         tag_ids (list[UUID] | None | Unset):
     """
 
@@ -68,6 +69,7 @@ class ContactUpdate:
     do_not_contact_reason: None | str | Unset = UNSET
     pronouns: None | str | Unset = UNSET
     timezone: None | str | Unset = UNSET
+    snoozed_until: datetime.datetime | None | Unset = UNSET
     tag_ids: list[UUID] | None | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -208,6 +210,14 @@ class ContactUpdate:
         else:
             timezone = self.timezone
 
+        snoozed_until: None | str | Unset
+        if isinstance(self.snoozed_until, Unset):
+            snoozed_until = UNSET
+        elif isinstance(self.snoozed_until, datetime.datetime):
+            snoozed_until = self.snoozed_until.isoformat()
+        else:
+            snoozed_until = self.snoozed_until
+
         tag_ids: list[str] | None | Unset
         if isinstance(self.tag_ids, Unset):
             tag_ids = UNSET
@@ -267,6 +277,8 @@ class ContactUpdate:
             field_dict["pronouns"] = pronouns
         if timezone is not UNSET:
             field_dict["timezone"] = timezone
+        if snoozed_until is not UNSET:
+            field_dict["snoozed_until"] = snoozed_until
         if tag_ids is not UNSET:
             field_dict["tag_ids"] = tag_ids
 
@@ -490,6 +502,23 @@ class ContactUpdate:
 
         timezone = _parse_timezone(d.pop("timezone", UNSET))
 
+        def _parse_snoozed_until(data: object) -> datetime.datetime | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, str):
+                    raise TypeError()
+                snoozed_until_type_0 = datetime.datetime.fromisoformat(data)
+
+                return snoozed_until_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(datetime.datetime | None | Unset, data)
+
+        snoozed_until = _parse_snoozed_until(d.pop("snoozed_until", UNSET))
+
         def _parse_tag_ids(data: object) -> list[UUID] | None | Unset:
             if data is None:
                 return data
@@ -535,6 +564,7 @@ class ContactUpdate:
             do_not_contact_reason=do_not_contact_reason,
             pronouns=pronouns,
             timezone=timezone,
+            snoozed_until=snoozed_until,
             tag_ids=tag_ids,
         )
 

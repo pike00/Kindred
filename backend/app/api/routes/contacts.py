@@ -29,6 +29,7 @@ from app.models import (
     ContactCreate,
     ContactField,
     ContactPublic,
+    ContactSnoozeRequest,
     ContactSource,
     ContactsPublic,
     ContactStageEvent,
@@ -297,13 +298,15 @@ def list_overdue_contacts(
     days: int = 30,
 ) -> Any:
     """List contacts that are overdue for a follow-up."""
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    now = datetime.now(timezone.utc)
+    cutoff = now - timedelta(days=days)
     stmt = (
         select(Contact)
         .where(
             Contact.id.in_(visible_contact_ids(current_user, include_deleted=False)),
             Contact.is_archived.is_(False),
             Contact.last_contacted_at < cutoff,
+            (Contact.snoozed_until.is_(None)) | (Contact.snoozed_until <= now),
         )
         .order_by(Contact.last_contacted_at.asc())
     )
@@ -323,6 +326,7 @@ def list_losing_touch_contacts(
             Contact.id.in_(visible_contact_ids(current_user, include_deleted=False)),
             Contact.is_archived.is_(False),
             Contact.contact_frequency_days.is_not(None),
+            (Contact.snoozed_until.is_(None)) | (Contact.snoozed_until <= now),
         )
     ).all()
     losing = [
@@ -332,6 +336,53 @@ def list_losing_touch_contacts(
         or (now - c.last_contacted_at).days >= c.contact_frequency_days
     ]
     return ContactsPublic(data=losing, count=len(losing))
+
+
+@router.post("/{contact_id}/snooze", response_model=ContactPublic)
+@router.patch("/{contact_id}/snooze", response_model=ContactPublic)
+@router.patch("/{contact_id}/skip", response_model=ContactPublic)
+def snooze_contact(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    contact_id: uuid.UUID,
+    body: ContactSnoozeRequest | None = None,
+) -> Any:
+    """Snooze a contact for a specified duration ('1w', '2w', '1m', '3m', '6m', 'indefinitely') or explicit datetime."""
+    contact = session.get(Contact, contact_id)
+    if not contact or contact.owner_id != current_user.id or contact.is_archived:
+        raise HTTPException(status_code=404, detail="Contact not found")
+
+    now = datetime.now(timezone.utc)
+    if body and body.snoozed_until is not None:
+        contact.snoozed_until = body.snoozed_until
+    elif body and body.duration:
+        dur = body.duration.lower().strip()
+        if dur in ("1w", "1 week", "7d", "7 days"):
+            contact.snoozed_until = now + timedelta(days=7)
+        elif dur in ("2w", "2 weeks", "14d", "14 days"):
+            contact.snoozed_until = now + timedelta(days=14)
+        elif dur in ("1m", "1 month", "30d", "30 days"):
+            contact.snoozed_until = now + timedelta(days=30)
+        elif dur in ("3m", "3 months", "90d", "90 days"):
+            contact.snoozed_until = now + timedelta(days=90)
+        elif dur in ("6m", "6 months", "180d", "180 days"):
+            contact.snoozed_until = now + timedelta(days=180)
+        elif dur in ("indefinitely", "forever"):
+            contact.snoozed_until = datetime(2099, 12, 31, 23, 59, 59, tzinfo=timezone.utc)
+        elif dur in ("none", "unsnooze", "clear"):
+            contact.snoozed_until = None
+        else:
+            raise HTTPException(status_code=400, detail=f"Invalid snooze duration: {body.duration}")
+    else:
+        # Default (e.g. skip week) -> 7 days
+        contact.snoozed_until = now + timedelta(days=7)
+
+    session.add(contact)
+    session.commit()
+    session.refresh(contact)
+    return contact
+
 
 
 @router.patch("/bulk", response_model=BulkUpdateResponse)

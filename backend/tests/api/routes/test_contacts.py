@@ -749,3 +749,75 @@ def test_pronouns_in_contact_list(
     contacts = r.json()["data"]
     pronoun_contact = next(c for c in contacts if c["first_name"] == "PronounTest")
     assert pronoun_contact["pronouns"] == "he/him"
+
+
+def test_snooze_contact_durations(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
+    """Test snoozing a contact with various duration options."""
+    r = client.post(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=superuser_token_headers,
+        json={"first_name": "SnoozeTest", "last_contacted_at": "2020-01-01T00:00:00Z"},
+    )
+    assert r.status_code == 200
+    contact_id = r.json()["id"]
+
+    # Snooze 1w
+    r_snooze = client.post(
+        f"{settings.API_V1_STR}/contacts/{contact_id}/snooze",
+        headers=superuser_token_headers,
+        json={"duration": "1w"},
+    )
+    assert r_snooze.status_code == 200
+    assert r_snooze.json()["snoozed_until"] is not None
+
+    # Snooze indefinitely
+    r_indef = client.post(
+        f"{settings.API_V1_STR}/contacts/{contact_id}/snooze",
+        headers=superuser_token_headers,
+        json={"duration": "indefinitely"},
+    )
+    assert r_indef.status_code == 200
+    assert r_indef.json()["snoozed_until"].startswith("2099")
+
+
+def test_snoozed_contact_excluded_from_overdue(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
+    """Test that a snoozed contact is omitted from overdue and losing-touch lists."""
+    r = client.post(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=superuser_token_headers,
+        json={
+            "first_name": "OverdueContact",
+            "last_contacted_at": "2020-01-01T00:00:00Z",
+            "contact_frequency_days": 7,
+        },
+    )
+    assert r.status_code == 200
+    contact_id = r.json()["id"]
+
+    # Verify contact is currently overdue
+    r_overdue = client.get(
+        f"{settings.API_V1_STR}/contacts/overdue",
+        headers=superuser_token_headers,
+    )
+    overdue_ids = [c["id"] for c in r_overdue.json()["data"]]
+    assert contact_id in overdue_ids
+
+    # Snooze contact
+    client.post(
+        f"{settings.API_V1_STR}/contacts/{contact_id}/snooze",
+        headers=superuser_token_headers,
+        json={"duration": "1w"},
+    )
+
+    # Verify contact is no longer in overdue list
+    r_overdue2 = client.get(
+        f"{settings.API_V1_STR}/contacts/overdue",
+        headers=superuser_token_headers,
+    )
+    overdue_ids2 = [c["id"] for c in r_overdue2.json()["data"]]
+    assert contact_id not in overdue_ids2
+

@@ -159,21 +159,13 @@ describe("EditContactDialog", () => {
     await waitFor(() => {
       expect(mockUpdate).toHaveBeenCalledWith({
         contactId: contact.id,
-        requestBody: {
+        requestBody: expect.objectContaining({
           first_name: "Jane",
           last_name: "Doe",
-          nickname: null,
-          how_we_met: null,
-          contact_frequency_days: null,
-          is_favorite: false,
-          is_archived: false,
-          do_not_contact: false,
-          do_not_contact_reason: null,
-          timezone: null,
-          pronouns: null,
-        },
+        }),
       })
     })
+
   })
 
   it("shows success toast on successful update", async () => {

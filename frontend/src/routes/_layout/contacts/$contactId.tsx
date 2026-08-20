@@ -64,8 +64,7 @@ function ContactLocalTime({ timezone }: { timezone: string }) {
 
   useEffect(() => {
     const id = setInterval(
-      () =>
-        setLocalTime(formatLocalTime(timezone, { includeDayName: true })),
+      () => setLocalTime(formatLocalTime(timezone, { includeDayName: true })),
       60_000,
     )
     return () => clearInterval(id)

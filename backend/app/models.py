@@ -674,6 +674,11 @@ class ContactBase(SQLModel):
         max_length=255,
         description="IANA timezone string (e.g. America/New_York).",
     )
+    snoozed_until: datetime | None = Field(
+        default=None,
+        description="If set, suppress stay-in-touch reminders until this date/time.",
+    )
+
 
 
 class ContactCreate(ContactBase):
@@ -703,7 +708,9 @@ class ContactUpdate(SQLModel):
     do_not_contact_reason: str | None = None
     pronouns: str | None = None
     timezone: str | None = None
+    snoozed_until: datetime | None = None
     tag_ids: list[uuid.UUID] | None = None
+
 
 
 class Contact(SoftDeleteMixin, ContactBase, table=True):
@@ -899,6 +906,18 @@ class OverdueContactPublic(ContactPublic):
 class OverdueContactsPublic(SQLModel):
     data: list[OverdueContactPublic]
     count: int
+
+
+class ContactSnoozeRequest(SQLModel):
+    duration: str | None = Field(
+        default=None,
+        description="Snooze duration: '1w', '2w', '1m', '1 month', '3m', '3 months', '6m', '6 months', 'indefinitely'",
+    )
+    snoozed_until: datetime | None = Field(
+        default=None,
+        description="Explicit snoozed_until datetime UTC.",
+    )
+
 
 
 # ─── ContactField ────────────────────────────────────────────────────────────

@@ -557,8 +557,10 @@ export type ContactPublic = {
      * IANA timezone string (e.g. America/New_York).
      */
     timezone?: (string | null);
+    snoozed_until?: (string | null);
     id: string;
     avatar_url: (string | null);
+
     last_contacted_at: (string | null);
     created_at: string;
     updated_at: string;
@@ -2373,7 +2375,21 @@ export type ContactsCreateContactData = {
 
 export type ContactsCreateContactResponse = (ContactPublic);
 
+
+export type ContactSnoozeRequest = {
+    duration?: (string | null);
+    snoozed_until?: (string | null);
+};
+
+export type ContactsSnoozeContactData = {
+    contactId: string;
+    requestBody?: ContactSnoozeRequest;
+};
+
+export type ContactsSnoozeContactResponse = (ContactPublic);
+
 export type ContactsListOverdueContactsData = {
+
     days?: number;
 };
 
