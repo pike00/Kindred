@@ -103,7 +103,9 @@ export function InlineContactDetailsCard({
             placeholder="+ Add birthday"
             displayFormat={(val) => {
               const info = formatBirthday(val)
-              return info ? `${info.formatted}${info.age ? ` (${info.age}y)` : ""}` : val
+              return info
+                ? `${info.formatted}${info.age ? ` (${info.age}y)` : ""}`
+                : val
             }}
             onSave={(val) => handleUpdate({ birthday: val })}
             className="sm:max-w-[240px]"
@@ -133,7 +135,11 @@ export function InlineContactDetailsCard({
           <div className="flex items-center gap-1">
             <InlineText
               type="number"
-              value={contact.contact_frequency_days ? String(contact.contact_frequency_days) : ""}
+              value={
+                contact.contact_frequency_days
+                  ? String(contact.contact_frequency_days)
+                  : ""
+              }
               placeholder="+ Set frequency"
               onSave={(val) => {
                 const num = val ? Number.parseInt(val, 10) : null
@@ -173,7 +179,9 @@ export function InlineContactDetailsCard({
             </div>
             <Switch
               checked={contact.auto_log_email ?? false}
-              onCheckedChange={(checked) => handleUpdate({ auto_log_email: checked })}
+              onCheckedChange={(checked) =>
+                handleUpdate({ auto_log_email: checked })
+              }
             />
           </div>
 
@@ -189,7 +197,9 @@ export function InlineContactDetailsCard({
             </div>
             <Switch
               checked={contact.do_not_contact ?? false}
-              onCheckedChange={(checked) => handleUpdate({ do_not_contact: checked })}
+              onCheckedChange={(checked) =>
+                handleUpdate({ do_not_contact: checked })
+              }
             />
           </div>
         </div>

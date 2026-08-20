@@ -45,6 +45,7 @@ export {
   Film,
   Focus,
   Gift,
+  Globe,
   GripVertical,
   HeartHandshake,
   // Sidebar nav
@@ -59,7 +60,6 @@ export {
   // Contact field types
   Mail,
   Map,
-  Globe,
   // Card section icons
   MapPin,
   MessageSquare,

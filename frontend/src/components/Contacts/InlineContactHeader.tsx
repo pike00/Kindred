@@ -167,11 +167,15 @@ export function InlineContactHeader({
             <Badge
               variant={contact.is_favorite ? "secondary" : "outline"}
               className="cursor-pointer gap-1 transition-all hover:scale-105"
-              onClick={() => handleUpdate({ is_favorite: !contact.is_favorite })}
+              onClick={() =>
+                handleUpdate({ is_favorite: !contact.is_favorite })
+              }
             >
               <Star
                 className={`size-3.5 ${
-                  contact.is_favorite ? "fill-amber-400 text-amber-400" : "text-muted-foreground"
+                  contact.is_favorite
+                    ? "fill-amber-400 text-amber-400"
+                    : "text-muted-foreground"
                 }`}
               />
               {contact.is_favorite ? "Favorite" : "+ Favorite"}
