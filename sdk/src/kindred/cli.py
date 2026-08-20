@@ -72,7 +72,7 @@ from ._generated.api.api_keys import (
     api_keys_list_my_api_keys,
     api_keys_revoke_my_api_key,
 )
-from ._generated.api.utils import utils_health_check
+from ._generated.api.utils import utils_health_check, utils_status
 from ._generated.api.webhooks import (
     webhooks_create_webhook,
     webhooks_delete_webhook,
@@ -650,6 +650,12 @@ def webhooks_delete(webhook_id: UUID, pretty: PrettyOpt = False) -> None:
 def health(pretty: PrettyOpt = False) -> None:
     """Hit the unauthenticated /api/v1/utils/health-check endpoint."""
     _emit(_run(utils_health_check), pretty)
+
+
+@app.command()
+def status(pretty: PrettyOpt = False) -> None:
+    """Hit the unauthenticated /api/v1/utils/status endpoint."""
+    _emit(_run(utils_status), pretty)
 
 
 @app.command()

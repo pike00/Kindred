@@ -163,7 +163,9 @@ export function OverdueContacts() {
                             title="Snooze contact"
                             aria-label={`Snooze ${fullName || "contact"}`}
                           >
-                            <Clock className={`h-4 w-4 ${isSnoozing ? "animate-spin" : ""}`} />
+                            <Clock
+                              className={`h-4 w-4 ${isSnoozing ? "animate-spin" : ""}`}
+                            />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-36">

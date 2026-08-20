@@ -69,6 +69,11 @@ vi.mock("@/components/Sidebar/User", () => ({
   User: ({ user }: any) => <div data-testid="sidebar-user">{user?.email}</div>,
 }))
 
+// Mock SidebarVersion component
+vi.mock("@/components/Sidebar/SidebarVersion", () => ({
+  SidebarVersion: () => <div data-testid="sidebar-version">v0.2.106</div>,
+}))
+
 // Mock Main component (we'll test it separately)
 vi.mock("@/components/Sidebar/Main", () => ({
   Main: ({ items }: any) => (
@@ -164,6 +169,14 @@ describe("AppSidebar", () => {
     const sidebarUser = screen.getByTestId("sidebar-user")
     expect(sidebarUser).toBeInTheDocument()
     expect(sidebarUser).toHaveTextContent("alice@example.com")
+  })
+
+  it("renders SidebarVersion component in footer", () => {
+    renderWithProviders(<AppSidebar />)
+
+    const sidebarVersion = screen.getByTestId("sidebar-version")
+    expect(sidebarVersion).toBeInTheDocument()
+    expect(sidebarVersion).toHaveTextContent("v0.2.106")
   })
 
   it("renders Main component with correct items for non-superuser", () => {

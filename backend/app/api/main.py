@@ -50,6 +50,13 @@ async def health() -> bool:
     return True
 
 
+@api_router.get("/status", tags=["utils"])
+async def api_status() -> utils.StatusInfo:
+    ver = utils.get_version()
+    h = utils.get_git_hash()
+    return utils.StatusInfo(status="ok", version=ver, git_hash=h, hash=h)
+
+
 api_router.include_router(communication_preferences.router)
 api_router.include_router(login.router)
 api_router.include_router(users.router)
