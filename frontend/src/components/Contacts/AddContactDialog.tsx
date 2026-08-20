@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 import type { ContactCreate } from "@/client"
 import { ContactsService } from "@/client"
+import { BirthdayInput } from "@/components/Contacts/BirthdayInput"
 import { TimezoneInput } from "@/components/Contacts/TimezoneInput"
 import { TagMultiSelect } from "@/components/Tags/TagMultiSelect"
 import { Button } from "@/components/ui/button"
@@ -35,7 +36,7 @@ const contactCreateSchema = z.object({
   nickname: z.string().max(255).optional(),
   company: z.string().max(255).optional(),
   title: z.string().max(255).optional(),
-  birthday: z.string().optional(),
+  birthday: z.string().nullable().optional(),
   pronouns: z.string().max(100).optional(),
   timezone: z.string().optional(),
   tag_ids: z.array(z.string()),
@@ -217,7 +218,11 @@ export const AddContactDialog = () => {
                     <FormItem>
                       <FormLabel>Birthday</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} />
+                        <BirthdayInput
+                          value={field.value}
+                          onChange={field.onChange}
+                          disabled={field.disabled}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

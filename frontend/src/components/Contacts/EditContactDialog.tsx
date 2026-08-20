@@ -5,6 +5,7 @@ import { useForm, useWatch } from "react-hook-form"
 import { z } from "zod"
 import type { ContactPublic, ContactUpdate } from "@/client"
 import { ContactsService } from "@/client"
+import { BirthdayInput } from "@/components/Contacts/BirthdayInput"
 import { CommunicationPreferenceCard } from "@/components/Contacts/CommunicationPreferenceCard"
 import { TimezoneInput } from "@/components/Contacts/TimezoneInput"
 import { Button } from "@/components/ui/button"
@@ -34,7 +35,7 @@ const contactUpdateSchema = z.object({
 
   last_name: z.string().optional(),
   nickname: z.string().optional(),
-  birthday: z.string().optional(),
+  birthday: z.string().nullable().optional(),
   how_we_met: z.string().optional(),
   contact_frequency_days: z.number().optional(),
   auto_log_email: z.boolean().optional(),
@@ -92,6 +93,7 @@ export const EditContactDialog = ({ contact }: EditContactDialogProps) => {
         first_name: contact.first_name,
         last_name: contact.last_name || "",
         nickname: contact.nickname || "",
+        birthday: toDateInputValue(contact.birthday),
         how_we_met: contact.how_we_met || "",
         contact_frequency_days: contact.contact_frequency_days || 0,
         auto_log_email: contact.auto_log_email ?? false,
@@ -202,7 +204,11 @@ export const EditContactDialog = ({ contact }: EditContactDialogProps) => {
                 <FormItem>
                   <FormLabel>Birthday</FormLabel>
                   <FormControl>
-                    <Input type="date" {...field} />
+                    <BirthdayInput
+                      value={field.value}
+                      onChange={field.onChange}
+                      disabled={field.disabled}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

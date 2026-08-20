@@ -61,7 +61,7 @@ function ContactBirthday({ birthday }: { birthday: string }) {
     <span className="flex items-center gap-1">
       <Cake className="size-3.5" />
       <span>
-        Born {info.formatted}
+        {info.age != null ? `Born ${info.formatted}` : `Birthday ${info.formatted}`}
         {info.age != null && <> · {info.age} years old</>}
         {info.upcoming && (
           <>

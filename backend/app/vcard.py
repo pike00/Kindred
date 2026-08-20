@@ -17,6 +17,7 @@ from app.models import (
     Contact,
     ContactField,
     ContactFieldType,
+    _parse_optional_year_birthday,
 )
 
 _NAME_URI_PREFIX_RE = re.compile(r"^\s*(?:tel|mailto|sip|fax):\s*", re.IGNORECASE)
@@ -388,9 +389,14 @@ def vcard_to_contact_data(vcard_text: str) -> dict:
     # BDAY
     if hasattr(card, "bday"):
         try:
-            from dateutil.parser import parse as dateparse
+            bday_val = card.bday.value
+            parsed_bday = _parse_optional_year_birthday(bday_val)
+            if parsed_bday:
+                contact["birthday"] = parsed_bday
+            else:
+                from dateutil.parser import parse as dateparse
 
-            contact["birthday"] = dateparse(card.bday.value).date()
+                contact["birthday"] = dateparse(bday_val).date()
         except Exception:
             pass
 

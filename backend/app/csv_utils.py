@@ -519,6 +519,25 @@ def parse_date_flexible(date_str: str) -> date | None:
         except ValueError:
             continue
 
+    # Partial date formats without year (e.g. "04-15", "--04-15", "April 15")
+    partial_formats = [
+        "--%m-%d",
+        "--%m%d",
+        "%m-%d",
+        "%m/%d",
+        "%b %d",
+        "%B %d",
+        "%d %b",
+        "%d %B",
+    ]
+    for fmt in partial_formats:
+        try:
+            d = datetime.strptime(date_str.strip(), fmt).date()
+            year = 4 if d.month == 2 and d.day == 29 else 1
+            return date(year, d.month, d.day)
+        except ValueError:
+            continue
+
     return None
 
 

@@ -1,10 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import type { ContactPublic, ContactUpdate } from "@/client"
 import { ContactsService } from "@/client"
+import { InlineBirthday } from "@/components/Contacts/BirthdayInput"
 import { TimezoneInput } from "@/components/Contacts/TimezoneInput"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
-  InlineDate,
   InlineText,
   InlineTextarea,
 } from "@/components/ui/inline-edit"
@@ -19,7 +19,6 @@ import {
   UserRoundSearch,
   Users,
 } from "@/lib/icons"
-import { formatBirthday } from "@/lib/utils"
 
 interface InlineContactDetailsCardProps {
   contact: ContactPublic
@@ -100,18 +99,11 @@ export function InlineContactDetailsCard({
             <Cake className="size-4 text-muted-foreground/70" />
             <span>Birthday</span>
           </div>
-          <InlineDate
+          <InlineBirthday
             value={contact.birthday ?? null}
             placeholder="+ Add birthday"
-            displayFormat={(val) => {
-              const info = formatBirthday(val)
-              return info
-                ? `${info.formatted}${info.age ? ` (${info.age}y)` : ""}`
-                : val
-            }}
             onSave={(val) => handleUpdate({ birthday: val })}
-            className="sm:max-w-[240px]"
-            inputClassName="w-full"
+            className="sm:max-w-[280px]"
           />
         </div>
 
