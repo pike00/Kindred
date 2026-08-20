@@ -5,6 +5,26 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.115] - 2026-08-20
+
+### Added
+- Feat(ui): add dual-input InlineContactName for distinct first and last name editing (5693955)
+- Feat(ui): add modern inline editing for contact fields (cb0bc35)
+
+### Changed
+- Perf(frontend): disable watch polling and dev service worker for instant page loads (22cedab)
+
+### Fixed
+- Fix(ui): unify full name inline edit and prevent full-width expansion (c13b44f)
+- Fix(deps): update frontend bun.lock for pinned react version (39a7bfb)
+- Fix(frontend): remove buggy TanStackRouterDevtools from root route (43efa88)
+- Fix(frontend): pin react version and update dev tailnet host config (0d069c9)
+- Fix(deploy): use home relative path for SSH deployment in deploy-homelab.py (08ead38)
+
+### Other
+- Style(frontend): format inline contact components with biome (3e7e38f)
+- Projects: create inline-contact-edit (36f147a)
+
 ## [0.2.114] - 2026-08-20
 
 ### Added
