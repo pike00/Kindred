@@ -3,6 +3,11 @@ import { Check, ChevronDown, Loader2, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import { cn, formatBirthday } from "@/lib/utils"
 
 export const MONTHS = [
@@ -96,6 +101,7 @@ export interface BirthdayInputProps {
   disabled?: boolean
   className?: string
   id?: string
+  showClearButton?: boolean
 }
 
 export function BirthdayInput({
@@ -104,6 +110,7 @@ export function BirthdayInput({
   disabled = false,
   className,
   id,
+  showClearButton = true,
 }: BirthdayInputProps) {
   const parsed = React.useMemo(() => parseBirthdayValue(value), [value])
   const [month, setMonth] = React.useState(parsed.month)
@@ -162,19 +169,20 @@ export function BirthdayInput({
   const hasValue = Boolean(month || day || year)
 
   const selectClassName =
-    "border-input bg-transparent dark:bg-input/30 dark:hover:bg-input/50 h-9 rounded-xl border px-2.5 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 text-foreground cursor-pointer"
+    "border-input bg-transparent dark:bg-input/30 dark:hover:bg-input/50 h-9 rounded-xl border px-2 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 text-foreground cursor-pointer"
 
   return (
-    <div className={cn("flex flex-wrap items-center gap-2", className)}>
-      <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-        <div className="relative">
+    <div className={cn("flex items-center gap-1.5 w-full", className)}>
+      <div className="grid grid-cols-12 gap-1.5 w-full items-center flex-1">
+        {/* Month selector */}
+        <div className="relative col-span-5">
           <select
             id={id}
             value={month}
             onChange={(e) => handleMonthChange(e.target.value)}
             disabled={disabled}
             aria-label="Birthday month"
-            className={cn(selectClassName, "w-[125px] pr-7 appearance-none")}
+            className={cn(selectClassName, "w-full pr-5 appearance-none text-xs sm:text-sm")}
           >
             <option value="" className="text-muted-foreground bg-background">
               Month
@@ -189,16 +197,17 @@ export function BirthdayInput({
               </option>
             ))}
           </select>
-          <ChevronDown className="size-4 opacity-50 absolute right-2 top-2.5 pointer-events-none" />
+          <ChevronDown className="size-3.5 opacity-50 absolute right-1.5 top-3 pointer-events-none" />
         </div>
 
-        <div className="relative">
+        {/* Day selector */}
+        <div className="relative col-span-3">
           <select
             value={day}
             onChange={(e) => handleDayChange(e.target.value)}
             disabled={disabled}
             aria-label="Birthday day"
-            className={cn(selectClassName, "w-[75px] pr-6 appearance-none")}
+            className={cn(selectClassName, "w-full pr-4 appearance-none text-center text-xs sm:text-sm")}
           >
             <option value="" className="text-muted-foreground bg-background">
               Day
@@ -213,33 +222,36 @@ export function BirthdayInput({
               </option>
             ))}
           </select>
-          <ChevronDown className="size-4 opacity-50 absolute right-1.5 top-2.5 pointer-events-none" />
+          <ChevronDown className="size-3.5 opacity-50 absolute right-1 top-3 pointer-events-none" />
         </div>
 
-        <Input
-          type="number"
-          placeholder="Year (optional)"
-          value={year}
-          onChange={handleYearChange}
-          disabled={disabled}
-          aria-label="Birthday year"
-          min={1900}
-          max={new Date().getFullYear()}
-          className="w-[125px] shrink-0 h-9 rounded-xl"
-        />
+        {/* Year input (optional) */}
+        <div className="col-span-4">
+          <Input
+            type="number"
+            placeholder="Year (opt)"
+            value={year}
+            onChange={handleYearChange}
+            disabled={disabled}
+            aria-label="Birthday year"
+            min={1900}
+            max={new Date().getFullYear()}
+            className="w-full h-9 rounded-xl px-2 text-xs sm:text-sm"
+          />
+        </div>
       </div>
 
-      {hasValue && !disabled && (
+      {hasValue && !disabled && showClearButton && (
         <Button
           type="button"
           variant="ghost"
           size="icon"
-          className="size-8 text-muted-foreground hover:text-foreground shrink-0 rounded-full"
+          className="size-7 text-muted-foreground hover:text-foreground shrink-0 rounded-full"
           onClick={handleClear}
           aria-label="Clear birthday"
           title="Clear birthday"
         >
-          <X className="size-4" />
+          <X className="size-3.5" />
         </Button>
       )}
     </div>
@@ -263,24 +275,39 @@ export function InlineBirthday({
   valueClassName,
   disabled = false,
 }: InlineBirthdayProps) {
-  const [isEditing, setIsEditing] = React.useState(false)
+  const [open, setOpen] = React.useState(false)
   const [tempValue, setTempValue] = React.useState<string | null>(value ?? null)
   const [isSaving, setIsSaving] = React.useState(false)
   const [justSaved, setJustSaved] = React.useState(false)
 
   React.useEffect(() => {
     setTempValue(value ?? null)
-  }, [value])
+  }, [value, open])
 
   const handleSave = async () => {
     if (tempValue === (value ?? null)) {
-      setIsEditing(false)
+      setOpen(false)
       return
     }
     try {
       setIsSaving(true)
       await onSave(tempValue)
-      setIsEditing(false)
+      setOpen(false)
+      setJustSaved(true)
+      setTimeout(() => setJustSaved(false), 2000)
+    } catch {
+      setTempValue(value ?? null)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleClear = async () => {
+    setTempValue(null)
+    try {
+      setIsSaving(true)
+      await onSave(null)
+      setOpen(false)
       setJustSaved(true)
       setTimeout(() => setJustSaved(false), 2000)
     } catch {
@@ -292,47 +319,7 @@ export function InlineBirthday({
 
   const handleCancel = () => {
     setTempValue(value ?? null)
-    setIsEditing(false)
-  }
-
-  if (isEditing) {
-    return (
-      <div className={cn("flex flex-wrap items-center gap-2", className)}>
-        <BirthdayInput
-          value={tempValue}
-          onChange={setTempValue}
-          disabled={isSaving}
-        />
-        <div className="flex items-center gap-1">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="size-8 text-primary hover:bg-primary/10 shrink-0"
-            onClick={handleSave}
-            disabled={isSaving}
-            aria-label="Save birthday"
-          >
-            {isSaving ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Check className="size-4" />
-            )}
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="size-8 text-muted-foreground hover:bg-muted shrink-0"
-            onClick={handleCancel}
-            disabled={isSaving}
-            aria-label="Cancel editing birthday"
-          >
-            <X className="size-4" />
-          </Button>
-        </div>
-      </div>
-    )
+    setOpen(false)
   }
 
   const info = value ? formatBirthday(value) : null
@@ -341,21 +328,76 @@ export function InlineBirthday({
     : value
 
   return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={() => setIsEditing(true)}
-      className={cn(
-        "group inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm text-left transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20",
-        !value &&
-          "text-muted-foreground hover:text-foreground border border-dashed border-border/70 hover:border-border",
-        justSaved && "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-        className,
-      )}
-    >
-      <span className={cn("truncate", valueClassName)}>
-        {displayLabel || placeholder}
-      </span>
-    </button>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          disabled={disabled}
+          className={cn(
+            "group inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm text-left transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 cursor-pointer",
+            !value &&
+              "text-muted-foreground hover:text-foreground border border-dashed border-border/70 hover:border-border",
+            justSaved && "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+            className,
+          )}
+        >
+          <span className={cn("truncate", valueClassName)}>
+            {displayLabel || placeholder}
+          </span>
+          {justSaved && <Check className="size-3.5 text-emerald-500 shrink-0 ml-0.5" />}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80 p-3.5 space-y-3" align="end">
+        <div className="flex items-center justify-between border-b border-border/40 pb-2">
+          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            Birthday
+          </span>
+          {value && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-6 px-2 text-xs text-muted-foreground hover:text-destructive"
+              onClick={handleClear}
+              disabled={isSaving}
+              aria-label="Clear birthday"
+            >
+              Clear
+            </Button>
+          )}
+        </div>
+
+        <BirthdayInput
+          value={tempValue}
+          onChange={setTempValue}
+          disabled={isSaving}
+          showClearButton={false}
+        />
+
+        <div className="flex items-center justify-end gap-1.5 pt-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs px-2.5"
+            onClick={handleCancel}
+            disabled={isSaving}
+            aria-label="Cancel editing birthday"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            className="h-7 text-xs px-3"
+            onClick={handleSave}
+            disabled={isSaving}
+            aria-label="Save birthday"
+          >
+            {isSaving ? <Loader2 className="size-3.5 animate-spin" /> : "Save"}
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
   )
 }
