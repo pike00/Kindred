@@ -58,7 +58,11 @@ def get_calendar_month(
     for contact in contacts:
         if contact.birthday and contact.birthday.month == month:
             day_key = date(year, month, contact.birthday.day).isoformat()
-            age = None if contact.birthday.year <= 1 else year - contact.birthday.year
+            age = (
+                None
+                if (contact.birthday.year <= 4 or contact.birthday.year < 1900)
+                else year - contact.birthday.year
+            )
             name = f"{contact.first_name} {contact.last_name or ''}".strip()
             days.setdefault(day_key, []).append(
                 CalendarEntry(
@@ -234,7 +238,7 @@ def _build_ics_feed(
         event.add("rrule", recur)
 
         # Add age to description if year is meaningful
-        if contact.birthday.year > 1:
+        if contact.birthday.year > 4 and contact.birthday.year >= 1900:
             event.add("description", f"Birthday for {name}")
 
         cal.add_component(event)

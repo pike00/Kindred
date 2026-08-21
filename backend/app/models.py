@@ -25,6 +25,41 @@ def get_datetime_utc() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def _parse_optional_year_birthday(v: Any) -> date | None:
+    """Parse a birthday value, allowing dates with or without a year.
+
+    Birthdays without a year are normalized to year 1 (or year 4 for Feb 29).
+    """
+    if v is None or v == "":
+        return None
+    if isinstance(v, datetime):
+        return v.date()
+    if isinstance(v, date):
+        return v
+    if isinstance(v, str):
+        v = v.strip()
+        if not v:
+            return None
+        # Match ISO partial date: --MM-DD, -MM-DD, MM-DD, --MMDD, MMDD
+        m = re.match(r"^--?(\d{2})-?(\d{2})$", v)
+        if m:
+            month, day = int(m.group(1)), int(m.group(2))
+            year = 4 if month == 2 and day == 29 else 1
+            return date(year, month, day)
+        # Match YYYY-MM-DD
+        m = re.match(r"^(\d{4})-(\d{2})-(\d{2})$", v)
+        if m:
+            year, month, day = int(m.group(1)), int(m.group(2)), int(m.group(3))
+            if year <= 1:
+                year = 4 if month == 2 and day == 29 else 1
+            return date(year, month, day)
+        try:
+            return date.fromisoformat(v[:10])
+        except (ValueError, TypeError):
+            pass
+    return v
+
+
 class SoftDeleteMixin:
     """Mixin that adds ``deleted_at`` for soft-delete support.
 
@@ -679,6 +714,11 @@ class ContactBase(SQLModel):
         description="If set, suppress stay-in-touch reminders until this date/time.",
     )
 
+    @field_validator("birthday", mode="before")
+    @classmethod
+    def validate_birthday(cls, v: Any) -> Any:
+        return _parse_optional_year_birthday(v)
+
 
 
 class ContactCreate(ContactBase):
@@ -710,6 +750,11 @@ class ContactUpdate(SQLModel):
     timezone: str | None = None
     snoozed_until: datetime | None = None
     tag_ids: list[uuid.UUID] | None = None
+
+    @field_validator("birthday", mode="before")
+    @classmethod
+    def validate_birthday(cls, v: Any) -> Any:
+        return _parse_optional_year_birthday(v)
 
 
 

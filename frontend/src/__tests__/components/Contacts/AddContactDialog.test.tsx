@@ -82,7 +82,7 @@ describe("AddContactDialog", () => {
 
     expect(screen.getByLabelText(/first name/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/last name/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/birthday/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/birthday month/i)).toBeInTheDocument()
   })
 
   it("shows validation error when first name is empty", async () => {
@@ -120,11 +120,18 @@ describe("AddContactDialog", () => {
 
     const firstNameInput = screen.getByPlaceholderText("John")
     const lastNameInput = screen.getByPlaceholderText("Doe")
-    const birthdayInput = screen.getByLabelText(/birthday/i)
 
     await user.type(firstNameInput, "Bob")
     await user.type(lastNameInput, "Johnson")
-    await user.type(birthdayInput, "1990-01-15")
+
+    const monthSelect = screen.getByLabelText("Birthday month")
+    await user.selectOptions(monthSelect, "1")
+
+    const daySelect = screen.getByLabelText("Birthday day")
+    await user.selectOptions(daySelect, "15")
+
+    const yearInput = screen.getByLabelText("Birthday year")
+    await user.type(yearInput, "1990")
 
     const submitButton = screen.getByRole("button", { name: /create contact/i })
     await user.click(submitButton)
@@ -138,6 +145,52 @@ describe("AddContactDialog", () => {
           company: null,
           title: null,
           birthday: "1990-01-15",
+          pronouns: null,
+          timezone: null,
+          tag_ids: null,
+        },
+      })
+    })
+  })
+
+  it("submits form with birthday without year", async () => {
+    const { ContactsService } = await import("@/client")
+    const mockCreateContact = vi.mocked(ContactsService.createContact)
+    mockCreateContact.mockResolvedValue(
+      makeContact({
+        id: "new-contact-id",
+        first_name: "Carol",
+        birthday: "0001-08-20",
+      }),
+    )
+
+    const user = userEvent.setup()
+    renderWithProviders(<AddContactDialog />)
+
+    const triggerButton = screen.getByRole("button", { name: /add contact/i })
+    await user.click(triggerButton)
+
+    const firstNameInput = screen.getByPlaceholderText("John")
+    await user.type(firstNameInput, "Carol")
+
+    const monthSelect = screen.getByLabelText("Birthday month")
+    await user.selectOptions(monthSelect, "8")
+
+    const daySelect = screen.getByLabelText("Birthday day")
+    await user.selectOptions(daySelect, "20")
+
+    const submitButton = screen.getByRole("button", { name: /create contact/i })
+    await user.click(submitButton)
+
+    await waitFor(() => {
+      expect(mockCreateContact).toHaveBeenCalledWith({
+        requestBody: {
+          first_name: "Carol",
+          last_name: null,
+          nickname: null,
+          company: null,
+          title: null,
+          birthday: "0001-08-20",
           pronouns: null,
           timezone: null,
           tag_ids: null,

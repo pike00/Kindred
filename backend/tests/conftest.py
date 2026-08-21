@@ -57,7 +57,7 @@ def _migrate_test_database() -> None:
     cfg = Config(str(backend_dir / "alembic.ini"))
     cfg.set_main_option("script_location", str(backend_dir / "app" / "alembic"))
     cfg.set_main_option("sqlalchemy.url", str(settings.SQLALCHEMY_DATABASE_URI))
-    command.upgrade(cfg, "head")
+    command.upgrade(cfg, "heads")
 
 
 _ensure_test_database()

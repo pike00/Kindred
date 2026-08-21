@@ -28,8 +28,26 @@ def _require_contact_visible(session: Any, user: Any, contact_id: uuid.UUID) -> 
         raise HTTPException(status_code=404, detail="Contact not found")
 
 
+def _days_until_birthday(birthday: date | None, today: date | None = None) -> int | None:
+    """Calculate days until the next occurrence of a birthday."""
+    if not birthday:
+        return None
+    today = today or date.today()
+    try:
+        next_bday = date(today.year, birthday.month, birthday.day)
+    except ValueError:
+        next_bday = date(today.year, 3, 1)
+    if next_bday < today:
+        try:
+            next_bday = date(today.year + 1, birthday.month, birthday.day)
+        except ValueError:
+            next_bday = date(today.year + 1, 3, 1)
+    return (next_bday - today).days
+
+
 @router.get("/contact/{contact_id}", response_model=GiftsPublic)
 def list_gifts(
+    *,
     session: SessionDep,
     current_user: CurrentUser,
     contact_id: uuid.UUID,
@@ -46,9 +64,7 @@ def list_gifts(
 
     gifts_data = []
     for gift, birthday, first_name, last_name in results:
-        days_until = None
-        if birthday:
-            days_until = (birthday - date.today()).days
+        days_until = _days_until_birthday(birthday)
         gifts_data.append(
             GiftPublic(
                 **gift.model_dump(),
@@ -159,9 +175,7 @@ def get_kanban_board(
     }
 
     for gift, birthday, first_name, last_name in results:
-        days_until = None
-        if birthday:
-            days_until = (birthday - date.today()).days
+        days_until = _days_until_birthday(birthday)
 
         is_overdue = (
             days_until is not None
@@ -217,9 +231,7 @@ def change_gift_status(
 
     # Get contact info for response
     contact = session.get(Contact, gift.contact_id)
-    days_until = None
-    if contact and contact.birthday:
-        days_until = (contact.birthday - date.today()).days
+    days_until = _days_until_birthday(contact.birthday) if contact else None
 
     return GiftPublic(
         **gift.model_dump(),

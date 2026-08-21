@@ -73,6 +73,11 @@ global.IntersectionObserver = vi.fn().mockImplementation(() => ({
 // Stub scrollIntoView (not in jsdom)
 Element.prototype.scrollIntoView = vi.fn()
 
+// Stub PointerCapture methods (not in jsdom; used by Radix UI Select)
+Element.prototype.hasPointerCapture = vi.fn().mockReturnValue(false)
+Element.prototype.setPointerCapture = vi.fn()
+Element.prototype.releasePointerCapture = vi.fn()
+
 // Silence console.warn in tests (Radix noisy)
 vi.spyOn(console, "warn").mockImplementation(() => {})
 

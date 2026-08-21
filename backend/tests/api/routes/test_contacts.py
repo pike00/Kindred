@@ -798,6 +798,18 @@ def test_snoozed_contact_excluded_from_overdue(
     assert r.status_code == 200
     contact_id = r.json()["id"]
 
+    # Create past interaction to set last_contacted_at
+    r_int = client.post(
+        f"{settings.API_V1_STR}/interactions/",
+        headers=superuser_token_headers,
+        json={
+            "channel": "call",
+            "occurred_at": "2020-01-01T00:00:00Z",
+            "attendee_ids": [contact_id],
+        },
+    )
+    assert r_int.status_code == 200
+
     # Verify contact is currently overdue
     r_overdue = client.get(
         f"{settings.API_V1_STR}/contacts/overdue",
@@ -820,4 +832,57 @@ def test_snoozed_contact_excluded_from_overdue(
     )
     overdue_ids2 = [c["id"] for c in r_overdue2.json()["data"]]
     assert contact_id not in overdue_ids2
+
+
+def test_create_and_update_contact_with_optional_birthday_year(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
+    # 1. Create with full year
+    r = client.post(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=superuser_token_headers,
+        json={"first_name": "FullYear", "birthday": "1990-05-14"},
+    )
+    assert r.status_code == 200
+    cid1 = r.json()["id"]
+    assert r.json()["birthday"] == "1990-05-14"
+
+    # 2. Create with sentinel year 0001
+    r = client.post(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=superuser_token_headers,
+        json={"first_name": "SentinelYear", "birthday": "0001-08-20"},
+    )
+    assert r.status_code == 200
+    cid2 = r.json()["id"]
+    assert r.json()["birthday"] == "0001-08-20"
+
+    # 3. Create with partial ISO format --08-20
+    r = client.post(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=superuser_token_headers,
+        json={"first_name": "PartialISO", "birthday": "--08-20"},
+    )
+    assert r.status_code == 200
+    cid3 = r.json()["id"]
+    assert r.json()["birthday"] == "0001-08-20"
+
+    # 4. Update contact from full year to year-less
+    r_patch = client.patch(
+        f"{settings.API_V1_STR}/contacts/{cid1}",
+        headers=superuser_token_headers,
+        json={"birthday": "0001-05-14"},
+    )
+    assert r_patch.status_code == 200
+    assert r_patch.json()["birthday"] == "0001-05-14"
+
+    # 5. Update contact to clear birthday
+    r_clear = client.patch(
+        f"{settings.API_V1_STR}/contacts/{cid1}",
+        headers=superuser_token_headers,
+        json={"birthday": None},
+    )
+    assert r_clear.status_code == 200
+    assert r_clear.json()["birthday"] is None
+
 
