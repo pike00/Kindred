@@ -229,10 +229,10 @@ export function VoiceRecordButton({
 
   return (
     <>
-      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
-        {/* Floating status badge */}
+      <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3">
+        {/* Floating status badge — positioned horizontally to the left of the button to avoid QuickLogFAB above */}
         {recordingState === "recording" && (
-          <div className="flex items-center gap-2 rounded-full bg-red-600 px-3.5 py-1.5 text-sm font-medium text-white shadow-lg animate-pulse">
+          <div className="flex items-center gap-2 rounded-full bg-red-600/95 px-3.5 py-1.5 text-sm font-medium text-white shadow-xl backdrop-blur-sm animate-pulse">
             <span className="size-2 rounded-full bg-white" />
             <span>Recording {formatTime(elapsedSeconds)}</span>
             <span className="text-xs text-red-200">(Click to stop)</span>
@@ -240,14 +240,14 @@ export function VoiceRecordButton({
         )}
 
         {recordingState === "processing" && (
-          <div className="flex items-center gap-2 rounded-full bg-amber-500 px-3.5 py-1.5 text-sm font-medium text-white shadow-lg">
+          <div className="flex items-center gap-2 rounded-full bg-amber-500/95 px-3.5 py-1.5 text-sm font-medium text-white shadow-xl backdrop-blur-sm">
             <Loader2 className="size-3.5 animate-spin" />
             <span>Transcribing audio...</span>
           </div>
         )}
 
         {recordingState === "requesting" && (
-          <div className="flex items-center gap-2 rounded-full bg-muted px-3.5 py-1.5 text-sm font-medium text-foreground shadow-lg border">
+          <div className="flex items-center gap-2 rounded-full bg-muted/95 px-3.5 py-1.5 text-sm font-medium text-foreground shadow-xl border backdrop-blur-sm">
             <Loader2 className="size-3.5 animate-spin" />
             <span>Starting microphone...</span>
           </div>
