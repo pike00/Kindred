@@ -1,5 +1,5 @@
 fastapi==0.115.0
-uvicorn[standard]==0.32.0
+uvicorn[standard]==0.52.4
 faster-whisper==1.0.3
 # faster-whisper 1.0.3 imports `requests`, but modern huggingface-hub uses
 # httpx and no longer pulls requests in transitively — install it explicitly
