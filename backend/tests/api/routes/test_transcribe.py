@@ -3,7 +3,6 @@
 from unittest.mock import AsyncMock, patch
 
 import httpx
-import pytest
 from fastapi.testclient import TestClient
 
 
@@ -28,8 +27,7 @@ class TestTranscribeAudio:
         assert response.status_code == 400
         assert response.json()["detail"] == "Empty file"
 
-    @pytest.mark.asyncio
-    async def test_transcribe_success(self, client: TestClient, user_headers: dict):
+    def test_transcribe_success(self, client: TestClient, user_headers: dict):
         """Valid audio upload forwards to Whisper and returns transcribed text."""
         mock_response = httpx.Response(
             status_code=200,
@@ -52,8 +50,7 @@ class TestTranscribeAudio:
             assert data["language"] == "en"
             assert data["duration"] == 2.5
 
-    @pytest.mark.asyncio
-    async def test_transcribe_whisper_unavailable(
+    def test_transcribe_whisper_unavailable(
         self, client: TestClient, user_headers: dict
     ):
         """When Whisper service cannot be reached, returns 503."""
@@ -68,3 +65,4 @@ class TestTranscribeAudio:
 
             assert response.status_code == 503
             assert "unavailable" in response.json()["detail"].lower()
+
