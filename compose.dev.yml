@@ -168,6 +168,26 @@ services:
       timeout: 5s
       retries: 5
 
+  whisper:
+    build:
+      context: ./whisper-service
+    env_file: .env
+    networks:
+      - kindred-internal-crm
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+
 volumes:
   # Project-local. Dev never shares storage with prod (apps/kindred uses
   # its own kindred-prod-* volumes). After Track A cutover the legacy

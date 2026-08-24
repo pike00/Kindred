@@ -1,9 +1,9 @@
 import { useMutation } from "@tanstack/react-query"
-import { useCallback, useRef, useState } from "react"
-import type { InteractionPublic } from "@/client"
+import { useCallback, useEffect, useRef, useState } from "react"
+import { type InteractionPublic, TranscribeService } from "@/client"
 import { Button } from "@/components/ui/button"
 import useCustomToast from "@/hooks/useCustomToast"
-import { Loader2, Mic, MicOff } from "@/lib/icons"
+import { Loader2, Mic, Square } from "@/lib/icons"
 import { cn } from "@/lib/utils"
 import { VoiceReviewModal } from "./VoiceReviewModal"
 
@@ -11,7 +11,26 @@ interface VoiceRecordButtonProps {
   onInteractionCreated?: (interaction: InteractionPublic) => void
 }
 
-type RecordingState = "idle" | "recording" | "processing" | "error"
+type RecordingState = "idle" | "requesting" | "recording" | "processing"
+
+function getSupportedMimeType(): { mimeType?: string; extension: string } {
+  if (typeof MediaRecorder === "undefined") {
+    return { extension: "webm" }
+  }
+  const candidateTypes = [
+    { mimeType: "audio/webm;codecs=opus", extension: "webm" },
+    { mimeType: "audio/webm", extension: "webm" },
+    { mimeType: "audio/mp4", extension: "mp4" },
+    { mimeType: "audio/aac", extension: "aac" },
+    { mimeType: "audio/ogg;codecs=opus", extension: "ogg" },
+  ]
+  for (const candidate of candidateTypes) {
+    if (MediaRecorder.isTypeSupported(candidate.mimeType)) {
+      return candidate
+    }
+  }
+  return { extension: "webm" }
+}
 
 export function VoiceRecordButton({
   onInteractionCreated,
@@ -19,30 +38,65 @@ export function VoiceRecordButton({
   const [recordingState, setRecordingState] = useState<RecordingState>("idle")
   const [transcribedText, setTranscribedText] = useState<string>("")
   const [showReviewModal, setShowReviewModal] = useState(false)
+  const [elapsedSeconds, setElapsedSeconds] = useState(0)
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const streamRef = useRef<MediaStream | null>(null)
   const chunksRef = useRef<Blob[]>([])
+  const recordingStateRef = useRef<RecordingState>("idle")
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const fileExtensionRef = useRef<string>("webm")
+  const pressStartTimeRef = useRef<number>(0)
+
   const { showSuccessToast, showErrorToast } = useCustomToast()
 
-  const transcribeMutation = useMutation({
-    mutationFn: async (audioBlob: Blob) => {
-      // Convert blob to file and send to backend
-      const file = new File([audioBlob], "recording.wav", { type: "audio/wav" })
-      const response = await fetch("/api/v1/transcribe/", {
-        method: "POST",
-        body: (() => {
-          const formData = new FormData()
-          formData.append("file", file)
-          return formData
-        })(),
-      })
-      if (!response.ok) {
-        const error = await response.text()
-        throw new Error(error || "Transcription failed")
+  // Keep ref in sync for event listeners and callbacks
+  useEffect(() => {
+    recordingStateRef.current = recordingState
+  }, [recordingState])
+
+  const clearTimer = useCallback(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current)
+      timerRef.current = null
+    }
+    setElapsedSeconds(0)
+  }, [])
+
+  const cleanupStream = useCallback(() => {
+    if (streamRef.current) {
+      for (const track of streamRef.current.getTracks()) {
+        track.stop()
       }
-      return response.json()
+      streamRef.current = null
+    }
+    mediaRecorderRef.current = null
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      clearTimer()
+      cleanupStream()
+    }
+  }, [clearTimer, cleanupStream])
+
+  const transcribeMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const response = await TranscribeService.transcribeAudio({
+        formData: {
+          file: file as unknown as string,
+        },
+      })
+      return response as { text?: string; language?: string; duration?: number }
     },
     onSuccess: (data) => {
-      setTranscribedText(data.text || "")
+      const text = data?.text?.trim() || ""
+      if (!text) {
+        showErrorToast("No speech detected in audio recording.")
+        setRecordingState("idle")
+        return
+      }
+      setTranscribedText(text)
       setShowReviewModal(true)
       setRecordingState("idle")
     },
@@ -52,73 +106,105 @@ export function VoiceRecordButton({
     },
   })
 
+  const stopRecording = useCallback(() => {
+    clearTimer()
+    if (
+      mediaRecorderRef.current &&
+      mediaRecorderRef.current.state !== "inactive"
+    ) {
+      mediaRecorderRef.current.stop()
+    } else {
+      cleanupStream()
+      setRecordingState("idle")
+    }
+  }, [clearTimer, cleanupStream])
+
   const startRecording = useCallback(async () => {
+    if (recordingStateRef.current !== "idle") return
+
+    setRecordingState("requesting")
+    pressStartTimeRef.current = Date.now()
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: "audio/webm;codecs=opus",
-      })
+      streamRef.current = stream
+
+      const { mimeType, extension } = getSupportedMimeType()
+      fileExtensionRef.current = extension
+
+      const mediaRecorder = mimeType
+        ? new MediaRecorder(stream, { mimeType })
+        : new MediaRecorder(stream)
 
       mediaRecorderRef.current = mediaRecorder
       chunksRef.current = []
 
       mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
+        if (event.data && event.data.size > 0) {
           chunksRef.current.push(event.data)
         }
       }
 
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(chunksRef.current, { type: "audio/webm" })
-        // Stop all tracks to release microphone
-        for (const track of stream.getTracks()) {
-          track.stop()
+        const detectedMimeType =
+          mediaRecorder.mimeType || mimeType || "audio/webm"
+        const audioBlob = new Blob(chunksRef.current, {
+          type: detectedMimeType,
+        })
+
+        cleanupStream()
+
+        if (audioBlob.size === 0) {
+          setRecordingState("idle")
+          return
         }
-        // Start transcription
+
+        const ext = fileExtensionRef.current
+        const file = new File([audioBlob], `recording.${ext}`, {
+          type: detectedMimeType,
+        })
+
         setRecordingState("processing")
-        transcribeMutation.mutate(audioBlob)
+        transcribeMutation.mutate(file)
       }
 
-      mediaRecorder.start()
+      mediaRecorder.start(250) // Request chunks every 250ms
       setRecordingState("recording")
+
+      setElapsedSeconds(0)
+      timerRef.current = setInterval(() => {
+        setElapsedSeconds((prev) => {
+          if (prev >= 180) {
+            // Auto stop after 3 minutes
+            stopRecording()
+            return prev
+          }
+          return prev + 1
+        })
+      }, 1000)
     } catch (error) {
       console.error("Failed to start recording:", error)
-      showErrorToast(
-        "Microphone access denied. Please allow microphone permissions.",
-      )
-      setRecordingState("error")
-      setTimeout(() => setRecordingState("idle"), 3000)
+      cleanupStream()
+      clearTimer()
+      const errorMsg =
+        error instanceof Error && error.name === "NotAllowedError"
+          ? "Microphone access denied. Please allow microphone permissions."
+          : "Could not access microphone."
+      showErrorToast(errorMsg)
+      setRecordingState("idle")
     }
-  }, [transcribeMutation, showErrorToast])
+  }, [
+    cleanupStream,
+    clearTimer,
+    showErrorToast,
+    stopRecording,
+    transcribeMutation,
+  ])
 
-  const stopRecording = useCallback(() => {
-    if (mediaRecorderRef.current && recordingState === "recording") {
-      mediaRecorderRef.current.stop()
-    }
-  }, [recordingState])
-
-  const handleMouseDown = () => {
+  const handleClick = () => {
     if (recordingState === "idle") {
       startRecording()
-    }
-  }
-
-  const handleMouseUp = () => {
-    if (recordingState === "recording") {
-      stopRecording()
-    }
-  }
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    e.preventDefault()
-    if (recordingState === "idle") {
-      startRecording()
-    }
-  }
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    e.preventDefault()
-    if (recordingState === "recording") {
+    } else if (recordingState === "recording") {
       stopRecording()
     }
   }
@@ -135,52 +221,70 @@ export function VoiceRecordButton({
     setTranscribedText("")
   }
 
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs.toString().padStart(2, "0")}`
+  }
+
   return (
     <>
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3">
+        {/* Floating status badge — positioned horizontally to the left of the button to avoid QuickLogFAB above */}
+        {recordingState === "recording" && (
+          <div className="flex items-center gap-2 rounded-full bg-red-600/95 px-3.5 py-1.5 text-sm font-medium text-white shadow-xl backdrop-blur-sm animate-pulse">
+            <span className="size-2 rounded-full bg-white" />
+            <span>Recording {formatTime(elapsedSeconds)}</span>
+            <span className="text-xs text-red-200">(Click to stop)</span>
+          </div>
+        )}
+
+        {recordingState === "processing" && (
+          <div className="flex items-center gap-2 rounded-full bg-amber-500/95 px-3.5 py-1.5 text-sm font-medium text-white shadow-xl backdrop-blur-sm">
+            <Loader2 className="size-3.5 animate-spin" />
+            <span>Transcribing audio...</span>
+          </div>
+        )}
+
+        {recordingState === "requesting" && (
+          <div className="flex items-center gap-2 rounded-full bg-muted/95 px-3.5 py-1.5 text-sm font-medium text-foreground shadow-xl border backdrop-blur-sm">
+            <Loader2 className="size-3.5 animate-spin" />
+            <span>Starting microphone...</span>
+          </div>
+        )}
+
         <Button
           size="lg"
           className={cn(
             "rounded-full w-16 h-16 shadow-lg transition-all duration-200",
             recordingState === "recording" &&
-              "bg-red-500 hover:bg-red-600 scale-110 animate-pulse",
+              "bg-red-600 hover:bg-red-700 scale-110 shadow-red-500/50",
             recordingState === "processing" &&
               "bg-amber-500 hover:bg-amber-600",
           )}
-          onMouseDown={handleMouseDown}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
-          disabled={recordingState === "processing"}
+          onClick={handleClick}
+          disabled={
+            recordingState === "processing" || recordingState === "requesting"
+          }
           aria-label={
             recordingState === "recording"
-              ? "Recording... release to stop"
+              ? "Stop recording"
               : recordingState === "processing"
-                ? "Processing..."
-                : "Hold to record voice"
+                ? "Processing transcription..."
+                : recordingState === "requesting"
+                  ? "Starting recording..."
+                  : "Start voice recording"
           }
         >
-          {recordingState === "processing" ? (
+          {recordingState === "processing" ||
+          recordingState === "requesting" ? (
             <Loader2 className="size-6 animate-spin" />
           ) : recordingState === "recording" ? (
-            <MicOff className="size-6" />
+            <Square className="size-6 fill-current" />
           ) : (
             <Mic className="size-6" />
           )}
         </Button>
-
-        {/* Visual feedback */}
-        {recordingState === "recording" && (
-          <div className="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-red-500 px-3 py-1.5 text-sm text-white shadow-lg">
-            Recording... release to stop
-          </div>
-        )}
-        {recordingState === "processing" && (
-          <div className="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-amber-500 px-3 py-1.5 text-sm text-white shadow-lg">
-            Transcribing...
-          </div>
-        )}
       </div>
 
       {/* Review Modal */}
