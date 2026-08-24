@@ -91,6 +91,7 @@ export {
   Share2,
   ShieldCheck,
   SkipForward,
+  Sparkles,
   Square,
   Star,
   // Theme
