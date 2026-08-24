@@ -5,6 +5,14 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.119] - 2026-08-24
+
+### Fixed
+- Fix(voice): fix audio intake authentication, browser compatibility, and auto-detect attendees and channel (#216) (17f9cab)
+
+### Other
+- ⬆ bump getmeili/meilisearch from v1.52 to v1.53 (#206) (85675ac)
+
 ## [0.2.118] - 2026-08-21
 
 ### Added
