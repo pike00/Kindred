@@ -22,14 +22,11 @@ test.afterAll(async ({ request }) => {
 async function openContacts(page: import("@playwright/test").Page) {
   await page.goto("/contacts")
   const heading = page.getByRole("heading", { name: "Contacts", level: 1 })
-  const search = page.getByPlaceholder(/search by name/i)
   try {
     await expect(heading).toBeVisible({ timeout: 15_000 })
-    await expect(search).toBeVisible({ timeout: 15_000 })
   } catch {
     await page.reload({ waitUntil: "domcontentloaded" })
     await expect(heading).toBeVisible({ timeout: 30_000 })
-    await expect(search).toBeVisible({ timeout: 30_000 })
   }
 }
 
@@ -87,11 +84,7 @@ test.describe("Contacts list", () => {
     page,
     request,
   }) => {
-    // Prefix with "AAA" so the row sorts into the first page of the list
-    // (the list endpoint is limited to 100, ordered alphabetically by first
-    // name; without an "early" prefix our timestamp-named contacts land
-    // beyond the visible window and search returns "No matches" because
-    // search is client-side over the loaded slice).
+    // Prefix with "AAA" so the row sorts into the first page of the list.
     const firstName = `AAAUICreate${Date.now()}`
     await openContacts(page)
     await page
@@ -108,7 +101,6 @@ test.describe("Contacts list", () => {
     // Allow extra time for the round-trip; on slow networks the dialog
     // takes a moment to close after the mutation settles.
     await expect(dialog).not.toBeVisible({ timeout: 15000 })
-    await page.getByPlaceholder(/search by name/i).fill(firstName)
     await expect(page.getByText(firstName).first()).toBeVisible({
       timeout: 10000,
     })
@@ -116,30 +108,6 @@ test.describe("Contacts list", () => {
     const list = await listContacts(request, token)
     const made = list.find((c) => c.first_name === firstName)
     if (made) createdIds.push(made.id)
-  })
-
-  test("search filters the list", async ({ page, request }) => {
-    const unique = `AAAXYZSearch${Date.now()}`
-    const c = await createContact(request, token, { first_name: unique })
-    createdIds.push(c.id)
-
-    await openContacts(page)
-    const search = page.getByPlaceholder(/search by name/i)
-    await search.fill(unique)
-    await expect(page.getByText(unique).first()).toBeVisible({ timeout: 8000 })
-
-    // Clearing returns to full list
-    await search.fill("")
-  })
-
-  test("search showing no matches shows the empty state", async ({ page }) => {
-    await openContacts(page)
-    await page
-      .getByPlaceholder(/search by name/i)
-      .fill(`nope-${Date.now()}-nothingmatches`)
-    await expect(page.getByText(/no matches/i).first()).toBeVisible({
-      timeout: 5000,
-    })
   })
 
   test("bulk select on a row exposes the bulk action bar", async ({
@@ -154,9 +122,6 @@ test.describe("Contacts list", () => {
     await expect(
       page.getByRole("heading", { name: "Contacts", level: 1 }),
     ).toBeVisible({ timeout: 30_000 })
-    const search = page.getByPlaceholder(/search by name/i)
-    await expect(search).toBeVisible({ timeout: 30_000 })
-    await search.fill(name)
     await expect(page.getByText(name).first()).toBeVisible({ timeout: 8000 })
 
     await page
@@ -180,7 +145,6 @@ test.describe("Contacts list", () => {
     createdIds.push(c.id)
 
     await openContacts(page)
-    await page.getByPlaceholder(/search by name/i).fill(name)
     await expect(page.getByText(name).first()).toBeVisible({ timeout: 8000 })
 
     await page
@@ -227,7 +191,6 @@ test.describe("Contacts list", () => {
     createdIds.push(c.id)
 
     await openContacts(page)
-    await page.getByPlaceholder(/search by name/i).fill(name)
     await expect(page.getByText(name).first()).toBeVisible({ timeout: 8000 })
     await page.getByText(name).first().click()
     await expect(page).toHaveURL(new RegExp(`/contacts/${c.id}`))

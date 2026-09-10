@@ -19,14 +19,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
 import {
   Archive,
   ChevronLeft,
   ChevronRight,
   Clock,
   Map as MapIcon,
-  Search,
   Star,
   Trash2,
   Users,
@@ -53,7 +51,6 @@ interface BulkContactRequest {
   }
   contact_ids?: string[]
   select_all_filtered?: boolean
-  filters?: { search?: string }
 }
 
 interface PreviewModalState {
@@ -94,24 +91,6 @@ function titleLine(contact: ContactPublic): string {
   if (contact.title) return contact.title
   if (contact.company) return contact.company
   return ""
-}
-
-function matchesSearch(contact: ContactPublic, q: string): boolean {
-  if (!q) return true
-  const needle = q.toLowerCase()
-  const haystack = [
-    contact.first_name,
-    contact.last_name,
-    contact.middle_name,
-    contact.nickname,
-    contact.company,
-    contact.title,
-    ...(contact.tags?.map((t) => t.name) ?? []),
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase()
-  return haystack.includes(needle)
 }
 
 function daysSince(iso: string | null | undefined): number | null {
@@ -203,10 +182,9 @@ export const ContactsList = () => {
   const seedMutation = useSeedDemo()
 
   const navigate = useNavigate({ from: "/contacts" })
-  const { search: urlSearch, saved_filter_id: urlFilterId } = useSearch({
+  const { saved_filter_id: urlFilterId } = useSearch({
     from: "/_layout/contacts/",
   })
-  const [search, setSearch] = useState(urlSearch ?? "")
   const [pageIndex, setPageIndex] = useState(0)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [selectAllFiltered, setSelectAllFiltered] = useState(false)
@@ -229,10 +207,7 @@ export const ContactsList = () => {
   const { data } = useSuspenseQuery(contactsListQueryOptions(activeFilterId))
 
   const allContacts = useMemo(() => data?.data ?? [], [data?.data])
-  const filtered = useMemo(
-    () => allContacts.filter((c: ContactPublic) => matchesSearch(c, search)),
-    [allContacts, search],
-  )
+  const filtered = allContacts
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const safePageIndex = Math.min(pageIndex, pageCount - 1)
   const paged = filtered.slice(
@@ -297,7 +272,6 @@ export const ContactsList = () => {
       // Build query string
       const params = new URLSearchParams()
       if (selectAllFiltered) params.append("select_all_filtered", "true")
-      if (search) params.append("search", search)
 
       // Get token from localStorage
       const token = localStorage.getItem("token") || ""
@@ -329,7 +303,7 @@ export const ContactsList = () => {
     } catch (_error) {
       toast.error("Failed to export CSV")
     }
-  }, [selectAllFiltered, search])
+  }, [selectAllFiltered])
 
   const handleBulkAction = useCallback(
     async (actionId: BulkActionId) => {
@@ -369,11 +343,6 @@ export const ContactsList = () => {
           operations,
           select_all_filtered: selectAllFiltered || undefined,
           contact_ids: selectAllFiltered ? undefined : Array.from(selectedIds),
-          filters: selectAllFiltered
-            ? {
-                search: search || undefined,
-              }
-            : undefined,
         }
 
         // TODO: backend bulk update endpoint not yet implemented
@@ -390,7 +359,7 @@ export const ContactsList = () => {
         setPreviewModal({ open: false, action: null, count: 0, contacts: [] })
       }
     },
-    [selectedCount, selectAllFiltered, selectedIds, search, handleExportCsv],
+    [selectedCount, selectAllFiltered, selectedIds, handleExportCsv],
   )
 
   const handlePreviewAction = useCallback(
@@ -425,7 +394,7 @@ export const ContactsList = () => {
                 · Filtered by: {activeFilter.name}
                 <button
                   type="button"
-                  onClick={() => navigate({ search: search ? { search } : {} })}
+                  onClick={() => navigate({ search: {} })}
                   className="ml-2 text-xs underline"
                 >
                   Clear filter
@@ -482,24 +451,6 @@ export const ContactsList = () => {
         </div>
       ) : null}
 
-      <div className="relative">
-        <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={search}
-          onChange={(e) => {
-            const next = e.target.value
-            setSearch(next)
-            setPageIndex(0)
-            navigate({
-              search: next ? { search: next } : {},
-              replace: true,
-            })
-          }}
-          placeholder="Search by name, company, or tag..."
-          className="pl-10"
-        />
-      </div>
-
       {/* Select all checkbox for current page */}
       {filtered.length > 0 && (
         <div className="flex items-center gap-2 px-4">
@@ -528,12 +479,6 @@ export const ContactsList = () => {
             />
           ))}
         </div>
-      ) : search ? (
-        <EmptyState
-          icon={Search}
-          title="No matches"
-          description={`Nothing matches "${search}".`}
-        />
       ) : (
         <EmptyState
           icon={Users}

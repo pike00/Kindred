@@ -1,5 +1,5 @@
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query"
-import { createFileRoute, Link } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
 import { useState } from "react"
 import type { DebtPublic, GiftPublic } from "@/client"
 import { DebtsService, GiftsService } from "@/client"
@@ -194,26 +194,16 @@ function ContactDetailPage() {
                   <InfoHint>
                     Small colored labels for free-form classification, like
                     "college", "book club", or "runner". A contact can have
-                    many. Good for quick filtering.
+                    many.
                   </InfoHint>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-1.5">
                   {contact.tags.map((tag) => (
-                    <Link
-                      key={tag.id}
-                      to="/contacts"
-                      search={{ search: tag.name }}
-                      className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-full"
-                    >
-                      <Badge
-                        variant="secondary"
-                        className="cursor-pointer transition-colors hover:bg-secondary/80"
-                      >
-                        {tag.name}
-                      </Badge>
-                    </Link>
+                    <Badge key={tag.id} variant="secondary">
+                      {tag.name}
+                    </Badge>
                   ))}
                 </div>
               </CardContent>
