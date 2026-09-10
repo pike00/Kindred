@@ -282,7 +282,11 @@ def list_contacts(
     )
 
     statement = (
-        statement.order_by(col(Contact.first_name).asc(), col(Contact.last_name).asc())
+        statement.order_by(
+            col(Contact.first_name).asc(),
+            col(Contact.last_name).asc(),
+            col(Contact.id).asc(),
+        )
         .offset(skip)
         .limit(limit)
     )

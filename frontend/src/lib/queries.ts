@@ -1,4 +1,4 @@
-import { queryOptions } from "@tanstack/react-query"
+import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query"
 import {
   CalendarService,
   ContactsService,
@@ -10,14 +10,13 @@ import {
 } from "@/client"
 import { CustomContactsService } from "@/client/custom"
 
-// Single source of truth for the route-level queries. Components call these via
-// `useSuspenseQuery(...)` and the matching route `loader` calls
-// `queryClient.ensureQueryData(...)` with the same factory, so the data is warm
-// before the route commits and the component never suspends on navigation.
+// Single source of truth for the route-level queries. Components and route
+// loaders use the matching query type with the same factory, so data is warm
+// before the route commits and components do not suspend on navigation.
 // Keys/args here MUST stay identical to the component call sites.
 
 // --- Dashboard (`/_layout/`) -------------------------------------------------
-// Note: intentionally distinct from `contactsListQueryOptions` — the dashboard
+// Note: intentionally distinct from `contactsListInfiniteQueryOptions`; the dashboard
 // caps at 100 under key ["contacts"], the list page keys by saved filter.
 export const dashboardContactsQueryOptions = () =>
   queryOptions({
@@ -38,11 +37,27 @@ export const savedFiltersQueryOptions = () =>
     queryFn: () => SavedFiltersService.listSavedFilters(),
   })
 
-export const contactsListQueryOptions = (savedFilterId?: string) =>
-  queryOptions({
-    queryKey: ["contacts", savedFilterId],
-    queryFn: () =>
-      ContactsService.listContacts(savedFilterId ? { savedFilterId } : {}),
+export const CONTACTS_PAGE_SIZE = 25
+
+export const contactsListInfiniteQueryOptions = (savedFilterId?: string) =>
+  infiniteQueryOptions({
+    queryKey: ["contacts", "list", savedFilterId],
+    queryFn: ({ pageParam }) =>
+      ContactsService.listContacts({
+        limit: CONTACTS_PAGE_SIZE,
+        skip: pageParam,
+        ...(savedFilterId ? { savedFilterId } : {}),
+      }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, pages) => {
+      const loadedCount = pages.reduce(
+        (count, page) => count + page.data.length,
+        0,
+      )
+      return lastPage.data.length > 0 && loadedCount < lastPage.count
+        ? loadedCount
+        : undefined
+    },
   })
 
 // --- Contact detail (`/_layout/contacts/$contactId`) -------------------------
