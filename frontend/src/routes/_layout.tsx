@@ -91,12 +91,12 @@ function CommandPaletteTrigger() {
       variant="outline"
       size="sm"
       onClick={() => setOpen(true)}
-      className="ml-auto h-8 gap-2 text-muted-foreground"
+      className="ml-auto h-8 gap-2 text-muted-foreground sm:w-64 sm:justify-start"
       aria-label="Open command palette"
     >
       <Search className="size-4" />
       <span className="hidden sm:inline">Search...</span>
-      <kbd className="pointer-events-none hidden select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium sm:inline-flex">
+      <kbd className="pointer-events-none ml-auto hidden select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium sm:inline-flex">
         {isMac ? "⌘" : "Ctrl"} K
       </kbd>
     </Button>
