@@ -476,6 +476,7 @@ describe("ContactsList", () => {
       limit: 25,
       skip: 25,
     })
+    expect(screen.getByText("All 26 contacts loaded")).toBeInTheDocument()
   })
 
   it("loads the next page when the list sentinel enters the viewport", async () => {
@@ -528,6 +529,66 @@ describe("ContactsList", () => {
       limit: 25,
       skip: 25,
     })
+  })
+
+  it("stops automatic retries after a next-page error and offers manual retry", async () => {
+    const firstPage = Array.from({ length: 25 }, (_, i) =>
+      makeContact({ id: `${i}`, first_name: "Contact", last_name: `${i}` }),
+    )
+    const finalContact = makeContact({
+      id: "25",
+      first_name: "Contact",
+      last_name: "25",
+    })
+    let triggerIntersection: (() => void) | undefined
+    const observerConstructors = vi.fn()
+
+    class TestIntersectionObserver implements IntersectionObserver {
+      readonly root = null
+      readonly rootMargin = "200px"
+      readonly scrollMargin = "0px"
+      readonly thresholds = [0]
+
+      constructor(callback: IntersectionObserverCallback) {
+        observerConstructors()
+        triggerIntersection = () =>
+          callback(
+            [{ isIntersecting: true } as IntersectionObserverEntry],
+            this,
+          )
+      }
+
+      disconnect = vi.fn()
+      observe = vi.fn()
+      takeRecords = vi.fn(() => [])
+      unobserve = vi.fn()
+    }
+
+    vi.stubGlobal("IntersectionObserver", TestIntersectionObserver)
+    let nextPageAttempts = 0
+    mockListContacts.mockImplementation(({ skip = 0 } = {}) => {
+      if (skip === 0) return Promise.resolve({ data: firstPage, count: 26 })
+      nextPageAttempts += 1
+      return nextPageAttempts === 1
+        ? Promise.reject(new Error("network unavailable"))
+        : Promise.resolve({ data: [finalContact], count: 26 })
+    })
+
+    const user = userEvent.setup()
+    renderWithProviders(<ContactsList />)
+    await screen.findByRole("button", { name: "Load more contacts" })
+
+    act(() => triggerIntersection?.())
+
+    const retryButton = await screen.findByRole("button", {
+      name: "Retry loading contacts",
+    })
+    expect(observerConstructors).toHaveBeenCalledTimes(1)
+
+    await user.click(retryButton)
+
+    expect(await screen.findByText("Contact 25")).toBeInTheDocument()
+    expect(screen.getByText("All 26 contacts loaded")).toBeInTheDocument()
   })
 
   it("does not render a previous-page control", async () => {

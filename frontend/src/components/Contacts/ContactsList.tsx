@@ -202,8 +202,14 @@ export const ContactsList = () => {
     (f: SavedFilterPublic) => f.id === activeFilterId,
   )
 
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useSuspenseInfiniteQuery(contactsListInfiniteQueryOptions(activeFilterId))
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchNextPageError,
+    isFetching,
+    isFetchingNextPage,
+  } = useSuspenseInfiniteQuery(contactsListInfiniteQueryOptions(activeFilterId))
   const loadMoreRef = useRef<HTMLDivElement>(null)
 
   const allContacts = useMemo(
@@ -214,7 +220,7 @@ export const ContactsList = () => {
 
   useEffect(() => {
     const target = loadMoreRef.current
-    if (!target || !hasNextPage || isFetchingNextPage) return
+    if (!target || !hasNextPage || isFetching || isFetchNextPageError) return
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -224,7 +230,7 @@ export const ContactsList = () => {
     )
     observer.observe(target)
     return () => observer.disconnect()
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage])
+  }, [fetchNextPage, hasNextPage, isFetchNextPageError, isFetching])
 
   const selectedCount = selectedIds.size
   const isAllSelected =
@@ -518,15 +524,33 @@ export const ContactsList = () => {
       )}
 
       {hasNextPage && (
-        <div ref={loadMoreRef} className="flex justify-center pt-2">
+        <div
+          ref={loadMoreRef}
+          className="flex flex-col items-center gap-2 pt-2"
+        >
+          {isFetchNextPageError && (
+            <p role="alert" className="text-sm text-destructive">
+              Could not load more contacts.
+            </p>
+          )}
           <Button
             variant="outline"
             onClick={() => fetchNextPage()}
-            disabled={isFetchingNextPage}
+            disabled={isFetching}
           >
-            {isFetchingNextPage ? "Loading more..." : "Load more contacts"}
+            {isFetchingNextPage
+              ? "Loading more..."
+              : isFetchNextPageError
+                ? "Retry loading contacts"
+                : "Load more contacts"}
           </Button>
         </div>
+      )}
+
+      {!hasNextPage && allContacts.length > 0 && (
+        <p className="text-center text-sm text-muted-foreground">
+          All {totalCount} {totalCount === 1 ? "contact" : "contacts"} loaded
+        </p>
       )}
 
       {/* Preview/Confirm Modal */}

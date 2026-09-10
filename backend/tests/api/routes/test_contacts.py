@@ -5,8 +5,9 @@ import uuid
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
+from app import crud
 from app.core.config import settings
-from app.models import AllContactsShare
+from app.models import AllContactsShare, Contact
 from tests.utils.user import authentication_token_from_email, create_random_user
 
 
@@ -134,6 +135,49 @@ def test_list_contacts(
         assert "tags" in contact
         # Regression: no legacy `groups` field after the 2026-05-06 merge.
         assert "groups" not in contact
+
+
+def test_list_contacts_uses_id_as_stable_name_tiebreaker(
+    client: TestClient,
+    db: Session,
+    superuser_token_headers: dict[str, str],
+) -> None:
+    superuser = crud.get_user_by_email(session=db, email=settings.FIRST_SUPERUSER)
+    assert superuser is not None
+
+    contact_ids = [
+        uuid.UUID("ffffffff-ffff-4fff-8fff-fffffffffff1"),
+        uuid.UUID("00000000-0000-4000-8000-000000000001"),
+    ]
+    for contact_id in contact_ids:
+        db.add(
+            Contact(
+                id=contact_id,
+                owner_id=superuser.id,
+                first_name="StablePaginationTie",
+                last_name="",
+            )
+        )
+    db.commit()
+
+    response = client.get(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=superuser_token_headers,
+        params={"search": "StablePaginationTie", "limit": 1},
+    )
+    assert response.status_code == 200
+    first_page = response.json()
+
+    response = client.get(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=superuser_token_headers,
+        params={"search": "StablePaginationTie", "skip": 1, "limit": 1},
+    )
+    assert response.status_code == 200
+    second_page = response.json()
+
+    returned_ids = [first_page["data"][0]["id"], second_page["data"][0]["id"]]
+    assert returned_ids == sorted(str(contact_id) for contact_id in contact_ids)
 
 
 def test_list_contacts_excludes_archived(
@@ -884,5 +928,3 @@ def test_create_and_update_contact_with_optional_birthday_year(
     )
     assert r_clear.status_code == 200
     assert r_clear.json()["birthday"] is None
-
-
