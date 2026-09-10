@@ -64,11 +64,19 @@ class MockResizeObserver {
 global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver
 
 // Stub IntersectionObserver
-global.IntersectionObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-}))
+class IntersectionObserverMock implements IntersectionObserver {
+  readonly root = null
+  readonly rootMargin = "0px"
+  readonly scrollMargin = "0px"
+  readonly thresholds = [0]
+
+  disconnect = vi.fn()
+  observe = vi.fn()
+  takeRecords = vi.fn(() => [])
+  unobserve = vi.fn()
+}
+
+global.IntersectionObserver = IntersectionObserverMock
 
 // Stub scrollIntoView (not in jsdom)
 Element.prototype.scrollIntoView = vi.fn()

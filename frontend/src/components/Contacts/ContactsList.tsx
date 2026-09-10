@@ -1,6 +1,9 @@
-import { useSuspenseQuery } from "@tanstack/react-query"
+import {
+  useSuspenseInfiniteQuery,
+  useSuspenseQuery,
+} from "@tanstack/react-query"
 import { Link, useNavigate, useSearch } from "@tanstack/react-router"
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "sonner"
 
 import type { ContactPublic } from "@/client"
@@ -21,8 +24,6 @@ import {
 } from "@/components/ui/dialog"
 import {
   Archive,
-  ChevronLeft,
-  ChevronRight,
   Clock,
   Map as MapIcon,
   Star,
@@ -30,7 +31,7 @@ import {
   Users,
 } from "@/lib/icons"
 import {
-  contactsListQueryOptions,
+  contactsListInfiniteQueryOptions,
   savedFiltersQueryOptions,
 } from "@/lib/queries"
 import { useSeedDemo } from "@/lib/seed"
@@ -59,8 +60,6 @@ interface PreviewModalState {
   count: number
   contacts: ContactPublic[]
 }
-
-const PAGE_SIZE = 25
 
 const BULK_ACTIONS = [
   { id: "archive", label: "Archive", icon: Archive, color: "" },
@@ -185,7 +184,6 @@ export const ContactsList = () => {
   const { saved_filter_id: urlFilterId } = useSearch({
     from: "/_layout/contacts/",
   })
-  const [pageIndex, setPageIndex] = useState(0)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [selectAllFiltered, setSelectAllFiltered] = useState(false)
   const [previewModal, setPreviewModal] = useState<PreviewModalState>({
@@ -204,39 +202,53 @@ export const ContactsList = () => {
     (f: SavedFilterPublic) => f.id === activeFilterId,
   )
 
-  const { data } = useSuspenseQuery(contactsListQueryOptions(activeFilterId))
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useSuspenseInfiniteQuery(contactsListInfiniteQueryOptions(activeFilterId))
+  const loadMoreRef = useRef<HTMLDivElement>(null)
 
-  const allContacts = useMemo(() => data?.data ?? [], [data?.data])
-  const filtered = allContacts
-  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
-  const safePageIndex = Math.min(pageIndex, pageCount - 1)
-  const paged = filtered.slice(
-    safePageIndex * PAGE_SIZE,
-    (safePageIndex + 1) * PAGE_SIZE,
+  const allContacts = useMemo(
+    () => data.pages.flatMap((page) => page.data),
+    [data.pages],
   )
+  const totalCount = data.pages[0]?.count ?? allContacts.length
+
+  useEffect(() => {
+    const target = loadMoreRef.current
+    if (!target || !hasNextPage || isFetchingNextPage) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) void fetchNextPage()
+      },
+      { rootMargin: "200px" },
+    )
+    observer.observe(target)
+    return () => observer.disconnect()
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage])
 
   const selectedCount = selectedIds.size
   const isAllSelected =
-    paged.length > 0 && paged.every((c: ContactPublic) => selectedIds.has(c.id))
-  const isSomeSelected = paged.some((c: ContactPublic) => selectedIds.has(c.id))
+    allContacts.length > 0 &&
+    allContacts.every((c: ContactPublic) => selectedIds.has(c.id))
+  const isSomeSelected = allContacts.some((c: ContactPublic) =>
+    selectedIds.has(c.id),
+  )
 
   const handleToggleAll = useCallback(() => {
     if (isAllSelected) {
-      // Deselect all on current page
       const newSelected = new Set(selectedIds)
-      paged.forEach((c: ContactPublic) => {
+      allContacts.forEach((c: ContactPublic) => {
         newSelected.delete(c.id)
       })
       setSelectedIds(newSelected)
     } else {
-      // Select all on current page
       const newSelected = new Set(selectedIds)
-      paged.forEach((c: ContactPublic) => {
+      allContacts.forEach((c: ContactPublic) => {
         newSelected.add(c.id)
       })
       setSelectedIds(newSelected)
     }
-  }, [paged, selectedIds, isAllSelected])
+  }, [allContacts, selectedIds, isAllSelected])
 
   const handleToggle = useCallback(
     (id: string) => {
@@ -387,8 +399,7 @@ export const ContactsList = () => {
             Contacts
           </h1>
           <p className="text-muted-foreground mt-1">
-            {allContacts.length}{" "}
-            {allContacts.length === 1 ? "person" : "people"}
+            {totalCount} {totalCount === 1 ? "person" : "people"}
             {activeFilter && (
               <span className="text-primary">
                 · Filtered by: {activeFilter.name}
@@ -451,26 +462,27 @@ export const ContactsList = () => {
         </div>
       ) : null}
 
-      {/* Select all checkbox for current page */}
-      {filtered.length > 0 && (
+      {allContacts.length > 0 && (
         <div className="flex items-center gap-2 px-4">
           <Checkbox
             checked={isAllSelected}
             onCheckedChange={handleToggleAll}
-            aria-label="Select all on this page"
+            aria-label="Select all loaded contacts"
             {...(isSomeSelected && !isAllSelected
               ? { indeterminate: true }
               : {})}
           />
           <span className="text-sm text-muted-foreground">
-            {isAllSelected ? "All on page selected" : "Select all on this page"}
+            {isAllSelected
+              ? "All loaded contacts selected"
+              : "Select all loaded contacts"}
           </span>
         </div>
       )}
 
-      {paged.length > 0 ? (
+      {allContacts.length > 0 ? (
         <div className="space-y-2">
-          {paged.map((contact: ContactPublic) => (
+          {allContacts.map((contact: ContactPublic) => (
             <ContactRow
               key={contact.id}
               contact={contact}
@@ -505,34 +517,15 @@ export const ContactsList = () => {
         />
       )}
 
-      {pageCount > 1 && (
-        <div className="flex items-center justify-between gap-4 pt-2">
-          <p className="text-xs text-muted-foreground">
-            Page {safePageIndex + 1} of {pageCount} · {filtered.length} result
-            {filtered.length === 1 ? "" : "s"}
-          </p>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="outline"
-              size="icon-sm"
-              onClick={() => setPageIndex((i) => Math.max(0, i - 1))}
-              disabled={safePageIndex === 0}
-              aria-label="Previous page"
-            >
-              <ChevronLeft className="size-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon-sm"
-              onClick={() =>
-                setPageIndex((i) => Math.min(pageCount - 1, i + 1))
-              }
-              disabled={safePageIndex >= pageCount - 1}
-              aria-label="Next page"
-            >
-              <ChevronRight className="size-4" />
-            </Button>
-          </div>
+      {hasNextPage && (
+        <div ref={loadMoreRef} className="flex justify-center pt-2">
+          <Button
+            variant="outline"
+            onClick={() => fetchNextPage()}
+            disabled={isFetchingNextPage}
+          >
+            {isFetchingNextPage ? "Loading more..." : "Load more contacts"}
+          </Button>
         </div>
       )}
 

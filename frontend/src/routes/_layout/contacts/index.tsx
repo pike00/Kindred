@@ -3,7 +3,7 @@ import { z } from "zod"
 
 import { ContactsList } from "@/components/Contacts/ContactsList"
 import {
-  contactsListQueryOptions,
+  contactsListInfiniteQueryOptions,
   savedFiltersQueryOptions,
 } from "@/lib/queries"
 import { queryClient } from "@/lib/queryClient"
@@ -19,7 +19,9 @@ export const Route = createFileRoute("/_layout/contacts/")({
   loader: ({ deps }) =>
     Promise.all([
       queryClient.ensureQueryData(savedFiltersQueryOptions()),
-      queryClient.ensureQueryData(contactsListQueryOptions(deps.savedFilterId)),
+      queryClient.ensureInfiniteQueryData(
+        contactsListInfiniteQueryOptions(deps.savedFilterId),
+      ),
     ]),
   head: () => ({
     meta: [{ title: "Contacts · Kindred" }],
