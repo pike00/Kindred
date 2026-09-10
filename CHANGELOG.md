@@ -5,6 +5,14 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.121] - 2026-09-10
+
+### Other
+- Contacts: load contact pages on demand (#233) (4ff1a3f)
+- ⬆ bump zod from 4.4.3 to 4.5.4 (#229) (d2f4372)
+- ⬆ bump @testing-library/react from 16.3.2 to 16.3.3 (#227) (b5636ff)
+- ⬆ bump axios from 1.19.0 to 1.20.0 (#228) (ffcc8b5)
+
 ## [0.2.120] - 2026-09-10
 
 ### Other
@@ -1385,5 +1393,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Frontend: use refetchQueries instead of invalidateQueries for reminders (d13c12a)
 - Docker-compose: add explicit DNS server for backend and frontend (010f2d4)
 - Chore: flatten app/ subdirectory to project root (97b7694)
-
 
