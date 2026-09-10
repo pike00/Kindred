@@ -5,6 +5,25 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.120] - 2026-09-10
+
+### Other
+- Ui: remove duplicate contacts search (#232) (c1c712e)
+- ⬆ bump faster-whisper from 1.0.3 to 1.2.1 (#226) (e64449d)
+- ⬆ bump rollup from 4.61.1 to 4.63.1 (#224) (eed3dd6)
+- ⬆ bump @types/react-dom from 19.2.4 to 19.2.5 (#218) (68fab65)
+- ⬆ bump @tanstack/react-query-devtools from 5.101.4 to 5.102.8 (#221) (7541905)
+- ⬆ bump @testing-library/user-event from 14.6.4 to 14.6.6 (#220) (82214b9)
+- ⬆ bump fast-uri from 3.1.5 to 3.1.6 (#225) (5ec5f45)
+- ⬆ bump phonenumbers from 9.0.31 to 9.0.37 (#207) (b5353f2)
+- ⬆ bump alembic from 1.18.4 to 1.19.1 (#217) (508204e)
+- ⬆ bump axios from 1.18.1 to 1.19.0 (#215) (2cb2595)
+- ⬆ bump rollup from 4.61.1 to 4.62.5 (#212) (087aead)
+- ⬆ bump @tanstack/react-router from 1.170.29 to 1.170.31 (#211) (f748dae)
+- ⬆ bump @hookform/resolvers from 5.9.0 to 5.9.1 (#214) (9cdd62f)
+- ⬆ bump @tanstack/router-plugin from 1.168.32 to 1.168.34 (#213) (e9476bf)
+- ⬆ bump uvicorn[standard] from 0.32.0 to 0.52.4 (#208) (b522b11)
+
 ## [0.2.119] - 2026-08-24
 
 ### Fixed
