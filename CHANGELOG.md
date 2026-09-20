@@ -5,6 +5,16 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.122] - 2026-09-20
+
+### Other
+- ⬆ Consolidate pending Dependabot updates (#243) (bd8d0dc)
+- ⬆ bump @tanstack/react-router from 1.170.31 to 1.170.33 (#236) (d47e681)
+- ⬆ update sentry-sdk[fastapi] requirement (#239) (3f6fc2e)
+- Build(deps): bump anyio from 4.13.0 to 4.14.2 in /sdk (#241) (a10ffaf)
+- ⬆ bump radicale from 3.7.5 to 3.8.0 (#235) (44bb738)
+- ⬆ bump apprise from 1.10.0 to 1.13.1 (#231) (aa3e63b)
+
 ## [0.2.121] - 2026-09-10
 
 ### Other
@@ -135,33 +145,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.109] - 2026-08-18
 
-### Fixed
-- Fix(dashboard): format badge as 'due' when check-in is due within [-2, 2] days (#199) (741a464)
-
-### Other
-- Merge: sync main with gitea/main (97530f2)
-
-## [0.2.108] - 2026-08-16
-
-### Fixed
-- Fix(frontend): default OpenAPI.BASE to empty string and configure dev server API proxying (b42a336)
-- Fix(frontend): eliminate sidebar navigation delay and add loading feedback (439df96)
-- Fix(version): sync backend pyproject.toml version during releases (1d2e49a)
-- Fix(release): handle non-GitHub origin remotes gracefully in release script (88b2bff)
-
-## [0.2.107] - 2026-08-12
-
-### Added
-- Feat(version): add runtime /utils/info API endpoint and dynamic query fallback in Footer (64f5101)
-
-### Fixed
-- Fix(version): fix fallback version resolution to prevent 0.0.0 footer (0993a85)
-
-### Other
-- Build(docker): use BUILDPLATFORM in Dockerfile.prod for frontend-builder (9b13b96)
-
-## [0.2.106] - 2026-08-09
-
 ### Added
 - Feat(frontend): eliminate sidebar navigation click delay and add loading feedback (#196) (673cd5e)
 
@@ -169,15 +152,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Docs: revamp README for a public audience (#166) (2c9c74e)
 
 ### Fixed
-- Fix(version): resolve version and commit hash fallbacks durably (45409f4)
+- Fix(dashboard): format badge as 'due' when check-in is due within [-2, 2] days (#199) (741a464)
 
 ### Other
-- Test(footer): fix link role regex match for Footer test (2008962)
-- Add bundle placeholder verification scanner and integrate into prepush gate (7a839f9)
-- Add build-time validation guard in vite.config.ts against placeholder API URLs (0c988dd)
-- Fix VITE_API_URL default in Dockerfile.prod for same-origin production requests (8bdd1be)
-- Fix prepush gate and backend Dockerfile dependencies (7064f1b)
-- Make Interaction Activity compact and expandable below contact metadata (eec918a)
+- Merge: sync main with gitea/main (97530f2)
 - Merge: sync dependabot/combine-all with github/main (7fa2e5c)
 - Style: format code according to ruff 0.16.0 and biome linter rules (008a32c)
 - Deps(frontend): bump @tanstack/router-plugin to 1.168.24 (82182da)
@@ -209,6 +187,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ⬆ Bump actions/checkout from 6 to 7 (2f777b8)
 - ⬆ bump getmeili/meilisearch from v1.52.0 to v1.53.0 (#192) (a4ab48f)
 - ⬆ bump getmeili/meilisearch from v1.51.0 to v1.52.0 (#185) (c5cea78)
+
+## [0.2.108] - 2026-08-16
+
+### Fixed
+- Fix(frontend): default OpenAPI.BASE to empty string and configure dev server API proxying (b42a336)
+- Fix(frontend): eliminate sidebar navigation delay and add loading feedback (439df96)
+- Fix(version): sync backend pyproject.toml version during releases (1d2e49a)
+- Fix(release): handle non-GitHub origin remotes gracefully in release script (88b2bff)
+
+## [0.2.107] - 2026-08-12
+
+### Added
+- Feat(version): add runtime /utils/info API endpoint and dynamic query fallback in Footer (64f5101)
+
+### Fixed
+- Fix(version): fix fallback version resolution to prevent 0.0.0 footer (0993a85)
+
+### Other
+- Build(docker): use BUILDPLATFORM in Dockerfile.prod for frontend-builder (9b13b96)
+
+## [0.2.106] - 2026-08-09
+
+### Fixed
+- Fix(version): resolve version and commit hash fallbacks durably (45409f4)
+
+### Other
+- Test(footer): fix link role regex match for Footer test (2008962)
+- Add bundle placeholder verification scanner and integrate into prepush gate (7a839f9)
+- Add build-time validation guard in vite.config.ts against placeholder API URLs (0c988dd)
+- Fix VITE_API_URL default in Dockerfile.prod for same-origin production requests (8bdd1be)
+- Fix prepush gate and backend Dockerfile dependencies (7064f1b)
+- Make Interaction Activity compact and expandable below contact metadata (eec918a)
 - Limit Stay in Touch widget to 2 contacts with expandable toggle (86329a8)
 
 ## [0.2.105] - 2026-08-05
@@ -269,9 +279,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Fix: report homelab compose status (233ccbf)
+- Fix: hide deleted gifts from listings (605a440)
 
 ### Other
 - Email: ingest matching Gmail interactions (954c431)
+- Revert "chore(release): v0.2.98" (953c4cf)
 
 ## [0.2.98] - 2026-08-02
 
@@ -281,11 +293,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Documentation
 - Docs: trim stale frontend coverage notes (a3d61ef)
 
-### Fixed
-- Fix: hide deleted gifts from listings (605a440)
-
 ### Other
-- Revert "chore(release): v0.2.98" (953c4cf)
 - Test: silence expected command palette errors (1bd0a74)
 
 ## [0.2.97] - 2026-08-02
@@ -1393,4 +1401,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Frontend: use refetchQueries instead of invalidateQueries for reminders (d13c12a)
 - Docker-compose: add explicit DNS server for backend and frontend (010f2d4)
 - Chore: flatten app/ subdirectory to project root (97b7694)
+
 
