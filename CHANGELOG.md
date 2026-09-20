@@ -5,6 +5,11 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.123] - 2026-09-20
+
+### Fixed
+- Fix: suppress disabled contact follow-ups (48effeb)
+
 ## [0.2.122] - 2026-09-20
 
 ### Other
@@ -279,11 +284,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Fix: report homelab compose status (233ccbf)
-- Fix: hide deleted gifts from listings (605a440)
 
 ### Other
 - Email: ingest matching Gmail interactions (954c431)
-- Revert "chore(release): v0.2.98" (953c4cf)
 
 ## [0.2.98] - 2026-08-02
 
@@ -293,7 +296,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Documentation
 - Docs: trim stale frontend coverage notes (a3d61ef)
 
+### Fixed
+- Fix: hide deleted gifts from listings (605a440)
+
 ### Other
+- Revert "chore(release): v0.2.98" (953c4cf)
 - Test: silence expected command palette errors (1bd0a74)
 
 ## [0.2.97] - 2026-08-02
