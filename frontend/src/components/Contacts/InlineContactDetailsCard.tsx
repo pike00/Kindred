@@ -4,10 +4,7 @@ import { ContactsService } from "@/client"
 import { InlineBirthday } from "@/components/Contacts/BirthdayInput"
 import { TimezoneInput } from "@/components/Contacts/TimezoneInput"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  InlineText,
-  InlineTextarea,
-} from "@/components/ui/inline-edit"
+import { InlineText, InlineTextarea } from "@/components/ui/inline-edit"
 import { Switch } from "@/components/ui/switch"
 import useCustomToast from "@/hooks/useCustomToast"
 import {
@@ -40,6 +37,10 @@ export function InlineContactDetailsCard({
       showSuccessToast("Updated successfully")
       queryClient.invalidateQueries({ queryKey: ["contacts"] })
       queryClient.invalidateQueries({ queryKey: ["contacts", contact.id] })
+      queryClient.invalidateQueries({ queryKey: ["overdue-contacts"] })
+      queryClient.invalidateQueries({ queryKey: ["losing-touch"] })
+      queryClient.invalidateQueries({ queryKey: ["reminders"] })
+      queryClient.invalidateQueries({ queryKey: ["reminders-due"] })
     },
     onError: (error: Error) => {
       showErrorToast(error.message || "Failed to update contact")

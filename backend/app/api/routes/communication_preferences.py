@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException
 from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
-from app.crud import contact_visible
+from app.crud import clear_contact_reminders, contact_visible
 from app.models import (
     CommunicationPreference,
     CommunicationPreferenceCreate,
@@ -88,6 +88,9 @@ def upsert_communication_preference(
         update_data = pref_in.model_dump(exclude_unset=True)
         pref.sqlmodel_update(update_data)
         session.add(pref)
+
+    if pref.do_not_contact:
+        clear_contact_reminders(session=session, contact_id=contact_id)
 
     session.commit()
     session.refresh(pref)

@@ -21,10 +21,15 @@ from sqlmodel import Field, SQLModel, col, func, select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.core.config import settings as app_settings
-from app.crud import visible_contact_ids
+from app.crud import (
+    clear_contact_reminders,
+    contact_reminders_enabled_filter,
+    visible_contact_ids,
+)
 from app.filter_compiler import apply_filter_json
 from app.models import (
     Address,
+    CommunicationPreference,
     Contact,
     ContactCreate,
     ContactField,
@@ -309,8 +314,13 @@ def list_overdue_contacts(
         .where(
             Contact.id.in_(visible_contact_ids(current_user, include_deleted=False)),
             Contact.is_archived.is_(False),
+            contact_reminders_enabled_filter(),
             Contact.last_contacted_at < cutoff,
             (Contact.snoozed_until.is_(None)) | (Contact.snoozed_until <= now),
+        )
+        .outerjoin(
+            CommunicationPreference,
+            CommunicationPreference.contact_id == Contact.id,
         )
         .order_by(Contact.last_contacted_at.asc())
     )
@@ -326,11 +336,17 @@ def list_losing_touch_contacts(
     """List contacts with a set cadence that are overdue or never contacted."""
     now = datetime.now(timezone.utc)
     contacts = session.exec(
-        select(Contact).where(
+        select(Contact)
+        .where(
             Contact.id.in_(visible_contact_ids(current_user, include_deleted=False)),
             Contact.is_archived.is_(False),
+            contact_reminders_enabled_filter(),
             Contact.contact_frequency_days.is_not(None),
             (Contact.snoozed_until.is_(None)) | (Contact.snoozed_until <= now),
+        )
+        .outerjoin(
+            CommunicationPreference,
+            CommunicationPreference.contact_id == Contact.id,
         )
     ).all()
     losing = [
@@ -683,6 +699,9 @@ def update_contact(
     if "vcard_raw" in update_data and contact.vcard_raw:
         contact.vcard_sha256 = compute_vcard_hash(contact.vcard_raw)
     session.add(contact)
+
+    if contact.do_not_contact:
+        clear_contact_reminders(session=session, contact_id=contact.id)
 
     # Sync tags if tag_ids was provided
     if tag_ids is not None:

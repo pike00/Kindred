@@ -41,6 +41,7 @@ async def check_reminders(ctx: dict) -> None:
         due_reminders = session.exec(
             select(Reminder).where(
                 Reminder.is_active.is_(True),
+                Reminder.deleted_at.is_(None),
                 Reminder.remind_at <= now,
                 (Reminder.snoozed_until.is_(None)) | (Reminder.snoozed_until <= now),
             )
@@ -59,6 +60,12 @@ async def check_reminders(ctx: dict) -> None:
             if reminder.contact_id:
                 contact = session.get(Contact, reminder.contact_id)
                 if contact:
+                    if contact.do_not_contact:
+                        logger.info(
+                            f"Skipping reminder {reminder.id}: "
+                            f"contact {contact.id} has reminders paused"
+                        )
+                        continue
                     # Skip if do-not-contact is set
                     pref = session.exec(
                         select(CommunicationPreference).where(
@@ -129,6 +136,8 @@ async def check_cadences(ctx: dict) -> None:
 
         for contact in contacts:
             # Skip if do-not-contact is set
+            if contact.do_not_contact:
+                continue
             pref = session.exec(
                 select(CommunicationPreference).where(
                     CommunicationPreference.contact_id == contact.id

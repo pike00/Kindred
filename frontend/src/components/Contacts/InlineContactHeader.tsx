@@ -61,7 +61,9 @@ function ContactBirthday({ birthday }: { birthday: string }) {
     <span className="flex items-center gap-1">
       <Cake className="size-3.5" />
       <span>
-        {info.age != null ? `Born ${info.formatted}` : `Birthday ${info.formatted}`}
+        {info.age != null
+          ? `Born ${info.formatted}`
+          : `Birthday ${info.formatted}`}
         {info.age != null && <> · {info.age} years old</>}
         {info.upcoming && (
           <>
@@ -104,6 +106,10 @@ export function InlineContactHeader({
       showSuccessToast("Contact updated")
       queryClient.invalidateQueries({ queryKey: ["contacts"] })
       queryClient.invalidateQueries({ queryKey: ["contacts", contact.id] })
+      queryClient.invalidateQueries({ queryKey: ["overdue-contacts"] })
+      queryClient.invalidateQueries({ queryKey: ["losing-touch"] })
+      queryClient.invalidateQueries({ queryKey: ["reminders"] })
+      queryClient.invalidateQueries({ queryKey: ["reminders-due"] })
     },
     onError: (error: Error) => {
       showErrorToast(error.message || "Failed to update contact")
