@@ -123,6 +123,10 @@ export function CommunicationPreferenceCard({
         queryKey: ["communication-preference", contact.id],
       })
       queryClient.invalidateQueries({ queryKey: ["contacts", contact.id] })
+      queryClient.invalidateQueries({ queryKey: ["overdue-contacts"] })
+      queryClient.invalidateQueries({ queryKey: ["losing-touch"] })
+      queryClient.invalidateQueries({ queryKey: ["reminders"] })
+      queryClient.invalidateQueries({ queryKey: ["reminders-due"] })
     },
     onError: (error: Error) => {
       showErrorToast(error.message || "Failed to update preferences")
@@ -141,6 +145,10 @@ export function CommunicationPreferenceCard({
         queryKey: ["communication-preference", contact.id],
       })
       queryClient.invalidateQueries({ queryKey: ["contacts", contact.id] })
+      queryClient.invalidateQueries({ queryKey: ["overdue-contacts"] })
+      queryClient.invalidateQueries({ queryKey: ["losing-touch"] })
+      queryClient.invalidateQueries({ queryKey: ["reminders"] })
+      queryClient.invalidateQueries({ queryKey: ["reminders-due"] })
     },
     onError: (error: Error) => {
       showErrorToast(error.message || "Failed to remove preferences")

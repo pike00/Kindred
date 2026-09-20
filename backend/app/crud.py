@@ -3,7 +3,8 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import func, union
+from sqlalchemy import and_, func, or_, union
+from sqlalchemy.sql.elements import ColumnElement
 from sqlmodel import Session, select
 from sqlmodel import delete as sql_delete
 
@@ -17,6 +18,7 @@ from app.models import (
     APIKey,
     APIKeyCreate,
     APIKeyImpersonate,
+    CommunicationPreference,
     Contact,
     ContactCreate,
     ContactField,
@@ -64,6 +66,39 @@ from app.models import (
     UserUpdate,
 )
 from app.vcard import compute_vcard_hash
+
+
+def contact_reminders_enabled_filter() -> ColumnElement[bool]:
+    """Return a SQL filter for contacts eligible for follow-up reminders."""
+    return and_(
+        Contact.do_not_contact.is_(False),
+        or_(
+            CommunicationPreference.id.is_(None),
+            CommunicationPreference.do_not_contact.is_(False),
+        ),
+    )
+
+
+def clear_contact_reminders(
+    *, session: Session, contact_id: uuid.UUID, now: datetime | None = None
+) -> None:
+    """Clear all follow-up state linked to a contact."""
+    cleared_at = now or datetime.now(timezone.utc)
+    contact = session.get(Contact, contact_id)
+    if contact is not None:
+        contact.snoozed_until = None
+        session.add(contact)
+
+    reminders = session.exec(
+        select(Reminder).where(
+            Reminder.contact_id == contact_id,
+            Reminder.deleted_at.is_(None),
+        )
+    ).all()
+    for reminder in reminders:
+        reminder.deleted_at = cleared_at
+        reminder.is_active = False
+        session.add(reminder)
 
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:

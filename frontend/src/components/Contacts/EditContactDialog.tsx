@@ -118,6 +118,10 @@ export const EditContactDialog = ({ contact }: EditContactDialogProps) => {
       setOpen(false)
       queryClient.invalidateQueries({ queryKey: ["contacts"] })
       queryClient.invalidateQueries({ queryKey: ["contacts", contact.id] })
+      queryClient.invalidateQueries({ queryKey: ["overdue-contacts"] })
+      queryClient.invalidateQueries({ queryKey: ["losing-touch"] })
+      queryClient.invalidateQueries({ queryKey: ["reminders"] })
+      queryClient.invalidateQueries({ queryKey: ["reminders-due"] })
     },
     onError: (error: Error) => {
       showErrorToast(error.message || "Failed to update contact")

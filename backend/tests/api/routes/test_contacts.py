@@ -7,7 +7,7 @@ from sqlmodel import Session
 
 from app import crud
 from app.core.config import settings
-from app.models import AllContactsShare, Contact
+from app.models import AllContactsShare, Contact, Reminder
 from tests.utils.user import authentication_token_from_email, create_random_user
 
 
@@ -878,6 +878,95 @@ def test_snoozed_contact_excluded_from_overdue(
     assert contact_id not in overdue_ids2
 
 
+def test_do_not_contact_excluded_from_follow_up_surfaces(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
+    """A paused contact is absent from overdue and losing-touch lists."""
+    r = client.post(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=superuser_token_headers,
+        json={
+            "first_name": "PausedContact",
+            "last_contacted_at": "2020-01-01T00:00:00Z",
+            "contact_frequency_days": 7,
+            "do_not_contact": True,
+        },
+    )
+    assert r.status_code == 200
+    contact_id = r.json()["id"]
+
+    overdue = client.get(
+        f"{settings.API_V1_STR}/contacts/overdue",
+        headers=superuser_token_headers,
+    )
+    losing_touch = client.get(
+        f"{settings.API_V1_STR}/contacts/losing-touch",
+        headers=superuser_token_headers,
+    )
+
+    assert contact_id not in [contact["id"] for contact in overdue.json()["data"]]
+    assert contact_id not in [contact["id"] for contact in losing_touch.json()["data"]]
+
+
+def test_marking_contact_do_not_contact_clears_linked_reminders(
+    client: TestClient,
+    db: Session,
+    superuser_token_headers: dict[str, str],
+) -> None:
+    """Enabling reminder suppression soft-deletes only linked reminders."""
+    contact_response = client.post(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=superuser_token_headers,
+        json={"first_name": "ReminderContact"},
+    )
+    assert contact_response.status_code == 200
+    contact_id = contact_response.json()["id"]
+
+    linked_response = client.post(
+        f"{settings.API_V1_STR}/reminders/",
+        headers=superuser_token_headers,
+        json={
+            "title": "Linked follow-up",
+            "remind_at": "2020-01-01T00:00:00Z",
+            "contact_id": contact_id,
+        },
+    )
+    standalone_response = client.post(
+        f"{settings.API_V1_STR}/reminders/",
+        headers=superuser_token_headers,
+        json={
+            "title": "Standalone follow-up",
+            "remind_at": "2020-01-01T00:00:00Z",
+        },
+    )
+    assert linked_response.status_code == 200
+    assert standalone_response.status_code == 200
+
+    snooze_response = client.post(
+        f"{settings.API_V1_STR}/contacts/{contact_id}/snooze",
+        headers=superuser_token_headers,
+        json={"duration": "indefinitely"},
+    )
+    assert snooze_response.status_code == 200
+    assert snooze_response.json()["snoozed_until"] is not None
+
+    update_response = client.patch(
+        f"{settings.API_V1_STR}/contacts/{contact_id}",
+        headers=superuser_token_headers,
+        json={"do_not_contact": True},
+    )
+    assert update_response.status_code == 200
+    assert update_response.json()["snoozed_until"] is None
+
+    linked = db.get(Reminder, uuid.UUID(linked_response.json()["id"]))
+    standalone = db.get(Reminder, uuid.UUID(standalone_response.json()["id"]))
+    assert linked is not None
+    assert linked.deleted_at is not None
+    assert linked.is_active is False
+    assert standalone is not None
+    assert standalone.deleted_at is None
+
+
 def test_create_and_update_contact_with_optional_birthday_year(
     client: TestClient, superuser_token_headers: dict[str, str]
 ) -> None:
@@ -898,7 +987,6 @@ def test_create_and_update_contact_with_optional_birthday_year(
         json={"first_name": "SentinelYear", "birthday": "0001-08-20"},
     )
     assert r.status_code == 200
-    cid2 = r.json()["id"]
     assert r.json()["birthday"] == "0001-08-20"
 
     # 3. Create with partial ISO format --08-20
@@ -908,7 +996,6 @@ def test_create_and_update_contact_with_optional_birthday_year(
         json={"first_name": "PartialISO", "birthday": "--08-20"},
     )
     assert r.status_code == 200
-    cid3 = r.json()["id"]
     assert r.json()["birthday"] == "0001-08-20"
 
     # 4. Update contact from full year to year-less

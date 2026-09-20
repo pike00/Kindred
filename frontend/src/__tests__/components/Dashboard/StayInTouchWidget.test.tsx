@@ -61,6 +61,31 @@ describe("StayInTouchWidget", () => {
     })
   })
 
+  it("omits suppressed contacts and never renders the old badge", async () => {
+    mockListOverdueContacts.mockReturnValue(
+      cancelable({
+        count: 2,
+        data: [
+          makeContact({
+            id: "suppressed",
+            first_name: "Suppressed",
+            do_not_contact: true,
+          }),
+          makeContact({ id: "visible", first_name: "Visible" }),
+        ],
+      }),
+    )
+
+    renderWithProviders(<StayInTouchWidget />)
+
+    await waitFor(() => {
+      expect(screen.getByText("Visible Smith")).toBeInTheDocument()
+      expect(screen.queryByText("Suppressed")).not.toBeInTheDocument()
+      expect(screen.queryByText("Do not contact")).not.toBeInTheDocument()
+      expect(screen.getByText("1 overdue")).toBeInTheDocument()
+    })
+  })
+
   it("limits displayed contacts to 2 and shows +X more overdue button when count > 2", async () => {
     const contacts = [
       makeContact({ id: "1", first_name: "Alice", last_name: "", days_overdue: 5 }),
@@ -154,4 +179,3 @@ describe("StayInTouchWidget", () => {
   })
 
 })
-

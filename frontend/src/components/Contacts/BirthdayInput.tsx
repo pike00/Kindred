@@ -1,5 +1,5 @@
-import * as React from "react"
 import { Check, ChevronDown, Loader2, X } from "lucide-react"
+import * as React from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -182,7 +182,10 @@ export function BirthdayInput({
             onChange={(e) => handleMonthChange(e.target.value)}
             disabled={disabled}
             aria-label="Birthday month"
-            className={cn(selectClassName, "w-full pr-5 appearance-none text-xs sm:text-sm")}
+            className={cn(
+              selectClassName,
+              "w-full pr-5 appearance-none text-xs sm:text-sm",
+            )}
           >
             <option value="" className="text-muted-foreground bg-background">
               Month
@@ -207,7 +210,10 @@ export function BirthdayInput({
             onChange={(e) => handleDayChange(e.target.value)}
             disabled={disabled}
             aria-label="Birthday day"
-            className={cn(selectClassName, "w-full pr-4 appearance-none text-center text-xs sm:text-sm")}
+            className={cn(
+              selectClassName,
+              "w-full pr-4 appearance-none text-center text-xs sm:text-sm",
+            )}
           >
             <option value="" className="text-muted-foreground bg-background">
               Day
@@ -282,7 +288,7 @@ export function InlineBirthday({
 
   React.useEffect(() => {
     setTempValue(value ?? null)
-  }, [value, open])
+  }, [value])
 
   const handleSave = async () => {
     if (tempValue === (value ?? null)) {
@@ -337,14 +343,17 @@ export function InlineBirthday({
             "group inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm text-left transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 cursor-pointer",
             !value &&
               "text-muted-foreground hover:text-foreground border border-dashed border-border/70 hover:border-border",
-            justSaved && "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+            justSaved &&
+              "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
             className,
           )}
         >
           <span className={cn("truncate", valueClassName)}>
             {displayLabel || placeholder}
           </span>
-          {justSaved && <Check className="size-3.5 text-emerald-500 shrink-0 ml-0.5" />}
+          {justSaved && (
+            <Check className="size-3.5 text-emerald-500 shrink-0 ml-0.5" />
+          )}
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-80 p-3.5 space-y-3" align="end">
