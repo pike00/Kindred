@@ -26,7 +26,8 @@
       "test-all"
     ],
     "on_pr": true,
-    "on_push": true
+    "on_push": true,
+    "required_check": null
   },
   "clean": {
     "enabled": true
@@ -44,11 +45,17 @@
     "frontend-test"
   ],
   "deploy": {
+    "allow_legacy_apply": false,
     "cf_worker": null,
     "custom_command": null,
     "enabled": true,
     "homelab_app": "kindred",
+    "homelab_mode": "bump",
+    "host": null,
     "pypi_package": null,
+    "remote_compose_root": "~/.local/share/project-kit-apps",
+    "ssh_alias": null,
+    "sync_checkout": false,
     "target": "homelab"
   },
   "docs": {
@@ -61,6 +68,9 @@
     "source_dir": "docs"
   },
   "domain": "",
+  "execution": {
+    "targets": {}
+  },
   "language": "python+ts",
   "managed_subsystems": [],
   "preview": {
@@ -77,13 +87,15 @@
   },
   "project_name": "kindred",
   "public": true,
-  "refreshed_at": "2026-06-27",
+  "refreshed_at": "2026-09-21",
   "release": {
+    "dedicated_llm_key": false,
     "enabled": true,
     "install_command": null,
     "litellm_base_url": "",
     "litellm_model": "deepseek-v4-pro-cloud",
     "prod_homelab_env": "",
+    "prod_pypi_package": "",
     "prod_source": "none"
   },
   "setup": {
@@ -93,7 +105,7 @@
     "hooks": false,
     "precommit": false
   },
-  "skill_version": "0.1.0",
+  "skill_version": "0.2.0",
   "test": {
     "backend": {
       "cmd": "docker compose -f compose.dev.yml exec -T backend pytest",
@@ -111,6 +123,14 @@
     "lint": {
       "cmd": "cd frontend && pnpm exec biome check src && cd ../backend && uvx ruff check app",
       "watch": null
+    },
+    "smoke": {
+      "command": null,
+      "enabled": false,
+      "endpoint": "/healthz",
+      "expected_status": 200,
+      "target": "preview",
+      "timeout_seconds": 30
     },
     "typecheck": {
       "cmd": "cd frontend && pnpm exec tsc --noEmit",

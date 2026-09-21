@@ -8,6 +8,7 @@
 Runs user-supplied command verbatim. The command was specified at scaffold time
 and is trusted.
 """
+
 from __future__ import annotations
 
 import subprocess
