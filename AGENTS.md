@@ -3,28 +3,38 @@
 <!-- BEGIN PROJECT-KIT — generated, do not edit by hand -->
 ## Project-kit recipes
 
-This repo is managed by project-kit (skill version: 0.1.0, last refreshed: 2026-05-31).
-All dev/test/release/deploy operations go through `just`.
+This repo is managed by project-kit (skill version: 0.2.0, last refreshed: 2026-09-21).
+Project-kit-managed operations go through `just`.
+
+### Execution context
+
+Run `just context` before every host-dependent action.
+Managed recipes enforce their checks automatically. Host roles are descriptive
+rather than exclusive; the actual hostname and configured target determine where
+an action runs.
 
 ### Quick reference
 
 | Task | Command |
 |---|---|
+| Show execution context | `just context [target]` |
 | Bring up dev environment | `just dev` |
 | Tear down dev | `just down` |
 | Tail logs | `just logs <service>` |
 | Create preview PR | `just pr` |
 | Run all tests | `just test-all` |
+| Fast pre-push test gate | `just test-fast` |
+| Unit test layer | `just test-unit` |
 | Backend tests | `just test-backend` |
 | Frontend tests | `just test-frontend` |
 | E2E tests | `just test-e2e` |
 | Lint | `just lint` |
 | Typecheck | `just typecheck` |
-| Cut a release | `just release patch` |
+| Prepare release PR | `just release-prepare patch` |
+| Publish merged release | `just release-publish vX.Y.Z` |
 | Update CHANGELOG | `just changelog` |
-| Build container image(s) | `just build-image [tag]` |
-| Deploy to prod | `just deploy` |
-| Ship (release+build+deploy) | `just ship patch` |
+| Build container image(s) | `just build-image vX.Y.Z` |
+| Deploy to prod | `just deploy vX.Y.Z` |
 | Install dependencies | `just setup` |
 | Health check | `uv run .project-kit/scripts/doctor.py` |
 
@@ -39,13 +49,14 @@ All dev/test/release/deploy operations go through `just`.
 - setup: enabled
 - docs: disabled
 - clean: enabled
+- ci: disabled
 
 ### Where things live
 
-- `.project-kit/*.just` — recipe definitions (10 files)
+- Managed recipe imports: 10 (`_lib.just` plus 9 managed subsystems)
 - `.project-kit/scripts/` — uv-scripts for non-trivial recipes
 - `.project-kit/cliff.toml` — git-cliff config (centralized; passed via `--config`, no root copy)
-- `justfile` (root) — imports the 10 `.just` files plus repo-specific recipes
+- `justfile` (root) — imports 10 managed recipe files plus repo-specific recipes
 
 ### How to refresh
 

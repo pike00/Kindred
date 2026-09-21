@@ -39,6 +39,17 @@ import '.project-kit/clean.just'
 
 # --- repo-specific ---
 
+# Regenerate docs/db/ from the live Postgres schema using tbls, then render
+# each .md to a standalone .html via pandoc. The helper follows the active
+# preview stack and reads credentials from its running DB container. Open
+# docs/db/index.html in a browser — no server needed.
+db-docs:
+    @bash scripts/db-docs.sh generate
+
+# Fail if docs/db/ is out of date with the live DB. Runs in the pre-push hook.
+db-docs-check:
+    @bash scripts/db-docs.sh check
+
 # Fast live development over the tailnet. Reuses existing images/containers,
 # starts Vite directly on the machine's Tailscale IP, and proxies /api to the
 # local backend. Use `BACKEND_PORT=18001` when the default port is occupied.
@@ -92,17 +103,6 @@ dev-tailnet:
     TAILNET_MAGICDNS="$tailnet_host" \
     KINDRED_BACKEND_URL="http://127.0.0.1:${BACKEND_PORT}" \
         exec bun run dev -- --config vite.tailnet.config.ts --host "$tailnet_ip" --port "$tailnet_port" --strictPort
-
-# Regenerate docs/db/ from the live Postgres schema using tbls, then render
-# each .md to a standalone .html via pandoc. The helper follows the active
-# preview stack and reads credentials from its running DB container. Open
-# docs/db/index.html in a browser — no server needed.
-db-docs:
-    @bash scripts/db-docs.sh generate
-
-# Fail if docs/db/ is out of date with the live DB. Runs in the pre-push hook.
-db-docs-check:
-    @bash scripts/db-docs.sh check
 
 # Run frontend Vitest with v8 coverage. Writes report to frontend/coverage/.
 frontend-coverage *args:
