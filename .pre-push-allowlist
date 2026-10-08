@@ -2,3 +2,7 @@
 ares.savannah-mimosa.ts.net
 # Required structured-log endpoint used by the operational smoke probe.
 loki.lab.khanpikehome.com
+
+# Public GitHub bot metadata in merged Dependabot commit authors.
+support@github.com
+49699333+dependabot[bot]@users.noreply.github.com
