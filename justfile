@@ -1,5 +1,4 @@
 set shell := ["bash", "-uc"]
-# `release` / `version` / changelog recipes come from release.just (shared).
 # `dev` / `down` / `down-clean` / `logs` / `ps` / `shell` / `pytest` /
 # `worktree` / `worktree-rm` / `pr` come from preview.just. preview-kit
 # threads GIT_HASH + APP_VERSION as build args.
@@ -16,9 +15,8 @@ _dc := "docker compose -f " + compose
 #   just -f website/justfile deploy    # push to Cloudflare Pages
 # ─── Release / build / deploy ────────────────────────────────────────────
 #
-# `release` comes from release.just (release-kit cut: preflight, git-cliff
-# CHANGELOG, LLM notes, tag, push, GH release). `build` and `deploy` are
-# inline because they reference repo-specific paths.
+# Project-kit provides guarded release preparation, publishing, changelog,
+# build, and deploy recipes through the imports below.
 # ─── Python SDK (sdk/) ───────────────────────────────────────────────────
 
 default:
