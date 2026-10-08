@@ -5,6 +5,20 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.124] - 2026-10-08
+
+### Added
+- Durable voice captures retain the original transcript alongside an editable, LLM-corrected review.
+- Review and route each fact into interactions, notes, contact updates, life events, or reminders, with source evidence and explicit handling for ambiguous people and dates.
+- Resume saved drafts and confirm reviewed actions atomically. Replaying a confirmation returns the same saved records.
+- Python SDK and CLI commands support the complete transcription, draft, analysis, review, and confirmation workflow.
+
+### Fixed
+- Improve English transcription with the small.en model, contact-name hints, bounded uploads, and a tested audio decoder.
+- Preserve unclassified facts and future plans during review. Contact-field clearing is explicit, and pending or uncertain saves cannot silently discard edits.
+- Publish versioned application and Whisper images together and verify the production release through its public API.
+- Restore reproducible frontend SDK generation and portable database documentation checks.
+
 ## [0.2.123] - 2026-09-20
 
 ### Fixed
