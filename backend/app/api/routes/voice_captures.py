@@ -19,6 +19,7 @@ from app.voice_capture.service import (
     analyze_capture,
     commit_review,
     create_capture,
+    delete_capture,
     public_capture,
     save_review,
 )
@@ -118,8 +119,4 @@ def commit_voice_capture(
 def delete_voice_capture(
     capture_id: uuid.UUID, session: SessionDep, current_user: CurrentUser
 ) -> None:
-    capture = _owned(session, capture_id, current_user.id)
-    if capture.status == "committed":
-        raise HTTPException(409, "Committed captures cannot be deleted")
-    session.delete(capture)
-    session.commit()
+    delete_capture(session, capture_id, current_user.id)

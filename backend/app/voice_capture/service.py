@@ -85,15 +85,18 @@ async def analyze_capture(
     text: str | None,
     config: LLMConfig,
 ) -> VoiceCapture:
+    if capture.status == "committed":
+        raise HTTPException(409, "Committed capture cannot be analyzed")
     if revision != capture.revision:
         raise HTTPException(409, "Capture revision is stale")
-    source = text or capture.raw_text
+    source = text if text is not None else capture.corrected_text
     contact_groups, ids = candidate_context(session, owner, source)
     # The provider request happens before any write transaction or row lock.
     try:
         proposal = await analyze_text(
             config=config,
             raw_text=source,
+            evidence_source=capture.raw_text,
             timezone_name=capture.timezone,
             recorded_at=capture.recorded_at,
             contacts=contact_groups,
@@ -116,22 +119,23 @@ async def analyze_capture(
         error = str(exc)
         status = "draft"
         actions = capture.actions.get("items", [])
-        corrected = capture.corrected_text
+        corrected = source
         warnings = capture.warnings or []
-    session.refresh(capture)
-    if capture.revision != revision:
-        raise HTTPException(409, "Capture changed while analysis was running")
-    capture.corrected_text = corrected
-    capture.actions = {"items": actions}
-    capture.warnings = warnings
-    capture.analysis_error = error
-    capture.status = status
-    capture.revision += 1
-    capture.updated_at = get_datetime_utc()
-    session.add(capture)
+    locked = _lock_capture(session, capture.id, owner.id)
+    _require_revision(locked, revision)
+    if locked.status == "committed":
+        raise HTTPException(409, "Committed capture cannot be analyzed")
+    locked.corrected_text = corrected
+    locked.actions = {"items": actions}
+    locked.warnings = warnings
+    locked.analysis_error = error
+    locked.status = status
+    locked.revision += 1
+    locked.updated_at = get_datetime_utc()
+    session.add(locked)
     session.commit()
-    session.refresh(capture)
-    return capture
+    session.refresh(locked)
+    return locked
 
 
 def _targets_allowed(action: VoiceAction, ids: set[uuid.UUID]) -> bool:
@@ -160,6 +164,16 @@ def save_review(
     session.commit()
     session.refresh(locked)
     return locked
+
+
+def delete_capture(
+    session: Session, capture_id: uuid.UUID, owner_id: uuid.UUID
+) -> None:
+    locked = _lock_capture(session, capture_id, owner_id)
+    if locked.status == "committed":
+        raise HTTPException(409, "Committed captures cannot be deleted")
+    session.delete(locked)
+    session.commit()
 
 
 def commit_review(
@@ -239,6 +253,7 @@ def _lock_capture(
         select(VoiceCapture)
         .where(VoiceCapture.id == capture_id, VoiceCapture.owner_id == owner_id)
         .with_for_update()
+        .execution_options(populate_existing=True)
     ).first()
     if capture is None:
         raise HTTPException(404, "Voice capture not found")
@@ -357,8 +372,8 @@ def _persist_action(session: Session, owner_id: uuid.UUID, action: VoiceAction):
     if isinstance(action, ContactUpdateAction):
         row = _owned_contact(session, owner_id, action.contact_id)  # type: ignore[arg-type]
         assert row is not None
-        for key, value in action.fields.items():
-            setattr(row, key, value)
+        for change in action.fields:
+            setattr(row, change.field, change.value)
         row.updated_at = get_datetime_utc()
         session.add(row)
         session.flush()

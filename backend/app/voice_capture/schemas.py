@@ -6,7 +6,7 @@ from datetime import date, datetime
 from typing import Annotated, Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class StrictModel(BaseModel):
@@ -62,26 +62,35 @@ class NoteAction(ActionBase):
     body: str = Field(min_length=1, max_length=50000)
 
 
+class TextContactFieldChange(StrictModel):
+    field: Literal[
+        "company", "department", "title", "nickname", "pronouns", "how_we_met"
+    ]
+    value: str | None
+
+
+class BirthdayFieldChange(StrictModel):
+    field: Literal["birthday"]
+    value: date | None
+
+
+ContactFieldChange = Annotated[
+    TextContactFieldChange | BirthdayFieldChange,
+    Field(discriminator="field"),
+]
+
+
 class ContactUpdateAction(ActionBase):
     kind: Literal["contact_update"]
     contact_id: uuid.UUID | None = None
-    fields: dict[str, str | date | None]
+    fields: list[ContactFieldChange] = Field(min_length=1, max_length=7)
 
-    @field_validator("fields")
-    @classmethod
-    def permitted_fields(cls, value: dict[str, str | date | None]):
-        allowed = {
-            "company",
-            "department",
-            "title",
-            "nickname",
-            "pronouns",
-            "birthday",
-            "how_we_met",
-        }
-        if not value or set(value) - allowed:
-            raise ValueError("fields must contain only permitted contact fields")
-        return value
+    @model_validator(mode="after")
+    def unique_fields(self) -> ContactUpdateAction:
+        names = [change.field for change in self.fields]
+        if len(names) != len(set(names)):
+            raise ValueError("contact update fields must not repeat")
+        return self
 
 
 class LifeEventAction(ActionBase):
@@ -179,3 +188,11 @@ class TranscriptionResponse(StrictModel):
     language: str | None = None
     duration: float | None = None
     capture_id: uuid.UUID
+
+
+class WhisperTranscription(StrictModel):
+    model_config = ConfigDict(extra="ignore", strict=True)
+
+    text: str = Field(min_length=1, max_length=100000)
+    language: str | None = None
+    duration: float | None = Field(default=None, ge=0, allow_inf_nan=False)
