@@ -139,13 +139,77 @@ describe("VoiceReviewModal", () => {
     const { onComplete } = renderModal()
     await screen.findByLabelText("Note text")
     await userEvent.setup().click(screen.getByRole("button", { name: "Commit reviewed actions" }))
-    await screen.findByRole("alert")
+    await screen.findByText("connection lost")
     const firstBody = mocks.commit.mock.calls[0][0].requestBody
-    fireEvent.change(screen.getByLabelText("Note text"), { target: { value: "A newer local edit" } })
-    await userEvent.setup().click(screen.getByRole("button", { name: "Commit reviewed actions" }))
+    expect(screen.getByLabelText("Note text")).toBeDisabled()
+    expect(screen.getByRole("button", { name: "Save draft and close" })).toBeDisabled()
+    expect(await screen.findByText(/could not confirm whether this commit completed/i)).toBeInTheDocument()
+    await userEvent.setup().click(screen.getByRole("button", { name: "Retry exact commit" }))
     await waitFor(() => expect(onComplete).toHaveBeenCalled())
     expect(mocks.commit.mock.calls[1][0].requestBody).toBe(firstBody)
     expect(mocks.commit.mock.calls[1][0].requestBody.actions[0]).toMatchObject({ id: "note-action-id", body: "Original note" })
+  })
+
+  it("reconciles an ambiguous commit before submitting newer visible edits", async () => {
+    mocks.commit.mockRejectedValueOnce(new Error("connection lost"))
+      .mockResolvedValueOnce(capture({ status: "committed", results: { notes: ["saved-note"] } }))
+    mocks.get.mockResolvedValueOnce(capture()).mockResolvedValueOnce(capture({ revision: 4 }))
+    renderModal()
+    await userEvent.setup().click(await screen.findByRole("button", { name: "Commit reviewed actions" }))
+    await screen.findByRole("button", { name: "Refresh status before submitting edits" })
+    expect(screen.getByLabelText("Note text")).toBeDisabled()
+    await userEvent.setup().click(screen.getByRole("button", { name: "Refresh status before submitting edits" }))
+    expect(await screen.findByText(/capture is still uncommitted/i)).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText("Note text"), { target: { value: "Corrected note" } })
+    expect(screen.getByLabelText("Note text")).toHaveValue("Corrected note")
+    await userEvent.setup().click(screen.getByRole("button", { name: "Commit reviewed actions" }))
+    await waitFor(() => expect(mocks.commit).toHaveBeenCalledTimes(2))
+    expect(mocks.commit.mock.calls[1][0].requestBody).toMatchObject({
+      revision: 4,
+      actions: [expect.objectContaining({ id: "note-action-id", body: "Corrected note" })],
+    })
+  })
+
+  it("treats a committed reconciliation as success without sending a duplicate", async () => {
+    const completed = capture({ status: "committed", results: { notes: ["saved-note"] } })
+    mocks.commit.mockRejectedValueOnce(new Error("connection lost"))
+    mocks.get.mockResolvedValueOnce(capture()).mockResolvedValueOnce(completed)
+    const { onComplete } = renderModal()
+    await userEvent.setup().click(await screen.findByRole("button", { name: "Commit reviewed actions" }))
+    await userEvent.setup().click(await screen.findByRole("button", { name: "Refresh status before submitting edits" }))
+    await waitFor(() => expect(onComplete).toHaveBeenCalledWith(completed))
+    expect(mocks.commit).toHaveBeenCalledOnce()
+  })
+
+  it("allows corrected values after a definite HTTP rejection", async () => {
+    const request = { method: "POST", url: "", path: {} }
+    const response = { url: "", ok: false, status: 422, statusText: "Unprocessable Entity", body: {} }
+    mocks.commit.mockRejectedValueOnce(new ApiError(request as never, response as never, "Invalid field"))
+      .mockResolvedValueOnce(capture({ status: "committed", results: { notes: ["saved-note"] } }))
+    renderModal()
+    await userEvent.setup().click(await screen.findByRole("button", { name: "Commit reviewed actions" }))
+    expect(await screen.findByRole("alert")).toHaveTextContent("Invalid field")
+    fireEvent.change(screen.getByLabelText("Note text"), { target: { value: "Corrected after rejection" } })
+    await userEvent.setup().click(screen.getByRole("button", { name: "Commit reviewed actions" }))
+    await waitFor(() => expect(mocks.commit).toHaveBeenCalledTimes(2))
+    expect(mocks.commit.mock.calls[1][0].requestBody.actions[0]).toMatchObject({ body: "Corrected after rejection" })
+  })
+
+  it("rejects unset contact values and requires an explicit clear action", async () => {
+    mocks.get.mockResolvedValue(capture({ actions: [
+      { id: "u", kind: "contact_update", enabled: true, evidence: "works at a company", contact_id: contactId, fields: [{ field: "company", value: "" }] },
+    ] }))
+    mocks.commit.mockResolvedValue(capture({ status: "committed", results: { contacts: [contactId] } }))
+    renderModal()
+    await screen.findByLabelText("company value")
+    await userEvent.setup().click(screen.getByRole("button", { name: "Commit reviewed actions" }))
+    expect(await screen.findByRole("alert")).toHaveTextContent("Contact update field company needs a value or an explicit clear.")
+    expect(mocks.commit).not.toHaveBeenCalled()
+    await userEvent.setup().click(screen.getByRole("button", { name: "Clear company" }))
+    expect(screen.getByText("This will clear company.")).toBeInTheDocument()
+    await userEvent.setup().click(screen.getByRole("button", { name: "Commit reviewed actions" }))
+    await waitFor(() => expect(mocks.commit).toHaveBeenCalledOnce())
+    expect(mocks.commit.mock.calls[0][0].requestBody.actions[0].fields).toEqual([{ field: "company", value: null }])
   })
 
   it("offers all five manual card types after analysis failure", async () => {
@@ -216,7 +280,7 @@ describe("VoiceReviewModal", () => {
     mocks.update.mockImplementation(async ({ requestBody }) => capture({ revision: 4, ...requestBody }))
     mocks.get.mockResolvedValue(capture({ actions: [
       { id: "i", kind: "interaction", enabled: true, evidence: "", attendee_ids: [], channel: null, occurred_at: null, notes: "Initial", duration_minutes: 5, location_label: "Somewhere" },
-      { id: "u", kind: "contact_update", enabled: true, evidence: "", contact_id: null, fields: [{ field: "birthday", value: "1980-01-01" }] },
+      { id: "u", kind: "contact_update", enabled: true, evidence: "", contact_id: null, fields: [{ field: "birthday", value: null }] },
       { id: "e", kind: "life_event", enabled: true, evidence: "", contact_id: null, event_type: "move", title: "Move", occurred_at: "2026-10-01", description: "Details" },
     ] }))
     renderModal()
@@ -227,7 +291,7 @@ describe("VoiceReviewModal", () => {
     fireEvent.change(screen.getByLabelText("Location"), { target: { value: "" } })
     fireEvent.change(screen.getByLabelText("Event date"), { target: { value: "" } })
     fireEvent.change(screen.getByLabelText("Event description"), { target: { value: "" } })
-    fireEvent.change(screen.getByLabelText("birthday value"), { target: { value: "" } })
+    expect(screen.getByText("This will clear birthday.")).toBeInTheDocument()
     fireEvent.change(screen.getByLabelText("Search contacts to add"), { target: { value: "Nora" } })
     await waitFor(() => expect(mocks.listContacts).toHaveBeenCalledWith({ search: "Nora", skip: 0, limit: 20 }))
     const contactRows = await screen.findAllByRole("button", { name: /Nora Taylor/ })
@@ -409,7 +473,7 @@ describe("VoiceReviewModal", () => {
     mocks.commit.mockRejectedValue("offline")
     renderModal()
     await userEvent.setup().click(await screen.findByRole("button", { name: "Commit reviewed actions" }))
-    expect(await screen.findByRole("alert")).toHaveTextContent("Could not commit the reviewed actions.")
+    expect(await screen.findByText("Could not commit the reviewed actions.")).toBeInTheDocument()
   })
 
   it("uses the delete fallback for a non-Error rejection", async () => {

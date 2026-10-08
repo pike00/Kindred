@@ -67,6 +67,8 @@ export function validateActions(actions: VoiceAction[]): string[] {
           errors.push("Contact update needs at least one field.")
         const seen = new Set<string>()
         for (const field of action.fields) {
+          if (field.value !== null && !field.value.trim())
+            errors.push(`Contact update field ${field.field} needs a value or an explicit clear.`)
           if (seen.has(field.field)) {
             errors.push("Contact update contains a repeated field.")
             break

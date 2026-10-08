@@ -167,6 +167,8 @@ export function VoiceReviewModal({ captureId, onComplete, onClose }: VoiceReview
   const [actions, setActions] = useState<VoiceAction[]>([])
   const [error, setError] = useState("")
   const [conflict, setConflict] = useState(false)
+  const [commitOutcomeUncertain, setCommitOutcomeUncertain] = useState(false)
+  const [reconciliationNotice, setReconciliationNotice] = useState("")
   const [busy, setBusy] = useState<"analyze" | "save" | "commit" | "delete" | null>(null)
   const [savedNotice, setSavedNotice] = useState(false)
   const initialized = useRef(false)
@@ -200,7 +202,7 @@ export function VoiceReviewModal({ captureId, onComplete, onClose }: VoiceReview
   ))
 
   async function analyze(current: VoiceCapturePublic, text: string) {
-    if (busyRef.current) return
+    if (busyRef.current || commitOutcomeUncertain) return
     busyRef.current = true
     setBusy("analyze")
     setError("")
@@ -225,6 +227,10 @@ export function VoiceReviewModal({ captureId, onComplete, onClose }: VoiceReview
   const analyzeStarted = useRef(false)
 
   async function saveDraft(): Promise<boolean> {
+    if (commitOutcomeUncertain) {
+      setError("Check the commit status or retry the exact commit before saving this draft.")
+      return false
+    }
     if (!capture || busyRef.current) return false
     if (!dirty) {
       setSavedNotice(true)
@@ -264,43 +270,95 @@ export function VoiceReviewModal({ captureId, onComplete, onClose }: VoiceReview
   }
 
   async function handleClose() {
+    if (commitOutcomeUncertain) {
+      setError("Check the commit status or retry the exact commit before closing this capture.")
+      return
+    }
     if (busyRef.current) return
     if (dirty && !(await saveDraft())) return
     onClose()
   }
 
-  async function commit() {
+  async function invalidateCommittedQueries() {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["contacts"] }),
+      queryClient.invalidateQueries({ queryKey: ["interactions"] }),
+      queryClient.invalidateQueries({ queryKey: ["notes"] }),
+      queryClient.invalidateQueries({ queryKey: ["life-events"] }),
+      queryClient.invalidateQueries({ queryKey: ["lifeEvents"] }),
+      queryClient.invalidateQueries({ queryKey: ["reminders"] }),
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
+      queryClient.invalidateQueries({ queryKey: ["voice-captures"] }),
+    ])
+  }
+
+  async function reconcilePendingCommit() {
+    if (!capture || !retryCommitRef.current || busyRef.current) return
+    busyRef.current = true
+    setBusy("commit")
+    setError("")
+    setReconciliationNotice("")
+    try {
+      const latest = await VoiceCapturesService.getVoiceCapture({ captureId })
+      setCapture(latest)
+      if (latest.status === "committed") {
+        retryCommitRef.current = null
+        setCommitOutcomeUncertain(false)
+        await invalidateCommittedQueries()
+        onComplete(latest)
+        return
+      }
+      retryCommitRef.current = null
+      setCommitOutcomeUncertain(false)
+      setReconciliationNotice("The capture is still uncommitted. Your visible edits are preserved, and a new commit will use those edits.")
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not check whether the commit completed.")
+    } finally {
+      busyRef.current = false
+      setBusy(null)
+    }
+  }
+
+  async function commit(exactRetry = false) {
     if (!capture || busyRef.current) return
-    const problems = validateActions(actions)
-    if (problems.length) {
-      setError(problems.join(" "))
+    const pendingRetry = retryCommitRef.current?.captureId === capture.id
+      ? retryCommitRef.current
+      : null
+    if (exactRetry && !pendingRetry) return
+    if (!exactRetry && pendingRetry) {
+      setError("Check the commit status or retry the exact submitted commit before sending changed edits.")
       return
     }
-    const request = retryCommitRef.current?.captureId === capture.id
-      ? retryCommitRef.current.requestBody
+    if (!exactRetry) {
+      const problems = validateActions(actions)
+      if (problems.length) {
+        setError(problems.join(" "))
+        return
+      }
+    }
+    const request = exactRetry
+      ? pendingRetry!.requestBody
       : { revision: capture.revision, corrected_text: correctedText, actions }
-    retryCommitRef.current = { captureId: capture.id, requestBody: request }
+    if (!exactRetry) retryCommitRef.current = { captureId: capture.id, requestBody: request }
     busyRef.current = true
     setBusy("commit")
     setError("")
     setConflict(false)
+    setReconciliationNotice("")
     try {
       const result = await VoiceCapturesService.commitVoiceCapture({ captureId, requestBody: request })
       if (result.status === "committed") {
-        await Promise.all([
-          queryClient.invalidateQueries({ queryKey: ["contacts"] }),
-          queryClient.invalidateQueries({ queryKey: ["interactions"] }),
-          queryClient.invalidateQueries({ queryKey: ["notes"] }),
-          queryClient.invalidateQueries({ queryKey: ["life-events"] }),
-          queryClient.invalidateQueries({ queryKey: ["lifeEvents"] }),
-          queryClient.invalidateQueries({ queryKey: ["reminders"] }),
-          queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
-          queryClient.invalidateQueries({ queryKey: ["voice-captures"] }),
-        ])
+        retryCommitRef.current = null
+        setCommitOutcomeUncertain(false)
+        await invalidateCommittedQueries()
         onComplete(result)
       } else {
-        setCapture(result)
         retryCommitRef.current = null
+        setCommitOutcomeUncertain(false)
+        setCapture(result)
+        setCorrectedText(result.corrected_text)
+        setActions(result.actions)
+        setReconciliationNotice("The capture is still uncommitted. Review the returned draft before committing again.")
       }
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : "Could not commit the reviewed actions."
@@ -308,11 +366,20 @@ export function VoiceReviewModal({ captureId, onComplete, onClose }: VoiceReview
       if (cause instanceof ApiError && cause.status === 409) {
         setConflict(true)
         retryCommitRef.current = null
+        setCommitOutcomeUncertain(false)
         try {
           setCapture(await VoiceCapturesService.getVoiceCapture({ captureId }))
         } catch {
           // Keep local edits so the user can copy or retry after restoring connectivity.
         }
+      } else if (cause instanceof ApiError && cause.status >= 400 && cause.status < 500) {
+        // An HTTP rejection confirms this request did not commit, so corrections may be submitted.
+        retryCommitRef.current = null
+        setCommitOutcomeUncertain(false)
+      } else {
+        // A transport error or server failure can lose the response after the transaction commits.
+        // Keep the exact request body until the user retries it or reconciles against the server.
+        setCommitOutcomeUncertain(true)
       }
     } finally {
       busyRef.current = false
@@ -321,7 +388,7 @@ export function VoiceReviewModal({ captureId, onComplete, onClose }: VoiceReview
   }
 
   async function deleteDraft() {
-    if (!capture || capture.status === "committed" || busyRef.current) return
+    if (!capture || capture.status === "committed" || busyRef.current || commitOutcomeUncertain) return
     if (!window.confirm("Delete this uncommitted voice draft?")) return
     busyRef.current = true
     setBusy("delete")
@@ -365,6 +432,7 @@ export function VoiceReviewModal({ captureId, onComplete, onClose }: VoiceReview
         {query.isError && <p role="alert">Could not load this voice capture. {query.error.message}</p>}
         {capture && (
           <div className="space-y-5">
+            <fieldset disabled={commitOutcomeUncertain} className="min-w-0 space-y-2 border-0 p-0">
             <section className="space-y-2">
               <h3 className="font-semibold">Original transcript</h3>
               <pre className="whitespace-pre-wrap rounded-md bg-muted p-3 text-sm">{capture.raw_text}</pre>
@@ -374,16 +442,33 @@ export function VoiceReviewModal({ captureId, onComplete, onClose }: VoiceReview
               </label>
               <p className="text-xs text-muted-foreground">Recorded {new Date(capture.recorded_at).toLocaleString()} ({capture.timezone})</p>
             </section>
+            </fieldset>
 
             {capture.warnings.map((warning) => <p key={warning} className="rounded-md bg-amber-50 p-2 text-sm text-amber-900">{warning}</p>)}
             {capture.analysis_error && <p className="rounded-md bg-destructive/10 p-3 text-sm" role="alert">Review could not be completed: {capture.analysis_error}</p>}
             {error && <p className="rounded-md bg-destructive/10 p-3 text-sm" role="alert">{conflict ? "This capture changed elsewhere. Your local edits are preserved; review the latest saved version before saving again. " : ""}{error}</p>}
+            {commitOutcomeUncertain && (
+              <section className="space-y-2 rounded-md border border-amber-500 bg-amber-50 p-3 text-sm text-amber-950" role="alert" aria-labelledby="uncertain-commit-title">
+                <h3 id="uncertain-commit-title" className="font-semibold">Commit status is uncertain</h3>
+                <p>We could not confirm whether this commit completed. The editor is locked until status is checked. Retrying the exact submitted actions avoids duplicate records; refresh the saved status before making or submitting changed edits.</p>
+                <div className="flex flex-wrap gap-2">
+                  <Button type="button" variant="outline" disabled={busy !== null} onClick={() => void commit(true)}>
+                    {busy === "commit" && <Loader2 className="mr-2 size-4 animate-spin" />}Retry exact commit
+                  </Button>
+                  <Button type="button" variant="outline" disabled={busy !== null} onClick={() => void reconcilePendingCommit()}>
+                    {busy === "commit" && <Loader2 className="mr-2 size-4 animate-spin" />}Refresh status before submitting edits
+                  </Button>
+                </div>
+              </section>
+            )}
+            {reconciliationNotice && <p className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-900" role="status">{reconciliationNotice}</p>}
             {savedNotice && <p role="status" className="text-sm text-emerald-700">Draft saved.</p>}
 
+            <fieldset disabled={commitOutcomeUncertain} className="min-w-0 border-0 p-0">
             <section className="space-y-3">
               <div className="flex items-center justify-between gap-2">
                 <h3 className="font-semibold">Actions to review</h3>
-                <Button type="button" variant="outline" size="sm" disabled={busy !== null} onClick={() => capture && void analyze(capture, correctedText)}>
+                <Button type="button" variant="outline" size="sm" disabled={busy !== null || commitOutcomeUncertain} onClick={() => capture && void analyze(capture, correctedText)}>
                   {busy === "analyze" ? <Loader2 className="mr-2 size-4 animate-spin" /> : <RotateCcw className="mr-2 size-4" />}
                   Retry analysis
                 </Button>
@@ -418,6 +503,7 @@ export function VoiceReviewModal({ captureId, onComplete, onClose }: VoiceReview
                 ))}
               </div>
             </section>
+            </fieldset>
 
             {capture.status === "committed" ? (
               <section className="space-y-2 rounded-md bg-emerald-50 p-3 text-sm text-emerald-900">
@@ -426,17 +512,17 @@ export function VoiceReviewModal({ captureId, onComplete, onClose }: VoiceReview
               </section>
             ) : (
               <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-4">
-                <Button type="button" variant="ghost" className="text-destructive" disabled={busy !== null} onClick={() => void deleteDraft()}>
+                <Button type="button" variant="ghost" className="text-destructive" disabled={busy !== null || commitOutcomeUncertain} onClick={() => void deleteDraft()}>
                   Delete draft
                 </Button>
                 <div className="flex flex-wrap gap-2">
-                  <Button type="button" variant="outline" disabled={busy !== null} onClick={() => void handleClose()}>
+                  <Button type="button" variant="outline" disabled={busy !== null || commitOutcomeUncertain} onClick={() => void handleClose()}>
                     Save draft and close
                   </Button>
-                  <Button type="button" variant="outline" disabled={busy !== null} onClick={() => void saveDraft()}>
+                  <Button type="button" variant="outline" disabled={busy !== null || commitOutcomeUncertain} onClick={() => void saveDraft()}>
                     {busy === "save" && <Loader2 className="mr-2 size-4 animate-spin" />}Save draft
                   </Button>
-                  <Button type="button" disabled={busy !== null || actions.every((action) => action.enabled === false)} onClick={() => void commit()}>
+                  <Button type="button" disabled={busy !== null || commitOutcomeUncertain || actions.every((action) => action.enabled === false)} onClick={() => void commit()}>
                     {busy === "commit" && <Loader2 className="mr-2 size-4 animate-spin" />}Commit reviewed actions
                   </Button>
                 </div>
@@ -503,7 +589,21 @@ function ActionEditor({ action, onChange }: { action: VoiceAction; onChange: (ac
       return <div className="space-y-3">
         {target(action.contact_id, (value) => onChange({ ...action, contact_id: typeof value === "string" ? value : null }))}
         {action.contact_id && action.fields.map((entry) => <p key={entry.field} className="text-xs text-muted-foreground">Current {entry.field}: {String(currentContact?.[entry.field as keyof ContactPublic] ?? "Empty")}</p>)}
-        {action.fields.map((entry) => <div key={entry.field}>{input(`${entry.field} value`, entry.value ?? "", (value) => setField(entry.field, value || null), entry.field === "birthday" ? "date" : "text")}</div>)}
+        {action.fields.map((entry) => (
+          <div key={entry.field} className="space-y-1">
+            {input(`${entry.field} value`, entry.value ?? "", (value) => setField(entry.field, value), entry.field === "birthday" ? "date" : "text")}
+            {entry.value === null && <p className="text-xs text-amber-800" role="status">This will clear {entry.field}.</p>}
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              aria-pressed={entry.value === null}
+              onClick={() => setField(entry.field, entry.value === null ? "" : null)}
+            >
+              {entry.value === null ? `Undo clear ${entry.field}` : `Clear ${entry.field}`}
+            </Button>
+          </div>
+        ))}
         <label className="block space-y-1 text-sm font-medium">Add field<select aria-label="Add field" defaultValue="" onChange={(event) => { if (event.target.value) setField(event.target.value, "") }}>
           <option value="">Choose a field</option>{[...contactFields, "birthday"].filter((field) => !action.fields.some((item) => item.field === field)).map((field) => <option key={field} value={field}>{field.replace("_", " ")}</option>)}
         </select></label>

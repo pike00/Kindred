@@ -107,6 +107,17 @@ describe("voice capture review helpers", () => {
     ])
   })
 
+  it("requires an explicit value or deliberate null clear for each contact field", () => {
+    const blankValue = validateActions([
+      { id: "u", kind: "contact_update", enabled: true, contact_id: "c", fields: [{ field: "company", value: "" }] },
+    ] as never)
+    expect(blankValue).toEqual(["Contact update field company needs a value or an explicit clear."])
+
+    expect(validateActions([
+      { id: "u", kind: "contact_update", enabled: true, contact_id: "c", fields: [{ field: "company", value: null }] },
+    ] as never)).toEqual([])
+  })
+
   it("accepts complete past interactions, contact updates, life events, and reminders", () => {
     expect(validateActions([
       { id: "i", kind: "interaction", enabled: true, attendee_ids: ["c"], occurred_at: "2000-01-01T12:00:00-06:00", notes: "Met" },
