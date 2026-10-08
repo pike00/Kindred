@@ -13,9 +13,106 @@ from faster_whisper import WhisperModel
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from starlette.concurrency import run_in_threadpool
+from starlette.formparsers import MultiPartException
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+MAX_UPLOAD_LIMIT_BYTES = 50 * 1024 * 1024
+MULTIPART_OVERHEAD_LIMIT_BYTES = 64 * 1024
+
+
+class RequestBodyTooLarge(MultiPartException):
+    """Raised when a transcription request exceeds its bounded body size."""
+
+
+class RequestBodyLimitMiddleware:
+    """Reject oversized ASGI request bodies before multipart parsing can spool them."""
+
+    def __init__(self, app: Any, max_bytes: int):
+        self.app = app
+        self.max_bytes = max_bytes
+
+    async def __call__(self, scope: dict[str, Any], receive: Any, send: Any) -> None:
+        if (
+            scope["type"] != "http"
+            or scope["method"] != "POST"
+            or scope["path"] != "/transcribe"
+        ):
+            await self.app(scope, receive, send)
+            return
+
+        content_length = next(
+            (
+                value
+                for name, value in scope.get("headers", [])
+                if name.lower() == b"content-length"
+            ),
+            None,
+        )
+        if content_length is not None:
+            try:
+                if int(content_length) > self.max_bytes:
+                    await self._reject(send)
+                    return
+            except ValueError:
+                pass
+
+        received_bytes = 0
+        overflowed = False
+        rejection_body_sent = False
+        rejection_body = b'{"detail":"Request body exceeds upload limit"}'
+
+        async def limited_receive() -> dict[str, Any]:
+            nonlocal overflowed, received_bytes
+            message = await receive()
+            if message["type"] == "http.request":
+                received_bytes += len(message.get("body", b""))
+                if received_bytes > self.max_bytes:
+                    overflowed = True
+                    raise RequestBodyTooLarge("Request body exceeds upload limit")
+            return message
+
+        async def limited_send(message: dict[str, Any]) -> None:
+            nonlocal rejection_body_sent
+            if not overflowed:
+                await send(message)
+                return
+            if message["type"] == "http.response.start":
+                headers = [
+                    (name, value)
+                    for name, value in message.get("headers", [])
+                    if name.lower() not in {b"content-length", b"content-type"}
+                ]
+                headers.extend(
+                    [
+                        (b"content-type", b"application/json"),
+                        (b"content-length", str(len(rejection_body)).encode("ascii")),
+                    ]
+                )
+                await send({**message, "status": 413, "headers": headers})
+            elif message["type"] == "http.response.body" and not rejection_body_sent:
+                rejection_body_sent = True
+                await send({**message, "body": rejection_body, "more_body": False})
+
+        try:
+            await self.app(scope, limited_receive, limited_send)
+        except RequestBodyTooLarge:
+            await self._reject(send)
+
+    async def _reject(self, send: Any) -> None:
+        body = b'{"detail":"Request body exceeds upload limit"}'
+        await send(
+            {
+                "type": "http.response.start",
+                "status": 413,
+                "headers": [
+                    (b"content-type", b"application/json"),
+                    (b"content-length", str(len(body)).encode("ascii")),
+                ],
+            }
+        )
+        await send({"type": "http.response.body", "body": body})
 
 
 class Settings(BaseSettings):
@@ -34,17 +131,29 @@ class Settings(BaseSettings):
     model_cache_path: Path = Path("/models")
     beam_size: int = Field(default=5, ge=1, le=10)
     language: str | None = "en"
-    upload_limit_bytes: int = Field(default=25 * 1024 * 1024, gt=0)
+    upload_limit_bytes: int = Field(
+        default=25 * 1024 * 1024, gt=0, le=MAX_UPLOAD_LIMIT_BYTES
+    )
     prompt_limit_chars: int = Field(default=500, gt=0, le=4000)
 
+    @property
+    def request_body_limit_bytes(self) -> int:
+        return (
+            self.upload_limit_bytes
+            + self.prompt_limit_chars
+            + MULTIPART_OVERHEAD_LIMIT_BYTES
+        )
 
-def load_model(settings: Settings) -> WhisperModel:
+
+def load_model(
+    model: str, device: str, compute_type: str, model_cache_path: Path
+) -> WhisperModel:
     """Load the configured model from the local cache or model registry."""
     return WhisperModel(
-        settings.model,
-        device=settings.device,
-        compute_type=settings.compute_type,
-        download_root=str(settings.model_cache_path),
+        model,
+        device=device,
+        compute_type=compute_type,
+        download_root=str(model_cache_path),
     )
 
 
@@ -78,7 +187,7 @@ def _run_transcription(
 
 def create_app(
     settings: Settings | None = None,
-    model_loader: Callable[[Settings], Any] | None = None,
+    model_loader: Callable[[str, str, str, Path], Any] | None = None,
 ) -> FastAPI:
     """Create an app with an injectable loader so tests never download models."""
     config = settings or Settings()
@@ -86,7 +195,12 @@ def create_app(
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
-        app.state.model = loader(config)
+        app.state.model = loader(
+            config.model,
+            config.device,
+            config.compute_type,
+            config.model_cache_path,
+        )
         app.state.loaded_model = config.model
         try:
             yield
@@ -95,6 +209,10 @@ def create_app(
             app.state.loaded_model = None
 
     app = FastAPI(title="Whisper Transcription Service", lifespan=lifespan)
+    app.add_middleware(
+        RequestBodyLimitMiddleware,
+        max_bytes=config.request_body_limit_bytes,
+    )
 
     @app.get("/health")
     async def health_check() -> dict[str, str | None]:

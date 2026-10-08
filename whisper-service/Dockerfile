@@ -5,6 +5,10 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 WORKDIR /app
 
 ARG WHISPER_MODEL=base.en
+ARG APP_VERSION=
+ARG GIT_HASH=
+LABEL org.opencontainers.image.version="${APP_VERSION}" \
+    org.opencontainers.image.revision="${GIT_HASH}"
 ENV WHISPER_MODEL=${WHISPER_MODEL} \
     WHISPER_MODEL_CACHE_PATH=/models
 

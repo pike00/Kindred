@@ -11,4 +11,4 @@ lint:
 
 build model="base.en":
     just --justfile ../justfile context
-    docker build --build-arg WHISPER_MODEL={{model}} -t kindred-whisper:dev .
+    docker build --build-arg WHISPER_MODEL={{model}} --build-arg APP_VERSION="${APP_VERSION:-dev}" --build-arg GIT_HASH="$(git rev-parse HEAD)" -t kindred-whisper:dev .
