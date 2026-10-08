@@ -3624,7 +3624,7 @@ export class TranscribeService {
      * Transcribe an audio file using the Whisper service.
      *
      * Accepts WAV, MP3, or any audio format supported by ffmpeg.
-     * Returns the transcribed text for review before saving as an Interaction.
+     * Returns the original text and a durable capture for reviewing proposed records.
      * @param data The data for the request.
      * @param data.formData
      * @returns TranscriptionResponse Successful Response

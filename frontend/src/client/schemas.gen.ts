@@ -889,6 +889,7 @@ export const Body_transcribe_transcribe_audioSchema = {
     properties: {
         file: {
             type: 'string',
+            format: 'binary',
             contentMediaType: 'application/octet-stream',
             title: 'File'
         },

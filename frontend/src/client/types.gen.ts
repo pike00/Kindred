@@ -218,7 +218,7 @@ export type Body_login_login_access_token = {
 };
 
 export type Body_transcribe_transcribe_audio = {
-    file: string;
+    file: (Blob | File);
     timezone?: string;
     contact_ids?: Array<(string)>;
 };

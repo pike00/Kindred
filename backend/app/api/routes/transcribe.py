@@ -8,7 +8,7 @@ import logging
 import uuid
 
 import httpx
-from fastapi import APIRouter, Form, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from pydantic import ValidationError
 from sqlmodel import select
 
@@ -75,7 +75,7 @@ async def transcribe_audio(
     *,
     current_user: CurrentUser,
     session: SessionDep,
-    file: UploadFile,
+    file: UploadFile = File(json_schema_extra={"format": "binary"}),
     timezone: str = Form(default="UTC"),
     contact_ids: list[uuid.UUID] = Form(default=[]),
 ) -> TranscriptionResponse:
@@ -83,7 +83,7 @@ async def transcribe_audio(
     Transcribe an audio file using the Whisper service.
 
     Accepts WAV, MP3, or any audio format supported by ffmpeg.
-    Returns the transcribed text for review before saving as an Interaction.
+    Returns the original text and a durable capture for reviewing proposed records.
     """
     if not file.filename:
         raise HTTPException(status_code=400, detail="No file provided")

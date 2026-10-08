@@ -10,6 +10,13 @@ from fastapi.testclient import TestClient
 class TestTranscribeAudio:
     """Tests for POST /api/v1/transcribe/."""
 
+    def test_openapi_declares_binary_upload(self, client: TestClient):
+        document = client.app.openapi()
+        body = document["paths"]["/api/v1/transcribe/"]["post"]["requestBody"]
+        reference = body["content"]["multipart/form-data"]["schema"]["$ref"]
+        schema = document["components"]["schemas"][reference.rsplit("/", 1)[-1]]
+        assert schema["properties"]["file"]["format"] == "binary"
+
     def test_transcribe_unauthorized(self, client: TestClient):
         """Unauthenticated requests must be rejected with 401."""
         response = client.post(
