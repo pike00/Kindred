@@ -195,6 +195,57 @@ describe("VoiceReviewModal", () => {
     expect(mocks.commit.mock.calls[1][0].requestBody.actions[0]).toMatchObject({ body: "Corrected after rejection" })
   })
 
+  it("locks the editor during commit and restores edits after a definite rejection", async () => {
+    const request = { method: "POST", url: "", path: {} }
+    const response = { url: "", ok: false, status: 422, statusText: "Unprocessable Entity", body: {} }
+    let rejectCommit!: (error: unknown) => void
+    const pendingCommit = new Promise<never>((_resolve, reject) => { rejectCommit = reject })
+    mocks.commit.mockImplementationOnce(() => pendingCommit)
+      .mockResolvedValueOnce(capture({ status: "committed", results: { notes: ["saved-note"] } }))
+    renderModal()
+    await userEvent.setup().click(await screen.findByRole("button", { name: "Commit reviewed actions" }))
+    await waitFor(() => expect(mocks.commit).toHaveBeenCalledOnce())
+    expect(screen.getByLabelText("Reviewed transcript")).toBeDisabled()
+    expect(screen.getByLabelText("Note text")).toBeDisabled()
+    await act(async () => { rejectCommit(new ApiError(request as never, response as never, "Invalid field")) })
+    expect(await screen.findByText("Invalid field")).toBeInTheDocument()
+    expect(screen.getByLabelText("Reviewed transcript")).toBeEnabled()
+    expect(screen.getByLabelText("Note text")).toBeEnabled()
+    fireEvent.change(screen.getByLabelText("Note text"), { target: { value: "Corrected after rejection" } })
+    await userEvent.setup().click(screen.getByRole("button", { name: "Commit reviewed actions" }))
+    await waitFor(() => expect(mocks.commit).toHaveBeenCalledTimes(2))
+    expect(mocks.commit.mock.calls[1][0].requestBody.actions[0]).toMatchObject({ body: "Corrected after rejection" })
+  })
+
+  it("locks the editor while saving and unlocks it after the saved state replaces it", async () => {
+    let resolveSave!: (value: ReturnType<typeof capture>) => void
+    const pendingSave = new Promise<ReturnType<typeof capture>>((resolve) => { resolveSave = resolve })
+    mocks.update.mockImplementationOnce(() => pendingSave)
+    renderModal()
+    fireEvent.change(await screen.findByLabelText("Note text"), { target: { value: "Draft being saved" } })
+    await userEvent.setup().click(screen.getByRole("button", { name: "Save draft" }))
+    expect(screen.getByLabelText("Reviewed transcript")).toBeDisabled()
+    expect(screen.getByLabelText("Note text")).toBeDisabled()
+    await act(async () => { resolveSave(capture({ revision: 4, actions: [note({ body: "Draft being saved" })] })) })
+    expect(await screen.findByText("Draft saved.")).toBeInTheDocument()
+    expect(screen.getByLabelText("Note text")).toBeEnabled()
+    expect(screen.getByLabelText("Note text")).toHaveValue("Draft being saved")
+  })
+
+  it("locks the editor while analysis replaces the action list", async () => {
+    let resolveAnalysis!: (value: ReturnType<typeof capture>) => void
+    const pendingAnalysis = new Promise<ReturnType<typeof capture>>((resolve) => { resolveAnalysis = resolve })
+    mocks.analyze.mockImplementationOnce(() => pendingAnalysis)
+    renderModal()
+    await userEvent.setup().click(await screen.findByRole("button", { name: "Retry analysis" }))
+    expect(screen.getByLabelText("Reviewed transcript")).toBeDisabled()
+    expect(screen.getByLabelText("Note text")).toBeDisabled()
+    await act(async () => { resolveAnalysis(capture({ revision: 4, actions: [note({ body: "Analyzed note" })] })) })
+    await waitFor(() => expect(screen.getByLabelText("Note text")).toHaveValue("Analyzed note"))
+    expect(screen.getByLabelText("Reviewed transcript")).toBeEnabled()
+    expect(screen.getByLabelText("Note text")).toBeEnabled()
+  })
+
   it("rejects unset contact values and requires an explicit clear action", async () => {
     mocks.get.mockResolvedValue(capture({ actions: [
       { id: "u", kind: "contact_update", enabled: true, evidence: "works at a company", contact_id: contactId, fields: [{ field: "company", value: "" }] },

@@ -432,7 +432,7 @@ export function VoiceReviewModal({ captureId, onComplete, onClose }: VoiceReview
         {query.isError && <p role="alert">Could not load this voice capture. {query.error.message}</p>}
         {capture && (
           <div className="space-y-5">
-            <fieldset disabled={commitOutcomeUncertain} className="min-w-0 space-y-2 border-0 p-0">
+            <fieldset disabled={commitOutcomeUncertain || busy !== null} className="min-w-0 space-y-2 border-0 p-0">
             <section className="space-y-2">
               <h3 className="font-semibold">Original transcript</h3>
               <pre className="whitespace-pre-wrap rounded-md bg-muted p-3 text-sm">{capture.raw_text}</pre>
@@ -464,7 +464,7 @@ export function VoiceReviewModal({ captureId, onComplete, onClose }: VoiceReview
             {reconciliationNotice && <p className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-900" role="status">{reconciliationNotice}</p>}
             {savedNotice && <p role="status" className="text-sm text-emerald-700">Draft saved.</p>}
 
-            <fieldset disabled={commitOutcomeUncertain} className="min-w-0 border-0 p-0">
+            <fieldset disabled={commitOutcomeUncertain || busy !== null} className="min-w-0 border-0 p-0">
             <section className="space-y-3">
               <div className="flex items-center justify-between gap-2">
                 <h3 className="font-semibold">Actions to review</h3>
