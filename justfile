@@ -40,6 +40,19 @@ import '.project-kit/clean.just'
 
 # --- repo-specific ---
 
+ci-backend:
+    cd backend && uv run --frozen bash scripts/tests-start.sh
+    just sdk-test
+    just --justfile whisper-service/justfile test coverage
+    uv run --project backend pytest scripts/tests -q
+
+ci-backend-coverage:
+    cd backend && uv run --frozen coverage report --fail-under=60
+
+# CI uses its own Postgres/Redis/Meilisearch services, without a preview stack.
+ci-backend-prepare:
+    cd backend && uv run --frozen bash scripts/prestart.sh
+
 # Regenerate docs/db/ from the live Postgres schema using tbls, then render
 # each .md to a standalone .html via pandoc. The helper follows the active
 # preview stack and reads credentials from its running DB container. Open
