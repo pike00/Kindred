@@ -5,10 +5,6 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 WORKDIR /app
 
 ARG WHISPER_MODEL=base.en
-ARG APP_VERSION=
-ARG GIT_HASH=
-LABEL org.opencontainers.image.version="${APP_VERSION}" \
-    org.opencontainers.image.revision="${GIT_HASH}"
 ENV WHISPER_MODEL=${WHISPER_MODEL} \
     WHISPER_MODEL_CACHE_PATH=/models
 
@@ -27,5 +23,16 @@ RUN mkdir -p /models && uv run --no-project --no-sync python -c \
 
 COPY app.py .
 
+# Runtime starts with the baked model only and sends uv's cache writes to the
+# writable /tmp mount used by read-only deployments.
+ENV HF_HUB_OFFLINE=1 \
+    UV_CACHE_DIR=/tmp/uv-cache
+
 # Run the FastAPI app
 CMD ["uv", "run", "--no-project", "--no-sync", "uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+
+# Keep provenance metadata after expensive dependency and model layers.
+ARG APP_VERSION=
+ARG GIT_HASH=
+LABEL org.opencontainers.image.version="${APP_VERSION}" \
+    org.opencontainers.image.revision="${GIT_HASH}"
