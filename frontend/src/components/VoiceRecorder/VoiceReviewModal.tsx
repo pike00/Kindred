@@ -189,12 +189,12 @@ export function VoiceReviewModal({ captureId, onComplete, onClose }: VoiceReview
   }
 
   useEffect(() => {
-    if (!query.data || !query.isFetchedAfterMount || initialized.current) return
+    if (!query.data || !query.isFetchedAfterMount || !query.isSuccess || initialized.current) return
     initialized.current = true
     setCapture(query.data)
     setCorrectedText(query.data.corrected_text)
     setActions(query.data.actions)
-  }, [query.data, query.isFetchedAfterMount])
+  }, [query.data, query.isFetchedAfterMount, query.isSuccess])
 
   useEffect(() => {
     if (!capture || capture.status !== "draft" || capture.actions.length > 0 || initialized.current !== true) return
@@ -229,7 +229,13 @@ export function VoiceReviewModal({ captureId, onComplete, onClose }: VoiceReview
         setConflict(true)
         setError("The saved capture changed while analysis was running. Your local edits are preserved; review the latest saved version before retrying.")
         try {
-          adoptCapture(await VoiceCapturesService.getVoiceCapture({ captureId }))
+          const latest = await VoiceCapturesService.getVoiceCapture({ captureId })
+          const hadLocalEdits = correctedText !== current.corrected_text || JSON.stringify(actions) !== JSON.stringify(current.actions)
+          adoptCapture(latest)
+          if (!hadLocalEdits) {
+            setCorrectedText(latest.corrected_text)
+            setActions(latest.actions)
+          }
         } catch {
           // Keep the local review state when the latest snapshot cannot be loaded.
         }
@@ -458,7 +464,7 @@ export function VoiceReviewModal({ captureId, onComplete, onClose }: VoiceReview
           </DialogDescription>
         </DialogHeader>
 
-        {query.isLoading && <p role="status">Loading saved voice capture…</p>}
+        {!initialized.current && query.isFetching && <p role="status">Loading saved voice capture…</p>}
         {query.isError && <p role="alert">Could not load this voice capture. {query.error.message}</p>}
         {capture && (
           <div className="space-y-5">

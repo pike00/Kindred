@@ -500,6 +500,20 @@ describe("VoiceReviewModal", () => {
     expect(mocks.analyze).toHaveBeenCalledOnce()
   })
 
+  it("does not analyze cached draft data when the fresh reopening request fails", async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    client.setQueryData(["voice-capture", "capture-1"], capture({ actions: [], analysis_error: null }))
+    let rejectFresh!: (error: Error) => void
+    mocks.get.mockImplementationOnce(() => new Promise((_resolve, reject) => { rejectFresh = reject }))
+
+    renderModalWithClient(client)
+    expect(await screen.findByRole("status")).toHaveTextContent("Loading saved voice capture")
+    await act(async () => { rejectFresh(new Error("Fresh load failed")) })
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Could not load this voice capture. Fresh load failed")
+    expect(mocks.analyze).not.toHaveBeenCalled()
+  })
+
   it("shows current revision conflict while retaining local transcript and card edits", async () => {
     const request = { method: "PUT", url: "", path: {} }
     const response = { url: "", ok: false, status: 409, statusText: "Conflict", body: {} }
@@ -535,6 +549,23 @@ describe("VoiceReviewModal", () => {
       captureId: "capture-1",
       requestBody: { revision: 4, corrected_text: "My transcript edit", actions: [expect.objectContaining({ body: "My note edit" })] },
     }))
+  })
+
+  it("adopts fresh saved proposals after an analysis conflict when there are no local edits", async () => {
+    const request = { method: "POST", url: "", path: {} }
+    const response = { url: "", ok: false, status: 409, statusText: "Conflict", body: {} }
+    const saved = capture({ revision: 4, corrected_text: "Saved transcript", actions: [note({ body: "Saved proposal" })] })
+    mocks.get.mockResolvedValueOnce(capture({ actions: [], analysis_error: "Provider unavailable" })).mockResolvedValueOnce(saved)
+    mocks.analyze.mockRejectedValueOnce(new ApiError(request as never, response as never, "Conflict"))
+    const { onClose } = renderModal()
+
+    await userEvent.setup().click(await screen.findByRole("button", { name: "Retry analysis" }))
+
+    expect(await screen.findByLabelText("Reviewed transcript")).toHaveValue("Saved transcript")
+    expect(screen.getByLabelText("Note text")).toHaveValue("Saved proposal")
+    await userEvent.setup().click(screen.getByRole("button", { name: "Save draft and close" }))
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce())
+    expect(mocks.update).not.toHaveBeenCalled()
   })
 
   it("deletes only after explicit confirmation and reports deletion errors", async () => {
