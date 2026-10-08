@@ -394,6 +394,92 @@ def test_commit_persists_all_five_reviewed_action_types_atomically(
     assert response.json()["raw_text"] == source
 
 
+def test_draft_save_and_reopen_preserves_incomplete_skipped_manual_cards(
+    client, user_headers
+):
+    source = "Keep these incomplete ideas for review later."
+    capture = client.post(
+        f"{settings.API_V1_STR}/voice-captures/",
+        headers=user_headers,
+        json={"raw_text": source, "timezone": "America/Chicago"},
+    ).json()
+    actions = [
+        {
+            "id": str(uuid4()),
+            "kind": "interaction",
+            "enabled": False,
+            "evidence": "",
+            "review_warning": None,
+            "attendee_ids": [],
+            "channel": None,
+            "occurred_at": None,
+            "notes": "",
+            "duration_minutes": None,
+            "location_label": None,
+        },
+        {
+            "id": str(uuid4()),
+            "kind": "note",
+            "enabled": False,
+            "evidence": "",
+            "review_warning": None,
+            "contact_id": None,
+            "body": "",
+        },
+        {
+            "id": str(uuid4()),
+            "kind": "contact_update",
+            "enabled": False,
+            "evidence": "",
+            "review_warning": None,
+            "contact_id": None,
+            "fields": [],
+        },
+        {
+            "id": str(uuid4()),
+            "kind": "life_event",
+            "enabled": False,
+            "evidence": "",
+            "review_warning": None,
+            "contact_id": None,
+            "event_type": "",
+            "title": "",
+            "description": None,
+            "occurred_at": None,
+            "create_annual_reminder": False,
+        },
+        {
+            "id": str(uuid4()),
+            "kind": "reminder",
+            "enabled": False,
+            "evidence": "",
+            "review_warning": None,
+            "contact_id": None,
+            "title": "",
+            "description": None,
+            "remind_at": None,
+            "frequency": "once",
+            "is_active": True,
+        },
+    ]
+    saved = client.put(
+        f"{settings.API_V1_STR}/voice-captures/{capture['id']}",
+        headers=user_headers,
+        json={
+            "revision": capture["revision"],
+            "corrected_text": source,
+            "actions": actions,
+        },
+    )
+    assert saved.status_code == 200, saved.text
+    reopened = client.get(
+        f"{settings.API_V1_STR}/voice-captures/{capture['id']}",
+        headers=user_headers,
+    )
+    assert reopened.status_code == 200
+    assert reopened.json()["actions"] == actions
+
+
 def test_contact_update_only_changes_listed_fields_and_can_clear_explicitly(
     client, user_headers
 ):
@@ -947,7 +1033,7 @@ def test_context_only_neighbor_cannot_be_an_action_target(
         )
     )
     db.commit()
-    source = "Sarah called yesterday"
+    source = "Sarah called yesterday. Her husband signed a book deal."
     capture = client.post(
         f"{settings.API_V1_STR}/voice-captures/",
         headers=user_headers,
@@ -969,10 +1055,10 @@ def test_context_only_neighbor_cannot_be_an_action_target(
                     id=uuid4(),
                     kind="note",
                     enabled=True,
-                    evidence=source,
+                    evidence="Her husband signed a book deal.",
                     review_warning=None,
                     contact_id=UUID(mark_id),
-                    body="Sarah called yesterday",
+                    body="Mark signed a book deal",
                 )
             ],
             warnings=[],
@@ -986,7 +1072,92 @@ def test_context_only_neighbor_cannot_be_an_action_target(
     )
 
     assert response.status_code == 200, response.text
-    assert response.json()["actions"] == []
+    action = response.json()["actions"][0]
+    assert action["kind"] == "note"
+    assert action["contact_id"] is None
+    assert action["body"] == "Mark signed a book deal"
+    assert action["evidence"] == "Her husband signed a book deal."
+    assert action["enabled"] is False
+    assert "eligible contact" in action["review_warning"].lower()
+
+
+def test_context_only_attendee_is_removed_but_eligible_attendee_remains_for_review(
+    client, user_headers, db, monkeypatch
+):
+    from uuid import UUID
+
+    from pydantic import SecretStr
+
+    from app.api.routes import voice_captures
+    from app.voice_capture import service
+    from app.voice_capture.analysis import LLMConfig
+    from app.voice_capture.schemas import InteractionAction
+
+    sarah_id = client.post(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=user_headers,
+        json={"first_name": "Sarah", "last_name": "Smith"},
+    ).json()["id"]
+    mark_id = client.post(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=user_headers,
+        json={"first_name": "Mark", "last_name": "Smith"},
+    ).json()["id"]
+    db.add(
+        Relationship(
+            contact_id=UUID(sarah_id),
+            related_contact_id=UUID(mark_id),
+            relationship_type="spouse",
+        )
+    )
+    db.commit()
+    source = "Sarah called yesterday. Her husband joined us."
+    capture = client.post(
+        f"{settings.API_V1_STR}/voice-captures/",
+        headers=user_headers,
+        json={"raw_text": source, "timezone": "UTC"},
+    ).json()
+    monkeypatch.setattr(
+        voice_captures,
+        "_llm_config",
+        lambda: LLMConfig("http://llm.test/v1", "model", SecretStr("test-only"), 3),
+    )
+
+    async def propose_mixed_attendees(**_kwargs):
+        return VoiceProposal(
+            corrected_text=source,
+            actions=[
+                InteractionAction(
+                    id=uuid4(),
+                    kind="interaction",
+                    enabled=True,
+                    evidence="Sarah called yesterday. Her husband joined us.",
+                    review_warning=None,
+                    attendee_ids=[UUID(sarah_id), UUID(mark_id)],
+                    channel="call",
+                    occurred_at=datetime.now(timezone.utc) - timedelta(hours=1),
+                    notes="Sarah and Mark talked",
+                    duration_minutes=None,
+                    location_label=None,
+                )
+            ],
+            warnings=[],
+        )
+
+    monkeypatch.setattr(service, "analyze_text", propose_mixed_attendees)
+    response = client.post(
+        f"{settings.API_V1_STR}/voice-captures/{capture['id']}/analyze",
+        headers=user_headers,
+        json={"revision": capture["revision"]},
+    )
+
+    assert response.status_code == 200, response.text
+    action = response.json()["actions"][0]
+    assert action["attendee_ids"] == [sarah_id]
+    assert action["enabled"] is False
+    assert action["notes"] == "Sarah and Mark talked"
+    assert action["evidence"] == "Sarah called yesterday. Her husband joined us."
+    assert "eligible contact" in action["review_warning"].lower()
 
 
 def test_contact_context_retains_shared_first_name_and_relationship_edge(db, user):

@@ -35,7 +35,7 @@ class ActionBase(StrictModel):
     id: uuid.UUID
     kind: str
     enabled: bool = True
-    evidence: str = Field(min_length=1, max_length=1000)
+    evidence: str = Field(max_length=1000)
     review_warning: str | None = Field(default=None, max_length=500)
 
 
@@ -59,7 +59,7 @@ class InteractionAction(ActionBase):
 class NoteAction(ActionBase):
     kind: Literal["note"]
     contact_id: uuid.UUID | None = None
-    body: str = Field(min_length=1, max_length=50000)
+    body: str = Field(max_length=50000)
 
 
 class TextContactFieldChange(StrictModel):
@@ -83,7 +83,7 @@ ContactFieldChange = Annotated[
 class ContactUpdateAction(ActionBase):
     kind: Literal["contact_update"]
     contact_id: uuid.UUID | None = None
-    fields: list[ContactFieldChange] = Field(min_length=1, max_length=7)
+    fields: list[ContactFieldChange] = Field(max_length=7)
 
     @model_validator(mode="after")
     def unique_fields(self) -> ContactUpdateAction:
@@ -96,8 +96,8 @@ class ContactUpdateAction(ActionBase):
 class LifeEventAction(ActionBase):
     kind: Literal["life_event"]
     contact_id: uuid.UUID | None = None
-    event_type: str = Field(min_length=1, max_length=100)
-    title: str = Field(min_length=1, max_length=500)
+    event_type: str = Field(max_length=100)
+    title: str = Field(max_length=500)
     description: str | None = Field(default=None, max_length=2000)
     occurred_at: date | None = None
     create_annual_reminder: Literal[False] = False
@@ -106,7 +106,7 @@ class LifeEventAction(ActionBase):
 class ReminderAction(ActionBase):
     kind: Literal["reminder"]
     contact_id: uuid.UUID | None = None
-    title: str = Field(min_length=1, max_length=500)
+    title: str = Field(max_length=500)
     description: str | None = Field(default=None, max_length=2000)
     remind_at: datetime | None = None
     frequency: Frequency = Frequency.ONCE
@@ -135,6 +135,12 @@ class VoiceProposal(StrictModel):
     actions: list[VoiceAction] = Field(max_length=50)
     warnings: list[str] = Field(default_factory=list, max_length=50)
 
+    @model_validator(mode="after")
+    def enabled_actions_are_complete(self) -> VoiceProposal:
+        for action in self.actions:
+            _validate_enabled_action(action)
+        return self
+
 
 class CreateCapture(StrictModel):
     raw_text: str = Field(min_length=1, max_length=100000)
@@ -159,6 +165,54 @@ class ReviewCapture(StrictModel):
     revision: int = Field(ge=1)
     corrected_text: str = Field(min_length=1, max_length=100000)
     actions: list[VoiceAction] = Field(max_length=50)
+
+    @model_validator(mode="after")
+    def enabled_actions_are_complete(self) -> ReviewCapture:
+        for action in self.actions:
+            if action.enabled:
+                _validate_enabled_action(action)
+        return self
+
+
+def _validate_enabled_action(action: VoiceAction) -> None:
+    if not action.evidence.strip():
+        raise ValueError("enabled actions need source evidence")
+    if isinstance(action, InteractionAction):
+        if (
+            not action.attendee_ids
+            or action.channel is None
+            or action.occurred_at is None
+        ):
+            raise ValueError(
+                "enabled interactions need attendees, channel, and occurrence time"
+            )
+        if not action.notes or not action.notes.strip():
+            raise ValueError("enabled interactions need notes")
+    elif isinstance(action, NoteAction):
+        if not action.body.strip():
+            raise ValueError("enabled notes need text")
+    elif isinstance(action, ContactUpdateAction):
+        if not action.fields:
+            raise ValueError("enabled contact updates need at least one field")
+        if any(
+            change.value is not None
+            and isinstance(change.value, str)
+            and not change.value.strip()
+            for change in action.fields
+        ):
+            raise ValueError(
+                "enabled contact update fields need a value or explicit null"
+            )
+    elif isinstance(action, LifeEventAction):
+        if (
+            not action.event_type.strip()
+            or not action.title.strip()
+            or action.occurred_at is None
+        ):
+            raise ValueError("enabled life events need a type, title, and date")
+    elif isinstance(action, ReminderAction):
+        if not action.title.strip() or action.remind_at is None:
+            raise ValueError("enabled reminders need a title and date")
 
 
 class VoiceCapturePublic(StrictModel):

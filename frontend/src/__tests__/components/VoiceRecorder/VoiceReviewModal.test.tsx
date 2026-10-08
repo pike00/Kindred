@@ -46,7 +46,7 @@ const note = (overrides: Record<string, unknown> = {}) => ({
 })
 const capture = (overrides: Record<string, unknown> = {}) => ({
   id: "capture-1",
-  raw_text: "Original immutable words",
+  raw_text: note().evidence,
   corrected_text: "Reviewed words",
   timezone: "America/Chicago",
   recorded_at: "2026-10-07T16:00:00-05:00",
@@ -65,8 +65,8 @@ function renderModal() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const onComplete = vi.fn()
   const onClose = vi.fn()
-  render(<QueryClientProvider client={client}><VoiceReviewModal captureId="capture-1" onComplete={onComplete} onClose={onClose} /></QueryClientProvider>)
-  return { onComplete, onClose, client }
+  const view = render(<QueryClientProvider client={client}><VoiceReviewModal captureId="capture-1" onComplete={onComplete} onClose={onClose} /></QueryClientProvider>)
+  return { onComplete, onClose, client, unmount: view.unmount }
 }
 
 describe("VoiceReviewModal", () => {
@@ -79,20 +79,21 @@ describe("VoiceReviewModal", () => {
 
   it("keeps original words immutable and displays edited transcript, warning, evidence, and timezone", async () => {
     mocks.get.mockResolvedValue(capture({
+      raw_text: "Original immutable words",
       actions: [
-        { ...note(), kind: "note" },
-        { ...note(), id: "interaction", kind: "interaction", attendee_ids: [contactId], channel: "call", occurred_at: "2026-10-06T12:00:00-05:00", notes: "Talked" },
-        { ...note(), id: "contact-update", kind: "contact_update", fields: [{ field: "company", value: "Acme" }] },
-        { ...note(), id: "life-event", kind: "life_event", event_type: "move", title: "Moved", occurred_at: "2026-10-05" },
-        { ...note(), id: "reminder", kind: "reminder", title: "Check in", remind_at: "2026-11-07T09:00:00-06:00" },
+        { ...note({ evidence: "Original immutable words" }), kind: "note" },
+        { ...note({ evidence: "Original immutable words" }), id: "interaction", kind: "interaction", attendee_ids: [contactId], channel: "call", occurred_at: "2026-10-06T12:00:00-05:00", notes: "Talked" },
+        { ...note({ evidence: "Original immutable words" }), id: "contact-update", kind: "contact_update", fields: [{ field: "company", value: "Acme" }] },
+        { ...note({ evidence: "Original immutable words" }), id: "life-event", kind: "life_event", event_type: "move", title: "Moved", occurred_at: "2026-10-05" },
+        { ...note({ evidence: "Original immutable words" }), id: "reminder", kind: "reminder", title: "Check in", remind_at: "2026-11-07T09:00:00-06:00" },
       ],
     }))
     renderModal()
-    expect(await screen.findByText("Original immutable words")).toBeInTheDocument()
+    expect(await screen.findByText("Original immutable words", { selector: "pre" })).toBeInTheDocument()
     expect(screen.getByLabelText("Reviewed transcript")).toHaveValue("Reviewed words")
     expect(screen.getByText(/more than one person/)).toBeInTheDocument()
-    expect(screen.getAllByText(/I told Nora she should save this story/)).toHaveLength(5)
-    expect(screen.getAllByText(/America\/Chicago/)).toHaveLength(2)
+    expect(screen.getAllByLabelText(/Source evidence for/)).toHaveLength(5)
+    expect(screen.getByRole("dialog")).toHaveTextContent(/America\/Chicago/)
     expect(screen.getByText("Interaction 2")).toBeInTheDocument()
     expect(screen.getByText("Contact update 3")).toBeInTheDocument()
     expect(screen.getByText("Life event 4")).toBeInTheDocument()
@@ -108,6 +109,93 @@ describe("VoiceReviewModal", () => {
       captureId: "capture-1",
       requestBody: { revision: 3, text: "Fixed words" },
     }))
+  })
+
+  it("preserves dirty transcript and cards when analysis returns a recoverable failure, then saves and reopens them", async () => {
+    const saved = capture({
+      revision: 5,
+      corrected_text: "Edited transcript",
+      actions: [note({ body: "Edited note" })],
+      analysis_error: "Provider unavailable",
+    })
+    mocks.analyze.mockResolvedValue(capture({
+      raw_text: note().evidence,
+      revision: 4,
+      corrected_text: "Reviewed words",
+      actions: [note()],
+      analysis_error: "Provider unavailable",
+    }))
+    mocks.update.mockImplementation(async ({ requestBody }) => capture({ ...saved, ...requestBody }))
+    mocks.get.mockResolvedValue(capture({ raw_text: note().evidence }))
+    const view = renderModal()
+    fireEvent.change(await screen.findByLabelText("Reviewed transcript"), { target: { value: "Edited transcript" } })
+    fireEvent.change(screen.getByLabelText("Note text"), { target: { value: "Edited note" } })
+    await userEvent.setup().click(screen.getByRole("button", { name: "Retry analysis" }))
+    expect(await screen.findByText("Review could not be completed: Provider unavailable")).toBeInTheDocument()
+    expect(screen.getByLabelText("Reviewed transcript")).toHaveValue("Edited transcript")
+    expect(screen.getByLabelText("Note text")).toHaveValue("Edited note")
+    await userEvent.setup().click(screen.getByRole("button", { name: "Save draft" }))
+    await waitFor(() => expect(mocks.update).toHaveBeenCalledWith(expect.objectContaining({
+      requestBody: expect.objectContaining({ revision: 4, corrected_text: "Edited transcript", actions: [expect.objectContaining({ body: "Edited note" })] }),
+    })))
+    view.unmount()
+    mocks.get.mockResolvedValueOnce(saved)
+    renderModal()
+    expect(await screen.findByLabelText("Reviewed transcript")).toHaveValue("Edited transcript")
+    expect(screen.getByLabelText("Note text")).toHaveValue("Edited note")
+  })
+
+  it("requires an exact source quote before fallback draft save and close", async () => {
+    const source = "Nora changed teams. Call Nora next week."
+    mocks.get.mockResolvedValue(capture({ raw_text: source, actions: [], analysis_error: "Provider unavailable" }))
+    mocks.listContacts.mockResolvedValue({ data: [{ id: contactId, first_name: "Nora", last_name: "Taylor" }], count: 1 })
+    mocks.update.mockImplementation(async ({ requestBody }) => capture({ revision: 4, ...requestBody }))
+    const { onClose } = renderModal()
+    await userEvent.setup().click(await screen.findByRole("button", { name: "Add note" }))
+    fireEvent.change(await screen.findByLabelText("Source evidence for Note 1"), { target: { value: "Nora changed company" } })
+    fireEvent.change(screen.getByLabelText("Note text"), { target: { value: "Nora changed roles." } })
+    fireEvent.change(screen.getByLabelText("Search contacts"), { target: { value: "Nora" } })
+    await userEvent.setup().click(await screen.findByRole("button", { name: "Nora Taylor" }))
+    await userEvent.setup().click(screen.getByRole("button", { name: "Save draft and close" }))
+    expect(await screen.findByText(/must exactly match a quote from the original transcript/)).toBeInTheDocument()
+    expect(mocks.update).not.toHaveBeenCalled()
+    expect(onClose).not.toHaveBeenCalled()
+    fireEvent.change(screen.getByLabelText("Source evidence for Note 1"), { target: { value: "Nora changed teams." } })
+    await userEvent.setup().click(screen.getByRole("button", { name: "Save draft and close" }))
+    await waitFor(() => expect(mocks.update).toHaveBeenCalled())
+    expect(mocks.update.mock.calls[0][0].requestBody.actions[0].evidence).toBe("Nora changed teams.")
+    expect(onClose).toHaveBeenCalledOnce()
+  })
+
+  it("commits a manually added card with exact source evidence", async () => {
+    const source = "Nora changed teams."
+    mocks.get.mockResolvedValue(capture({ raw_text: source, actions: [], analysis_error: "Provider unavailable" }))
+    mocks.listContacts.mockResolvedValue({ data: [{ id: contactId, first_name: "Nora", last_name: "Taylor" }], count: 1 })
+    mocks.commit.mockResolvedValue(capture({ status: "committed", results: { notes: ["saved"] } }))
+    renderModal()
+    await userEvent.setup().click(await screen.findByRole("button", { name: "Add note" }))
+    fireEvent.change(await screen.findByLabelText("Source evidence for Note 1"), { target: { value: "Nora changed teams." } })
+    fireEvent.change(screen.getByLabelText("Note text"), { target: { value: "Nora changed roles." } })
+    fireEvent.change(screen.getByLabelText("Search contacts"), { target: { value: "Nora" } })
+    await userEvent.setup().click(await screen.findByRole("button", { name: "Nora Taylor" }))
+    await userEvent.setup().click(screen.getByRole("button", { name: "Commit reviewed actions" }))
+    await waitFor(() => expect(mocks.commit).toHaveBeenCalledOnce())
+    expect(mocks.commit.mock.calls[0][0].requestBody.actions[0].evidence).toBe("Nora changed teams.")
+  })
+
+  it("labels browser-local datetime editing separately from the capture analysis timezone", async () => {
+    const previousTz = process.env.TZ
+    process.env.TZ = "America/New_York"
+    try {
+      mocks.get.mockResolvedValue(capture({ timezone: "America/Chicago" }))
+      renderModal()
+      expect(await screen.findByText(/Recorded .*browser local time \(America\/New_York\).*Analysis reference: America\/Chicago/)).toBeInTheDocument()
+      expect(screen.getByText(/Datetime fields use your browser's local timezone \(America\/New_York\)/)).toBeInTheDocument()
+      expect(screen.getByText(/America\/Chicago is the analysis reference for relative dates/)).toBeInTheDocument()
+    } finally {
+      if (previousTz === undefined) delete process.env.TZ
+      else process.env.TZ = previousTz
+    }
   })
 
   it("preserves edits and stable action IDs when draft saving fails", async () => {
@@ -247,7 +335,7 @@ describe("VoiceReviewModal", () => {
   })
 
   it("rejects unset contact values and requires an explicit clear action", async () => {
-    mocks.get.mockResolvedValue(capture({ actions: [
+    mocks.get.mockResolvedValue(capture({ raw_text: "works at a company", actions: [
       { id: "u", kind: "contact_update", enabled: true, evidence: "works at a company", contact_id: contactId, fields: [{ field: "company", value: "" }] },
     ] }))
     mocks.commit.mockResolvedValue(capture({ status: "committed", results: { contacts: [contactId] } }))
@@ -277,6 +365,19 @@ describe("VoiceReviewModal", () => {
     expect(screen.getByText("Reminder 5")).toBeInTheDocument()
   })
 
+  it("saves an incomplete manual card when it is explicitly skipped", async () => {
+    const { onClose } = renderModal()
+    await userEvent.setup().click(await screen.findByRole("button", { name: "Add note" }))
+    fireEvent.change(screen.getAllByLabelText("Note text").at(-1)!, { target: { value: "Keep this unresolved idea." } })
+    await userEvent.setup().click(screen.getAllByRole("button", { name: "Skip" })[1])
+    await userEvent.setup().click(screen.getByRole("button", { name: "Save draft and close" }))
+    await waitFor(() => expect(mocks.update).toHaveBeenCalledOnce())
+    expect(mocks.update.mock.calls[0][0].requestBody.actions).toEqual(expect.arrayContaining([
+      expect.objectContaining({ enabled: false, evidence: "", body: "Keep this unresolved idea." }),
+    ]))
+    expect(onClose).toHaveBeenCalledOnce()
+  })
+
   it("searches contacts on the backend and advances through result pages", async () => {
     mocks.listContacts.mockResolvedValue({ data: [{ id: contactId, first_name: "Nora", last_name: "Taylor" }], count: 41 })
     renderModal()
@@ -289,7 +390,7 @@ describe("VoiceReviewModal", () => {
   it("edits the fields for all action types and keeps date-only contact and event values", async () => {
     mocks.getContact.mockResolvedValue({ id: contactId, first_name: "Nora", last_name: "Taylor", company: "Old Co", birthday: "1985-02-03" })
     mocks.update.mockImplementation(async ({ requestBody }) => capture({ revision: 4, ...requestBody }))
-    mocks.get.mockResolvedValue(capture({ actions: [
+    mocks.get.mockResolvedValue(capture({ raw_text: "met save works moved call", actions: [
       { id: "i", kind: "interaction", enabled: true, evidence: "met", attendee_ids: [contactId], channel: "call", occurred_at: "2026-10-06T12:00:00-05:00", notes: "Talked", duration_minutes: 10, location_label: "Cafe" },
       { id: "n", kind: "note", enabled: true, evidence: "save", contact_id: contactId, body: "Note" },
       { id: "u", kind: "contact_update", enabled: true, evidence: "works", contact_id: contactId, fields: [{ field: "company", value: "New Co" }] },
@@ -329,10 +430,10 @@ describe("VoiceReviewModal", () => {
   it("supports unresolved multi-contact attendees and nullable action fields", async () => {
     mocks.listContacts.mockResolvedValue({ data: [{ id: contactId, first_name: "Nora", last_name: "Taylor" }], count: 1 })
     mocks.update.mockImplementation(async ({ requestBody }) => capture({ revision: 4, ...requestBody }))
-    mocks.get.mockResolvedValue(capture({ actions: [
-      { id: "i", kind: "interaction", enabled: true, evidence: "", attendee_ids: [], channel: null, occurred_at: null, notes: "Initial", duration_minutes: 5, location_label: "Somewhere" },
-      { id: "u", kind: "contact_update", enabled: true, evidence: "", contact_id: null, fields: [{ field: "birthday", value: null }] },
-      { id: "e", kind: "life_event", enabled: true, evidence: "", contact_id: null, event_type: "move", title: "Move", occurred_at: "2026-10-01", description: "Details" },
+    mocks.get.mockResolvedValue(capture({ raw_text: "Meeting. Birthday. Moved.", actions: [
+      { id: "i", kind: "interaction", enabled: false, evidence: "", attendee_ids: [], channel: null, occurred_at: null, notes: "Initial", duration_minutes: 5, location_label: "Somewhere" },
+      { id: "u", kind: "contact_update", enabled: false, evidence: "", contact_id: null, fields: [{ field: "birthday", value: null }] },
+      { id: "e", kind: "life_event", enabled: false, evidence: "", contact_id: null, event_type: "move", title: "Move", occurred_at: "2026-10-01", description: "Details" },
     ] }))
     renderModal()
     await screen.findByLabelText("Occurred at")

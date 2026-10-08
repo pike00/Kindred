@@ -3,6 +3,7 @@ import {
   dateTimeLocalToIso,
   isoToDateTimeLocal,
   createManualAction,
+  validateEvidence,
   validateActions,
 } from "@/components/VoiceRecorder/voiceCaptureUtils"
 
@@ -133,5 +134,26 @@ describe("voice capture review helpers", () => {
     expect(actions.map((action) => action.kind)).toEqual(kinds)
     expect(new Set(actions.map((action) => action.id)).size).toBe(5)
     expect(actions.every((action) => action.enabled && action.evidence === "")).toBe(true)
+  })
+
+  it("requires exact nonempty evidence quotes from the immutable source for every card", () => {
+    const actions = [
+      { id: "one", kind: "note", enabled: true, evidence: "Nora changed teams.", contact_id: "c", body: "Note" },
+      { id: "two", kind: "reminder", enabled: false, evidence: "", title: "Call", remind_at: null },
+    ] as never
+    expect(validateEvidence(actions, "Nora changed teams. Call Nora next week.")).toEqual([])
+    expect(validateEvidence([
+      { id: "one", kind: "note", enabled: true, evidence: "", contact_id: "c", body: "Note" },
+    ] as never, "Nora changed teams.")).toEqual([
+      "Action 1 needs source evidence from the original transcript.",
+    ])
+    expect(validateEvidence([
+      { id: "one", kind: "note", enabled: true, evidence: "Nora changed jobs", contact_id: "c", body: "Note" },
+    ] as never, "Nora changed teams.")).toEqual([
+      "Action 1 evidence must exactly match a quote from the original transcript.",
+    ])
+    expect(validateEvidence([
+      { id: "one", kind: "note", enabled: true, evidence: "Nora changed teams.", contact_id: "c", body: "Note" },
+    ] as never, "Nora changed teams.")).toEqual([])
   })
 })

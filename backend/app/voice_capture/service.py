@@ -104,9 +104,8 @@ async def analyze_capture(
         proposal = proposal.model_copy(
             update={
                 "actions": [
-                    action
+                    _mark_ineligible_targets_for_review(action, ids)
                     for action in proposal.actions
-                    if _targets_allowed(action, ids)
                 ],
             }
         )
@@ -138,13 +137,31 @@ async def analyze_capture(
     return locked
 
 
-def _targets_allowed(action: VoiceAction, ids: set[uuid.UUID]) -> bool:
-    targets = []
-    if getattr(action, "contact_id", None) is not None:
-        targets.append(action.contact_id)
+def _mark_ineligible_targets_for_review(
+    action: VoiceAction, ids: set[uuid.UUID]
+) -> VoiceAction:
+    changes: dict[str, Any] = {}
+    contact_id = getattr(action, "contact_id", None)
+    if contact_id is not None and contact_id not in ids:
+        changes["contact_id"] = None
     if isinstance(action, InteractionAction):
-        targets.extend(action.attendee_ids)
-    return all(target in ids for target in targets)
+        eligible_attendees = [target for target in action.attendee_ids if target in ids]
+        if len(eligible_attendees) != len(action.attendee_ids):
+            changes["attendee_ids"] = eligible_attendees
+    if not changes:
+        return action
+    warning = (
+        "One or more proposed contacts are visible only through a relationship. "
+        "Choose an eligible contact before keeping this action."
+    )
+    existing_warning = action.review_warning
+    changes.update(
+        enabled=False,
+        review_warning=(
+            f"{existing_warning} {warning}" if existing_warning else warning
+        )[:500],
+    )
+    return action.model_copy(update=changes)
 
 
 def save_review(
