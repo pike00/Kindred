@@ -574,6 +574,11 @@
           "type": "boolean",
           "nullable": false,
           "default": "false"
+        },
+        {
+          "name": "snoozed_until",
+          "type": "timestamp with time zone",
+          "nullable": true
         }
       ],
       "indexes": [
@@ -6514,6 +6519,267 @@
           ]
         }
       ]
+    },
+    {
+      "name": "public.voice_capture",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "owner_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "raw_text",
+          "type": "text",
+          "nullable": false
+        },
+        {
+          "name": "corrected_text",
+          "type": "text",
+          "nullable": false
+        },
+        {
+          "name": "timezone",
+          "type": "varchar(100)",
+          "nullable": false
+        },
+        {
+          "name": "recorded_at",
+          "type": "timestamp with time zone",
+          "nullable": false
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": false
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "nullable": false
+        },
+        {
+          "name": "status",
+          "type": "varchar(20)",
+          "nullable": false,
+          "default": "'draft'::character varying"
+        },
+        {
+          "name": "revision",
+          "type": "integer",
+          "nullable": false,
+          "default": "1"
+        },
+        {
+          "name": "actions",
+          "type": "jsonb",
+          "nullable": false,
+          "default": "'{}'::jsonb"
+        },
+        {
+          "name": "warnings",
+          "type": "jsonb",
+          "nullable": false,
+          "default": "'[]'::jsonb"
+        },
+        {
+          "name": "analysis_error",
+          "type": "varchar(500)",
+          "nullable": true
+        },
+        {
+          "name": "committed_at",
+          "type": "timestamp with time zone",
+          "nullable": true
+        },
+        {
+          "name": "commit_hash",
+          "type": "varchar(64)",
+          "nullable": true
+        },
+        {
+          "name": "results",
+          "type": "jsonb",
+          "nullable": true
+        }
+      ],
+      "indexes": [
+        {
+          "name": "voice_capture_pkey",
+          "def": "CREATE UNIQUE INDEX voice_capture_pkey ON public.voice_capture USING btree (id)",
+          "table": "public.voice_capture",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "ix_voice_capture_owner_id",
+          "def": "CREATE INDEX ix_voice_capture_owner_id ON public.voice_capture USING btree (owner_id)",
+          "table": "public.voice_capture",
+          "columns": [
+            "owner_id"
+          ]
+        },
+        {
+          "name": "ix_voice_capture_commit_hash",
+          "def": "CREATE INDEX ix_voice_capture_commit_hash ON public.voice_capture USING btree (commit_hash)",
+          "table": "public.voice_capture",
+          "columns": [
+            "commit_hash"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "voice_capture_actions_not_null",
+          "type": "n",
+          "def": "NOT NULL actions",
+          "table": "public.voice_capture",
+          "referenced_table": "",
+          "columns": [
+            "actions"
+          ]
+        },
+        {
+          "name": "voice_capture_corrected_text_not_null",
+          "type": "n",
+          "def": "NOT NULL corrected_text",
+          "table": "public.voice_capture",
+          "referenced_table": "",
+          "columns": [
+            "corrected_text"
+          ]
+        },
+        {
+          "name": "voice_capture_created_at_not_null",
+          "type": "n",
+          "def": "NOT NULL created_at",
+          "table": "public.voice_capture",
+          "referenced_table": "",
+          "columns": [
+            "created_at"
+          ]
+        },
+        {
+          "name": "voice_capture_id_not_null",
+          "type": "n",
+          "def": "NOT NULL id",
+          "table": "public.voice_capture",
+          "referenced_table": "",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "voice_capture_owner_id_not_null",
+          "type": "n",
+          "def": "NOT NULL owner_id",
+          "table": "public.voice_capture",
+          "referenced_table": "",
+          "columns": [
+            "owner_id"
+          ]
+        },
+        {
+          "name": "voice_capture_raw_text_not_null",
+          "type": "n",
+          "def": "NOT NULL raw_text",
+          "table": "public.voice_capture",
+          "referenced_table": "",
+          "columns": [
+            "raw_text"
+          ]
+        },
+        {
+          "name": "voice_capture_recorded_at_not_null",
+          "type": "n",
+          "def": "NOT NULL recorded_at",
+          "table": "public.voice_capture",
+          "referenced_table": "",
+          "columns": [
+            "recorded_at"
+          ]
+        },
+        {
+          "name": "voice_capture_revision_not_null",
+          "type": "n",
+          "def": "NOT NULL revision",
+          "table": "public.voice_capture",
+          "referenced_table": "",
+          "columns": [
+            "revision"
+          ]
+        },
+        {
+          "name": "voice_capture_status_not_null",
+          "type": "n",
+          "def": "NOT NULL status",
+          "table": "public.voice_capture",
+          "referenced_table": "",
+          "columns": [
+            "status"
+          ]
+        },
+        {
+          "name": "voice_capture_timezone_not_null",
+          "type": "n",
+          "def": "NOT NULL timezone",
+          "table": "public.voice_capture",
+          "referenced_table": "",
+          "columns": [
+            "timezone"
+          ]
+        },
+        {
+          "name": "voice_capture_updated_at_not_null",
+          "type": "n",
+          "def": "NOT NULL updated_at",
+          "table": "public.voice_capture",
+          "referenced_table": "",
+          "columns": [
+            "updated_at"
+          ]
+        },
+        {
+          "name": "voice_capture_warnings_not_null",
+          "type": "n",
+          "def": "NOT NULL warnings",
+          "table": "public.voice_capture",
+          "referenced_table": "",
+          "columns": [
+            "warnings"
+          ]
+        },
+        {
+          "name": "voice_capture_owner_id_fkey",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (owner_id) REFERENCES \"user\"(id) ON DELETE CASCADE",
+          "table": "public.voice_capture",
+          "referenced_table": "public.user",
+          "columns": [
+            "owner_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "voice_capture_pkey",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "public.voice_capture",
+          "referenced_table": "",
+          "columns": [
+            "id"
+          ]
+        }
+      ]
     }
   ],
   "relations": [
@@ -7283,6 +7549,19 @@
       ],
       "parent_cardinality": "exactly_one",
       "def": "FOREIGN KEY (owner_id) REFERENCES \"user\"(id) ON DELETE CASCADE"
+    },
+    {
+      "table": "public.voice_capture",
+      "columns": [
+        "owner_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.user",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (owner_id) REFERENCES \"user\"(id) ON DELETE CASCADE"
     }
   ],
   "functions": [
@@ -7439,7 +7718,7 @@
   ],
   "driver": {
     "name": "postgres",
-    "database_version": "PostgreSQL 18.4 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
+    "database_version": "PostgreSQL 18.6 on aarch64-unknown-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
     "meta": {
       "current_schema": "public",
       "search_paths": [

@@ -79,7 +79,8 @@ if [ "$mode" = "check" ]; then
     "$tbls_image" \
     diff -c /work/.tbls.yml "$dsn" docs/db
 
-  dbml_check_dir="$(mktemp -d)"
+  # Docker Desktop/Colima shares the checkout, but not macOS's private TMPDIR.
+  dbml_check_dir="$(mktemp -d "$repo_root/.dbml-check.XXXXXX")"
   dbml_cid="$(docker create \
     "${docker_workspace_args[@]}" \
     -v "$dbml_check_dir":/output \
@@ -136,6 +137,12 @@ docker run --rm \
     done
   '
 
-find docs/db -name "*.html" -exec sed -i -E 's/\.md([#"])/.html\1/g' {} +
+python3 - <<'PY'
+from pathlib import Path
+
+for path in Path("docs/db").glob("*.html"):
+    text = path.read_text()
+    path.write_text(text.replace('.md#', '.html#').replace('.md"', '.html"'))
+PY
 cp docs/db/README.html docs/db/index.html
 echo "Generated docs/db/index.html — open it in a browser."

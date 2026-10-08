@@ -49,6 +49,7 @@ Core contact entity — the subject of everything else in the CRM.
 | pronouns | text |  | true |  |  |  |
 | search_vector | tsvector |  | true |  |  |  |
 | auto_log_email | boolean | false | false |  |  |  |
+| snoozed_until | timestamp with time zone |  | true |  |  |  |
 
 ## Constraints
 
@@ -165,6 +166,7 @@ erDiagram
   text pronouns
   tsvector search_vector
   boolean auto_log_email
+  timestamp_with_time_zone snoozed_until
 }
 "public.contact_tag" {
   uuid contact_id FK

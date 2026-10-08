@@ -13,7 +13,7 @@ Authenticated user; tenant-scope owner of every row below.
 | is_superuser | boolean |  | false |  |  | Grants admin-only endpoints. |
 | full_name | varchar(255) |  | true |  |  | Display name; optional. |
 | hashed_password | varchar |  | true |  |  | Argon2id hash; null for OIDC-only users. |
-| id | uuid |  | false | [public.tag](public.tag.md) [public.contact](public.contact.md) [public.custom_field_definition](public.custom_field_definition.md) [public.interaction](public.interaction.md) [public.reminder](public.reminder.md) [public.gift](public.gift.md) [public.debt](public.debt.md) [public.life_event](public.life_event.md) [public.note](public.note.md) [public.webhook_endpoint](public.webhook_endpoint.md) [public.tag_share](public.tag_share.md) [public.media_recommendation](public.media_recommendation.md) [public.activity_log](public.activity_log.md) [public.api_key](public.api_key.md) [public.api_key_impersonate](public.api_key_impersonate.md) [public.organization](public.organization.md) [public.contact_merge](public.contact_merge.md) [public.ical_import_log](public.ical_import_log.md) [public.calendar_token](public.calendar_token.md) [public.contact_stage_event](public.contact_stage_event.md) [public.email_oauth_token](public.email_oauth_token.md) [public.saved_filter](public.saved_filter.md) [public.all_contacts_share](public.all_contacts_share.md) |  | Primary key. |
+| id | uuid |  | false | [public.tag](public.tag.md) [public.contact](public.contact.md) [public.custom_field_definition](public.custom_field_definition.md) [public.interaction](public.interaction.md) [public.reminder](public.reminder.md) [public.gift](public.gift.md) [public.debt](public.debt.md) [public.life_event](public.life_event.md) [public.note](public.note.md) [public.webhook_endpoint](public.webhook_endpoint.md) [public.tag_share](public.tag_share.md) [public.media_recommendation](public.media_recommendation.md) [public.activity_log](public.activity_log.md) [public.api_key](public.api_key.md) [public.api_key_impersonate](public.api_key_impersonate.md) [public.organization](public.organization.md) [public.contact_merge](public.contact_merge.md) [public.ical_import_log](public.ical_import_log.md) [public.calendar_token](public.calendar_token.md) [public.contact_stage_event](public.contact_stage_event.md) [public.email_oauth_token](public.email_oauth_token.md) [public.saved_filter](public.saved_filter.md) [public.all_contacts_share](public.all_contacts_share.md) [public.voice_capture](public.voice_capture.md) |  | Primary key. |
 | created_at | timestamp with time zone |  | true |  |  | When the account was created (UTC). |
 | oidc_iss | varchar(512) |  | true |  |  | OIDC issuer URL; paired with oidc_sub forms the unique external identity. |
 | oidc_sub | varchar(255) |  | true |  |  | OIDC subject; paired with oidc_iss forms the unique external identity. |
@@ -69,6 +69,7 @@ erDiagram
 "public.saved_filter" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.all_contacts_share" }o--|| "public.user" : "FOREIGN KEY (grantee_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.all_contacts_share" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
+"public.voice_capture" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 
 "public.user" {
   varchar_255_ email
@@ -131,6 +132,7 @@ erDiagram
   text pronouns
   tsvector search_vector
   boolean auto_log_email
+  timestamp_with_time_zone snoozed_until
 }
 "public.custom_field_definition" {
   uuid id
@@ -363,6 +365,24 @@ erDiagram
   uuid owner_id FK
   uuid grantee_id FK
   timestamp_with_time_zone created_at
+}
+"public.voice_capture" {
+  uuid id
+  uuid owner_id FK
+  text raw_text
+  text corrected_text
+  varchar_100_ timezone
+  timestamp_with_time_zone recorded_at
+  timestamp_with_time_zone created_at
+  timestamp_with_time_zone updated_at
+  varchar_20_ status
+  integer revision
+  jsonb actions
+  jsonb warnings
+  varchar_500_ analysis_error
+  timestamp_with_time_zone committed_at
+  varchar_64_ commit_hash
+  jsonb results
 }
 ```
 
