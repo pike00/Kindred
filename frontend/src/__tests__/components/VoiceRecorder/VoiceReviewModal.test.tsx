@@ -69,6 +69,13 @@ function renderModal() {
   return { onComplete, onClose, client, unmount: view.unmount }
 }
 
+function renderModalWithClient(client: QueryClient) {
+  const onComplete = vi.fn()
+  const onClose = vi.fn()
+  const view = render(<QueryClientProvider client={client}><VoiceReviewModal captureId="capture-1" onComplete={onComplete} onClose={onClose} /></QueryClientProvider>)
+  return { onComplete, onClose, unmount: view.unmount }
+}
+
 describe("VoiceReviewModal", () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -470,6 +477,29 @@ describe("VoiceReviewModal", () => {
     expect(mocks.commit).not.toHaveBeenCalled()
   })
 
+  it("waits for the fresh capture after reopening instead of analyzing cached draft revision", async () => {
+    const analyzed = capture({ revision: 4, actions: [note()] })
+    const cachedDraft = capture({ revision: 3, actions: [], analysis_error: null })
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    mocks.get.mockResolvedValueOnce(cachedDraft)
+    mocks.analyze.mockResolvedValueOnce(analyzed)
+
+    const first = renderModalWithClient(client)
+    await waitFor(() => expect(mocks.analyze).toHaveBeenCalledOnce())
+    await waitFor(() => expect(client.getQueryData(["voice-capture", "capture-1"])).toEqual(analyzed))
+    first.unmount()
+
+    let resolveFresh!: (value: ReturnType<typeof capture>) => void
+    mocks.get.mockImplementationOnce(() => new Promise((resolve) => { resolveFresh = resolve }))
+    renderModalWithClient(client)
+
+    await waitFor(() => expect(mocks.get).toHaveBeenCalledTimes(2))
+    expect(mocks.analyze).toHaveBeenCalledOnce()
+    await act(async () => { resolveFresh(analyzed) })
+    expect(await screen.findByLabelText("Note text")).toHaveValue("Original note")
+    expect(mocks.analyze).toHaveBeenCalledOnce()
+  })
+
   it("shows current revision conflict while retaining local transcript and card edits", async () => {
     const request = { method: "PUT", url: "", path: {} }
     const response = { url: "", ok: false, status: 409, statusText: "Conflict", body: {} }
@@ -481,6 +511,30 @@ describe("VoiceReviewModal", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("This capture changed elsewhere")
     expect(screen.getByLabelText("Reviewed transcript")).toHaveValue("Keep my edit")
     expect(screen.getByLabelText("Note text")).toHaveValue("Original note")
+  })
+
+  it("refreshes after analysis conflict and preserves dirty local edits for an explicit save", async () => {
+    const request = { method: "POST", url: "", path: {} }
+    const response = { url: "", ok: false, status: 409, statusText: "Conflict", body: {} }
+    mocks.get.mockResolvedValueOnce(capture()).mockResolvedValueOnce(capture({ revision: 4, corrected_text: "Server transcript", actions: [note({ body: "Server note" })] }))
+    mocks.analyze.mockRejectedValueOnce(new ApiError(request as never, response as never, "Conflict"))
+    mocks.update.mockImplementation(async ({ requestBody }) => capture({ revision: 5, ...requestBody }))
+    renderModal()
+
+    fireEvent.change(await screen.findByLabelText("Reviewed transcript"), { target: { value: "My transcript edit" } })
+    fireEvent.change(screen.getByLabelText("Note text"), { target: { value: "My note edit" } })
+    await userEvent.setup().click(screen.getByRole("button", { name: "Retry analysis" }))
+
+    expect(await screen.findByText(/changed while analysis was running/)).toBeInTheDocument()
+    expect(screen.getByLabelText("Reviewed transcript")).toHaveValue("My transcript edit")
+    expect(screen.getByLabelText("Note text")).toHaveValue("My note edit")
+    expect(screen.queryByText("Review could not be completed: Conflict")).not.toBeInTheDocument()
+
+    await userEvent.setup().click(screen.getByRole("button", { name: "Save draft" }))
+    await waitFor(() => expect(mocks.update).toHaveBeenCalledWith({
+      captureId: "capture-1",
+      requestBody: { revision: 4, corrected_text: "My transcript edit", actions: [expect.objectContaining({ body: "My note edit" })] },
+    }))
   })
 
   it("deletes only after explicit confirmation and reports deletion errors", async () => {

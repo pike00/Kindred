@@ -180,15 +180,21 @@ export function VoiceReviewModal({ captureId, onComplete, onClose }: VoiceReview
     queryKey: ["voice-capture", captureId],
     queryFn: () => VoiceCapturesService.getVoiceCapture({ captureId }),
     retry: false,
+    refetchOnMount: "always",
   })
 
+  function adoptCapture(updated: VoiceCapturePublic) {
+    queryClient.setQueryData(["voice-capture", captureId], updated)
+    setCapture(updated)
+  }
+
   useEffect(() => {
-    if (!query.data || initialized.current) return
+    if (!query.data || !query.isFetchedAfterMount || initialized.current) return
     initialized.current = true
     setCapture(query.data)
     setCorrectedText(query.data.corrected_text)
     setActions(query.data.actions)
-  }, [query.data])
+  }, [query.data, query.isFetchedAfterMount])
 
   useEffect(() => {
     if (!capture || capture.status !== "draft" || capture.actions.length > 0 || initialized.current !== true) return
@@ -207,20 +213,31 @@ export function VoiceReviewModal({ captureId, onComplete, onClose }: VoiceReview
     busyRef.current = true
     setBusy("analyze")
     setError("")
+    setConflict(false)
     try {
       const updated = await VoiceCapturesService.analyzeVoiceCapture({
         captureId,
         requestBody: { revision: current.revision, text },
       })
-      setCapture(updated)
+      adoptCapture(updated)
       if (!updated.analysis_error) {
         setCorrectedText(updated.corrected_text || text)
         setActions(updated.actions)
       }
     } catch (cause) {
-      const message = cause instanceof Error ? cause.message : "Analysis failed. You can retry or add cards manually."
-      setError(message)
-      setCapture({ ...current, analysis_error: message })
+      if (cause instanceof ApiError && cause.status === 409) {
+        setConflict(true)
+        setError("The saved capture changed while analysis was running. Your local edits are preserved; review the latest saved version before retrying.")
+        try {
+          adoptCapture(await VoiceCapturesService.getVoiceCapture({ captureId }))
+        } catch {
+          // Keep the local review state when the latest snapshot cannot be loaded.
+        }
+      } else {
+        const message = cause instanceof Error ? cause.message : "Analysis failed. You can retry or add cards manually."
+        setError(message)
+        adoptCapture({ ...current, analysis_error: message })
+      }
     } finally {
       busyRef.current = false
       setBusy(null)
@@ -253,7 +270,7 @@ export function VoiceReviewModal({ captureId, onComplete, onClose }: VoiceReview
         captureId,
         requestBody: { revision: capture.revision, corrected_text: correctedText, actions },
       })
-      setCapture(updated)
+      adoptCapture(updated)
       setCorrectedText(updated.corrected_text)
       setActions(updated.actions)
       setSavedNotice(true)
@@ -265,7 +282,7 @@ export function VoiceReviewModal({ captureId, onComplete, onClose }: VoiceReview
         setConflict(true)
         try {
           const latest = await VoiceCapturesService.getVoiceCapture({ captureId })
-          setCapture(latest)
+          adoptCapture(latest)
         } catch {
           // Keep all local review edits visible when the refresh also fails.
         }
@@ -308,7 +325,7 @@ export function VoiceReviewModal({ captureId, onComplete, onClose }: VoiceReview
     setReconciliationNotice("")
     try {
       const latest = await VoiceCapturesService.getVoiceCapture({ captureId })
-      setCapture(latest)
+      adoptCapture(latest)
       if (latest.status === "committed") {
         retryCommitRef.current = null
         setCommitOutcomeUncertain(false)
@@ -359,6 +376,7 @@ export function VoiceReviewModal({ captureId, onComplete, onClose }: VoiceReview
     try {
       const result = await VoiceCapturesService.commitVoiceCapture({ captureId, requestBody: request })
       if (result.status === "committed") {
+        adoptCapture(result)
         retryCommitRef.current = null
         setCommitOutcomeUncertain(false)
         await invalidateCommittedQueries()
@@ -366,7 +384,7 @@ export function VoiceReviewModal({ captureId, onComplete, onClose }: VoiceReview
       } else {
         retryCommitRef.current = null
         setCommitOutcomeUncertain(false)
-        setCapture(result)
+        adoptCapture(result)
         setCorrectedText(result.corrected_text)
         setActions(result.actions)
         setReconciliationNotice("The capture is still uncommitted. Review the returned draft before committing again.")
@@ -379,7 +397,7 @@ export function VoiceReviewModal({ captureId, onComplete, onClose }: VoiceReview
         retryCommitRef.current = null
         setCommitOutcomeUncertain(false)
         try {
-          setCapture(await VoiceCapturesService.getVoiceCapture({ captureId }))
+          adoptCapture(await VoiceCapturesService.getVoiceCapture({ captureId }))
         } catch {
           // Keep local edits so the user can copy or retry after restoring connectivity.
         }
