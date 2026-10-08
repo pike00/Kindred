@@ -510,7 +510,7 @@ export function VoiceReviewModal({ captureId, onComplete, onClose }: VoiceReview
                       onChange={(event) => editAction(action.id, (item) => ({ ...item, evidence: event.target.value }))}
                       rows={2}
                     />
-                    <span className="block text-xs font-normal text-muted-foreground">Enter an exact, nonempty quote from the original transcript (up to 1,000 characters). Required for every card, including skipped cards.</span>
+                    <span className="block text-xs font-normal text-muted-foreground">Enter an exact, nonempty quote from the original transcript (up to 1,000 characters) for included actions. Skipped cards may remain incomplete.</span>
                   </label>
                   {action.evidence && <blockquote className="border-l-2 pl-3 text-sm text-muted-foreground">Source: “{action.evidence}”</blockquote>}
                   {action.review_warning && <p className="rounded bg-amber-50 p-2 text-sm text-amber-900">{action.review_warning}</p>}

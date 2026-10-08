@@ -33,6 +33,7 @@ from app.voice_capture.schemas import (
     ReviewCapture,
     VoiceAction,
     VoiceCapturePublic,
+    validate_enabled_action,
 )
 
 
@@ -171,6 +172,13 @@ def save_review(
     if locked.status == "committed":
         raise HTTPException(409, "Committed capture cannot be edited")
     _require_revision(locked, review.revision)
+    for action in review.actions:
+        if action.enabled and (
+            not action.evidence.strip() or action.evidence not in locked.raw_text
+        ):
+            raise HTTPException(
+                422, "Enabled action evidence must quote the original transcript"
+            )
     locked.corrected_text = review.corrected_text
     locked.actions = {"items": _dump_actions(review.actions)}
     locked.status = "ready"
@@ -213,6 +221,11 @@ def commit_review(
     _require_revision(locked, review.revision)
     try:
         actions = [a for a in review.actions if a.enabled]
+        for action in actions:
+            try:
+                validate_enabled_action(action)
+            except ValueError as exc:
+                raise HTTPException(422, str(exc)) from exc
         _validate_actions(session, owner_id, locked.raw_text, actions)
         results: list[dict[str, str]] = []
         indexed_contacts: set[uuid.UUID] = set()

@@ -168,6 +168,64 @@ def test_action_discriminators_and_aware_datetime_validation():
         )
 
 
+def test_provider_proposals_allow_optional_and_unresolved_action_values():
+    source = "Nora and Lucas shared an update."
+    attendee_id = "a0000000-0000-4000-8000-000000000001"
+    proposal = validate_proposal(
+        json.dumps(
+            {
+                "corrected_text": source,
+                "warnings": [],
+                "actions": [
+                    {
+                        "id": str(uuid4()),
+                        "kind": "interaction",
+                        "enabled": True,
+                        "evidence": source,
+                        "review_warning": None,
+                        "attendee_ids": [attendee_id],
+                        "channel": "in_person",
+                        "occurred_at": "2026-10-06T12:00:00-05:00",
+                        "notes": None,
+                        "duration_minutes": None,
+                        "location_label": None,
+                    },
+                    {
+                        "id": str(uuid4()),
+                        "kind": "reminder",
+                        "enabled": True,
+                        "evidence": source,
+                        "review_warning": "A time was not specified.",
+                        "contact_id": None,
+                        "title": "Call Nora",
+                        "description": None,
+                        "remind_at": None,
+                        "frequency": "once",
+                        "is_active": True,
+                    },
+                    {
+                        "id": str(uuid4()),
+                        "kind": "note",
+                        "enabled": False,
+                        "evidence": source,
+                        "review_warning": None,
+                        "contact_id": None,
+                        "body": "",
+                    },
+                ],
+            }
+        ),
+        allowed_contact_ids={attendee_id},
+        source=source,
+    )
+
+    assert len(proposal.actions) == 3
+    assert proposal.actions[0].notes is None
+    assert proposal.actions[1].remind_at is None
+    assert proposal.actions[1].review_warning == "A time was not specified."
+    assert proposal.actions[2].enabled is False
+
+
 def test_reminder_can_be_incomplete_for_review():
     reminder = ReminderAction.model_validate(
         {
@@ -478,6 +536,62 @@ def test_draft_save_and_reopen_preserves_incomplete_skipped_manual_cards(
     )
     assert reopened.status_code == 200
     assert reopened.json()["actions"] == actions
+
+
+def test_enabled_unresolved_reminder_can_be_saved_but_not_committed(
+    client, user_headers
+):
+    source = "I need to call Nora tomorrow."
+    capture = client.post(
+        f"{settings.API_V1_STR}/voice-captures/",
+        headers=user_headers,
+        json={"raw_text": source, "timezone": "America/Chicago"},
+    ).json()
+    actions = [
+        {
+            "id": str(uuid4()),
+            "kind": "reminder",
+            "enabled": True,
+            "evidence": source,
+            "review_warning": "A time was not specified.",
+            "contact_id": None,
+            "title": "Call Nora",
+            "description": None,
+            "remind_at": None,
+            "frequency": "once",
+            "is_active": True,
+        }
+    ]
+    saved = client.put(
+        f"{settings.API_V1_STR}/voice-captures/{capture['id']}",
+        headers=user_headers,
+        json={
+            "revision": capture["revision"],
+            "corrected_text": source,
+            "actions": actions,
+        },
+    )
+    assert saved.status_code == 200, saved.text
+    assert saved.json()["actions"][0]["remind_at"] is None
+    assert saved.json()["actions"][0]["review_warning"] == "A time was not specified."
+
+    committed = client.post(
+        f"{settings.API_V1_STR}/voice-captures/{capture['id']}/commit",
+        headers=user_headers,
+        json={
+            "revision": saved.json()["revision"],
+            "corrected_text": source,
+            "actions": actions,
+        },
+    )
+    assert committed.status_code == 422
+    assert "enabled reminders need a title and date" in committed.json()["detail"]
+    persisted = client.get(
+        f"{settings.API_V1_STR}/voice-captures/{capture['id']}",
+        headers=user_headers,
+    )
+    assert persisted.json()["status"] == "ready"
+    assert persisted.json()["actions"] == saved.json()["actions"]
 
 
 def test_contact_update_only_changes_listed_fields_and_can_clear_explicitly(
