@@ -1,14 +1,12 @@
 import asyncio
-import sys
+import wave
 from contextlib import asynccontextmanager
 from pathlib import Path
 from types import SimpleNamespace
 
 import httpx
 import pytest
-
-# Importing the service must not download or load a real model during unit tests.
-sys.modules["faster_whisper"] = SimpleNamespace(WhisperModel=lambda *args, **kwargs: None)
+from faster_whisper.audio import decode_audio
 
 import app as service
 from app import Settings, create_app
@@ -123,6 +121,31 @@ def test_model_loads_in_lifespan_and_health_reports_configured_and_loaded_model(
         "compute_type": "int8",
     }
     assert called == [("base.en", "cpu", "int8", Path("/models"))]
+
+
+def test_falsey_injected_loader_is_used(monkeypatch):
+    model = FakeModel()
+
+    class FalseyLoader:
+        def __bool__(self):
+            return False
+
+        def __call__(self, *_args):
+            return model
+
+    monkeypatch.setattr(
+        service, "load_model", lambda *_args: pytest.fail("default loader was used")
+    )
+    app = create_app(Settings(_env_file=None), FalseyLoader())
+
+    async def request_health():
+        async with async_client(app) as client:
+            return await client.get("/health")
+
+    response = asyncio.run(request_health())
+
+    assert response.status_code == 200
+    assert response.json()["loaded_model"] == "base.en"
 
 
 def test_transcription_propagates_prompt_and_returns_segment_metadata(tmp_path, monkeypatch):
@@ -291,6 +314,21 @@ def test_initial_prompt_limit_is_validated():
 def test_upload_limit_has_a_configured_upper_bound():
     with pytest.raises(ValueError):
         Settings(_env_file=None, upload_limit_bytes=50 * 1024 * 1024 + 1)
+
+
+def test_pinned_pyav_decodes_generated_wav_with_faster_whisper(tmp_path):
+    audio_path = tmp_path / "generated.wav"
+    with wave.open(str(audio_path), "wb") as audio_file:
+        audio_file.setnchannels(1)
+        audio_file.setsampwidth(2)
+        audio_file.setframerate(16_000)
+        audio_file.writeframes(bytes(16_000 // 4 * 2))
+
+    audio = decode_audio(str(audio_path))
+
+    assert audio.shape == (4_000,)
+    assert audio.dtype.name == "float32"
+    assert float(audio.max()) == 0.0
 
 
 def test_oversized_multipart_content_length_is_rejected_before_parsing(tmp_path, monkeypatch):

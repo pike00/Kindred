@@ -191,7 +191,7 @@ def create_app(
 ) -> FastAPI:
     """Create an app with an injectable loader so tests never download models."""
     config = settings or Settings()
-    loader = model_loader or load_model
+    loader = model_loader if model_loader is not None else load_model
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):

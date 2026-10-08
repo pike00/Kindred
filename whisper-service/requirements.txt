@@ -1,6 +1,8 @@
 fastapi==0.141.1
 uvicorn[standard]==0.52.4
 faster-whisper==1.2.1
+# faster-whisper 1.2.1 passes metadata_errors to av.open; PyAV 19 removed it.
+av==18.0.0
 pydantic-settings==2.14.2
 # Keep the HTTP client at the version validated in the integrated image build.
 requests==2.34.2
