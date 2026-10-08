@@ -43,8 +43,8 @@ describe("StayInTouchWidget", () => {
 
   it("renders all contacts when count is 2 or less", async () => {
     const contacts = [
-      makeContact({ id: "1", first_name: "Alice", last_name: "", days_overdue: 5 }),
-      makeContact({ id: "2", first_name: "Bob", last_name: "", days_overdue: 10 }),
+      makeContact({ id: "1", first_name: "Alice", last_name: "" }),
+      makeContact({ id: "2", first_name: "Bob", last_name: "" }),
     ]
     mockListOverdueContacts.mockReturnValue(
       cancelable({ data: contacts, count: 2 }),
@@ -88,11 +88,11 @@ describe("StayInTouchWidget", () => {
 
   it("limits displayed contacts to 2 and shows +X more overdue button when count > 2", async () => {
     const contacts = [
-      makeContact({ id: "1", first_name: "Alice", last_name: "", days_overdue: 5 }),
-      makeContact({ id: "2", first_name: "Bob", last_name: "", days_overdue: 10 }),
-      makeContact({ id: "3", first_name: "Charlie", last_name: "", days_overdue: 15 }),
-      makeContact({ id: "4", first_name: "Diana", last_name: "", days_overdue: 20 }),
-      makeContact({ id: "5", first_name: "Evan", last_name: "", days_overdue: 25 }),
+      makeContact({ id: "1", first_name: "Alice", last_name: "" }),
+      makeContact({ id: "2", first_name: "Bob", last_name: "" }),
+      makeContact({ id: "3", first_name: "Charlie", last_name: "" }),
+      makeContact({ id: "4", first_name: "Diana", last_name: "" }),
+      makeContact({ id: "5", first_name: "Evan", last_name: "" }),
     ]
     mockListOverdueContacts.mockReturnValue(
       cancelable({ data: contacts, count: 5 }),

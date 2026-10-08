@@ -126,8 +126,13 @@ function Layout() {
           <Footer />
         </SidebarInset>
         <VoiceRecordButton
-          onInteractionCreated={() => {
+          onCaptureCommitted={() => {
+            queryClient.invalidateQueries({ queryKey: ["contacts"] })
             queryClient.invalidateQueries({ queryKey: ["interactions"] })
+            queryClient.invalidateQueries({ queryKey: ["notes"] })
+            queryClient.invalidateQueries({ queryKey: ["life-events"] })
+            queryClient.invalidateQueries({ queryKey: ["reminders"] })
+            queryClient.invalidateQueries({ queryKey: ["dashboard"] })
           }}
         />
       </SidebarProvider>
