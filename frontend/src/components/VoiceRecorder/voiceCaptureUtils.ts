@@ -68,7 +68,9 @@ export function validateActions(actions: VoiceAction[]): string[] {
         const seen = new Set<string>()
         for (const field of action.fields) {
           if (field.value !== null && !field.value.trim())
-            errors.push(`Contact update field ${field.field} needs a value or an explicit clear.`)
+            errors.push(
+              `Contact update field ${field.field} needs a value or an explicit clear.`,
+            )
           if (seen.has(field.field)) {
             errors.push("Contact update contains a repeated field.")
             break
@@ -81,20 +83,41 @@ export function validateActions(actions: VoiceAction[]): string[] {
         if (!action.contact_id) errors.push("Life event needs a contact.")
         if (!action.event_type.trim() || !action.title.trim())
           errors.push("Life event needs a type and title.")
-        if (!action.occurred_at)
-          errors.push("Life event needs a date.")
+        if (!action.occurred_at) errors.push("Life event needs a date.")
         else if (!/^\d{4}-\d{2}-\d{2}$/.test(action.occurred_at))
           errors.push("Life event date must be a calendar date.")
         break
       case "reminder":
         if (!action.title.trim()) errors.push("Reminder needs a title.")
-        if (!action.remind_at)
-          errors.push("Reminder needs a date and time.")
+        if (!action.remind_at) errors.push("Reminder needs a date and time.")
         if (action.contact_id === "") errors.push("Choose a reminder contact.")
         break
     }
   }
   return [...new Set(errors)]
+}
+
+export function validateEvidence(
+  actions: VoiceAction[],
+  source: string,
+): string[] {
+  const errors: string[] = []
+  actions.forEach((action, index) => {
+    if (action.enabled === false) return
+    if (!action.evidence.trim()) {
+      errors.push(
+        `Action ${index + 1} needs source evidence from the original transcript.`,
+      )
+    } else if (
+      action.evidence.length > 1000 ||
+      !source.includes(action.evidence)
+    ) {
+      errors.push(
+        `Action ${index + 1} evidence must exactly match a quote from the original transcript.`,
+      )
+    }
+  })
+  return errors
 }
 
 export function createManualAction(kind: VoiceAction["kind"]): VoiceAction {

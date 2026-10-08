@@ -1,14 +1,14 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useEffect, useRef, useState } from "react"
 import {
+  ApiError,
   type BirthdayFieldChange,
   type ContactPublic,
+  ContactsService,
   type ContactUpdateAction,
   type InteractionAction,
   type ReminderAction,
   type VoiceCapturePublic,
-  ApiError,
-  ContactsService,
   VoiceCapturesService,
 } from "@/client"
 import { Badge } from "@/components/ui/badge"
@@ -29,6 +29,7 @@ import {
   isoToDateTimeLocal,
   type VoiceAction,
   validateActions,
+  validateEvidence,
 } from "./voiceCaptureUtils"
 
 interface VoiceReviewModalProps {
@@ -212,8 +213,10 @@ export function VoiceReviewModal({ captureId, onComplete, onClose }: VoiceReview
         requestBody: { revision: current.revision, text },
       })
       setCapture(updated)
-      setCorrectedText(updated.corrected_text || text)
-      setActions(updated.actions)
+      if (!updated.analysis_error) {
+        setCorrectedText(updated.corrected_text || text)
+        setActions(updated.actions)
+      }
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : "Analysis failed. You can retry or add cards manually."
       setError(message)
@@ -235,6 +238,11 @@ export function VoiceReviewModal({ captureId, onComplete, onClose }: VoiceReview
     if (!dirty) {
       setSavedNotice(true)
       return true
+    }
+    const evidenceProblems = validateEvidence(actions, capture.raw_text)
+    if (evidenceProblems.length) {
+      setError(evidenceProblems.join(" "))
+      return false
     }
     busyRef.current = true
     setBusy("save")
@@ -330,7 +338,10 @@ export function VoiceReviewModal({ captureId, onComplete, onClose }: VoiceReview
       return
     }
     if (!exactRetry) {
-      const problems = validateActions(actions)
+      const problems = [
+        ...validateEvidence(actions, capture.raw_text),
+        ...validateActions(actions),
+      ]
       if (problems.length) {
         setError(problems.join(" "))
         return
@@ -417,6 +428,7 @@ export function VoiceReviewModal({ captureId, onComplete, onClose }: VoiceReview
     life_event: "Life event",
     reminder: "Reminder",
   })[action.kind]
+  const browserTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "your browser timezone"
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) void handleClose() }}>
@@ -424,7 +436,7 @@ export function VoiceReviewModal({ captureId, onComplete, onClose }: VoiceReview
         <DialogHeader>
           <DialogTitle>Review voice capture</DialogTitle>
           <DialogDescription>
-            Edit the transcript and each action before saving or committing. Times are interpreted in {capture?.timezone ?? "your browser timezone"}.
+            Edit the transcript and each action before saving or committing. Datetime fields use your browser&apos;s local timezone ({browserTimeZone}). {capture?.timezone ?? "The capture timezone"} is the analysis reference for relative dates.
           </DialogDescription>
         </DialogHeader>
 
@@ -436,11 +448,11 @@ export function VoiceReviewModal({ captureId, onComplete, onClose }: VoiceReview
             <section className="space-y-2">
               <h3 className="font-semibold">Original transcript</h3>
               <pre className="whitespace-pre-wrap rounded-md bg-muted p-3 text-sm">{capture.raw_text}</pre>
-              <label className="block space-y-1 text-sm font-medium">
+              <label htmlFor="reviewed-transcript" className="block space-y-1 text-sm font-medium">
                 Reviewed transcript
-                <Textarea aria-label="Reviewed transcript" value={correctedText} onChange={(event) => { setCorrectedText(event.target.value); setSavedNotice(false) }} rows={4} />
+                <Textarea id="reviewed-transcript" aria-label="Reviewed transcript" value={correctedText} onChange={(event) => { setCorrectedText(event.target.value); setSavedNotice(false) }} rows={4} />
               </label>
-              <p className="text-xs text-muted-foreground">Recorded {new Date(capture.recorded_at).toLocaleString()} ({capture.timezone})</p>
+              <p className="text-xs text-muted-foreground">Recorded {new Date(capture.recorded_at).toLocaleString()} in browser local time ({browserTimeZone}). Analysis reference: {capture.timezone}.</p>
             </section>
             </fieldset>
 
@@ -489,6 +501,17 @@ export function VoiceReviewModal({ captureId, onComplete, onClose }: VoiceReview
                       </Button>
                     </div>
                   </div>
+                  <label htmlFor={`voice-action-evidence-${action.id}`} className="block space-y-1 text-sm font-medium">
+                    Source evidence for {actionLabel(action)} {index + 1}
+                    <Textarea
+                      id={`voice-action-evidence-${action.id}`}
+                      aria-label={`Source evidence for ${actionLabel(action)} ${index + 1}`}
+                      value={action.evidence}
+                      onChange={(event) => editAction(action.id, (item) => ({ ...item, evidence: event.target.value }))}
+                      rows={2}
+                    />
+                    <span className="block text-xs font-normal text-muted-foreground">Enter an exact, nonempty quote from the original transcript (up to 1,000 characters). Required for every card, including skipped cards.</span>
+                  </label>
                   {action.evidence && <blockquote className="border-l-2 pl-3 text-sm text-muted-foreground">Source: “{action.evidence}”</blockquote>}
                   {action.review_warning && <p className="rounded bg-amber-50 p-2 text-sm text-amber-900">{action.review_warning}</p>}
                   <ActionEditor action={action} onChange={(next) => editAction(action.id, () => next)} />
