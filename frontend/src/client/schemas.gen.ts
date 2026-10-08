@@ -702,6 +702,59 @@ export const AllContactsSharesPublicSchema = {
     title: 'AllContactsSharesPublic'
 } as const;
 
+export const AnalyzeCaptureSchema = {
+    properties: {
+        revision: {
+            type: 'integer',
+            minimum: 1,
+            title: 'Revision'
+        },
+        text: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 100000,
+                    minLength: 1
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Text'
+        }
+    },
+    additionalProperties: false,
+    type: 'object',
+    required: ['revision'],
+    title: 'AnalyzeCapture'
+} as const;
+
+export const BirthdayFieldChangeSchema = {
+    properties: {
+        field: {
+            type: 'string',
+            const: 'birthday',
+            title: 'Field'
+        },
+        value: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Value'
+        }
+    },
+    additionalProperties: false,
+    type: 'object',
+    required: ['field', 'value'],
+    title: 'BirthdayFieldChange'
+} as const;
+
 export const Body_ical_upload_icalSchema = {
     properties: {
         file: {
@@ -838,6 +891,20 @@ export const Body_transcribe_transcribe_audioSchema = {
             type: 'string',
             contentMediaType: 'application/octet-stream',
             title: 'File'
+        },
+        timezone: {
+            type: 'string',
+            title: 'Timezone',
+            default: 'UTC'
+        },
+        contact_ids: {
+            items: {
+                type: 'string',
+                format: 'uuid'
+            },
+            type: 'array',
+            title: 'Contact Ids',
+            default: []
         }
     },
     type: 'object',
@@ -1248,6 +1315,12 @@ export const CalendarTokensPublicSchema = {
     type: 'object',
     required: ['data', 'count'],
     title: 'CalendarTokensPublic'
+} as const;
+
+export const ChannelSchema = {
+    type: 'string',
+    enum: ['call', 'in_person', 'text', 'email', 'video', 'social', 'other'],
+    title: 'Channel'
 } as const;
 
 export const CommunicationPreferencePublicSchema = {
@@ -2819,6 +2892,88 @@ export const ContactUpdateSchema = {
     title: 'ContactUpdate'
 } as const;
 
+export const ContactUpdateActionSchema = {
+    properties: {
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        kind: {
+            type: 'string',
+            const: 'contact_update',
+            title: 'Kind'
+        },
+        enabled: {
+            type: 'boolean',
+            title: 'Enabled',
+            default: true
+        },
+        evidence: {
+            type: 'string',
+            maxLength: 1000,
+            minLength: 1,
+            title: 'Evidence'
+        },
+        review_warning: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 500
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Review Warning'
+        },
+        contact_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'uuid'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Contact Id'
+        },
+        fields: {
+            items: {
+                oneOf: [
+                    {
+                        '$ref': '#/components/schemas/TextContactFieldChange'
+                    },
+                    {
+                        '$ref': '#/components/schemas/BirthdayFieldChange'
+                    }
+                ],
+                discriminator: {
+                    propertyName: 'field',
+                    mapping: {
+                        birthday: '#/components/schemas/BirthdayFieldChange',
+                        company: '#/components/schemas/TextContactFieldChange',
+                        department: '#/components/schemas/TextContactFieldChange',
+                        how_we_met: '#/components/schemas/TextContactFieldChange',
+                        nickname: '#/components/schemas/TextContactFieldChange',
+                        pronouns: '#/components/schemas/TextContactFieldChange',
+                        title: '#/components/schemas/TextContactFieldChange'
+                    }
+                }
+            },
+            type: 'array',
+            maxItems: 7,
+            minItems: 1,
+            title: 'Fields'
+        }
+    },
+    additionalProperties: false,
+    type: 'object',
+    required: ['id', 'kind', 'evidence', 'fields'],
+    title: 'ContactUpdateAction'
+} as const;
+
 export const ContactsGeoResponseSchema = {
     properties: {
         points: {
@@ -2856,6 +3011,27 @@ export const ContactsPublicSchema = {
     type: 'object',
     required: ['data', 'count'],
     title: 'ContactsPublic'
+} as const;
+
+export const CreateCaptureSchema = {
+    properties: {
+        raw_text: {
+            type: 'string',
+            maxLength: 100000,
+            minLength: 1,
+            title: 'Raw Text'
+        },
+        timezone: {
+            type: 'string',
+            maxLength: 100,
+            minLength: 1,
+            title: 'Timezone'
+        }
+    },
+    additionalProperties: false,
+    type: 'object',
+    required: ['raw_text', 'timezone'],
+    title: 'CreateCapture'
 } as const;
 
 export const CustomFieldDefinitionCreateSchema = {
@@ -3573,6 +3749,12 @@ export const EnvironmentInfoSchema = {
     title: 'EnvironmentInfo'
 } as const;
 
+export const FrequencySchema = {
+    type: 'string',
+    enum: ['once', 'daily', 'weekly', 'monthly', 'yearly'],
+    title: 'Frequency'
+} as const;
+
 export const GiftCreateSchema = {
     properties: {
         name: {
@@ -4223,6 +4405,116 @@ export const IMessageSyncResultSchema = {
     description: 'Result of iMessage sync operation.'
 } as const;
 
+export const InteractionActionSchema = {
+    properties: {
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        kind: {
+            type: 'string',
+            const: 'interaction',
+            title: 'Kind'
+        },
+        enabled: {
+            type: 'boolean',
+            title: 'Enabled',
+            default: true
+        },
+        evidence: {
+            type: 'string',
+            maxLength: 1000,
+            minLength: 1,
+            title: 'Evidence'
+        },
+        review_warning: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 500
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Review Warning'
+        },
+        attendee_ids: {
+            items: {
+                type: 'string',
+                format: 'uuid'
+            },
+            type: 'array',
+            maxItems: 20,
+            title: 'Attendee Ids'
+        },
+        channel: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/Channel'
+                },
+                {
+                    type: 'null'
+                }
+            ]
+        },
+        occurred_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Occurred At'
+        },
+        notes: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 10000
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Notes'
+        },
+        duration_minutes: {
+            anyOf: [
+                {
+                    type: 'integer',
+                    maximum: 10000,
+                    minimum: 0
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Duration Minutes'
+        },
+        location_label: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 500
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Location Label'
+        }
+    },
+    additionalProperties: false,
+    type: 'object',
+    required: ['id', 'kind', 'evidence'],
+    title: 'InteractionAction'
+} as const;
+
 export const InteractionAttendeeSummarySchema = {
     properties: {
         id: {
@@ -4678,6 +4970,102 @@ export const JsonExportResponseSchema = {
     required: ['contacts'],
     title: 'JsonExportResponse',
     description: 'JSON export of all contact rows (raw model_dump per contact).'
+} as const;
+
+export const LifeEventActionSchema = {
+    properties: {
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        kind: {
+            type: 'string',
+            const: 'life_event',
+            title: 'Kind'
+        },
+        enabled: {
+            type: 'boolean',
+            title: 'Enabled',
+            default: true
+        },
+        evidence: {
+            type: 'string',
+            maxLength: 1000,
+            minLength: 1,
+            title: 'Evidence'
+        },
+        review_warning: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 500
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Review Warning'
+        },
+        contact_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'uuid'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Contact Id'
+        },
+        event_type: {
+            type: 'string',
+            maxLength: 100,
+            minLength: 1,
+            title: 'Event Type'
+        },
+        title: {
+            type: 'string',
+            maxLength: 500,
+            minLength: 1,
+            title: 'Title'
+        },
+        description: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 2000
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Description'
+        },
+        occurred_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Occurred At'
+        },
+        create_annual_reminder: {
+            type: 'boolean',
+            const: false,
+            title: 'Create Annual Reminder',
+            default: false
+        }
+    },
+    additionalProperties: false,
+    type: 'object',
+    required: ['id', 'kind', 'evidence', 'event_type', 'title'],
+    title: 'LifeEventAction'
 } as const;
 
 export const LifeEventCreateSchema = {
@@ -5142,6 +5530,66 @@ export const NewPasswordSchema = {
     type: 'object',
     required: ['token', 'new_password'],
     title: 'NewPassword'
+} as const;
+
+export const NoteActionSchema = {
+    properties: {
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        kind: {
+            type: 'string',
+            const: 'note',
+            title: 'Kind'
+        },
+        enabled: {
+            type: 'boolean',
+            title: 'Enabled',
+            default: true
+        },
+        evidence: {
+            type: 'string',
+            maxLength: 1000,
+            minLength: 1,
+            title: 'Evidence'
+        },
+        review_warning: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 500
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Review Warning'
+        },
+        contact_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'uuid'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Contact Id'
+        },
+        body: {
+            type: 'string',
+            maxLength: 50000,
+            minLength: 1,
+            title: 'Body'
+        }
+    },
+    additionalProperties: false,
+    type: 'object',
+    required: ['id', 'kind', 'evidence', 'body'],
+    title: 'NoteAction'
 } as const;
 
 export const NoteCreateSchema = {
@@ -6557,6 +7005,100 @@ export const RelationshipsPublicSchema = {
     title: 'RelationshipsPublic'
 } as const;
 
+export const ReminderActionSchema = {
+    properties: {
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        kind: {
+            type: 'string',
+            const: 'reminder',
+            title: 'Kind'
+        },
+        enabled: {
+            type: 'boolean',
+            title: 'Enabled',
+            default: true
+        },
+        evidence: {
+            type: 'string',
+            maxLength: 1000,
+            minLength: 1,
+            title: 'Evidence'
+        },
+        review_warning: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 500
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Review Warning'
+        },
+        contact_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'uuid'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Contact Id'
+        },
+        title: {
+            type: 'string',
+            maxLength: 500,
+            minLength: 1,
+            title: 'Title'
+        },
+        description: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 2000
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Description'
+        },
+        remind_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Remind At'
+        },
+        frequency: {
+            '$ref': '#/components/schemas/Frequency',
+            default: 'once'
+        },
+        is_active: {
+            type: 'boolean',
+            const: true,
+            title: 'Is Active',
+            default: true
+        }
+    },
+    additionalProperties: false,
+    type: 'object',
+    required: ['id', 'kind', 'evidence', 'title'],
+    title: 'ReminderAction'
+} as const;
+
 export const ReminderContactInfoSchema = {
     properties: {
         id: {
@@ -7011,6 +7553,60 @@ export const RemindersPublicSchema = {
     type: 'object',
     required: ['data'],
     title: 'RemindersPublic'
+} as const;
+
+export const ReviewCaptureSchema = {
+    properties: {
+        revision: {
+            type: 'integer',
+            minimum: 1,
+            title: 'Revision'
+        },
+        corrected_text: {
+            type: 'string',
+            maxLength: 100000,
+            minLength: 1,
+            title: 'Corrected Text'
+        },
+        actions: {
+            items: {
+                oneOf: [
+                    {
+                        '$ref': '#/components/schemas/InteractionAction'
+                    },
+                    {
+                        '$ref': '#/components/schemas/NoteAction'
+                    },
+                    {
+                        '$ref': '#/components/schemas/ContactUpdateAction'
+                    },
+                    {
+                        '$ref': '#/components/schemas/LifeEventAction'
+                    },
+                    {
+                        '$ref': '#/components/schemas/ReminderAction'
+                    }
+                ],
+                discriminator: {
+                    propertyName: 'kind',
+                    mapping: {
+                        contact_update: '#/components/schemas/ContactUpdateAction',
+                        interaction: '#/components/schemas/InteractionAction',
+                        life_event: '#/components/schemas/LifeEventAction',
+                        note: '#/components/schemas/NoteAction',
+                        reminder: '#/components/schemas/ReminderAction'
+                    }
+                }
+            },
+            type: 'array',
+            maxItems: 50,
+            title: 'Actions'
+        }
+    },
+    additionalProperties: false,
+    type: 'object',
+    required: ['revision', 'corrected_text', 'actions'],
+    title: 'ReviewCapture'
 } as const;
 
 export const SavedFilterCreateSchema = {
@@ -7566,6 +8162,31 @@ export const TagsPublicSchema = {
     title: 'TagsPublic'
 } as const;
 
+export const TextContactFieldChangeSchema = {
+    properties: {
+        field: {
+            type: 'string',
+            enum: ['company', 'department', 'title', 'nickname', 'pronouns', 'how_we_met'],
+            title: 'Field'
+        },
+        value: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Value'
+        }
+    },
+    additionalProperties: false,
+    type: 'object',
+    required: ['field', 'value'],
+    title: 'TextContactFieldChange'
+} as const;
+
 export const TokenSchema = {
     properties: {
         access_token: {
@@ -7581,6 +8202,46 @@ export const TokenSchema = {
     type: 'object',
     required: ['access_token'],
     title: 'Token'
+} as const;
+
+export const TranscriptionResponseSchema = {
+    properties: {
+        text: {
+            type: 'string',
+            title: 'Text'
+        },
+        language: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Language'
+        },
+        duration: {
+            anyOf: [
+                {
+                    type: 'number'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Duration'
+        },
+        capture_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Capture Id'
+        }
+    },
+    additionalProperties: false,
+    type: 'object',
+    required: ['text', 'capture_id'],
+    title: 'TranscriptionResponse'
 } as const;
 
 export const UpdatePasswordSchema = {
@@ -8022,6 +8683,151 @@ export const VersionInfoSchema = {
     type: 'object',
     required: ['version', 'git_hash', 'hash'],
     title: 'VersionInfo'
+} as const;
+
+export const VoiceCapturePublicSchema = {
+    properties: {
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        raw_text: {
+            type: 'string',
+            title: 'Raw Text'
+        },
+        corrected_text: {
+            type: 'string',
+            title: 'Corrected Text'
+        },
+        timezone: {
+            type: 'string',
+            title: 'Timezone'
+        },
+        recorded_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Recorded At'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        },
+        updated_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Updated At'
+        },
+        status: {
+            type: 'string',
+            enum: ['draft', 'ready', 'committed'],
+            title: 'Status'
+        },
+        revision: {
+            type: 'integer',
+            title: 'Revision'
+        },
+        actions: {
+            items: {
+                oneOf: [
+                    {
+                        '$ref': '#/components/schemas/InteractionAction'
+                    },
+                    {
+                        '$ref': '#/components/schemas/NoteAction'
+                    },
+                    {
+                        '$ref': '#/components/schemas/ContactUpdateAction'
+                    },
+                    {
+                        '$ref': '#/components/schemas/LifeEventAction'
+                    },
+                    {
+                        '$ref': '#/components/schemas/ReminderAction'
+                    }
+                ],
+                discriminator: {
+                    propertyName: 'kind',
+                    mapping: {
+                        contact_update: '#/components/schemas/ContactUpdateAction',
+                        interaction: '#/components/schemas/InteractionAction',
+                        life_event: '#/components/schemas/LifeEventAction',
+                        note: '#/components/schemas/NoteAction',
+                        reminder: '#/components/schemas/ReminderAction'
+                    }
+                }
+            },
+            type: 'array',
+            title: 'Actions'
+        },
+        warnings: {
+            items: {
+                type: 'string'
+            },
+            type: 'array',
+            title: 'Warnings'
+        },
+        analysis_error: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Analysis Error'
+        },
+        committed_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Committed At'
+        },
+        results: {
+            anyOf: [
+                {
+                    additionalProperties: true,
+                    type: 'object'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Results'
+        }
+    },
+    additionalProperties: false,
+    type: 'object',
+    required: ['id', 'raw_text', 'corrected_text', 'timezone', 'recorded_at', 'created_at', 'updated_at', 'status', 'revision', 'actions', 'warnings'],
+    title: 'VoiceCapturePublic'
+} as const;
+
+export const VoiceCapturesPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/VoiceCapturePublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    additionalProperties: false,
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'VoiceCapturesPublic'
 } as const;
 
 export const WebhookEndpointBaseSchema = {

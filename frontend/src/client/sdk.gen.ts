@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { ActivityLogsListActivityLogsData, ActivityLogsListActivityLogsResponse, AddressesListAddressesData, AddressesListAddressesResponse, AddressesCreateAddressRouteData, AddressesCreateAddressRouteResponse, AddressesUpdateAddressData, AddressesUpdateAddressResponse, AddressesDeleteAddressData, AddressesDeleteAddressResponse, AddressesGeocodeAddressManualData, AddressesGeocodeAddressManualResponse, AddressesGeocodeMissingCoordinatesResponse, ApiKeysListMyApiKeysResponse, ApiKeysCreateMyApiKeyData, ApiKeysCreateMyApiKeyResponse, ApiKeysRevokeMyApiKeyData, ApiKeysRevokeMyApiKeyResponse, CalendarGetCalendarMonthData, CalendarGetCalendarMonthResponse, CalendarCreateCalendarTokenData, CalendarCreateCalendarTokenResponse, CalendarListCalendarTokensResponse, CalendarRevokeCalendarTokenData, CalendarRevokeCalendarTokenResponse, CalendarGetCalendarIcsData, CalendarGetCalendarIcsResponse, CarddavWellKnownCarddavResponse, CommunicationPreferencesGetCommunicationPreferenceData, CommunicationPreferencesGetCommunicationPreferenceResponse, CommunicationPreferencesUpsertCommunicationPreferenceData, CommunicationPreferencesUpsertCommunicationPreferenceResponse, CommunicationPreferencesDeleteCommunicationPreferenceData, CommunicationPreferencesDeleteCommunicationPreferenceResponse, ContactFieldsListContactFieldsData, ContactFieldsListContactFieldsResponse, ContactFieldsCreateContactFieldRouteData, ContactFieldsCreateContactFieldRouteResponse, ContactFieldsUpdateContactFieldData, ContactFieldsUpdateContactFieldResponse, ContactFieldsDeleteContactFieldData, ContactFieldsDeleteContactFieldResponse, ContactsGetContactPdfData, ContactsGetContactPdfResponse, ContactsGetDistinctStagesResponse, ContactsGetKanbanBoardData, ContactsGetKanbanBoardResponse, ContactsGetContactStageEventsData, ContactsGetContactStageEventsResponse, ContactsListContactsData, ContactsListContactsResponse, ContactsCreateContactData, ContactsCreateContactResponse, ContactsListOverdueContactsData, ContactsListOverdueContactsResponse, ContactsListLosingTouchContactsResponse, ContactsSnoozeContactData, ContactsSnoozeContactResponse, ContactsSnoozeContact1Data, ContactsSnoozeContact1Response, ContactsSnoozeContact2Data, ContactsSnoozeContact2Response, ContactsBulkUpdateContactsData, ContactsBulkUpdateContactsResponse, ContactsListContactsGeoData, ContactsListContactsGeoResponse, ContactsGetContactData, ContactsGetContactResponse, ContactsUpdateContactData, ContactsUpdateContactResponse, ContactsDeleteContactData, ContactsDeleteContactResponse, ContactsRestoreContactData, ContactsRestoreContactResponse, ContactsGetContactHeatmapData, ContactsGetContactHeatmapResponse, ContactsListContactMentionsData, ContactsListContactMentionsResponse, ContactsSyncImessageContactsData, ContactsSyncImessageContactsResponse, ContactsGetImessageProfileData, ContactsGetImessageProfileResponse, ContactSharesListContactSharesResponse, ContactSharesCreateContactShareData, ContactSharesCreateContactShareResponse, ContactSharesDeleteContactShareData, ContactSharesDeleteContactShareResponse, ContactStageEventsCreateContactStageEventData, ContactStageEventsCreateContactStageEventResponse, ContactStageEventsListContactStageHistoryData, ContactStageEventsListContactStageHistoryResponse, ContactStageEventsGetLatestStageData, ContactStageEventsGetLatestStageResponse, ContactStageEventsGetStageDurationRouteData, ContactStageEventsGetStageDurationRouteResponse, ContactStageEventsBackfillStageEventsRouteResponse, ContactStageEventsGetStageAnalyticsData, ContactStageEventsGetStageAnalyticsResponse, CustomFieldsListFieldDefinitionsResponse, CustomFieldsCreateFieldDefinitionData, CustomFieldsCreateFieldDefinitionResponse, CustomFieldsUpdateFieldDefinitionData, CustomFieldsUpdateFieldDefinitionResponse, CustomFieldsDeleteFieldDefinitionData, CustomFieldsDeleteFieldDefinitionResponse, CustomFieldsListFieldValuesData, CustomFieldsListFieldValuesResponse, CustomFieldsCreateFieldValueData, CustomFieldsCreateFieldValueResponse, CustomFieldsUpdateFieldValueData, CustomFieldsUpdateFieldValueResponse, CustomFieldsDeleteFieldValueData, CustomFieldsDeleteFieldValueResponse, DebtsListDebtsData, DebtsListDebtsResponse, DebtsCreateDebtRouteData, DebtsCreateDebtRouteResponse, DebtsUpdateDebtData, DebtsUpdateDebtResponse, DebtsDeleteDebtData, DebtsDeleteDebtResponse, DebtsRestoreDebtData, DebtsRestoreDebtResponse, EmailGmailAuthorizeData, EmailGmailAuthorizeResponse, EmailGmailCallbackData, EmailGmailCallbackResponse, EmailListEmailTokensData, EmailListEmailTokensResponse, EmailDeleteEmailTokenData, EmailDeleteEmailTokenResponse, EmailPollContactEmailData, EmailPollContactEmailResponse, EmailPollAllEmailsResponse, GiftsListGiftsData, GiftsListGiftsResponse, GiftsCreateGiftRouteData, GiftsCreateGiftRouteResponse, GiftsUpdateGiftData, GiftsUpdateGiftResponse, GiftsDeleteGiftData, GiftsDeleteGiftResponse, GiftsRestoreGiftData, GiftsRestoreGiftResponse, GiftsGetKanbanBoardResponse, GiftsChangeGiftStatusData, GiftsChangeGiftStatusResponse, GraphGetContactsGraphData, GraphGetContactsGraphResponse, GraphGetContactGraphData, GraphGetContactGraphResponse, IcalUploadIcalData, IcalUploadIcalResponse, IcalConfirmIcalImportData, IcalConfirmIcalImportResponse, ImportExportImportVcardData, ImportExportImportVcardResponse, ImportExportExportVcardResponse, ImportExportExportJsonResponse, ImportExportPreviewCsvImportData, ImportExportPreviewCsvImportResponse, ImportExportImportCsvData, ImportExportImportCsvResponse, ImportExportExportCsvData, ImportExportExportCsvResponse, InteractionsListInteractionsData, InteractionsListInteractionsResponse, InteractionsCreateInteractionRouteData, InteractionsCreateInteractionRouteResponse, InteractionsUpdateInteractionData, InteractionsUpdateInteractionResponse, InteractionsDeleteInteractionData, InteractionsDeleteInteractionResponse, InteractionsConfirmDraftInteractionData, InteractionsConfirmDraftInteractionResponse, InteractionsRestoreInteractionData, InteractionsRestoreInteractionResponse, LifeEventsListLifeEventsData, LifeEventsListLifeEventsResponse, LifeEventsCreateLifeEventRouteData, LifeEventsCreateLifeEventRouteResponse, LifeEventsUpdateLifeEventData, LifeEventsUpdateLifeEventResponse, LifeEventsDeleteLifeEventData, LifeEventsDeleteLifeEventResponse, LifeEventsRestoreLifeEventData, LifeEventsRestoreLifeEventResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, MediaRecommendationsListMediaRecommendationsData, MediaRecommendationsListMediaRecommendationsResponse, MediaRecommendationsCreateMediaRecommendationRouteData, MediaRecommendationsCreateMediaRecommendationRouteResponse, MediaRecommendationsUpdateMediaRecommendationData, MediaRecommendationsUpdateMediaRecommendationResponse, MediaRecommendationsDeleteMediaRecommendationData, MediaRecommendationsDeleteMediaRecommendationResponse, NotesListNotesData, NotesListNotesResponse, NotesCreateNoteRouteData, NotesCreateNoteRouteResponse, NotesUpdateNoteRouteData, NotesUpdateNoteRouteResponse, NotesDeleteNoteData, NotesDeleteNoteResponse, NotesRestoreNoteData, NotesRestoreNoteResponse, OrganizationsListOrganizationsData, OrganizationsListOrganizationsResponse, OrganizationsCreateOrganizationData, OrganizationsCreateOrganizationResponse, OrganizationsGetOrganizationData, OrganizationsGetOrganizationResponse, OrganizationsUpdateOrganizationData, OrganizationsUpdateOrganizationResponse, OrganizationsDeleteOrganizationData, OrganizationsDeleteOrganizationResponse, OrganizationsGetOrganizationWithContactsData, OrganizationsGetOrganizationWithContactsResponse, PetsListPetsData, PetsListPetsResponse, PetsCreatePetRouteData, PetsCreatePetRouteResponse, PetsUpdatePetData, PetsUpdatePetResponse, PetsDeletePetData, PetsDeletePetResponse, PrivateCreateUserData, PrivateCreateUserResponse, PrivateSeedDataData, PrivateSeedDataResponse, RelationshipInverseMapListInverseMapsData, RelationshipInverseMapListInverseMapsResponse, RelationshipInverseMapCreateInverseMapData, RelationshipInverseMapCreateInverseMapResponse, RelationshipInverseMapGetInverseMapData, RelationshipInverseMapGetInverseMapResponse, RelationshipInverseMapUpdateInverseMapData, RelationshipInverseMapUpdateInverseMapResponse, RelationshipInverseMapDeleteInverseMapData, RelationshipInverseMapDeleteInverseMapResponse, RelationshipInverseMapSeedInverseMapEndpointResponse, RelationshipInverseMapLookupInverseData, RelationshipInverseMapLookupInverseResponse, RelationshipsLookupInverseData, RelationshipsLookupInverseResponse, RelationshipsListRelationshipsData, RelationshipsListRelationshipsResponse, RelationshipsCreateRelationshipRouteData, RelationshipsCreateRelationshipRouteResponse, RelationshipsUpdateRelationshipData, RelationshipsUpdateRelationshipResponse, RelationshipsDeleteRelationshipData, RelationshipsDeleteRelationshipResponse, RemindersListRemindersData, RemindersListRemindersResponse, RemindersCreateReminderRouteData, RemindersCreateReminderRouteResponse, RemindersListDueRemindersData, RemindersListDueRemindersResponse, RemindersDismissReminderData, RemindersDismissReminderResponse, RemindersUpdateReminderData, RemindersUpdateReminderResponse, RemindersDeleteReminderData, RemindersDeleteReminderResponse, RemindersSnoozeReminderData, RemindersSnoozeReminderResponse, RemindersGetSnoozeHistoryData, RemindersGetSnoozeHistoryResponse, RemindersGetSnoozeStatsData, RemindersGetSnoozeStatsResponse, RemindersGetChronicSnoozersData, RemindersGetChronicSnoozersResponse, RemindersRestoreReminderData, RemindersRestoreReminderResponse, SavedFiltersListSavedFiltersData, SavedFiltersListSavedFiltersResponse, SavedFiltersCreateSavedFilterRouteData, SavedFiltersCreateSavedFilterRouteResponse, SavedFiltersUpdateSavedFilterRouteData, SavedFiltersUpdateSavedFilterRouteResponse, SavedFiltersDeleteSavedFilterRouteData, SavedFiltersDeleteSavedFilterRouteResponse, SearchSearchData, SearchSearchResponse, SetupSetupPageData, SetupSetupPageResponse, SetupSetupSubmitData, SetupSetupSubmitResponse, TagsListTagsData, TagsListTagsResponse, TagsCreateTagRouteData, TagsCreateTagRouteResponse, TagsUpdateTagData, TagsUpdateTagResponse, TagsDeleteTagData, TagsDeleteTagResponse, TagSharesPreviewTagShareData, TagSharesPreviewTagShareResponse, TagSharesCreateTagShareData, TagSharesCreateTagShareResponse, TagSharesListTagSharesData, TagSharesListTagSharesResponse, TagSharesDeleteTagShareData, TagSharesDeleteTagShareResponse, TagSharesLogTagShareAuditData, TagSharesLogTagShareAuditResponse, TranscribeTranscribeAudioData, TranscribeTranscribeAudioResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsHealthResponse, UtilsApiStatusResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse, UtilsStatusResponse, UtilsEnvironmentResponse, UtilsVersionInfoResponse, VCardConflictsListVcardConflictsData, VCardConflictsListVcardConflictsResponse, VCardConflictsResolveVcardConflictData, VCardConflictsResolveVcardConflictResponse, VCardConflictsDeleteVcardConflictData, VCardConflictsDeleteVcardConflictResponse, WebhooksTwilioWebhookData, WebhooksTwilioWebhookResponse, WebhooksListWebhooksResponse, WebhooksCreateWebhookData, WebhooksCreateWebhookResponse, WebhooksUpdateWebhookData, WebhooksUpdateWebhookResponse, WebhooksDeleteWebhookData, WebhooksDeleteWebhookResponse, WebhooksInboundWebhookData, WebhooksInboundWebhookResponse } from './types.gen';
+import type { ActivityLogsListActivityLogsData, ActivityLogsListActivityLogsResponse, AddressesListAddressesData, AddressesListAddressesResponse, AddressesCreateAddressRouteData, AddressesCreateAddressRouteResponse, AddressesUpdateAddressData, AddressesUpdateAddressResponse, AddressesDeleteAddressData, AddressesDeleteAddressResponse, AddressesGeocodeAddressManualData, AddressesGeocodeAddressManualResponse, AddressesGeocodeMissingCoordinatesResponse, ApiKeysListMyApiKeysResponse, ApiKeysCreateMyApiKeyData, ApiKeysCreateMyApiKeyResponse, ApiKeysRevokeMyApiKeyData, ApiKeysRevokeMyApiKeyResponse, CalendarGetCalendarMonthData, CalendarGetCalendarMonthResponse, CalendarCreateCalendarTokenData, CalendarCreateCalendarTokenResponse, CalendarListCalendarTokensResponse, CalendarRevokeCalendarTokenData, CalendarRevokeCalendarTokenResponse, CalendarGetCalendarIcsData, CalendarGetCalendarIcsResponse, CarddavWellKnownCarddavResponse, CommunicationPreferencesGetCommunicationPreferenceData, CommunicationPreferencesGetCommunicationPreferenceResponse, CommunicationPreferencesUpsertCommunicationPreferenceData, CommunicationPreferencesUpsertCommunicationPreferenceResponse, CommunicationPreferencesDeleteCommunicationPreferenceData, CommunicationPreferencesDeleteCommunicationPreferenceResponse, ContactFieldsListContactFieldsData, ContactFieldsListContactFieldsResponse, ContactFieldsCreateContactFieldRouteData, ContactFieldsCreateContactFieldRouteResponse, ContactFieldsUpdateContactFieldData, ContactFieldsUpdateContactFieldResponse, ContactFieldsDeleteContactFieldData, ContactFieldsDeleteContactFieldResponse, ContactsGetContactPdfData, ContactsGetContactPdfResponse, ContactsGetDistinctStagesResponse, ContactsGetKanbanBoardData, ContactsGetKanbanBoardResponse, ContactsGetContactStageEventsData, ContactsGetContactStageEventsResponse, ContactsListContactsData, ContactsListContactsResponse, ContactsCreateContactData, ContactsCreateContactResponse, ContactsListOverdueContactsData, ContactsListOverdueContactsResponse, ContactsListLosingTouchContactsResponse, ContactsSkipContactData, ContactsSkipContactResponse, ContactsPatchSnoozeContactData, ContactsPatchSnoozeContactResponse, ContactsSnoozeContactData, ContactsSnoozeContactResponse, ContactsBulkUpdateContactsData, ContactsBulkUpdateContactsResponse, ContactsListContactsGeoData, ContactsListContactsGeoResponse, ContactsGetContactData, ContactsGetContactResponse, ContactsUpdateContactData, ContactsUpdateContactResponse, ContactsDeleteContactData, ContactsDeleteContactResponse, ContactsRestoreContactData, ContactsRestoreContactResponse, ContactsGetContactHeatmapData, ContactsGetContactHeatmapResponse, ContactsListContactMentionsData, ContactsListContactMentionsResponse, ContactsSyncImessageContactsData, ContactsSyncImessageContactsResponse, ContactsGetImessageProfileData, ContactsGetImessageProfileResponse, ContactSharesListContactSharesResponse, ContactSharesCreateContactShareData, ContactSharesCreateContactShareResponse, ContactSharesDeleteContactShareData, ContactSharesDeleteContactShareResponse, ContactStageEventsCreateContactStageEventData, ContactStageEventsCreateContactStageEventResponse, ContactStageEventsListContactStageHistoryData, ContactStageEventsListContactStageHistoryResponse, ContactStageEventsGetLatestStageData, ContactStageEventsGetLatestStageResponse, ContactStageEventsGetStageDurationRouteData, ContactStageEventsGetStageDurationRouteResponse, ContactStageEventsBackfillStageEventsRouteResponse, ContactStageEventsGetStageAnalyticsData, ContactStageEventsGetStageAnalyticsResponse, CustomFieldsListFieldDefinitionsResponse, CustomFieldsCreateFieldDefinitionData, CustomFieldsCreateFieldDefinitionResponse, CustomFieldsUpdateFieldDefinitionData, CustomFieldsUpdateFieldDefinitionResponse, CustomFieldsDeleteFieldDefinitionData, CustomFieldsDeleteFieldDefinitionResponse, CustomFieldsListFieldValuesData, CustomFieldsListFieldValuesResponse, CustomFieldsCreateFieldValueData, CustomFieldsCreateFieldValueResponse, CustomFieldsUpdateFieldValueData, CustomFieldsUpdateFieldValueResponse, CustomFieldsDeleteFieldValueData, CustomFieldsDeleteFieldValueResponse, DebtsListDebtsData, DebtsListDebtsResponse, DebtsCreateDebtRouteData, DebtsCreateDebtRouteResponse, DebtsUpdateDebtData, DebtsUpdateDebtResponse, DebtsDeleteDebtData, DebtsDeleteDebtResponse, DebtsRestoreDebtData, DebtsRestoreDebtResponse, EmailGmailAuthorizeData, EmailGmailAuthorizeResponse, EmailGmailCallbackData, EmailGmailCallbackResponse, EmailListEmailTokensData, EmailListEmailTokensResponse, EmailDeleteEmailTokenData, EmailDeleteEmailTokenResponse, EmailPollContactEmailData, EmailPollContactEmailResponse, EmailPollAllEmailsResponse, GiftsListGiftsData, GiftsListGiftsResponse, GiftsCreateGiftRouteData, GiftsCreateGiftRouteResponse, GiftsUpdateGiftData, GiftsUpdateGiftResponse, GiftsDeleteGiftData, GiftsDeleteGiftResponse, GiftsRestoreGiftData, GiftsRestoreGiftResponse, GiftsGetKanbanBoardResponse, GiftsChangeGiftStatusData, GiftsChangeGiftStatusResponse, GraphGetContactsGraphData, GraphGetContactsGraphResponse, GraphGetContactGraphData, GraphGetContactGraphResponse, IcalUploadIcalData, IcalUploadIcalResponse, IcalConfirmIcalImportData, IcalConfirmIcalImportResponse, ImportExportImportVcardData, ImportExportImportVcardResponse, ImportExportExportVcardResponse, ImportExportExportJsonResponse, ImportExportPreviewCsvImportData, ImportExportPreviewCsvImportResponse, ImportExportImportCsvData, ImportExportImportCsvResponse, ImportExportExportCsvData, ImportExportExportCsvResponse, InteractionsListInteractionsData, InteractionsListInteractionsResponse, InteractionsCreateInteractionRouteData, InteractionsCreateInteractionRouteResponse, InteractionsUpdateInteractionData, InteractionsUpdateInteractionResponse, InteractionsDeleteInteractionData, InteractionsDeleteInteractionResponse, InteractionsConfirmDraftInteractionData, InteractionsConfirmDraftInteractionResponse, InteractionsRestoreInteractionData, InteractionsRestoreInteractionResponse, LifeEventsListLifeEventsData, LifeEventsListLifeEventsResponse, LifeEventsCreateLifeEventRouteData, LifeEventsCreateLifeEventRouteResponse, LifeEventsUpdateLifeEventData, LifeEventsUpdateLifeEventResponse, LifeEventsDeleteLifeEventData, LifeEventsDeleteLifeEventResponse, LifeEventsRestoreLifeEventData, LifeEventsRestoreLifeEventResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, MediaRecommendationsListMediaRecommendationsData, MediaRecommendationsListMediaRecommendationsResponse, MediaRecommendationsCreateMediaRecommendationRouteData, MediaRecommendationsCreateMediaRecommendationRouteResponse, MediaRecommendationsUpdateMediaRecommendationData, MediaRecommendationsUpdateMediaRecommendationResponse, MediaRecommendationsDeleteMediaRecommendationData, MediaRecommendationsDeleteMediaRecommendationResponse, NotesListNotesData, NotesListNotesResponse, NotesCreateNoteRouteData, NotesCreateNoteRouteResponse, NotesUpdateNoteRouteData, NotesUpdateNoteRouteResponse, NotesDeleteNoteData, NotesDeleteNoteResponse, NotesRestoreNoteData, NotesRestoreNoteResponse, OrganizationsListOrganizationsData, OrganizationsListOrganizationsResponse, OrganizationsCreateOrganizationData, OrganizationsCreateOrganizationResponse, OrganizationsGetOrganizationData, OrganizationsGetOrganizationResponse, OrganizationsUpdateOrganizationData, OrganizationsUpdateOrganizationResponse, OrganizationsDeleteOrganizationData, OrganizationsDeleteOrganizationResponse, OrganizationsGetOrganizationWithContactsData, OrganizationsGetOrganizationWithContactsResponse, PetsListPetsData, PetsListPetsResponse, PetsCreatePetRouteData, PetsCreatePetRouteResponse, PetsUpdatePetData, PetsUpdatePetResponse, PetsDeletePetData, PetsDeletePetResponse, PrivateCreateUserData, PrivateCreateUserResponse, PrivateSeedDataData, PrivateSeedDataResponse, RelationshipInverseMapListInverseMapsData, RelationshipInverseMapListInverseMapsResponse, RelationshipInverseMapCreateInverseMapData, RelationshipInverseMapCreateInverseMapResponse, RelationshipInverseMapGetInverseMapData, RelationshipInverseMapGetInverseMapResponse, RelationshipInverseMapUpdateInverseMapData, RelationshipInverseMapUpdateInverseMapResponse, RelationshipInverseMapDeleteInverseMapData, RelationshipInverseMapDeleteInverseMapResponse, RelationshipInverseMapSeedInverseMapEndpointResponse, RelationshipInverseMapLookupInverseData, RelationshipInverseMapLookupInverseResponse, RelationshipsLookupInverseData, RelationshipsLookupInverseResponse, RelationshipsListRelationshipsData, RelationshipsListRelationshipsResponse, RelationshipsCreateRelationshipRouteData, RelationshipsCreateRelationshipRouteResponse, RelationshipsUpdateRelationshipData, RelationshipsUpdateRelationshipResponse, RelationshipsDeleteRelationshipData, RelationshipsDeleteRelationshipResponse, RemindersListRemindersData, RemindersListRemindersResponse, RemindersCreateReminderRouteData, RemindersCreateReminderRouteResponse, RemindersListDueRemindersData, RemindersListDueRemindersResponse, RemindersDismissReminderData, RemindersDismissReminderResponse, RemindersUpdateReminderData, RemindersUpdateReminderResponse, RemindersDeleteReminderData, RemindersDeleteReminderResponse, RemindersSnoozeReminderData, RemindersSnoozeReminderResponse, RemindersGetSnoozeHistoryData, RemindersGetSnoozeHistoryResponse, RemindersGetSnoozeStatsData, RemindersGetSnoozeStatsResponse, RemindersGetChronicSnoozersData, RemindersGetChronicSnoozersResponse, RemindersRestoreReminderData, RemindersRestoreReminderResponse, SavedFiltersListSavedFiltersData, SavedFiltersListSavedFiltersResponse, SavedFiltersCreateSavedFilterRouteData, SavedFiltersCreateSavedFilterRouteResponse, SavedFiltersUpdateSavedFilterRouteData, SavedFiltersUpdateSavedFilterRouteResponse, SavedFiltersDeleteSavedFilterRouteData, SavedFiltersDeleteSavedFilterRouteResponse, SearchSearchData, SearchSearchResponse, SetupSetupPageData, SetupSetupPageResponse, SetupSetupSubmitData, SetupSetupSubmitResponse, TagsListTagsData, TagsListTagsResponse, TagsCreateTagRouteData, TagsCreateTagRouteResponse, TagsUpdateTagData, TagsUpdateTagResponse, TagsDeleteTagData, TagsDeleteTagResponse, TagSharesPreviewTagShareData, TagSharesPreviewTagShareResponse, TagSharesCreateTagShareData, TagSharesCreateTagShareResponse, TagSharesListTagSharesData, TagSharesListTagSharesResponse, TagSharesDeleteTagShareData, TagSharesDeleteTagShareResponse, TagSharesLogTagShareAuditData, TagSharesLogTagShareAuditResponse, TranscribeTranscribeAudioData, TranscribeTranscribeAudioResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsHealthResponse, UtilsApiStatusResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse, UtilsStatusResponse, UtilsEnvironmentResponse, UtilsVersionInfoResponse, VCardConflictsListVcardConflictsData, VCardConflictsListVcardConflictsResponse, VCardConflictsResolveVcardConflictData, VCardConflictsResolveVcardConflictResponse, VCardConflictsDeleteVcardConflictData, VCardConflictsDeleteVcardConflictResponse, VoiceCapturesCreateVoiceCaptureData, VoiceCapturesCreateVoiceCaptureResponse, VoiceCapturesListVoiceCapturesData, VoiceCapturesListVoiceCapturesResponse, VoiceCapturesGetVoiceCaptureData, VoiceCapturesGetVoiceCaptureResponse, VoiceCapturesUpdateVoiceCaptureData, VoiceCapturesUpdateVoiceCaptureResponse, VoiceCapturesDeleteVoiceCaptureData, VoiceCapturesDeleteVoiceCaptureResponse, VoiceCapturesAnalyzeVoiceCaptureData, VoiceCapturesAnalyzeVoiceCaptureResponse, VoiceCapturesCommitVoiceCaptureData, VoiceCapturesCommitVoiceCaptureResponse, WebhooksTwilioWebhookData, WebhooksTwilioWebhookResponse, WebhooksListWebhooksResponse, WebhooksCreateWebhookData, WebhooksCreateWebhookResponse, WebhooksUpdateWebhookData, WebhooksUpdateWebhookResponse, WebhooksDeleteWebhookData, WebhooksDeleteWebhookResponse, WebhooksInboundWebhookData, WebhooksInboundWebhookResponse } from './types.gen';
 
 export class ActivityLogsService {
     /**
@@ -673,7 +673,7 @@ export class ContactsService {
      * @returns ContactPublic Successful Response
      * @throws ApiError
      */
-    public static snoozeContact(data: ContactsSnoozeContactData): CancelablePromise<ContactsSnoozeContactResponse> {
+    public static skipContact(data: ContactsSkipContactData): CancelablePromise<ContactsSkipContactResponse> {
         return __request(OpenAPI, {
             method: 'PATCH',
             url: '/api/v1/contacts/{contact_id}/skip',
@@ -697,7 +697,7 @@ export class ContactsService {
      * @returns ContactPublic Successful Response
      * @throws ApiError
      */
-    public static snoozeContact1(data: ContactsSnoozeContact1Data): CancelablePromise<ContactsSnoozeContact1Response> {
+    public static patchSnoozeContact(data: ContactsPatchSnoozeContactData): CancelablePromise<ContactsPatchSnoozeContactResponse> {
         return __request(OpenAPI, {
             method: 'PATCH',
             url: '/api/v1/contacts/{contact_id}/snooze',
@@ -721,7 +721,7 @@ export class ContactsService {
      * @returns ContactPublic Successful Response
      * @throws ApiError
      */
-    public static snoozeContact2(data: ContactsSnoozeContact2Data): CancelablePromise<ContactsSnoozeContact2Response> {
+    public static snoozeContact(data: ContactsSnoozeContactData): CancelablePromise<ContactsSnoozeContactResponse> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/v1/contacts/{contact_id}/snooze',
@@ -3627,7 +3627,7 @@ export class TranscribeService {
      * Returns the transcribed text for review before saving as an Interaction.
      * @param data The data for the request.
      * @param data.formData
-     * @returns unknown Successful Response
+     * @returns TranscriptionResponse Successful Response
      * @throws ApiError
      */
     public static transcribeAudio(data: TranscribeTranscribeAudioData): CancelablePromise<TranscribeTranscribeAudioResponse> {
@@ -4001,6 +4001,158 @@ export class VCardConflictsService {
             path: {
                 conflict_id: data.conflictId
             },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+}
+
+export class VoiceCapturesService {
+    /**
+     * Create Voice Capture
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns VoiceCapturePublic Successful Response
+     * @throws ApiError
+     */
+    public static createVoiceCapture(data: VoiceCapturesCreateVoiceCaptureData): CancelablePromise<VoiceCapturesCreateVoiceCaptureResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/voice-captures/',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+
+    /**
+     * List Voice Captures
+     * @param data The data for the request.
+     * @param data.skip
+     * @param data.limit
+     * @returns VoiceCapturesPublic Successful Response
+     * @throws ApiError
+     */
+    public static listVoiceCaptures(data: VoiceCapturesListVoiceCapturesData = {}): CancelablePromise<VoiceCapturesListVoiceCapturesResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/voice-captures/',
+            query: {
+                skip: data.skip,
+                limit: data.limit
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+
+    /**
+     * Get Voice Capture
+     * @param data The data for the request.
+     * @param data.captureId
+     * @returns VoiceCapturePublic Successful Response
+     * @throws ApiError
+     */
+    public static getVoiceCapture(data: VoiceCapturesGetVoiceCaptureData): CancelablePromise<VoiceCapturesGetVoiceCaptureResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/voice-captures/{capture_id}',
+            path: {
+                capture_id: data.captureId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+
+    /**
+     * Update Voice Capture
+     * @param data The data for the request.
+     * @param data.captureId
+     * @param data.requestBody
+     * @returns VoiceCapturePublic Successful Response
+     * @throws ApiError
+     */
+    public static updateVoiceCapture(data: VoiceCapturesUpdateVoiceCaptureData): CancelablePromise<VoiceCapturesUpdateVoiceCaptureResponse> {
+        return __request(OpenAPI, {
+            method: 'PUT',
+            url: '/api/v1/voice-captures/{capture_id}',
+            path: {
+                capture_id: data.captureId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+
+    /**
+     * Delete Voice Capture
+     * @param data The data for the request.
+     * @param data.captureId
+     * @returns void Successful Response
+     * @throws ApiError
+     */
+    public static deleteVoiceCapture(data: VoiceCapturesDeleteVoiceCaptureData): CancelablePromise<VoiceCapturesDeleteVoiceCaptureResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/voice-captures/{capture_id}',
+            path: {
+                capture_id: data.captureId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+
+    /**
+     * Analyze Voice Capture
+     * @param data The data for the request.
+     * @param data.captureId
+     * @param data.requestBody
+     * @returns VoiceCapturePublic Successful Response
+     * @throws ApiError
+     */
+    public static analyzeVoiceCapture(data: VoiceCapturesAnalyzeVoiceCaptureData): CancelablePromise<VoiceCapturesAnalyzeVoiceCaptureResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/voice-captures/{capture_id}/analyze',
+            path: {
+                capture_id: data.captureId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+
+    /**
+     * Commit Voice Capture
+     * @param data The data for the request.
+     * @param data.captureId
+     * @param data.requestBody
+     * @returns VoiceCapturePublic Successful Response
+     * @throws ApiError
+     */
+    public static commitVoiceCapture(data: VoiceCapturesCommitVoiceCaptureData): CancelablePromise<VoiceCapturesCommitVoiceCaptureResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/voice-captures/{capture_id}/commit',
+            path: {
+                capture_id: data.captureId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
             errors: {
                 422: 'Validation Error'
             }
