@@ -62,7 +62,7 @@ def validate_proposal(
             "The language model returned an invalid proposal. You can edit this capture manually."
         ) from exc
     for action in proposal.actions:
-        if action.evidence not in source:
+        if not action.evidence.strip() or action.evidence not in source:
             raise ProposalError(
                 "The proposal included evidence that is not an exact quote from the recording."
             )

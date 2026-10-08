@@ -368,7 +368,7 @@ describe("VoiceReviewModal", () => {
   it("saves an incomplete manual card when it is explicitly skipped", async () => {
     const { onClose } = renderModal()
     await userEvent.setup().click(await screen.findByRole("button", { name: "Add note" }))
-    fireEvent.change(screen.getAllByLabelText("Note text").at(-1)!, { target: { value: "Keep this unresolved idea." } })
+    fireEvent.change(screen.getAllByLabelText("Note text")[1], { target: { value: "Keep this unresolved idea." } })
     await userEvent.setup().click(screen.getAllByRole("button", { name: "Skip" })[1])
     await userEvent.setup().click(screen.getByRole("button", { name: "Save draft and close" }))
     await waitFor(() => expect(mocks.update).toHaveBeenCalledOnce())

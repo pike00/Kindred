@@ -135,12 +135,6 @@ class VoiceProposal(StrictModel):
     actions: list[VoiceAction] = Field(max_length=50)
     warnings: list[str] = Field(default_factory=list, max_length=50)
 
-    @model_validator(mode="after")
-    def enabled_actions_are_complete(self) -> VoiceProposal:
-        for action in self.actions:
-            _validate_enabled_action(action)
-        return self
-
 
 class CreateCapture(StrictModel):
     raw_text: str = Field(min_length=1, max_length=100000)
@@ -166,15 +160,8 @@ class ReviewCapture(StrictModel):
     corrected_text: str = Field(min_length=1, max_length=100000)
     actions: list[VoiceAction] = Field(max_length=50)
 
-    @model_validator(mode="after")
-    def enabled_actions_are_complete(self) -> ReviewCapture:
-        for action in self.actions:
-            if action.enabled:
-                _validate_enabled_action(action)
-        return self
 
-
-def _validate_enabled_action(action: VoiceAction) -> None:
+def validate_enabled_action(action: VoiceAction) -> None:
     if not action.evidence.strip():
         raise ValueError("enabled actions need source evidence")
     if isinstance(action, InteractionAction):
@@ -186,8 +173,6 @@ def _validate_enabled_action(action: VoiceAction) -> None:
             raise ValueError(
                 "enabled interactions need attendees, channel, and occurrence time"
             )
-        if not action.notes or not action.notes.strip():
-            raise ValueError("enabled interactions need notes")
     elif isinstance(action, NoteAction):
         if not action.body.strip():
             raise ValueError("enabled notes need text")
