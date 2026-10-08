@@ -10,6 +10,7 @@ from ..types import UNSET, Unset
 
 from ..models.interaction_channel import InteractionChannel
 from ..types import UNSET, Unset
+from dateutil.parser import isoparse
 from typing import cast
 from uuid import UUID
 import datetime
@@ -157,11 +158,11 @@ class InteractionPublic:
         d = dict(src_dict)
         channel = InteractionChannel(d.pop("channel"))
 
-        occurred_at = datetime.datetime.fromisoformat(d.pop("occurred_at"))
+        occurred_at = isoparse(d.pop("occurred_at"))
 
         id = UUID(d.pop("id"))
 
-        created_at = datetime.datetime.fromisoformat(d.pop("created_at"))
+        created_at = isoparse(d.pop("created_at"))
 
         def _parse_notes(data: object) -> None | str | Unset:
             if data is None:
@@ -198,7 +199,7 @@ class InteractionPublic:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                deleted_at_type_0 = datetime.datetime.fromisoformat(data)
+                deleted_at_type_0 = isoparse(data)
 
                 return deleted_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):

@@ -21,12 +21,15 @@ pipes cleanly into ``jq``. Use ``--pretty`` for indented JSON.
 from __future__ import annotations
 
 import json
+import mimetypes
 import sys
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Annotated, Any, Optional
 from uuid import UUID
 
 import typer
+import httpx
 
 from .client import KindredClient
 from ._generated.api.contacts import (
@@ -73,6 +76,16 @@ from ._generated.api.api_keys import (
     api_keys_revoke_my_api_key,
 )
 from ._generated.api.utils import utils_health_check, utils_status
+from ._generated.api.transcribe import transcribe_transcribe_audio
+from ._generated.api.voice_captures import (
+    voice_captures_analyze_voice_capture,
+    voice_captures_commit_voice_capture,
+    voice_captures_create_voice_capture,
+    voice_captures_delete_voice_capture,
+    voice_captures_get_voice_capture,
+    voice_captures_list_voice_captures,
+    voice_captures_update_voice_capture,
+)
 from ._generated.api.webhooks import (
     webhooks_create_webhook,
     webhooks_delete_webhook,
@@ -92,7 +105,11 @@ from ._generated.models.reminder_frequency import ReminderFrequency
 from ._generated.models.webhook_endpoint_base import WebhookEndpointBase
 from ._generated.models.api_key_create import APIKeyCreate
 from ._generated.models.user_create import UserCreate
-from ._generated.types import UNSET
+from ._generated.models.analyze_capture import AnalyzeCapture
+from ._generated.models.body_transcribe_transcribe_audio import BodyTranscribeTranscribeAudio
+from ._generated.models.create_capture import CreateCapture
+from ._generated.models.review_capture import ReviewCapture
+from ._generated.types import UNSET, File
 
 app = typer.Typer(
     no_args_is_help=True,
@@ -107,6 +124,7 @@ webhooks_app = typer.Typer(no_args_is_help=True, help="Webhook endpoint operatio
 interactions_app = typer.Typer(no_args_is_help=True, help="Interaction operations.")
 users_app = typer.Typer(no_args_is_help=True, help="User operations (superuser).")
 apikeys_app = typer.Typer(no_args_is_help=True, help="API key operations.")
+voice_app = typer.Typer(no_args_is_help=True, help="Record, review, and save voice captures.")
 
 app.add_typer(contacts_app, name="contacts")
 app.add_typer(reminders_app, name="reminders")
@@ -116,6 +134,7 @@ app.add_typer(interactions_app, name="interactions")
 app.add_typer(webhooks_app, name="webhooks")
 app.add_typer(users_app, name="users")
 app.add_typer(apikeys_app, name="api-keys")
+app.add_typer(voice_app, name="voice")
 
 
 PrettyOpt = Annotated[bool, typer.Option("--pretty", help="Indent JSON output.")]
@@ -166,10 +185,13 @@ def _main(
     _on_behalf_of = on_behalf_of
 
 
-def _run(fn: Any, **kwargs: Any) -> Any:
-    with KindredClient.from_env(on_behalf_of=_on_behalf_of) as k:
+def _run(fn: Any, *, request_timeout: float | None = None, **kwargs: Any) -> Any:
+    with KindredClient.from_env(on_behalf_of=_on_behalf_of, timeout=request_timeout) as k:
         try:
-            return fn.sync(client=k.raw, **kwargs)
+            response = fn.sync_detailed(client=k.raw, **kwargs)
+            if response.status_code >= 400:
+                raise UnexpectedStatus(response.status_code, response.content)
+            return response.parsed
         except UnexpectedStatus as exc:
             typer.secho(
                 f"API error {exc.status_code}: {exc.content.decode(errors='ignore')}",
@@ -177,6 +199,117 @@ def _run(fn: Any, **kwargs: Any) -> Any:
                 fg=typer.colors.RED,
             )
             raise typer.Exit(code=1) from None
+        except httpx.RequestError:
+            typer.secho(
+                "Request failed. Check whether the operation completed before retrying.",
+                err=True,
+                fg=typer.colors.RED,
+            )
+            raise typer.Exit(code=1) from None
+
+
+InputFileOpt = Annotated[typer.FileText, typer.Option("--file", help="UTF-8 input file, or '-' for stdin.")]
+
+
+def _review_file(file: typer.FileText) -> ReviewCapture:
+    try:
+        data = json.load(file)
+        if not isinstance(data, dict):
+            raise ValueError("Expected a JSON object")
+        return ReviewCapture.from_dict(data)
+    except (ValueError, TypeError, KeyError, AttributeError, OSError):
+        raise typer.BadParameter(
+            "Invalid review file. Supply revision, corrected_text, and typed actions as JSON.",
+            param_hint="--file",
+        ) from None
+
+
+@voice_app.command("create")
+def voice_create(
+    file: InputFileOpt,
+    timezone_name: Annotated[str, typer.Option("--timezone", help="IANA timezone.")] = "UTC",
+    pretty: PrettyOpt = False,
+) -> None:
+    """Preserve a transcript as a recoverable draft without writing CRM records."""
+    body = CreateCapture(raw_text=file.read(), timezone=timezone_name)
+    _emit(_run(voice_captures_create_voice_capture, body=body), pretty)
+
+
+@voice_app.command("list")
+def voice_list(
+    skip: Annotated[int, typer.Option(min=0)] = 0,
+    limit: Annotated[int, typer.Option(min=1, max=100)] = 50,
+    pretty: PrettyOpt = False,
+) -> None:
+    """List drafts and saved receipts, newest first."""
+    _emit(_run(voice_captures_list_voice_captures, skip=skip, limit=limit), pretty)
+
+
+@voice_app.command("get")
+def voice_get(capture_id: UUID, pretty: PrettyOpt = False) -> None:
+    """Read original text, reviewed actions, and the current revision."""
+    _emit(_run(voice_captures_get_voice_capture, capture_id=capture_id), pretty)
+
+
+@voice_app.command("analyze")
+def voice_analyze(
+    capture_id: UUID,
+    revision: Annotated[int, typer.Option(min=1)],
+    file: Annotated[
+        typer.FileText | None, typer.Option("--file", help="Optional edited transcript; '-' for stdin.")
+    ] = None,
+    pretty: PrettyOpt = False,
+) -> None:
+    """Propose actions; original evidence stays unchanged and nothing is committed."""
+    body = AnalyzeCapture(revision=revision, text=file.read() if file else UNSET)
+    _emit(
+        _run(voice_captures_analyze_voice_capture, capture_id=capture_id, body=body, request_timeout=120),
+        pretty,
+    )
+
+
+@voice_app.command("update")
+def voice_update(capture_id: UUID, file: InputFileOpt, pretty: PrettyOpt = False) -> None:
+    """Save an edited review as a draft. Use the returned revision for the next request."""
+    _emit(_run(voice_captures_update_voice_capture, capture_id=capture_id, body=_review_file(file)), pretty)
+
+
+@voice_app.command("commit")
+def voice_commit(capture_id: UUID, file: InputFileOpt, pretty: PrettyOpt = False) -> None:
+    """Save enabled actions together. Reuse the identical file for a lost-response retry."""
+    _emit(_run(voice_captures_commit_voice_capture, capture_id=capture_id, body=_review_file(file)), pretty)
+
+
+@voice_app.command("delete")
+def voice_delete(capture_id: UUID, pretty: PrettyOpt = False) -> None:
+    """Delete an uncommitted draft; saved receipts cannot be deleted."""
+    _run(voice_captures_delete_voice_capture, capture_id=capture_id)
+    _emit({"deleted": str(capture_id)}, pretty)
+
+
+@voice_app.command("transcribe")
+def voice_transcribe(
+    audio: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+    timezone_name: Annotated[str, typer.Option("--timezone", help="IANA timezone.")] = "UTC",
+    contact: Annotated[
+        list[UUID] | None, typer.Option("--contact", help="Visible contact name hint; repeat up to 20 times.")
+    ] = None,
+    pretty: PrettyOpt = False,
+) -> None:
+    """Upload audio and preserve its original transcript as a reviewable draft."""
+    if contact and len(contact) > 20:
+        raise typer.BadParameter("At most 20 contact hints are allowed.", param_hint="--contact")
+    with audio.open("rb") as stream:
+        body = BodyTranscribeTranscribeAudio(
+            file=File(
+                payload=stream,
+                file_name=audio.name,
+                mime_type=mimetypes.guess_type(audio.name)[0] or "application/octet-stream",
+            ),
+            timezone=timezone_name,
+            contact_ids=contact or UNSET,
+        )
+        _emit(_run(transcribe_transcribe_audio, body=body, request_timeout=120), pretty)
 
 
 # ── contacts ────────────────────────────────────────────────────────────────

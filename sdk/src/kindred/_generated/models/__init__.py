@@ -12,10 +12,12 @@ from .addresses_geocode_missing_coordinates_response_addresses_geocode_missing_c
 from .addresses_public import AddressesPublic
 from .all_contacts_share_public import AllContactsSharePublic
 from .all_contacts_shares_public import AllContactsSharesPublic
+from .analyze_capture import AnalyzeCapture
 from .api_key_create import APIKeyCreate
 from .api_key_created import APIKeyCreated
 from .api_key_public import APIKeyPublic
 from .api_keys_public import APIKeysPublic
+from .birthday_field_change import BirthdayFieldChange
 from .body_ical_upload_ical import BodyIcalUploadIcal
 from .body_import_export_import_csv import BodyImportExportImportCsv
 from .body_import_export_import_csv_column_mapping_type_0 import BodyImportExportImportCsvColumnMappingType0
@@ -33,6 +35,7 @@ from .calendar_month_response_days import CalendarMonthResponseDays
 from .calendar_token_create import CalendarTokenCreate
 from .calendar_token_public import CalendarTokenPublic
 from .calendar_tokens_public import CalendarTokensPublic
+from .channel import Channel
 from .communication_preference_public import CommunicationPreferencePublic
 from .communication_preference_update import CommunicationPreferenceUpdate
 from .contact_create import ContactCreate
@@ -58,6 +61,7 @@ from .contact_stage_events_get_stage_analytics_response_contact_stage_events_get
 )
 from .contact_stage_events_public import ContactStageEventsPublic
 from .contact_update import ContactUpdate
+from .contact_update_action import ContactUpdateAction
 from .contacts_delete_contact_response_contacts_delete_contact import (
     ContactsDeleteContactResponseContactsDeleteContact,
 )
@@ -66,6 +70,7 @@ from .contacts_get_kanban_board_response_contacts_get_kanban_board import (
     ContactsGetKanbanBoardResponseContactsGetKanbanBoard,
 )
 from .contacts_public import ContactsPublic
+from .create_capture import CreateCapture
 from .csv_import_response import CSVImportResponse
 from .csv_preview_response import CSVPreviewResponse
 from .csv_preview_response_detected_mapping import CSVPreviewResponseDetectedMapping
@@ -98,6 +103,7 @@ from .email_poll_contact_email_response_email_poll_contact_email import (
     EmailPollContactEmailResponseEmailPollContactEmail,
 )
 from .environment_info import EnvironmentInfo
+from .frequency import Frequency
 from .gift_create import GiftCreate
 from .gift_public import GiftPublic
 from .gift_status import GiftStatus
@@ -115,6 +121,7 @@ from .i_message_sync_request import IMessageSyncRequest
 from .i_message_sync_request_co_mentions_type_0_item import IMessageSyncRequestCoMentionsType0Item
 from .i_message_sync_result import IMessageSyncResult
 from .ical_confirm_ical_import_body_item import IcalConfirmIcalImportBodyItem
+from .interaction_action import InteractionAction
 from .interaction_attendee_summary import InteractionAttendeeSummary
 from .interaction_channel import InteractionChannel
 from .interaction_create import InteractionCreate
@@ -127,6 +134,7 @@ from .inverse_relationship_map_update import InverseRelationshipMapUpdate
 from .inverse_relationship_maps_public import InverseRelationshipMapsPublic
 from .json_export_response import JsonExportResponse
 from .json_export_response_contacts_item import JsonExportResponseContactsItem
+from .life_event_action import LifeEventAction
 from .life_event_create import LifeEventCreate
 from .life_event_public import LifeEventPublic
 from .life_event_update import LifeEventUpdate
@@ -139,6 +147,7 @@ from .media_recommendations_public import MediaRecommendationsPublic
 from .mention_public import MentionPublic
 from .message import Message
 from .new_password import NewPassword
+from .note_action import NoteAction
 from .note_create import NoteCreate
 from .note_public import NotePublic
 from .note_update import NoteUpdate
@@ -167,6 +176,7 @@ from .relationships_lookup_inverse_response_relationships_lookup_inverse import 
     RelationshipsLookupInverseResponseRelationshipsLookupInverse,
 )
 from .relationships_public import RelationshipsPublic
+from .reminder_action import ReminderAction
 from .reminder_contact_info import ReminderContactInfo
 from .reminder_create import ReminderCreate
 from .reminder_due_public import ReminderDuePublic
@@ -176,6 +186,7 @@ from .reminder_snooze_request import ReminderSnoozeRequest
 from .reminder_update import ReminderUpdate
 from .reminders_due_public import RemindersDuePublic
 from .reminders_public import RemindersPublic
+from .review_capture import ReviewCapture
 from .saved_filter_create import SavedFilterCreate
 from .saved_filter_create_filter_json import SavedFilterCreateFilterJson
 from .saved_filter_public import SavedFilterPublic
@@ -202,7 +213,10 @@ from .tag_shares_log_tag_share_audit_response_tag_shares_log_tag_share_audit imp
 from .tag_shares_public import TagSharesPublic
 from .tag_update import TagUpdate
 from .tags_public import TagsPublic
+from .text_contact_field_change import TextContactFieldChange
+from .text_contact_field_change_field import TextContactFieldChangeField
 from .token import Token
+from .transcription_response import TranscriptionResponse
 from .update_password import UpdatePassword
 from .user_create import UserCreate
 from .user_public import UserPublic
@@ -216,6 +230,10 @@ from .v_card_import_response import VCardImportResponse
 from .validation_error import ValidationError
 from .validation_error_context import ValidationErrorContext
 from .version_info import VersionInfo
+from .voice_capture_public import VoiceCapturePublic
+from .voice_capture_public_results_type_0 import VoiceCapturePublicResultsType0
+from .voice_capture_public_status import VoiceCapturePublicStatus
+from .voice_captures_public import VoiceCapturesPublic
 from .webhook_endpoint_base import WebhookEndpointBase
 from .webhook_endpoint_created import WebhookEndpointCreated
 from .webhook_endpoint_public import WebhookEndpointPublic
@@ -234,10 +252,12 @@ __all__ = (
     "AddressUpdate",
     "AllContactsSharePublic",
     "AllContactsSharesPublic",
+    "AnalyzeCapture",
     "APIKeyCreate",
     "APIKeyCreated",
     "APIKeyPublic",
     "APIKeysPublic",
+    "BirthdayFieldChange",
     "BodyIcalUploadIcal",
     "BodyImportExportImportCsv",
     "BodyImportExportImportCsvColumnMappingType0",
@@ -255,6 +275,7 @@ __all__ = (
     "CalendarTokenCreate",
     "CalendarTokenPublic",
     "CalendarTokensPublic",
+    "Channel",
     "CommunicationPreferencePublic",
     "CommunicationPreferenceUpdate",
     "ContactCreate",
@@ -280,6 +301,8 @@ __all__ = (
     "ContactStageEventsGetStageAnalyticsResponseContactStageEventsGetStageAnalytics",
     "ContactStageEventsPublic",
     "ContactUpdate",
+    "ContactUpdateAction",
+    "CreateCapture",
     "CSVImportResponse",
     "CSVPreviewResponse",
     "CSVPreviewResponseDetectedMapping",
@@ -306,6 +329,7 @@ __all__ = (
     "EmailPollAllEmailsResponseEmailPollAllEmails",
     "EmailPollContactEmailResponseEmailPollContactEmail",
     "EnvironmentInfo",
+    "Frequency",
     "GiftCreate",
     "GiftPublic",
     "GiftsGetKanbanBoardResponseGiftsGetKanbanBoard",
@@ -321,6 +345,7 @@ __all__ = (
     "IMessageSyncRequest",
     "IMessageSyncRequestCoMentionsType0Item",
     "IMessageSyncResult",
+    "InteractionAction",
     "InteractionAttendeeSummary",
     "InteractionChannel",
     "InteractionCreate",
@@ -333,6 +358,7 @@ __all__ = (
     "InverseRelationshipMapUpdate",
     "JsonExportResponse",
     "JsonExportResponseContactsItem",
+    "LifeEventAction",
     "LifeEventCreate",
     "LifeEventPublic",
     "LifeEventsPublic",
@@ -345,6 +371,7 @@ __all__ = (
     "MentionPublic",
     "Message",
     "NewPassword",
+    "NoteAction",
     "NoteCreate",
     "NotePublic",
     "NotesPublic",
@@ -369,6 +396,7 @@ __all__ = (
     "RelationshipsLookupInverseResponseRelationshipsLookupInverse",
     "RelationshipsPublic",
     "RelationshipUpdate",
+    "ReminderAction",
     "ReminderContactInfo",
     "ReminderCreate",
     "ReminderDuePublic",
@@ -378,6 +406,7 @@ __all__ = (
     "ReminderSnoozeRequest",
     "RemindersPublic",
     "ReminderUpdate",
+    "ReviewCapture",
     "SavedFilterCreate",
     "SavedFilterCreateFilterJson",
     "SavedFilterPublic",
@@ -400,7 +429,10 @@ __all__ = (
     "TagSharesPublic",
     "TagsPublic",
     "TagUpdate",
+    "TextContactFieldChange",
+    "TextContactFieldChangeField",
     "Token",
+    "TranscriptionResponse",
     "UpdatePassword",
     "UserCreate",
     "UserPublic",
@@ -414,6 +446,10 @@ __all__ = (
     "VCardConflictsPublic",
     "VCardImportResponse",
     "VersionInfo",
+    "VoiceCapturePublic",
+    "VoiceCapturePublicResultsType0",
+    "VoiceCapturePublicStatus",
+    "VoiceCapturesPublic",
     "WebhookEndpointBase",
     "WebhookEndpointCreated",
     "WebhookEndpointPublic",

@@ -17,7 +17,7 @@ if [[ ! -f "$SPEC" ]]; then
 fi
 
 echo "→ regenerating from $SPEC"
-uvx openapi-python-client generate \
+uv run --frozen openapi-python-client generate \
     --path "$SPEC" \
     --meta none \
     --output-path "$OUT" \
