@@ -1,4 +1,5 @@
-_python := "PYTHONPATH=. uv run --no-project --with-requirements requirements.txt --with-requirements test-requirements.txt"
+# Match the production image instead of inheriting the repository's Python.
+_python := "PYTHONPATH=. uv run --python 3.12 --no-project --with-requirements requirements.txt --with-requirements test-requirements.txt"
 
 test:
     {{_python}} coverage run --branch --source=app -m pytest -q tests
