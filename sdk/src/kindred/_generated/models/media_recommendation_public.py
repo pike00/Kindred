@@ -10,6 +10,7 @@ from ..types import UNSET, Unset
 
 from ..models.media_category import MediaCategory
 from ..types import UNSET, Unset
+from dateutil.parser import isoparse
 from typing import cast
 from uuid import UUID
 import datetime
@@ -109,9 +110,9 @@ class MediaRecommendationPublic:
 
         contact_id = UUID(d.pop("contact_id"))
 
-        created_at = datetime.datetime.fromisoformat(d.pop("created_at"))
+        created_at = isoparse(d.pop("created_at"))
 
-        updated_at = datetime.datetime.fromisoformat(d.pop("updated_at"))
+        updated_at = isoparse(d.pop("updated_at"))
 
         def _parse_creator(data: object) -> None | str | Unset:
             if data is None:
@@ -139,7 +140,7 @@ class MediaRecommendationPublic:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                recommended_at_type_0 = datetime.date.fromisoformat(data)
+                recommended_at_type_0 = isoparse(data).date()
 
                 return recommended_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):

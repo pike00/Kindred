@@ -10,6 +10,9 @@ Checks subsystem health for this adopter. Stdlib only.
 
 from __future__ import annotations
 
+import argparse
+import hashlib
+import json
 import re
 import shlex
 import shutil
@@ -24,26 +27,81 @@ EXPECTED_JUST = [
     "release",
     "test",
     "deploy",
+    "delivery",
     "build",
     "db",
     "setup",
     "docs",
     "clean",
 ]
+JSON_MODE = False
+CHECKS: list[dict[str, str]] = []
+CURRENT_SECTION = "configuration"
 RESOLVER_TIMEOUT_SECONDS = 45
 COMPOSE_FILENAMES = ("docker-compose.yml", "docker-compose.yaml", "compose.yml", "compose.yaml")
 
 
-def _ok(msg: str) -> None:
-    print(f"  ✓ {msg}")
+def _section(section: str, *, first: bool = False) -> None:
+    global CURRENT_SECTION
+    CURRENT_SECTION = section
+    if not JSON_MODE:
+        prefix = "" if first else "\n"
+        print(f"{prefix}{section}:")
 
 
-def _warn(msg: str) -> None:
-    print(f"  ⚠ {msg}")
+def _record(status: str, name: str, detail: str) -> None:
+    CHECKS.append(
+        {
+            "section": CURRENT_SECTION,
+            "name": name,
+            "status": status,
+            "detail": detail,
+        }
+    )
 
 
-def _fail(msg: str) -> None:
-    print(f"  ✗ {msg}")
+def _ok(name: str, detail: str | None = None) -> None:
+    shown = detail if detail is not None else name
+    _record("ok", name, shown)
+    if not JSON_MODE:
+        print(f"  ✓ {shown}")
+
+
+def _warn(name: str, detail: str | None = None) -> None:
+    shown = detail if detail is not None else name
+    _record("warn", name, shown)
+    if not JSON_MODE:
+        print(f"  ⚠ {shown}")
+
+
+def _fail(name: str, detail: str | None = None) -> None:
+    shown = detail if detail is not None else name
+    _record("fail", name, shown)
+    if not JSON_MODE:
+        print(f"  ✗ {shown}")
+
+
+def _skip(name: str, detail: str) -> None:
+    _record("skip", name, detail)
+    if not JSON_MODE:
+        print(f"  ~ {detail}")
+
+
+def _emit_json(project_name: str, checks: list[dict[str, str]]) -> None:
+    failures = sum(check["status"] == "fail" for check in checks)
+    warnings = sum(check["status"] == "warn" for check in checks)
+    exit_code = 2 if failures else (1 if warnings else 0)
+    print(
+        json.dumps(
+            {
+                "project": project_name,
+                "checks": checks,
+                "summary": {"failures": failures, "warnings": warnings},
+                "exit_code": exit_code,
+            },
+            sort_keys=True,
+        )
+    )
 
 
 def _check_cmd(layer: str, cmd: str) -> int:
@@ -60,6 +118,65 @@ def _check_cmd(layer: str, cmd: str) -> int:
         return 0
     _warn(f"{layer} test runner not on $PATH: {runner!r} (cmd: {cmd})")
     return 1
+
+
+def _check_generated_files(repo: Path) -> bool:
+    """Return True when generated-file parity found a failure."""
+    lock_path = repo / ".project-kit" / "answers.lock.json"
+    if not lock_path.is_file():
+        _skip("generated file parity", "skipped: answers.lock.json is absent")
+        return False
+    try:
+        lock = json.loads(lock_path.read_text())
+    except (OSError, json.JSONDecodeError) as exc:
+        _fail("generated file parity", f"generated-file parity unreadable: {exc}")
+        return True
+    if not isinstance(lock, dict):
+        _fail(
+            "generated file parity",
+            f"generated-file parity lock is not a JSON object: {type(lock).__name__}",
+        )
+        return True
+
+    schema_version = lock.get("schema_version")
+    generated_files = lock.get("generated_files")
+    if (
+        not isinstance(schema_version, int)
+        or schema_version < 2
+        or not isinstance(generated_files, dict)
+    ):
+        _skip("generated file parity", "skipped: older lock schema")
+        return False
+    if not generated_files:
+        _fail("generated file parity", "no generated files recorded")
+        return True
+
+    mismatches = []
+    unreadable = []
+    for relative, digest in generated_files.items():
+        path = repo / relative
+        try:
+            actual = hashlib.sha256(path.read_bytes()).hexdigest()
+        except OSError as exc:
+            unreadable.append(f"{relative}: {exc}")
+            continue
+        if actual != digest:
+            mismatches.append(relative)
+    if mismatches or unreadable:
+        detail_parts = []
+        if mismatches:
+            detail_parts.append("generated file mismatch: " + ", ".join(sorted(mismatches)))
+        detail_parts.extend("unreadable: " + item for item in unreadable)
+        _fail(
+            "generated file parity",
+            "; ".join(detail_parts),
+        )
+        return True
+    _ok(
+        "generated file parity",
+        f"all {len(generated_files)} generated files match",
+    )
+    return False
 
 
 def _normalize_stack_selector(value: str, label: str) -> str:
@@ -169,12 +286,22 @@ def _stack_resolution(
 
 
 def main() -> int:
+    global JSON_MODE
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--json", action="store_true")
+    parser.add_argument("--strict", action="store_true")
+    args = parser.parse_args()
+    JSON_MODE = args.json
+
     repo = Path.cwd()
-    print("project-kit doctor — kindred\n")
-    print("configuration:")
+    if not JSON_MODE:
+        print("project-kit doctor — kindred\n")
+    _section("configuration", first=True)
     pk = repo / ".project-kit"
     if not pk.is_dir():
         _fail(".project-kit/ missing")
+        if JSON_MODE:
+            _emit_json("kindred", CHECKS)
         return 2
     fails = 0
     warns = 0
@@ -212,14 +339,14 @@ def main() -> int:
         _fail("root justfile missing")
         fails += 1
 
-    print("\npreview:")
+    _section("preview")
     compose_file = "compose.worktree.yml"
     if (repo / compose_file).is_file():
         _ok(f"{compose_file} present")
     else:
         _fail(f"{compose_file} missing")
         fails += 1
-    print("\nrelease:")
+    _section("release")
     if (repo / ".project-kit" / "cliff.toml").is_file():
         _ok(".project-kit/cliff.toml present")
     else:
@@ -230,20 +357,20 @@ def main() -> int:
     else:
         _warn("gh CLI not on $PATH")
         warns += 1
-    print("\ntest:")
-    warns += _check_cmd("backend", "docker compose -f compose.dev.yml exec -T backend pytest")
+    _section("test")
+    warns += _check_cmd("backend", "just pytest \u0026\u0026 just sdk-test \u0026\u0026 just --justfile whisper-service/justfile test coverage \u0026\u0026 uv run --project backend pytest scripts/tests -q")
     warns += _check_cmd("frontend", "cd frontend \u0026\u0026 pnpm run test")
     warns += _check_cmd("e2e", "bash scripts/run-e2e-prepush.sh")
-    print("\ndeploy:")
-    deploy_host = "".lower()
+    _section("deploy")
+    deploy_host = "ares".lower()
     execution_host = socket.gethostname().split(".", 1)[0].lower()
-    ssh_alias = ""
+    ssh_alias = "ares.savannah-mimosa.ts.net"
     try:
         resolution = _stack_resolution(
             deploy_host,
             execution_host,
             ssh_alias,
-            "kindred",
+            "apps/kindred",
         )
         resolved_stack = _resolve_stack_output(resolution)
     except (FileNotFoundError, RuntimeError, subprocess.TimeoutExpired, ValueError) as exc:
@@ -251,9 +378,11 @@ def main() -> int:
         fails += 1
     else:
         _ok(f"homelab stack resolves to {resolved_stack}")
-    print("\nbuild:")
+    _ok("deployment checkout configured at /home/will/projects/kindred")
+    _section("build")
     dockerfiles = [
         "Dockerfile.prod",
+        "whisper-service/Dockerfile",
     ]
     missing_dockerfiles = [path for path in dockerfiles if not (repo / path).is_file()]
     if not dockerfiles:
@@ -270,13 +399,27 @@ def main() -> int:
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError):
         _warn("docker daemon not reachable")
         warns += 1
+    _section("provenance")
+    if _check_generated_files(repo):
+        fails += 1
+
+    exit_code = 2 if fails else (2 if args.strict and warns else (1 if warns else 0))
+    if JSON_MODE:
+        print(
+            json.dumps(
+                {
+                    "project": "kindred",
+                    "checks": CHECKS,
+                    "summary": {"failures": fails, "warnings": warns},
+                    "exit_code": exit_code,
+                },
+                sort_keys=True,
+            )
+        )
+        return exit_code
 
     print(f"\n{fails} failures, {warns} warnings.")
-    if fails:
-        return 2
-    if warns:
-        return 1
-    return 0
+    return exit_code
 
 
 if __name__ == "__main__":

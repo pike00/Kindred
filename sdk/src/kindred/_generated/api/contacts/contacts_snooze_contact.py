@@ -24,7 +24,7 @@ def _get_kwargs(
     headers: dict[str, Any] = {}
 
     _kwargs: dict[str, Any] = {
-        "method": "patch",
+        "method": "post",
         "url": "/api/v1/contacts/{contact_id}/snooze".format(
             contact_id=quote(str(contact_id), safe=""),
         ),

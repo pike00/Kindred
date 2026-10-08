@@ -8,6 +8,7 @@ from pydantic import (
     EmailStr,
     HttpUrl,
     PostgresDsn,
+    SecretStr,
     computed_field,
     model_validator,
 )
@@ -135,6 +136,10 @@ class Settings(BaseSettings):
     MEILI_URL: str = "http://meilisearch:7700"
     MEILI_MASTER_KEY: str = ""
     WHISPER_URL: str = "http://whisper:8000"
+    VOICE_LLM_BASE_URL: str = ""
+    VOICE_LLM_MODEL: str = ""
+    VOICE_LLM_API_KEY: SecretStr | None = None
+    VOICE_LLM_TIMEOUT_SECONDS: float = 20.0
 
     # OIDC / multi-user (Phase 0+)
     AUTH_MODE: Literal["local", "oidc", "both"] = "local"

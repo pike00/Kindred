@@ -10,6 +10,7 @@ from ..types import UNSET, Unset
 
 from ..models.interaction_channel import InteractionChannel
 from ..types import UNSET, Unset
+from dateutil.parser import isoparse
 from typing import cast
 from uuid import UUID
 import datetime
@@ -122,7 +123,7 @@ class InteractionUpdate:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                occurred_at_type_0 = datetime.datetime.fromisoformat(data)
+                occurred_at_type_0 = isoparse(data)
 
                 return occurred_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):

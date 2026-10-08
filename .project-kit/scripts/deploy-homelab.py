@@ -7,28 +7,24 @@
 
 from __future__ import annotations
 
-import json
 import re
 import shlex
-import socket
 import subprocess
-import sys
 import time
-import urllib.request
-from datetime import UTC, datetime
 from pathlib import Path, PurePosixPath
 
 import typer
+from _runtime import execution_host, flush_events, log
 
-HOMELAB_APP = "kindred"
+HOMELAB_APP = "apps/kindred"
 HOMELAB_MODE = "bump"
 ALLOW_LEGACY_APPLY = False
 SYNC_CHECKOUT = False
-DEPLOY_REPO_PATH = ""
+DEPLOY_REPO_PATH = "/home/will/projects/kindred"
 
 DEPLOY_BRANCH = "main"
-DEPLOY_HOST = "".lower()
-DEPLOY_SSH_ALIAS = ""
+DEPLOY_HOST = "ares".lower()
+DEPLOY_SSH_ALIAS = "ares.savannah-mimosa.ts.net"
 HOMELAB_ROOT = Path.home() / "projects" / "Homelab"
 HL_PATH = HOMELAB_ROOT / "infra" / "scripts" / "hl"
 RESOLVER_PATH = HOMELAB_ROOT / "infra" / "scripts" / "resolve-stack.py"
@@ -39,59 +35,10 @@ LOKI_URL = "http://127.0.0.1:3100/loki/api/v1/push"
 VERSION_TAG = re.compile(r"v[0-9]+\.[0-9]+\.[0-9]+(?:[-+][A-Za-z0-9.-]+)?\Z")
 
 app = typer.Typer(add_completion=False)
-_events: list[dict[str, object]] = []
-
-
-def _execution_host() -> str:
-    return socket.gethostname().split(".", 1)[0].lower()
-
-
-def _log(level: str, msg: str, **context: object) -> None:
-    event = {
-        "level": level,
-        "msg": msg,
-        "time": datetime.now(UTC).isoformat(),
-        **context,
-    }
-    _events.append(event)
-    print(json.dumps(event, separators=(",", ":")), file=sys.stderr)
-
-
-def _flush() -> None:
-    try:
-        values = [
-            [
-                str(int(datetime.fromisoformat(str(e["time"])).timestamp() * 1_000_000_000)),
-                json.dumps(e),
-            ]
-            for e in _events
-        ]
-        payload = {
-            "streams": [
-                {
-                    "stream": {
-                        "job": "project-kit",
-                        "script": "deploy-homelab",
-                        "host": _execution_host(),
-                    },
-                    "values": values,
-                }
-            ]
-        }
-        request = urllib.request.Request(
-            LOKI_URL,
-            data=json.dumps(payload).encode(),
-            headers={"Content-Type": "application/json"},
-            method="POST",
-        )
-        with urllib.request.urlopen(request, timeout=3):
-            pass
-    except Exception:  # noqa: BLE001, S110 - logging must never block deployment
-        pass
 
 
 def _is_deploy_host() -> bool:
-    return not DEPLOY_HOST or _execution_host() == DEPLOY_HOST
+    return not DEPLOY_HOST or execution_host() == DEPLOY_HOST
 
 
 def _route() -> str:
@@ -364,6 +311,12 @@ def _run_bump(resolved_app: str, tag: str) -> None:
     )
 
 
+def _deploy_bump(resolved_app: str, tag: str) -> None:
+    """Sync the deployment checkout before delegating the image bump."""
+    _sync_checkout(tag)
+    _run_bump(resolved_app, tag)
+
+
 @app.command()
 def main(
     env: str = typer.Option("prod", "--env"),
@@ -373,13 +326,13 @@ def main(
     status: bool = typer.Option(False, "--status"),
 ) -> None:
     started = time.monotonic()
-    _log(
+    log(
         "info",
         "started",
         app=HOMELAB_APP,
         env=env,
-        execution_host=_execution_host(),
-        deploy_host=DEPLOY_HOST or _execution_host(),
+        execution_host=execution_host(),
+        deploy_host=DEPLOY_HOST or execution_host(),
         route=_route(),
         tag=tag or None,
     )
@@ -414,12 +367,11 @@ def main(
         else:
             resolved_app = _resolved_homelab_app()
             typer.echo(
-                f"deploying {resolved_app} on " f"{DEPLOY_HOST or _execution_host()} (env={env})"
+                f"deploying {resolved_app} on " f"{DEPLOY_HOST or execution_host()} (env={env})"
             )
             if HOMELAB_MODE == "bump":
                 version_tag = _validated_version_tag(tag)
-                _sync_checkout(version_tag)
-                _run_bump(resolved_app, version_tag)
+                _deploy_bump(resolved_app, version_tag)
             elif HOMELAB_MODE == "apply" and ALLOW_LEGACY_APPLY:
                 _run_hl("up", resolved_app)
             else:
@@ -428,7 +380,7 @@ def main(
                     "set allow_legacy_apply=true only for an explicit legacy opt-in"
                 )
     except BaseException as exc:
-        _log(
+        log(
             "error",
             "failed",
             app=HOMELAB_APP,
@@ -437,14 +389,14 @@ def main(
         )
         raise
     else:
-        _log(
+        log(
             "info",
             "complete",
             app=HOMELAB_APP,
             elapsed_s=round(time.monotonic() - started, 3),
         )
     finally:
-        _flush()
+        flush_events(LOKI_URL, "project-kit", "deploy-homelab", execution_host())
 
 
 if __name__ == "__main__":

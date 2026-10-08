@@ -4,236 +4,176 @@ import { VoiceRecordButton } from "@/components/VoiceRecorder/VoiceRecordButton"
 import { renderWithProviders } from "@/test/helpers"
 import * as ClientModule from "@/client"
 
-// Mock TranscribeService
+const mockErrors = vi.hoisted(() => ({ show: vi.fn() }))
 vi.mock("@/client", async () => {
-  const actual = await vi.importActual("@/client")
+  const actual = await vi.importActual<typeof import("@/client")>("@/client")
   return {
     ...actual,
-    TranscribeService: {
-      transcribeAudio: vi.fn(),
-    },
-    ContactsService: {
-      listContacts: vi.fn().mockResolvedValue({ data: [], count: 0 }),
-    },
-    InteractionsService: {
-      createInteractionRoute: vi.fn(),
-    },
+    TranscribeService: { transcribeAudio: vi.fn() },
+    VoiceCapturesService: { listVoiceCaptures: vi.fn() },
   }
 })
-
-// Mock toast hook
-const mockShowSuccessToast = vi.fn()
-const mockShowErrorToast = vi.fn()
-vi.mock("@/hooks/useCustomToast", () => ({
-  default: vi.fn(() => ({
-    showSuccessToast: mockShowSuccessToast,
-    showErrorToast: mockShowErrorToast,
-  })),
-}))
-
-// Mock VoiceReviewModal
+vi.mock("@/hooks/useCustomToast", () => ({ default: () => ({ showErrorToast: mockErrors.show }) }))
 vi.mock("@/components/VoiceRecorder/VoiceReviewModal", () => ({
-  VoiceReviewModal: ({
-    transcribedText,
-    onComplete,
-    onCancel,
-  }: {
-    transcribedText: string
-    onComplete: (data: any) => void
-    onCancel: () => void
-  }) => (
-    <div data-testid="voice-review-modal">
-      <span data-testid="transcribed-text">{transcribedText}</span>
-      <button
-        type="button"
-        data-testid="complete-review-btn"
-        onClick={() =>
-          onComplete({
-            id: "int-1",
-            notes: transcribedText,
-            channel: "in_person",
-            occurred_at: "2026-08-23T20:00:00Z",
-            attendee_ids: [],
-          })
-        }
-      >
-        Complete
-      </button>
-      <button
-        type="button"
-        data-testid="cancel-review-btn"
-        onClick={onCancel}
-      >
-        Cancel
-      </button>
-    </div>
-  ),
+  VoiceReviewModal: ({ captureId, onClose, onComplete }: { captureId: string; onClose: () => void; onComplete: (capture: any) => void }) => <div data-testid="voice-review-modal">
+    <span data-testid="capture-id">{captureId}</span><button type="button" onClick={onClose}>Close capture</button>
+    <button type="button" onClick={() => onComplete({ id: captureId, status: "committed" })}>Commit capture</button>
+  </div>,
 }))
 
 class MockMediaRecorder {
-  state: "inactive" | "recording" | "paused" = "inactive"
+  state: "inactive" | "recording" = "inactive"
   mimeType = "audio/webm"
   ondataavailable: ((event: { data: Blob }) => void) | null = null
   onstop: (() => void) | null = null
-
   static isTypeSupported = vi.fn().mockReturnValue(true)
-
-  start() {
-    this.state = "recording"
-  }
-
+  static emitEmpty = false
+  static reportedMimeType = "audio/webm"
+  constructor(_stream: MediaStream, _options?: MediaRecorderOptions) { this.mimeType = MockMediaRecorder.reportedMimeType }
+  start() { this.state = "recording" }
   stop() {
     this.state = "inactive"
-    if (this.ondataavailable) {
-      this.ondataavailable({ data: new Blob(["fake-audio-chunk"], { type: "audio/webm" }) })
-    }
-    if (this.onstop) {
-      this.onstop()
-    }
+    this.ondataavailable?.({ data: MockMediaRecorder.emitEmpty ? new Blob([]) : new Blob(["recorded audio"], { type: "audio/webm" }) })
+    this.onstop?.()
   }
 }
 
 describe("VoiceRecordButton", () => {
-  let mockMediaStream: { getTracks: () => Array<{ stop: () => void }> }
-
+  let trackStop: ReturnType<typeof vi.fn>
   beforeEach(() => {
     vi.clearAllMocks()
-    mockMediaStream = {
-      getTracks: vi.fn().mockReturnValue([{ stop: vi.fn() }]),
-    }
-
-    Object.defineProperty(globalThis, "MediaRecorder", {
-      writable: true,
-      value: MockMediaRecorder,
-    })
-
+    MockMediaRecorder.emitEmpty = false
+    MockMediaRecorder.reportedMimeType = "audio/webm"
+    MockMediaRecorder.isTypeSupported.mockReturnValue(true)
+    trackStop = vi.fn()
+    Object.defineProperty(globalThis, "MediaRecorder", { writable: true, value: MockMediaRecorder })
     Object.defineProperty(navigator, "mediaDevices", {
       writable: true,
-      value: {
-        getUserMedia: vi.fn().mockResolvedValue(mockMediaStream),
-      },
+      value: { getUserMedia: vi.fn().mockResolvedValue({ getTracks: () => [{ stop: trackStop }] }) },
     })
+    vi.mocked(ClientModule.VoiceCapturesService.listVoiceCaptures).mockResolvedValue({ data: [], count: 0 })
   })
+  afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks() })
 
-  afterEach(() => {
-    vi.restoreAllMocks()
-  })
-
-  it("renders idle voice record button with initial accessibility label", () => {
+  it("keeps accessible recording controls and opens the durable capture returned by transcription", async () => {
+    vi.mocked(ClientModule.TranscribeService.transcribeAudio).mockResolvedValue({
+      text: "Original speech", capture_id: "capture-42",
+    })
     renderWithProviders(<VoiceRecordButton />)
-
-    const button = screen.getByRole("button", { name: "Start voice recording" })
-    expect(button).toBeInTheDocument()
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Start voice recording" })) })
+    await act(async () => { fireEvent.click(await screen.findByRole("button", { name: "Stop recording" })) })
+    expect(await screen.findByTestId("capture-id")).toHaveTextContent("capture-42")
+    expect(ClientModule.TranscribeService.transcribeAudio).toHaveBeenCalledWith({
+      formData: expect.objectContaining({ file: expect.any(File), timezone: expect.any(String) }),
+    })
+    expect(trackStop).toHaveBeenCalled()
   })
 
-  it("starts recording on click and displays recording indicator", async () => {
-    renderWithProviders(<VoiceRecordButton />)
-
-    const button = screen.getByRole("button", { name: "Start voice recording" })
-    await act(async () => {
-      fireEvent.click(button)
-    })
-
-    expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({ audio: true })
-    expect(await screen.findByText(/Recording 0:00/i)).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "Stop recording" })).toBeInTheDocument()
-  })
-
-  it("handles microphone permission denied error gracefully", async () => {
-    const notAllowedError = new Error("Permission denied")
-    notAllowedError.name = "NotAllowedError"
-    vi.mocked(navigator.mediaDevices.getUserMedia).mockRejectedValueOnce(notAllowedError)
-
-    renderWithProviders(<VoiceRecordButton />)
-
-    const button = screen.getByRole("button", { name: "Start voice recording" })
-    await act(async () => {
-      fireEvent.click(button)
-    })
-
-    await waitFor(() => {
-      expect(mockShowErrorToast).toHaveBeenCalledWith(
-        "Microphone access denied. Please allow microphone permissions.",
-      )
-    })
-  })
-
-  it("stops recording on click, sends audio to TranscribeService, and opens review modal on success", async () => {
-    vi.mocked(ClientModule.TranscribeService.transcribeAudio).mockResolvedValueOnce({
-      text: "Discussed quarterly roadmap with Sarah.",
-      language: "en",
-      duration: 3.5,
-    } as any)
-
-    renderWithProviders(<VoiceRecordButton />)
-
-    const button = screen.getByRole("button", { name: "Start voice recording" })
-    await act(async () => {
-      fireEvent.click(button)
-    })
-
-    const stopButton = await screen.findByRole("button", { name: "Stop recording" })
-    await act(async () => {
-      fireEvent.click(stopButton)
-    })
-
-    await waitFor(() => {
-      expect(ClientModule.TranscribeService.transcribeAudio).toHaveBeenCalled()
-    })
-
-    expect(await screen.findByTestId("voice-review-modal")).toBeInTheDocument()
-    expect(screen.getByTestId("transcribed-text")).toHaveTextContent(
-      "Discussed quarterly roadmap with Sarah.",
-    )
-  })
-
-  it("shows error toast when transcription detects no speech", async () => {
-    vi.mocked(ClientModule.TranscribeService.transcribeAudio).mockResolvedValueOnce({
-      text: "   ",
-      language: "en",
-    } as any)
-
-    renderWithProviders(<VoiceRecordButton />)
-
-    const button = screen.getByRole("button", { name: "Start voice recording" })
-    await act(async () => {
-      fireEvent.click(button)
-    })
-
-    const stopButton = await screen.findByRole("button", { name: "Stop recording" })
-    await act(async () => {
-      fireEvent.click(stopButton)
-    })
-
-    await waitFor(() => {
-      expect(mockShowErrorToast).toHaveBeenCalledWith(
-        "No speech detected in audio recording.",
-      )
-    })
+  it("notifies the layout after the review commits", async () => {
+    vi.mocked(ClientModule.TranscribeService.transcribeAudio).mockResolvedValue({ text: "Words", capture_id: "capture-done" })
+    const onCaptureCommitted = vi.fn()
+    renderWithProviders(<VoiceRecordButton onCaptureCommitted={onCaptureCommitted} />)
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Start voice recording" })) })
+    await act(async () => { fireEvent.click(await screen.findByRole("button", { name: "Stop recording" })) })
+    await act(async () => { fireEvent.click(await screen.findByRole("button", { name: "Commit capture" })) })
+    expect(onCaptureCommitted).toHaveBeenCalledWith({ id: "capture-done", status: "committed" })
     expect(screen.queryByTestId("voice-review-modal")).not.toBeInTheDocument()
   })
 
-  it("shows error toast when TranscribeService fails", async () => {
-    vi.mocked(ClientModule.TranscribeService.transcribeAudio).mockRejectedValueOnce(
-      new Error("Whisper container unavailable"),
-    )
-
+  it("retains the recording and offers retry after a transcription failure", async () => {
+    vi.mocked(ClientModule.TranscribeService.transcribeAudio)
+      .mockRejectedValueOnce(new Error("network unavailable"))
+      .mockResolvedValueOnce({ text: "Words", capture_id: "capture-retry" })
     renderWithProviders(<VoiceRecordButton />)
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Start voice recording" })) })
+    await act(async () => { fireEvent.click(await screen.findByRole("button", { name: "Stop recording" })) })
+    expect(await screen.findByRole("button", { name: "Retry transcription" })).toBeInTheDocument()
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Retry transcription" })) })
+    expect(await screen.findByTestId("capture-id")).toHaveTextContent("capture-retry")
+    expect(ClientModule.TranscribeService.transcribeAudio).toHaveBeenCalledTimes(2)
+  })
 
-    const button = screen.getByRole("button", { name: "Start voice recording" })
-    await act(async () => {
-      fireEvent.click(button)
-    })
+  it("allows discarding a failed recording without retrying", async () => {
+    vi.mocked(ClientModule.TranscribeService.transcribeAudio).mockRejectedValue(new Error("offline"))
+    renderWithProviders(<VoiceRecordButton />)
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Start voice recording" })) })
+    await act(async () => { fireEvent.click(await screen.findByRole("button", { name: "Stop recording" })) })
+    await act(async () => { fireEvent.click(await screen.findByRole("button", { name: "Discard failed recording" })) })
+    expect(screen.queryByRole("button", { name: "Retry transcription" })).not.toBeInTheDocument()
+    expect(ClientModule.TranscribeService.transcribeAudio).toHaveBeenCalledTimes(1)
+  })
 
-    const stopButton = await screen.findByRole("button", { name: "Stop recording" })
-    await act(async () => {
-      fireEvent.click(stopButton)
-    })
+  it("returns to idle without uploading an empty recording", async () => {
+    MockMediaRecorder.emitEmpty = true
+    renderWithProviders(<VoiceRecordButton />)
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Start voice recording" })) })
+    await act(async () => { fireEvent.click(await screen.findByRole("button", { name: "Stop recording" })) })
+    expect(await screen.findByRole("button", { name: "Start voice recording" })).toBeInTheDocument()
+    expect(ClientModule.TranscribeService.transcribeAudio).not.toHaveBeenCalled()
+  })
 
-    await waitFor(() => {
-      expect(mockShowErrorToast).toHaveBeenCalledWith(
-        "Transcription failed: Whisper container unavailable",
-      )
-    })
+  it("uses the generic webm format when the browser reports no supported mime type", async () => {
+    MockMediaRecorder.isTypeSupported.mockReturnValue(false)
+    MockMediaRecorder.reportedMimeType = ""
+    vi.mocked(ClientModule.TranscribeService.transcribeAudio).mockResolvedValue({ text: "Words", capture_id: "fallback" })
+    renderWithProviders(<VoiceRecordButton />)
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Start voice recording" })) })
+    await act(async () => { fireEvent.click(await screen.findByRole("button", { name: "Stop recording" })) })
+    await screen.findByTestId("capture-id")
+    expect(vi.mocked(ClientModule.TranscribeService.transcribeAudio).mock.calls[0][0].formData.file).toBeInstanceOf(File)
+  })
+
+  it("shows a recoverable message when MediaRecorder is unavailable", async () => {
+    Object.defineProperty(globalThis, "MediaRecorder", { writable: true, value: undefined })
+    renderWithProviders(<VoiceRecordButton />)
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Start voice recording" })) })
+    expect(mockErrors.show).toHaveBeenCalledWith("Could not access microphone.")
+  })
+
+  it("shows a specific message when microphone permission is denied", async () => {
+    vi.mocked(navigator.mediaDevices.getUserMedia).mockRejectedValue(Object.assign(new Error("denied"), { name: "NotAllowedError" }))
+    renderWithProviders(<VoiceRecordButton />)
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Start voice recording" })) })
+    expect(mockErrors.show).toHaveBeenCalledWith("Microphone access denied. Please allow microphone permissions.")
+  })
+
+  it("updates the recording timer and stops automatically at three minutes", async () => {
+    vi.useFakeTimers()
+    vi.mocked(ClientModule.TranscribeService.transcribeAudio).mockResolvedValue({ text: "Timed recording", capture_id: "timer-stop" })
+    renderWithProviders(<VoiceRecordButton />)
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Start voice recording" })) })
+    act(() => { vi.advanceTimersByTime(1000) })
+    expect(screen.getByText("Recording 0:01")).toBeInTheDocument()
+    await act(async () => { vi.advanceTimersByTime(180_000) })
+    expect(screen.getByTestId("capture-id")).toHaveTextContent("timer-stop")
+    expect(trackStop).toHaveBeenCalled()
+  })
+
+  it("closes a capture and refreshes the saved capture list", async () => {
+    vi.mocked(ClientModule.TranscribeService.transcribeAudio).mockResolvedValue({ text: "Words", capture_id: "capture-close" })
+    renderWithProviders(<VoiceRecordButton />)
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Start voice recording" })) })
+    await act(async () => { fireEvent.click(await screen.findByRole("button", { name: "Stop recording" })) })
+    await act(async () => { fireEvent.click(await screen.findByRole("button", { name: "Close capture" })) })
+    expect(screen.queryByTestId("voice-review-modal")).not.toBeInTheDocument()
+    expect(ClientModule.VoiceCapturesService.listVoiceCaptures).toHaveBeenCalledTimes(2)
+  })
+
+  it("finds a resumable capture on a later page and only opens it after user selection", async () => {
+    const committedPage = Array.from({ length: 100 }, (_, index) => ({
+      id: `old-${index}`, status: "committed", updated_at: "2026-01-01T00:00:00Z",
+    }))
+    vi.mocked(ClientModule.VoiceCapturesService.listVoiceCaptures)
+      .mockResolvedValueOnce({ data: committedPage, count: 101 } as never)
+      .mockResolvedValueOnce({ data: [
+        { id: "older-draft", status: "draft", updated_at: "2026-10-06T12:00:00Z", timezone: "America/Chicago" },
+        { id: "later-draft", status: "draft", updated_at: "2026-10-07T12:00:00Z", timezone: "America/Chicago" },
+      ], count: 102 } as never)
+    renderWithProviders(<VoiceRecordButton />)
+    const resume = await screen.findByRole("button", { name: /Resume draft/ })
+    expect(screen.queryByTestId("voice-review-modal")).not.toBeInTheDocument()
+    expect(ClientModule.VoiceCapturesService.listVoiceCaptures).toHaveBeenCalledWith({ skip: 100, limit: 100 })
+    await act(async () => { fireEvent.click(resume) })
+    await waitFor(() => expect(screen.getByTestId("capture-id")).toHaveTextContent("later-draft"))
   })
 })

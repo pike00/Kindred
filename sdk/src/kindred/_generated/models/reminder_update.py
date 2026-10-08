@@ -10,6 +10,7 @@ from ..types import UNSET, Unset
 
 from ..models.reminder_frequency import ReminderFrequency
 from ..types import UNSET, Unset
+from dateutil.parser import isoparse
 from typing import cast
 import datetime
 
@@ -116,7 +117,7 @@ class ReminderUpdate:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                remind_at_type_0 = datetime.datetime.fromisoformat(data)
+                remind_at_type_0 = isoparse(data)
 
                 return remind_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):

@@ -7,7 +7,7 @@
 | [public.alembic_version](public.alembic_version.md) | 1 |  | BASE TABLE |
 | [public.user](public.user.md) | 9 | Authenticated user; tenant-scope owner of every row below. | BASE TABLE |
 | [public.tag](public.tag.md) | 6 | User-defined tag for grouping contacts. | BASE TABLE |
-| [public.contact](public.contact.md) | 41 | Core contact entity — the subject of everything else in the CRM. | BASE TABLE |
+| [public.contact](public.contact.md) | 42 | Core contact entity — the subject of everything else in the CRM. | BASE TABLE |
 | [public.contact_tag](public.contact_tag.md) | 2 | Many-to-many link between contacts and tags. | BASE TABLE |
 | [public.contact_field](public.contact_field.md) | 7 | Flexible contact info (emails, phones) attached to a contact. | BASE TABLE |
 | [public.address](public.address.md) | 11 | Physical address attached to a contact. | BASE TABLE |
@@ -43,6 +43,7 @@
 | [public.saved_filter](public.saved_filter.md) | 7 |  | BASE TABLE |
 | [public.vcard_conflict](public.vcard_conflict.md) | 8 |  | BASE TABLE |
 | [public.all_contacts_share](public.all_contacts_share.md) | 3 | Grants another user access to all current and future contacts by owner. | BASE TABLE |
+| [public.voice_capture](public.voice_capture.md) | 16 |  | BASE TABLE |
 
 ## Stored procedures and functions
 
@@ -138,6 +139,7 @@ erDiagram
 "public.vcard_conflict" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.all_contacts_share" }o--|| "public.user" : "FOREIGN KEY (grantee_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.all_contacts_share" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
+"public.voice_capture" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 
 "public.alembic_version" {
   varchar_32_ version_num
@@ -203,6 +205,7 @@ erDiagram
   text pronouns
   tsvector search_vector
   boolean auto_log_email
+  timestamp_with_time_zone snoozed_until
 }
 "public.contact_tag" {
   uuid contact_id FK
@@ -539,6 +542,24 @@ erDiagram
   uuid owner_id FK
   uuid grantee_id FK
   timestamp_with_time_zone created_at
+}
+"public.voice_capture" {
+  uuid id
+  uuid owner_id FK
+  text raw_text
+  text corrected_text
+  varchar_100_ timezone
+  timestamp_with_time_zone recorded_at
+  timestamp_with_time_zone created_at
+  timestamp_with_time_zone updated_at
+  varchar_20_ status
+  integer revision
+  jsonb actions
+  jsonb warnings
+  varchar_500_ analysis_error
+  timestamp_with_time_zone committed_at
+  varchar_64_ commit_hash
+  jsonb results
 }
 ```
 

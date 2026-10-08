@@ -131,6 +131,7 @@ Table "contact" {
   "pronouns" text
   "search_vector" tsvector
   "auto_log_email" bool [not null, default: false]
+  "snoozed_until" timestamptz
 
   Indexes {
     (owner_id, source, source_external_id) [type: btree, unique, name: "uq_contact_owner_source_external_id"]
@@ -697,6 +698,30 @@ Table "all_contacts_share" {
   }
 }
 
+Table "voice_capture" {
+  "id" uuid [pk, not null]
+  "owner_id" uuid [not null]
+  "raw_text" text [not null]
+  "corrected_text" text [not null]
+  "timezone" varchar(100) [not null]
+  "recorded_at" timestamptz [not null]
+  "created_at" timestamptz [not null]
+  "updated_at" timestamptz [not null]
+  "status" varchar(20) [not null, default: 'draft']
+  "revision" int4 [not null, default: 1]
+  "actions" jsonb [not null, default: `{}`]
+  "warnings" jsonb [not null, default: `[]`]
+  "analysis_error" varchar(500)
+  "committed_at" timestamptz
+  "commit_hash" varchar(64)
+  "results" jsonb
+
+  Indexes {
+    commit_hash [type: btree, name: "ix_voice_capture_commit_hash"]
+    owner_id [type: btree, name: "ix_voice_capture_owner_id"]
+  }
+}
+
 Ref "activity_log_actor_id_fkey":"user"."id" < "activity_log"."actor_id" [delete: set null]
 
 Ref "activity_log_owner_id_fkey":"user"."id" < "activity_log"."owner_id" [delete: cascade]
@@ -812,5 +837,7 @@ Ref "tag_share_grantee_id_fkey":"user"."id" < "tag_share"."grantee_id" [delete: 
 Ref "tag_share_tag_id_fkey":"tag"."id" < "tag_share"."tag_id" [delete: cascade]
 
 Ref "vcard_conflict_contact_id_fkey":"contact"."id" < "vcard_conflict"."contact_id" [delete: cascade]
+
+Ref "voice_capture_owner_id_fkey":"user"."id" < "voice_capture"."owner_id" [delete: cascade]
 
 Ref "webhook_endpoint_owner_id_fkey":"user"."id" < "webhook_endpoint"."owner_id" [delete: cascade]

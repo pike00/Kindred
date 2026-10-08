@@ -8,6 +8,7 @@ from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
+from dateutil.parser import isoparse
 from typing import cast
 from uuid import UUID
 import datetime
@@ -118,7 +119,7 @@ class APIKeyCreated:
 
             can_impersonate.append(can_impersonate_item)
 
-        created_at = datetime.datetime.fromisoformat(d.pop("created_at"))
+        created_at = isoparse(d.pop("created_at"))
 
         def _parse_last_used_at(data: object) -> datetime.datetime | None:
             if data is None:
@@ -126,7 +127,7 @@ class APIKeyCreated:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                last_used_at_type_0 = datetime.datetime.fromisoformat(data)
+                last_used_at_type_0 = isoparse(data)
 
                 return last_used_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -141,7 +142,7 @@ class APIKeyCreated:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                revoked_at_type_0 = datetime.datetime.fromisoformat(data)
+                revoked_at_type_0 = isoparse(data)
 
                 return revoked_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -156,7 +157,7 @@ class APIKeyCreated:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                expires_at_type_0 = datetime.datetime.fromisoformat(data)
+                expires_at_type_0 = isoparse(data)
 
                 return expires_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):

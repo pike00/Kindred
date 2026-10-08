@@ -30,6 +30,7 @@ import '.project-kit/preview.just'
 import '.project-kit/release.just'
 import '.project-kit/test.just'
 import '.project-kit/deploy.just'
+import '.project-kit/delivery.just'
 import '.project-kit/build.just'
 import '.project-kit/db.just'
 import '.project-kit/setup.just'
@@ -38,6 +39,19 @@ import '.project-kit/clean.just'
 # END PROJECT-KIT
 
 # --- repo-specific ---
+
+ci-backend:
+    cd backend && uv run --frozen bash scripts/tests-start.sh
+    just sdk-test
+    just --justfile whisper-service/justfile test coverage
+    uv run --project backend pytest scripts/tests -q
+
+ci-backend-coverage:
+    cd backend && uv run --frozen coverage report --fail-under=60
+
+# CI uses its own Postgres/Redis/Meilisearch services, without a preview stack.
+ci-backend-prepare:
+    cd backend && uv run --frozen bash scripts/prestart.sh
 
 # Regenerate docs/db/ from the live Postgres schema using tbls, then render
 # each .md to a standalone .html via pandoc. The helper follows the active
@@ -120,7 +134,15 @@ regen-client:
     #!/usr/bin/env bash
     set -euo pipefail
     bash scripts/generate-client.sh
-    {{_dc}} restart frontend
+    project="$(just env | sed -n 's/^COMPOSE_PROJECT_NAME=//p')"
+    [[ "$project" =~ ^[a-z0-9][a-z0-9_-]+$ ]] || { echo "Invalid preview project" >&2; exit 1; }
+    container="$(docker ps -q --filter "label=com.docker.compose.project=$project" --filter 'label=com.docker.compose.service=frontend')"
+    if [ -n "$container" ]; then
+        [[ "$container" != *$'\n'* ]] || { echo "Multiple preview frontends found" >&2; exit 1; }
+        docker restart "$container"
+    else
+        echo "No running frontend in $project; generated SDK is ready for the next start."
+    fi
 
 # Build a wheel + sdist into sdk/dist/.
 [group('SDK')]

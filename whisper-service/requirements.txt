@@ -1,10 +1,11 @@
 fastapi==0.141.1
 uvicorn[standard]==0.52.4
 faster-whisper==1.2.1
-# faster-whisper 1.0.3 imports `requests`, but modern huggingface-hub uses
-# httpx and no longer pulls requests in transitively — install it explicitly
-# or the service crashes on import.
-requests>=2.31.0
-# Required by FastAPI for multipart/form-data uploads (the /transcribe
-# UploadFile endpoint); FastAPI raises at startup without it.
-python-multipart>=0.0.32
+# faster-whisper 1.2.1 passes metadata_errors to av.open; PyAV 19 removed it.
+av==18.0.0
+pydantic-settings==2.14.2
+# Keep the HTTP client at the version validated in the integrated image build.
+requests==2.34.2
+# Required for FastAPI multipart/form-data uploads; version validated in the
+# integrated image build.
+python-multipart==0.0.32

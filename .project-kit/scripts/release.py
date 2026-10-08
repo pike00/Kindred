@@ -42,13 +42,17 @@ PROJECT_NAME = "kindred"
 CLIFF_CONFIG = ".project-kit/cliff.toml"
 BRANCH = "main"
 LITELLM_MODEL = "deepseek-v4-pro-cloud"
+# Pinned git-cliff version (baked from .project-kit answers). Every cliff
+# invocation in this script and in the changelog recipe uses this exact
+# version so changelog output stays reproducible across adopters.
+GIT_CLIFF_VERSION = "2.14.2"
 DEDICATED_LLM_KEY = False
 INSTALL_COMMAND = None
 # `just version` prod-version resolution (baked from .project-kit answers).
 PROD_SOURCE = "none"
 PROD_HOMELAB_ENV = ""
 PROD_PYPI_PACKAGE = "kindred"
-REQUIRED_CHECK = None
+REQUIRED_CHECK = "test-backend"
 BAKED_LITELLM_BASE_URL: HttpUrl | None = None
 
 
@@ -337,6 +341,11 @@ def _changelog_contains_release(changelog: str, tag: str) -> bool:
     return re.search(rf"^## \[{version}\](?:\s|$)", changelog, re.MULTILINE) is not None
 
 
+def _cliff_cmd(extra: list[str]) -> list[str]:
+    """Build the pinned uvx git-cliff invocation shared by prepare and check."""
+    return ["uvx", f"git-cliff@{GIT_CLIFF_VERSION}", "--config", CLIFF_CONFIG, *extra]
+
+
 def _release_is_in_changelog(release_ref: str, tag: str) -> bool:
     changelog = _run(["git", "show", f"{release_ref}:CHANGELOG.md"]).stdout
     return _changelog_contains_release(changelog, tag)
@@ -347,6 +356,13 @@ def _latest_tag() -> str | None:
         return _run(["git", "describe", "--tags", "--abbrev=0", "--match", "v*"]).stdout.strip()
     except subprocess.CalledProcessError:
         return None
+
+
+def _commits_since(prev_tag: str | None) -> list[str]:
+    """List commit subjects since ``prev_tag``, or over all history when None."""
+    rng = f"{prev_tag}..HEAD" if prev_tag else "HEAD"
+    log = _run(["git", "log", rng, "--pretty=format:%s"]).stdout
+    return [line for line in log.splitlines() if line]
 
 
 def _next_version(level: str) -> str:
@@ -495,22 +511,49 @@ def prepare(
         raise typer.Exit(code=1)
     typer.echo("[3/3] preparing CHANGELOG.md via git-cliff…")
     output_mode = "--prepend" if changelog_exists else "--output"
-    _run(
-        [
-            "uvx",
-            "git-cliff@latest",
-            "--config",
-            CLIFF_CONFIG,
-            "--unreleased",
-            "--tag",
-            version,
-            output_mode,
-            "CHANGELOG.md",
-        ]
-    )
+    _run(_cliff_cmd(["--unreleased", "--tag", version, output_mode, "CHANGELOG.md"]))
     typer.echo(
         f"prepared {version}. Commit CHANGELOG.md atomically, test the branch, "
         "then merge its pull request."
+    )
+
+
+@app.command()
+def check(level: str = typer.Argument(..., help="patch | minor | major")) -> None:
+    """Report the pending release state as JSON. Read-only: no files, no tags."""
+    if level not in ("patch", "minor", "major"):
+        typer.echo(f"error: bad level {level}", err=True)
+        raise typer.Exit(code=1)
+    version = _next_version(level)
+    prev_tag = _latest_tag()
+    subjects = _commits_since(prev_tag)
+    blockers: list[str] = []
+    changelog_preview: str | None = None
+    try:
+        changelog_preview = _run(_cliff_cmd(["--unreleased"])).stdout
+    except (OSError, subprocess.CalledProcessError):
+        blockers.append("cliff unavailable")
+    changelog_path = Path("CHANGELOG.md")
+    if changelog_path.is_file() and _changelog_contains_release(
+        changelog_path.read_text(), version
+    ):
+        blockers.append(f"{version} is already present in CHANGELOG.md")
+    dirty = not _is_clean()
+    if dirty:
+        blockers.append("working tree is dirty")
+    typer.echo(
+        json.dumps(
+            {
+                "next_version": version,
+                "latest_tag": prev_tag,
+                "commits": {"count": len(subjects), "subjects": subjects[:20]},
+                "changelog_preview": changelog_preview,
+                "dirty": dirty,
+                "linked_worktree": _is_linked_worktree(),
+                "blockers": blockers,
+            },
+            indent=2,
+        )
     )
 
 

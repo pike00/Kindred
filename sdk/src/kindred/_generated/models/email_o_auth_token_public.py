@@ -9,6 +9,7 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 from ..types import UNSET, Unset
+from dateutil.parser import isoparse
 from typing import cast
 from uuid import UUID
 import datetime
@@ -104,9 +105,9 @@ class EmailOAuthTokenPublic:
 
         contact_id = UUID(d.pop("contact_id"))
 
-        created_at = datetime.datetime.fromisoformat(d.pop("created_at"))
+        created_at = isoparse(d.pop("created_at"))
 
-        updated_at = datetime.datetime.fromisoformat(d.pop("updated_at"))
+        updated_at = isoparse(d.pop("updated_at"))
 
         provider = d.pop("provider", UNSET)
 
@@ -127,7 +128,7 @@ class EmailOAuthTokenPublic:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                token_expires_at_type_0 = datetime.datetime.fromisoformat(data)
+                token_expires_at_type_0 = isoparse(data)
 
                 return token_expires_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):

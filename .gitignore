@@ -7,6 +7,9 @@
 .vscode/*
 !.vscode/extensions.json
 node_modules/
+.pnpm-store/
+__pycache__/
+*.py[cod]
 /test-results/
 /playwright-report/
 /blob-report/

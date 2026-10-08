@@ -140,6 +140,11 @@ export type AllContactsSharesPublic = {
     count: number;
 };
 
+export type AnalyzeCapture = {
+    revision: number;
+    text?: (string | null);
+};
+
 export type APIKeyCreate = {
     name: string;
     can_impersonate?: Array<(string)>;
@@ -179,6 +184,11 @@ export type APIKeysPublic = {
     count: number;
 };
 
+export type BirthdayFieldChange = {
+    field: "birthday";
+    value: (string | null);
+};
+
 export type Body_ical_upload_ical = {
     file: string;
 };
@@ -208,7 +218,9 @@ export type Body_login_login_access_token = {
 };
 
 export type Body_transcribe_transcribe_audio = {
-    file: string;
+    file: (Blob | File);
+    timezone?: string;
+    contact_ids?: Array<(string)>;
 };
 
 export type BulkFilters = {
@@ -270,6 +282,8 @@ export type CalendarTokensPublic = {
     data: Array<CalendarTokenPublic>;
     count: number;
 };
+
+export type Channel = 'call' | 'in_person' | 'text' | 'email' | 'video' | 'social' | 'other';
 
 export type CommunicationPreferencePublic = {
     preferred_channel?: (string | null);
@@ -386,6 +400,10 @@ export type ContactCreate = {
      * IANA timezone string (e.g. America/New_York).
      */
     timezone?: (string | null);
+    /**
+     * If set, suppress stay-in-touch reminders until this date/time.
+     */
+    snoozed_until?: (string | null);
     tag_ids?: (Array<(string)> | null);
 };
 
@@ -557,10 +575,12 @@ export type ContactPublic = {
      * IANA timezone string (e.g. America/New_York).
      */
     timezone?: (string | null);
+    /**
+     * If set, suppress stay-in-touch reminders until this date/time.
+     */
     snoozed_until?: (string | null);
     id: string;
     avatar_url: (string | null);
-
     last_contacted_at: (string | null);
     created_at: string;
     updated_at: string;
@@ -586,6 +606,17 @@ export type ContactsGeoResponse = {
 export type ContactShareIn = {
     grantee_id?: (string | null);
     grantee_email?: (string | null);
+};
+
+export type ContactSnoozeRequest = {
+    /**
+     * Snooze duration: '1w', '2w', '1m', '1 month', '3m', '3 months', '6m', '6 months', 'indefinitely'
+     */
+    duration?: (string | null);
+    /**
+     * Explicit snoozed_until datetime UTC.
+     */
+    snoozed_until?: (string | null);
 };
 
 /**
@@ -669,7 +700,23 @@ export type ContactUpdate = {
     do_not_contact_reason?: (string | null);
     pronouns?: (string | null);
     timezone?: (string | null);
+    snoozed_until?: (string | null);
     tag_ids?: (Array<(string)> | null);
+};
+
+export type ContactUpdateAction = {
+    id: string;
+    kind: "contact_update";
+    enabled?: boolean;
+    evidence: string;
+    review_warning?: (string | null);
+    contact_id?: (string | null);
+    fields: Array<(TextContactFieldChange | BirthdayFieldChange)>;
+};
+
+export type CreateCapture = {
+    raw_text: string;
+    timezone: string;
 };
 
 /**
@@ -910,18 +957,7 @@ export type EnvironmentInfo = {
     environment: string;
 };
 
-export type StatusInfo = {
-    status?: string;
-    version: string;
-    git_hash: string;
-    hash: string;
-};
-
-export type VersionInfo = {
-    version: string;
-    git_hash: string;
-    hash: string;
-};
+export type Frequency = 'once' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 
 export type GiftCreate = {
     /**
@@ -1113,6 +1149,20 @@ export type IMessageSyncResult = {
     failed_ids?: Array<(string)>;
 };
 
+export type InteractionAction = {
+    id: string;
+    kind: "interaction";
+    enabled?: boolean;
+    evidence: string;
+    review_warning?: (string | null);
+    attendee_ids?: Array<(string)>;
+    channel?: (Channel | null);
+    occurred_at?: (string | null);
+    notes?: (string | null);
+    duration_minutes?: (number | null);
+    location_label?: (string | null);
+};
+
 export type InteractionAttendeeSummary = {
     id: string;
     first_name: string;
@@ -1246,6 +1296,20 @@ export type JsonExportResponse = {
     contacts: Array<{
         [key: string]: unknown;
     }>;
+};
+
+export type LifeEventAction = {
+    id: string;
+    kind: "life_event";
+    enabled?: boolean;
+    evidence: string;
+    review_warning?: (string | null);
+    contact_id?: (string | null);
+    event_type: string;
+    title: string;
+    description?: (string | null);
+    occurred_at?: (string | null);
+    create_annual_reminder?: false;
 };
 
 export type LifeEventCreate = {
@@ -1385,6 +1449,16 @@ export type Message = {
 export type NewPassword = {
     token: string;
     new_password: string;
+};
+
+export type NoteAction = {
+    id: string;
+    kind: "note";
+    enabled?: boolean;
+    evidence: string;
+    review_warning?: (string | null);
+    contact_id?: (string | null);
+    body: string;
 };
 
 export type NoteCreate = {
@@ -1567,6 +1641,10 @@ export type OverdueContactPublic = {
      * IANA timezone string (e.g. America/New_York).
      */
     timezone?: (string | null);
+    /**
+     * If set, suppress stay-in-touch reminders until this date/time.
+     */
+    snoozed_until?: (string | null);
     id: string;
     avatar_url: (string | null);
     last_contacted_at: (string | null);
@@ -1691,6 +1769,20 @@ export type RelationshipUpdate = {
     notes?: (string | null);
 };
 
+export type ReminderAction = {
+    id: string;
+    kind: "reminder";
+    enabled?: boolean;
+    evidence: string;
+    review_warning?: (string | null);
+    contact_id?: (string | null);
+    title: string;
+    description?: (string | null);
+    remind_at?: (string | null);
+    frequency?: Frequency;
+    is_active?: true;
+};
+
 export type ReminderContactInfo = {
     id: string;
     first_name: string;
@@ -1806,6 +1898,12 @@ export type ReminderUpdate = {
     is_active?: (boolean | null);
 };
 
+export type ReviewCapture = {
+    revision: number;
+    corrected_text: string;
+    actions: Array<(InteractionAction | NoteAction | ContactUpdateAction | LifeEventAction | ReminderAction)>;
+};
+
 export type SavedFilterCreate = {
     /**
      * User-visible name for the smart list.
@@ -1894,6 +1992,13 @@ export type SharePreviewEntity = {
     count: number;
 };
 
+export type StatusInfo = {
+    status?: string;
+    version: string;
+    git_hash: string;
+    hash: string;
+};
+
 export type TagCreate = {
     /**
      * Tag name, 1-100 chars.
@@ -1961,9 +2066,23 @@ export type TagUpdate = {
     description?: (string | null);
 };
 
+export type TextContactFieldChange = {
+    field: 'company' | 'department' | 'title' | 'nickname' | 'pronouns' | 'how_we_met';
+    value: (string | null);
+};
+
+export type field = 'company' | 'department' | 'title' | 'nickname' | 'pronouns' | 'how_we_met';
+
 export type Token = {
     access_token: string;
     token_type?: string;
+};
+
+export type TranscriptionResponse = {
+    text: string;
+    language?: (string | null);
+    duration?: (number | null);
+    capture_id: string;
 };
 
 export type UpdatePassword = {
@@ -2102,6 +2221,38 @@ export type VCardConflictsPublic = {
 export type VCardImportResponse = {
     imported: number;
     errors?: Array<(string)>;
+};
+
+export type VersionInfo = {
+    version: string;
+    git_hash: string;
+    hash: string;
+};
+
+export type VoiceCapturePublic = {
+    id: string;
+    raw_text: string;
+    corrected_text: string;
+    timezone: string;
+    recorded_at: string;
+    created_at: string;
+    updated_at: string;
+    status: 'draft' | 'ready' | 'committed';
+    revision: number;
+    actions: Array<(InteractionAction | NoteAction | ContactUpdateAction | LifeEventAction | ReminderAction)>;
+    warnings: Array<(string)>;
+    analysis_error?: (string | null);
+    committed_at?: (string | null);
+    results?: ({
+    [key: string]: unknown;
+} | null);
+};
+
+export type status = 'draft' | 'ready' | 'committed';
+
+export type VoiceCapturesPublic = {
+    data: Array<VoiceCapturePublic>;
+    count: number;
 };
 
 export type WebhookEndpointBase = {
@@ -2388,27 +2539,34 @@ export type ContactsCreateContactData = {
 
 export type ContactsCreateContactResponse = (ContactPublic);
 
-
-export type ContactSnoozeRequest = {
-    duration?: (string | null);
-    snoozed_until?: (string | null);
-};
-
-export type ContactsSnoozeContactData = {
-    contactId: string;
-    requestBody?: ContactSnoozeRequest;
-};
-
-export type ContactsSnoozeContactResponse = (ContactPublic);
-
 export type ContactsListOverdueContactsData = {
-
     days?: number;
 };
 
 export type ContactsListOverdueContactsResponse = (OverdueContactsPublic);
 
 export type ContactsListLosingTouchContactsResponse = (ContactsPublic);
+
+export type ContactsSkipContactData = {
+    contactId: string;
+    requestBody?: (ContactSnoozeRequest | null);
+};
+
+export type ContactsSkipContactResponse = (ContactPublic);
+
+export type ContactsPatchSnoozeContactData = {
+    contactId: string;
+    requestBody?: (ContactSnoozeRequest | null);
+};
+
+export type ContactsPatchSnoozeContactResponse = (ContactPublic);
+
+export type ContactsSnoozeContactData = {
+    contactId: string;
+    requestBody?: (ContactSnoozeRequest | null);
+};
+
+export type ContactsSnoozeContactResponse = (ContactPublic);
 
 export type ContactsBulkUpdateContactsData = {
     requestBody: BulkUpdateRequest;
@@ -3290,7 +3448,7 @@ export type TranscribeTranscribeAudioData = {
     formData: Body_transcribe_transcribe_audio;
 };
 
-export type TranscribeTranscribeAudioResponse = (unknown);
+export type TranscribeTranscribeAudioResponse = (TranscriptionResponse);
 
 export type UsersReadUsersData = {
     limit?: number;
@@ -3348,6 +3506,8 @@ export type UsersDeleteUserResponse = (Message);
 
 export type UtilsHealthResponse = (boolean);
 
+export type UtilsApiStatusResponse = (StatusInfo);
+
 export type UtilsTestEmailData = {
     emailTo: string;
 };
@@ -3356,9 +3516,9 @@ export type UtilsTestEmailResponse = (Message);
 
 export type UtilsHealthCheckResponse = (boolean);
 
-export type UtilsEnvironmentResponse = (EnvironmentInfo);
-
 export type UtilsStatusResponse = (StatusInfo);
+
+export type UtilsEnvironmentResponse = (EnvironmentInfo);
 
 export type UtilsVersionInfoResponse = (VersionInfo);
 
@@ -3381,6 +3541,52 @@ export type VCardConflictsDeleteVcardConflictData = {
 };
 
 export type VCardConflictsDeleteVcardConflictResponse = (void);
+
+export type VoiceCapturesCreateVoiceCaptureData = {
+    requestBody: CreateCapture;
+};
+
+export type VoiceCapturesCreateVoiceCaptureResponse = (VoiceCapturePublic);
+
+export type VoiceCapturesListVoiceCapturesData = {
+    limit?: number;
+    skip?: number;
+};
+
+export type VoiceCapturesListVoiceCapturesResponse = (VoiceCapturesPublic);
+
+export type VoiceCapturesGetVoiceCaptureData = {
+    captureId: string;
+};
+
+export type VoiceCapturesGetVoiceCaptureResponse = (VoiceCapturePublic);
+
+export type VoiceCapturesUpdateVoiceCaptureData = {
+    captureId: string;
+    requestBody: ReviewCapture;
+};
+
+export type VoiceCapturesUpdateVoiceCaptureResponse = (VoiceCapturePublic);
+
+export type VoiceCapturesDeleteVoiceCaptureData = {
+    captureId: string;
+};
+
+export type VoiceCapturesDeleteVoiceCaptureResponse = (void);
+
+export type VoiceCapturesAnalyzeVoiceCaptureData = {
+    captureId: string;
+    requestBody: AnalyzeCapture;
+};
+
+export type VoiceCapturesAnalyzeVoiceCaptureResponse = (VoiceCapturePublic);
+
+export type VoiceCapturesCommitVoiceCaptureData = {
+    captureId: string;
+    requestBody: ReviewCapture;
+};
+
+export type VoiceCapturesCommitVoiceCaptureResponse = (VoiceCapturePublic);
 
 export type WebhooksTwilioWebhookData = {
     apiKey: string;

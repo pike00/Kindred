@@ -10,6 +10,7 @@ from ..types import UNSET, Unset
 
 from ..models.interaction_channel import InteractionChannel
 from ..types import UNSET, Unset
+from dateutil.parser import isoparse
 from typing import cast
 from uuid import UUID
 import datetime
@@ -95,7 +96,7 @@ class InteractionCreate:
         d = dict(src_dict)
         channel = InteractionChannel(d.pop("channel"))
 
-        occurred_at = datetime.datetime.fromisoformat(d.pop("occurred_at"))
+        occurred_at = isoparse(d.pop("occurred_at"))
 
         attendee_ids = []
         _attendee_ids = d.pop("attendee_ids")

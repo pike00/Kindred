@@ -9,6 +9,7 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 from ..types import UNSET, Unset
+from dateutil.parser import isoparse
 from typing import cast
 from uuid import UUID
 import datetime
@@ -101,13 +102,13 @@ class LifeEventPublic:
 
         title = d.pop("title")
 
-        occurred_at = datetime.date.fromisoformat(d.pop("occurred_at"))
+        occurred_at = isoparse(d.pop("occurred_at")).date()
 
         id = UUID(d.pop("id"))
 
         contact_id = UUID(d.pop("contact_id"))
 
-        created_at = datetime.datetime.fromisoformat(d.pop("created_at"))
+        created_at = isoparse(d.pop("created_at"))
 
         def _parse_description(data: object) -> None | str | Unset:
             if data is None:
@@ -128,7 +129,7 @@ class LifeEventPublic:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                deleted_at_type_0 = datetime.datetime.fromisoformat(data)
+                deleted_at_type_0 = isoparse(data)
 
                 return deleted_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):

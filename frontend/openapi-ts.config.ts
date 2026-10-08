@@ -2,9 +2,13 @@ import { defineConfig } from "@hey-api/openapi-ts"
 
 export default defineConfig({
   input: "./openapi.json",
-  output: "./src/client",
-  client: "legacy/axios",
+  output: {
+    path: "./src/client",
+    // Keep the hand-maintained compatibility exports in custom.ts.
+    clean: false,
+  },
   plugins: [
+    "legacy/axios",
     {
       name: "@hey-api/sdk",
       // NOTE: this doesn't allow tree-shaking

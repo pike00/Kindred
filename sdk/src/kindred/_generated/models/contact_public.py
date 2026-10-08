@@ -10,6 +10,7 @@ from ..types import UNSET, Unset
 
 from ..models.contact_source import ContactSource
 from ..types import UNSET, Unset
+from dateutil.parser import isoparse
 from typing import cast
 from uuid import UUID
 import datetime
@@ -406,7 +407,7 @@ class ContactPublic:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                last_contacted_at_type_0 = datetime.datetime.fromisoformat(data)
+                last_contacted_at_type_0 = isoparse(data)
 
                 return last_contacted_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -415,9 +416,9 @@ class ContactPublic:
 
         last_contacted_at = _parse_last_contacted_at(d.pop("last_contacted_at"))
 
-        created_at = datetime.datetime.fromisoformat(d.pop("created_at"))
+        created_at = isoparse(d.pop("created_at"))
 
-        updated_at = datetime.datetime.fromisoformat(d.pop("updated_at"))
+        updated_at = isoparse(d.pop("updated_at"))
 
         def _parse_last_name(data: object) -> None | str | Unset:
             if data is None:
@@ -499,7 +500,7 @@ class ContactPublic:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                birthday_type_0 = datetime.date.fromisoformat(data)
+                birthday_type_0 = isoparse(data).date()
 
                 return birthday_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -531,7 +532,7 @@ class ContactPublic:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                deceased_at_type_0 = datetime.date.fromisoformat(data)
+                deceased_at_type_0 = isoparse(data).date()
 
                 return deceased_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -613,7 +614,7 @@ class ContactPublic:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                snoozed_until_type_0 = datetime.datetime.fromisoformat(data)
+                snoozed_until_type_0 = isoparse(data)
 
                 return snoozed_until_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -630,7 +631,7 @@ class ContactPublic:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                deleted_at_type_0 = datetime.datetime.fromisoformat(data)
+                deleted_at_type_0 = isoparse(data)
 
                 return deleted_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -683,7 +684,7 @@ class ContactPublic:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                imessage_synced_at_type_0 = datetime.datetime.fromisoformat(data)
+                imessage_synced_at_type_0 = isoparse(data)
 
                 return imessage_synced_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):

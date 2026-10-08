@@ -1,0 +1,4 @@
+# Intentional deployment destination recorded by project-kit.
+ares.savannah-mimosa.ts.net
+# Required structured-log endpoint used by the operational smoke probe.
+loki.lab.khanpikehome.com
