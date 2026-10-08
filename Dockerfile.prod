@@ -56,8 +56,7 @@ RUN apt-get update && \
       build-essential libpq-dev curl ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
-# Install uv from PyPI
-RUN pip install --no-cache-dir uv==0.9.26
+COPY --from=ghcr.io/astral-sh/uv:0.9.26 /uv /uvx /bin/
 
 WORKDIR /app
 
@@ -79,6 +78,11 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 # Built SPA → /app/static (served by FastAPI's StaticFiles when STATIC_DIR is set)
 COPY --from=frontend-builder /build/frontend/dist /app/static
+
+ARG APP_VERSION=
+ARG GIT_HASH=
+ENV APP_VERSION=${APP_VERSION} \
+    GIT_HASH=${GIT_HASH}
 
 WORKDIR /app/backend
 EXPOSE 8000
