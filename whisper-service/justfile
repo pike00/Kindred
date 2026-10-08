@@ -1,0 +1,14 @@
+_python := "PYTHONPATH=. uv run --no-project --with-requirements requirements.txt --with-requirements test-requirements.txt"
+
+test:
+    {{_python}} coverage run --branch --source=app -m pytest -q tests
+
+coverage:
+    {{_python}} coverage report --fail-under=90
+
+lint:
+    {{_python}} ruff check app.py tests
+
+build model="base.en":
+    just --justfile ../justfile context
+    docker build --build-arg WHISPER_MODEL={{model}} -t kindred-whisper:dev .
