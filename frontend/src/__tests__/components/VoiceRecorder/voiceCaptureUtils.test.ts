@@ -71,8 +71,23 @@ describe("voice capture review helpers", () => {
     ).toEqual([
       "Interaction needs at least one attendee.",
       "Interaction needs a date and time.",
-      "Interaction needs notes.",
     ])
+  })
+
+  it.each([null, ""])("allows an interaction without notes (%s)", (notes) => {
+    expect(
+      validateActions([
+        {
+          id: "one",
+          kind: "interaction",
+          enabled: true,
+          evidence: "We spoke by phone.",
+          attendee_ids: ["contact"],
+          occurred_at: "2000-01-01T12:00:00Z",
+          notes,
+        },
+      ] as never),
+    ).toEqual([])
   })
 
   it("validates every action kind and permits incomplete disabled cards", () => {

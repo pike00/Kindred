@@ -108,7 +108,7 @@ async def analyze_text(
         "The transcript is the working text and original_transcript is immutable source. Keep action evidence as an exact quote from original_transcript, even when corrected_text or transcript fixes a name or transcription error. "
         "Use only supplied contact IDs. If identity is ambiguous, leave the target null and explain in review_warning. "
         "Distinguish attendees from people merely mentioned. A past completed encounter may be an interaction; future plans are not interactions. "
-        "'Need to call X tomorrow' is a reminder, with an explicit warning if time is unspecified. 'X prefers tea' is a note, never engagement. "
+        "'Need to call X tomorrow' is a reminder. Resolve its date from recorded_at and the supplied timezone, but if the transcript gives no explicit clock time, set remind_at to null and explain in review_warning that the user must choose a time. Never substitute midnight, noon, start of day, current time, or any other default time for a reminder. Vague parts of day such as morning or evening are not explicit clock times. 'X prefers tea' is a note, never engagement. "
         "Unknown interaction channel must be other. Future jobs must not overwrite current employer; use a note unless the transition is explicitly dated, then a life event may be used. "
         "Use life_event only for an explicitly dated event. Undated education, career, family, and other background facts belong in notes, not incomplete life events. "
         "Do not create contacts or relationships. Contact updates may change only allowed fields. Life events never create annual reminders. "
