@@ -1,6 +1,7 @@
 import asyncio
 import sys
 from contextlib import asynccontextmanager
+from pathlib import Path
 from types import SimpleNamespace
 
 import httpx
@@ -83,7 +84,12 @@ def test_model_loader_uses_all_model_runtime_settings(monkeypatch, tmp_path):
         model_cache_path=tmp_path,
     )
 
-    assert service.load_model(settings) == "model"
+    assert service.load_model(
+        settings.model,
+        settings.device,
+        settings.compute_type,
+        settings.model_cache_path,
+    ) == "model"
     assert calls == [
         (
             ("small.en",),
@@ -100,7 +106,7 @@ def test_model_loads_in_lifespan_and_health_reports_configured_and_loaded_model(
     settings = Settings(_env_file=None, model="base.en", model_cache_path="/models")
     model = FakeModel()
     called = []
-    app = create_app(settings, lambda config: called.append(config) or model)
+    app = create_app(settings, lambda *args: called.append(args) or model)
 
     async def request_health():
         async with async_client(app) as client:
@@ -116,14 +122,14 @@ def test_model_loads_in_lifespan_and_health_reports_configured_and_loaded_model(
         "device": "cpu",
         "compute_type": "int8",
     }
-    assert called == [settings]
+    assert called == [("base.en", "cpu", "int8", Path("/models"))]
 
 
 def test_transcription_propagates_prompt_and_returns_segment_metadata(tmp_path, monkeypatch):
     monkeypatch.setattr("tempfile.tempdir", str(tmp_path))
     settings = Settings(_env_file=None, prompt_limit_chars=80)
     model = FakeModel()
-    app = create_app(settings, lambda _config: model)
+    app = create_app(settings, lambda *_args: model)
 
     async def request():
         async with async_client(app) as client:
@@ -156,7 +162,7 @@ def test_transcription_propagates_prompt_and_returns_segment_metadata(tmp_path, 
 
 
 def test_oversized_initial_prompt_is_rejected():
-    app = create_app(Settings(_env_file=None, prompt_limit_chars=4), lambda _config: FakeModel())
+    app = create_app(Settings(_env_file=None, prompt_limit_chars=4), lambda *_args: FakeModel())
 
     async def request():
         async with async_client(app) as client:
@@ -173,7 +179,7 @@ def test_oversized_initial_prompt_is_rejected():
 
 def test_language_can_be_configured_for_non_english_transcription():
     model = FakeModel()
-    app = create_app(Settings(_env_file=None, language="es"), lambda _config: model)
+    app = create_app(Settings(_env_file=None, language="es"), lambda *_args: model)
 
     async def request():
         async with async_client(app) as client:
@@ -190,7 +196,7 @@ def test_language_can_be_configured_for_non_english_transcription():
 
 def test_language_detection_is_passed_as_none():
     model = FakeModel()
-    app = create_app(Settings(_env_file=None, language=None), lambda _config: model)
+    app = create_app(Settings(_env_file=None, language=None), lambda *_args: model)
 
     async def request():
         async with async_client(app) as client:
@@ -206,7 +212,7 @@ def test_language_detection_is_passed_as_none():
 
 def test_empty_audio_is_rejected():
     model = FakeModel()
-    app = create_app(Settings(_env_file=None), lambda _config: model)
+    app = create_app(Settings(_env_file=None), lambda *_args: model)
 
     async def request():
         async with async_client(app) as client:
@@ -223,7 +229,7 @@ def test_empty_audio_is_rejected():
 def test_oversized_audio_is_rejected_before_temp_file_creation(tmp_path, monkeypatch):
     monkeypatch.setattr("tempfile.tempdir", str(tmp_path))
     settings = Settings(_env_file=None, upload_limit_bytes=4)
-    app = create_app(settings, lambda _config: FakeModel())
+    app = create_app(settings, lambda *_args: FakeModel())
 
     async def request():
         async with async_client(app) as client:
@@ -239,7 +245,7 @@ def test_oversized_audio_is_rejected_before_temp_file_creation(tmp_path, monkeyp
 
 def test_decoder_failure_returns_error_and_removes_temp_file(tmp_path, monkeypatch):
     monkeypatch.setattr("tempfile.tempdir", str(tmp_path))
-    app = create_app(Settings(_env_file=None), lambda _config: FakeModel(fail=True))
+    app = create_app(Settings(_env_file=None), lambda *_args: FakeModel(fail=True))
 
     async def request():
         async with async_client(app) as client:
@@ -256,7 +262,7 @@ def test_decoder_failure_returns_error_and_removes_temp_file(tmp_path, monkeypat
 
 def test_inference_does_not_block_the_event_loop():
     model = FakeModel(delay=0.25)
-    app = create_app(Settings(_env_file=None), lambda _config: model)
+    app = create_app(Settings(_env_file=None), lambda *_args: model)
 
     async def exercise():
         async with async_client(app) as client:
@@ -280,3 +286,89 @@ def test_inference_does_not_block_the_event_loop():
 def test_initial_prompt_limit_is_validated():
     with pytest.raises(ValueError):
         Settings(_env_file=None, prompt_limit_chars=0)
+
+
+def test_upload_limit_has_a_configured_upper_bound():
+    with pytest.raises(ValueError):
+        Settings(_env_file=None, upload_limit_bytes=50 * 1024 * 1024 + 1)
+
+
+def test_oversized_multipart_content_length_is_rejected_before_parsing(tmp_path, monkeypatch):
+    monkeypatch.setattr("tempfile.tempdir", str(tmp_path))
+    settings = Settings(_env_file=None, upload_limit_bytes=4, prompt_limit_chars=4)
+    model = FakeModel()
+    app = create_app(settings, lambda *_args: model)
+    request_limit = settings.upload_limit_bytes + settings.prompt_limit_chars + 64 * 1024
+
+    async def request():
+        async with async_client(app) as client:
+            response = await client.post(
+                "/transcribe",
+                content=b"x" * (request_limit + 1),
+                headers={"Content-Type": "multipart/form-data; boundary=broken"},
+            )
+            health = await client.get("/health")
+            return response, health
+
+    response, health = asyncio.run(request())
+
+    assert response.status_code == 413
+    assert model.options is None
+    assert health.status_code == 200
+    assert health.json()["loaded_model"] == "base.en"
+    assert not list(tmp_path.iterdir())
+
+
+def test_chunked_oversized_multipart_is_rejected_and_parser_tempfiles_are_cleaned(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setattr("tempfile.tempdir", str(tmp_path))
+    settings = Settings(_env_file=None, upload_limit_bytes=1024 * 1024, prompt_limit_chars=4)
+    model = FakeModel()
+    app = create_app(settings, lambda *_args: model)
+    boundary = "asr-size-boundary"
+    request_limit = settings.upload_limit_bytes + settings.prompt_limit_chars + 64 * 1024
+    header = (
+        f"--{boundary}\r\n"
+        'Content-Disposition: form-data; name="file"; filename="large.wav"\r\n'
+        "Content-Type: audio/wav\r\n\r\n"
+    ).encode()
+    trailer = f"\r\n--{boundary}--\r\n".encode()
+
+    async def chunks():
+        nonlocal chunks_yielded
+        chunks_yielded += 1
+        yield header
+        remaining = request_limit + 512 * 1024
+        while remaining:
+            chunk = b"x" * min(32 * 1024, remaining)
+            remaining -= len(chunk)
+            chunks_yielded += 1
+            yield chunk
+        chunks_yielded += 1
+        yield trailer
+
+    chunks_yielded = 0
+    total_chunks = 1 + (request_limit + 512 * 1024 + 32 * 1024 - 1) // (32 * 1024) + 1
+
+    async def request():
+        async with async_client(app) as client:
+            request = client.build_request(
+                "POST",
+                "/transcribe",
+                content=chunks(),
+                headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
+            )
+            assert "content-length" not in request.headers
+            response = await client.send(request)
+            health = await client.get("/health")
+            return response, health
+
+    response, health = asyncio.run(request())
+
+    assert response.status_code == 413
+    assert chunks_yielded < total_chunks
+    assert model.options is None
+    assert health.status_code == 200
+    assert health.json()["loaded_model"] == "base.en"
+    assert not list(tmp_path.iterdir())
