@@ -452,6 +452,47 @@ def test_commit_persists_all_five_reviewed_action_types_atomically(
     assert response.json()["raw_text"] == source
 
 
+@pytest.mark.parametrize("notes", [None, ""])
+def test_commit_accepts_interaction_without_notes(client, user_headers, notes):
+    contact_id = client.post(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=user_headers,
+        json={"first_name": "Nora"},
+    ).json()["id"]
+    source = "I called Nora yesterday."
+    capture = client.post(
+        f"{settings.API_V1_STR}/voice-captures/",
+        headers=user_headers,
+        json={"raw_text": source, "timezone": "UTC"},
+    ).json()
+    response = client.post(
+        f"{settings.API_V1_STR}/voice-captures/{capture['id']}/commit",
+        headers=user_headers,
+        json={
+            "revision": capture["revision"],
+            "corrected_text": source,
+            "actions": [
+                {
+                    "id": str(uuid4()),
+                    "kind": "interaction",
+                    "enabled": True,
+                    "evidence": "I called Nora yesterday.",
+                    "review_warning": None,
+                    "attendee_ids": [contact_id],
+                    "channel": "call",
+                    "occurred_at": "2026-10-06T12:00:00Z",
+                    "notes": notes,
+                    "duration_minutes": None,
+                    "location_label": None,
+                }
+            ],
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    assert response.json()["results"]["items"][0]["kind"] == "interaction"
+
+
 def test_draft_save_and_reopen_preserves_incomplete_skipped_manual_cards(
     client, user_headers
 ):
@@ -743,6 +784,11 @@ def test_provider_proposal_uses_closed_schema_and_stores_valid_suggestions(
     assert "exact quote from original_transcript" in system_prompt
     assert "Use life_event only for an explicitly dated event" in system_prompt
     assert "Undated education, career, family" in system_prompt
+    assert (
+        "if the transcript gives no explicit clock time, set remind_at to null"
+        in system_prompt
+    )
+    assert "Never substitute midnight, noon, start of day" in system_prompt
 
 
 def test_edited_transcript_analysis_keeps_evidence_committable(

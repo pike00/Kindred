@@ -54,7 +54,6 @@ export function validateActions(actions: VoiceAction[]): string[] {
           errors.push("Interaction needs a date and time.")
         else if (new Date(action.occurred_at).getTime() > Date.now())
           errors.push("Interaction date and time must be in the past.")
-        if (!action.notes?.trim()) errors.push("Interaction needs notes.")
         break
       }
       case "note":
