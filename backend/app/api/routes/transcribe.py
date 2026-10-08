@@ -5,13 +5,14 @@ The Whisper service runs in a separate container and is accessed via Docker netw
 """
 
 import logging
-from typing import Any
 
 import httpx
-from fastapi import APIRouter, HTTPException, UploadFile
+from fastapi import APIRouter, Form, HTTPException, UploadFile
 
-from app.api.deps import CurrentUser
+from app.api.deps import CurrentUser, SessionDep
 from app.core.config import settings
+from app.voice_capture.schemas import CreateCapture, TranscriptionResponse
+from app.voice_capture.service import create_capture
 
 router = APIRouter(prefix="/transcribe", tags=["transcribe"])
 
@@ -22,12 +23,14 @@ logger = logging.getLogger(__name__)
 WHISPER_URL = f"{settings.WHISPER_URL.rstrip('/')}/transcribe"
 
 
-@router.post("/")
+@router.post("/", response_model=TranscriptionResponse)
 async def transcribe_audio(
     *,
-    _current_user: CurrentUser,  # noqa: ARG001 (kept for auth)
+    current_user: CurrentUser,
+    session: SessionDep,
     file: UploadFile,
-) -> Any:
+    timezone: str = Form(default="UTC"),
+) -> TranscriptionResponse:
     """
     Transcribe an audio file using the Whisper service.
 
@@ -57,7 +60,25 @@ async def transcribe_audio(
             logger.info(
                 f"Transcription successful: {len(result.get('text', ''))} characters"
             )
-            return result
+            try:
+                request = CreateCapture(raw_text=result["text"], timezone=timezone)
+            except (KeyError, ValueError) as e:
+                raise HTTPException(
+                    status_code=502,
+                    detail="Transcription service returned invalid text",
+                ) from e
+            capture = create_capture(
+                session, current_user.id, request.raw_text, request.timezone
+            )
+            return TranscriptionResponse(
+                text=request.raw_text,
+                language=result.get("language"),
+                duration=result.get("duration"),
+                capture_id=capture.id,
+            )
+
+    except HTTPException:
+        raise
 
     except httpx.ConnectError as e:
         logger.error(f"Cannot connect to Whisper service at {WHISPER_URL}: {e}")

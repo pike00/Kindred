@@ -1,0 +1,181 @@
+from __future__ import annotations
+
+import enum
+import uuid
+from datetime import date, datetime
+from typing import Annotated, Literal
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+
+class StrictModel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+
+class Channel(str, enum.Enum):
+    CALL = "call"
+    IN_PERSON = "in_person"
+    TEXT = "text"
+    EMAIL = "email"
+    VIDEO = "video"
+    SOCIAL = "social"
+    OTHER = "other"
+
+
+class Frequency(str, enum.Enum):
+    ONCE = "once"
+    DAILY = "daily"
+    WEEKLY = "weekly"
+    MONTHLY = "monthly"
+    YEARLY = "yearly"
+
+
+class ActionBase(StrictModel):
+    id: uuid.UUID
+    kind: str
+    enabled: bool = True
+    evidence: str = Field(min_length=1, max_length=1000)
+    review_warning: str | None = Field(default=None, max_length=500)
+
+
+class InteractionAction(ActionBase):
+    kind: Literal["interaction"]
+    attendee_ids: list[uuid.UUID] = Field(default_factory=list, max_length=20)
+    channel: Channel | None = None
+    occurred_at: datetime | None = None
+    notes: str | None = Field(default=None, max_length=10000)
+    duration_minutes: int | None = Field(default=None, ge=0, le=10000)
+    location_label: str | None = Field(default=None, max_length=500)
+
+    @field_validator("occurred_at")
+    @classmethod
+    def aware_occurrence(cls, value: datetime | None) -> datetime | None:
+        if value is not None and value.utcoffset() is None:
+            raise ValueError("occurred_at must include a timezone")
+        return value
+
+
+class NoteAction(ActionBase):
+    kind: Literal["note"]
+    contact_id: uuid.UUID | None = None
+    body: str = Field(min_length=1, max_length=50000)
+
+
+class ContactUpdateAction(ActionBase):
+    kind: Literal["contact_update"]
+    contact_id: uuid.UUID | None = None
+    fields: dict[str, str | date | None]
+
+    @field_validator("fields")
+    @classmethod
+    def permitted_fields(cls, value: dict[str, str | date | None]):
+        allowed = {
+            "company",
+            "department",
+            "title",
+            "nickname",
+            "pronouns",
+            "birthday",
+            "how_we_met",
+        }
+        if not value or set(value) - allowed:
+            raise ValueError("fields must contain only permitted contact fields")
+        return value
+
+
+class LifeEventAction(ActionBase):
+    kind: Literal["life_event"]
+    contact_id: uuid.UUID | None = None
+    event_type: str = Field(min_length=1, max_length=100)
+    title: str = Field(min_length=1, max_length=500)
+    description: str | None = Field(default=None, max_length=2000)
+    occurred_at: date | None = None
+    create_annual_reminder: Literal[False] = False
+
+
+class ReminderAction(ActionBase):
+    kind: Literal["reminder"]
+    contact_id: uuid.UUID | None = None
+    title: str = Field(min_length=1, max_length=500)
+    description: str | None = Field(default=None, max_length=2000)
+    remind_at: datetime | None = None
+    frequency: Frequency = Frequency.ONCE
+    is_active: Literal[True] = True
+
+    @field_validator("remind_at")
+    @classmethod
+    def aware_reminder(cls, value: datetime | None) -> datetime | None:
+        if value is not None and value.utcoffset() is None:
+            raise ValueError("remind_at must include a timezone")
+        return value
+
+
+VoiceAction = Annotated[
+    InteractionAction
+    | NoteAction
+    | ContactUpdateAction
+    | LifeEventAction
+    | ReminderAction,
+    Field(discriminator="kind"),
+]
+
+
+class VoiceProposal(StrictModel):
+    corrected_text: str = Field(min_length=1, max_length=100000)
+    actions: list[VoiceAction] = Field(max_length=50)
+    warnings: list[str] = Field(default_factory=list, max_length=50)
+
+
+class CreateCapture(StrictModel):
+    raw_text: str = Field(min_length=1, max_length=100000)
+    timezone: str = Field(min_length=1, max_length=100)
+
+    @field_validator("timezone")
+    @classmethod
+    def valid_timezone(cls, value: str) -> str:
+        try:
+            ZoneInfo(value)
+        except (ValueError, ZoneInfoNotFoundError) as exc:
+            raise ValueError("timezone must be a valid IANA timezone") from exc
+        return value
+
+
+class AnalyzeCapture(StrictModel):
+    revision: int = Field(ge=1)
+    text: str | None = Field(default=None, min_length=1, max_length=100000)
+
+
+class ReviewCapture(StrictModel):
+    revision: int = Field(ge=1)
+    corrected_text: str = Field(min_length=1, max_length=100000)
+    actions: list[VoiceAction] = Field(max_length=50)
+
+
+class VoiceCapturePublic(StrictModel):
+    id: uuid.UUID
+    raw_text: str
+    corrected_text: str
+    timezone: str
+    recorded_at: datetime
+    created_at: datetime
+    updated_at: datetime
+    status: Literal["draft", "ready", "committed"]
+    revision: int
+    actions: list[VoiceAction]
+    warnings: list[str]
+    analysis_error: str | None = None
+    committed_at: datetime | None = None
+    results: dict | None = None
+
+
+class VoiceCapturesPublic(StrictModel):
+    data: list[VoiceCapturePublic]
+    count: int
+
+
+class TranscriptionResponse(StrictModel):
+    text: str
+    language: str | None = None
+    duration: float | None = None
+    capture_id: uuid.UUID

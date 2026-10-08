@@ -408,6 +408,44 @@ class ReminderFrequency(str, enum.Enum):
     YEARLY = "yearly"
 
 
+class VoiceCapture(SQLModel, table=True):
+    """Durable, owner-scoped voice text and reviewed proposal receipt."""
+
+    __tablename__ = "voice_capture"
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id", ondelete="CASCADE", nullable=False, index=True
+    )
+    raw_text: str = Field(sa_column=sa.Column(sa.Text, nullable=False))
+    corrected_text: str = Field(sa_column=sa.Column(sa.Text, nullable=False))
+    timezone: str = Field(max_length=100)
+    recorded_at: datetime = Field(sa_type=DateTime(timezone=True), nullable=False)
+    created_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),
+        nullable=False,
+    )
+    updated_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),
+        nullable=False,
+    )
+    status: str = Field(default="draft", max_length=20)
+    revision: int = Field(default=1)
+    actions: dict = Field(
+        default_factory=dict, sa_column=sa.Column(JSONB, nullable=False)
+    )
+    warnings: list = Field(
+        default_factory=list, sa_column=sa.Column(JSONB, nullable=False)
+    )
+    analysis_error: str | None = Field(default=None, max_length=500)
+    committed_at: datetime | None = Field(default=None, sa_type=DateTime(timezone=True))
+    commit_hash: str | None = Field(default=None, max_length=64, index=True)
+    results: dict | None = Field(
+        default=None, sa_column=sa.Column(JSONB, nullable=True)
+    )
+
+
 class DebtDirection(str, enum.Enum):
     I_OWE = "i_owe"
     THEY_OWE = "they_owe"
@@ -720,7 +758,6 @@ class ContactBase(SQLModel):
         return _parse_optional_year_birthday(v)
 
 
-
 class ContactCreate(ContactBase):
     tag_ids: list[uuid.UUID] | None = None
 
@@ -755,7 +792,6 @@ class ContactUpdate(SQLModel):
     @classmethod
     def validate_birthday(cls, v: Any) -> Any:
         return _parse_optional_year_birthday(v)
-
 
 
 class Contact(SoftDeleteMixin, ContactBase, table=True):
@@ -962,7 +998,6 @@ class ContactSnoozeRequest(SQLModel):
         default=None,
         description="Explicit snoozed_until datetime UTC.",
     )
-
 
 
 # ─── ContactField ────────────────────────────────────────────────────────────
