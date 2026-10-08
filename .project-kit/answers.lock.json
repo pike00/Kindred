@@ -9,7 +9,7 @@
     "images": [
       {
         "build_args": {
-          "VITE_API_URL": "${VITE_API_URL:-}"
+          "VITE_API_URL": ""
         },
         "context": ".",
         "dockerfile": "Dockerfile.prod",
@@ -95,11 +95,11 @@
     ".project-kit/preview.just": "8a4103886c2131298552fe880d11d52a286296893eaccc4def09b2efceb81652",
     ".project-kit/release.just": "beeb244db3785a430c8baf46b91392e6a87335297cf0bfab84dcbe33b61dfc9a",
     ".project-kit/scripts/_runtime.py": "600f658ea913fc24efce29cde79b20ee27f39a2dd25e4857ccf1e60582af4a80",
-    ".project-kit/scripts/build-image.py": "e2201a77a7dacd09b52fd01c0d27734f330613c14f2534382d0e96f1f9c8e319",
+    ".project-kit/scripts/build-image.py": "1a8f946f22dd89cac3ff214f88187f784aa788444d05c7637c3e38850980fe10",
     ".project-kit/scripts/delivery.py": "ae75e798683625149019c5f6b38789a7385de9a299470fdf34b084629dcbf18f",
     ".project-kit/scripts/deploy-cloudflare.py": "f97643c8fd1ba9d8958965d6bbe93f1a24886ffd5fa858ad475ebe91a132d7c0",
     ".project-kit/scripts/deploy-custom.py": "0b5e4c8e5cbd43f46e20b9e4f6ca1492ce7d6f839990e9fe2e35d8dd653dd469",
-    ".project-kit/scripts/deploy-ghcr.py": "568bbd8bff3e6e6efc7cc3ae936e3d0c127f8c07256f136cddcbbf3b2114dd51",
+    ".project-kit/scripts/deploy-ghcr.py": "f5a375ee9f2b1f110974a1e8417840ec0b18f14d24dbaa540e2c1f64b657f46a",
     ".project-kit/scripts/deploy-homelab.py": "10cb989019f8ae3a7d2f1b389ed13dbec32fcb16799c5cec29108765a8e29391",
     ".project-kit/scripts/deploy-pypi.py": "7313e03526c53ee61695464d83d354f4dedf721946c10a8ba38da2a9e9bb6cd7",
     ".project-kit/scripts/deploy-remote-compose.py": "82c0e6938c5fcea6f6ee34f7ddc5ff5e42e49bd85d4cd2e82d3364d480dc4aaa",
