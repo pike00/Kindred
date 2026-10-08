@@ -358,7 +358,7 @@ def main() -> int:
         _warn("gh CLI not on $PATH")
         warns += 1
     _section("test")
-    warns += _check_cmd("backend", "just pytest")
+    warns += _check_cmd("backend", "just pytest \u0026\u0026 just sdk-test \u0026\u0026 just --justfile whisper-service/justfile test coverage \u0026\u0026 uv run --project backend pytest scripts/tests -q")
     warns += _check_cmd("frontend", "cd frontend \u0026\u0026 pnpm run test")
     warns += _check_cmd("e2e", "bash scripts/run-e2e-prepush.sh")
     _section("deploy")

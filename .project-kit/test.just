@@ -21,7 +21,7 @@ test-unit:
     @just test-frontend
 
 test-backend:
-    @just pytest
+    @just pytest && just sdk-test && just --justfile whisper-service/justfile test coverage && uv run --project backend pytest scripts/tests -q
 
 test-frontend:
     @cd frontend && pnpm run test
@@ -30,7 +30,29 @@ test-e2e:
     @bash scripts/run-e2e-prepush.sh
 
 smoke TARGET="preview" TAG="":
-    @just _skip "smoke tests"
+    #!/usr/bin/env bash
+    set -euo pipefail
+    target="{{TARGET}}"
+    tag="{{TAG}}"
+    case "$target" in
+        preview) ;;
+        production)
+            if [[ -z "$tag" || ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+                echo "error: production smoke requires a SemVer tag like v1.2.3" >&2
+                exit 1
+            fi
+            export SMOKE_EXPECTED_TAG="$tag"
+            ;;
+        *)
+            echo "error: smoke target must be preview or production" >&2
+            exit 1
+            ;;
+    esac
+    export SMOKE_TARGET="$target"
+    export SMOKE_ENDPOINT="/api/v1/utils/health-check/"
+    export SMOKE_EXPECTED_STATUS="200"
+    export SMOKE_TIMEOUT_SECONDS="30"
+    uv run --script scripts/smoke.py
 
 test-watch:
     @just _skip "backend watch"

@@ -35,6 +35,7 @@ an action runs.
 | E2E tests | `just test-e2e` |
 | Lint | `just lint` |
 | Typecheck | `just typecheck` |
+| Read-only production smoke | `just smoke production vX.Y.Z` |
 | Prepare release PR | `just release-prepare patch` |
 | Publish merged release | `just release-publish vX.Y.Z` |
 | Update CHANGELOG | `just changelog` |
