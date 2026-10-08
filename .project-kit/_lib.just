@@ -9,6 +9,17 @@ context TARGET="":
     requested_target="{{TARGET}}"
     printf 'host=%s\nrepo=%s\n' "$execution_host" "$(pwd)"
     matched=false
+    if [ -z "$requested_target" ] || [ "$requested_target" = "deploy" ]; then
+        matched=true
+        target_host="ares"
+        if [ "$execution_host" = "$target_host" ]; then
+            target_route="local"
+        else
+            target_route="ssh:ares.savannah-mimosa.ts.net"
+        fi
+        printf 'target.%s.host=%s\ntarget.%s.route=%s\n' "deploy" "$target_host" "deploy" "$target_route"
+        printf 'target.%s.repo=%s\n' "deploy" "/home/will/projects/kindred"
+    fi
     if [ -n "$requested_target" ] && [ "$matched" != true ]; then
         printf 'error=unknown execution target: %s\n' "$requested_target" >&2
         exit 2

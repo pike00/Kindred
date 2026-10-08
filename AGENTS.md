@@ -3,15 +3,20 @@
 <!-- BEGIN PROJECT-KIT — generated, do not edit by hand -->
 ## Project-kit recipes
 
-This repo is managed by project-kit (skill version: 0.2.0, last refreshed: 2026-09-21).
+This repo is managed by project-kit (skill version: 0.3.0, last refreshed: 2026-10-08).
 Project-kit-managed operations go through `just`.
 
 ### Execution context
 
 Run `just context` before every host-dependent action.
+Pass a named target, for example `just context deploy`, when checking a specific action.
 Managed recipes enforce their checks automatically. Host roles are descriptive
 rather than exclusive; the actual hostname and configured target determine where
 an action runs.
+
+| Target | Host | Repository path | Remote route |
+|---|---|---|---|
+| `deploy` | `ares` | `/home/will/projects/kindred` | `ssh ares.savannah-mimosa.ts.net` |
 
 ### Quick reference
 
@@ -35,6 +40,9 @@ an action runs.
 | Update CHANGELOG | `just changelog` |
 | Build container image(s) | `just build-image vX.Y.Z` |
 | Deploy to prod | `just deploy vX.Y.Z` |
+| Show delivery status | `just delivery-status` |
+| Show delivery status (json) | `just delivery-status-json` |
+| Show delivery plan | `just delivery-plan <tag>` |
 | Install dependencies | `just setup` |
 | Health check | `uv run .project-kit/scripts/doctor.py` |
 
@@ -44,6 +52,7 @@ an action runs.
 - release: enabled
 - test: enabled
 - deploy: enabled (target=homelab)
+- delivery: enabled
 - build: enabled
 - db: disabled
 - setup: enabled
@@ -53,10 +62,10 @@ an action runs.
 
 ### Where things live
 
-- Managed recipe imports: 10 (`_lib.just` plus 9 managed subsystems)
+- Managed recipe imports: 11 (`_lib.just` plus 10 managed subsystems)
 - `.project-kit/scripts/` — uv-scripts for non-trivial recipes
 - `.project-kit/cliff.toml` — git-cliff config (centralized; passed via `--config`, no root copy)
-- `justfile` (root) — imports 10 managed recipe files plus repo-specific recipes
+- `justfile` (root) — imports 11 managed recipe files plus repo-specific recipes
 
 ### How to refresh
 

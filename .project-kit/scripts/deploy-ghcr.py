@@ -13,7 +13,7 @@ import subprocess
 
 import typer
 
-IMAGES_JSON = r"""[{"build_args": {"VITE_API_URL": "${VITE_API_URL:-}"}, "context": ".", "dockerfile": "Dockerfile.prod", "name": "kindred", "registry": "ghcr.io/pike00"}]"""
+IMAGES_JSON = r"""[{"build_args": {"VITE_API_URL": "${VITE_API_URL:-}"}, "context": ".", "dockerfile": "Dockerfile.prod", "name": "kindred", "registry": "ghcr.io/pike00"}, {"build_args": {}, "context": "whisper-service", "dockerfile": "whisper-service/Dockerfile", "name": "kindred-whisper", "registry": "ghcr.io/pike00"}]"""
 IMAGES = json.loads(IMAGES_JSON)
 SEMVER = re.compile(r"v\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?")
 

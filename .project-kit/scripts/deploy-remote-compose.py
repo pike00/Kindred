@@ -7,78 +7,25 @@
 
 from __future__ import annotations
 
-import json
 import shlex
-import socket
 import subprocess
-import sys
 import time
-import urllib.request
-from datetime import UTC, datetime
 from pathlib import Path
 
 import typer
+from _runtime import execution_host, flush_events, log
 
 PROJECT_NAME = "kindred"
-DEPLOY_HOST = "".lower()
-DEPLOY_SSH_ALIAS = ""
+DEPLOY_HOST = "ares".lower()
+DEPLOY_SSH_ALIAS = "ares.savannah-mimosa.ts.net"
 REMOTE_APP_DIR = f"~/.local/share/project-kit-apps/{PROJECT_NAME}"
 LOKI_URL = "http://127.0.0.1:3100/loki/api/v1/push"
 
 app = typer.Typer(add_completion=False)
-_events: list[dict[str, object]] = []
-
-
-def _execution_host() -> str:
-    return socket.gethostname().split(".", 1)[0].lower()
-
-
-def _log(level: str, msg: str, **context: object) -> None:
-    event = {
-        "level": level,
-        "msg": msg,
-        "time": datetime.now(UTC).isoformat(),
-        **context,
-    }
-    _events.append(event)
-    print(json.dumps(event, separators=(",", ":")), file=sys.stderr)
-
-
-def _flush() -> None:
-    try:
-        values = [
-            [
-                str(int(datetime.fromisoformat(str(e["time"])).timestamp() * 1_000_000_000)),
-                json.dumps(e),
-            ]
-            for e in _events
-        ]
-        payload = {
-            "streams": [
-                {
-                    "stream": {
-                        "job": "project-kit",
-                        "script": "deploy-remote-compose",
-                        "host": _execution_host(),
-                    },
-                    "values": values,
-                }
-            ]
-        }
-        request = urllib.request.Request(
-            LOKI_URL,
-            data=json.dumps(payload).encode(),
-            headers={"Content-Type": "application/json"},
-            method="POST",
-        )
-        with urllib.request.urlopen(request, timeout=3):
-            pass
-    except Exception:  # noqa: BLE001, S110 - logging must never block deployment
-        pass
 
 
 def _is_deploy_host() -> bool:
-    return not DEPLOY_HOST or _execution_host() == DEPLOY_HOST
+    return not DEPLOY_HOST or execution_host() == DEPLOY_HOST
 
 
 def _route() -> str:
@@ -96,13 +43,13 @@ def main(
     ssh_alias = DEPLOY_SSH_ALIAS or DEPLOY_HOST or "ares"
     src_dir = Path("infra") / env
 
-    _log(
+    log(
         "info",
         "started",
         app=PROJECT_NAME,
         env=env,
-        execution_host=_execution_host(),
-        deploy_host=DEPLOY_HOST or _execution_host(),
+        execution_host=execution_host(),
+        deploy_host=DEPLOY_HOST or execution_host(),
         route=_route(),
     )
 
@@ -197,7 +144,7 @@ def main(
             subprocess.run(["ssh", ssh_alias, remote_deploy_cmd], check=True)
 
     except BaseException as exc:
-        _log(
+        log(
             "error",
             "failed",
             app=PROJECT_NAME,
@@ -206,14 +153,14 @@ def main(
         )
         raise
     else:
-        _log(
+        log(
             "info",
             "complete",
             app=PROJECT_NAME,
             elapsed_s=round(time.monotonic() - started, 3),
         )
     finally:
-        _flush()
+        flush_events(LOKI_URL, "project-kit", "deploy-remote-compose", execution_host())
 
 
 if __name__ == "__main__":
