@@ -1636,6 +1636,19 @@ export const ContactCreateSchema = {
             title: 'Timezone',
             description: 'IANA timezone string (e.g. America/New_York).'
         },
+        snoozed_until: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Snoozed Until',
+            description: 'If set, suppress stay-in-touch reminders until this date/time.'
+        },
         tag_ids: {
             anyOf: [
                 {
@@ -2177,6 +2190,19 @@ export const ContactPublicSchema = {
             title: 'Timezone',
             description: 'IANA timezone string (e.g. America/New_York).'
         },
+        snoozed_until: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Snoozed Until',
+            description: 'If set, suppress stay-in-touch reminders until this date/time.'
+        },
         id: {
             type: 'string',
             format: 'uuid',
@@ -2323,6 +2349,38 @@ export const ContactShareInSchema = {
     },
     type: 'object',
     title: 'ContactShareIn'
+} as const;
+
+export const ContactSnoozeRequestSchema = {
+    properties: {
+        duration: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Duration',
+            description: "Snooze duration: '1w', '2w', '1m', '1 month', '3m', '3 months', '6m', '6 months', 'indefinitely'"
+        },
+        snoozed_until: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Snoozed Until',
+            description: 'Explicit snoozed_until datetime UTC.'
+        }
+    },
+    type: 'object',
+    title: 'ContactSnoozeRequest'
 } as const;
 
 export const ContactSourceSchema = {
@@ -2728,6 +2786,18 @@ export const ContactUpdateSchema = {
                 }
             ],
             title: 'Timezone'
+        },
+        snoozed_until: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Snoozed Until'
         },
         tag_ids: {
             anyOf: [
@@ -3710,6 +3780,51 @@ export const GiftPublicSchema = {
                 }
             ],
             title: 'Deleted At'
+        },
+        contact_birthday: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Contact Birthday'
+        },
+        contact_first_name: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Contact First Name'
+        },
+        contact_last_name: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Contact Last Name'
+        },
+        days_until_occasion: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Days Until Occasion'
         }
     },
     type: 'object',
@@ -5909,6 +6024,19 @@ export const OverdueContactPublicSchema = {
             title: 'Timezone',
             description: 'IANA timezone string (e.g. America/New_York).'
         },
+        snoozed_until: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Snoozed Until',
+            description: 'If set, suppress stay-in-touch reminders until this date/time.'
+        },
         id: {
             type: 'string',
             format: 'uuid',
@@ -7174,6 +7302,31 @@ export const SharePreviewEntitySchema = {
     description: 'Preview counts for a single entity type.'
 } as const;
 
+export const StatusInfoSchema = {
+    properties: {
+        status: {
+            type: 'string',
+            title: 'Status',
+            default: 'ok'
+        },
+        version: {
+            type: 'string',
+            title: 'Version'
+        },
+        git_hash: {
+            type: 'string',
+            title: 'Git Hash'
+        },
+        hash: {
+            type: 'string',
+            title: 'Hash'
+        }
+    },
+    type: 'object',
+    required: ['version', 'git_hash', 'hash'],
+    title: 'StatusInfo'
+} as const;
+
 export const TagCreateSchema = {
     properties: {
         name: {
@@ -7849,6 +8002,26 @@ export const ValidationErrorSchema = {
     type: 'object',
     required: ['loc', 'msg', 'type'],
     title: 'ValidationError'
+} as const;
+
+export const VersionInfoSchema = {
+    properties: {
+        version: {
+            type: 'string',
+            title: 'Version'
+        },
+        git_hash: {
+            type: 'string',
+            title: 'Git Hash'
+        },
+        hash: {
+            type: 'string',
+            title: 'Hash'
+        }
+    },
+    type: 'object',
+    required: ['version', 'git_hash', 'hash'],
+    title: 'VersionInfo'
 } as const;
 
 export const WebhookEndpointBaseSchema = {

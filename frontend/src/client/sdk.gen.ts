@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { ActivityLogsListActivityLogsData, ActivityLogsListActivityLogsResponse, AddressesListAddressesData, AddressesListAddressesResponse, AddressesCreateAddressRouteData, AddressesCreateAddressRouteResponse, AddressesUpdateAddressData, AddressesUpdateAddressResponse, AddressesDeleteAddressData, AddressesDeleteAddressResponse, AddressesGeocodeAddressManualData, AddressesGeocodeAddressManualResponse, AddressesGeocodeMissingCoordinatesResponse, ApiKeysListMyApiKeysResponse, ApiKeysCreateMyApiKeyData, ApiKeysCreateMyApiKeyResponse, ApiKeysRevokeMyApiKeyData, ApiKeysRevokeMyApiKeyResponse, CalendarGetCalendarMonthData, CalendarGetCalendarMonthResponse, CalendarCreateCalendarTokenData, CalendarCreateCalendarTokenResponse, CalendarListCalendarTokensResponse, CalendarRevokeCalendarTokenData, CalendarRevokeCalendarTokenResponse, CalendarGetCalendarIcsData, CalendarGetCalendarIcsResponse, CarddavWellKnownCarddavResponse, CommunicationPreferencesGetCommunicationPreferenceData, CommunicationPreferencesGetCommunicationPreferenceResponse, CommunicationPreferencesUpsertCommunicationPreferenceData, CommunicationPreferencesUpsertCommunicationPreferenceResponse, CommunicationPreferencesDeleteCommunicationPreferenceData, CommunicationPreferencesDeleteCommunicationPreferenceResponse, ContactFieldsListContactFieldsData, ContactFieldsListContactFieldsResponse, ContactFieldsCreateContactFieldRouteData, ContactFieldsCreateContactFieldRouteResponse, ContactFieldsUpdateContactFieldData, ContactFieldsUpdateContactFieldResponse, ContactFieldsDeleteContactFieldData, ContactFieldsDeleteContactFieldResponse, ContactsGetContactPdfData, ContactsGetContactPdfResponse, ContactsGetDistinctStagesResponse, ContactsGetKanbanBoardData, ContactsGetKanbanBoardResponse, ContactsGetContactStageEventsData, ContactsGetContactStageEventsResponse, ContactsListContactsData, ContactsListContactsResponse, ContactsCreateContactData, ContactsCreateContactResponse, ContactsListOverdueContactsData, ContactsListOverdueContactsResponse, ContactsSnoozeContactData, ContactsSnoozeContactResponse, ContactsListLosingTouchContactsResponse, ContactsBulkUpdateContactsData, ContactsBulkUpdateContactsResponse, ContactsListContactsGeoData, ContactsListContactsGeoResponse, ContactsGetContactData, ContactsGetContactResponse, ContactsUpdateContactData, ContactsUpdateContactResponse, ContactsDeleteContactData, ContactsDeleteContactResponse, ContactsRestoreContactData, ContactsRestoreContactResponse, ContactsGetContactHeatmapData, ContactsGetContactHeatmapResponse, ContactsListContactMentionsData, ContactsListContactMentionsResponse, ContactsSyncImessageContactsData, ContactsSyncImessageContactsResponse, ContactsGetImessageProfileData, ContactsGetImessageProfileResponse, ContactSharesListContactSharesResponse, ContactSharesCreateContactShareData, ContactSharesCreateContactShareResponse, ContactSharesDeleteContactShareData, ContactSharesDeleteContactShareResponse, ContactStageEventsCreateContactStageEventData, ContactStageEventsCreateContactStageEventResponse, ContactStageEventsListContactStageHistoryData, ContactStageEventsListContactStageHistoryResponse, ContactStageEventsGetLatestStageData, ContactStageEventsGetLatestStageResponse, ContactStageEventsGetStageDurationRouteData, ContactStageEventsGetStageDurationRouteResponse, ContactStageEventsBackfillStageEventsRouteResponse, ContactStageEventsGetStageAnalyticsData, ContactStageEventsGetStageAnalyticsResponse, CustomFieldsListFieldDefinitionsResponse, CustomFieldsCreateFieldDefinitionData, CustomFieldsCreateFieldDefinitionResponse, CustomFieldsUpdateFieldDefinitionData, CustomFieldsUpdateFieldDefinitionResponse, CustomFieldsDeleteFieldDefinitionData, CustomFieldsDeleteFieldDefinitionResponse, CustomFieldsListFieldValuesData, CustomFieldsListFieldValuesResponse, CustomFieldsCreateFieldValueData, CustomFieldsCreateFieldValueResponse, CustomFieldsUpdateFieldValueData, CustomFieldsUpdateFieldValueResponse, CustomFieldsDeleteFieldValueData, CustomFieldsDeleteFieldValueResponse, DebtsListDebtsData, DebtsListDebtsResponse, DebtsCreateDebtRouteData, DebtsCreateDebtRouteResponse, DebtsUpdateDebtData, DebtsUpdateDebtResponse, DebtsDeleteDebtData, DebtsDeleteDebtResponse, DebtsRestoreDebtData, DebtsRestoreDebtResponse, EmailGmailAuthorizeData, EmailGmailAuthorizeResponse, EmailGmailCallbackData, EmailGmailCallbackResponse, EmailListEmailTokensData, EmailListEmailTokensResponse, EmailDeleteEmailTokenData, EmailDeleteEmailTokenResponse, EmailPollContactEmailData, EmailPollContactEmailResponse, EmailPollAllEmailsResponse, GiftsListGiftsData, GiftsListGiftsResponse, GiftsCreateGiftRouteData, GiftsCreateGiftRouteResponse, GiftsUpdateGiftData, GiftsUpdateGiftResponse, GiftsDeleteGiftData, GiftsDeleteGiftResponse, GiftsRestoreGiftData, GiftsRestoreGiftResponse, GiftsGetKanbanBoardResponse, GiftsChangeGiftStatusData, GiftsChangeGiftStatusResponse, GraphGetContactsGraphData, GraphGetContactsGraphResponse, GraphGetContactGraphData, GraphGetContactGraphResponse, IcalUploadIcalData, IcalUploadIcalResponse, IcalConfirmIcalImportData, IcalConfirmIcalImportResponse, ImportExportImportVcardData, ImportExportImportVcardResponse, ImportExportExportVcardResponse, ImportExportExportJsonResponse, ImportExportPreviewCsvImportData, ImportExportPreviewCsvImportResponse, ImportExportImportCsvData, ImportExportImportCsvResponse, ImportExportExportCsvData, ImportExportExportCsvResponse, InteractionsListInteractionsData, InteractionsListInteractionsResponse, InteractionsCreateInteractionRouteData, InteractionsCreateInteractionRouteResponse, InteractionsUpdateInteractionData, InteractionsUpdateInteractionResponse, InteractionsDeleteInteractionData, InteractionsDeleteInteractionResponse, InteractionsConfirmDraftInteractionData, InteractionsConfirmDraftInteractionResponse, InteractionsRestoreInteractionData, InteractionsRestoreInteractionResponse, LifeEventsListLifeEventsData, LifeEventsListLifeEventsResponse, LifeEventsCreateLifeEventRouteData, LifeEventsCreateLifeEventRouteResponse, LifeEventsUpdateLifeEventData, LifeEventsUpdateLifeEventResponse, LifeEventsDeleteLifeEventData, LifeEventsDeleteLifeEventResponse, LifeEventsRestoreLifeEventData, LifeEventsRestoreLifeEventResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, MediaRecommendationsListMediaRecommendationsData, MediaRecommendationsListMediaRecommendationsResponse, MediaRecommendationsCreateMediaRecommendationRouteData, MediaRecommendationsCreateMediaRecommendationRouteResponse, MediaRecommendationsUpdateMediaRecommendationData, MediaRecommendationsUpdateMediaRecommendationResponse, MediaRecommendationsDeleteMediaRecommendationData, MediaRecommendationsDeleteMediaRecommendationResponse, NotesListNotesData, NotesListNotesResponse, NotesCreateNoteRouteData, NotesCreateNoteRouteResponse, NotesUpdateNoteRouteData, NotesUpdateNoteRouteResponse, NotesDeleteNoteData, NotesDeleteNoteResponse, NotesRestoreNoteData, NotesRestoreNoteResponse, OrganizationsListOrganizationsData, OrganizationsListOrganizationsResponse, OrganizationsCreateOrganizationData, OrganizationsCreateOrganizationResponse, OrganizationsGetOrganizationData, OrganizationsGetOrganizationResponse, OrganizationsUpdateOrganizationData, OrganizationsUpdateOrganizationResponse, OrganizationsDeleteOrganizationData, OrganizationsDeleteOrganizationResponse, OrganizationsGetOrganizationWithContactsData, OrganizationsGetOrganizationWithContactsResponse, PetsListPetsData, PetsListPetsResponse, PetsCreatePetRouteData, PetsCreatePetRouteResponse, PetsUpdatePetData, PetsUpdatePetResponse, PetsDeletePetData, PetsDeletePetResponse, PrivateCreateUserData, PrivateCreateUserResponse, PrivateSeedDataData, PrivateSeedDataResponse, RelationshipInverseMapListInverseMapsData, RelationshipInverseMapListInverseMapsResponse, RelationshipInverseMapCreateInverseMapData, RelationshipInverseMapCreateInverseMapResponse, RelationshipInverseMapGetInverseMapData, RelationshipInverseMapGetInverseMapResponse, RelationshipInverseMapUpdateInverseMapData, RelationshipInverseMapUpdateInverseMapResponse, RelationshipInverseMapDeleteInverseMapData, RelationshipInverseMapDeleteInverseMapResponse, RelationshipInverseMapSeedInverseMapEndpointResponse, RelationshipInverseMapLookupInverseData, RelationshipInverseMapLookupInverseResponse, RelationshipsLookupInverseData, RelationshipsLookupInverseResponse, RelationshipsListRelationshipsData, RelationshipsListRelationshipsResponse, RelationshipsCreateRelationshipRouteData, RelationshipsCreateRelationshipRouteResponse, RelationshipsUpdateRelationshipData, RelationshipsUpdateRelationshipResponse, RelationshipsDeleteRelationshipData, RelationshipsDeleteRelationshipResponse, RemindersListRemindersData, RemindersListRemindersResponse, RemindersCreateReminderRouteData, RemindersCreateReminderRouteResponse, RemindersListDueRemindersData, RemindersListDueRemindersResponse, RemindersDismissReminderData, RemindersDismissReminderResponse, RemindersUpdateReminderData, RemindersUpdateReminderResponse, RemindersDeleteReminderData, RemindersDeleteReminderResponse, RemindersSnoozeReminderData, RemindersSnoozeReminderResponse, RemindersGetSnoozeHistoryData, RemindersGetSnoozeHistoryResponse, RemindersGetSnoozeStatsData, RemindersGetSnoozeStatsResponse, RemindersGetChronicSnoozersData, RemindersGetChronicSnoozersResponse, RemindersRestoreReminderData, RemindersRestoreReminderResponse, SavedFiltersListSavedFiltersData, SavedFiltersListSavedFiltersResponse, SavedFiltersCreateSavedFilterRouteData, SavedFiltersCreateSavedFilterRouteResponse, SavedFiltersUpdateSavedFilterRouteData, SavedFiltersUpdateSavedFilterRouteResponse, SavedFiltersDeleteSavedFilterRouteData, SavedFiltersDeleteSavedFilterRouteResponse, SearchSearchData, SearchSearchResponse, SetupSetupPageData, SetupSetupPageResponse, SetupSetupSubmitData, SetupSetupSubmitResponse, TagsListTagsData, TagsListTagsResponse, TagsCreateTagRouteData, TagsCreateTagRouteResponse, TagsUpdateTagData, TagsUpdateTagResponse, TagsDeleteTagData, TagsDeleteTagResponse, TagSharesPreviewTagShareData, TagSharesPreviewTagShareResponse, TagSharesCreateTagShareData, TagSharesCreateTagShareResponse, TagSharesListTagSharesData, TagSharesListTagSharesResponse, TagSharesDeleteTagShareData, TagSharesDeleteTagShareResponse, TagSharesLogTagShareAuditData, TagSharesLogTagShareAuditResponse, TranscribeTranscribeAudioData, TranscribeTranscribeAudioResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsHealthResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse, UtilsEnvironmentResponse, UtilsStatusResponse, UtilsVersionInfoResponse, VCardConflictsListVcardConflictsData, VCardConflictsListVcardConflictsResponse, VCardConflictsResolveVcardConflictData, VCardConflictsResolveVcardConflictResponse, VCardConflictsDeleteVcardConflictData, VCardConflictsDeleteVcardConflictResponse, WebhooksTwilioWebhookData, WebhooksTwilioWebhookResponse, WebhooksListWebhooksResponse, WebhooksCreateWebhookData, WebhooksCreateWebhookResponse, WebhooksUpdateWebhookData, WebhooksUpdateWebhookResponse, WebhooksDeleteWebhookData, WebhooksDeleteWebhookResponse, WebhooksInboundWebhookData, WebhooksInboundWebhookResponse } from './types.gen';
+import type { ActivityLogsListActivityLogsData, ActivityLogsListActivityLogsResponse, AddressesListAddressesData, AddressesListAddressesResponse, AddressesCreateAddressRouteData, AddressesCreateAddressRouteResponse, AddressesUpdateAddressData, AddressesUpdateAddressResponse, AddressesDeleteAddressData, AddressesDeleteAddressResponse, AddressesGeocodeAddressManualData, AddressesGeocodeAddressManualResponse, AddressesGeocodeMissingCoordinatesResponse, ApiKeysListMyApiKeysResponse, ApiKeysCreateMyApiKeyData, ApiKeysCreateMyApiKeyResponse, ApiKeysRevokeMyApiKeyData, ApiKeysRevokeMyApiKeyResponse, CalendarGetCalendarMonthData, CalendarGetCalendarMonthResponse, CalendarCreateCalendarTokenData, CalendarCreateCalendarTokenResponse, CalendarListCalendarTokensResponse, CalendarRevokeCalendarTokenData, CalendarRevokeCalendarTokenResponse, CalendarGetCalendarIcsData, CalendarGetCalendarIcsResponse, CarddavWellKnownCarddavResponse, CommunicationPreferencesGetCommunicationPreferenceData, CommunicationPreferencesGetCommunicationPreferenceResponse, CommunicationPreferencesUpsertCommunicationPreferenceData, CommunicationPreferencesUpsertCommunicationPreferenceResponse, CommunicationPreferencesDeleteCommunicationPreferenceData, CommunicationPreferencesDeleteCommunicationPreferenceResponse, ContactFieldsListContactFieldsData, ContactFieldsListContactFieldsResponse, ContactFieldsCreateContactFieldRouteData, ContactFieldsCreateContactFieldRouteResponse, ContactFieldsUpdateContactFieldData, ContactFieldsUpdateContactFieldResponse, ContactFieldsDeleteContactFieldData, ContactFieldsDeleteContactFieldResponse, ContactsGetContactPdfData, ContactsGetContactPdfResponse, ContactsGetDistinctStagesResponse, ContactsGetKanbanBoardData, ContactsGetKanbanBoardResponse, ContactsGetContactStageEventsData, ContactsGetContactStageEventsResponse, ContactsListContactsData, ContactsListContactsResponse, ContactsCreateContactData, ContactsCreateContactResponse, ContactsListOverdueContactsData, ContactsListOverdueContactsResponse, ContactsListLosingTouchContactsResponse, ContactsSnoozeContactData, ContactsSnoozeContactResponse, ContactsSnoozeContact1Data, ContactsSnoozeContact1Response, ContactsSnoozeContact2Data, ContactsSnoozeContact2Response, ContactsBulkUpdateContactsData, ContactsBulkUpdateContactsResponse, ContactsListContactsGeoData, ContactsListContactsGeoResponse, ContactsGetContactData, ContactsGetContactResponse, ContactsUpdateContactData, ContactsUpdateContactResponse, ContactsDeleteContactData, ContactsDeleteContactResponse, ContactsRestoreContactData, ContactsRestoreContactResponse, ContactsGetContactHeatmapData, ContactsGetContactHeatmapResponse, ContactsListContactMentionsData, ContactsListContactMentionsResponse, ContactsSyncImessageContactsData, ContactsSyncImessageContactsResponse, ContactsGetImessageProfileData, ContactsGetImessageProfileResponse, ContactSharesListContactSharesResponse, ContactSharesCreateContactShareData, ContactSharesCreateContactShareResponse, ContactSharesDeleteContactShareData, ContactSharesDeleteContactShareResponse, ContactStageEventsCreateContactStageEventData, ContactStageEventsCreateContactStageEventResponse, ContactStageEventsListContactStageHistoryData, ContactStageEventsListContactStageHistoryResponse, ContactStageEventsGetLatestStageData, ContactStageEventsGetLatestStageResponse, ContactStageEventsGetStageDurationRouteData, ContactStageEventsGetStageDurationRouteResponse, ContactStageEventsBackfillStageEventsRouteResponse, ContactStageEventsGetStageAnalyticsData, ContactStageEventsGetStageAnalyticsResponse, CustomFieldsListFieldDefinitionsResponse, CustomFieldsCreateFieldDefinitionData, CustomFieldsCreateFieldDefinitionResponse, CustomFieldsUpdateFieldDefinitionData, CustomFieldsUpdateFieldDefinitionResponse, CustomFieldsDeleteFieldDefinitionData, CustomFieldsDeleteFieldDefinitionResponse, CustomFieldsListFieldValuesData, CustomFieldsListFieldValuesResponse, CustomFieldsCreateFieldValueData, CustomFieldsCreateFieldValueResponse, CustomFieldsUpdateFieldValueData, CustomFieldsUpdateFieldValueResponse, CustomFieldsDeleteFieldValueData, CustomFieldsDeleteFieldValueResponse, DebtsListDebtsData, DebtsListDebtsResponse, DebtsCreateDebtRouteData, DebtsCreateDebtRouteResponse, DebtsUpdateDebtData, DebtsUpdateDebtResponse, DebtsDeleteDebtData, DebtsDeleteDebtResponse, DebtsRestoreDebtData, DebtsRestoreDebtResponse, EmailGmailAuthorizeData, EmailGmailAuthorizeResponse, EmailGmailCallbackData, EmailGmailCallbackResponse, EmailListEmailTokensData, EmailListEmailTokensResponse, EmailDeleteEmailTokenData, EmailDeleteEmailTokenResponse, EmailPollContactEmailData, EmailPollContactEmailResponse, EmailPollAllEmailsResponse, GiftsListGiftsData, GiftsListGiftsResponse, GiftsCreateGiftRouteData, GiftsCreateGiftRouteResponse, GiftsUpdateGiftData, GiftsUpdateGiftResponse, GiftsDeleteGiftData, GiftsDeleteGiftResponse, GiftsRestoreGiftData, GiftsRestoreGiftResponse, GiftsGetKanbanBoardResponse, GiftsChangeGiftStatusData, GiftsChangeGiftStatusResponse, GraphGetContactsGraphData, GraphGetContactsGraphResponse, GraphGetContactGraphData, GraphGetContactGraphResponse, IcalUploadIcalData, IcalUploadIcalResponse, IcalConfirmIcalImportData, IcalConfirmIcalImportResponse, ImportExportImportVcardData, ImportExportImportVcardResponse, ImportExportExportVcardResponse, ImportExportExportJsonResponse, ImportExportPreviewCsvImportData, ImportExportPreviewCsvImportResponse, ImportExportImportCsvData, ImportExportImportCsvResponse, ImportExportExportCsvData, ImportExportExportCsvResponse, InteractionsListInteractionsData, InteractionsListInteractionsResponse, InteractionsCreateInteractionRouteData, InteractionsCreateInteractionRouteResponse, InteractionsUpdateInteractionData, InteractionsUpdateInteractionResponse, InteractionsDeleteInteractionData, InteractionsDeleteInteractionResponse, InteractionsConfirmDraftInteractionData, InteractionsConfirmDraftInteractionResponse, InteractionsRestoreInteractionData, InteractionsRestoreInteractionResponse, LifeEventsListLifeEventsData, LifeEventsListLifeEventsResponse, LifeEventsCreateLifeEventRouteData, LifeEventsCreateLifeEventRouteResponse, LifeEventsUpdateLifeEventData, LifeEventsUpdateLifeEventResponse, LifeEventsDeleteLifeEventData, LifeEventsDeleteLifeEventResponse, LifeEventsRestoreLifeEventData, LifeEventsRestoreLifeEventResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, MediaRecommendationsListMediaRecommendationsData, MediaRecommendationsListMediaRecommendationsResponse, MediaRecommendationsCreateMediaRecommendationRouteData, MediaRecommendationsCreateMediaRecommendationRouteResponse, MediaRecommendationsUpdateMediaRecommendationData, MediaRecommendationsUpdateMediaRecommendationResponse, MediaRecommendationsDeleteMediaRecommendationData, MediaRecommendationsDeleteMediaRecommendationResponse, NotesListNotesData, NotesListNotesResponse, NotesCreateNoteRouteData, NotesCreateNoteRouteResponse, NotesUpdateNoteRouteData, NotesUpdateNoteRouteResponse, NotesDeleteNoteData, NotesDeleteNoteResponse, NotesRestoreNoteData, NotesRestoreNoteResponse, OrganizationsListOrganizationsData, OrganizationsListOrganizationsResponse, OrganizationsCreateOrganizationData, OrganizationsCreateOrganizationResponse, OrganizationsGetOrganizationData, OrganizationsGetOrganizationResponse, OrganizationsUpdateOrganizationData, OrganizationsUpdateOrganizationResponse, OrganizationsDeleteOrganizationData, OrganizationsDeleteOrganizationResponse, OrganizationsGetOrganizationWithContactsData, OrganizationsGetOrganizationWithContactsResponse, PetsListPetsData, PetsListPetsResponse, PetsCreatePetRouteData, PetsCreatePetRouteResponse, PetsUpdatePetData, PetsUpdatePetResponse, PetsDeletePetData, PetsDeletePetResponse, PrivateCreateUserData, PrivateCreateUserResponse, PrivateSeedDataData, PrivateSeedDataResponse, RelationshipInverseMapListInverseMapsData, RelationshipInverseMapListInverseMapsResponse, RelationshipInverseMapCreateInverseMapData, RelationshipInverseMapCreateInverseMapResponse, RelationshipInverseMapGetInverseMapData, RelationshipInverseMapGetInverseMapResponse, RelationshipInverseMapUpdateInverseMapData, RelationshipInverseMapUpdateInverseMapResponse, RelationshipInverseMapDeleteInverseMapData, RelationshipInverseMapDeleteInverseMapResponse, RelationshipInverseMapSeedInverseMapEndpointResponse, RelationshipInverseMapLookupInverseData, RelationshipInverseMapLookupInverseResponse, RelationshipsLookupInverseData, RelationshipsLookupInverseResponse, RelationshipsListRelationshipsData, RelationshipsListRelationshipsResponse, RelationshipsCreateRelationshipRouteData, RelationshipsCreateRelationshipRouteResponse, RelationshipsUpdateRelationshipData, RelationshipsUpdateRelationshipResponse, RelationshipsDeleteRelationshipData, RelationshipsDeleteRelationshipResponse, RemindersListRemindersData, RemindersListRemindersResponse, RemindersCreateReminderRouteData, RemindersCreateReminderRouteResponse, RemindersListDueRemindersData, RemindersListDueRemindersResponse, RemindersDismissReminderData, RemindersDismissReminderResponse, RemindersUpdateReminderData, RemindersUpdateReminderResponse, RemindersDeleteReminderData, RemindersDeleteReminderResponse, RemindersSnoozeReminderData, RemindersSnoozeReminderResponse, RemindersGetSnoozeHistoryData, RemindersGetSnoozeHistoryResponse, RemindersGetSnoozeStatsData, RemindersGetSnoozeStatsResponse, RemindersGetChronicSnoozersData, RemindersGetChronicSnoozersResponse, RemindersRestoreReminderData, RemindersRestoreReminderResponse, SavedFiltersListSavedFiltersData, SavedFiltersListSavedFiltersResponse, SavedFiltersCreateSavedFilterRouteData, SavedFiltersCreateSavedFilterRouteResponse, SavedFiltersUpdateSavedFilterRouteData, SavedFiltersUpdateSavedFilterRouteResponse, SavedFiltersDeleteSavedFilterRouteData, SavedFiltersDeleteSavedFilterRouteResponse, SearchSearchData, SearchSearchResponse, SetupSetupPageData, SetupSetupPageResponse, SetupSetupSubmitData, SetupSetupSubmitResponse, TagsListTagsData, TagsListTagsResponse, TagsCreateTagRouteData, TagsCreateTagRouteResponse, TagsUpdateTagData, TagsUpdateTagResponse, TagsDeleteTagData, TagsDeleteTagResponse, TagSharesPreviewTagShareData, TagSharesPreviewTagShareResponse, TagSharesCreateTagShareData, TagSharesCreateTagShareResponse, TagSharesListTagSharesData, TagSharesListTagSharesResponse, TagSharesDeleteTagShareData, TagSharesDeleteTagShareResponse, TagSharesLogTagShareAuditData, TagSharesLogTagShareAuditResponse, TranscribeTranscribeAudioData, TranscribeTranscribeAudioResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsHealthResponse, UtilsApiStatusResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse, UtilsStatusResponse, UtilsEnvironmentResponse, UtilsVersionInfoResponse, VCardConflictsListVcardConflictsData, VCardConflictsListVcardConflictsResponse, VCardConflictsResolveVcardConflictData, VCardConflictsResolveVcardConflictResponse, VCardConflictsDeleteVcardConflictData, VCardConflictsDeleteVcardConflictResponse, WebhooksTwilioWebhookData, WebhooksTwilioWebhookResponse, WebhooksListWebhooksResponse, WebhooksCreateWebhookData, WebhooksCreateWebhookResponse, WebhooksUpdateWebhookData, WebhooksUpdateWebhookResponse, WebhooksDeleteWebhookData, WebhooksDeleteWebhookResponse, WebhooksInboundWebhookData, WebhooksInboundWebhookResponse } from './types.gen';
 
 export class ActivityLogsService {
     /**
@@ -60,7 +60,7 @@ export class AddressesService {
             }
         });
     }
-    
+
     /**
      * Create Address Route
      * Create a new address.
@@ -80,7 +80,7 @@ export class AddressesService {
             }
         });
     }
-    
+
     /**
      * Update Address
      * Update an address.
@@ -104,7 +104,7 @@ export class AddressesService {
             }
         });
     }
-    
+
     /**
      * Delete Address
      * Delete an address.
@@ -125,7 +125,7 @@ export class AddressesService {
             }
         });
     }
-    
+
     /**
      * Geocode Address Manual
      * Manually trigger geocoding for an address.
@@ -146,7 +146,7 @@ export class AddressesService {
             }
         });
     }
-    
+
     /**
      * Geocode Missing Coordinates
      * Trigger geocoding for all addresses missing coordinates (owned by user).
@@ -173,7 +173,7 @@ export class ApiKeysService {
             url: '/api/v1/users/me/api-keys/'
         });
     }
-    
+
     /**
      * Create My Api Key
      * Create a new API key. Returns the plaintext token once — store it now.
@@ -193,7 +193,7 @@ export class ApiKeysService {
             }
         });
     }
-    
+
     /**
      * Revoke My Api Key
      * Revoke a key. Idempotent: revoking an already-revoked key returns 200.
@@ -236,7 +236,7 @@ export class CalendarService {
             }
         });
     }
-    
+
     /**
      * Create Calendar Token
      * Create a new calendar token for ICS feed access.
@@ -256,7 +256,7 @@ export class CalendarService {
             }
         });
     }
-    
+
     /**
      * List Calendar Tokens
      * List all calendar tokens for the current user.
@@ -269,7 +269,7 @@ export class CalendarService {
             url: '/api/v1/calendar/tokens'
         });
     }
-    
+
     /**
      * Revoke Calendar Token
      * Revoke a calendar token (soft delete by setting status to revoked).
@@ -290,7 +290,7 @@ export class CalendarService {
             }
         });
     }
-    
+
     /**
      * Get Calendar Ics
      * Return the ICS calendar feed for the authenticated user via bearer token.
@@ -349,7 +349,7 @@ export class CommunicationPreferencesService {
             }
         });
     }
-    
+
     /**
      * Upsert Communication Preference
      * Create or update communication preferences for a contact (upsert).
@@ -373,7 +373,7 @@ export class CommunicationPreferencesService {
             }
         });
     }
-    
+
     /**
      * Delete Communication Preference
      * Delete communication preferences for a contact.
@@ -423,7 +423,7 @@ export class ContactFieldsService {
             }
         });
     }
-    
+
     /**
      * Create Contact Field Route
      * Create a new contact field.
@@ -443,7 +443,7 @@ export class ContactFieldsService {
             }
         });
     }
-    
+
     /**
      * Update Contact Field
      * Update a contact field.
@@ -467,7 +467,7 @@ export class ContactFieldsService {
             }
         });
     }
-    
+
     /**
      * Delete Contact Field
      * Delete a contact field.
@@ -511,7 +511,7 @@ export class ContactsService {
             }
         });
     }
-    
+
     /**
      * Get Distinct Stages
      * Return distinct stage values used by the current user's contacts.
@@ -524,7 +524,7 @@ export class ContactsService {
             url: '/api/v1/contacts/stages/distinct'
         });
     }
-    
+
     /**
      * Get Kanban Board
      * Return contacts grouped by stage for kanban board.
@@ -547,7 +547,7 @@ export class ContactsService {
             }
         });
     }
-    
+
     /**
      * Get Contact Stage Events
      * Get stage change history for a contact.
@@ -568,7 +568,7 @@ export class ContactsService {
             }
         });
     }
-    
+
     /**
      * List Contacts
      * List contacts with filtering.
@@ -609,7 +609,7 @@ export class ContactsService {
             }
         });
     }
-    
+
     /**
      * Create Contact
      * Create a new contact.
@@ -629,7 +629,7 @@ export class ContactsService {
             }
         });
     }
-    
+
     /**
      * List Overdue Contacts
      * List contacts that are overdue for a follow-up.
@@ -652,6 +652,19 @@ export class ContactsService {
     }
 
     /**
+     * List Losing Touch Contacts
+     * List contacts with a set cadence that are overdue or never contacted.
+     * @returns ContactsPublic Successful Response
+     * @throws ApiError
+     */
+    public static listLosingTouchContacts(): CancelablePromise<ContactsListLosingTouchContactsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/contacts/losing-touch'
+        });
+    }
+
+    /**
      * Snooze Contact
      * Snooze a contact for a specified duration ('1w', '2w', '1m', '3m', '6m', 'indefinitely') or explicit datetime.
      * @param data The data for the request.
@@ -661,6 +674,54 @@ export class ContactsService {
      * @throws ApiError
      */
     public static snoozeContact(data: ContactsSnoozeContactData): CancelablePromise<ContactsSnoozeContactResponse> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/contacts/{contact_id}/skip',
+            path: {
+                contact_id: data.contactId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+
+    /**
+     * Snooze Contact
+     * Snooze a contact for a specified duration ('1w', '2w', '1m', '3m', '6m', 'indefinitely') or explicit datetime.
+     * @param data The data for the request.
+     * @param data.contactId
+     * @param data.requestBody
+     * @returns ContactPublic Successful Response
+     * @throws ApiError
+     */
+    public static snoozeContact1(data: ContactsSnoozeContact1Data): CancelablePromise<ContactsSnoozeContact1Response> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/contacts/{contact_id}/snooze',
+            path: {
+                contact_id: data.contactId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+
+    /**
+     * Snooze Contact
+     * Snooze a contact for a specified duration ('1w', '2w', '1m', '3m', '6m', 'indefinitely') or explicit datetime.
+     * @param data The data for the request.
+     * @param data.contactId
+     * @param data.requestBody
+     * @returns ContactPublic Successful Response
+     * @throws ApiError
+     */
+    public static snoozeContact2(data: ContactsSnoozeContact2Data): CancelablePromise<ContactsSnoozeContact2Response> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/v1/contacts/{contact_id}/snooze',
@@ -675,20 +736,6 @@ export class ContactsService {
         });
     }
 
-    /**
-     * List Losing Touch Contacts
-
-     * List contacts with a set cadence that are overdue or never contacted.
-     * @returns ContactsPublic Successful Response
-     * @throws ApiError
-     */
-    public static listLosingTouchContacts(): CancelablePromise<ContactsListLosingTouchContactsResponse> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/contacts/losing-touch'
-        });
-    }
-    
     /**
      * Bulk Update Contacts
      * Bulk update contacts by explicit IDs or filtered selection.
@@ -708,7 +755,7 @@ export class ContactsService {
             }
         });
     }
-    
+
     /**
      * List Contacts Geo
      * List contacts with geographic coordinates for map visualization.
@@ -739,7 +786,7 @@ export class ContactsService {
             }
         });
     }
-    
+
     /**
      * Get Contact
      * Get a single contact by ID.
@@ -760,7 +807,7 @@ export class ContactsService {
             }
         });
     }
-    
+
     /**
      * Update Contact
      * Update a contact.
@@ -784,7 +831,7 @@ export class ContactsService {
             }
         });
     }
-    
+
     /**
      * Delete Contact
      * Soft-delete a contact.
@@ -805,7 +852,7 @@ export class ContactsService {
             }
         });
     }
-    
+
     /**
      * Restore Contact
      * Restore a soft-deleted contact.
@@ -826,7 +873,7 @@ export class ContactsService {
             }
         });
     }
-    
+
     /**
      * Get Contact Heatmap
      * Return 52 weekly interaction-count buckets for a contact (oldest first).
@@ -847,7 +894,7 @@ export class ContactsService {
             }
         });
     }
-    
+
     /**
      * List Contact Mentions
      * Get notes where this contact is mentioned.
@@ -868,7 +915,7 @@ export class ContactsService {
             }
         });
     }
-    
+
     /**
      * Sync Imessage Contacts
      * Sync iMessage profiles to kindred contacts.
@@ -891,7 +938,7 @@ export class ContactsService {
             }
         });
     }
-    
+
     /**
      * Get Imessage Profile
      * Get the raw iMessage profile for a contact.
@@ -926,7 +973,7 @@ export class ContactSharesService {
             url: '/api/v1/contact-shares/'
         });
     }
-    
+
     /**
      * Create Contact Share
      * @param data The data for the request.
@@ -945,7 +992,7 @@ export class ContactSharesService {
             }
         });
     }
-    
+
     /**
      * Delete Contact Share
      * @param data The data for the request.
@@ -994,7 +1041,7 @@ export class ContactStageEventsService {
             }
         });
     }
-    
+
     /**
      * List Contact Stage History
      * List all stage events for a contact, newest first.
@@ -1015,7 +1062,7 @@ export class ContactStageEventsService {
             }
         });
     }
-    
+
     /**
      * Get Latest Stage
      * Get the most recent stage event for a contact.
@@ -1036,7 +1083,7 @@ export class ContactStageEventsService {
             }
         });
     }
-    
+
     /**
      * Get Stage Duration Route
      * Get dwell times for a specific stage.
@@ -1062,7 +1109,7 @@ export class ContactStageEventsService {
             }
         });
     }
-    
+
     /**
      * Backfill Stage Events Route
      * Backfill seed stage events for all contacts owned by the current user.
@@ -1078,7 +1125,7 @@ export class ContactStageEventsService {
             url: '/api/v1/contacts/backfill-stage-events'
         });
     }
-    
+
     /**
      * Get Stage Analytics
      * Get aggregate dwell time per stage for a contact.
@@ -1118,7 +1165,7 @@ export class CustomFieldsService {
             url: '/api/v1/custom-fields/definitions/'
         });
     }
-    
+
     /**
      * Create Field Definition
      * Create a new custom field definition.
@@ -1138,7 +1185,7 @@ export class CustomFieldsService {
             }
         });
     }
-    
+
     /**
      * Update Field Definition
      * Update a custom field definition.
@@ -1162,7 +1209,7 @@ export class CustomFieldsService {
             }
         });
     }
-    
+
     /**
      * Delete Field Definition
      * Delete a custom field definition.
@@ -1183,7 +1230,7 @@ export class CustomFieldsService {
             }
         });
     }
-    
+
     /**
      * List Field Values
      * List custom field values for a contact.
@@ -1204,7 +1251,7 @@ export class CustomFieldsService {
             }
         });
     }
-    
+
     /**
      * Create Field Value
      * Create a custom field value for a contact.
@@ -1224,7 +1271,7 @@ export class CustomFieldsService {
             }
         });
     }
-    
+
     /**
      * Update Field Value
      * Update a custom field value.
@@ -1248,7 +1295,7 @@ export class CustomFieldsService {
             }
         });
     }
-    
+
     /**
      * Delete Field Value
      * Delete a custom field value.
@@ -1292,7 +1339,7 @@ export class DebtsService {
             }
         });
     }
-    
+
     /**
      * Create Debt Route
      * Create a new debt.
@@ -1312,7 +1359,7 @@ export class DebtsService {
             }
         });
     }
-    
+
     /**
      * Update Debt
      * Update a debt.
@@ -1336,7 +1383,7 @@ export class DebtsService {
             }
         });
     }
-    
+
     /**
      * Delete Debt
      * Soft-delete a debt by setting deleted_at.
@@ -1357,7 +1404,7 @@ export class DebtsService {
             }
         });
     }
-    
+
     /**
      * Restore Debt
      * Restore a soft-deleted debt by clearing deleted_at.
@@ -1405,7 +1452,7 @@ export class EmailService {
             }
         });
     }
-    
+
     /**
      * Gmail Callback
      * Handle Gmail OAuth2 callback and store encrypted tokens.
@@ -1430,7 +1477,7 @@ export class EmailService {
             }
         });
     }
-    
+
     /**
      * List Email Tokens
      * List configured email OAuth tokens for the current user.
@@ -1451,7 +1498,7 @@ export class EmailService {
             }
         });
     }
-    
+
     /**
      * Delete Email Token
      * Delete an email OAuth token.
@@ -1472,7 +1519,7 @@ export class EmailService {
             }
         });
     }
-    
+
     /**
      * Poll Contact Email
      * Manually trigger email polling for a contact.
@@ -1495,7 +1542,7 @@ export class EmailService {
             }
         });
     }
-    
+
     /**
      * Poll All Emails
      * Manually trigger email polling for all contacts with auto_log_email enabled.
@@ -1531,7 +1578,7 @@ export class GiftsService {
             }
         });
     }
-    
+
     /**
      * Create Gift Route
      * Create a new gift.
@@ -1551,7 +1598,7 @@ export class GiftsService {
             }
         });
     }
-    
+
     /**
      * Update Gift
      * Update a gift.
@@ -1575,7 +1622,7 @@ export class GiftsService {
             }
         });
     }
-    
+
     /**
      * Delete Gift
      * Soft-delete a gift by setting deleted_at.
@@ -1596,7 +1643,7 @@ export class GiftsService {
             }
         });
     }
-    
+
     /**
      * Restore Gift
      * Restore a soft-deleted gift by clearing deleted_at.
@@ -1617,7 +1664,7 @@ export class GiftsService {
             }
         });
     }
-    
+
     /**
      * Get Kanban Board
      * Get gifts grouped by status for Kanban board view.
@@ -1630,7 +1677,7 @@ export class GiftsService {
             url: '/api/v1/gifts/kanban'
         });
     }
-    
+
     /**
      * Change Gift Status
      * Change gift status (for drag-and-drop).
@@ -1680,7 +1727,7 @@ export class GraphService {
             }
         });
     }
-    
+
     /**
      * Get Contact Graph
      * Return the neighborhood graph for a specific contact.
@@ -1730,7 +1777,7 @@ export class IcalService {
             }
         });
     }
-    
+
     /**
      * Confirm Ical Import
      * Confirm and import selected iCal proposals.
@@ -1775,7 +1822,7 @@ export class ImportExportService {
             }
         });
     }
-    
+
     /**
      * Export Vcard
      * Export all contacts as a single .vcf file.
@@ -1788,7 +1835,7 @@ export class ImportExportService {
             url: '/api/v1/import-export/export/vcard'
         });
     }
-    
+
     /**
      * Export Json
      * Export all data as JSON.
@@ -1801,7 +1848,7 @@ export class ImportExportService {
             url: '/api/v1/import-export/export/json'
         });
     }
-    
+
     /**
      * Preview Csv Import
      * Preview CSV import: detect columns and show sample rows.
@@ -1823,7 +1870,7 @@ export class ImportExportService {
             }
         });
     }
-    
+
     /**
      * Import Csv
      * Import contacts from a CSV file.
@@ -1856,7 +1903,7 @@ export class ImportExportService {
             }
         });
     }
-    
+
     /**
      * Export Csv
      * Export all contacts as a CSV file with UTF-8 BOM for Excel compatibility.
@@ -1914,7 +1961,7 @@ export class InteractionsService {
             }
         });
     }
-    
+
     /**
      * Create Interaction Route
      * Create a new interaction with one or more attendees.
@@ -1934,7 +1981,7 @@ export class InteractionsService {
             }
         });
     }
-    
+
     /**
      * Update Interaction
      * Update an interaction; ``attendee_ids`` replaces the attendee set.
@@ -1958,7 +2005,7 @@ export class InteractionsService {
             }
         });
     }
-    
+
     /**
      * Delete Interaction
      * Soft-delete an interaction by setting deleted_at.
@@ -1979,7 +2026,7 @@ export class InteractionsService {
             }
         });
     }
-    
+
     /**
      * Confirm Draft Interaction
      * Promote a draft interaction to confirmed.
@@ -2000,7 +2047,7 @@ export class InteractionsService {
             }
         });
     }
-    
+
     /**
      * Restore Interaction
      * Restore a soft-deleted interaction by clearing deleted_at.
@@ -2044,7 +2091,7 @@ export class LifeEventsService {
             }
         });
     }
-    
+
     /**
      * Create Life Event Route
      * Create a new life event.
@@ -2064,7 +2111,7 @@ export class LifeEventsService {
             }
         });
     }
-    
+
     /**
      * Update Life Event
      * Update a life event.
@@ -2088,7 +2135,7 @@ export class LifeEventsService {
             }
         });
     }
-    
+
     /**
      * Delete Life Event
      * Soft-delete a life event by setting deleted_at.
@@ -2109,7 +2156,7 @@ export class LifeEventsService {
             }
         });
     }
-    
+
     /**
      * Restore Life Event
      * Restore a soft-deleted life event by clearing deleted_at.
@@ -2152,7 +2199,7 @@ export class LoginService {
             }
         });
     }
-    
+
     /**
      * Test Token
      * Test access token
@@ -2165,7 +2212,7 @@ export class LoginService {
             url: '/api/v1/login/test-token'
         });
     }
-    
+
     /**
      * Recover Password
      * Password Recovery
@@ -2186,7 +2233,7 @@ export class LoginService {
             }
         });
     }
-    
+
     /**
      * Reset Password
      * Reset password
@@ -2206,7 +2253,7 @@ export class LoginService {
             }
         });
     }
-    
+
     /**
      * Recover Password Html Content
      * HTML Content for Password Recovery
@@ -2250,7 +2297,7 @@ export class MediaRecommendationsService {
             }
         });
     }
-    
+
     /**
      * Create Media Recommendation Route
      * Create a new media recommendation.
@@ -2270,7 +2317,7 @@ export class MediaRecommendationsService {
             }
         });
     }
-    
+
     /**
      * Update Media Recommendation
      * Update a media recommendation.
@@ -2294,7 +2341,7 @@ export class MediaRecommendationsService {
             }
         });
     }
-    
+
     /**
      * Delete Media Recommendation
      * Delete a media recommendation.
@@ -2344,7 +2391,7 @@ export class NotesService {
             }
         });
     }
-    
+
     /**
      * Create Note Route
      * Create a new note.
@@ -2364,7 +2411,7 @@ export class NotesService {
             }
         });
     }
-    
+
     /**
      * Update Note Route
      * Update a note.
@@ -2388,7 +2435,7 @@ export class NotesService {
             }
         });
     }
-    
+
     /**
      * Delete Note
      * Soft-delete a note by setting deleted_at.
@@ -2409,7 +2456,7 @@ export class NotesService {
             }
         });
     }
-    
+
     /**
      * Restore Note
      * Restore a soft-deleted note by clearing deleted_at.
@@ -2455,7 +2502,7 @@ export class OrganizationsService {
             }
         });
     }
-    
+
     /**
      * Create Organization
      * Create a new organization.
@@ -2475,7 +2522,7 @@ export class OrganizationsService {
             }
         });
     }
-    
+
     /**
      * Get Organization
      * Get a specific organization.
@@ -2496,7 +2543,7 @@ export class OrganizationsService {
             }
         });
     }
-    
+
     /**
      * Update Organization
      * Update an organization.
@@ -2520,7 +2567,7 @@ export class OrganizationsService {
             }
         });
     }
-    
+
     /**
      * Delete Organization
      * Delete an organization. Contacts linked to it will have organization_id set to NULL.
@@ -2541,7 +2588,7 @@ export class OrganizationsService {
             }
         });
     }
-    
+
     /**
      * Get Organization With Contacts
      * Get an organization and its linked contacts.
@@ -2585,7 +2632,7 @@ export class PetsService {
             }
         });
     }
-    
+
     /**
      * Create Pet Route
      * Create a new pet.
@@ -2605,7 +2652,7 @@ export class PetsService {
             }
         });
     }
-    
+
     /**
      * Update Pet
      * Update a pet.
@@ -2629,7 +2676,7 @@ export class PetsService {
             }
         });
     }
-    
+
     /**
      * Delete Pet
      * Delete a pet.
@@ -2672,7 +2719,7 @@ export class PrivateService {
             }
         });
     }
-    
+
     /**
      * Seed Data
      * Seed the database with fake demo data. Only available in local environment.
@@ -2722,7 +2769,7 @@ export class RelationshipInverseMapService {
             }
         });
     }
-    
+
     /**
      * Create Inverse Map
      * Add or update a relationship type → inverse mapping.
@@ -2742,7 +2789,7 @@ export class RelationshipInverseMapService {
             }
         });
     }
-    
+
     /**
      * Get Inverse Map
      * Get a single mapping by ID.
@@ -2763,7 +2810,7 @@ export class RelationshipInverseMapService {
             }
         });
     }
-    
+
     /**
      * Update Inverse Map
      * Update a mapping (superuser only).
@@ -2787,7 +2834,7 @@ export class RelationshipInverseMapService {
             }
         });
     }
-    
+
     /**
      * Delete Inverse Map
      * Delete a mapping (superuser only).
@@ -2808,7 +2855,7 @@ export class RelationshipInverseMapService {
             }
         });
     }
-    
+
     /**
      * Seed Inverse Map Endpoint
      * (Re-)populate the map with the canonical symmetric/asymmetric pairs.
@@ -2821,7 +2868,7 @@ export class RelationshipInverseMapService {
             url: '/api/v1/relationship-inverse-map/seed'
         });
     }
-    
+
     /**
      * Lookup Inverse
      * Look up the inverse type for a given relationship type.
@@ -2872,7 +2919,7 @@ export class RelationshipsService {
             }
         });
     }
-    
+
     /**
      * List Relationships
      * List relationships for a contact.
@@ -2893,7 +2940,7 @@ export class RelationshipsService {
             }
         });
     }
-    
+
     /**
      * Create Relationship Route
      * Create a relationship plus its inverse so both contacts stay symmetric.
@@ -2913,7 +2960,7 @@ export class RelationshipsService {
             }
         });
     }
-    
+
     /**
      * Update Relationship
      * Update a relationship.
@@ -2942,7 +2989,7 @@ export class RelationshipsService {
             }
         });
     }
-    
+
     /**
      * Delete Relationship
      * Delete a relationship and its paired inverse row.
@@ -2990,7 +3037,7 @@ export class RemindersService {
             }
         });
     }
-    
+
     /**
      * Create Reminder Route
      * Create a new reminder.
@@ -3010,7 +3057,7 @@ export class RemindersService {
             }
         });
     }
-    
+
     /**
      * List Due Reminders
      * List reminders due now or overdue for the current user.
@@ -3033,7 +3080,7 @@ export class RemindersService {
             }
         });
     }
-    
+
     /**
      * Dismiss Reminder
      * Dismiss a reminder by setting snoozed_until to now (soft-clear from badge).
@@ -3054,7 +3101,7 @@ export class RemindersService {
             }
         });
     }
-    
+
     /**
      * Update Reminder
      * Update a reminder.
@@ -3078,7 +3125,7 @@ export class RemindersService {
             }
         });
     }
-    
+
     /**
      * Delete Reminder
      * Soft-delete a reminder by setting deleted_at.
@@ -3099,7 +3146,7 @@ export class RemindersService {
             }
         });
     }
-    
+
     /**
      * Snooze Reminder
      * Snooze a reminder. Accepts JSON body with minutes/snooze_until, or minutes as query param.
@@ -3127,7 +3174,7 @@ export class RemindersService {
             }
         });
     }
-    
+
     /**
      * Get Snooze History
      * Get snooze history for a reminder.
@@ -3148,7 +3195,7 @@ export class RemindersService {
             }
         });
     }
-    
+
     /**
      * Get Snooze Stats
      * Get snooze count per reminder in the last N days.
@@ -3169,7 +3216,7 @@ export class RemindersService {
             }
         });
     }
-    
+
     /**
      * Get Chronic Snoozers
      * Get contacts with reminders snoozed more than threshold times in N days.
@@ -3192,7 +3239,7 @@ export class RemindersService {
             }
         });
     }
-    
+
     /**
      * Restore Reminder
      * Restore a soft-deleted reminder by clearing deleted_at.
@@ -3238,7 +3285,7 @@ export class SavedFiltersService {
             }
         });
     }
-    
+
     /**
      * Create Saved Filter Route
      * Create a new saved filter / smart list.
@@ -3258,7 +3305,7 @@ export class SavedFiltersService {
             }
         });
     }
-    
+
     /**
      * Update Saved Filter Route
      * Update a saved filter.
@@ -3282,7 +3329,7 @@ export class SavedFiltersService {
             }
         });
     }
-    
+
     /**
      * Delete Saved Filter Route
      * Delete a saved filter.
@@ -3353,7 +3400,7 @@ export class SetupService {
             }
         });
     }
-    
+
     /**
      * Setup Submit
      * @param data The data for the request.
@@ -3397,7 +3444,7 @@ export class TagsService {
             }
         });
     }
-    
+
     /**
      * Create Tag Route
      * Create a new tag.
@@ -3417,7 +3464,7 @@ export class TagsService {
             }
         });
     }
-    
+
     /**
      * Update Tag
      * Update a tag.
@@ -3441,7 +3488,7 @@ export class TagsService {
             }
         });
     }
-    
+
     /**
      * Delete Tag
      * Delete a tag.
@@ -3485,7 +3532,7 @@ export class TagSharesService {
             }
         });
     }
-    
+
     /**
      * Create Tag Share
      * @param data The data for the request.
@@ -3504,7 +3551,7 @@ export class TagSharesService {
             }
         });
     }
-    
+
     /**
      * List Tag Shares
      * @param data The data for the request.
@@ -3524,7 +3571,7 @@ export class TagSharesService {
             }
         });
     }
-    
+
     /**
      * Delete Tag Share
      * @param data The data for the request.
@@ -3546,7 +3593,7 @@ export class TagSharesService {
             }
         });
     }
-    
+
     /**
      * Log Tag Share Audit
      * Log an audit entry for tag share creation (deprecated: now auto-logged).
@@ -3619,7 +3666,7 @@ export class UsersService {
             }
         });
     }
-    
+
     /**
      * Create User
      * Create new user.
@@ -3639,7 +3686,7 @@ export class UsersService {
             }
         });
     }
-    
+
     /**
      * Read User Me
      * Get current user.
@@ -3652,7 +3699,7 @@ export class UsersService {
             url: '/api/v1/users/me'
         });
     }
-    
+
     /**
      * Delete User Me
      * Delete own user.
@@ -3665,7 +3712,7 @@ export class UsersService {
             url: '/api/v1/users/me'
         });
     }
-    
+
     /**
      * Update User Me
      * Update own user.
@@ -3685,7 +3732,7 @@ export class UsersService {
             }
         });
     }
-    
+
     /**
      * Update Password Me
      * Update own password.
@@ -3705,7 +3752,7 @@ export class UsersService {
             }
         });
     }
-    
+
     /**
      * Register User
      * Create new user without the need to be logged in.
@@ -3725,7 +3772,7 @@ export class UsersService {
             }
         });
     }
-    
+
     /**
      * Read User By Id
      * Get a specific user by id.
@@ -3746,7 +3793,7 @@ export class UsersService {
             }
         });
     }
-    
+
     /**
      * Update User
      * Update a user.
@@ -3770,7 +3817,7 @@ export class UsersService {
             }
         });
     }
-    
+
     /**
      * Delete User
      * Delete a user.
@@ -3805,7 +3852,19 @@ export class UtilsService {
             url: '/api/v1/health'
         });
     }
-    
+
+    /**
+     * Api Status
+     * @returns StatusInfo Successful Response
+     * @throws ApiError
+     */
+    public static apiStatus(): CancelablePromise<UtilsApiStatusResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/status'
+        });
+    }
+
     /**
      * Test Email
      * Test emails.
@@ -3826,7 +3885,7 @@ export class UtilsService {
             }
         });
     }
-    
+
     /**
      * Health Check
      * @returns boolean Successful Response
@@ -3838,19 +3897,7 @@ export class UtilsService {
             url: '/api/v1/utils/health-check/'
         });
     }
-    
-    /**
-     * Environment
-     * @returns EnvironmentInfo Successful Response
-     * @throws ApiError
-     */
-    public static environment(): CancelablePromise<UtilsEnvironmentResponse> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/utils/environment/'
-        });
-    }
-    
+
     /**
      * Status
      * @returns StatusInfo Successful Response
@@ -3862,7 +3909,19 @@ export class UtilsService {
             url: '/api/v1/utils/status/'
         });
     }
-    
+
+    /**
+     * Environment
+     * @returns EnvironmentInfo Successful Response
+     * @throws ApiError
+     */
+    public static environment(): CancelablePromise<UtilsEnvironmentResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/utils/environment/'
+        });
+    }
+
     /**
      * Version Info
      * @returns VersionInfo Successful Response
@@ -3899,7 +3958,7 @@ export class VCardConflictsService {
             }
         });
     }
-    
+
     /**
      * Resolve Vcard Conflict
      * Resolve a vCard conflict by accepting remote or keeping local.
@@ -3926,7 +3985,7 @@ export class VCardConflictsService {
             }
         });
     }
-    
+
     /**
      * Delete Vcard Conflict
      * Delete a vCard conflict (dismiss without action).
@@ -3976,7 +4035,7 @@ export class WebhooksService {
             }
         });
     }
-    
+
     /**
      * List Webhooks
      * List all webhook endpoints for the user.
@@ -3989,7 +4048,7 @@ export class WebhooksService {
             url: '/api/v1/webhooks/'
         });
     }
-    
+
     /**
      * Create Webhook
      * Create a new webhook endpoint.
@@ -4009,7 +4068,7 @@ export class WebhooksService {
             }
         });
     }
-    
+
     /**
      * Update Webhook
      * Update a webhook endpoint.
@@ -4033,7 +4092,7 @@ export class WebhooksService {
             }
         });
     }
-    
+
     /**
      * Delete Webhook
      * Delete a webhook endpoint.
@@ -4054,7 +4113,7 @@ export class WebhooksService {
             }
         });
     }
-    
+
     /**
      * Inbound Webhook
      * Inbound webhook receiver for external integrations (n8n, Aqara, etc.).

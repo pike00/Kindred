@@ -121,7 +121,15 @@ regen-client:
     #!/usr/bin/env bash
     set -euo pipefail
     bash scripts/generate-client.sh
-    {{_dc}} restart frontend
+    project="$(just env | sed -n 's/^COMPOSE_PROJECT_NAME=//p')"
+    [[ "$project" =~ ^[a-z0-9][a-z0-9_-]+$ ]] || { echo "Invalid preview project" >&2; exit 1; }
+    container="$(docker ps -q --filter "label=com.docker.compose.project=$project" --filter 'label=com.docker.compose.service=frontend')"
+    if [ -n "$container" ]; then
+        [[ "$container" != *$'\n'* ]] || { echo "Multiple preview frontends found" >&2; exit 1; }
+        docker restart "$container"
+    else
+        echo "No running frontend in $project; generated SDK is ready for the next start."
+    fi
 
 # Build a wheel + sdist into sdk/dist/.
 [group('SDK')]

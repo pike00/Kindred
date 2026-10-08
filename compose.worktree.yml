@@ -67,7 +67,7 @@ services:
         condition: service_healthy
 
   frontend:
-    image: oven/bun:1-slim
+    image: node:22-slim
     working_dir: /app/frontend
     env_file: .env
     environment:
@@ -89,14 +89,18 @@ services:
       - "127.0.0.1:${FRONTEND_PORT:-5173}:5173"
     volumes:
       - ./package.json:/app/package.json:ro
+      - ./pnpm-lock.yaml:/app/pnpm-lock.yaml:ro
+      - ./pnpm-workspace.yaml:/app/pnpm-workspace.yaml:ro
       - ./frontend:/app/frontend
-      - frontend-node-modules:/app/frontend/node_modules
+      - frontend-pnpm-root-modules:/app/node_modules
+      - frontend-pnpm-workspace-modules:/app/frontend/node_modules
     command:
       - sh
       - -c
       - |
-        bun install &&
-        bun run dev --host 0.0.0.0 --port 5173
+        npm install -g pnpm@11.3.0 &&
+        pnpm install --frozen-lockfile &&
+        pnpm exec vite --host 0.0.0.0 --port 5173
     networks:
       - default
       - pikenet-private
@@ -203,7 +207,8 @@ volumes:
   db-data:
   redis-data:
   meili-data:
-  frontend-node-modules:
+  frontend-pnpm-root-modules:
+  frontend-pnpm-workspace-modules:
 
 networks:
   default:

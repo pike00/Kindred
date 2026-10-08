@@ -1,7 +1,6 @@
 #! /usr/bin/env bash
 
-set -e
-set -x
+set -euo pipefail
 
 # Force local env so private (dev-only) routes — including PrivateService used
 # by frontend/src/lib/seed.ts — are included in the OpenAPI export.
@@ -11,10 +10,12 @@ cd backend
 uv run python -c "import app.main; import json; print(json.dumps(app.main.app.openapi()))" > ../openapi.json
 cd ..
 mv openapi.json frontend/
-if command -v bun >/dev/null 2>&1; then
-  (cd frontend && bun run generate-client && bun run lint)
-else
-  pnpm --filter frontend generate-client
-  pnpm run lint
-fi
+pnpm --filter frontend generate-client
 
+# The legacy client generator leaves spaces on otherwise empty lines.
+uv run --project backend python - <<'PY'
+from pathlib import Path
+
+for path in Path("frontend/src/client").glob("*.gen.ts"):
+    path.write_text("\n".join(line if line.strip() else "" for line in path.read_text().splitlines()) + "\n")
+PY
