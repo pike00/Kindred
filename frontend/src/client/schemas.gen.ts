@@ -2913,7 +2913,6 @@ export const ContactUpdateActionSchema = {
         evidence: {
             type: 'string',
             maxLength: 1000,
-            minLength: 1,
             title: 'Evidence'
         },
         review_warning: {
@@ -2965,7 +2964,6 @@ export const ContactUpdateActionSchema = {
             },
             type: 'array',
             maxItems: 7,
-            minItems: 1,
             title: 'Fields'
         }
     },
@@ -4426,7 +4424,6 @@ export const InteractionActionSchema = {
         evidence: {
             type: 'string',
             maxLength: 1000,
-            minLength: 1,
             title: 'Evidence'
         },
         review_warning: {
@@ -4993,7 +4990,6 @@ export const LifeEventActionSchema = {
         evidence: {
             type: 'string',
             maxLength: 1000,
-            minLength: 1,
             title: 'Evidence'
         },
         review_warning: {
@@ -5023,13 +5019,11 @@ export const LifeEventActionSchema = {
         event_type: {
             type: 'string',
             maxLength: 100,
-            minLength: 1,
             title: 'Event Type'
         },
         title: {
             type: 'string',
             maxLength: 500,
-            minLength: 1,
             title: 'Title'
         },
         description: {
@@ -5553,7 +5547,6 @@ export const NoteActionSchema = {
         evidence: {
             type: 'string',
             maxLength: 1000,
-            minLength: 1,
             title: 'Evidence'
         },
         review_warning: {
@@ -5583,7 +5576,6 @@ export const NoteActionSchema = {
         body: {
             type: 'string',
             maxLength: 50000,
-            minLength: 1,
             title: 'Body'
         }
     },
@@ -7026,7 +7018,6 @@ export const ReminderActionSchema = {
         evidence: {
             type: 'string',
             maxLength: 1000,
-            minLength: 1,
             title: 'Evidence'
         },
         review_warning: {
@@ -7056,7 +7047,6 @@ export const ReminderActionSchema = {
         title: {
             type: 'string',
             maxLength: 500,
-            minLength: 1,
             title: 'Title'
         },
         description: {
