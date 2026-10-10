@@ -6600,6 +6600,17 @@ export const OverdueContactPublicSchema = {
                 }
             ],
             title: 'Days Overdue'
+        },
+        last_interaction_notes: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Last Interaction Notes'
         }
     },
     type: 'object',

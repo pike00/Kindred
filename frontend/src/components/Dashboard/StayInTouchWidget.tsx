@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
 import { useState } from "react"
-import type { ContactPublic } from "@/client"
+import type { OverdueContactPublic } from "@/client"
 import { ContactsService } from "@/client"
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
 import { AddInteractionDialog } from "@/components/Interactions/AddInteractionDialog"
@@ -18,8 +18,16 @@ import {
 import { Skeleton } from "@/components/ui/skeleton"
 import { Clock } from "@/lib/icons"
 
-interface OverdueContact extends ContactPublic {
-  days_overdue?: number
+type OverdueContact = OverdueContactPublic
+
+function daysSince(iso: string | null | undefined): number | null {
+  if (!iso) return null
+  return Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000)
+}
+
+function formatShortDate(iso: string): string {
+  const d = new Date(iso)
+  return `${d.getMonth() + 1}/${d.getDate()}`
 }
 
 const DISPLAY_LIMIT = 2
@@ -107,7 +115,42 @@ export function StayInTouchWidget() {
             const fullName = [contact.first_name, contact.last_name]
               .filter(Boolean)
               .join(" ")
-            const daysOverdue = contact.days_overdue ?? 0
+            const daysSinceLast = daysSince(contact.last_contacted_at)
+            const cadence = contact.contact_frequency_days ?? 30
+            const computedOverdue =
+              contact.days_overdue ??
+              (daysSinceLast != null ? Math.max(0, daysSinceLast - cadence) : 0)
+            const daysOverdue = computedOverdue
+
+            const overdueText =
+              daysOverdue === 1
+                ? "1 day overdue"
+                : `${daysOverdue} days overdue`
+
+            let lastInteractedText: string
+            if (contact.last_contacted_at) {
+              const daysAgoStr =
+                daysSinceLast === 0
+                  ? "today"
+                  : daysSinceLast === 1
+                    ? "1 day ago"
+                    : `${daysSinceLast} days ago`
+              const dateStr = formatShortDate(contact.last_contacted_at)
+              const cleanNote = contact.last_interaction_notes
+                ?.trim()
+                .replace(/\s+/g, " ")
+              const truncatedNote =
+                cleanNote && cleanNote.length > 50
+                  ? `${cleanNote.slice(0, 50)}…`
+                  : cleanNote
+              const detailStr = truncatedNote
+                ? `(${dateStr}: ${truncatedNote})`
+                : `(${dateStr})`
+              lastInteractedText = `Last interacted ${daysAgoStr} ${detailStr}`
+            } else {
+              lastInteractedText = "No interactions yet"
+            }
+
             const isSnoozing = snoozingId === contact.id
             const contactContext = contact.company || ""
 
@@ -131,12 +174,21 @@ export function StayInTouchWidget() {
                     <p className="truncate font-medium text-sm">
                       {fullName || "Unnamed contact"}
                     </p>
-                    <div className="mt-0.5 flex items-center gap-2">
+                    <div
+                      className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground truncate"
+                      title={`${contact.company ? `${contact.company} · ` : ""}${overdueText} · ${lastInteractedText}`}
+                    >
                       {contact.company && (
-                        <span className="truncate text-xs text-muted-foreground">
-                          {contact.company}
-                        </span>
+                        <>
+                          <span className="truncate max-w-[120px]">
+                            {contact.company}
+                          </span>
+                          <span className="shrink-0">·</span>
+                        </>
                       )}
+                      <span className="shrink-0">{overdueText}</span>
+                      <span className="shrink-0">·</span>
+                      <span className="truncate">{lastInteractedText}</span>
                     </div>
                   </div>
                 </Link>
