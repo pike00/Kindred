@@ -982,6 +982,7 @@ class ContactsPublic(SQLModel):
 
 class OverdueContactPublic(ContactPublic):
     days_overdue: int | None = None
+    last_interaction_notes: str | None = None
 
 
 class OverdueContactsPublic(SQLModel):

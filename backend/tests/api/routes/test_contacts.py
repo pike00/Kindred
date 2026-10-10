@@ -1,6 +1,7 @@
 """Tests for contact management routes."""
 
 import uuid
+from datetime import datetime, timedelta, timezone
 
 from fastapi.testclient import TestClient
 from sqlmodel import Session
@@ -876,6 +877,46 @@ def test_snoozed_contact_excluded_from_overdue(
     )
     overdue_ids2 = [c["id"] for c in r_overdue2.json()["data"]]
     assert contact_id not in overdue_ids2
+
+
+def test_list_overdue_contacts_calculates_days_and_includes_notes(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
+    """Overdue contacts list includes days_overdue and last_interaction_notes."""
+    past_date = (datetime.now(timezone.utc) - timedelta(days=45)).isoformat()
+    r = client.post(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=superuser_token_headers,
+        json={
+            "first_name": "OverdueWithNote",
+            "last_contacted_at": past_date,
+            "contact_frequency_days": 15,
+        },
+    )
+    assert r.status_code == 200
+    contact_id = r.json()["id"]
+
+    r_int = client.post(
+        f"{settings.API_V1_STR}/interactions/",
+        headers=superuser_token_headers,
+        json={
+            "channel": "call",
+            "occurred_at": past_date,
+            "notes": "Discussed project updates",
+            "attendee_ids": [contact_id],
+        },
+    )
+    assert r_int.status_code == 200
+
+    r_overdue = client.get(
+        f"{settings.API_V1_STR}/contacts/overdue",
+        headers=superuser_token_headers,
+    )
+    assert r_overdue.status_code == 200
+    matched = next((c for c in r_overdue.json()["data"] if c["id"] == contact_id), None)
+    assert matched is not None
+    assert matched["days_overdue"] == 30  # 45 days since - 15 cadence
+    assert matched["last_interaction_notes"] == "Discussed project updates"
 
 
 def test_do_not_contact_excluded_from_follow_up_surfaces(
