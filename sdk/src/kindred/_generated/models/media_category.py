@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class MediaCategory(str, Enum):
+class MediaCategory(StrEnum):
     BOOK = "book"
     MOVIE = "movie"
     MUSICIAN = "musician"

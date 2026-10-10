@@ -74,11 +74,11 @@ def sync_detailed(
     code: str,
     state: str,
 ) -> Response[EmailGmailCallbackResponseEmailGmailCallback | HTTPValidationError]:
-    r"""Gmail Callback
+    """Gmail Callback
 
      Handle Gmail OAuth2 callback and store encrypted tokens.
 
-    State format: \"{contact_id}:{email_address}\"
+    State format: "{contact_id}:{email_address}"
 
     Args:
         code (str):
@@ -110,11 +110,11 @@ def sync(
     code: str,
     state: str,
 ) -> EmailGmailCallbackResponseEmailGmailCallback | HTTPValidationError | None:
-    r"""Gmail Callback
+    """Gmail Callback
 
      Handle Gmail OAuth2 callback and store encrypted tokens.
 
-    State format: \"{contact_id}:{email_address}\"
+    State format: "{contact_id}:{email_address}"
 
     Args:
         code (str):
@@ -141,11 +141,11 @@ async def asyncio_detailed(
     code: str,
     state: str,
 ) -> Response[EmailGmailCallbackResponseEmailGmailCallback | HTTPValidationError]:
-    r"""Gmail Callback
+    """Gmail Callback
 
      Handle Gmail OAuth2 callback and store encrypted tokens.
 
-    State format: \"{contact_id}:{email_address}\"
+    State format: "{contact_id}:{email_address}"
 
     Args:
         code (str):
@@ -175,11 +175,11 @@ async def asyncio(
     code: str,
     state: str,
 ) -> EmailGmailCallbackResponseEmailGmailCallback | HTTPValidationError | None:
-    r"""Gmail Callback
+    """Gmail Callback
 
      Handle Gmail OAuth2 callback and store encrypted tokens.
 
-    State format: \"{contact_id}:{email_address}\"
+    State format: "{contact_id}:{email_address}"
 
     Args:
         code (str):

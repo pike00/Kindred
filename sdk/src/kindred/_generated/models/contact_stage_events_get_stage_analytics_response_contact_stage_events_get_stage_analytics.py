@@ -16,8 +16,6 @@ T = TypeVar("T", bound="ContactStageEventsGetStageAnalyticsResponseContactStageE
 
 @_attrs_define
 class ContactStageEventsGetStageAnalyticsResponseContactStageEventsGetStageAnalytics:
-    """ """
-
     additional_properties: dict[str, list[list[Any]]] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:

@@ -30,7 +30,7 @@ class InverseRelationshipMapsPublic:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.inverse_relationship_map_public import InverseRelationshipMapPublic
+        from ..models.inverse_relationship_map_public import InverseRelationshipMapPublic  # noqa: PLC0415
 
         data = []
         for data_item_data in self.data:
@@ -52,7 +52,7 @@ class InverseRelationshipMapsPublic:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.inverse_relationship_map_public import InverseRelationshipMapPublic
+        from ..models.inverse_relationship_map_public import InverseRelationshipMapPublic  # noqa: PLC0415
 
         d = dict(src_dict)
         data = []

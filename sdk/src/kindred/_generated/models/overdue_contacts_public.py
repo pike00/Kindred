@@ -30,7 +30,7 @@ class OverdueContactsPublic:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.overdue_contact_public import OverdueContactPublic
+        from ..models.overdue_contact_public import OverdueContactPublic  # noqa: PLC0415
 
         data = []
         for data_item_data in self.data:
@@ -52,7 +52,7 @@ class OverdueContactsPublic:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.overdue_contact_public import OverdueContactPublic
+        from ..models.overdue_contact_public import OverdueContactPublic  # noqa: PLC0415
 
         d = dict(src_dict)
         data = []

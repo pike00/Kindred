@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class DebtDirection(str, Enum):
+class DebtDirection(StrEnum):
     I_OWE = "i_owe"
     THEY_OWE = "they_owe"
 

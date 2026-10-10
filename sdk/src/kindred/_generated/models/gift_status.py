@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class GiftStatus(str, Enum):
+class GiftStatus(StrEnum):
     GIVEN = "given"
     IDEA = "idea"
     PURCHASED = "purchased"

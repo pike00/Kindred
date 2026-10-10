@@ -39,8 +39,8 @@ class BulkUpdateRequest:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.bulk_filters import BulkFilters
-        from ..models.bulk_operations import BulkOperations
+        from ..models.bulk_filters import BulkFilters  # noqa: PLC0415
+        from ..models.bulk_operations import BulkOperations  # noqa: PLC0415
 
         operations = self.operations.to_dict()
 
@@ -88,8 +88,8 @@ class BulkUpdateRequest:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.bulk_filters import BulkFilters
-        from ..models.bulk_operations import BulkOperations
+        from ..models.bulk_filters import BulkFilters  # noqa: PLC0415
+        from ..models.bulk_operations import BulkOperations  # noqa: PLC0415
 
         d = dict(src_dict)
         operations = BulkOperations.from_dict(d.pop("operations"))

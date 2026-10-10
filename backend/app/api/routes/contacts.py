@@ -42,6 +42,7 @@ from app.models import (
     ContactUpdate,
     Interaction,
     InteractionAttendee,
+    OverdueContactPublic,
     OverdueContactsPublic,
     Relationship,
     SavedFilter,
@@ -325,7 +326,47 @@ def list_overdue_contacts(
         .order_by(Contact.last_contacted_at.asc())
     )
     contacts = session.exec(stmt).all()
-    return OverdueContactsPublic(data=contacts, count=len(contacts))
+    contact_ids = [c.id for c in contacts]
+    latest_interaction_notes: dict[uuid.UUID, str | None] = {}
+    if contact_ids:
+        ix_stmt = (
+            select(InteractionAttendee.contact_id, Interaction.notes)
+            .join(Interaction, Interaction.id == InteractionAttendee.interaction_id)
+            .where(
+                InteractionAttendee.contact_id.in_(contact_ids),
+                Interaction.deleted_at.is_(None),
+                Interaction.is_draft == False,  # noqa: E712
+            )
+            .order_by(InteractionAttendee.contact_id, Interaction.occurred_at.desc())
+        )
+        for cid, notes in session.exec(ix_stmt).all():
+            if cid not in latest_interaction_notes:
+                latest_interaction_notes[cid] = notes
+
+    res = []
+    for c in contacts:
+        last_dt = (
+            c.last_contacted_at.replace(tzinfo=timezone.utc)
+            if c.last_contacted_at and c.last_contacted_at.tzinfo is None
+            else c.last_contacted_at
+        )
+        if last_dt:
+            days_since = (now - last_dt).days
+            cadence = c.contact_frequency_days if c.contact_frequency_days is not None else days
+            days_overdue = max(0, days_since - cadence)
+        else:
+            days_overdue = None
+
+        res.append(
+            OverdueContactPublic.model_validate(
+                c,
+                update={
+                    "days_overdue": days_overdue,
+                    "last_interaction_notes": latest_interaction_notes.get(c.id),
+                },
+            )
+        )
+    return OverdueContactsPublic(data=res, count=len(res))
 
 
 @router.get("/losing-touch", response_model=ContactsPublic)

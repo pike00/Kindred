@@ -31,7 +31,7 @@ class ContactsGeoResponse:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.contact_geo_point import ContactGeoPoint
+        from ..models.contact_geo_point import ContactGeoPoint  # noqa: PLC0415
 
         points = []
         for points_item_data in self.points:
@@ -53,7 +53,7 @@ class ContactsGeoResponse:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.contact_geo_point import ContactGeoPoint
+        from ..models.contact_geo_point import ContactGeoPoint  # noqa: PLC0415
 
         d = dict(src_dict)
         points = []

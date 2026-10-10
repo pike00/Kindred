@@ -1660,6 +1660,7 @@ export type OverdueContactPublic = {
     [key: string]: unknown;
 } | null);
     days_overdue?: (number | null);
+    last_interaction_notes?: (string | null);
 };
 
 export type OverdueContactsPublic = {

@@ -38,8 +38,8 @@ class CSVPreviewResponse:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.csv_preview_response_detected_mapping import CSVPreviewResponseDetectedMapping
-        from ..models.csv_preview_response_sample_rows_item import CSVPreviewResponseSampleRowsItem
+        from ..models.csv_preview_response_detected_mapping import CSVPreviewResponseDetectedMapping  # noqa: PLC0415
+        from ..models.csv_preview_response_sample_rows_item import CSVPreviewResponseSampleRowsItem  # noqa: PLC0415
 
         headers = self.headers
 
@@ -70,8 +70,8 @@ class CSVPreviewResponse:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.csv_preview_response_detected_mapping import CSVPreviewResponseDetectedMapping
-        from ..models.csv_preview_response_sample_rows_item import CSVPreviewResponseSampleRowsItem
+        from ..models.csv_preview_response_detected_mapping import CSVPreviewResponseDetectedMapping  # noqa: PLC0415
+        from ..models.csv_preview_response_sample_rows_item import CSVPreviewResponseSampleRowsItem  # noqa: PLC0415
 
         d = dict(src_dict)
         headers = cast(list[str], d.pop("headers"))

@@ -107,9 +107,9 @@ class ContactPublic:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.contact_public_imessage_profile_type_0 import ContactPublicImessageProfileType0
-        from ..models.contact_stage_event_public import ContactStageEventPublic
-        from ..models.tag_public import TagPublic
+        from ..models.contact_public_imessage_profile_type_0 import ContactPublicImessageProfileType0  # noqa: PLC0415
+        from ..models.contact_stage_event_public import ContactStageEventPublic  # noqa: PLC0415
+        from ..models.tag_public import TagPublic  # noqa: PLC0415
 
         first_name = self.first_name
 
@@ -385,9 +385,9 @@ class ContactPublic:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.contact_public_imessage_profile_type_0 import ContactPublicImessageProfileType0
-        from ..models.contact_stage_event_public import ContactStageEventPublic
-        from ..models.tag_public import TagPublic
+        from ..models.contact_public_imessage_profile_type_0 import ContactPublicImessageProfileType0  # noqa: PLC0415
+        from ..models.contact_stage_event_public import ContactStageEventPublic  # noqa: PLC0415
+        from ..models.tag_public import TagPublic  # noqa: PLC0415
 
         d = dict(src_dict)
         first_name = d.pop("first_name")

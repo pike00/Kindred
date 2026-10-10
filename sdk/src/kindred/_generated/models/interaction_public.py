@@ -57,7 +57,7 @@ class InteractionPublic:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.interaction_attendee_summary import InteractionAttendeeSummary
+        from ..models.interaction_attendee_summary import InteractionAttendeeSummary  # noqa: PLC0415
 
         channel = self.channel.value
 
@@ -153,7 +153,7 @@ class InteractionPublic:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.interaction_attendee_summary import InteractionAttendeeSummary
+        from ..models.interaction_attendee_summary import InteractionAttendeeSummary  # noqa: PLC0415
 
         d = dict(src_dict)
         channel = InteractionChannel(d.pop("channel"))
