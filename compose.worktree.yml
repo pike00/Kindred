@@ -67,7 +67,7 @@ services:
         condition: service_healthy
 
   frontend:
-    image: node:22-slim
+    image: node:25-slim
     working_dir: /app/frontend
     env_file: .env
     environment:
