@@ -42,7 +42,7 @@ class IMessageProfileResponse:
     def to_dict(self) -> dict[str, Any]:
         from ..models.i_message_profile_response_imessage_profile_type_0 import (
             IMessageProfileResponseImessageProfileType0,
-        )
+        )  # noqa: PLC0415
 
         imessage_id: None | str | Unset
         if isinstance(self.imessage_id, Unset):
@@ -90,7 +90,7 @@ class IMessageProfileResponse:
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         from ..models.i_message_profile_response_imessage_profile_type_0 import (
             IMessageProfileResponseImessageProfileType0,
-        )
+        )  # noqa: PLC0415
 
         d = dict(src_dict)
 

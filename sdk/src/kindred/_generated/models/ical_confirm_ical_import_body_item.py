@@ -14,8 +14,6 @@ T = TypeVar("T", bound="IcalConfirmIcalImportBodyItem")
 
 @_attrs_define
 class IcalConfirmIcalImportBodyItem:
-    """ """
-
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:

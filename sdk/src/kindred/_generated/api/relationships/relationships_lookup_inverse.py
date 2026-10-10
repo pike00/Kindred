@@ -70,14 +70,14 @@ def sync_detailed(
     client: AuthenticatedClient,
     type_: str,
 ) -> Response[HTTPValidationError | RelationshipsLookupInverseResponseRelationshipsLookupInverse]:
-    r"""Lookup Inverse
+    """Lookup Inverse
 
      Return the inferred inverse for a relationship type, or null.
 
     The frontend calls this before saving to decide whether to prompt
-    the user for the inverse. Symmetric types (\"friend\") return
-    themselves; asymmetric pairs (\"parent\") return their counterpart
-    (\"child\"); unknown types return null so the UI can ask.
+    the user for the inverse. Symmetric types ("friend") return
+    themselves; asymmetric pairs ("parent") return their counterpart
+    ("child"); unknown types return null so the UI can ask.
 
     Args:
         type_ (str):
@@ -106,14 +106,14 @@ def sync(
     client: AuthenticatedClient,
     type_: str,
 ) -> HTTPValidationError | RelationshipsLookupInverseResponseRelationshipsLookupInverse | None:
-    r"""Lookup Inverse
+    """Lookup Inverse
 
      Return the inferred inverse for a relationship type, or null.
 
     The frontend calls this before saving to decide whether to prompt
-    the user for the inverse. Symmetric types (\"friend\") return
-    themselves; asymmetric pairs (\"parent\") return their counterpart
-    (\"child\"); unknown types return null so the UI can ask.
+    the user for the inverse. Symmetric types ("friend") return
+    themselves; asymmetric pairs ("parent") return their counterpart
+    ("child"); unknown types return null so the UI can ask.
 
     Args:
         type_ (str):
@@ -137,14 +137,14 @@ async def asyncio_detailed(
     client: AuthenticatedClient,
     type_: str,
 ) -> Response[HTTPValidationError | RelationshipsLookupInverseResponseRelationshipsLookupInverse]:
-    r"""Lookup Inverse
+    """Lookup Inverse
 
      Return the inferred inverse for a relationship type, or null.
 
     The frontend calls this before saving to decide whether to prompt
-    the user for the inverse. Symmetric types (\"friend\") return
-    themselves; asymmetric pairs (\"parent\") return their counterpart
-    (\"child\"); unknown types return null so the UI can ask.
+    the user for the inverse. Symmetric types ("friend") return
+    themselves; asymmetric pairs ("parent") return their counterpart
+    ("child"); unknown types return null so the UI can ask.
 
     Args:
         type_ (str):
@@ -171,14 +171,14 @@ async def asyncio(
     client: AuthenticatedClient,
     type_: str,
 ) -> HTTPValidationError | RelationshipsLookupInverseResponseRelationshipsLookupInverse | None:
-    r"""Lookup Inverse
+    """Lookup Inverse
 
      Return the inferred inverse for a relationship type, or null.
 
     The frontend calls this before saving to decide whether to prompt
-    the user for the inverse. Symmetric types (\"friend\") return
-    themselves; asymmetric pairs (\"parent\") return their counterpart
-    (\"child\"); unknown types return null so the UI can ask.
+    the user for the inverse. Symmetric types ("friend") return
+    themselves; asymmetric pairs ("parent") return their counterpart
+    ("child"); unknown types return null so the UI can ask.
 
     Args:
         type_ (str):

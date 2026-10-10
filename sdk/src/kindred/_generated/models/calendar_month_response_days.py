@@ -19,12 +19,10 @@ T = TypeVar("T", bound="CalendarMonthResponseDays")
 
 @_attrs_define
 class CalendarMonthResponseDays:
-    """ """
-
     additional_properties: dict[str, list[CalendarEntry]] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.calendar_entry import CalendarEntry
+        from ..models.calendar_entry import CalendarEntry  # noqa: PLC0415
 
         field_dict: dict[str, Any] = {}
         for prop_name, prop in self.additional_properties.items():
@@ -37,7 +35,7 @@ class CalendarMonthResponseDays:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.calendar_entry import CalendarEntry
+        from ..models.calendar_entry import CalendarEntry  # noqa: PLC0415
 
         d = dict(src_dict)
         calendar_month_response_days = cls()

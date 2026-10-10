@@ -37,7 +37,7 @@ class MentionPublic:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.contact_public import ContactPublic
+        from ..models.contact_public import ContactPublic  # noqa: PLC0415
 
         note_id = str(self.note_id)
 
@@ -62,7 +62,7 @@ class MentionPublic:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.contact_public import ContactPublic
+        from ..models.contact_public import ContactPublic  # noqa: PLC0415
 
         d = dict(src_dict)
         note_id = UUID(d.pop("note_id"))

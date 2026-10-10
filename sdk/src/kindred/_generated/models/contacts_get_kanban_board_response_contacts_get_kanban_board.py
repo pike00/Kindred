@@ -19,12 +19,10 @@ T = TypeVar("T", bound="ContactsGetKanbanBoardResponseContactsGetKanbanBoard")
 
 @_attrs_define
 class ContactsGetKanbanBoardResponseContactsGetKanbanBoard:
-    """ """
-
     additional_properties: dict[str, ContactsPublic] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.contacts_public import ContactsPublic
+        from ..models.contacts_public import ContactsPublic  # noqa: PLC0415
 
         field_dict: dict[str, Any] = {}
         for prop_name, prop in self.additional_properties.items():
@@ -34,12 +32,12 @@ class ContactsGetKanbanBoardResponseContactsGetKanbanBoard:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.contacts_public import ContactsPublic
+        from ..models.contacts_public import ContactsPublic  # noqa: PLC0415
 
         d = dict(src_dict)
         contacts_get_kanban_board_response_contacts_get_kanban_board = cls()
 
-        from ..models.contact_public import ContactPublic
+        from ..models.contact_public import ContactPublic  # noqa: PLC0415
 
         additional_properties = {}
         for prop_name, prop_dict in d.items():

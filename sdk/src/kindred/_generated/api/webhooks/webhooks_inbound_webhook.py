@@ -72,17 +72,17 @@ def sync_detailed(
     client: AuthenticatedClient | Client,
     body: WebhooksInboundWebhookPayload,
 ) -> Response[HTTPValidationError | WebhookEventResponse]:
-    r"""Inbound Webhook
+    """Inbound Webhook
 
      Inbound webhook receiver for external integrations (n8n, Aqara, etc.).
 
     Payload format:
     {
-        \"contact_email\": \"user@example.com\",  // OR
-        \"contact_name\": \"John Doe\",           // lookup by name
-        \"channel\": \"call\",                     // InteractionChannel value
-        \"notes\": \"Called about project X\",     // optional
-        \"occurred_at\": \"2024-01-15T10:00:00Z\"  // optional, defaults to now
+        "contact_email": "user@example.com",  // OR
+        "contact_name": "John Doe",           // lookup by name
+        "channel": "call",                     // InteractionChannel value
+        "notes": "Called about project X",     // optional
+        "occurred_at": "2024-01-15T10:00:00Z"  // optional, defaults to now
     }
 
     Args:
@@ -115,17 +115,17 @@ def sync(
     client: AuthenticatedClient | Client,
     body: WebhooksInboundWebhookPayload,
 ) -> HTTPValidationError | WebhookEventResponse | None:
-    r"""Inbound Webhook
+    """Inbound Webhook
 
      Inbound webhook receiver for external integrations (n8n, Aqara, etc.).
 
     Payload format:
     {
-        \"contact_email\": \"user@example.com\",  // OR
-        \"contact_name\": \"John Doe\",           // lookup by name
-        \"channel\": \"call\",                     // InteractionChannel value
-        \"notes\": \"Called about project X\",     // optional
-        \"occurred_at\": \"2024-01-15T10:00:00Z\"  // optional, defaults to now
+        "contact_email": "user@example.com",  // OR
+        "contact_name": "John Doe",           // lookup by name
+        "channel": "call",                     // InteractionChannel value
+        "notes": "Called about project X",     // optional
+        "occurred_at": "2024-01-15T10:00:00Z"  // optional, defaults to now
     }
 
     Args:
@@ -153,17 +153,17 @@ async def asyncio_detailed(
     client: AuthenticatedClient | Client,
     body: WebhooksInboundWebhookPayload,
 ) -> Response[HTTPValidationError | WebhookEventResponse]:
-    r"""Inbound Webhook
+    """Inbound Webhook
 
      Inbound webhook receiver for external integrations (n8n, Aqara, etc.).
 
     Payload format:
     {
-        \"contact_email\": \"user@example.com\",  // OR
-        \"contact_name\": \"John Doe\",           // lookup by name
-        \"channel\": \"call\",                     // InteractionChannel value
-        \"notes\": \"Called about project X\",     // optional
-        \"occurred_at\": \"2024-01-15T10:00:00Z\"  // optional, defaults to now
+        "contact_email": "user@example.com",  // OR
+        "contact_name": "John Doe",           // lookup by name
+        "channel": "call",                     // InteractionChannel value
+        "notes": "Called about project X",     // optional
+        "occurred_at": "2024-01-15T10:00:00Z"  // optional, defaults to now
     }
 
     Args:
@@ -194,17 +194,17 @@ async def asyncio(
     client: AuthenticatedClient | Client,
     body: WebhooksInboundWebhookPayload,
 ) -> HTTPValidationError | WebhookEventResponse | None:
-    r"""Inbound Webhook
+    """Inbound Webhook
 
      Inbound webhook receiver for external integrations (n8n, Aqara, etc.).
 
     Payload format:
     {
-        \"contact_email\": \"user@example.com\",  // OR
-        \"contact_name\": \"John Doe\",           // lookup by name
-        \"channel\": \"call\",                     // InteractionChannel value
-        \"notes\": \"Called about project X\",     // optional
-        \"occurred_at\": \"2024-01-15T10:00:00Z\"  // optional, defaults to now
+        "contact_email": "user@example.com",  // OR
+        "contact_name": "John Doe",           // lookup by name
+        "channel": "call",                     // InteractionChannel value
+        "notes": "Called about project X",     // optional
+        "occurred_at": "2024-01-15T10:00:00Z"  // optional, defaults to now
     }
 
     Args:

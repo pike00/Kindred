@@ -14,8 +14,6 @@ T = TypeVar("T", bound="TagSharesLogTagShareAuditResponseTagSharesLogTagShareAud
 
 @_attrs_define
 class TagSharesLogTagShareAuditResponseTagSharesLogTagShareAudit:
-    """ """
-
     additional_properties: dict[str, str] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:

@@ -37,7 +37,7 @@ class BodyImportExportImportCsv:
     def to_dict(self) -> dict[str, Any]:
         from ..models.body_import_export_import_csv_column_mapping_type_0 import (
             BodyImportExportImportCsvColumnMappingType0,
-        )
+        )  # noqa: PLC0415
 
         file = self.file
 
@@ -64,7 +64,7 @@ class BodyImportExportImportCsv:
     def to_multipart(self) -> types.RequestFiles:
         from ..models.body_import_export_import_csv_column_mapping_type_0 import (
             BodyImportExportImportCsvColumnMappingType0,
-        )
+        )  # noqa: PLC0415
 
         files: types.RequestFiles = []
 
@@ -90,7 +90,7 @@ class BodyImportExportImportCsv:
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         from ..models.body_import_export_import_csv_column_mapping_type_0 import (
             BodyImportExportImportCsvColumnMappingType0,
-        )
+        )  # noqa: PLC0415
 
         d = dict(src_dict)
         file = d.pop("file")

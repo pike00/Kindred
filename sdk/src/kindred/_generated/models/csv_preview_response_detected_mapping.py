@@ -16,8 +16,6 @@ T = TypeVar("T", bound="CSVPreviewResponseDetectedMapping")
 
 @_attrs_define
 class CSVPreviewResponseDetectedMapping:
-    """ """
-
     additional_properties: dict[str, None | str] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:

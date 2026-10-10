@@ -40,7 +40,7 @@ class TagSharePreview:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.share_preview_entity import SharePreviewEntity
+        from ..models.share_preview_entity import SharePreviewEntity  # noqa: PLC0415
 
         tag_id = str(self.tag_id)
 
@@ -74,7 +74,7 @@ class TagSharePreview:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.share_preview_entity import SharePreviewEntity
+        from ..models.share_preview_entity import SharePreviewEntity  # noqa: PLC0415
 
         d = dict(src_dict)
         tag_id = UUID(d.pop("tag_id"))

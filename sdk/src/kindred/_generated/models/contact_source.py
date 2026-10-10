@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class ContactSource(str, Enum):
+class ContactSource(StrEnum):
     CARDDAV = "carddav"
     GOOGLE = "google"
     MANUAL = "manual"

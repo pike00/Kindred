@@ -34,7 +34,7 @@ class SavedFilterUpdate:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.saved_filter_update_filter_json_type_0 import SavedFilterUpdateFilterJsonType0
+        from ..models.saved_filter_update_filter_json_type_0 import SavedFilterUpdateFilterJsonType0  # noqa: PLC0415
 
         name: None | str | Unset
         if isinstance(self.name, Unset):
@@ -72,7 +72,7 @@ class SavedFilterUpdate:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.saved_filter_update_filter_json_type_0 import SavedFilterUpdateFilterJsonType0
+        from ..models.saved_filter_update_filter_json_type_0 import SavedFilterUpdateFilterJsonType0  # noqa: PLC0415
 
         d = dict(src_dict)
 

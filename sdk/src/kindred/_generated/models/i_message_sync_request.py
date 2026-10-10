@@ -35,10 +35,10 @@ class IMessageSyncRequest:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.i_message_profile_payload import IMessageProfilePayload
+        from ..models.i_message_profile_payload import IMessageProfilePayload  # noqa: PLC0415
         from ..models.i_message_sync_request_co_mentions_type_0_item import (
             IMessageSyncRequestCoMentionsType0Item,
-        )
+        )  # noqa: PLC0415
 
         profiles = []
         for profiles_item_data in self.profiles:
@@ -75,10 +75,10 @@ class IMessageSyncRequest:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.i_message_profile_payload import IMessageProfilePayload
+        from ..models.i_message_profile_payload import IMessageProfilePayload  # noqa: PLC0415
         from ..models.i_message_sync_request_co_mentions_type_0_item import (
             IMessageSyncRequestCoMentionsType0Item,
-        )
+        )  # noqa: PLC0415
 
         d = dict(src_dict)
         profiles = []
