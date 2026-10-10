@@ -5,6 +5,19 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.128] - 2026-10-10
+
+### Added
+- Feat(dashboard): show overdue duration and last interaction note on contact cards (55f8b6e)
+- Feat(contacts): calculate overdue days and return last interaction notes (e9a9fa4)
+
+### Other
+- Chore: allowlist documentation email in pre-push scan (1376fc4)
+- Chore(sdk): regenerate kindred python sdk models (cefa330)
+- ⬆ bump icalendar from 7.2.2 to 7.3.0 (#280) (6d52f34)
+- ⬆ bump pyjwt from 2.15.0 to 2.15.1 (#278) (15ebdcf)
+- ⬆ bump prek from 0.4.1 to 0.5.5 (#279) (168be12)
+
 ## [0.2.127] - 2026-10-08
 
 ### Fixed
