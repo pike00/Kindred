@@ -38,7 +38,7 @@ target-version = "py312"
 
 [dependency-groups]
 dev = [
-    "openapi-python-client>=0.28",
+    "openapi-python-client>=0.29.1",
     "pytest>=8",
     "pytest-httpx>=0.30",
     "ruff>=0.5",
