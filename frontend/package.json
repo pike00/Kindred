@@ -64,7 +64,7 @@
     "react-leaflet": "^5.0.0",
     "rollup": "^4.63.1",
     "sonner": "^2.0.7",
-    "supercluster": "^8.0.1",
+    "supercluster": "^9.1.0",
     "tailwind-merge": "^3.4.0",
     "tailwindcss": "^4.2.1",
     "tinykeys": "^4.0.0",
