@@ -44,7 +44,8 @@ class RuntimeSecurity(unittest.TestCase):
             self.assertIsNone(shutil.which(name), name)
         self.assertIsNone(importlib.util.find_spec("pip"))
         self.assertIsNone(importlib.util.find_spec("ensurepip"))
-        self.assertIsNone(importlib.util.find_spec("hatchling"))
+        for builder in ("hatchling", "setuptools", "wheel"):
+            self.assertIsNone(importlib.util.find_spec(builder))
         for name in ("fastapi", "arq", "alembic", "curl"):
             self.assertIsNotNone(shutil.which(name), name)
 

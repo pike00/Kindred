@@ -41,10 +41,12 @@ The resulting source hashes exactly match the earlier deployed hotfix:
 | unchanged `backend/scripts/prestart.sh` | `a92b6e105daa4de626b7d77babafacf99fe9ecf3dd674a4876a8753b22cfaf7c` |
 
 PyJWT 2.15.0, certifi 2026.10.19, oauthlib 4.0.0 and urllib3 2.8.0 are exact
-application requirements and hash-locked artifacts. Hatchling 1.32.4 and its
+application requirements and hash-locked artifacts. Hatchling 1.32.4, setuptools 84.2.1, wheel 0.48.0 and their
 transitive build dependencies are separately hash-locked in the build group.
-The application wheel is built without isolated dependency resolution, then
-that group is pruned. uv 0.13.5 exists only in the dependency builder. The final
+The build group is first installed with --no-build. The dependency and
+application wheels are then built with --no-build-isolation, and that group is
+pruned. This also bounds the source-only dkimpy build, which independent review
+found was still resolving an isolated builder in the original implementation. uv 0.13.5 exists only in the dependency builder. The final
 runtime omits uv, pip, ensurepip, compilers and make. This removes unused
 installed software; it is not a claim that remaining OS findings are fixed.
 Mako was also updated in the lock from 1.3.12 to 1.4.2. Its only detected Python
@@ -104,9 +106,11 @@ the patch with zero fuzz. The build-time regression rejects every C0 byte and
 DEL through both USER and PASS before any output, and accepts ordinary values.
 The runtime probe repeats this on the installed interpreter. This is a recorded
 downstream backport, not an assertion that upstream 3.14.10 fixed POP3.
-After image validation, redundant blank context lines were removed from the
-patch file to satisfy `git diff --check`. Reapplying that normalized patch with
-zero fuzz produced exactly the installed/tested `poplib.py` SHA-256
+After arm64 validation, redundant blank context lines were removed from the
+patch. That form passed BSD patch but failed GNU patch with --fuzz=0 in the
+first native amd64 build. Balanced one-line context now applies with GNU patch
+without fuzz, and the build verifies both the original file and resulting
+`poplib.py` SHA-256
 `a6ffff188814b56d95b043c31d9e0dfee51ac6d6e92afe74ab070cb6136b076f`.
 
 ## Validation and remaining gates
@@ -134,7 +138,7 @@ version/tool-removal and POP3 checks. Docker Desktop was limited to approximatel
 or unfixed filter was applied. This is local bootstrap evidence, not an AWS
 amd64 application scan or an absence-of-vulnerabilities claim.
 
-The final disposable combined **arm64** candidate was actually built and all
+The historical disposable combined **arm64** candidate was actually built and all
 eight tests passed. Its full Trivy scan retained the same 283 OS findings and
 enumerated 90 Python distributions with zero Python findings. The installed
 application is 0.2.123; all four required security pins and Mako 1.4.2 match.
@@ -150,13 +154,25 @@ public `VITE_AUTH_MODE=local` switch, not a credential. They were not suppressed
 
 This candidate deliberately has an empty revision label because it was tested
 before committing the runtime changes. It is not eligible for production.
-The amd64 input graph is prepared, but no amd64 candidate was built in this
-local implementation lane. The deployment owner must perform the native amd64
+The arm64 evidence predates the corrected dkimpy builder bootstrap and GNU
+patch context. Native amd64 validation of the corrected inputs is in progress;
+its result is recorded separately by the deployment owner. The deployment owner must perform the native amd64
 clean-revision build and rescan those actual bytes, collect frontend assets and
 complete the synthetic service integration, migration/restore rehearsal and
 production checks. No service/cloud mutation or credential read occurred here.
 
 ## Source and evidence fingerprints
+
+The corrected native amd64 dependency build completed from a cold Python build
+on Ares. Both POP3 checksums passed, dkimpy built with the locked installed
+backend, all eight builder-group distributions were removed, and uv verified
+90 compatible runtime packages. A complete disposable amd64 image then passed
+all eight runtime checks in 7.525 seconds. The build and test logs are retained
+at `/tmp/kindred-runtime-amd64-build.log` and
+`/tmp/kindred-runtime-amd64-test.log`. This validation image still has an empty
+revision label because the review corrections were uncommitted. The final
+clean-commit build, full scan, integration and production receipts belong to
+the deployment report, avoiding a circular source-commit claim here.
 
 The application source commit delivered with this report is assigned by the
 atomic Git commit containing these files; the handoff records its exact SHA.
@@ -164,13 +180,13 @@ These SHA-256 inputs independently bind the tested build:
 
 | Input | SHA-256 |
 | --- | --- |
-| `Dockerfile.prod` | `0d8bf0e825ad4ccfc48bef72093c21dfa1b1b4d1d5228e503739e92296f6e870` |
-| `backend/pyproject.toml` | `5344159e159f1d57940936eb4cd6956984dcce3abe95b93e2008b706b61fa0da` |
-| `uv.lock` | `ea2a90ae1749f43b8fcc940ad9083407e95b2e8a2aaff8799d64ee54d7ea1367` |
+| `Dockerfile.prod` | `7f7bb8dfb94b3791ac3cbcfd71f728b742053bacdec4d8bb17673ecbce734daf` |
+| `backend/pyproject.toml` | `ca7694283425c305ef115ae0595804f9d67801abfa128ab245415cd027ec66b6` |
+| `uv.lock` | `251ade5d6515b27bd634c9abea5bec4c2effd3ecabf68b5f328e99fd061292bf` |
 | `pnpm-lock.yaml` | `5386eb3c8a9f1635ea4ecda50cb6233d5070e5c8a8c74cf1455b197e2f6fd3e3` |
 | `docker/security/build.sh` | `884dc5f104787a96f27c6652fdb202c9dbf87ee287e2fdfc3d3bf360c39c6d10` |
-| `docker/security/build-python.sh` | `d48fbbd60d067ee8b08146068f1adbed3aa84bbddf6339cf808e94d6502422a3` |
-| `docker/security/poplib.patch` | `a04d756691f6b400150b320289e7ac5ed9be0138efa357ec35e1a9248a9d498d` |
+| `docker/security/build-python.sh` | `1fcadba6f8d4ae459a3c0da057407895b73e9d9f678802a028fa959832b050ff` |
+| `docker/security/poplib.patch` | `ff8cd0b1444b6b26f87aa2786811b712820cf6c2095b110d2e68348518366984` |
 | `docker/security/install-pnpm.mjs` | `74ec3eaa469bbda28a6dd281cd373e241eca081161b7c4e61fe14680f21bee4e` |
 
 Temporary evidence retained for the deployment owner:

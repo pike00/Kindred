@@ -16,6 +16,7 @@ rm /tmp/python.tar.xz
 cd /usr/src/python
 echo '527e714523264093910a0a0b1a55c6583f952835c89061537fc40ad98c347056  Lib/poplib.py' | sha256sum -c -
 patch --fuzz=0 -p1 < /tmp/poplib.patch
+echo 'a6ffff188814b56d95b043c31d9e0dfee51ac6d6e92afe74ab070cb6136b076f  Lib/poplib.py' | sha256sum -c -
 ./configure --build="$(dpkg-architecture --query DEB_BUILD_GNU_TYPE)" \
     --enable-loadable-sqlite-extensions --enable-option-checking=fatal \
     --enable-shared --without-ensurepip
