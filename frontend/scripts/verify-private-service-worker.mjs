@@ -113,7 +113,7 @@ await assert.rejects(
   "offline request replayed a private response",
 )
 assert(!cacheNames.has("api-cache"))
-// A final old-worker write must still never be replayed by the new worker.
+// A synthetically inserted stale cache must never be replayed by the new worker.
 cacheNames.set("api-cache", { privateBody: "late account-a" })
 await assert.rejects(fetchPrivate())
 assert(

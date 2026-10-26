@@ -11,38 +11,59 @@ function workerIsSafe(worker: ServiceWorker): Promise<boolean> {
     }
     const timer = setTimeout(() => finish(false), 1000)
     channel.port1.onmessage = (event) => finish(event.data === PROTOCOL)
-    worker.postMessage(PROTOCOL, [channel.port2])
+    try {
+      worker.postMessage(PROTOCOL, [channel.port2])
+    } catch {
+      finish(false)
+    }
   })
 }
 
-// New JS can be served while an older worker still controls the page. Do not
-// mount queries or private routes until that controller confirms NetworkOnly.
+// Subscribe before probing: an automatic update can replace the captured old
+// controller while its handshake is still pending. Only trust the actual current
+// controller after its own successful handshake, regardless of event ordering.
 export async function ensurePrivateApiWorker(): Promise<void> {
   const workers = navigator.serviceWorker
   if (!workers?.controller) return
-  if (await workerIsSafe(workers.controller)) return
-
-  let timeout: ReturnType<typeof setTimeout> | undefined
-  let changed: (() => void) | undefined
-  try {
-    const updated = new Promise<void>((resolve) => {
-      changed = () => resolve()
-      workers.addEventListener("controllerchange", changed, { once: true })
+  let revision = 0
+  let wake!: () => void
+  let change = new Promise<void>((resolve) => {
+    wake = resolve
+  })
+  const changed = () => {
+    revision++
+    wake()
+    change = new Promise<void>((resolve) => {
+      wake = resolve
     })
-    const update = async () => {
-      const registration = await workers.register("/sw.js", {
-        updateViaCache: "none",
-      })
-      await registration.update()
-      await updated
-      if (!workers.controller || !(await workerIsSafe(workers.controller))) {
-        throw new Error(
-          "The security update is not active. Reload to try again.",
-        )
-      }
+  }
+  workers.addEventListener("controllerchange", changed)
+  let timeout: ReturnType<typeof setTimeout> | undefined
+  const currentIsSafe = async (): Promise<boolean> => {
+    for (;;) {
+      const current = workers.controller
+      if (!current) return false
+      const safe = await workerIsSafe(current)
+      if (current === workers.controller) return safe
     }
+  }
+  const ensure = async () => {
+    if (await currentIsSafe()) return
+    const previous = workers.controller
+    const registration = await workers.register("/sw.js", {
+      updateViaCache: "none",
+    })
+    if (previous !== workers.controller && (await currentIsSafe())) return
+    await registration.update()
+    for (;;) {
+      const beforeProbe = revision
+      if (await currentIsSafe()) return
+      if (beforeProbe === revision) await change
+    }
+  }
+  try {
     await Promise.race([
-      update(),
+      ensure(),
       new Promise<never>((_, reject) => {
         timeout = setTimeout(
           () =>
@@ -57,6 +78,6 @@ export async function ensurePrivateApiWorker(): Promise<void> {
     ])
   } finally {
     clearTimeout(timeout)
-    if (changed) workers.removeEventListener("controllerchange", changed)
+    workers.removeEventListener("controllerchange", changed)
   }
 }

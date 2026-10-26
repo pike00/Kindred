@@ -291,16 +291,8 @@ export const ContactsList = () => {
       const params = new URLSearchParams()
       if (selectAllFiltered) params.append("select_all_filtered", "true")
 
-      // Get token from localStorage
-      const token = localStorage.getItem("token") || ""
-
       const response = await sessionFetch(
         `/api/v1/import-export/export/csv?${params.toString()}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
       )
 
       if (!response.ok) throw new Error("Failed to export CSV")

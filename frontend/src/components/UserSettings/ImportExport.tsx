@@ -22,18 +22,17 @@ function downloadBlob(blob: Blob, filename: string) {
 }
 
 async function downloadAuthed(path: string, filename: string, accept: string) {
-  const token =
-    typeof OpenAPI.TOKEN === "function"
-      ? await (OpenAPI.TOKEN as () => Promise<string>)()
-      : OpenAPI.TOKEN || ""
-  const res = await sessionFetch(`${OpenAPI.BASE}${path}`, {
-    method: "GET",
-    credentials: "include",
-    headers: {
-      Accept: accept,
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  const res = await sessionFetch(
+    `${OpenAPI.BASE}${path}`,
+    {
+      method: "GET",
+      credentials: "include",
+      headers: {
+        Accept: accept,
+      },
     },
-  })
+    OpenAPI.TOKEN,
+  )
   if (!res.ok) {
     throw new Error(`Export failed (${res.status})`)
   }

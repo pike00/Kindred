@@ -116,3 +116,55 @@ it("treats an Access HTML redirect as an auth transition", async () => {
   expect(queryClient.getQueryData(["contacts"])).toBeUndefined()
   expect(window.location.assign).toHaveBeenCalledWith("/login")
 })
+
+it("rejects new SDK work after sibling credential drift before its storage event", async () => {
+  const { session, OpenAPI, request, queryClient } = await setup()
+  localStorage.setItem("access_token", "token-a")
+  session.acceptIdentity("account-a")
+  queryClient.setQueryData(["contacts"], { secret: "A" })
+  localStorage.setItem("access_token", "token-b")
+  const adapter = vi.fn(async () => { throw new Error("must not send") })
+  await expect(request(OpenAPI, { method: "POST", url: "/api/v1/notes" }, axios.create({ adapter }))).rejects.toThrow("session changed")
+  expect(adapter).not.toHaveBeenCalled()
+  expect(queryClient.getQueryData(["contacts"])).toBeUndefined()
+  expect(session.getVerifiedAccountId()).toBeNull()
+  expect(localStorage.getItem("access_token")).toBe("token-b")
+  expect(window.location.reload).toHaveBeenCalled()
+})
+
+it("does not overwrite a sibling's login with a simultaneous late login response", async () => {
+  const { session } = await setup()
+  const pendingLogin = session.captureSession()
+  localStorage.setItem("access_token", "sibling-token-b")
+  expect(() => session.completeLogin("token-a", pendingLogin)).toThrow("session changed")
+  expect(localStorage.getItem("access_token")).toBe("sibling-token-b")
+  expect(window.location.reload).toHaveBeenCalled()
+})
+
+it("rejects an A Authorization header under a B generation before fetching", async () => {
+  const { session, api } = await setup()
+  localStorage.setItem("access_token", "token-b")
+  session.acceptIdentity("account-b")
+  const fetchMock = vi.fn()
+  vi.stubGlobal("fetch", fetchMock)
+  await expect(api.sessionFetch("/api/v1/keys", { headers: { Authorization: "Bearer token-a" } })).rejects.toThrow("session changed")
+  expect(fetchMock).not.toHaveBeenCalled()
+  expect(localStorage.getItem("access_token")).toBe("token-b")
+})
+
+it("captures before asynchronous credential resolution and rejects drift during the await", async () => {
+  const { session, api, OpenAPI } = await setup()
+  localStorage.setItem("access_token", "token-a")
+  session.acceptIdentity("account-a")
+  let resolveToken!: (token: string) => void
+  OpenAPI.TOKEN = () => new Promise((resolve) => { resolveToken = resolve })
+  const fetchMock = vi.fn()
+  vi.stubGlobal("fetch", fetchMock)
+  const pending = api.sessionFetch("/api/v1/keys")
+  const rejected = expect(pending).rejects.toThrow("session changed")
+  localStorage.setItem("access_token", "token-b")
+  resolveToken("token-a")
+  await rejected
+  expect(fetchMock).not.toHaveBeenCalled()
+  expect(localStorage.getItem("access_token")).toBe("token-b")
+})

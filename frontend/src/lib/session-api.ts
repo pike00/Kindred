@@ -1,12 +1,14 @@
 import type { AxiosRequestConfig, AxiosResponse } from "axios"
 import { cfEnabled } from "@/auth/cf"
-import { OpenAPI } from "@/client/core/OpenAPI"
+import type { ApiRequestOptions } from "@/client/core/ApiRequestOptions"
+import { OpenAPI, type OpenAPIConfig } from "@/client/core/OpenAPI"
 import {
   acceptIdentity,
   assertSession,
   captureSession,
   leaveSession,
   onSessionReset,
+  reloadSession,
   type Session,
   SessionChangedError,
 } from "./session"
@@ -42,6 +44,13 @@ export function installSessionApi() {
     delete headers["X-Kindred-Request-Session"]
     if (!session) throw new SessionChangedError()
     assertSession(session)
+    if (
+      (headers.Authorization || "") !==
+      (session.token ? `Bearer ${session.token}` : "")
+    ) {
+      reloadSession()
+      throw new SessionChangedError()
+    }
     config.kindredSession = session
     config.signal = config.signal
       ? AbortSignal.any([config.signal as AbortSignal, session.signal])
@@ -69,11 +78,40 @@ export function installSessionApi() {
 export async function sessionFetch(
   input: RequestInfo | URL,
   init?: RequestInit,
-) {
+  credentialSource: OpenAPIConfig["TOKEN"] = OpenAPI.TOKEN,
+): Promise<Response> {
   const session = captureSession()
+  // Capture before resolving any asynchronous credential provider.
+  const token =
+    (typeof credentialSource === "function"
+      ? await credentialSource({
+          method: (init?.method || "GET") as ApiRequestOptions["method"],
+          url: String(input),
+        })
+      : credentialSource) ??
+    session.token ??
+    ""
   assertSession(session)
+  const headers = new Headers(
+    input instanceof Request ? input.headers : undefined,
+  )
+  new Headers(init?.headers).forEach((value, key) => {
+    headers.set(key, value)
+  })
+  const authorization = session.token ? `Bearer ${session.token}` : null
+  if (
+    token !== (session.token ?? "") ||
+    (headers.has("Authorization") &&
+      headers.get("Authorization") !== authorization)
+  ) {
+    reloadSession()
+    throw new SessionChangedError()
+  }
+  if (authorization) headers.set("Authorization", authorization)
   const response = await fetch(input, {
     ...init,
+    headers,
+    credentials: init?.credentials ?? "include",
     cache: "no-store",
     signal: init?.signal
       ? AbortSignal.any([init.signal, session.signal])

@@ -684,3 +684,29 @@ describe("ContactsList", () => {
     expect(screen.getByText("30 people")).toBeInTheDocument()
   })
 })
+
+it("exports CSV with the logged-in bearer and preserves the session", async () => {
+  localStorage.setItem("access_token", "csv-token-a")
+  const fetchMock = vi.fn(async (_url: unknown, init?: RequestInit) => {
+    const authorized = new Headers(init?.headers).get("Authorization") === "Bearer csv-token-a"
+    return { ok: authorized, status: authorized ? 200 : 401, blob: async () => new Blob(["name\nAlice"], { type: "text/csv" }) }
+  })
+  vi.stubGlobal("fetch", fetchMock)
+  const createUrl = vi.fn(() => "blob:csv-export")
+  const revokeUrl = vi.fn()
+  Object.defineProperty(URL, "createObjectURL", { value: createUrl, configurable: true })
+  Object.defineProperty(URL, "revokeObjectURL", { value: revokeUrl, configurable: true })
+  const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {})
+  const { queryClient } = renderContactsListWithData([makeContact({ id: "csv-a" })])
+  const user = userEvent.setup()
+  await user.click(screen.getByRole("checkbox", { name: "Select all loaded contacts" }))
+  await user.click(screen.getByRole("button", { name: "Export CSV" }))
+  await waitFor(() => expect(createUrl).toHaveBeenCalledOnce())
+  expect(new Headers(fetchMock.mock.calls[0][1]?.headers).get("Authorization")).toBe("Bearer csv-token-a")
+  expect(click).toHaveBeenCalledOnce()
+  expect(revokeUrl).toHaveBeenCalledWith("blob:csv-export")
+  expect(localStorage.getItem("access_token")).toBe("csv-token-a")
+  expect(window.location.assign).not.toHaveBeenCalled()
+  expect(queryClient.getQueryData(["contacts", "list", undefined])).toBeDefined()
+  click.mockRestore()
+})

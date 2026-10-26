@@ -4,6 +4,9 @@ let generation = 0
 let controller = new AbortController()
 let ownerId: string | null = null
 let leaving = false
+// Bound once before the generation first accepts work or a verified identity.
+// Reading storage again must never silently adopt a sibling tab's credentials.
+let credential: string | null | undefined
 const listeners = new Set<() => void>()
 const exitListeners = new Set<() => void>()
 const identityListeners = new Set<() => void>()
@@ -16,22 +19,39 @@ export class SessionChangedError extends Error {
   }
 }
 
-export function captureSession() {
+export interface Session {
+  generation: number
+  token: string | null
+  signal: AbortSignal
+}
+
+function assertCredential(): void {
+  if (leaving) throw new SessionChangedError()
+  const stored = localStorage.getItem("access_token")
+  if (credential === undefined) credential = stored
+  if (stored !== credential) {
+    // Preserve the sibling's token while discarding this page's old identity.
+    reloadSession()
+    throw new SessionChangedError()
+  }
+}
+
+export function captureSession(): Session {
+  assertCredential()
   return {
     generation,
-    token: localStorage.getItem("access_token"),
+    token: credential ?? null,
     signal: controller.signal,
   }
 }
 
-export type Session = ReturnType<typeof captureSession>
-
-export function assertSession(session: Session) {
+export function assertSession(session: Session): void {
+  assertCredential()
   if (
     leaving ||
     session.signal.aborted ||
     session.generation !== generation ||
-    session.token !== localStorage.getItem("access_token")
+    session.token !== credential
   )
     throw new SessionChangedError()
 }
@@ -55,17 +75,19 @@ function exitPage() {
   for (const listener of exitListeners) listener()
 }
 
-export function resetSession() {
+export function resetSession(): void {
   leaving = false
   generation++
   controller.abort()
   controller = new AbortController()
   ownerId = null
+  credential = undefined
   for (const listener of identityListeners) listener()
   for (const listener of listeners) listener()
 }
 
 export function currentAccountId(): string {
+  assertCredential()
   if (leaving || !ownerId) throw new SessionChangedError()
   return ownerId
 }
@@ -78,7 +100,8 @@ export function onIdentityChange(listener: () => void) {
   }
 }
 
-export function acceptIdentity(id: string) {
+export function acceptIdentity(id: string): void {
+  assertCredential()
   if (ownerId && ownerId !== id) {
     leaveSession("/")
     throw new SessionChangedError()
@@ -87,8 +110,9 @@ export function acceptIdentity(id: string) {
   for (const listener of identityListeners) listener()
 }
 
-export function leaveSession(url: string, broadcast = true) {
+export function leaveSession(url: string, broadcast = true): void {
   if (leaving) return
+  assertCredential()
   localStorage.removeItem("access_token")
   resetSession()
   exitPage()
@@ -97,7 +121,7 @@ export function leaveSession(url: string, broadcast = true) {
   window.location.assign(url)
 }
 
-export function completeLogin(token: string, session: Session) {
+export function completeLogin(token: string, session: Session): void {
   assertSession(session)
   resetSession()
   localStorage.setItem("access_token", token)
@@ -106,7 +130,7 @@ export function completeLogin(token: string, session: Session) {
   window.location.assign("/")
 }
 
-export function reloadSession() {
+export function reloadSession(): void {
   resetSession()
   exitPage()
   window.location.reload()

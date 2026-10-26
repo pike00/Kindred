@@ -47,27 +47,23 @@ type ApiKeyCreated = ApiKey & { plaintext_key: string }
 
 // ─── API helpers ──────────────────────────────────────────────────────────────
 
-async function bearerToken(): Promise<string> {
-  const t = OpenAPI.TOKEN
-  if (typeof t === "function") return (await t({} as any)) ?? ""
-  return t ?? ""
-}
-
 async function apiRequest<T>(
   method: string,
   path: string,
   body?: unknown,
 ): Promise<T> {
-  const token = await bearerToken()
   const base = OpenAPI.BASE || ""
-  const res = await sessionFetch(`${base}${path}`, {
-    method,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
+  const res = await sessionFetch(
+    `${base}${path}`,
+    {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: body !== undefined ? JSON.stringify(body) : undefined,
     },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  })
+    OpenAPI.TOKEN,
+  )
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
     throw new Error(err.detail || `HTTP ${res.status}`)

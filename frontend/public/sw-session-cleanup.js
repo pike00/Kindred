@@ -14,7 +14,7 @@ self.addEventListener("message", (event) => {
   }
 })
 
-// Repeat cleanup after taking control, including an old worker's last writes.
+// Repeat cleanup if a legacy cache is found after taking control.
 // Private requests are NetworkOnly and can never read this legacy cache.
 self.addEventListener("fetch", (event) => {
   if (new URL(event.request.url).pathname.startsWith("/api/")) {
