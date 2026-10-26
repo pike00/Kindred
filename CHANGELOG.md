@@ -5,6 +5,39 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.129] - 2026-10-26
+
+### Security
+
+- Fix a privilege-escalation vulnerability that allowed an ordinary account to impersonate an administrator through an API key and permanently promote itself to superuser (#303).
+- Require an active superuser to grant and use API-key impersonation. Recheck the owner's authority on every request, including for existing keys and owners who have been demoted or disabled. Ordinary personal API keys remain supported.
+- Existing impersonation integrations owned by non-admin accounts must move to an authorized admin-owned key. Administrators should review existing superusers and API keys for unauthorized access; upgrading does not undo prior account changes or credential exposure.
+- Thanks to **Nirut Tangprasitti of SOSECURE Co., Ltd.** for responsibly reporting the vulnerability and providing the detailed findings that helped validate the fix.
+
+### Fixed
+
+- Prevent a focus loop when opening a dialog from a menu by sharing Radix overlay state. All 2,007 frontend tests now pass.
+
+### Other
+- ⬆ bump serialize-javascript from 7.1.2 to 7.1.3 (#302) (369674c)
+- ⬆ bump @radix-ui/react-dialog from 1.1.23 to 1.3.1 (#301) (132f06e)
+- ⬆ bump @radix-ui/react-dropdown-menu from 2.1.24 to 2.2.1 (#299) (3e1e805)
+- ⬆ bump @tanstack/router-devtools from 1.167.1 to 1.167.2 (#300) (e5a3645)
+- ⬆ bump @radix-ui/react-scroll-area from 1.2.18 to 1.4.0 (#295) (42073c8)
+- ⬆ bump react-hook-form from 7.85.0 to 7.90.0 (#298) (0685df4)
+- ⬆ bump @tanstack/router-plugin from 1.168.34 to 1.168.47 (#297) (9c44ee1)
+- ⬆ bump @radix-ui/react-tooltip from 1.2.16 to 1.4.1 (#294) (654c4d8)
+- ⬆ bump vite from 8.2.4 to 8.3.4 (#260) (7cd6b0c)
+- ⬆ bump @tanstack/react-router-devtools from 1.167.1 to 1.167.2 (#255) (c7a29cf)
+- ⬆ bump @tanstack/react-query-devtools from 5.102.8 to 5.104.4 (#259) (fafc469)
+- ⬆ bump lucide-react from 1.31.0 to 1.59.0 (#261) (2e12d39)
+- ⬆ bump zod from 4.5.4 to 4.6.7 (#251) (654b528)
+- ⬆ bump certifi from 2026.5.20 to 2026.10.19 (#290) (3bdfe5c)
+- ⬆ bump vite from 8.2.1 to 8.2.4 (#288) (4f144ad)
+- ⬆ bump pydantic-settings from 2.14.2 to 2.15.0 (#286) (9b7c301)
+- ⬆ update pwdlib[argon2,bcrypt] requirement from >=0.3.0 to >=0.3.1 (#284) (dc04053)
+- ⬆ bump sqlmodel from 0.0.39 to 0.0.48 (#285) (7ab365a)
+
 ## [0.2.128] - 2026-10-10
 
 ### Added
