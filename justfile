@@ -51,6 +51,10 @@ ci-backend-coverage:
 ci-backend-prepare:
     cd backend && uv run --frozen bash scripts/prestart.sh
 
+# Focused authorization regressions against an explicitly configured test DB.
+test-security *args:
+    cd backend && uv run --frozen pytest tests/api/test_api_keys.py tests/api/routes/test_contact_shares.py tests/api/routes/test_users.py tests/api/test_deps_auth_mode.py {{args}}
+
 # Regenerate docs/db/ from the live Postgres schema using tbls, then render
 # each .md to a standalone .html via pandoc. The helper follows the active
 # preview stack and reads credentials from its running DB container. Open

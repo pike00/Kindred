@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { Skeleton } from "@/components/ui/skeleton"
+import useAuth from "@/hooks/useAuth"
 import useCustomToast from "@/hooks/useCustomToast"
 import { MoreHorizontal, Plus } from "@/lib/icons"
 import { formatDateWithRelative } from "@/lib/utils"
@@ -166,17 +167,22 @@ function AddApiKeyDialog() {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const queryClient = useQueryClient()
   const { showErrorToast } = useCustomToast()
+  const { user } = useAuth()
+  const canImpersonate = user?.is_superuser === true
 
   const { data: usersData } = useQuery({
     queryKey: ["users-for-impersonation"],
     queryFn: () => UsersService.readUsers({ limit: 200 }),
-    enabled: open,
+    enabled: open && canImpersonate,
   })
-  const users: UserPublic[] = (usersData as any)?.data ?? []
+  const users: UserPublic[] = usersData?.data ?? []
 
   const mutation = useMutation({
     mutationFn: () =>
-      createApiKey({ name: name.trim(), can_impersonate: [...selected] }),
+      createApiKey({
+        name: name.trim(),
+        can_impersonate: canImpersonate ? [...selected] : [],
+      }),
     onSuccess: (res) => {
       setCreated(res)
       setName("")
@@ -220,8 +226,9 @@ function AddApiKeyDialog() {
           <DialogHeader>
             <DialogTitle>Create API key</DialogTitle>
             <DialogDescription>
-              API keys authenticate as you. Optionally allow the key to act on
-              behalf of specific other users.
+              API keys authenticate as you.
+              {canImpersonate &&
+                " Optionally allow the key to act on behalf of specific other users."}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-2">
@@ -236,7 +243,7 @@ function AddApiKeyDialog() {
                 onChange={(e) => setName(e.target.value)}
               />
             </div>
-            {users.length > 1 && (
+            {canImpersonate && users.length > 1 && (
               <div className="grid gap-1.5">
                 <Label>Can act on behalf of</Label>
                 <p className="text-xs text-muted-foreground">

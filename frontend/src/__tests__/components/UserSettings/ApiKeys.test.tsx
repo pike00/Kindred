@@ -4,6 +4,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import ApiKeys from "@/components/UserSettings/ApiKeys"
 import { renderWithProviders } from "@/test/helpers"
 
+const authState = vi.hoisted(() => ({
+  user: { is_superuser: true } as { is_superuser: boolean } | undefined,
+}))
+
+vi.mock("@/hooks/useAuth", () => ({
+  default: () => ({ user: authState.user }),
+}))
+
 // Mock Sonner toast
 vi.mock("sonner", () => ({
   toast: {
@@ -96,8 +104,44 @@ vi.mock("@/client", () => ({
 describe("ApiKeys", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    authState.user = { is_superuser: true }
     global.fetch = vi.fn()
   })
+
+  it.each([false, undefined])(
+    "does not request or offer impersonation when superuser is %s",
+    async (isSuperuser) => {
+      authState.user = isSuperuser === undefined
+        ? undefined
+        : { is_superuser: isSuperuser }
+      const { UsersService } = await import("@/client")
+      vi.mocked(global.fetch).mockResolvedValue({
+        ok: true,
+        json: async () => ({ data: [], count: 0 }),
+      } as Response)
+
+      const user = userEvent.setup()
+      renderWithProviders(<ApiKeys />)
+      await user.click(await screen.findByRole("button", { name: /Create key/ }))
+
+      expect(screen.getByText("Create API key")).toBeInTheDocument()
+      expect(UsersService.readUsers).not.toHaveBeenCalled()
+      expect(screen.queryByText("Can act on behalf of")).not.toBeInTheDocument()
+      expect(screen.queryByText(/Optionally allow the key/)).not.toBeInTheDocument()
+
+      await user.type(screen.getByPlaceholderText("janet bot"), "Personal key")
+      await user.click(screen.getByRole("button", { name: /^Create$/ }))
+      await waitFor(() => {
+        expect(global.fetch).toHaveBeenCalledWith(
+          expect.stringContaining("/api/v1/users/me/api-keys/"),
+          expect.objectContaining({
+            method: "POST",
+            body: JSON.stringify({ name: "Personal key", can_impersonate: [] }),
+          }),
+        )
+      })
+    },
+  )
 
   it("renders section heading and description", () => {
     vi.mocked(global.fetch as any).mockResolvedValueOnce({
