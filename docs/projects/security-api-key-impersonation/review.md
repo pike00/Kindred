@@ -10,6 +10,7 @@ Report received: October 25, 2026. Reported and reviewed base:
 - [x] Require superuser authorization for impersonation grants and every impersonated request.
 - [x] Verify legacy keys, disabled/demoted owners, ordinary keys, and legitimate admin impersonation.
 - [x] Align the settings UI and regenerate the frontend client (no generated diff).
+- [x] Resolve the frontend focus-loop failure and pass the full frontend suite.
 
 ## Scope
 
@@ -24,18 +25,14 @@ it at production or a shared development database.
 
 ## Review boundaries
 
-This work prepares a local fix for review. Publication, deployment, incident
-response against production, and correspondence with the reporter are separate
-actions. The configured Gitea origin currently advertises an older main than
-GitHub; this branch is based on the exact GitHub revision named in the report.
+This change is prepared for pull request review against the exact GitHub revision
+named in the report. Deployment, incident response against production, and
+correspondence with the reporter remain separate actions.
 
 ## Findings
 
 The report is technically valid. The missing authorization check allows a normal
-account to become a persistent superuser. The reporter's name, employer, and
-claim of exclusively local research have not been independently verified.
-The forwarded email carries passing Gmail authentication results; that supports
-its origin, not those identity or research-scope claims.
+account to become a persistent superuser.
 
 | Claim | Verification |
 | --- | --- |
@@ -95,12 +92,17 @@ No production data or credentials were used.
   SQLModel/Starlette warnings. The suite includes 17 added cases.
 - API-key UI component suite: 38 passed, including ordinary-user and unresolved
   identity cases that neither query nor offer impersonation.
-- The full frontend suite did not complete. Both the default run and a retry
-  with two workers encountered repeated `RangeError: Maximum call stack size
-  exceeded` errors inside Vitest/Zod on Node 26.12.0 and were stopped. The focused
-  API-key suite completed successfully after its auth fixture was updated.
-  This is not a claim that the full frontend suite is green.
+- Full frontend suite: `just test-frontend` passed all 2,007 tests in 92 files.
+  The earlier stack overflow came from separate Radix focus-manager instances
+  competing when a dropdown opened an edit dialog. Dialog, sheet, dropdown,
+  select, popover, and alert-dialog wrappers now import from the existing
+  `radix-ui` package to share overlay state. The custom-field suite that
+  reproduced the failure passes all 27 tests. This follows the upstream
+  [Radix dependency guidance](https://www.radix-ui.com/primitives/docs/overview/introduction).
+  No dependency versions or lockfile entries changed.
 - `just typecheck`, focused Ruff and Biome checks, and `git diff --check` passed.
+  The generated UI wrappers are excluded by the repository's Biome configuration;
+  their six import changes were reviewed directly and covered by the full suite.
 - `just regen-client` passed and produced no schema or generated-client changes.
   No backend schema changed, so Python SDK regeneration is unnecessary.
 
@@ -113,5 +115,5 @@ and available account-change audit evidence; revoke unauthorized credentials and
 remediate compromised accounts if found. This review does not establish that
 production was compromised or that it is clean.
 
-The change is prepared on `codex/security-impersonation-fix` for local review.
-No code has been published or deployed, and no reply has been sent to the reporter.
+The change is prepared on `codex/security-impersonation-fix` for pull request review.
+It has not been deployed, and no reply has been sent to the reporter.
