@@ -38,6 +38,8 @@ def _format_date(value: date | datetime | str | None) -> str:
             return value[:10]
     if isinstance(value, datetime):
         value = value.date()
+    if value.year <= 4 or value.year < 1900:
+        return value.strftime("%b %d")
     return value.strftime("%b %d, %Y")
 
 

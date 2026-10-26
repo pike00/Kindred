@@ -5,6 +5,91 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.123] - 2026-09-20
+
+### Fixed
+- Fix: suppress disabled contact follow-ups (48effeb)
+
+## [0.2.122] - 2026-09-20
+
+### Other
+- ⬆ Consolidate pending Dependabot updates (#243) (bd8d0dc)
+- ⬆ bump @tanstack/react-router from 1.170.31 to 1.170.33 (#236) (d47e681)
+- ⬆ update sentry-sdk[fastapi] requirement (#239) (3f6fc2e)
+- Build(deps): bump anyio from 4.13.0 to 4.14.2 in /sdk (#241) (a10ffaf)
+- ⬆ bump radicale from 3.7.5 to 3.8.0 (#235) (44bb738)
+- ⬆ bump apprise from 1.10.0 to 1.13.1 (#231) (aa3e63b)
+
+## [0.2.121] - 2026-09-10
+
+### Other
+- Contacts: load contact pages on demand (#233) (4ff1a3f)
+- ⬆ bump zod from 4.4.3 to 4.5.4 (#229) (d2f4372)
+- ⬆ bump @testing-library/react from 16.3.2 to 16.3.3 (#227) (b5636ff)
+- ⬆ bump axios from 1.19.0 to 1.20.0 (#228) (ffcc8b5)
+
+## [0.2.120] - 2026-09-10
+
+### Other
+- Ui: remove duplicate contacts search (#232) (c1c712e)
+- ⬆ bump faster-whisper from 1.0.3 to 1.2.1 (#226) (e64449d)
+- ⬆ bump rollup from 4.61.1 to 4.63.1 (#224) (eed3dd6)
+- ⬆ bump @types/react-dom from 19.2.4 to 19.2.5 (#218) (68fab65)
+- ⬆ bump @tanstack/react-query-devtools from 5.101.4 to 5.102.8 (#221) (7541905)
+- ⬆ bump @testing-library/user-event from 14.6.4 to 14.6.6 (#220) (82214b9)
+- ⬆ bump fast-uri from 3.1.5 to 3.1.6 (#225) (5ec5f45)
+- ⬆ bump phonenumbers from 9.0.31 to 9.0.37 (#207) (b5353f2)
+- ⬆ bump alembic from 1.18.4 to 1.19.1 (#217) (508204e)
+- ⬆ bump axios from 1.18.1 to 1.19.0 (#215) (2cb2595)
+- ⬆ bump rollup from 4.61.1 to 4.62.5 (#212) (087aead)
+- ⬆ bump @tanstack/react-router from 1.170.29 to 1.170.31 (#211) (f748dae)
+- ⬆ bump @hookform/resolvers from 5.9.0 to 5.9.1 (#214) (9cdd62f)
+- ⬆ bump @tanstack/router-plugin from 1.168.32 to 1.168.34 (#213) (e9476bf)
+- ⬆ bump uvicorn[standard] from 0.32.0 to 0.52.4 (#208) (b522b11)
+
+## [0.2.119] - 2026-08-24
+
+### Fixed
+- Fix(voice): fix audio intake authentication, browser compatibility, and auto-detect attendees and channel (#216) (17f9cab)
+
+### Other
+- ⬆ bump getmeili/meilisearch from v1.52 to v1.53 (#206) (85675ac)
+
+## [0.2.118] - 2026-08-21
+
+### Added
+- Feat(contacts): allow entering birthday without a year (#205) (aa0cc8d)
+
+## [0.2.117] - 2026-08-20
+
+### Fixed
+- Fix(deps): sync react-dom specifier in pnpm-lock.yaml (bfb6b87)
+
+## [0.2.116] - 2026-08-20
+
+### Other
+- Build(docker): install pnpm directly via npm in Dockerfile.prod (f95bd32)
+
+## [0.2.115] - 2026-08-20
+
+### Added
+- Feat(ui): add dual-input InlineContactName for distinct first and last name editing (5693955)
+- Feat(ui): add modern inline editing for contact fields (cb0bc35)
+
+### Changed
+- Perf(frontend): disable watch polling and dev service worker for instant page loads (22cedab)
+
+### Fixed
+- Fix(ui): unify full name inline edit and prevent full-width expansion (c13b44f)
+- Fix(deps): update frontend bun.lock for pinned react version (39a7bfb)
+- Fix(frontend): remove buggy TanStackRouterDevtools from root route (43efa88)
+- Fix(frontend): pin react version and update dev tailnet host config (0d069c9)
+- Fix(deploy): use home relative path for SSH deployment in deploy-homelab.py (08ead38)
+
+### Other
+- Style(frontend): format inline contact components with biome (3e7e38f)
+- Projects: create inline-contact-edit (36f147a)
+
 ## [0.2.114] - 2026-08-20
 
 ### Added
@@ -65,33 +150,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.109] - 2026-08-18
 
-### Fixed
-- Fix(dashboard): format badge as 'due' when check-in is due within [-2, 2] days (#199) (741a464)
-
-### Other
-- Merge: sync main with gitea/main (97530f2)
-
-## [0.2.108] - 2026-08-16
-
-### Fixed
-- Fix(frontend): default OpenAPI.BASE to empty string and configure dev server API proxying (b42a336)
-- Fix(frontend): eliminate sidebar navigation delay and add loading feedback (439df96)
-- Fix(version): sync backend pyproject.toml version during releases (1d2e49a)
-- Fix(release): handle non-GitHub origin remotes gracefully in release script (88b2bff)
-
-## [0.2.107] - 2026-08-12
-
-### Added
-- Feat(version): add runtime /utils/info API endpoint and dynamic query fallback in Footer (64f5101)
-
-### Fixed
-- Fix(version): fix fallback version resolution to prevent 0.0.0 footer (0993a85)
-
-### Other
-- Build(docker): use BUILDPLATFORM in Dockerfile.prod for frontend-builder (9b13b96)
-
-## [0.2.106] - 2026-08-09
-
 ### Added
 - Feat(frontend): eliminate sidebar navigation click delay and add loading feedback (#196) (673cd5e)
 
@@ -99,15 +157,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Docs: revamp README for a public audience (#166) (2c9c74e)
 
 ### Fixed
-- Fix(version): resolve version and commit hash fallbacks durably (45409f4)
+- Fix(dashboard): format badge as 'due' when check-in is due within [-2, 2] days (#199) (741a464)
 
 ### Other
-- Test(footer): fix link role regex match for Footer test (2008962)
-- Add bundle placeholder verification scanner and integrate into prepush gate (7a839f9)
-- Add build-time validation guard in vite.config.ts against placeholder API URLs (0c988dd)
-- Fix VITE_API_URL default in Dockerfile.prod for same-origin production requests (8bdd1be)
-- Fix prepush gate and backend Dockerfile dependencies (7064f1b)
-- Make Interaction Activity compact and expandable below contact metadata (eec918a)
+- Merge: sync main with gitea/main (97530f2)
 - Merge: sync dependabot/combine-all with github/main (7fa2e5c)
 - Style: format code according to ruff 0.16.0 and biome linter rules (008a32c)
 - Deps(frontend): bump @tanstack/router-plugin to 1.168.24 (82182da)
@@ -139,6 +192,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ⬆ Bump actions/checkout from 6 to 7 (2f777b8)
 - ⬆ bump getmeili/meilisearch from v1.52.0 to v1.53.0 (#192) (a4ab48f)
 - ⬆ bump getmeili/meilisearch from v1.51.0 to v1.52.0 (#185) (c5cea78)
+
+## [0.2.108] - 2026-08-16
+
+### Fixed
+- Fix(frontend): default OpenAPI.BASE to empty string and configure dev server API proxying (b42a336)
+- Fix(frontend): eliminate sidebar navigation delay and add loading feedback (439df96)
+- Fix(version): sync backend pyproject.toml version during releases (1d2e49a)
+- Fix(release): handle non-GitHub origin remotes gracefully in release script (88b2bff)
+
+## [0.2.107] - 2026-08-12
+
+### Added
+- Feat(version): add runtime /utils/info API endpoint and dynamic query fallback in Footer (64f5101)
+
+### Fixed
+- Fix(version): fix fallback version resolution to prevent 0.0.0 footer (0993a85)
+
+### Other
+- Build(docker): use BUILDPLATFORM in Dockerfile.prod for frontend-builder (9b13b96)
+
+## [0.2.106] - 2026-08-09
+
+### Fixed
+- Fix(version): resolve version and commit hash fallbacks durably (45409f4)
+
+### Other
+- Test(footer): fix link role regex match for Footer test (2008962)
+- Add bundle placeholder verification scanner and integrate into prepush gate (7a839f9)
+- Add build-time validation guard in vite.config.ts against placeholder API URLs (0c988dd)
+- Fix VITE_API_URL default in Dockerfile.prod for same-origin production requests (8bdd1be)
+- Fix prepush gate and backend Dockerfile dependencies (7064f1b)
+- Make Interaction Activity compact and expandable below contact metadata (eec918a)
 - Limit Stay in Touch widget to 2 contacts with expandable toggle (86329a8)
 
 ## [0.2.105] - 2026-08-05

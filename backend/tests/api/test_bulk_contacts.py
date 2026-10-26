@@ -23,9 +23,7 @@ def get_superuser_id(db: Session) -> uuid.UUID:
     from app.core.config import settings
     from app.models import User
 
-    user = db.exec(
-        select(User).where(User.email == settings.FIRST_SUPERUSER)
-    ).first()
+    user = db.exec(select(User).where(User.email == settings.FIRST_SUPERUSER)).first()
     if user:
         return user.id
     raise ValueError("No superuser found in database")

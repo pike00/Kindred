@@ -97,6 +97,7 @@ class Settings(BaseSettings):
     # production posture), the token-gated /setup flow is the only way in.
     FIRST_SUPERUSER: EmailStr | None = None
     FIRST_SUPERUSER_PASSWORD: str | None = None
+    USERS_OPEN_REGISTRATION: bool = False
 
     # HMAC pepper for the first-boot admin setup token. Must be stable across
     # restarts so the printed token keeps verifying. Defaults to a per-process

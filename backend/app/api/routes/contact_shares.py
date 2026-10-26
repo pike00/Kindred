@@ -34,7 +34,9 @@ def _resolve_grantee(session: SessionDep, body: ContactShareIn) -> User | None:
     if body.grantee_id is not None:
         return session.get(User, body.grantee_id)
     if body.grantee_email is not None:
-        return session.exec(select(User).where(User.email == body.grantee_email)).first()
+        return session.exec(
+            select(User).where(User.email == body.grantee_email)
+        ).first()
     return None
 
 
@@ -49,7 +51,9 @@ def create_contact_share(
     if grantee is None or not grantee.is_active:
         raise HTTPException(status_code=404, detail="Grantee not found")
     if grantee.id == current_user.id:
-        raise HTTPException(status_code=400, detail="Cannot share contacts with yourself")
+        raise HTTPException(
+            status_code=400, detail="Cannot share contacts with yourself"
+        )
 
     existing = session.get(AllContactsShare, (current_user.id, grantee.id))
     if existing is not None:

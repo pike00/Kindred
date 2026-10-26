@@ -1,6 +1,6 @@
-import { screen, waitFor } from "@testing-library/react"
+import { act, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { ContactsList } from "@/components/Contacts/ContactsList"
 import { createQueryClient, makeContact, makeTag, renderWithProviders } from "@/test/helpers"
 
@@ -80,11 +80,6 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }))
 
-// Mock Input
-vi.mock("@/components/ui/input", () => ({
-  Input: (props: any) => <input data-testid="search-input" {...props} />,
-}))
-
 // Pre-populate both query caches to avoid double-suspension under load
 function renderContactsListWithData(
   contacts: ReturnType<typeof makeContact>[] = [],
@@ -92,7 +87,17 @@ function renderContactsListWithData(
 ) {
   const queryClient = createQueryClient()
   queryClient.setQueryData(["saved-filters"], { data: savedFilters })
-  queryClient.setQueryData(["contacts", undefined], { data: contacts })
+  const pages = Array.from(
+    { length: Math.max(1, Math.ceil(contacts.length / 25)) },
+    (_, pageIndex) => ({
+      data: contacts.slice(pageIndex * 25, (pageIndex + 1) * 25),
+      count: contacts.length,
+    }),
+  )
+  queryClient.setQueryData(["contacts", "list", undefined], {
+    pages,
+    pageParams: pages.map((_, pageIndex) => pageIndex * 25),
+  })
   return { ...renderWithProviders(<ContactsList />, { queryClient }), queryClient }
 }
 
@@ -104,7 +109,11 @@ describe("ContactsList", () => {
     mockUseSearch.mockReturnValue({})
   })
 
-  it("renders contacts list with heading and search", async () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it("renders contacts list without a page-specific search field", async () => {
     mockListContacts.mockResolvedValue({
       data: [
         makeContact({ id: "1", first_name: "Alice", last_name: "Smith" }),
@@ -116,8 +125,29 @@ describe("ContactsList", () => {
     await waitFor(() => {
       expect(screen.getByText("Contacts")).toBeInTheDocument()
     })
-    expect(screen.getByTestId("search-input")).toBeInTheDocument()
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument()
     expect(screen.getByTestId("add-contact-dialog")).toBeInTheDocument()
+  })
+
+  it("applies the saved filter to every paginated request", async () => {
+    mockUseSearch.mockReturnValue({ saved_filter_id: "filter-1" })
+    mockListSavedFilters.mockResolvedValue({
+      data: [{ id: "filter-1", name: "Close friends" }],
+    })
+    mockListContacts.mockResolvedValue({ data: [], count: 0 })
+
+    renderWithProviders(<ContactsList />)
+
+    await waitFor(() => {
+      expect(mockListContacts).toHaveBeenCalledWith({
+        limit: 25,
+        savedFilterId: "filter-1",
+        skip: 0,
+      })
+    })
+    expect(
+      await screen.findByText(/Filtered by: Close friends/),
+    ).toBeInTheDocument()
   })
 
   it("displays contact count (singular)", async () => {
@@ -384,184 +414,7 @@ describe("ContactsList", () => {
     })
   })
 
-  it("filters contacts by search query", async () => {
-    mockListContacts.mockResolvedValue({
-      data: [
-        makeContact({ id: "1", first_name: "Alice", last_name: "Smith" }),
-        makeContact({ id: "2", first_name: "Bob", last_name: "Jones" }),
-      ],
-    })
-
-    const user = userEvent.setup()
-    renderWithProviders(<ContactsList />)
-
-    await waitFor(() => {
-      expect(screen.getByText("Alice Smith")).toBeInTheDocument()
-    })
-
-    const searchInput = screen.getByTestId("search-input") as HTMLInputElement
-    await user.type(searchInput, "alice")
-
-    await waitFor(() => {
-      expect(screen.getByText("Alice Smith")).toBeInTheDocument()
-      expect(screen.queryByText("Bob Jones")).not.toBeInTheDocument()
-    })
-  })
-
-  it("filters by last name", async () => {
-    mockListContacts.mockResolvedValue({
-      data: [
-        makeContact({ id: "1", first_name: "Alice", last_name: "Smith" }),
-        makeContact({ id: "2", first_name: "Bob", last_name: "Jones" }),
-      ],
-    })
-
-    const user = userEvent.setup()
-    renderWithProviders(<ContactsList />)
-
-    await waitFor(() => {
-      expect(screen.getByText("Alice Smith")).toBeInTheDocument()
-    })
-
-    const searchInput = screen.getByTestId("search-input") as HTMLInputElement
-    await user.type(searchInput, "smith")
-
-    await waitFor(() => {
-      expect(screen.getByText("Alice Smith")).toBeInTheDocument()
-      expect(screen.queryByText("Bob Jones")).not.toBeInTheDocument()
-    })
-  })
-
-  it("filters by company", async () => {
-    mockListContacts.mockResolvedValue({
-      data: [
-        makeContact({
-          id: "1",
-          first_name: "Alice",
-          last_name: "Smith",
-          company: "Acme Corp",
-        }),
-        makeContact({
-          id: "2",
-          first_name: "Bob",
-          last_name: "Jones",
-          company: "Tech Inc",
-        }),
-      ],
-    })
-
-    const user = userEvent.setup()
-    renderWithProviders(<ContactsList />)
-
-    await waitFor(() => {
-      expect(screen.getByText(/Alice Smith/)).toBeInTheDocument()
-    })
-
-    const searchInput = screen.getByTestId("search-input") as HTMLInputElement
-    await user.type(searchInput, "acme")
-
-    await waitFor(() => {
-      expect(screen.getByText(/Alice Smith/)).toBeInTheDocument()
-      expect(screen.queryByText(/Bob Jones/)).not.toBeInTheDocument()
-    })
-  })
-
-  it("filters by tag name", async () => {
-    const friendsTag = makeTag({ id: "t1", name: "Friends" })
-    const colleaguesTag = makeTag({ id: "t2", name: "Colleagues" })
-
-    mockListContacts.mockResolvedValue({
-      data: [
-        makeContact({
-          id: "1",
-          first_name: "Alice",
-          last_name: "Smith",
-          tags: [friendsTag],
-        }),
-        makeContact({
-          id: "2",
-          first_name: "Bob",
-          last_name: "Jones",
-          tags: [colleaguesTag],
-        }),
-      ],
-    })
-
-    const user = userEvent.setup()
-    renderWithProviders(<ContactsList />)
-
-    await waitFor(() => {
-      expect(screen.getByText(/Alice Smith/)).toBeInTheDocument()
-    })
-
-    const searchInput = screen.getByTestId("search-input") as HTMLInputElement
-    await user.type(searchInput, "friends")
-
-    await waitFor(() => {
-      expect(screen.getByText(/Alice Smith/)).toBeInTheDocument()
-      expect(screen.queryByText(/Bob Jones/)).not.toBeInTheDocument()
-    })
-  })
-
-  it("renders empty state when search returns no results", async () => {
-    mockListContacts.mockResolvedValue({
-      data: [
-        makeContact({ id: "1", first_name: "Alice", last_name: "Smith" }),
-      ],
-    })
-
-    const user = userEvent.setup()
-    renderWithProviders(<ContactsList />)
-
-    await waitFor(() => {
-      expect(screen.getByText("Alice Smith")).toBeInTheDocument()
-    })
-
-    const searchInput = screen.getByTestId("search-input") as HTMLInputElement
-    await user.type(searchInput, "xyz")
-
-    await waitFor(() => {
-      expect(screen.getByTestId("empty-state")).toBeInTheDocument()
-      expect(screen.getByText("No matches")).toBeInTheDocument()
-      expect(screen.getByText('Nothing matches "xyz".')).toBeInTheDocument()
-    })
-  })
-
-  it("resets to page 0 when search changes", async () => {
-    const contacts = Array.from({ length: 30 }, (_, i) =>
-      makeContact({
-        id: `${i}`,
-        first_name: `Contact`,
-        last_name: `${i}`,
-      }),
-    )
-
-    const user = userEvent.setup()
-    renderContactsListWithData(contacts)
-
-    await waitFor(() => {
-      expect(screen.getByText(/Contact 0/)).toBeInTheDocument()
-    })
-
-    // Go to page 2
-    const nextButtons = screen.getAllByRole("button", { name: /next/i })
-    const nextButton = nextButtons[nextButtons.length - 1]
-    await user.click(nextButton)
-
-    await waitFor(() => {
-      expect(screen.getByText(/Page 2 of 2/)).toBeInTheDocument()
-    })
-
-    // Search should reset to page 1
-    const searchInput = screen.getByTestId("search-input") as HTMLInputElement
-    await user.type(searchInput, "contact")
-
-    await waitFor(() => {
-      expect(screen.getByText(/Page 1 of 2/)).toBeInTheDocument()
-    })
-  })
-
-  it("paginates contacts with PAGE_SIZE=25", async () => {
+  it("renders contacts from every loaded page", async () => {
     const contacts = Array.from({ length: 30 }, (_, i) =>
       makeContact({
         id: `${i}`,
@@ -576,57 +429,206 @@ describe("ContactsList", () => {
       expect(screen.getByText(/Contact 0/)).toBeInTheDocument()
     })
 
-    // First 25 contacts on page 1
-    expect(screen.getByText(/Page 1 of 2/)).toBeInTheDocument()
-    expect(screen.getByText(/30 results/)).toBeInTheDocument()
+    expect(screen.getByText("Contact 29")).toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", { name: /previous page/i }),
+    ).not.toBeInTheDocument()
   })
 
-  it("disables prev button on first page", async () => {
-    const contacts = Array.from({ length: 30 }, (_, i) =>
+  it("loads the next contacts page from the server and appends it", async () => {
+    const firstPage = Array.from({ length: 25 }, (_, i) =>
       makeContact({
         id: `${i}`,
-        first_name: `Contact`,
+        first_name: "Contact",
         last_name: `${i}`,
       }),
     )
-
-    renderContactsListWithData(contacts)
-
-    await waitFor(() => {
-      expect(screen.getByText(/Contact 0/)).toBeInTheDocument()
+    const finalContact = makeContact({
+      id: "25",
+      first_name: "Contact",
+      last_name: "25",
     })
 
-    const prevButtons = screen.getAllByRole("button", { name: /previous/i })
-    const prevButton = prevButtons[prevButtons.length - 1] as HTMLButtonElement
-    expect(prevButton).toBeDisabled()
-  })
-
-  it("disables next button on last page", async () => {
-    const contacts = Array.from({ length: 30 }, (_, i) =>
-      makeContact({
-        id: `${i}`,
-        first_name: `Contact`,
-        last_name: `${i}`,
-      }),
+    mockListContacts.mockImplementation(({ skip = 0 } = {}) =>
+      Promise.resolve(
+        skip === 0
+          ? { data: firstPage, count: 26 }
+          : { data: [finalContact], count: 26 },
+      ),
     )
 
     const user = userEvent.setup()
+    renderWithProviders(<ContactsList />)
+
+    await user.click(
+      await screen.findByRole("button", { name: "Load more contacts" }),
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText("Contact 25")).toBeInTheDocument()
+    })
+    expect(screen.getByText("Contact 0")).toBeInTheDocument()
+    expect(mockListContacts).toHaveBeenNthCalledWith(1, {
+      limit: 25,
+      skip: 0,
+    })
+    expect(mockListContacts).toHaveBeenNthCalledWith(2, {
+      limit: 25,
+      skip: 25,
+    })
+    expect(screen.getByText("All 26 contacts loaded")).toBeInTheDocument()
+  })
+
+  it("loads the next page when the list sentinel enters the viewport", async () => {
+    const firstPage = Array.from({ length: 25 }, (_, i) =>
+      makeContact({ id: `${i}`, first_name: "Contact", last_name: `${i}` }),
+    )
+    const finalContact = makeContact({
+      id: "25",
+      first_name: "Contact",
+      last_name: "25",
+    })
+    let triggerIntersection: (() => void) | undefined
+
+    class TestIntersectionObserver implements IntersectionObserver {
+      readonly root = null
+      readonly rootMargin = "200px"
+      readonly scrollMargin = "0px"
+      readonly thresholds = [0]
+
+      constructor(callback: IntersectionObserverCallback) {
+        triggerIntersection = () =>
+          callback(
+            [{ isIntersecting: true } as IntersectionObserverEntry],
+            this,
+          )
+      }
+
+      disconnect = vi.fn()
+      observe = vi.fn()
+      takeRecords = vi.fn(() => [])
+      unobserve = vi.fn()
+    }
+
+    vi.stubGlobal("IntersectionObserver", TestIntersectionObserver)
+    mockListContacts.mockImplementation(({ skip = 0 } = {}) =>
+      Promise.resolve(
+        skip === 0
+          ? { data: firstPage, count: 26 }
+          : { data: [finalContact], count: 26 },
+      ),
+    )
+
+    renderWithProviders(<ContactsList />)
+    await screen.findByRole("button", { name: "Load more contacts" })
+
+    act(() => triggerIntersection?.())
+
+    expect(await screen.findByText("Contact 25")).toBeInTheDocument()
+    expect(mockListContacts).toHaveBeenNthCalledWith(2, {
+      limit: 25,
+      skip: 25,
+    })
+  })
+
+  it("stops automatic retries after a next-page error and offers manual retry", async () => {
+    const firstPage = Array.from({ length: 25 }, (_, i) =>
+      makeContact({ id: `${i}`, first_name: "Contact", last_name: `${i}` }),
+    )
+    const finalContact = makeContact({
+      id: "25",
+      first_name: "Contact",
+      last_name: "25",
+    })
+    let triggerIntersection: (() => void) | undefined
+    const observerConstructors = vi.fn()
+
+    class TestIntersectionObserver implements IntersectionObserver {
+      readonly root = null
+      readonly rootMargin = "200px"
+      readonly scrollMargin = "0px"
+      readonly thresholds = [0]
+
+      constructor(callback: IntersectionObserverCallback) {
+        observerConstructors()
+        triggerIntersection = () =>
+          callback(
+            [{ isIntersecting: true } as IntersectionObserverEntry],
+            this,
+          )
+      }
+
+      disconnect = vi.fn()
+      observe = vi.fn()
+      takeRecords = vi.fn(() => [])
+      unobserve = vi.fn()
+    }
+
+    vi.stubGlobal("IntersectionObserver", TestIntersectionObserver)
+    let nextPageAttempts = 0
+    mockListContacts.mockImplementation(({ skip = 0 } = {}) => {
+      if (skip === 0) return Promise.resolve({ data: firstPage, count: 26 })
+      nextPageAttempts += 1
+      return nextPageAttempts === 1
+        ? Promise.reject(new Error("network unavailable"))
+        : Promise.resolve({ data: [finalContact], count: 26 })
+    })
+
+    const user = userEvent.setup()
+    renderWithProviders(<ContactsList />)
+    await screen.findByRole("button", { name: "Load more contacts" })
+
+    act(() => triggerIntersection?.())
+
+    const retryButton = await screen.findByRole("button", {
+      name: "Retry loading contacts",
+    })
+    expect(observerConstructors).toHaveBeenCalledTimes(1)
+
+    await user.click(retryButton)
+
+    expect(await screen.findByText("Contact 25")).toBeInTheDocument()
+    expect(screen.getByText("All 26 contacts loaded")).toBeInTheDocument()
+  })
+
+  it("does not render a previous-page control", async () => {
+    const contacts = Array.from({ length: 30 }, (_, i) =>
+      makeContact({
+        id: `${i}`,
+        first_name: `Contact`,
+        last_name: `${i}`,
+      }),
+    )
+
     renderContactsListWithData(contacts)
 
     await waitFor(() => {
       expect(screen.getByText(/Contact 0/)).toBeInTheDocument()
     })
 
-    // Go to last page
-    const nextButtons = screen.getAllByRole("button", { name: /next/i })
-    const nextButton = nextButtons[nextButtons.length - 1]
-    await user.click(nextButton)
+    expect(
+      screen.queryByRole("button", { name: /previous/i }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("does not render a next-page control after the final page", async () => {
+    const contacts = Array.from({ length: 30 }, (_, i) =>
+      makeContact({
+        id: `${i}`,
+        first_name: `Contact`,
+        last_name: `${i}`,
+      }),
+    )
+
+    renderContactsListWithData(contacts)
 
     await waitFor(() => {
-      const nextBtns = screen.getAllByRole("button", { name: /next/i })
-      const lastNextBtn = nextBtns[nextBtns.length - 1] as HTMLButtonElement
-      expect(lastNextBtn).toBeDisabled()
+      expect(screen.getByText(/Contact 0/)).toBeInTheDocument()
     })
+
+    expect(
+      screen.queryByRole("button", { name: /next/i }),
+    ).not.toBeInTheDocument()
   })
 
   it("does not show pagination when contacts fit on one page", async () => {
@@ -664,227 +666,7 @@ describe("ContactsList", () => {
     expect(link).toBeInTheDocument()
   })
 
-  it("calls navigate with search param when search changes", async () => {
-    mockListContacts.mockResolvedValue({
-      data: [makeContact({ id: "1", first_name: "Alice", last_name: "Smith" })],
-    })
-
-    const user = userEvent.setup()
-    renderWithProviders(<ContactsList />)
-
-    await waitFor(() => {
-      expect(screen.getByText(/Alice Smith/)).toBeInTheDocument()
-    })
-
-    const searchInput = screen.getByTestId("search-input") as HTMLInputElement
-    await user.type(searchInput, "test")
-
-    await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith({
-        search: { search: "test" },
-        replace: true,
-      })
-    })
-  })
-
-  it("clears search param when search is empty", async () => {
-    mockListContacts.mockResolvedValue({
-      data: [makeContact({ id: "1", first_name: "Alice", last_name: "Smith" })],
-    })
-
-    const user = userEvent.setup()
-    renderWithProviders(<ContactsList />)
-
-    await waitFor(() => {
-      expect(screen.getByText(/Alice Smith/)).toBeInTheDocument()
-    })
-
-    const searchInput = screen.getByTestId("search-input") as HTMLInputElement
-    await user.type(searchInput, "test")
-
-    await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith({
-        search: { search: "test" },
-        replace: true,
-      })
-    })
-
-    // Clear search
-    mockNavigate.mockClear()
-    await user.clear(searchInput)
-
-    await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith({
-        search: {},
-        replace: true,
-      })
-    })
-  })
-
-  it("initializes with search param from URL", async () => {
-    mockListContacts.mockResolvedValue({
-      data: [
-        makeContact({ id: "1", first_name: "Alice", last_name: "Smith" }),
-        makeContact({ id: "2", first_name: "Bob", last_name: "Jones" }),
-      ],
-    })
-
-    mockUseSearch.mockReturnValue({ search: "alice" })
-
-    renderWithProviders(<ContactsList />)
-
-    await waitFor(() => {
-      expect(screen.getByText(/Alice Smith/)).toBeInTheDocument()
-      expect(screen.queryByText(/Bob Jones/)).not.toBeInTheDocument()
-    })
-  })
-
-  it("handles case-insensitive search", async () => {
-    mockListContacts.mockResolvedValue({
-      data: [
-        makeContact({ id: "1", first_name: "Alice", last_name: "Smith", company: "ACME CORP" }),
-      ],
-    })
-
-    const user = userEvent.setup()
-    renderWithProviders(<ContactsList />)
-
-    await waitFor(() => {
-      expect(screen.getByText(/Alice Smith/)).toBeInTheDocument()
-    })
-
-    const searchInput = screen.getByTestId("search-input") as HTMLInputElement
-    await user.type(searchInput, "acme")
-
-    await waitFor(() => {
-      expect(screen.getByText(/Alice Smith/)).toBeInTheDocument()
-    })
-  })
-
-  it("searches by middle name", async () => {
-    mockListContacts.mockResolvedValue({
-      data: [
-        makeContact({
-          id: "1",
-          first_name: "Alice",
-          middle_name: "Marie",
-          last_name: "Smith",
-        }),
-      ],
-    })
-
-    const user = userEvent.setup()
-    renderWithProviders(<ContactsList />)
-
-    await waitFor(() => {
-      expect(screen.getByText("Alice Marie Smith")).toBeInTheDocument()
-    })
-
-    const searchInput = screen.getByTestId("search-input") as HTMLInputElement
-    await user.type(searchInput, "marie")
-
-    await waitFor(() => {
-      expect(screen.getByText("Alice Marie Smith")).toBeInTheDocument()
-    })
-  })
-
-  it("searches by nickname", async () => {
-    mockListContacts.mockResolvedValue({
-      data: [
-        makeContact({
-          id: "1",
-          first_name: "Alice",
-          last_name: "Smith",
-          nickname: "Ali",
-        }),
-      ],
-    })
-
-    const user = userEvent.setup()
-    renderWithProviders(<ContactsList />)
-
-    await waitFor(() => {
-      expect(screen.getByText(/Alice Smith/)).toBeInTheDocument()
-    })
-
-    const searchInput = screen.getByTestId("search-input") as HTMLInputElement
-    await user.type(searchInput, "ali")
-
-    await waitFor(() => {
-      expect(screen.getByText(/Alice Smith/)).toBeInTheDocument()
-    })
-  })
-
-  it("searches by title", async () => {
-    mockListContacts.mockResolvedValue({
-      data: [
-        makeContact({
-          id: "1",
-          first_name: "Alice",
-          last_name: "Smith",
-          title: "Software Engineer",
-        }),
-      ],
-    })
-
-    const user = userEvent.setup()
-    renderWithProviders(<ContactsList />)
-
-    await waitFor(() => {
-      expect(screen.getByText(/Alice Smith/)).toBeInTheDocument()
-    })
-
-    const searchInput = screen.getByTestId("search-input") as HTMLInputElement
-    await user.type(searchInput, "engineer")
-
-    await waitFor(() => {
-      expect(screen.getByText(/Alice Smith/)).toBeInTheDocument()
-    })
-  })
-
-  it("handles pagination with filtered results", async () => {
-    const aliceContacts = Array.from({ length: 30 }, (_, i) =>
-      makeContact({
-        id: `alice-${i}`,
-        first_name: "Alice",
-        last_name: `Smith${i}`,
-      }),
-    )
-    const bobContacts = Array.from({ length: 5 }, (_, i) =>
-      makeContact({
-        id: `bob-${i}`,
-        first_name: "Bob",
-        last_name: `Jones${i}`,
-      }),
-    )
-
-    const user = userEvent.setup()
-    renderContactsListWithData([...aliceContacts, ...bobContacts])
-
-    await waitFor(() => {
-      expect(screen.getByText(/Alice Smith0/)).toBeInTheDocument()
-    })
-
-    // Filter to only Alices
-    const searchInput = screen.getByTestId("search-input") as HTMLInputElement
-    await user.type(searchInput, "alice")
-
-    await waitFor(() => {
-      expect(screen.getByText(/Page 1 of 2/)).toBeInTheDocument()
-      expect(screen.getByText(/30 results/)).toBeInTheDocument()
-    })
-
-    // Navigate to second page
-    const nextButtons = screen.getAllByRole("button", { name: /next/i })
-    const nextButton = nextButtons[nextButtons.length - 1]
-    await user.click(nextButton)
-
-    await waitFor(() => {
-      expect(screen.getByText(/Page 2 of 2/)).toBeInTheDocument()
-    })
-  })
-
-  it("displays results count in pagination", async () => {
+  it("displays the server total rather than only the first page size", async () => {
     const contacts = Array.from({ length: 30 }, (_, i) =>
       makeContact({
         id: `${i}`,
@@ -899,7 +681,32 @@ describe("ContactsList", () => {
       expect(screen.getByText(/Contact 0/)).toBeInTheDocument()
     })
 
-    // Check pagination text shows result count
-    expect(screen.getByText(/30 results/)).toBeInTheDocument()
+    expect(screen.getByText("30 people")).toBeInTheDocument()
   })
+})
+
+it("exports CSV with the logged-in bearer and preserves the session", async () => {
+  localStorage.setItem("access_token", "csv-token-a")
+  const fetchMock = vi.fn(async (_url: unknown, init?: RequestInit) => {
+    const authorized = new Headers(init?.headers).get("Authorization") === "Bearer csv-token-a"
+    return { ok: authorized, status: authorized ? 200 : 401, blob: async () => new Blob(["name\nAlice"], { type: "text/csv" }) }
+  })
+  vi.stubGlobal("fetch", fetchMock)
+  const createUrl = vi.fn(() => "blob:csv-export")
+  const revokeUrl = vi.fn()
+  Object.defineProperty(URL, "createObjectURL", { value: createUrl, configurable: true })
+  Object.defineProperty(URL, "revokeObjectURL", { value: revokeUrl, configurable: true })
+  const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {})
+  const { queryClient } = renderContactsListWithData([makeContact({ id: "csv-a" })])
+  const user = userEvent.setup()
+  await user.click(screen.getByRole("checkbox", { name: "Select all loaded contacts" }))
+  await user.click(screen.getByRole("button", { name: "Export CSV" }))
+  await waitFor(() => expect(createUrl).toHaveBeenCalledOnce())
+  expect(new Headers(fetchMock.mock.calls[0][1]?.headers).get("Authorization")).toBe("Bearer csv-token-a")
+  expect(click).toHaveBeenCalledOnce()
+  expect(revokeUrl).toHaveBeenCalledWith("blob:csv-export")
+  expect(localStorage.getItem("access_token")).toBe("csv-token-a")
+  expect(window.location.assign).not.toHaveBeenCalled()
+  expect(queryClient.getQueryData(["contacts", "list", undefined])).toBeDefined()
+  click.mockRestore()
 })

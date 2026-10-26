@@ -34,8 +34,10 @@ export function OverdueContacts() {
       ),
   })
 
-  const contacts = (contactsData?.data || []) as OverdueContact[]
-  const count = contactsData?.count || 0
+  const contacts = ((contactsData?.data || []) as OverdueContact[]).filter(
+    (contact) => !contact.do_not_contact,
+  )
+  const count = contacts.length
   const displayedContacts = isExpanded
     ? contacts
     : contacts.slice(0, DISPLAY_LIMIT)
@@ -107,7 +109,6 @@ export function OverdueContacts() {
               .filter(Boolean)
               .join(" ")
             const daysOverdue = contact.days_overdue ?? 0
-            const isDoNotContact = contact.do_not_contact
             const isSnoozing = snoozingId === contact.id
 
             return (
@@ -116,9 +117,7 @@ export function OverdueContacts() {
                 className={`flex items-center gap-3 rounded-2xl border bg-card p-3 shadow-xs transition-all duration-300 ease-out ${
                   isSnoozing
                     ? "opacity-0 -translate-x-4 scale-95 pointer-events-none"
-                    : isDoNotContact
-                      ? "opacity-60"
-                      : "hover:bg-accent/50"
+                    : "hover:bg-accent/50"
                 }`}
               >
                 <ContactAvatar contact={contact} size="sm" />
@@ -131,11 +130,6 @@ export function OverdueContacts() {
                       <span className="text-xs text-muted-foreground truncate">
                         {contact.company}
                       </span>
-                    )}
-                    {isDoNotContact && (
-                      <Badge variant="secondary" className="text-xs">
-                        Do not contact
-                      </Badge>
                     )}
                   </div>
                 </div>
@@ -151,65 +145,59 @@ export function OverdueContacts() {
                   >
                     {daysOverdue}d overdue
                   </Badge>
-                  {!isDoNotContact && (
-                    <>
-                      <AddInteractionDialog seedContact={contact} />
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-8 w-8 p-0"
-                            title="Snooze contact"
-                            aria-label={`Snooze ${fullName || "contact"}`}
-                          >
-                            <Clock
-                              className={`h-4 w-4 ${isSnoozing ? "animate-spin" : ""}`}
-                            />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-36">
-                          <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-                            Snooze for...
-                          </DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => handleSnooze(contact.id, "1 week")}
-                          >
-                            1 week
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleSnooze(contact.id, "2 weeks")}
-                          >
-                            2 weeks
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleSnooze(contact.id, "1m")}
-                          >
-                            1 month
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleSnooze(contact.id, "3m")}
-                          >
-                            3 months
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleSnooze(contact.id, "6m")}
-                          >
-                            6 months
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() =>
-                              handleSnooze(contact.id, "indefinitely")
-                            }
-                          >
-                            indefinitely
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </>
-                  )}
+                  <AddInteractionDialog seedContact={contact} />
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 w-8 p-0"
+                        title="Snooze contact"
+                        aria-label={`Snooze ${fullName || "contact"}`}
+                      >
+                        <Clock
+                          className={`h-4 w-4 ${isSnoozing ? "animate-spin" : ""}`}
+                        />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-36">
+                      <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+                        Snooze for...
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => handleSnooze(contact.id, "1 week")}
+                      >
+                        1 week
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleSnooze(contact.id, "2 weeks")}
+                      >
+                        2 weeks
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleSnooze(contact.id, "1m")}
+                      >
+                        1 month
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleSnooze(contact.id, "3m")}
+                      >
+                        3 months
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleSnooze(contact.id, "6m")}
+                      >
+                        6 months
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => handleSnooze(contact.id, "indefinitely")}
+                      >
+                        indefinitely
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
             )

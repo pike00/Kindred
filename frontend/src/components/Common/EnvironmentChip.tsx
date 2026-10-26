@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query"
-
 import { OpenAPI } from "@/client"
+import { sessionFetch } from "@/lib/session-api"
 
 export type EnvironmentInfo = { environment: string }
 
 export async function fetchEnvironment(): Promise<EnvironmentInfo> {
-  const res = await fetch(`${OpenAPI.BASE}/api/v1/utils/environment/`, {
+  const res = await sessionFetch(`${OpenAPI.BASE}/api/v1/utils/environment/`, {
     credentials: "include",
   })
   if (!res.ok) throw new Error(`environment fetch failed: ${res.status}`)

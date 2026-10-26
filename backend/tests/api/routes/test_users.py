@@ -316,6 +316,21 @@ def test_update_password_me_same_password_error(
     )
 
 
+@patch.object(settings, "USERS_OPEN_REGISTRATION", False)
+def test_registration_is_closed_by_default(client: TestClient) -> None:
+    assert type(settings).model_fields["USERS_OPEN_REGISTRATION"].default is False
+    with patch("app.api.routes.users.crud.get_user_by_email") as lookup:
+        with patch("app.api.routes.users.crud.create_user") as create:
+            response = client.post(
+                f"{settings.API_V1_STR}/users/signup",
+                json={"email": random_email(), "password": random_lower_string()},
+            )
+    assert response.status_code == 403
+    lookup.assert_not_called()
+    create.assert_not_called()
+
+
+@patch.object(settings, "USERS_OPEN_REGISTRATION", True)
 def test_register_user(client: TestClient, db: Session) -> None:
     username = random_email()
     password = random_lower_string()
@@ -339,6 +354,7 @@ def test_register_user(client: TestClient, db: Session) -> None:
     assert verified
 
 
+@patch.object(settings, "USERS_OPEN_REGISTRATION", True)
 def test_register_user_already_exists_error(client: TestClient) -> None:
     password = random_lower_string()
     full_name = random_lower_string()

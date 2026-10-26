@@ -7,7 +7,8 @@ import {
   useRouterState,
 } from "@tanstack/react-router"
 import { useEffect, useMemo } from "react"
-import { ApiError } from "@/client"
+import { cfEnabled } from "@/auth/cf"
+import { ApiError, UsersService } from "@/client"
 import { CommandPalette } from "@/components/CommandPalette/CommandPalette"
 import {
   CommandPaletteProvider,
@@ -29,6 +30,7 @@ import { VoiceRecordButton } from "@/components/VoiceRecorder/VoiceRecordButton"
 import { isLoggedIn } from "@/hooks/useAuth"
 import { useRegisterShortcuts } from "@/hooks/useKeyboardShortcuts"
 import { Search } from "@/lib/icons"
+import { leaveSession } from "@/lib/session"
 
 export function NavigationProgressBar() {
   const isPending = useRouterState({ select: (s) => s.status === "pending" })
@@ -48,17 +50,14 @@ export function NavigationProgressBar() {
 }
 
 function AuthGuardError({ error }: { error: unknown }) {
-  const navigate = useNavigate()
-
   useEffect(() => {
     if (
       error instanceof ApiError &&
       (error.status === 401 || error.status === 403)
     ) {
-      localStorage.removeItem("access_token")
-      navigate({ to: "/login", replace: true })
+      leaveSession(cfEnabled() ? "/" : "/login")
     }
-  }, [error, navigate])
+  }, [error])
 
   if (
     error instanceof ApiError &&
@@ -77,6 +76,8 @@ export const Route = createFileRoute("/_layout")({
     if (!isLoggedIn()) {
       throw redirect({ to: "/login" })
     }
+    // Verify cookie-backed identity before any private child loader can reuse data.
+    if (cfEnabled()) await UsersService.readUserMe()
   },
 })
 
@@ -91,12 +92,12 @@ function CommandPaletteTrigger() {
       variant="outline"
       size="sm"
       onClick={() => setOpen(true)}
-      className="ml-auto h-8 gap-2 text-muted-foreground"
+      className="ml-auto h-8 gap-2 text-muted-foreground sm:w-64 sm:justify-start"
       aria-label="Open command palette"
     >
       <Search className="size-4" />
       <span className="hidden sm:inline">Search...</span>
-      <kbd className="pointer-events-none hidden select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium sm:inline-flex">
+      <kbd className="pointer-events-none ml-auto hidden select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium sm:inline-flex">
         {isMac ? "⌘" : "Ctrl"} K
       </kbd>
     </Button>

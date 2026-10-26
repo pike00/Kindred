@@ -1,7 +1,7 @@
 {
   "name": "personal-crm",
   "private": true,
-  "version": "0.2.114",
+  "version": "0.2.123",
   "packageManager": "pnpm@11.3.0",
   "scripts": {
     "dev": "pnpm --filter frontend dev",
@@ -9,6 +9,6 @@
     "e2e": "pnpm exec playwright test"
   },
   "devDependencies": {
-    "@playwright/test": "^1.60.0"
+    "@playwright/test": "^1.63.0"
   }
 }

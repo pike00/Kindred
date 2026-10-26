@@ -8,8 +8,14 @@ from fastapi import APIRouter, HTTPException
 from sqlmodel import func, or_, select
 
 from app.api.deps import CurrentUser, SessionDep
-from app.crud import contact_visible, create_reminder, visible_contact_ids
+from app.crud import (
+    contact_reminders_enabled_filter,
+    contact_visible,
+    create_reminder,
+    visible_contact_ids,
+)
 from app.models import (
+    CommunicationPreference,
     Contact,
     Ok,
     Reminder,
@@ -46,10 +52,21 @@ def list_reminders(
     """List reminders for the current user (owned + tied to visible contacts)."""
     statement = (
         select(Reminder)
+        .outerjoin(Contact, Reminder.contact_id == Contact.id)
+        .outerjoin(
+            CommunicationPreference,
+            CommunicationPreference.contact_id == Contact.id,
+        )
         .where(
             or_(
                 Reminder.owner_id == current_user.id,
                 Reminder.contact_id.in_(visible_contact_ids(current_user)),
+            )
+        )
+        .where(
+            or_(
+                Reminder.contact_id.is_(None),
+                contact_reminders_enabled_filter(),
             )
         )
         .where(Reminder.deleted_at == None)  # noqa: E711
@@ -82,6 +99,7 @@ def list_due_reminders(
 
     base_filter = [
         Reminder.remind_at <= now,
+        Reminder.deleted_at.is_(None),
         or_(
             Reminder.snoozed_until.is_(None),
             Reminder.snoozed_until <= now,
@@ -91,17 +109,32 @@ def list_due_reminders(
             Reminder.owner_id == current_user.id,
             Reminder.contact_id.in_(visible_contact_ids(current_user)),
         ),
+        or_(
+            Reminder.contact_id.is_(None),
+            contact_reminders_enabled_filter(),
+        ),
     ]
 
     count = session.exec(
         select(func.count()).select_from(
-            select(Reminder.id).where(*base_filter).subquery()
+            select(Reminder.id)
+            .outerjoin(Contact, Reminder.contact_id == Contact.id)
+            .outerjoin(
+                CommunicationPreference,
+                CommunicationPreference.contact_id == Contact.id,
+            )
+            .where(*base_filter)
+            .subquery()
         )
     ).one()
 
     results = session.exec(
         select(Reminder, Contact)
         .outerjoin(Contact, Reminder.contact_id == Contact.id)
+        .outerjoin(
+            CommunicationPreference,
+            CommunicationPreference.contact_id == Contact.id,
+        )
         .where(*base_filter)
         .order_by(Reminder.remind_at.asc())
         .offset(skip)
@@ -274,10 +307,20 @@ def get_snooze_stats(
         .join(Reminder, ReminderSnooze.reminder_id == Reminder.id)
         .where(
             ReminderSnooze.snoozed_at >= cutoff,
+            Reminder.deleted_at.is_(None),
             or_(
                 Reminder.owner_id == current_user.id,
                 Reminder.contact_id.in_(visible_contact_ids(current_user)),
             ),
+            or_(
+                Reminder.contact_id.is_(None),
+                contact_reminders_enabled_filter(),
+            ),
+        )
+        .outerjoin(Contact, Reminder.contact_id == Contact.id)
+        .outerjoin(
+            CommunicationPreference,
+            CommunicationPreference.contact_id == Contact.id,
         )
         .group_by(ReminderSnooze.reminder_id)
     )
@@ -303,10 +346,20 @@ def get_chronic_snoozers(
         .join(ReminderSnooze, ReminderSnooze.reminder_id == Reminder.id)
         .where(
             ReminderSnooze.snoozed_at >= cutoff,
+            Reminder.deleted_at.is_(None),
             or_(
                 Reminder.owner_id == current_user.id,
                 Reminder.contact_id.in_(visible_contact_ids(current_user)),
             ),
+            or_(
+                Reminder.contact_id.is_(None),
+                contact_reminders_enabled_filter(),
+            ),
+        )
+        .outerjoin(Contact, Reminder.contact_id == Contact.id)
+        .outerjoin(
+            CommunicationPreference,
+            CommunicationPreference.contact_id == Contact.id,
         )
         .group_by(Reminder.contact_id, Reminder.id)
         .having(func.count(ReminderSnooze.id) > threshold)

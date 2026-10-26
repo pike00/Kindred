@@ -45,6 +45,7 @@ export {
   Film,
   Focus,
   Gift,
+  Globe,
   GripVertical,
   HeartHandshake,
   // Sidebar nav
@@ -90,6 +91,7 @@ export {
   Share2,
   ShieldCheck,
   SkipForward,
+  Sparkles,
   Square,
   Star,
   // Theme

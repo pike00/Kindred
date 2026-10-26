@@ -1,6 +1,14 @@
 import "@testing-library/jest-dom"
 import { cleanup, configure } from "@testing-library/react"
-import { afterEach, vi } from "vitest"
+import { afterEach, beforeEach, vi } from "vitest"
+import { resetSession } from "@/lib/session"
+
+beforeEach(() => {
+  resetSession()
+  vi.spyOn(window, "location", "get").mockReturnValue({
+    ...window.location, assign: vi.fn(), reload: vi.fn(),
+  })
+})
 
 // Increase default waitFor timeout to handle slow async resolution under load
 configure({ asyncUtilTimeout: 5000 })
@@ -64,14 +72,27 @@ class MockResizeObserver {
 global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver
 
 // Stub IntersectionObserver
-global.IntersectionObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-}))
+class IntersectionObserverMock implements IntersectionObserver {
+  readonly root = null
+  readonly rootMargin = "0px"
+  readonly scrollMargin = "0px"
+  readonly thresholds = [0]
+
+  disconnect = vi.fn()
+  observe = vi.fn()
+  takeRecords = vi.fn(() => [])
+  unobserve = vi.fn()
+}
+
+global.IntersectionObserver = IntersectionObserverMock
 
 // Stub scrollIntoView (not in jsdom)
 Element.prototype.scrollIntoView = vi.fn()
+
+// Stub PointerCapture methods (not in jsdom; used by Radix UI Select)
+Element.prototype.hasPointerCapture = vi.fn().mockReturnValue(false)
+Element.prototype.setPointerCapture = vi.fn()
+Element.prototype.releasePointerCapture = vi.fn()
 
 // Silence console.warn in tests (Radix noisy)
 vi.spyOn(console, "warn").mockImplementation(() => {})

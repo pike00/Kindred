@@ -1,8 +1,10 @@
-import { useSuspenseQuery } from "@tanstack/react-query"
+import {
+  useSuspenseInfiniteQuery,
+  useSuspenseQuery,
+} from "@tanstack/react-query"
 import { Link, useNavigate, useSearch } from "@tanstack/react-router"
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "sonner"
-
 import type { ContactPublic } from "@/client"
 import type { SavedFilterPublic } from "@/client/types.gen"
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
@@ -19,23 +21,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
 import {
   Archive,
-  ChevronLeft,
-  ChevronRight,
   Clock,
   Map as MapIcon,
-  Search,
   Star,
   Trash2,
   Users,
 } from "@/lib/icons"
 import {
-  contactsListQueryOptions,
+  contactsListInfiniteQueryOptions,
   savedFiltersQueryOptions,
 } from "@/lib/queries"
 import { useSeedDemo } from "@/lib/seed"
+import { sessionFetch } from "@/lib/session-api"
 import { cn } from "@/lib/utils"
 
 type BulkActionId =
@@ -53,7 +52,6 @@ interface BulkContactRequest {
   }
   contact_ids?: string[]
   select_all_filtered?: boolean
-  filters?: { search?: string }
 }
 
 interface PreviewModalState {
@@ -62,8 +60,6 @@ interface PreviewModalState {
   count: number
   contacts: ContactPublic[]
 }
-
-const PAGE_SIZE = 25
 
 const BULK_ACTIONS = [
   { id: "archive", label: "Archive", icon: Archive, color: "" },
@@ -94,24 +90,6 @@ function titleLine(contact: ContactPublic): string {
   if (contact.title) return contact.title
   if (contact.company) return contact.company
   return ""
-}
-
-function matchesSearch(contact: ContactPublic, q: string): boolean {
-  if (!q) return true
-  const needle = q.toLowerCase()
-  const haystack = [
-    contact.first_name,
-    contact.last_name,
-    contact.middle_name,
-    contact.nickname,
-    contact.company,
-    contact.title,
-    ...(contact.tags?.map((t) => t.name) ?? []),
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase()
-  return haystack.includes(needle)
 }
 
 function daysSince(iso: string | null | undefined): number | null {
@@ -203,11 +181,9 @@ export const ContactsList = () => {
   const seedMutation = useSeedDemo()
 
   const navigate = useNavigate({ from: "/contacts" })
-  const { search: urlSearch, saved_filter_id: urlFilterId } = useSearch({
+  const { saved_filter_id: urlFilterId } = useSearch({
     from: "/_layout/contacts/",
   })
-  const [search, setSearch] = useState(urlSearch ?? "")
-  const [pageIndex, setPageIndex] = useState(0)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [selectAllFiltered, setSelectAllFiltered] = useState(false)
   const [previewModal, setPreviewModal] = useState<PreviewModalState>({
@@ -226,42 +202,59 @@ export const ContactsList = () => {
     (f: SavedFilterPublic) => f.id === activeFilterId,
   )
 
-  const { data } = useSuspenseQuery(contactsListQueryOptions(activeFilterId))
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchNextPageError,
+    isFetching,
+    isFetchingNextPage,
+  } = useSuspenseInfiniteQuery(contactsListInfiniteQueryOptions(activeFilterId))
+  const loadMoreRef = useRef<HTMLDivElement>(null)
 
-  const allContacts = useMemo(() => data?.data ?? [], [data?.data])
-  const filtered = useMemo(
-    () => allContacts.filter((c: ContactPublic) => matchesSearch(c, search)),
-    [allContacts, search],
+  const allContacts = useMemo(
+    () => data.pages.flatMap((page) => page.data),
+    [data.pages],
   )
-  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
-  const safePageIndex = Math.min(pageIndex, pageCount - 1)
-  const paged = filtered.slice(
-    safePageIndex * PAGE_SIZE,
-    (safePageIndex + 1) * PAGE_SIZE,
-  )
+  const totalCount = data.pages[0]?.count ?? allContacts.length
+
+  useEffect(() => {
+    const target = loadMoreRef.current
+    if (!target || !hasNextPage || isFetching || isFetchNextPageError) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) void fetchNextPage()
+      },
+      { rootMargin: "200px" },
+    )
+    observer.observe(target)
+    return () => observer.disconnect()
+  }, [fetchNextPage, hasNextPage, isFetchNextPageError, isFetching])
 
   const selectedCount = selectedIds.size
   const isAllSelected =
-    paged.length > 0 && paged.every((c: ContactPublic) => selectedIds.has(c.id))
-  const isSomeSelected = paged.some((c: ContactPublic) => selectedIds.has(c.id))
+    allContacts.length > 0 &&
+    allContacts.every((c: ContactPublic) => selectedIds.has(c.id))
+  const isSomeSelected = allContacts.some((c: ContactPublic) =>
+    selectedIds.has(c.id),
+  )
 
   const handleToggleAll = useCallback(() => {
     if (isAllSelected) {
-      // Deselect all on current page
       const newSelected = new Set(selectedIds)
-      paged.forEach((c: ContactPublic) => {
+      allContacts.forEach((c: ContactPublic) => {
         newSelected.delete(c.id)
       })
       setSelectedIds(newSelected)
     } else {
-      // Select all on current page
       const newSelected = new Set(selectedIds)
-      paged.forEach((c: ContactPublic) => {
+      allContacts.forEach((c: ContactPublic) => {
         newSelected.add(c.id)
       })
       setSelectedIds(newSelected)
     }
-  }, [paged, selectedIds, isAllSelected])
+  }, [allContacts, selectedIds, isAllSelected])
 
   const handleToggle = useCallback(
     (id: string) => {
@@ -297,18 +290,9 @@ export const ContactsList = () => {
       // Build query string
       const params = new URLSearchParams()
       if (selectAllFiltered) params.append("select_all_filtered", "true")
-      if (search) params.append("search", search)
 
-      // Get token from localStorage
-      const token = localStorage.getItem("token") || ""
-
-      const response = await fetch(
+      const response = await sessionFetch(
         `/api/v1/import-export/export/csv?${params.toString()}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
       )
 
       if (!response.ok) throw new Error("Failed to export CSV")
@@ -329,7 +313,7 @@ export const ContactsList = () => {
     } catch (_error) {
       toast.error("Failed to export CSV")
     }
-  }, [selectAllFiltered, search])
+  }, [selectAllFiltered])
 
   const handleBulkAction = useCallback(
     async (actionId: BulkActionId) => {
@@ -369,11 +353,6 @@ export const ContactsList = () => {
           operations,
           select_all_filtered: selectAllFiltered || undefined,
           contact_ids: selectAllFiltered ? undefined : Array.from(selectedIds),
-          filters: selectAllFiltered
-            ? {
-                search: search || undefined,
-              }
-            : undefined,
         }
 
         // TODO: backend bulk update endpoint not yet implemented
@@ -390,7 +369,7 @@ export const ContactsList = () => {
         setPreviewModal({ open: false, action: null, count: 0, contacts: [] })
       }
     },
-    [selectedCount, selectAllFiltered, selectedIds, search, handleExportCsv],
+    [selectedCount, selectAllFiltered, selectedIds, handleExportCsv],
   )
 
   const handlePreviewAction = useCallback(
@@ -418,14 +397,13 @@ export const ContactsList = () => {
             Contacts
           </h1>
           <p className="text-muted-foreground mt-1">
-            {allContacts.length}{" "}
-            {allContacts.length === 1 ? "person" : "people"}
+            {totalCount} {totalCount === 1 ? "person" : "people"}
             {activeFilter && (
               <span className="text-primary">
                 · Filtered by: {activeFilter.name}
                 <button
                   type="button"
-                  onClick={() => navigate({ search: search ? { search } : {} })}
+                  onClick={() => navigate({ search: {} })}
                   className="ml-2 text-xs underline"
                 >
                   Clear filter
@@ -482,44 +460,27 @@ export const ContactsList = () => {
         </div>
       ) : null}
 
-      <div className="relative">
-        <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={search}
-          onChange={(e) => {
-            const next = e.target.value
-            setSearch(next)
-            setPageIndex(0)
-            navigate({
-              search: next ? { search: next } : {},
-              replace: true,
-            })
-          }}
-          placeholder="Search by name, company, or tag..."
-          className="pl-10"
-        />
-      </div>
-
-      {/* Select all checkbox for current page */}
-      {filtered.length > 0 && (
+      {allContacts.length > 0 && (
         <div className="flex items-center gap-2 px-4">
           <Checkbox
             checked={isAllSelected}
             onCheckedChange={handleToggleAll}
-            aria-label="Select all on this page"
+            aria-label="Select all loaded contacts"
             {...(isSomeSelected && !isAllSelected
               ? { indeterminate: true }
               : {})}
           />
           <span className="text-sm text-muted-foreground">
-            {isAllSelected ? "All on page selected" : "Select all on this page"}
+            {isAllSelected
+              ? "All loaded contacts selected"
+              : "Select all loaded contacts"}
           </span>
         </div>
       )}
 
-      {paged.length > 0 ? (
+      {allContacts.length > 0 ? (
         <div className="space-y-2">
-          {paged.map((contact: ContactPublic) => (
+          {allContacts.map((contact: ContactPublic) => (
             <ContactRow
               key={contact.id}
               contact={contact}
@@ -528,12 +489,6 @@ export const ContactsList = () => {
             />
           ))}
         </div>
-      ) : search ? (
-        <EmptyState
-          icon={Search}
-          title="No matches"
-          description={`Nothing matches "${search}".`}
-        />
       ) : (
         <EmptyState
           icon={Users}
@@ -560,35 +515,34 @@ export const ContactsList = () => {
         />
       )}
 
-      {pageCount > 1 && (
-        <div className="flex items-center justify-between gap-4 pt-2">
-          <p className="text-xs text-muted-foreground">
-            Page {safePageIndex + 1} of {pageCount} · {filtered.length} result
-            {filtered.length === 1 ? "" : "s"}
-          </p>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="outline"
-              size="icon-sm"
-              onClick={() => setPageIndex((i) => Math.max(0, i - 1))}
-              disabled={safePageIndex === 0}
-              aria-label="Previous page"
-            >
-              <ChevronLeft className="size-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon-sm"
-              onClick={() =>
-                setPageIndex((i) => Math.min(pageCount - 1, i + 1))
-              }
-              disabled={safePageIndex >= pageCount - 1}
-              aria-label="Next page"
-            >
-              <ChevronRight className="size-4" />
-            </Button>
-          </div>
+      {hasNextPage && (
+        <div
+          ref={loadMoreRef}
+          className="flex flex-col items-center gap-2 pt-2"
+        >
+          {isFetchNextPageError && (
+            <p role="alert" className="text-sm text-destructive">
+              Could not load more contacts.
+            </p>
+          )}
+          <Button
+            variant="outline"
+            onClick={() => fetchNextPage()}
+            disabled={isFetching}
+          >
+            {isFetchingNextPage
+              ? "Loading more..."
+              : isFetchNextPageError
+                ? "Retry loading contacts"
+                : "Load more contacts"}
+          </Button>
         </div>
+      )}
+
+      {!hasNextPage && allContacts.length > 0 && (
+        <p className="text-center text-sm text-muted-foreground">
+          All {totalCount} {totalCount === 1 ? "contact" : "contacts"} loaded
+        </p>
       )}
 
       {/* Preview/Confirm Modal */}

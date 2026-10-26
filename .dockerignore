@@ -10,3 +10,11 @@
 .worktrees
 .project-kit
 *.log
+# Credentials, application data and local reports never belong in build contexts.
+**/.env
+**/.env.*
+**/.envrc
+**/*.sops
+**/*.sops.*
+**/uploads
+.codegraph
