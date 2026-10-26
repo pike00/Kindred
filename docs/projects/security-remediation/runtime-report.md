@@ -104,6 +104,10 @@ the patch with zero fuzz. The build-time regression rejects every C0 byte and
 DEL through both USER and PASS before any output, and accepts ordinary values.
 The runtime probe repeats this on the installed interpreter. This is a recorded
 downstream backport, not an assertion that upstream 3.14.10 fixed POP3.
+After image validation, redundant blank context lines were removed from the
+patch file to satisfy `git diff --check`. Reapplying that normalized patch with
+zero fuzz produced exactly the installed/tested `poplib.py` SHA-256
+`a6ffff188814b56d95b043c31d9e0dfee51ac6d6e92afe74ab070cb6136b076f`.
 
 ## Validation and remaining gates
 
@@ -166,7 +170,7 @@ These SHA-256 inputs independently bind the tested build:
 | `pnpm-lock.yaml` | `5386eb3c8a9f1635ea4ecda50cb6233d5070e5c8a8c74cf1455b197e2f6fd3e3` |
 | `docker/security/build.sh` | `884dc5f104787a96f27c6652fdb202c9dbf87ee287e2fdfc3d3bf360c39c6d10` |
 | `docker/security/build-python.sh` | `d48fbbd60d067ee8b08146068f1adbed3aa84bbddf6339cf808e94d6502422a3` |
-| `docker/security/poplib.patch` | `65f1d8fbf8726479e1223bedf2b8e9c715da2e5ecad9dfa4865ec40373a91b04` |
+| `docker/security/poplib.patch` | `a04d756691f6b400150b320289e7ac5ed9be0138efa357ec35e1a9248a9d498d` |
 | `docker/security/install-pnpm.mjs` | `74ec3eaa469bbda28a6dd281cd373e241eca081161b7c4e61fe14680f21bee4e` |
 
 Temporary evidence retained for the deployment owner:
