@@ -1,15 +1,39 @@
-# syntax=docker/dockerfile:1
-#
-# Production image for Kindred. Single combined artifact: FastAPI backend
-# serves the built React SPA from /app/static/. Used by web + worker modes
-# (worker overrides CMD to run arq). Built and pushed by .github/workflows/
-# release.yml on every v*.*.* tag.
+# Combined web/worker image. `just security-build` builds locally, never pushes.
+# Default inputs are Linux amd64 child manifests. The recipe also supplies the
+# recorded arm64 children for native disposable verification on Apple Silicon.
+ARG DEBIAN_IMAGE=debian@sha256:4876fdea29cac1a33a3195f1eb1952feb1fca7dd6dd00be3e2f1879cf20d34d2
+ARG NODE_IMAGE=node@sha256:ea11b74b986d520137cdef9a5346e447a00f275ecc4abc0055b7151226231e09
+ARG UV_IMAGE=ghcr.io/astral-sh/uv@sha256:a12ede1e6dc90d3b3e600d0901731e71f0ab0f4d72683ea097b76c19c43cc8df
+
+FROM ${DEBIAN_IMAGE} AS python-base
+ENV PATH=/usr/local/bin:$PATH LANG=C.UTF-8 \
+    PYTHON_VERSION=3.14.10 \
+    PYTHON_SHA256=de414a57119abef52784d8993e341d53aed635fc2b05c2607d9f98a2c5b72032 \
+    PYTHONDONTWRITEBYTECODE=1
+# Signed, dated package indexes make security updates replayable. Refresh this
+# timestamp intentionally after review; never upgrade packages at app startup.
+# Package versions are fixed by the signed snapshot, including transitive deps.
+# hadolint ignore=DL3008
+RUN sed -i \
+      -e 's|http://deb.debian.org/debian-security|http://snapshot.debian.org/archive/debian-security/20261026T000000Z|' \
+      -e 's|http://deb.debian.org/debian|http://snapshot.debian.org/archive/debian/20261026T000000Z|' \
+      /etc/apt/sources.list.d/debian.sources \
+    && printf 'Acquire::Check-Valid-Until "false";\n' > /etc/apt/apt.conf.d/99snapshot \
+    && apt-get update && apt-get upgrade -y \
+    && apt-get install -y --no-install-recommends ca-certificates netbase tzdata curl \
+    && rm -rf /var/lib/apt/lists/*
+COPY docker/security/build-python.sh docker/security/poplib.patch docker/security/test-poplib.py /tmp/
+RUN bash /tmp/build-python.sh && rm /tmp/build-python.sh /tmp/poplib.patch /tmp/test-poplib.py
+
+FROM ${UV_IMAGE} AS uv-builder
 
 # ---- Stage 1: build the frontend with pnpm ---------------------------------
-FROM --platform=$BUILDPLATFORM node:22-slim AS frontend-builder
+FROM ${NODE_IMAGE} AS frontend-builder
 WORKDIR /build
-# Install pnpm directly
-RUN npm install -g pnpm@11.3.0
+COPY docker/security/install-pnpm.mjs /tmp/install-pnpm.mjs
+RUN node /tmp/install-pnpm.mjs \
+    && npm install -g /tmp/pnpm.tgz --ignore-scripts \
+    && rm /tmp/install-pnpm.mjs /tmp/pnpm.tgz
 
 # pnpm workspace files first for layer caching
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
@@ -39,48 +63,42 @@ ENV VITE_API_URL=${VITE_API_URL} \
 RUN pnpm --filter frontend build
 # produces /build/frontend/dist
 
-# ---- Stage 2: python runtime -----------------------------------------------
-FROM python:3.14-slim AS runtime
+# ---- Stage 2: locked Python dependencies ----------------------------------
+FROM python-base AS dependency-builder
+COPY --from=uv-builder /uv /usr/local/bin/uv
+ENV UV_LINK_MODE=copy UV_PYTHON_DOWNLOADS=never
+WORKDIR /app
+COPY pyproject.toml uv.lock ./
+COPY backend/pyproject.toml backend/pyproject.toml
+RUN uv sync --locked --no-install-workspace --package app --no-dev --group build
+COPY backend/scripts /app/backend/scripts
+COPY backend/alembic.ini /app/backend/
+COPY backend/app /app/backend/app
+# Build using the hash-locked builder group already installed, then remove that
+# group from the final venv. No isolated unbounded build-dependency resolution.
+RUN uv sync --locked --package app --no-dev --no-editable --no-build-isolation \
+    && uv pip check
+
+# ---- Stage 3: immutable non-root runtime ----------------------------------
+FROM python-base AS runtime
+ARG BUILD_REVISION=""
+LABEL org.opencontainers.image.revision=${BUILD_REVISION}
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    UV_LINK_MODE=copy \
-    UV_COMPILE_BYTECODE=0 \
     PATH="/app/.venv/bin:$PATH" \
-    STATIC_DIR=/app/static
-
-# System deps: libpq for psycopg, curl for healthchecks, build-essential for
-# any sdist that needs compiling. Cleaned up to keep the image lean.
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-      build-essential libpq-dev curl ca-certificates && \
-    rm -rf /var/lib/apt/lists/*
-
-# Install uv from PyPI
-RUN pip install --no-cache-dir uv==0.9.26
-
-WORKDIR /app
-
-# Workspace metadata first (cached by uv layer)
-COPY pyproject.toml uv.lock ./
-
-# Install only the `app` workspace member (skips dev deps)
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-install-workspace --package app --no-dev
-
-# Copy backend source after deps so code edits don't bust the dep cache
-COPY backend/scripts /app/backend/scripts
-COPY backend/pyproject.toml backend/alembic.ini /app/backend/
-COPY backend/app /app/backend/app
-
-# Materialize the workspace member install
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --package app --no-dev
+    STATIC_DIR=/app/static \
+    HOME=/home/kindred
+RUN groupadd --gid 10001 kindred \
+    && useradd --uid 10001 --gid 10001 --home-dir /home/kindred --create-home --shell /usr/sbin/nologin kindred \
+    && install -d -o 10001 -g 10001 /app/backend/uploads
+COPY --from=dependency-builder /app /app
 
 # Built SPA → /app/static (served by FastAPI's StaticFiles when STATIC_DIR is set)
 COPY --from=frontend-builder /build/frontend/dist /app/static
 
 WORKDIR /app/backend
+USER 10001:10001
 EXPOSE 8000
 
 # Default to web mode. compose.yml's worker service overrides this with arq.
