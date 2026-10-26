@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+from uuid import uuid4
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session, select
 
@@ -278,6 +280,201 @@ def test_create_rejects_unknown_impersonation_target(
         },
     )
     assert r.status_code == 400
+
+
+@pytest.mark.parametrize("target_kind", ["other", "self", "unknown", "inactive"])
+@pytest.mark.parametrize("credential", ["login", "api_key"])
+def test_normal_user_cannot_grant_impersonation(
+    client: TestClient,
+    db: Session,
+    user: User,
+    user_headers: dict[str, str],
+    target_kind: str,
+    credential: str,
+) -> None:
+    target_id = user.id if target_kind == "self" else uuid4()
+    if target_kind in {"other", "inactive"}:
+        target = _create_user(db)
+        if target_kind == "inactive":
+            target.is_active = False
+            db.add(target)
+            db.commit()
+        target_id = target.id
+    headers = user_headers
+    if credential == "api_key":
+        _, plaintext = _issue_key(db, owner=user)
+        headers = {"Authorization": f"Bearer {plaintext}"}
+    before = {key.id for key in crud.list_api_keys(session=db, owner_id=user.id)}
+
+    response = client.post(
+        f"{settings.API_V1_STR}/users/me/api-keys/",
+        headers=headers,
+        json={"name": "unauthorized grant", "can_impersonate": [str(target_id)]},
+    )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Only superusers can grant impersonation"
+    assert {
+        key.id for key in crud.list_api_keys(session=db, owner_id=user.id)
+    } == before
+
+
+def test_self_registered_user_cannot_grant_admin_impersonation(
+    client: TestClient, db: Session
+) -> None:
+    email, password = random_email(), random_lower_string()
+    registered = client.post(
+        f"{settings.API_V1_STR}/users/signup",
+        json={"email": email, "password": password},
+    )
+    assert registered.status_code == 200
+    assert registered.json()["is_superuser"] is False
+    login = client.post(
+        f"{settings.API_V1_STR}/login/access-token",
+        data={"username": email, "password": password},
+    )
+    assert login.status_code == 200
+    headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
+    shared = client.post(
+        f"{settings.API_V1_STR}/contact-shares/",
+        headers=headers,
+        json={"grantee_email": settings.FIRST_SUPERUSER},
+    )
+    assert shared.status_code == 200
+
+    created = client.post(
+        f"{settings.API_V1_STR}/users/me/api-keys/",
+        headers=headers,
+        json={"name": "escalation", "can_impersonate": [shared.json()["grantee_id"]]},
+    )
+
+    assert created.status_code == 403
+    user = crud.get_user_by_email(session=db, email=email)
+    assert user is not None
+    assert not crud.list_api_keys(session=db, owner_id=user.id)
+    assert (
+        client.get(f"{settings.API_V1_STR}/users/me", headers=headers).json()[
+            "is_superuser"
+        ]
+        is False
+    )
+
+
+def test_normal_user_can_manage_personal_key(
+    client: TestClient, user_headers: dict[str, str], user: User
+) -> None:
+    created = client.post(
+        f"{settings.API_V1_STR}/users/me/api-keys/",
+        headers=user_headers,
+        json={"name": "personal"},
+    )
+    assert created.status_code == 201
+    body = created.json()
+    assert body["can_impersonate"] == []
+    headers = {"Authorization": f"Bearer {body['plaintext_key']}"}
+    authenticated = client.get(f"{settings.API_V1_STR}/users/me", headers=headers)
+    assert authenticated.status_code == 200
+    assert authenticated.json()["id"] == str(user.id)
+    listed = client.get(
+        f"{settings.API_V1_STR}/users/me/api-keys/", headers=user_headers
+    )
+    assert listed.status_code == 200
+    assert body["id"] in {key["id"] for key in listed.json()["data"]}
+    revoked = client.delete(
+        f"{settings.API_V1_STR}/users/me/api-keys/{body['id']}", headers=user_headers
+    )
+    assert revoked.status_code == 200
+    assert (
+        client.get(f"{settings.API_V1_STR}/users/me", headers=headers).status_code
+        == 401
+    )
+
+
+def test_legacy_non_admin_key_cannot_permanently_promote_owner(
+    client: TestClient, db: Session, user: User, user_headers: dict[str, str]
+) -> None:
+    admin = crud.get_user_by_email(session=db, email=settings.FIRST_SUPERUSER)
+    assert admin is not None
+    # Seed the permission an unpatched server would have issued.
+    _, plaintext = _issue_key(db, owner=user, can_impersonate=[admin.id])
+    response = client.patch(
+        f"{settings.API_V1_STR}/users/{user.id}",
+        headers={
+            "Authorization": f"Bearer {plaintext}",
+            "X-On-Behalf-Of": str(admin.id),
+        },
+        json={"is_superuser": True},
+    )
+    original_login = client.get(f"{settings.API_V1_STR}/users/me", headers=user_headers)
+    assert original_login.status_code == 200
+    assert (response.status_code, original_login.json()["is_superuser"]) == (403, False)
+
+
+@pytest.mark.parametrize("auth_mode", ["local", "oidc", "both"])
+def test_legacy_non_admin_key_cannot_impersonate_in_any_auth_mode(
+    client: TestClient, db: Session, monkeypatch: pytest.MonkeyPatch, auth_mode: str
+) -> None:
+    owner, target = _create_user(db), _create_user(db)
+    _, plaintext = _issue_key(db, owner=owner, can_impersonate=[target.id])
+    monkeypatch.setattr(settings, "AUTH_MODE", auth_mode)
+    response = client.get(
+        f"{settings.API_V1_STR}/users/me",
+        headers={
+            "Authorization": f"Bearer {plaintext}",
+            "X-On-Behalf-Of": str(target.id),
+        },
+    )
+    assert response.status_code == 403
+
+
+@pytest.mark.parametrize(
+    "owner_change, expected_status", [("demoted", 403), ("inactive", 400)]
+)
+def test_impersonation_rechecks_owner_authority(
+    client: TestClient, db: Session, owner_change: str, expected_status: int
+) -> None:
+    owner, target = _create_user(db), _create_user(db)
+    owner.is_superuser = True
+    db.add(owner)
+    db.commit()
+    _, plaintext = _issue_key(db, owner=owner, can_impersonate=[target.id])
+    headers = {"Authorization": f"Bearer {plaintext}", "X-On-Behalf-Of": str(target.id)}
+    assert (
+        client.get(f"{settings.API_V1_STR}/users/me", headers=headers).status_code
+        == 200
+    )
+
+    if owner_change == "demoted":
+        owner.is_superuser = False
+    else:
+        owner.is_active = False
+    db.add(owner)
+    db.commit()
+    assert (
+        client.get(f"{settings.API_V1_STR}/users/me", headers=headers).status_code
+        == expected_status
+    )
+
+
+def test_impersonation_rechecks_target_active_status(
+    client: TestClient, db: Session
+) -> None:
+    owner, target = _create_user(db), _create_user(db)
+    owner.is_superuser = True
+    db.add(owner)
+    db.commit()
+    _, plaintext = _issue_key(db, owner=owner, can_impersonate=[target.id])
+    target.is_active = False
+    db.add(target)
+    db.commit()
+    response = client.get(
+        f"{settings.API_V1_STR}/users/me",
+        headers={
+            "Authorization": f"Bearer {plaintext}",
+            "X-On-Behalf-Of": str(target.id),
+        },
+    )
+    assert response.status_code == 400
 
 
 # ─── audit log: actor_id and acting_api_key_id ───────────────────────────────
