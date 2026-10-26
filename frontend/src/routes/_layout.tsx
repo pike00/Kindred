@@ -7,7 +7,8 @@ import {
   useRouterState,
 } from "@tanstack/react-router"
 import { useEffect, useMemo } from "react"
-import { ApiError } from "@/client"
+import { cfEnabled } from "@/auth/cf"
+import { ApiError, UsersService } from "@/client"
 import { CommandPalette } from "@/components/CommandPalette/CommandPalette"
 import {
   CommandPaletteProvider,
@@ -29,6 +30,7 @@ import { VoiceRecordButton } from "@/components/VoiceRecorder/VoiceRecordButton"
 import { isLoggedIn } from "@/hooks/useAuth"
 import { useRegisterShortcuts } from "@/hooks/useKeyboardShortcuts"
 import { Search } from "@/lib/icons"
+import { leaveSession } from "@/lib/session"
 
 export function NavigationProgressBar() {
   const isPending = useRouterState({ select: (s) => s.status === "pending" })
@@ -48,17 +50,14 @@ export function NavigationProgressBar() {
 }
 
 function AuthGuardError({ error }: { error: unknown }) {
-  const navigate = useNavigate()
-
   useEffect(() => {
     if (
       error instanceof ApiError &&
       (error.status === 401 || error.status === 403)
     ) {
-      localStorage.removeItem("access_token")
-      navigate({ to: "/login", replace: true })
+      leaveSession(cfEnabled() ? "/" : "/login")
     }
-  }, [error, navigate])
+  }, [error])
 
   if (
     error instanceof ApiError &&
@@ -77,6 +76,8 @@ export const Route = createFileRoute("/_layout")({
     if (!isLoggedIn()) {
       throw redirect({ to: "/login" })
     }
+    // Verify cookie-backed identity before any private child loader can reuse data.
+    if (cfEnabled()) await UsersService.readUserMe()
   },
 })
 

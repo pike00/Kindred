@@ -160,7 +160,7 @@ describe("EnvironmentChip", () => {
 
       expect(fetchMock).toHaveBeenCalledWith(
         "http://localhost:3000/api/v1/utils/environment/",
-        { credentials: "include" },
+        expect.objectContaining({ credentials: "include", cache: "no-store", signal: expect.any(AbortSignal) }),
       )
     })
 

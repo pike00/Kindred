@@ -3,6 +3,11 @@ import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { StayInTouchWidget } from "@/components/Dashboard/StayInTouchWidget"
 import { cancelable, makeContact, renderWithProviders } from "@/test/helpers"
+import type { ContactPublic } from "@/client"
+
+function makeOverdueContact({ days_overdue, ...contact }: Partial<ContactPublic> & { days_overdue: number }) {
+  return { ...makeContact(contact), days_overdue }
+}
 
 const { mockListOverdueContacts, mockSnoozeContact } = vi.hoisted(() => ({
   mockListOverdueContacts: vi.fn(),
@@ -43,8 +48,8 @@ describe("StayInTouchWidget", () => {
 
   it("renders all contacts when count is 2 or less", async () => {
     const contacts = [
-      makeContact({ id: "1", first_name: "Alice", last_name: "", days_overdue: 5 }),
-      makeContact({ id: "2", first_name: "Bob", last_name: "", days_overdue: 10 }),
+      makeOverdueContact({ id: "1", first_name: "Alice", last_name: "", days_overdue: 5 }),
+      makeOverdueContact({ id: "2", first_name: "Bob", last_name: "", days_overdue: 10 }),
     ]
     mockListOverdueContacts.mockReturnValue(
       cancelable({ data: contacts, count: 2 }),
@@ -88,11 +93,11 @@ describe("StayInTouchWidget", () => {
 
   it("limits displayed contacts to 2 and shows +X more overdue button when count > 2", async () => {
     const contacts = [
-      makeContact({ id: "1", first_name: "Alice", last_name: "", days_overdue: 5 }),
-      makeContact({ id: "2", first_name: "Bob", last_name: "", days_overdue: 10 }),
-      makeContact({ id: "3", first_name: "Charlie", last_name: "", days_overdue: 15 }),
-      makeContact({ id: "4", first_name: "Diana", last_name: "", days_overdue: 20 }),
-      makeContact({ id: "5", first_name: "Evan", last_name: "", days_overdue: 25 }),
+      makeOverdueContact({ id: "1", first_name: "Alice", last_name: "", days_overdue: 5 }),
+      makeOverdueContact({ id: "2", first_name: "Bob", last_name: "", days_overdue: 10 }),
+      makeOverdueContact({ id: "3", first_name: "Charlie", last_name: "", days_overdue: 15 }),
+      makeOverdueContact({ id: "4", first_name: "Diana", last_name: "", days_overdue: 20 }),
+      makeOverdueContact({ id: "5", first_name: "Evan", last_name: "", days_overdue: 25 }),
     ]
     mockListOverdueContacts.mockReturnValue(
       cancelable({ data: contacts, count: 5 }),

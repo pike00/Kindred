@@ -4,6 +4,7 @@ import {
   EnvironmentChip,
   useEnvironment,
 } from "@/components/Common/EnvironmentChip"
+import { sessionFetch } from "@/lib/session-api"
 
 type VersionInfo = {
   version: string
@@ -12,7 +13,7 @@ type VersionInfo = {
 }
 
 async function fetchVersionInfo(): Promise<VersionInfo> {
-  const res = await fetch(`${OpenAPI.BASE}/api/v1/utils/info/`, {
+  const res = await sessionFetch(`${OpenAPI.BASE}/api/v1/utils/info/`, {
     credentials: "include",
   })
   if (!res.ok) throw new Error(`version fetch failed: ${res.status}`)

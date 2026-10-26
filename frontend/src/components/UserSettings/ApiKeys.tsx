@@ -27,6 +27,7 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import { Skeleton } from "@/components/ui/skeleton"
 import useCustomToast from "@/hooks/useCustomToast"
 import { MoreHorizontal, Plus } from "@/lib/icons"
+import { sessionFetch } from "@/lib/session-api"
 import { formatDateWithRelative } from "@/lib/utils"
 
 // ─── types ────────────────────────────────────────────────────────────────────
@@ -59,7 +60,7 @@ async function apiRequest<T>(
 ): Promise<T> {
   const token = await bearerToken()
   const base = OpenAPI.BASE || ""
-  const res = await fetch(`${base}${path}`, {
+  const res = await sessionFetch(`${base}${path}`, {
     method,
     headers: {
       Authorization: `Bearer ${token}`,

@@ -125,6 +125,8 @@ vi.mock("@/lib/icons", () => ({
   NotebookPen: () => <span data-testid="icon-notebook">Notebook</span>,
   Pencil: () => <span data-testid="icon-pencil">Pencil</span>,
   Trash2: () => <span data-testid="icon-trash">Trash</span>,
+  WifiOff: () => <span>Offline</span>,
+  RefreshCw: () => <span>Refresh</span>,
 }))
 
 describe("NotesCard", () => {
@@ -983,4 +985,30 @@ describe("NotesCard", () => {
       expect(screen.queryByTestId("dialog")).not.toBeInTheDocument()
     })
   })
+})
+
+it("syncs only the verified account's draft to its original contact", async () => {
+  const { IDBFactory } = await import("fake-indexeddb")
+  vi.stubGlobal("indexedDB", new IDBFactory())
+  const session = await import("@/lib/session")
+  const db = await import("@/lib/offline-db")
+  session.acceptIdentity("account-a")
+  await db.addDraft({ id: "private-a", contactId: "contact-current", body: "private account A" })
+  session.resetSession()
+  session.acceptIdentity("account-b")
+  await db.addDraft({ id: "other-contact", contactId: "contact-other", body: "another contact" })
+  await db.addDraft({ id: "current-b", contactId: "contact-current", body: "account B note" })
+  mockListNotes.mockResolvedValue({ data: [], count: 0 })
+  mockCreateNote.mockResolvedValue({ id: "created" })
+  const view = renderWithProviders(<NotesCard contactId="contact-current" />)
+  await waitFor(() => expect(mockCreateNote).toHaveBeenCalledWith({
+    requestBody: { contact_id: "contact-current", body: "account B note", client_id: "current-b" },
+  }))
+  expect(mockCreateNote).toHaveBeenCalledOnce()
+  view.unmount()
+  const pending = await db.getPendingDrafts()
+  expect(pending.map((draft) => draft.id)).toEqual(["other-contact"])
+  session.resetSession()
+  session.acceptIdentity("account-a")
+  expect((await db.getPendingDrafts()).map((draft) => draft.id)).toEqual(["private-a"])
 })

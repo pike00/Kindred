@@ -5,7 +5,6 @@ import {
 import { Link, useNavigate, useSearch } from "@tanstack/react-router"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "sonner"
-
 import type { ContactPublic } from "@/client"
 import type { SavedFilterPublic } from "@/client/types.gen"
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
@@ -35,6 +34,7 @@ import {
   savedFiltersQueryOptions,
 } from "@/lib/queries"
 import { useSeedDemo } from "@/lib/seed"
+import { sessionFetch } from "@/lib/session-api"
 import { cn } from "@/lib/utils"
 
 type BulkActionId =
@@ -294,7 +294,7 @@ export const ContactsList = () => {
       // Get token from localStorage
       const token = localStorage.getItem("token") || ""
 
-      const response = await fetch(
+      const response = await sessionFetch(
         `/api/v1/import-export/export/csv?${params.toString()}`,
         {
           headers: {

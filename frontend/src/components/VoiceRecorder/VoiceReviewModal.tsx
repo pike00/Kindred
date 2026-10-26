@@ -58,7 +58,10 @@ const channels = [
 const reviewSchema = z.object({
   notes: z.string().min(1, "Notes cannot be empty"),
   channel: z.string().min(1, "Select a channel"),
-  attendee_ids: z.array(z.string().uuid()).min(1, "Pick at least one attendee"),
+  attendee_ids: z
+    .array(z.string().uuid())
+    .min(1, "Pick at least one attendee")
+    .max(1000),
   occurred_at: z.string().min(1, "Date is required"),
   duration_minutes: z.string().optional(),
 })

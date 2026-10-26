@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import type { ContactPublic } from "@/client"
+import { makeContact } from "@/test/helpers"
 import {
   cleanTranscriptionText,
   detectChannel,
@@ -8,38 +9,34 @@ import {
 } from "@/components/VoiceRecorder/parseVoiceTranscription"
 
 const mockContacts: ContactPublic[] = [
-  {
+  makeContact({
     id: "id-nora",
     first_name: "Nora",
     last_name: "Taylor",
-    owner_id: "owner-1",
     created_at: "2026-01-01T00:00:00Z",
     updated_at: "2026-01-01T00:00:00Z",
-  },
-  {
+  }),
+  makeContact({
     id: "id-lucas",
     first_name: "Lucas",
     last_name: "Maeda",
-    owner_id: "owner-1",
     created_at: "2026-01-01T00:00:00Z",
     updated_at: "2026-01-01T00:00:00Z",
-  },
-  {
+  }),
+  makeContact({
     id: "id-yara",
     first_name: "Yara",
     last_name: "Vasquez",
-    owner_id: "owner-1",
     created_at: "2026-01-01T00:00:00Z",
     updated_at: "2026-01-01T00:00:00Z",
-  },
-  {
+  }),
+  makeContact({
     id: "id-satoshi",
     first_name: "Satoshi",
     last_name: "Lee",
-    owner_id: "owner-1",
     created_at: "2026-01-01T00:00:00Z",
     updated_at: "2026-01-01T00:00:00Z",
-  },
+  }),
 ]
 
 describe("parseVoiceTranscription", () => {

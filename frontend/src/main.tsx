@@ -8,6 +8,13 @@ import { ShortcutRegistryProvider } from "./hooks/useKeyboardShortcuts"
 import "./index.css"
 import PagePending from "./components/Common/PagePending"
 import { queryClient } from "./lib/queryClient"
+import { ensurePrivateApiWorker } from "./lib/service-worker-session"
+import {
+  listenForSessionChanges,
+  onSessionExit,
+  reloadSession,
+} from "./lib/session"
+import { installSessionApi } from "./lib/session-api"
 import { routeTree } from "./routeTree.gen"
 
 // Deferred off the critical path — neither is needed for first paint, and keeping
@@ -28,6 +35,8 @@ OpenAPI.WITH_CREDENTIALS = true
 OpenAPI.TOKEN = async () => {
   return localStorage.getItem("access_token") || ""
 }
+installSessionApi()
+listenForSessionChanges()
 
 const router = createRouter({
   routeTree,
@@ -75,7 +84,7 @@ function ServiceWorkerUpdatePrompt() {
       })
 
       navigator.serviceWorker.addEventListener("controllerchange", () => {
-        window.location.reload()
+        reloadSession()
       })
     }
   }, [])
@@ -97,7 +106,9 @@ function ServiceWorkerUpdatePrompt() {
   )
 }
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
+const root = ReactDOM.createRoot(document.getElementById("root")!)
+onSessionExit(() => root.unmount())
+const app = (
   <StrictMode>
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <QueryClientProvider client={queryClient}>
@@ -111,5 +122,26 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         </ShortcutRegistryProvider>
       </QueryClientProvider>
     </ThemeProvider>
-  </StrictMode>,
+  </StrictMode>
 )
+
+if (isE2E) root.render(app)
+else {
+  root.render(<PagePending />)
+  ensurePrivateApiWorker()
+    .then(() => root.render(app))
+    .catch((error: unknown) => {
+      root.render(
+        <div role="alert" className="p-8">
+          <p>
+            {error instanceof Error
+              ? error.message
+              : "Reconnect and reload to finish the security update."}
+          </p>
+          <button type="button" onClick={() => window.location.reload()}>
+            Reload
+          </button>
+        </div>,
+      )
+    })
+}

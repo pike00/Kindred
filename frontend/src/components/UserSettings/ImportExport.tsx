@@ -3,6 +3,7 @@ import { useRef, useState } from "react"
 import { ImportExportService, OpenAPI } from "@/client"
 import { LoadingButton } from "@/components/ui/loading-button"
 import useCustomToast from "@/hooks/useCustomToast"
+import { sessionFetch } from "@/lib/session-api"
 
 type ImportResult = {
   imported: number
@@ -25,7 +26,7 @@ async function downloadAuthed(path: string, filename: string, accept: string) {
     typeof OpenAPI.TOKEN === "function"
       ? await (OpenAPI.TOKEN as () => Promise<string>)()
       : OpenAPI.TOKEN || ""
-  const res = await fetch(`${OpenAPI.BASE}${path}`, {
+  const res = await sessionFetch(`${OpenAPI.BASE}${path}`, {
     method: "GET",
     credentials: "include",
     headers: {

@@ -1,6 +1,14 @@
 import "@testing-library/jest-dom"
 import { cleanup, configure } from "@testing-library/react"
-import { afterEach, vi } from "vitest"
+import { afterEach, beforeEach, vi } from "vitest"
+import { resetSession } from "@/lib/session"
+
+beforeEach(() => {
+  resetSession()
+  vi.spyOn(window, "location", "get").mockReturnValue({
+    ...window.location, assign: vi.fn(), reload: vi.fn(),
+  })
+})
 
 // Increase default waitFor timeout to handle slow async resolution under load
 configure({ asyncUtilTimeout: 5000 })
