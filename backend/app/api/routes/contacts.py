@@ -389,11 +389,15 @@ def snooze_contact(
         elif dur in ("6m", "6 months", "180d", "180 days"):
             contact.snoozed_until = now + timedelta(days=180)
         elif dur in ("indefinitely", "forever"):
-            contact.snoozed_until = datetime(2099, 12, 31, 23, 59, 59, tzinfo=timezone.utc)
+            contact.snoozed_until = datetime(
+                2099, 12, 31, 23, 59, 59, tzinfo=timezone.utc
+            )
         elif dur in ("none", "unsnooze", "clear"):
             contact.snoozed_until = None
         else:
-            raise HTTPException(status_code=400, detail=f"Invalid snooze duration: {body.duration}")
+            raise HTTPException(
+                status_code=400, detail=f"Invalid snooze duration: {body.duration}"
+            )
     else:
         # Default (e.g. skip week) -> 7 days
         contact.snoozed_until = now + timedelta(days=7)
@@ -402,7 +406,6 @@ def snooze_contact(
     session.commit()
     session.refresh(contact)
     return contact
-
 
 
 @router.patch("/bulk", response_model=BulkUpdateResponse)

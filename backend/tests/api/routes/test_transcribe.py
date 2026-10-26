@@ -31,7 +31,11 @@ class TestTranscribeAudio:
         """Valid audio upload forwards to Whisper and returns transcribed text."""
         mock_response = httpx.Response(
             status_code=200,
-            json={"text": "Hello world transcription", "language": "en", "duration": 2.5},
+            json={
+                "text": "Hello world transcription",
+                "language": "en",
+                "duration": 2.5,
+            },
             request=httpx.Request("POST", "http://whisper:8000/transcribe"),
         )
 
@@ -65,4 +69,3 @@ class TestTranscribeAudio:
 
             assert response.status_code == 503
             assert "unavailable" in response.json()["detail"].lower()
-

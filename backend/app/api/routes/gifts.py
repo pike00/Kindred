@@ -28,7 +28,9 @@ def _require_contact_visible(session: Any, user: Any, contact_id: uuid.UUID) -> 
         raise HTTPException(status_code=404, detail="Contact not found")
 
 
-def _days_until_birthday(birthday: date | None, today: date | None = None) -> int | None:
+def _days_until_birthday(
+    birthday: date | None, today: date | None = None
+) -> int | None:
     """Calculate days until the next occurrence of a birthday."""
     if not birthday:
         return None

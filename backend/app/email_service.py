@@ -170,10 +170,14 @@ def parse_email_addresses(header_val: str | None) -> list[str]:
 
 def build_gmail_contact_query(addresses: set[str]) -> str | None:
     """Build a Gmail query matching messages from or to any contact address."""
-    normalized = sorted({address.strip().lower() for address in addresses if address.strip()})
+    normalized = sorted(
+        {address.strip().lower() for address in addresses if address.strip()}
+    )
     if not normalized:
         return None
-    return "{" + " ".join(f"from:{address} to:{address}" for address in normalized) + "}"
+    return (
+        "{" + " ".join(f"from:{address} to:{address}" for address in normalized) + "}"
+    )
 
 
 def fetch_gmail_messages(
@@ -195,11 +199,15 @@ def fetch_gmail_messages(
         fetched = 0
         while True:
             page_size = min(100, max_results - fetched) if max_results else 100
-            request = service.users().messages().list(
-                userId="me",
-                maxResults=page_size,
-                q=query,
-                pageToken=page_token,
+            request = (
+                service.users()
+                .messages()
+                .list(
+                    userId="me",
+                    maxResults=page_size,
+                    q=query,
+                    pageToken=page_token,
+                )
             )
             result = request.execute()
             messages = result.get("messages", [])

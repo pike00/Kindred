@@ -30,7 +30,9 @@ def two_users():
         s.commit()
 
 
-def visible_ids(session: Session, user: User, *, include_deleted: bool = False) -> set[uuid.UUID]:
+def visible_ids(
+    session: Session, user: User, *, include_deleted: bool = False
+) -> set[uuid.UUID]:
     return set(
         session.exec(
             select(Contact.id).where(

@@ -720,7 +720,6 @@ class ContactBase(SQLModel):
         return _parse_optional_year_birthday(v)
 
 
-
 class ContactCreate(ContactBase):
     tag_ids: list[uuid.UUID] | None = None
 
@@ -755,7 +754,6 @@ class ContactUpdate(SQLModel):
     @classmethod
     def validate_birthday(cls, v: Any) -> Any:
         return _parse_optional_year_birthday(v)
-
 
 
 class Contact(SoftDeleteMixin, ContactBase, table=True):
@@ -962,7 +960,6 @@ class ContactSnoozeRequest(SQLModel):
         default=None,
         description="Explicit snoozed_until datetime UTC.",
     )
-
 
 
 # ─── ContactField ────────────────────────────────────────────────────────────
