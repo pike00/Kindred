@@ -543,8 +543,12 @@ def parse_date_flexible(date_str: str) -> date | None:
 
 def _spreadsheet_safe(value: Any) -> Any:
     """Prefix text that spreadsheet apps could interpret as a formula."""
-    if isinstance(value, str) and value.startswith(("=", "+", "-", "@", "\t", "\r")):
-        return f"'{value}"
+    if isinstance(value, str):
+        candidate = value.lstrip()
+        if value.startswith(("\t", "\r", "\n")) or (
+            candidate and candidate.startswith(("=", "+", "-", "@"))
+        ):
+            return f"'{value}"
     return value
 
 

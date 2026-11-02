@@ -86,3 +86,10 @@ def test_csv_export_escapes_spreadsheet_formulas(
     assert rows[0]["company"].startswith("'-")
     assert rows[0]["how_we_met"].startswith("'@")
     assert rows[0]["tag_names"].startswith("'=")
+
+
+def test_csv_export_neutralizes_line_feed_formula_prefixes() -> None:
+    from app.csv_utils import _spreadsheet_safe
+
+    for value in ("\n=1+1", "\n+SUM(1,1)", "\n-2+3", "\n@SUM(1,1)"):
+        assert _spreadsheet_safe(value) == f"'{value}"
