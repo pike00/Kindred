@@ -177,14 +177,25 @@ class Collection(BaseCollection):
             if not user:
                 raise ValueError(f"User {self._user} not found")
 
-            # Check if contact exists by (owner_id, source, source_external_id)
-            existing = None
-            if source_external_id:
+            # A client may change or omit the vCard UID while reusing the same
+            # resource href. Treat the href as the stable identity in that case.
+            existing = session.exec(
+                select(Contact).where(
+                    Contact.owner_id == user.id,
+                    Contact.vcard_href == href,
+                    Contact.deleted_at.is_(None),
+                )
+            ).first()
+
+            # Then check the vCard UID so the same logical contact can move to a
+            # different href without creating a duplicate.
+            if not existing and source_external_id:
                 existing = session.exec(
                     select(Contact).where(
                         Contact.owner_id == user.id,
                         Contact.source == ContactSource.CARDDAV,
                         Contact.source_external_id == source_external_id,
+                        Contact.deleted_at.is_(None),
                     )
                 ).first()
 
@@ -250,6 +261,7 @@ class Collection(BaseCollection):
                 existing.vcard_raw = vcard_text
                 existing.vcard_etag = item.etag
                 existing.vcard_href = href
+                existing.source_external_id = source_external_id
                 existing.vcard_sha256 = incoming_hash
             else:
                 # Create new contact

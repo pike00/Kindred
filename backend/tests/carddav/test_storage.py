@@ -74,3 +74,25 @@ END:VCARD"""
     assert len(items) == 1
     assert "FN:CardDAV Person" in items[0].serialize()
     assert items[0].href == "new-carddav-contact.vcf"
+
+    changed_uid = """BEGIN:VCARD
+VERSION:3.0
+UID:new-carddav-contact-v2@example.com
+FN:CardDAV Person Updated
+N:Person;CardDAV Updated;;;
+EMAIL;TYPE=HOME:carddav-updated@example.com
+END:VCARD"""
+    updated = radicale_item.Item(
+        collection_path=collection.path,
+        text=changed_uid,
+        href="new-carddav-contact.vcf",
+        etag='"carddav-etag-v2"',
+        uid="new-carddav-contact-v2@example.com",
+    )
+
+    collection.upload("new-carddav-contact.vcf", updated)
+
+    stored = db.exec(select(Contact).where(Contact.owner_id == user.id)).all()
+    assert len(stored) == 1
+    assert stored[0].first_name == "CardDAV Updated"
+    assert stored[0].source_external_id == "new-carddav-contact-v2@example.com"

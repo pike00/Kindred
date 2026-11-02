@@ -852,6 +852,16 @@ class Contact(SoftDeleteMixin, ContactBase, table=True):
         link_model=ContactTag,
     )
 
+    __table_args__ = (
+        sa.Index(
+            "uq_contact_owner_carddav_href",
+            "owner_id",
+            "vcard_href",
+            unique=True,
+            postgresql_where=sa.text("vcard_href IS NOT NULL"),
+        ),
+    )
+
 
 # ─── ContactStageEvent ───────────────────────────────────────────────
 
