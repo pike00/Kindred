@@ -168,6 +168,11 @@ class User(UserBase, table=True):
         index=True,
         description="OIDC subject; paired with oidc_iss forms the unique external identity.",
     )
+    session_version: int = Field(
+        default=0,
+        nullable=False,
+        description="Incremented to revoke previously issued local access tokens.",
+    )
     created_at: datetime | None = Field(
         default_factory=get_datetime_utc,
         sa_type=DateTime(timezone=True),  # type: ignore
@@ -2777,6 +2782,7 @@ class Token(SQLModel):
 # Contents of JWT token
 class TokenPayload(SQLModel):
     sub: str | None = None
+    ver: int = 0
 
 
 class NewPassword(SQLModel):

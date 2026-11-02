@@ -66,6 +66,8 @@ def _get_current_user_local(session: Session, token: str) -> User:
         raise HTTPException(status_code=401, detail="User not found")
     if not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
+    if token_data.ver != user.session_version:
+        raise HTTPException(status_code=401, detail="Session has been revoked")
     return user
 
 

@@ -113,9 +113,19 @@ def update_password_me(
         )
     hashed_password = get_password_hash(body.new_password)
     current_user.hashed_password = hashed_password
+    current_user.session_version += 1
     session.add(current_user)
     session.commit()
     return Message(message="Password updated successfully")
+
+
+@router.post("/me/logout", response_model=Message)
+def logout_me(*, session: SessionDep, current_user: CurrentUser) -> Message:
+    """Revoke all local access tokens for the current user."""
+    current_user.session_version += 1
+    session.add(current_user)
+    session.commit()
+    return Message(message="Logged out")
 
 
 @router.get("/me", response_model=UserPublic)

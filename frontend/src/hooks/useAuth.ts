@@ -17,6 +17,7 @@ import {
   leaveSession,
   resetSession,
 } from "@/lib/session"
+import { sessionFetch } from "@/lib/session-api"
 import { handleError } from "@/utils"
 import useCustomToast from "./useCustomToast"
 
@@ -72,14 +73,23 @@ const useAuth = () => {
     onError: handleError.bind(showErrorToast),
   })
 
-  const logout = () => {
-    void queryClient.cancelQueries()
+  const logout = async () => {
+    await queryClient.cancelQueries()
     queryClient.clear()
     if (cfEnabled()) {
       cfLogout()
       return
     }
-    leaveSession("/login")
+    try {
+      await sessionFetch("/api/v1/users/me/logout", {
+        method: "POST",
+        signal: AbortSignal.timeout(3000),
+      })
+    } catch {
+      // Local logout still succeeds if the server is unreachable.
+    } finally {
+      leaveSession("/login")
+    }
   }
 
   return {

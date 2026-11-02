@@ -120,6 +120,8 @@ def update_user(*, session: Session, db_user: User, user_in: UserUpdate) -> Any:
         hashed_password = get_password_hash(password)
         extra_data["hashed_password"] = hashed_password
     db_user.sqlmodel_update(user_data, update=extra_data)
+    if "password" in user_data:
+        db_user.session_version += 1
     session.add(db_user)
     session.commit()
     session.refresh(db_user)
@@ -677,7 +679,8 @@ def get_or_create_user_from_claims(
     if existing:
         return existing
 
-    if email:
+    email_verified = claims.get("email_verified") is True
+    if email and email_verified:
         merge = session.exec(
             select(User).where(User.email == email, User.oidc_sub.is_(None))  # type: ignore[union-attr]
         ).first()
@@ -691,8 +694,12 @@ def get_or_create_user_from_claims(
 
     from app.core.config import settings
 
+    new_email = email or f"{sub}@oidc.invalid"
+    if email and session.exec(select(User).where(User.email == email)).first():
+        new_email = f"{sub}@oidc.invalid"
+
     new_user = User(
-        email=email or f"{sub}@oidc.invalid",
+        email=new_email,
         full_name=str(claims.get("name", "")) or None,
         is_active=settings.OIDC_JIT_ACTIVE,
         is_superuser=False,

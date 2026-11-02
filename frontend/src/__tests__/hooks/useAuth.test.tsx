@@ -44,6 +44,14 @@ vi.mock("@/hooks/useCustomToast", () => ({
   }),
 }))
 
+vi.mock("@/lib/session-api", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/session-api")>()
+  return {
+    ...actual,
+    sessionFetch: vi.fn().mockResolvedValue(new Response(null, { status: 200 })),
+  }
+})
+
 // Mock handleError util
 vi.mock("@/utils", () => ({
   handleError: vi.fn((callback) => callback),
@@ -363,7 +371,7 @@ describe("useAuth hook", () => {
         ),
       })
 
-      result.current.logout()
+      await result.current.logout()
 
       expect(localStorage.getItem("access_token")).toBeNull()
       expect(queryClient.getQueryData(["contacts"])).toBeUndefined()
@@ -385,7 +393,7 @@ describe("useAuth hook", () => {
         ),
       })
 
-      result.current.logout()
+      await result.current.logout()
 
       expect(window.location.assign).toHaveBeenCalledWith("/login")
     })
@@ -405,10 +413,32 @@ describe("useAuth hook", () => {
         ),
       })
 
-      result.current.logout()
+      await result.current.logout()
 
       expect(vi.mocked(cfLogout)).toHaveBeenCalled()
       expect(mockNavigate).not.toHaveBeenCalled()
+    })
+
+    it("revokes the backend session before leaving", async () => {
+      const { cfEnabled } = await import("@/auth/cf")
+      const { sessionFetch } = await import("@/lib/session-api")
+      vi.mocked(cfEnabled).mockReturnValue(false)
+      localStorage.setItem("access_token", "test-token")
+
+      const { result } = renderHook(() => useAuth(), {
+        wrapper: ({ children }: { children: React.ReactNode }) => (
+          <QueryClientProvider client={createQueryClient()}>
+            {children}
+          </QueryClientProvider>
+        ),
+      })
+
+      await result.current.logout()
+
+      expect(sessionFetch).toHaveBeenCalledWith(
+        "/api/v1/users/me/logout",
+        expect.objectContaining({ method: "POST" }),
+      )
     })
   })
 })
