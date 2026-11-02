@@ -17,6 +17,10 @@ from kindred._generated.api.contacts import (
 from kindred._generated.api.contact_shares import (
     delete_api_v1_contact_shares as contact_shares_delete_contact_share,
 )
+from kindred._generated.api.contacts.get_api_v1_contacts import sync as contacts_sync
+from kindred._generated.api.contacts.contacts_list_contacts import (
+    sync as legacy_contacts_sync,
+)
 from kindred._generated.api.utils import (
     get_api_v1_utils_health_check as utils_health_check,
     get_api_v1_utils_status as utils_status,
@@ -45,6 +49,10 @@ CONTACT_FIXTURE = {
     "created_at": NOW,
     "updated_at": NOW,
 }
+
+
+def test_legacy_generated_operation_imports_remain_available():
+    assert legacy_contacts_sync is contacts_sync
 
 
 @pytest.fixture
