@@ -102,6 +102,12 @@
           "type": "varchar(255)",
           "nullable": true,
           "comment": "OIDC subject; paired with oidc_iss forms the unique external identity."
+        },
+        {
+          "name": "session_version",
+          "type": "integer",
+          "nullable": false,
+          "default": "0"
         }
       ],
       "indexes": [
@@ -186,6 +192,16 @@
           "referenced_table": "",
           "columns": [
             "id"
+          ]
+        },
+        {
+          "name": "user_session_version_not_null",
+          "type": "n",
+          "def": "NOT NULL session_version",
+          "table": "public.user",
+          "referenced_table": "",
+          "columns": [
+            "session_version"
           ]
         },
         {
@@ -574,6 +590,16 @@
           "type": "boolean",
           "nullable": false,
           "default": "false"
+        },
+        {
+          "name": "snoozed_until",
+          "type": "timestamp with time zone",
+          "nullable": true
+        },
+        {
+          "name": "vcard_href",
+          "type": "varchar(500)",
+          "nullable": true
         }
       ],
       "indexes": [
@@ -665,6 +691,15 @@
           "table": "public.contact",
           "columns": [
             "search_vector"
+          ]
+        },
+        {
+          "name": "uq_contact_owner_carddav_href",
+          "def": "CREATE UNIQUE INDEX uq_contact_owner_carddav_href ON public.contact USING btree (owner_id, vcard_href) WHERE (vcard_href IS NOT NULL)",
+          "table": "public.contact",
+          "columns": [
+            "owner_id",
+            "vcard_href"
           ]
         }
       ],
@@ -2157,6 +2192,17 @@
           "name": "deleted_at",
           "type": "timestamp without time zone",
           "nullable": true
+        },
+        {
+          "name": "delivery_attempts",
+          "type": "integer",
+          "nullable": false,
+          "default": "0"
+        },
+        {
+          "name": "next_delivery_at",
+          "type": "timestamp with time zone",
+          "nullable": true
         }
       ],
       "indexes": [
@@ -2218,6 +2264,16 @@
           "referenced_table": "",
           "columns": [
             "created_at"
+          ]
+        },
+        {
+          "name": "reminder_delivery_attempts_not_null",
+          "type": "n",
+          "def": "NOT NULL delivery_attempts",
+          "table": "public.reminder",
+          "referenced_table": "",
+          "columns": [
+            "delivery_attempts"
           ]
         },
         {
@@ -3122,6 +3178,15 @@
           "table": "public.note",
           "columns": [
             "search_vector"
+          ]
+        },
+        {
+          "name": "uq_note_owner_client_id",
+          "def": "CREATE UNIQUE INDEX uq_note_owner_client_id ON public.note USING btree (owner_id, client_id) WHERE (client_id IS NOT NULL)",
+          "table": "public.note",
+          "columns": [
+            "owner_id",
+            "client_id"
           ]
         }
       ],
@@ -6514,6 +6579,170 @@
           ]
         }
       ]
+    },
+    {
+      "name": "public.webhook_delivery",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "webhook_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "delivery_id",
+          "type": "varchar(255)",
+          "nullable": false
+        },
+        {
+          "name": "interaction_id",
+          "type": "uuid",
+          "nullable": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "claimed_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "webhook_delivery_pkey",
+          "def": "CREATE UNIQUE INDEX webhook_delivery_pkey ON public.webhook_delivery USING btree (id)",
+          "table": "public.webhook_delivery",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "uq_webhook_delivery_event",
+          "def": "CREATE UNIQUE INDEX uq_webhook_delivery_event ON public.webhook_delivery USING btree (webhook_id, delivery_id)",
+          "table": "public.webhook_delivery",
+          "columns": [
+            "webhook_id",
+            "delivery_id"
+          ]
+        },
+        {
+          "name": "ix_webhook_delivery_webhook_id",
+          "def": "CREATE INDEX ix_webhook_delivery_webhook_id ON public.webhook_delivery USING btree (webhook_id)",
+          "table": "public.webhook_delivery",
+          "columns": [
+            "webhook_id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "webhook_delivery_claimed_at_not_null",
+          "type": "n",
+          "def": "NOT NULL claimed_at",
+          "table": "public.webhook_delivery",
+          "referenced_table": "",
+          "columns": [
+            "claimed_at"
+          ]
+        },
+        {
+          "name": "webhook_delivery_created_at_not_null",
+          "type": "n",
+          "def": "NOT NULL created_at",
+          "table": "public.webhook_delivery",
+          "referenced_table": "",
+          "columns": [
+            "created_at"
+          ]
+        },
+        {
+          "name": "webhook_delivery_delivery_id_not_null",
+          "type": "n",
+          "def": "NOT NULL delivery_id",
+          "table": "public.webhook_delivery",
+          "referenced_table": "",
+          "columns": [
+            "delivery_id"
+          ]
+        },
+        {
+          "name": "webhook_delivery_id_not_null",
+          "type": "n",
+          "def": "NOT NULL id",
+          "table": "public.webhook_delivery",
+          "referenced_table": "",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "webhook_delivery_webhook_id_not_null",
+          "type": "n",
+          "def": "NOT NULL webhook_id",
+          "table": "public.webhook_delivery",
+          "referenced_table": "",
+          "columns": [
+            "webhook_id"
+          ]
+        },
+        {
+          "name": "webhook_delivery_interaction_id_fkey",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (interaction_id) REFERENCES interaction(id) ON DELETE SET NULL",
+          "table": "public.webhook_delivery",
+          "referenced_table": "public.interaction",
+          "columns": [
+            "interaction_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "webhook_delivery_webhook_id_fkey",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (webhook_id) REFERENCES webhook_endpoint(id) ON DELETE CASCADE",
+          "table": "public.webhook_delivery",
+          "referenced_table": "public.webhook_endpoint",
+          "columns": [
+            "webhook_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "webhook_delivery_pkey",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "public.webhook_delivery",
+          "referenced_table": "",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "uq_webhook_delivery_event",
+          "type": "UNIQUE",
+          "def": "UNIQUE (webhook_id, delivery_id)",
+          "table": "public.webhook_delivery",
+          "referenced_table": "",
+          "columns": [
+            "webhook_id",
+            "delivery_id"
+          ]
+        }
+      ]
     }
   ],
   "relations": [
@@ -7283,6 +7512,32 @@
       ],
       "parent_cardinality": "exactly_one",
       "def": "FOREIGN KEY (owner_id) REFERENCES \"user\"(id) ON DELETE CASCADE"
+    },
+    {
+      "table": "public.webhook_delivery",
+      "columns": [
+        "interaction_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.interaction",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "zero_or_one",
+      "def": "FOREIGN KEY (interaction_id) REFERENCES interaction(id) ON DELETE SET NULL"
+    },
+    {
+      "table": "public.webhook_delivery",
+      "columns": [
+        "webhook_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.webhook_endpoint",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (webhook_id) REFERENCES webhook_endpoint(id) ON DELETE CASCADE"
     }
   ],
   "functions": [
@@ -7439,7 +7694,7 @@
   ],
   "driver": {
     "name": "postgres",
-    "database_version": "PostgreSQL 18.4 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
+    "database_version": "PostgreSQL 18.6 on aarch64-unknown-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
     "meta": {
       "current_schema": "public",
       "search_paths": [

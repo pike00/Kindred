@@ -5,9 +5,9 @@
 | Name | Columns | Comment | Type |
 | ---- | ------- | ------- | ---- |
 | [public.alembic_version](public.alembic_version.md) | 1 |  | BASE TABLE |
-| [public.user](public.user.md) | 9 | Authenticated user; tenant-scope owner of every row below. | BASE TABLE |
+| [public.user](public.user.md) | 10 | Authenticated user; tenant-scope owner of every row below. | BASE TABLE |
 | [public.tag](public.tag.md) | 6 | User-defined tag for grouping contacts. | BASE TABLE |
-| [public.contact](public.contact.md) | 41 | Core contact entity — the subject of everything else in the CRM. | BASE TABLE |
+| [public.contact](public.contact.md) | 43 | Core contact entity — the subject of everything else in the CRM. | BASE TABLE |
 | [public.contact_tag](public.contact_tag.md) | 2 | Many-to-many link between contacts and tags. | BASE TABLE |
 | [public.contact_field](public.contact_field.md) | 7 | Flexible contact info (emails, phones) attached to a contact. | BASE TABLE |
 | [public.address](public.address.md) | 11 | Physical address attached to a contact. | BASE TABLE |
@@ -16,7 +16,7 @@
 | [public.custom_field_definition](public.custom_field_definition.md) | 8 | User-defined custom field schema, scoped to one owner. | BASE TABLE |
 | [public.custom_field_value](public.custom_field_value.md) | 4 | Value of a custom field for a specific contact (one per contact per definition). | BASE TABLE |
 | [public.interaction](public.interaction.md) | 19 | Logged touchpoint with one or more contacts (call, meeting, text, etc.). Attendees are attached via interaction_attendee. | BASE TABLE |
-| [public.reminder](public.reminder.md) | 12 | Scheduled reminder; contact-specific or standalone. | BASE TABLE |
+| [public.reminder](public.reminder.md) | 14 | Scheduled reminder; contact-specific or standalone. | BASE TABLE |
 | [public.gift](public.gift.md) | 13 | Gift idea or record for a contact. | BASE TABLE |
 | [public.debt](public.debt.md) | 11 | Money owed to or from a contact. | BASE TABLE |
 | [public.life_event](public.life_event.md) | 10 | Milestone on a contact's timeline (job change, wedding, move, etc.). | BASE TABLE |
@@ -43,6 +43,7 @@
 | [public.saved_filter](public.saved_filter.md) | 7 |  | BASE TABLE |
 | [public.vcard_conflict](public.vcard_conflict.md) | 8 |  | BASE TABLE |
 | [public.all_contacts_share](public.all_contacts_share.md) | 3 | Grants another user access to all current and future contacts by owner. | BASE TABLE |
+| [public.webhook_delivery](public.webhook_delivery.md) | 6 |  | BASE TABLE |
 
 ## Stored procedures and functions
 
@@ -138,6 +139,8 @@ erDiagram
 "public.vcard_conflict" }o--|| "public.contact" : "FOREIGN KEY (contact_id) REFERENCES contact(id) ON DELETE CASCADE"
 "public.all_contacts_share" }o--|| "public.user" : "FOREIGN KEY (grantee_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 "public.all_contacts_share" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
+"public.webhook_delivery" }o--o| "public.interaction" : "FOREIGN KEY (interaction_id) REFERENCES interaction(id) ON DELETE SET NULL"
+"public.webhook_delivery" }o--|| "public.webhook_endpoint" : "FOREIGN KEY (webhook_id) REFERENCES webhook_endpoint(id) ON DELETE CASCADE"
 
 "public.alembic_version" {
   varchar_32_ version_num
@@ -152,6 +155,7 @@ erDiagram
   timestamp_with_time_zone created_at
   varchar_512_ oidc_iss
   varchar_255_ oidc_sub
+  integer session_version
 }
 "public.tag" {
   uuid id
@@ -203,6 +207,8 @@ erDiagram
   text pronouns
   tsvector search_vector
   boolean auto_log_email
+  timestamp_with_time_zone snoozed_until
+  varchar_500_ vcard_href
 }
 "public.contact_tag" {
   uuid contact_id FK
@@ -296,6 +302,8 @@ erDiagram
   timestamp_with_time_zone snoozed_until
   timestamp_with_time_zone created_at
   timestamp_without_time_zone deleted_at
+  integer delivery_attempts
+  timestamp_with_time_zone next_delivery_at
 }
 "public.gift" {
   uuid id
@@ -539,6 +547,14 @@ erDiagram
   uuid owner_id FK
   uuid grantee_id FK
   timestamp_with_time_zone created_at
+}
+"public.webhook_delivery" {
+  uuid id
+  uuid webhook_id FK
+  varchar_255_ delivery_id
+  uuid interaction_id FK
+  timestamp_with_time_zone created_at
+  timestamp_with_time_zone claimed_at
 }
 ```
 

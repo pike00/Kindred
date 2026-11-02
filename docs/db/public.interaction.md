@@ -8,7 +8,7 @@ Logged touchpoint with one or more contacts (call, meeting, text, etc.). Attende
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | uuid |  | false | [public.interaction_attendee](public.interaction_attendee.md) |  | Primary key. |
+| id | uuid |  | false | [public.interaction_attendee](public.interaction_attendee.md) [public.webhook_delivery](public.webhook_delivery.md) |  | Primary key. |
 | owner_id | uuid |  | false |  | [public.user](public.user.md) | Owner user; cascades on delete. |
 | channel | interactionchannel |  | false |  |  | How the interaction happened (call, in_person, text, etc.). |
 | occurred_at | timestamp with time zone |  | false |  |  | When the interaction actually took place. |
@@ -65,6 +65,7 @@ Logged touchpoint with one or more contacts (call, meeting, text, etc.). Attende
 erDiagram
 
 "public.interaction_attendee" }o--|| "public.interaction" : "FOREIGN KEY (interaction_id) REFERENCES interaction(id) ON DELETE CASCADE"
+"public.webhook_delivery" }o--o| "public.interaction" : "FOREIGN KEY (interaction_id) REFERENCES interaction(id) ON DELETE SET NULL"
 "public.interaction" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 
 "public.interaction" {
@@ -92,6 +93,14 @@ erDiagram
   uuid interaction_id FK
   uuid contact_id FK
 }
+"public.webhook_delivery" {
+  uuid id
+  uuid webhook_id FK
+  varchar_255_ delivery_id
+  uuid interaction_id FK
+  timestamp_with_time_zone created_at
+  timestamp_with_time_zone claimed_at
+}
 "public.user" {
   varchar_255_ email
   boolean is_active
@@ -102,6 +111,7 @@ erDiagram
   timestamp_with_time_zone created_at
   varchar_512_ oidc_iss
   varchar_255_ oidc_sub
+  integer session_version
 }
 ```
 

@@ -68,6 +68,7 @@ Table "user" {
   "created_at" timestamptz
   "oidc_iss" varchar(512)
   "oidc_sub" varchar(255)
+  "session_version" int4 [not null, default: 0]
 
   Indexes {
     (oidc_iss, oidc_sub) [type: btree, unique, name: "uq_user_oidc_identity"]
@@ -131,8 +132,11 @@ Table "contact" {
   "pronouns" text
   "search_vector" tsvector
   "auto_log_email" bool [not null, default: false]
+  "snoozed_until" timestamptz
+  "vcard_href" varchar(500)
 
   Indexes {
+    (owner_id, vcard_href) [type: btree, unique, name: "uq_contact_owner_carddav_href"]
     (owner_id, source, source_external_id) [type: btree, unique, name: "uq_contact_owner_source_external_id"]
     contact_frequency_days [type: btree, name: "ix_contact_contact_frequency_days"]
     deleted_at [type: btree, name: "ix_contact_deleted_at"]
@@ -288,6 +292,8 @@ Table "reminder" {
   "snoozed_until" timestamptz
   "created_at" timestamptz [not null]
   "deleted_at" timestamp
+  "delivery_attempts" int4 [not null, default: 0]
+  "next_delivery_at" timestamptz
 
   Indexes {
     contact_id [type: btree, name: "ix_reminder_contact_id"]
@@ -374,6 +380,7 @@ Table "note" {
   "search_vector" tsvector
 
   Indexes {
+    (owner_id, client_id) [type: btree, unique, name: "uq_note_owner_client_id"]
     client_id [type: btree, name: "ix_note_client_id"]
     contact_id [type: btree, name: "ix_note_contact_id"]
     created_at [type: btree, name: "ix_note_created_at"]
@@ -697,6 +704,20 @@ Table "all_contacts_share" {
   }
 }
 
+Table "webhook_delivery" {
+  "id" uuid [pk, not null]
+  "webhook_id" uuid [not null]
+  "delivery_id" varchar(255) [not null]
+  "interaction_id" uuid
+  "created_at" timestamptz [not null, default: `now()`]
+  "claimed_at" timestamptz [not null, default: `now()`]
+
+  Indexes {
+    (webhook_id, delivery_id) [type: btree, unique, name: "uq_webhook_delivery_event"]
+    webhook_id [type: btree, name: "ix_webhook_delivery_webhook_id"]
+  }
+}
+
 Ref "activity_log_actor_id_fkey":"user"."id" < "activity_log"."actor_id" [delete: set null]
 
 Ref "activity_log_owner_id_fkey":"user"."id" < "activity_log"."owner_id" [delete: cascade]
@@ -812,5 +833,9 @@ Ref "tag_share_grantee_id_fkey":"user"."id" < "tag_share"."grantee_id" [delete: 
 Ref "tag_share_tag_id_fkey":"tag"."id" < "tag_share"."tag_id" [delete: cascade]
 
 Ref "vcard_conflict_contact_id_fkey":"contact"."id" < "vcard_conflict"."contact_id" [delete: cascade]
+
+Ref "webhook_delivery_interaction_id_fkey":"interaction"."id" < "webhook_delivery"."interaction_id" [delete: set null]
+
+Ref "webhook_delivery_webhook_id_fkey":"webhook_endpoint"."id" < "webhook_delivery"."webhook_id" [delete: cascade]
 
 Ref "webhook_endpoint_owner_id_fkey":"user"."id" < "webhook_endpoint"."owner_id" [delete: cascade]

@@ -17,6 +17,7 @@ Authenticated user; tenant-scope owner of every row below.
 | created_at | timestamp with time zone |  | true |  |  | When the account was created (UTC). |
 | oidc_iss | varchar(512) |  | true |  |  | OIDC issuer URL; paired with oidc_sub forms the unique external identity. |
 | oidc_sub | varchar(255) |  | true |  |  | OIDC subject; paired with oidc_iss forms the unique external identity. |
+| session_version | integer | 0 | false |  |  |  |
 
 ## Constraints
 
@@ -26,6 +27,7 @@ Authenticated user; tenant-scope owner of every row below.
 | user_is_active_not_null | n | NOT NULL is_active |
 | user_is_superuser_not_null | n | NOT NULL is_superuser |
 | user_new_id_not_null | n | NOT NULL id |
+| user_session_version_not_null | n | NOT NULL session_version |
 | user_pkey | PRIMARY KEY | PRIMARY KEY (id) |
 | uq_user_oidc_identity | UNIQUE | UNIQUE (oidc_iss, oidc_sub) |
 
@@ -80,6 +82,7 @@ erDiagram
   timestamp_with_time_zone created_at
   varchar_512_ oidc_iss
   varchar_255_ oidc_sub
+  integer session_version
 }
 "public.tag" {
   uuid id
@@ -131,6 +134,8 @@ erDiagram
   text pronouns
   tsvector search_vector
   boolean auto_log_email
+  timestamp_with_time_zone snoozed_until
+  varchar_500_ vcard_href
 }
 "public.custom_field_definition" {
   uuid id
@@ -176,6 +181,8 @@ erDiagram
   timestamp_with_time_zone snoozed_until
   timestamp_with_time_zone created_at
   timestamp_without_time_zone deleted_at
+  integer delivery_attempts
+  timestamp_with_time_zone next_delivery_at
 }
 "public.gift" {
   uuid id

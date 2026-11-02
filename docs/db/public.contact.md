@@ -49,6 +49,8 @@ Core contact entity — the subject of everything else in the CRM.
 | pronouns | text |  | true |  |  |  |
 | search_vector | tsvector |  | true |  |  |  |
 | auto_log_email | boolean | false | false |  |  |  |
+| snoozed_until | timestamp with time zone |  | true |  |  |  |
+| vcard_href | varchar(500) |  | true |  |  |  |
 
 ## Constraints
 
@@ -86,6 +88,7 @@ Core contact entity — the subject of everything else in the CRM.
 | ix_contact_imessage_id | CREATE INDEX ix_contact_imessage_id ON public.contact USING btree (imessage_id) |
 | ix_contact_is_merged | CREATE INDEX ix_contact_is_merged ON public.contact USING btree (is_merged) |
 | ix_contact_search_vector | CREATE INDEX ix_contact_search_vector ON public.contact USING gin (search_vector) |
+| uq_contact_owner_carddav_href | CREATE UNIQUE INDEX uq_contact_owner_carddav_href ON public.contact USING btree (owner_id, vcard_href) WHERE (vcard_href IS NOT NULL) |
 
 ## Triggers
 
@@ -165,6 +168,8 @@ erDiagram
   text pronouns
   tsvector search_vector
   boolean auto_log_email
+  timestamp_with_time_zone snoozed_until
+  varchar_500_ vcard_href
 }
 "public.contact_tag" {
   uuid contact_id FK
@@ -227,6 +232,8 @@ erDiagram
   timestamp_with_time_zone snoozed_until
   timestamp_with_time_zone created_at
   timestamp_without_time_zone deleted_at
+  integer delivery_attempts
+  timestamp_with_time_zone next_delivery_at
 }
 "public.gift" {
   uuid id
@@ -367,6 +374,7 @@ erDiagram
   timestamp_with_time_zone created_at
   varchar_512_ oidc_iss
   varchar_255_ oidc_sub
+  integer session_version
 }
 "public.organization" {
   varchar_255_ name

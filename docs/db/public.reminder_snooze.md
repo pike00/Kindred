@@ -59,6 +59,8 @@ erDiagram
   timestamp_with_time_zone snoozed_until
   timestamp_with_time_zone created_at
   timestamp_without_time_zone deleted_at
+  integer delivery_attempts
+  timestamp_with_time_zone next_delivery_at
 }
 ```
 

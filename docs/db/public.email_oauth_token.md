@@ -70,6 +70,7 @@ erDiagram
   timestamp_with_time_zone created_at
   varchar_512_ oidc_iss
   varchar_255_ oidc_sub
+  integer session_version
 }
 "public.contact" {
   uuid id
@@ -113,6 +114,8 @@ erDiagram
   text pronouns
   tsvector search_vector
   boolean auto_log_email
+  timestamp_with_time_zone snoozed_until
+  varchar_500_ vcard_href
 }
 ```
 

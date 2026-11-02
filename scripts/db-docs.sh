@@ -79,7 +79,8 @@ if [ "$mode" = "check" ]; then
     "$tbls_image" \
     diff -c /work/.tbls.yml "$dsn" docs/db
 
-  dbml_check_dir="$(mktemp -d)"
+  dbml_check_dir="$(mktemp -d "$repo_root/.dbml-check.XXXXXX")"
+  chmod 0777 "$dbml_check_dir"
   dbml_cid="$(docker create \
     "${docker_workspace_args[@]}" \
     -v "$dbml_check_dir":/output \
@@ -136,6 +137,13 @@ docker run --rm \
     done
   '
 
-find docs/db -name "*.html" -exec sed -i -E 's/\.md([#"])/.html\1/g' {} +
+python3 - <<'PY'
+from pathlib import Path
+import re
+
+for path in Path("docs/db").glob("*.html"):
+    text = path.read_text()
+    path.write_text(re.sub(r"\.md(?=[#\"])", ".html", text))
+PY
 cp docs/db/README.html docs/db/index.html
 echo "Generated docs/db/index.html — open it in a browser."
