@@ -7,30 +7,101 @@
 
 Checks subsystem health for this adopter. Stdlib only.
 """
+
 from __future__ import annotations
 
-import os
+import argparse
+import hashlib
+import json
+import re
+import shlex
 import shutil
+import socket
 import subprocess
 import sys
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 EXPECTED_JUST = [
-    "_lib", "preview", "release", "test", "deploy",
-    "build", "db", "setup", "docs", "clean",
+    "_lib",
+    "preview",
+    "release",
+    "test",
+    "deploy",
+    "delivery",
+    "build",
+    "db",
+    "setup",
+    "docs",
+    "clean",
 ]
+JSON_MODE = False
+CHECKS: list[dict[str, str]] = []
+CURRENT_SECTION = "configuration"
+RESOLVER_TIMEOUT_SECONDS = 45
+COMPOSE_FILENAMES = ("docker-compose.yml", "docker-compose.yaml", "compose.yml", "compose.yaml")
 
 
-def _ok(msg: str) -> None:
-    print(f"  ✓ {msg}")
+def _section(section: str, *, first: bool = False) -> None:
+    global CURRENT_SECTION
+    CURRENT_SECTION = section
+    if not JSON_MODE:
+        prefix = "" if first else "\n"
+        print(f"{prefix}{section}:")
 
 
-def _warn(msg: str) -> None:
-    print(f"  ⚠ {msg}")
+def _record(status: str, name: str, detail: str) -> None:
+    CHECKS.append(
+        {
+            "section": CURRENT_SECTION,
+            "name": name,
+            "status": status,
+            "detail": detail,
+        }
+    )
 
 
-def _fail(msg: str) -> None:
-    print(f"  ✗ {msg}")
+def _ok(name: str, detail: str | None = None) -> None:
+    shown = detail if detail is not None else name
+    _record("ok", name, shown)
+    if not JSON_MODE:
+        print(f"  ✓ {shown}")
+
+
+def _warn(name: str, detail: str | None = None) -> None:
+    shown = detail if detail is not None else name
+    _record("warn", name, shown)
+    if not JSON_MODE:
+        print(f"  ⚠ {shown}")
+
+
+def _fail(name: str, detail: str | None = None) -> None:
+    shown = detail if detail is not None else name
+    _record("fail", name, shown)
+    if not JSON_MODE:
+        print(f"  ✗ {shown}")
+
+
+def _skip(name: str, detail: str) -> None:
+    _record("skip", name, detail)
+    if not JSON_MODE:
+        print(f"  ~ {detail}")
+
+
+def _emit_json(project_name: str, checks: list[dict[str, str]]) -> None:
+    failures = sum(check["status"] == "fail" for check in checks)
+    warnings = sum(check["status"] == "warn" for check in checks)
+    exit_code = 2 if failures else (1 if warnings else 0)
+    print(
+        json.dumps(
+            {
+                "project": project_name,
+                "checks": checks,
+                "summary": {"failures": failures, "warnings": warnings},
+                "exit_code": exit_code,
+            },
+            sort_keys=True,
+        )
+    )
 
 
 def _check_cmd(layer: str, cmd: str) -> int:
@@ -49,13 +120,188 @@ def _check_cmd(layer: str, cmd: str) -> int:
     return 1
 
 
+def _check_generated_files(repo: Path) -> bool:
+    """Return True when generated-file parity found a failure."""
+    lock_path = repo / ".project-kit" / "answers.lock.json"
+    if not lock_path.is_file():
+        _skip("generated file parity", "skipped: answers.lock.json is absent")
+        return False
+    try:
+        lock = json.loads(lock_path.read_text())
+    except (OSError, json.JSONDecodeError) as exc:
+        _fail("generated file parity", f"generated-file parity unreadable: {exc}")
+        return True
+    if not isinstance(lock, dict):
+        _fail(
+            "generated file parity",
+            f"generated-file parity lock is not a JSON object: {type(lock).__name__}",
+        )
+        return True
+
+    schema_version = lock.get("schema_version")
+    generated_files = lock.get("generated_files")
+    if (
+        not isinstance(schema_version, int)
+        or schema_version < 2
+        or not isinstance(generated_files, dict)
+    ):
+        _skip("generated file parity", "skipped: older lock schema")
+        return False
+    if not generated_files:
+        _fail("generated file parity", "no generated files recorded")
+        return True
+
+    mismatches = []
+    unreadable = []
+    for relative, digest in generated_files.items():
+        path = repo / relative
+        try:
+            actual = hashlib.sha256(path.read_bytes()).hexdigest()
+        except OSError as exc:
+            unreadable.append(f"{relative}: {exc}")
+            continue
+        if actual != digest:
+            mismatches.append(relative)
+    if mismatches or unreadable:
+        detail_parts = []
+        if mismatches:
+            detail_parts.append("generated file mismatch: " + ", ".join(sorted(mismatches)))
+        detail_parts.extend("unreadable: " + item for item in unreadable)
+        _fail(
+            "generated file parity",
+            "; ".join(detail_parts),
+        )
+        return True
+    _ok(
+        "generated file parity",
+        f"all {len(generated_files)} generated files match",
+    )
+    return False
+
+
+def _normalize_stack_selector(value: str, label: str) -> str:
+    if not value or value.startswith("/") or not re.fullmatch(r"[A-Za-z0-9._/-]+", value):
+        raise ValueError(f"unsafe {label}: {value!r}")
+    path = PurePosixPath(value)
+    if ".." in path.parts:
+        raise ValueError(f"unsafe {label}: {value!r}")
+    return path.as_posix().strip("/")
+
+
+def _resolve_stack_output(output: str) -> str:
+    """Validate a resolver base/stack pair and return the relative stack path."""
+    lines = output.splitlines()
+    if len(lines) != 1:
+        raise ValueError("stack resolver output must contain exactly one line")
+    parts = lines[0].split("\t")
+    if len(parts) != 2 or not all(parts):
+        raise ValueError(f"malformed stack resolver output: {lines[0]!r}")
+    base, stack = parts
+    base_path = PurePosixPath(base)
+    stack_path = PurePosixPath(stack)
+    if not base_path.is_absolute() or not stack_path.is_absolute():
+        raise ValueError("stack resolver paths must be absolute")
+    if base_path.as_posix() != base or stack_path.as_posix() != stack:
+        raise ValueError("stack resolver paths must be canonical")
+    try:
+        relative = stack_path.relative_to(base_path)
+    except ValueError as exc:
+        raise ValueError("resolved stack is outside the Homelab root") from exc
+    if relative == PurePosixPath("."):
+        raise ValueError("resolved stack cannot be the Homelab root")
+    return _normalize_stack_selector(relative.as_posix(), "resolved stack path")
+
+
+def _remote_resolver_command(selector: str) -> str:
+    quoted_selector = shlex.quote(selector)
+    return (
+        'base="$HOME/projects/Homelab"; '
+        f'candidate="$base"/{quoted_selector}; '
+        'if [ ! -f "$candidate/docker-compose.yml" ] '
+        '&& [ ! -f "$candidate/docker-compose.yaml" ] '
+        '&& [ ! -f "$candidate/compose.yml" ] '
+        '&& [ ! -f "$candidate/compose.yaml" ]; then '
+        'printf "canonical Homelab stack path not found: %s\\n" "$candidate" >&2; '
+        "exit 2; fi; "
+        'stack="$(HOMELAB_BASE_DIR="$base" '
+        f'"$base/infra/scripts/resolve-stack.py" {quoted_selector})" || exit $?; '
+        'printf "%s\\t%s\\n" "$base" "$stack"'
+    )
+
+
+def _stack_resolution(
+    deploy_host: str,
+    execution_host: str,
+    ssh_alias: str,
+    selector: str,
+) -> str:
+    homelab_root = Path.home() / "projects" / "Homelab"
+    resolver = homelab_root / "infra" / "scripts" / "resolve-stack.py"
+    if not deploy_host or execution_host == deploy_host:
+        candidate = homelab_root / selector
+        if not any((candidate / name).is_file() for name in COMPOSE_FILENAMES):
+            raise RuntimeError(
+                f"canonical Homelab stack path not found: {selector!r}; "
+                "migrate homelab_app to the audited path relative to the Homelab root"
+            )
+        command = [
+            "env",
+            f"HOMELAB_BASE_DIR={homelab_root}",
+            str(resolver),
+            selector,
+        ]
+        cwd = homelab_root
+    else:
+        if not ssh_alias:
+            raise RuntimeError(f"deploy host is {deploy_host!r}, but no SSH alias is configured")
+        command = [
+            "ssh",
+            "-T",
+            "-o",
+            "BatchMode=yes",
+            "-o",
+            "ConnectTimeout=5",
+            "-o",
+            "ConnectionAttempts=1",
+            ssh_alias,
+            _remote_resolver_command(selector),
+        ]
+        cwd = None
+    proc = subprocess.run(
+        command,
+        stdin=subprocess.DEVNULL,
+        capture_output=True,
+        text=True,
+        cwd=cwd,
+        timeout=RESOLVER_TIMEOUT_SECONDS,
+        check=False,
+        start_new_session=True,
+    )
+    if proc.returncode != 0:
+        detail = (proc.stderr or proc.stdout).strip()[:160]
+        raise RuntimeError(f"stack resolver command failed: {detail}")
+    if not deploy_host or execution_host == deploy_host:
+        return f"{homelab_root}\t{proc.stdout.strip()}\n"
+    return proc.stdout
+
+
 def main() -> int:
+    global JSON_MODE
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--json", action="store_true")
+    parser.add_argument("--strict", action="store_true")
+    args = parser.parse_args()
+    JSON_MODE = args.json
+
     repo = Path.cwd()
-    print(f"project-kit doctor — kindred\n")
-    print("configuration:")
+    if not JSON_MODE:
+        print("project-kit doctor — kindred\n")
+    _section("configuration", first=True)
     pk = repo / ".project-kit"
     if not pk.is_dir():
         _fail(".project-kit/ missing")
+        if JSON_MODE:
+            _emit_json("kindred", CHECKS)
         return 2
     fails = 0
     warns = 0
@@ -76,7 +322,10 @@ def main() -> int:
         if shutil.which("just"):
             proc = subprocess.run(
                 ["just", "--justfile", str(jf), "--summary"],
-                capture_output=True, text=True, cwd=str(repo),
+                capture_output=True,
+                text=True,
+                cwd=str(repo),
+                check=False,
             )
             if proc.returncode == 0:
                 _ok("root justfile parses (just --summary)")
@@ -90,38 +339,14 @@ def main() -> int:
         _fail("root justfile missing")
         fails += 1
 
-    print("\npreview:")
-    if (repo / "compose.dev.yml").is_file():
-        _ok("compose.dev.yml present")
+    _section("preview")
+    compose_file = "compose.worktree.yml"
+    if (repo / compose_file).is_file():
+        _ok(f"{compose_file} present")
     else:
-        _fail("compose.dev.yml missing")
+        _fail(f"{compose_file} missing")
         fails += 1
-    if (repo / "compose.worktree.yml").is_file():
-        _ok("compose.worktree.yml present")
-    else:
-        _warn("compose.worktree.yml missing")
-    if shutil.which("just"):
-        try:
-            proc = subprocess.run(["just", "env"], capture_output=True, text=True, cwd=str(repo), check=True)
-            env_dict = dict(line.split("=", 1) for line in proc.stdout.strip().splitlines() if "=" in line)
-            host = env_dict.get("WORKTREE_HOST", "").strip()
-            if ".dev.kindred." in host:
-                _ok(f"WORKTREE_HOST: {host}")
-            else:
-                _warn(f"WORKTREE_HOST unexpected format: {host!r}")
-                warns += 1
-            if host and shutil.which("dig"):
-                dig_p = subprocess.run(["dig", "+short", "+time=2", "+tries=1", host], capture_output=True, text=True)
-                ips = [l.strip() for l in dig_p.stdout.strip().splitlines() if l.strip()]
-                if ips:
-                    _ok(f"DNS resolution: {host} -> {ips[0]}")
-                else:
-                    _warn(f"DNS resolution: {host} returned no records")
-                    warns += 1
-        except Exception:
-            _warn("could not resolve WORKTREE_HOST via 'just env'")
-            warns += 1
-    print("\nrelease:")
+    _section("release")
     if (repo / ".project-kit" / "cliff.toml").is_file():
         _ok(".project-kit/cliff.toml present")
     else:
@@ -132,37 +357,67 @@ def main() -> int:
     else:
         _warn("gh CLI not on $PATH")
         warns += 1
-    print("\ntest:")
+    _section("test")
     warns += _check_cmd("backend", "docker compose -f compose.dev.yml exec -T backend pytest")
     warns += _check_cmd("frontend", "cd frontend \u0026\u0026 pnpm run test")
     warns += _check_cmd("e2e", "bash scripts/run-e2e-prepush.sh")
-    print("\ndeploy:")
-    homelab_app = Path.home() / "Documents" / "Homelab" / "apps" / "kindred"
-    if homelab_app.is_dir():
-        _ok(f"homelab app at {homelab_app}")
-    else:
-        _fail(f"homelab app dir missing: {homelab_app}")
+    _section("deploy")
+    deploy_host = "".lower()
+    execution_host = socket.gethostname().split(".", 1)[0].lower()
+    ssh_alias = ""
+    try:
+        resolution = _stack_resolution(
+            deploy_host,
+            execution_host,
+            ssh_alias,
+            "apps/kindred",
+        )
+        resolved_stack = _resolve_stack_output(resolution)
+    except (FileNotFoundError, RuntimeError, subprocess.TimeoutExpired, ValueError) as exc:
+        _fail(f"homelab stack resolution failed: {exc}")
         fails += 1
-    print("\nbuild:")
-    dfs = [n for n in ("Dockerfile", "Dockerfile.prod") if (repo / n).is_file()]
-    if dfs:
-        _ok(f"Dockerfile present: {dfs}")
     else:
-        _fail("no Dockerfile")
+        _ok(f"homelab stack resolves to {resolved_stack}")
+    _section("build")
+    dockerfiles = [
+        "Dockerfile.prod",
+    ]
+    missing_dockerfiles = [path for path in dockerfiles if not (repo / path).is_file()]
+    if not dockerfiles:
+        _fail("no container images configured")
         fails += 1
+    elif missing_dockerfiles:
+        _fail(f"configured Dockerfiles missing: {missing_dockerfiles}")
+        fails += 1
+    else:
+        _ok(f"configured Dockerfiles present: {dockerfiles}")
     try:
         subprocess.run(["docker", "info"], check=True, capture_output=True, timeout=5)
         _ok("docker daemon reachable")
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError):
         _warn("docker daemon not reachable")
         warns += 1
+    _section("provenance")
+    if _check_generated_files(repo):
+        fails += 1
+
+    exit_code = 2 if fails else (2 if args.strict and warns else (1 if warns else 0))
+    if JSON_MODE:
+        print(
+            json.dumps(
+                {
+                    "project": "kindred",
+                    "checks": CHECKS,
+                    "summary": {"failures": fails, "warnings": warns},
+                    "exit_code": exit_code,
+                },
+                sort_keys=True,
+            )
+        )
+        return exit_code
 
     print(f"\n{fails} failures, {warns} warnings.")
-    if fails:
-        return 2
-    if warns:
-        return 1
-    return 0
+    return exit_code
 
 
 if __name__ == "__main__":
