@@ -120,6 +120,7 @@ def test_contact_notes_hide_other_owners_notes_on_the_contact(
 
     assert response.status_code == 200
     assert response.json()["data"] == []
+    assert response.json()["count"] == 0
 
 
 def test_contact_mentions_do_not_expose_other_users_notes(
@@ -275,6 +276,40 @@ def test_same_owner_client_id_retry_returns_existing_note(
     assert second.json()["id"] == first.json()["id"]
     notes = db.exec(select(Note).where(Note.client_id == client_id)).all()
     assert len(notes) == 1
+
+
+def test_client_id_retry_does_not_restore_deleted_note(
+    client: TestClient,
+    db: Session,
+) -> None:
+    owner = create_random_user(db)
+    contact = _contact(db, owner, "Deleted note contact")
+    client_id = uuid.uuid4().hex
+    deleted = Note(
+        body="deleted note",
+        contact_id=contact.id,
+        owner_id=owner.id,
+        client_id=client_id,
+        deleted_at=datetime.now(timezone.utc),
+    )
+    db.add(deleted)
+    db.commit()
+    db.refresh(deleted)
+
+    response = client.post(
+        f"{API}/notes/",
+        headers=_headers(client, db, owner),
+        json={
+            "contact_id": str(contact.id),
+            "body": "deleted note",
+            "client_id": client_id,
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["id"] == str(deleted.id)
+    db.refresh(deleted)
+    assert deleted.deleted_at is not None
 
 
 def test_note_client_id_has_owner_scoped_database_constraint(

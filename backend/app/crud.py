@@ -497,11 +497,7 @@ def create_note(*, session: Session, note_in: NoteCreate, owner_id: uuid.UUID) -
             )
         ).first()
         if existing:
-            if existing.deleted_at is not None:
-                existing.deleted_at = None
-                session.add(existing)
-                session.commit()
-                session.refresh(existing)
+            # A retry must not resurrect a note the owner explicitly deleted.
             return existing
     db_obj = Note.model_validate(note_in, update={"owner_id": owner_id})
     session.add(db_obj)
