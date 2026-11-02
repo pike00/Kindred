@@ -385,6 +385,10 @@ export type ContactCreate = {
      * IANA timezone string (e.g. America/New_York).
      */
     timezone?: (string | null);
+    /**
+     * If set, suppress stay-in-touch reminders until this date/time.
+     */
+    snoozed_until?: (string | null);
     tag_ids?: (Array<(string)> | null);
 };
 
@@ -556,10 +560,12 @@ export type ContactPublic = {
      * IANA timezone string (e.g. America/New_York).
      */
     timezone?: (string | null);
+    /**
+     * If set, suppress stay-in-touch reminders until this date/time.
+     */
     snoozed_until?: (string | null);
     id: string;
     avatar_url: (string | null);
-
     last_contacted_at: (string | null);
     created_at: string;
     updated_at: string;
@@ -584,6 +590,17 @@ export type ContactsGeoResponse = {
 
 export type ContactShareIn = {
     grantee_email: string;
+};
+
+export type ContactSnoozeRequest = {
+    /**
+     * Snooze duration: '1w', '2w', '1m', '1 month', '3m', '3 months', '6m', '6 months', 'indefinitely'
+     */
+    duration?: (string | null);
+    /**
+     * Explicit snoozed_until datetime UTC.
+     */
+    snoozed_until?: (string | null);
 };
 
 /**
@@ -667,6 +684,7 @@ export type ContactUpdate = {
     do_not_contact_reason?: (string | null);
     pronouns?: (string | null);
     timezone?: (string | null);
+    snoozed_until?: (string | null);
     tag_ids?: (Array<(string)> | null);
 };
 
@@ -882,14 +900,6 @@ export type EmailOAuthTokenPublic = {
      */
     email_address: string;
     /**
-     * Encrypted access token for the Gmail API.
-     */
-    encrypted_access_token: string;
-    /**
-     * Encrypted refresh token for obtaining new access tokens.
-     */
-    encrypted_refresh_token?: (string | null);
-    /**
      * When the access token expires (UTC).
      */
     token_expires_at?: (string | null);
@@ -906,19 +916,6 @@ export type EmailOAuthTokensPublic = {
 
 export type EnvironmentInfo = {
     environment: string;
-};
-
-export type StatusInfo = {
-    status?: string;
-    version: string;
-    git_hash: string;
-    hash: string;
-};
-
-export type VersionInfo = {
-    version: string;
-    git_hash: string;
-    hash: string;
 };
 
 export type GiftCreate = {
@@ -1143,6 +1140,9 @@ export type InteractionCreate = {
     attendee_ids: Array<(string)>;
     is_draft?: boolean;
     draft_source?: (string | null);
+    location_label?: (string | null);
+    latitude?: (number | null);
+    longitude?: (number | null);
 };
 
 export type InteractionPublic = {
@@ -1183,6 +1183,9 @@ export type InteractionUpdate = {
     occurred_at?: (string | null);
     notes?: (string | null);
     duration_minutes?: (number | null);
+    location_label?: (string | null);
+    latitude?: (number | null);
+    longitude?: (number | null);
     /**
      * Replace the attendee set; must have at least one if provided.
      */
@@ -1565,6 +1568,10 @@ export type OverdueContactPublic = {
      * IANA timezone string (e.g. America/New_York).
      */
     timezone?: (string | null);
+    /**
+     * If set, suppress stay-in-touch reminders until this date/time.
+     */
+    snoozed_until?: (string | null);
     id: string;
     avatar_url: (string | null);
     last_contacted_at: (string | null);
@@ -1645,6 +1652,10 @@ export type PrivateUserCreate = {
     password: string;
     full_name: string;
     is_verified?: boolean;
+};
+
+export type ReadyInfo = {
+    status?: string;
 };
 
 export type RelationshipCreate = {
@@ -1892,6 +1903,13 @@ export type SharePreviewEntity = {
     count: number;
 };
 
+export type StatusInfo = {
+    status?: string;
+    version: string;
+    git_hash: string;
+    hash: string;
+};
+
 export type TagCreate = {
     /**
      * Tag name, 1-100 chars.
@@ -2100,6 +2118,12 @@ export type VCardConflictsPublic = {
 export type VCardImportResponse = {
     imported: number;
     errors?: Array<(string)>;
+};
+
+export type VersionInfo = {
+    version: string;
+    git_hash: string;
+    hash: string;
 };
 
 export type WebhookEndpointBase = {
@@ -2341,12 +2365,6 @@ export type ContactFieldsDeleteContactFieldData = {
 
 export type ContactFieldsDeleteContactFieldResponse = (Ok);
 
-export type ContactsGetContactPdfData = {
-    contactId: string;
-};
-
-export type ContactsGetContactPdfResponse = (unknown);
-
 export type ContactsGetDistinctStagesResponse = (Array<(string)>);
 
 export type ContactsGetKanbanBoardData = {
@@ -2386,27 +2404,34 @@ export type ContactsCreateContactData = {
 
 export type ContactsCreateContactResponse = (ContactPublic);
 
-
-export type ContactSnoozeRequest = {
-    duration?: (string | null);
-    snoozed_until?: (string | null);
-};
-
-export type ContactsSnoozeContactData = {
-    contactId: string;
-    requestBody?: ContactSnoozeRequest;
-};
-
-export type ContactsSnoozeContactResponse = (ContactPublic);
-
 export type ContactsListOverdueContactsData = {
-
     days?: number;
 };
 
 export type ContactsListOverdueContactsResponse = (OverdueContactsPublic);
 
 export type ContactsListLosingTouchContactsResponse = (ContactsPublic);
+
+export type ContactsSnoozeContactData = {
+    contactId: string;
+    requestBody?: (ContactSnoozeRequest | null);
+};
+
+export type ContactsSnoozeContactResponse = (ContactPublic);
+
+export type ContactsSnoozeContact1Data = {
+    contactId: string;
+    requestBody?: (ContactSnoozeRequest | null);
+};
+
+export type ContactsSnoozeContact1Response = (ContactPublic);
+
+export type ContactsSnoozeContact2Data = {
+    contactId: string;
+    requestBody?: (ContactSnoozeRequest | null);
+};
+
+export type ContactsSnoozeContact2Response = (ContactPublic);
 
 export type ContactsBulkUpdateContactsData = {
     requestBody: BulkUpdateRequest;
@@ -2486,13 +2511,13 @@ export type ContactsGetImessageProfileData = {
 
 export type ContactsGetImessageProfileResponse = (IMessageProfileResponse);
 
-export type ContactSharesListContactSharesResponse = (AllContactsSharesPublic);
-
 export type ContactSharesCreateContactShareData = {
     requestBody: ContactShareIn;
 };
 
 export type ContactSharesCreateContactShareResponse = (AllContactsSharePublic);
+
+export type ContactSharesListContactSharesResponse = (AllContactsSharesPublic);
 
 export type ContactSharesDeleteContactShareData = {
     granteeEmail: string;
@@ -2657,15 +2682,15 @@ export type EmailDeleteEmailTokenResponse = ({
     [key: string]: (string);
 });
 
+export type EmailPollAllEmailsResponse = ({
+    [key: string]: unknown;
+});
+
 export type EmailPollContactEmailData = {
     contactId: string;
 };
 
 export type EmailPollContactEmailResponse = ({
-    [key: string]: unknown;
-});
-
-export type EmailPollAllEmailsResponse = ({
     [key: string]: unknown;
 });
 
@@ -3319,6 +3344,8 @@ export type UsersUpdatePasswordMeData = {
 
 export type UsersUpdatePasswordMeResponse = (Message);
 
+export type UsersLogoutMeResponse = (Message);
+
 export type UsersRegisterUserData = {
     requestBody: UserRegister;
 };
@@ -3346,6 +3373,8 @@ export type UsersDeleteUserResponse = (Message);
 
 export type UtilsHealthResponse = (boolean);
 
+export type UtilsApiStatusResponse = (StatusInfo);
+
 export type UtilsTestEmailData = {
     emailTo: string;
 };
@@ -3354,9 +3383,11 @@ export type UtilsTestEmailResponse = (Message);
 
 export type UtilsHealthCheckResponse = (boolean);
 
-export type UtilsEnvironmentResponse = (EnvironmentInfo);
+export type UtilsReadinessCheckResponse = (ReadyInfo);
 
 export type UtilsStatusResponse = (StatusInfo);
+
+export type UtilsEnvironmentResponse = (EnvironmentInfo);
 
 export type UtilsVersionInfoResponse = (VersionInfo);
 

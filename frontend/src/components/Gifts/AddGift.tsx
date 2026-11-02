@@ -240,16 +240,17 @@ export function AddGift({
   })
 
   const onSubmit = (data: FormData) => {
-    mutation.mutate({
+    const payload: GiftCreate = {
       contact_id: contactId,
       name: data.name,
       description: data.description || undefined,
       status: data.status,
       occasion: data.occasion || undefined,
-      date: data.date || undefined,
+      gift_date: data.date || undefined,
       value_amount: data.value_amount || undefined,
       url: data.url || undefined,
-    } as GiftCreate)
+    }
+    mutation.mutate(payload)
   }
 
   return (

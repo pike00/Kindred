@@ -6,6 +6,7 @@ import { MonthCalendar } from "@/components/Calendar/MonthCalendar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { calendarMonthQueryOptions } from "@/lib/queries"
 import { queryClient } from "@/lib/queryClient"
+import { localDateKey } from "@/lib/utils"
 
 const searchSchema = z.object({
   month: z.string().optional(),
@@ -18,7 +19,7 @@ export const Route = createFileRoute("/_layout/calendar")({
   loader: ({ deps }) =>
     queryClient.ensureQueryData(
       calendarMonthQueryOptions(
-        deps.month ?? new Date().toISOString().slice(0, 7),
+        deps.month ?? localDateKey(new Date()).slice(0, 7),
       ),
     ),
   head: () => ({
@@ -28,7 +29,7 @@ export const Route = createFileRoute("/_layout/calendar")({
 
 function CalendarPage() {
   const { month } = Route.useSearch()
-  const currentMonth = new Date().toISOString().slice(0, 7)
+  const currentMonth = localDateKey(new Date()).slice(0, 7)
 
   return (
     <div className="container mx-auto py-6 px-4">

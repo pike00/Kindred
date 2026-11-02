@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 import type { ReactNode } from "react"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { ContactsService, InteractionsService } from "@/client"
 import { VoiceReviewModal } from "@/components/VoiceRecorder/VoiceReviewModal"
 
@@ -55,6 +55,30 @@ describe("VoiceReviewModal", () => {
       data: mockContacts,
       count: mockContacts.length,
     } as any)
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it("initializes the occurrence time from the local clock", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] })
+    vi.setSystemTime(new Date(2026, 10, 1, 22, 5))
+
+    renderWithQueryClient(
+      <VoiceReviewModal
+        transcribedText="I called Nora Taylor"
+        onComplete={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText("Nora Taylor")).toBeInTheDocument()
+    })
+
+    const occurredAt = screen.getByLabelText(/when \*/i) as HTMLInputElement
+    expect(occurredAt.value).toBe("2026-11-01T22:05")
   })
 
   it("automatically identifies attendee, channel, and cleans notes from voice transcription", async () => {

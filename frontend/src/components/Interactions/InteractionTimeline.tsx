@@ -28,7 +28,7 @@ import {
 } from "@/lib/icons"
 import { interactionsQueryOptions } from "@/lib/queries"
 import { useSeedDemo } from "@/lib/seed"
-import { cn, formatDateWithRelative } from "@/lib/utils"
+import { cn, formatDateWithRelative, localDateKey } from "@/lib/utils"
 import { AddInteractionDialog } from "./AddInteractionDialog"
 
 type ChannelTone =
@@ -79,7 +79,7 @@ function groupByDate(
 ): Record<string, InteractionPublic[]> {
   const groups: Record<string, InteractionPublic[]> = {}
   for (const ix of interactions) {
-    const date = new Date(ix.occurred_at).toISOString().split("T")[0]
+    const date = localDateKey(new Date(ix.occurred_at))
     if (!groups[date]) groups[date] = []
     groups[date].push(ix)
   }

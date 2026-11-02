@@ -1631,6 +1631,19 @@ export const ContactCreateSchema = {
             title: 'Timezone',
             description: 'IANA timezone string (e.g. America/New_York).'
         },
+        snoozed_until: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Snoozed Until',
+            description: 'If set, suppress stay-in-touch reminders until this date/time.'
+        },
         tag_ids: {
             anyOf: [
                 {
@@ -2172,6 +2185,19 @@ export const ContactPublicSchema = {
             title: 'Timezone',
             description: 'IANA timezone string (e.g. America/New_York).'
         },
+        snoozed_until: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Snoozed Until',
+            description: 'If set, suppress stay-in-touch reminders until this date/time.'
+        },
         id: {
             type: 'string',
             format: 'uuid',
@@ -2294,12 +2320,46 @@ export const ContactShareInSchema = {
     properties: {
         grantee_email: {
             type: 'string',
+            format: 'email',
             title: 'Grantee Email'
         }
     },
+    additionalProperties: false,
     type: 'object',
     required: ['grantee_email'],
     title: 'ContactShareIn'
+} as const;
+
+export const ContactSnoozeRequestSchema = {
+    properties: {
+        duration: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Duration',
+            description: "Snooze duration: '1w', '2w', '1m', '1 month', '3m', '3 months', '6m', '6 months', 'indefinitely'"
+        },
+        snoozed_until: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Snoozed Until',
+            description: 'Explicit snoozed_until datetime UTC.'
+        }
+    },
+    type: 'object',
+    title: 'ContactSnoozeRequest'
 } as const;
 
 export const ContactSourceSchema = {
@@ -2705,6 +2765,18 @@ export const ContactUpdateSchema = {
                 }
             ],
             title: 'Timezone'
+        },
+        snoozed_until: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Snoozed Until'
         },
         tag_ids: {
             anyOf: [
@@ -3393,23 +3465,6 @@ export const EmailOAuthTokenPublicSchema = {
             title: 'Email Address',
             description: 'The email address these tokens are for.'
         },
-        encrypted_access_token: {
-            type: 'string',
-            title: 'Encrypted Access Token',
-            description: 'Encrypted access token for the Gmail API.'
-        },
-        encrypted_refresh_token: {
-            anyOf: [
-                {
-                    type: 'string'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Encrypted Refresh Token',
-            description: 'Encrypted refresh token for obtaining new access tokens.'
-        },
         token_expires_at: {
             anyOf: [
                 {
@@ -3445,7 +3500,7 @@ export const EmailOAuthTokenPublicSchema = {
         }
     },
     type: 'object',
-    required: ['email_address', 'encrypted_access_token', 'id', 'contact_id', 'created_at', 'updated_at'],
+    required: ['email_address', 'id', 'contact_id', 'created_at', 'updated_at'],
     title: 'EmailOAuthTokenPublic'
 } as const;
 
@@ -3687,6 +3742,51 @@ export const GiftPublicSchema = {
                 }
             ],
             title: 'Deleted At'
+        },
+        contact_birthday: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Contact Birthday'
+        },
+        contact_first_name: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Contact First Name'
+        },
+        contact_last_name: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Contact Last Name'
+        },
+        days_until_occasion: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Days Until Occasion'
         }
     },
     type: 'object',
@@ -4194,6 +4294,44 @@ export const InteractionCreateSchema = {
                 }
             ],
             title: 'Draft Source'
+        },
+        location_label: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 500
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Location Label'
+        },
+        latitude: {
+            anyOf: [
+                {
+                    type: 'number',
+                    maximum: 90,
+                    minimum: -90
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Latitude'
+        },
+        longitude: {
+            anyOf: [
+                {
+                    type: 'number',
+                    maximum: 180,
+                    minimum: -180
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Longitude'
         }
     },
     type: 'object',
@@ -4369,6 +4507,44 @@ export const InteractionUpdateSchema = {
                 }
             ],
             title: 'Duration Minutes'
+        },
+        location_label: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 500
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Location Label'
+        },
+        latitude: {
+            anyOf: [
+                {
+                    type: 'number',
+                    maximum: 90,
+                    minimum: -90
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Latitude'
+        },
+        longitude: {
+            anyOf: [
+                {
+                    type: 'number',
+                    maximum: 180,
+                    minimum: -180
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Longitude'
         },
         attendee_ids: {
             anyOf: [
@@ -5886,6 +6062,19 @@ export const OverdueContactPublicSchema = {
             title: 'Timezone',
             description: 'IANA timezone string (e.g. America/New_York).'
         },
+        snoozed_until: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Snoozed Until',
+            description: 'If set, suppress stay-in-touch reminders until this date/time.'
+        },
         id: {
             type: 'string',
             format: 'uuid',
@@ -6252,6 +6441,18 @@ export const PrivateUserCreateSchema = {
     type: 'object',
     required: ['email', 'password', 'full_name'],
     title: 'PrivateUserCreate'
+} as const;
+
+export const ReadyInfoSchema = {
+    properties: {
+        status: {
+            type: 'string',
+            title: 'Status',
+            default: 'ready'
+        }
+    },
+    type: 'object',
+    title: 'ReadyInfo'
 } as const;
 
 export const RelationshipCreateSchema = {
@@ -7151,6 +7352,31 @@ export const SharePreviewEntitySchema = {
     description: 'Preview counts for a single entity type.'
 } as const;
 
+export const StatusInfoSchema = {
+    properties: {
+        status: {
+            type: 'string',
+            title: 'Status',
+            default: 'ok'
+        },
+        version: {
+            type: 'string',
+            title: 'Version'
+        },
+        git_hash: {
+            type: 'string',
+            title: 'Git Hash'
+        },
+        hash: {
+            type: 'string',
+            title: 'Hash'
+        }
+    },
+    type: 'object',
+    required: ['version', 'git_hash', 'hash'],
+    title: 'StatusInfo'
+} as const;
+
 export const TagCreateSchema = {
     properties: {
         name: {
@@ -7826,6 +8052,26 @@ export const ValidationErrorSchema = {
     type: 'object',
     required: ['loc', 'msg', 'type'],
     title: 'ValidationError'
+} as const;
+
+export const VersionInfoSchema = {
+    properties: {
+        version: {
+            type: 'string',
+            title: 'Version'
+        },
+        git_hash: {
+            type: 'string',
+            title: 'Git Hash'
+        },
+        hash: {
+            type: 'string',
+            title: 'Hash'
+        }
+    },
+    type: 'object',
+    required: ['version', 'git_hash', 'hash'],
+    title: 'VersionInfo'
 } as const;
 
 export const WebhookEndpointBaseSchema = {

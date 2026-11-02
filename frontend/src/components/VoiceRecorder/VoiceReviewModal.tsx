@@ -43,6 +43,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import useCustomToast from "@/hooks/useCustomToast"
 import { Loader2, Plus, RotateCcw, Sparkles, X } from "@/lib/icons"
+import { toLocalDateTimeInput } from "@/lib/utils"
 import { parseVoiceTranscription } from "./parseVoiceTranscription"
 
 const channels = [
@@ -110,7 +111,7 @@ export function VoiceReviewModal({
       notes: parsed.cleanedNotes,
       channel: parsed.detectedChannel,
       attendee_ids: parsed.matchedAttendeeIds,
-      occurred_at: new Date().toISOString().slice(0, 16),
+      occurred_at: toLocalDateTimeInput(new Date()),
       duration_minutes: "",
     },
   })
@@ -123,8 +124,7 @@ export function VoiceReviewModal({
         channel: parsed.detectedChannel,
         attendee_ids: parsed.matchedAttendeeIds,
         occurred_at:
-          form.getValues("occurred_at") ||
-          new Date().toISOString().slice(0, 16),
+          form.getValues("occurred_at") || toLocalDateTimeInput(new Date()),
         duration_minutes: form.getValues("duration_minutes") || "",
       })
     }

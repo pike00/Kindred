@@ -4,6 +4,7 @@ import { ImportExportService, OpenAPI } from "@/client"
 import { LoadingButton } from "@/components/ui/loading-button"
 import useCustomToast from "@/hooks/useCustomToast"
 import { sessionFetch } from "@/lib/session-api"
+import { localDateKey } from "@/lib/utils"
 
 type ImportResult = {
   imported: number
@@ -67,7 +68,7 @@ export default function ImportExport() {
     mutationFn: () =>
       downloadAuthed(
         "/api/v1/import-export/export/vcard",
-        `contacts-${new Date().toISOString().slice(0, 10)}.vcf`,
+        `contacts-${localDateKey(new Date())}.vcf`,
         "text/vcard",
       ),
     onSuccess: () => showSuccessToast("vCard export downloaded"),
@@ -79,7 +80,7 @@ export default function ImportExport() {
     mutationFn: () =>
       downloadAuthed(
         "/api/v1/import-export/export/json",
-        `contacts-${new Date().toISOString().slice(0, 10)}.json`,
+        `contacts-${localDateKey(new Date())}.json`,
         "application/json",
       ),
     onSuccess: () => showSuccessToast("JSON export downloaded"),

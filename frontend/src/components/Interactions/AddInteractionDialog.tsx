@@ -40,11 +40,7 @@ import {
 } from "@/components/ui/popover"
 import useCustomToast from "@/hooks/useCustomToast"
 import { Plus, X } from "@/lib/icons"
-
-export const toLocalDateTimeInput = (d: Date) => {
-  const pad = (n: number) => String(n).padStart(2, "0")
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
-}
+import { toLocalDateTimeInput } from "@/lib/utils"
 
 export const channels = [
   { value: "call", label: "Call" },
@@ -105,8 +101,8 @@ export const AddInteractionDialog = ({
     else setInternalOpen(o)
   }
   const [osmStatus, setOsmStatus] = useState<OsmStatus>("idle")
-  const [_resolvedLat, setResolvedLat] = useState<number | null>(null)
-  const [_resolvedLng, setResolvedLng] = useState<number | null>(null)
+  const [resolvedLat, setResolvedLat] = useState<number | null>(null)
+  const [resolvedLng, setResolvedLng] = useState<number | null>(null)
   const [resolvedName, setResolvedName] = useState<string | null>(null)
   const osmAbortRef = useRef<AbortController | null>(null)
   const { showSuccessToast, showErrorToast } = useCustomToast()
@@ -120,6 +116,7 @@ export const AddInteractionDialog = ({
       occurred_at: toLocalDateTimeInput(new Date()),
       notes: "",
       duration_minutes: "",
+      location_label: "",
     },
   })
 
@@ -212,7 +209,7 @@ export const AddInteractionDialog = ({
   })
 
   const onSubmit = (data: InteractionCreateFormData) => {
-    addMutation.mutate({
+    const payload: InteractionCreate = {
       attendee_ids: data.attendee_ids,
       channel: data.channel as InteractionCreate["channel"],
       occurred_at: new Date(data.occurred_at).toISOString(),
@@ -220,7 +217,11 @@ export const AddInteractionDialog = ({
       duration_minutes: data.duration_minutes
         ? parseInt(data.duration_minutes, 10)
         : null,
-    })
+      location_label: data.location_label?.trim() || null,
+      latitude: resolvedLat,
+      longitude: resolvedLng,
+    }
+    addMutation.mutate(payload)
   }
 
   return (

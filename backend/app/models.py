@@ -1663,6 +1663,9 @@ class InteractionCreate(InteractionBase):
     )
     is_draft: bool = False
     draft_source: str | None = Field(default=None, max_length=32)
+    location_label: str | None = Field(default=None, max_length=500)
+    latitude: float | None = Field(default=None, ge=-90, le=90)
+    longitude: float | None = Field(default=None, ge=-180, le=180)
 
 
 class InteractionUpdate(SQLModel):
@@ -1670,6 +1673,9 @@ class InteractionUpdate(SQLModel):
     occurred_at: datetime | None = None
     notes: str | None = None
     duration_minutes: int | None = None
+    location_label: str | None = Field(default=None, max_length=500)
+    latitude: float | None = Field(default=None, ge=-90, le=90)
+    longitude: float | None = Field(default=None, ge=-180, le=180)
     attendee_ids: list[uuid.UUID] | None = Field(
         default=None,
         min_length=1,
