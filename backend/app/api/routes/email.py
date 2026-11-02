@@ -9,7 +9,7 @@ import secrets
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request, Response
 from redis import Redis
 from sqlmodel import select
 
@@ -31,12 +31,14 @@ from app.models import (
     EmailOAuthTokenCreate,
     EmailOAuthTokenPublic,
     EmailOAuthTokensPublic,
+    User,
 )
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/email", tags=["email"])
 _OAUTH_STATE_TTL_SECONDS = 600
+_OAUTH_STATE_COOKIE = "kindred_gmail_oauth_state"
 
 
 def _oauth_state_key(state: str) -> str:
@@ -51,6 +53,7 @@ def _get_oauth_redis() -> Redis:
 def gmail_authorize(
     session: SessionDep,
     current_user: CurrentUser,
+    response: Response,
     contact_id: uuid.UUID = Query(
         ..., description="Contact ID to associate with this email"
     ),
@@ -78,13 +81,23 @@ def gmail_authorize(
         ex=_OAUTH_STATE_TTL_SECONDS,
     )
     auth_url, _ = get_gmail_auth_url(state)
+    response.set_cookie(
+        _OAUTH_STATE_COOKIE,
+        state,
+        max_age=_OAUTH_STATE_TTL_SECONDS,
+        httponly=True,
+        secure=settings.FRONTEND_HOST.startswith("https://"),
+        samesite="lax",
+        path=f"{settings.API_V1_STR}/email/oauth",
+    )
     return {"authorization_url": auth_url, "state": state}
 
 
 @router.get("/oauth/callback")
 def gmail_callback(
+    request: Request,
+    response: Response,
     session: SessionDep,
-    current_user: CurrentUser,
     code: str = Query(...),
     state: str = Query(...),
 ) -> dict[str, Any]:
@@ -93,18 +106,23 @@ def gmail_callback(
     The state is an opaque, one-time server-side value.
     """
     try:
+        cookie_state = request.cookies.get(_OAUTH_STATE_COOKIE)
+        if not cookie_state or not secrets.compare_digest(cookie_state, state):
+            raise ValueError("OAuth state cookie does not match")
         redis = _get_oauth_redis()
         serialized_state = redis.getdel(_oauth_state_key(state))
         if not serialized_state:
             raise ValueError("State not found or expired")
         state_data = json.loads(serialized_state)
-        if state_data.get("user_id") != str(current_user.id):
-            raise ValueError("State belongs to a different user")
+        user_id = uuid.UUID(str(state_data["user_id"]))
         contact_id = uuid.UUID(str(state_data["contact_id"]))
     except (KeyError, TypeError, ValueError, json.JSONDecodeError):
         raise HTTPException(status_code=400, detail="Invalid state parameter")
 
     # Verify contact exists and belongs to user
+    current_user = session.get(User, user_id)
+    if not current_user or not current_user.is_active:
+        raise HTTPException(status_code=400, detail="Invalid state parameter")
     contact = session.get(Contact, contact_id)
     if not contact or contact.owner_id != current_user.id:
         raise HTTPException(status_code=404, detail="Contact not found")
@@ -139,6 +157,10 @@ def gmail_callback(
         token_in=token_in,
         owner_id=current_user.id,
         contact_id=contact_id,
+    )
+    response.delete_cookie(
+        _OAUTH_STATE_COOKIE,
+        path=f"{settings.API_V1_STR}/email/oauth",
     )
 
     return {

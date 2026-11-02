@@ -71,19 +71,19 @@ def test_gmail_oauth_state_is_random_bound_and_one_time(
     assert json.loads(redis.values[f"kindred:gmail-oauth-state:{state}"])[
         "user_id"
     ] == str(user.id)
+    assert client.cookies.get("kindred_gmail_oauth_state") == state
 
     first = client.get(
         f"{settings.API_V1_STR}/email/oauth/callback",
         params={"code": "code", "state": state},
-        headers=user_headers,
     )
     assert first.status_code == 200
     assert first.json()["email_address"] == "gmail-owner@example.com"
+    assert client.cookies.get("kindred_gmail_oauth_state") is None
 
     replay = client.get(
         f"{settings.API_V1_STR}/email/oauth/callback",
         params={"code": "code", "state": state},
-        headers=user_headers,
     )
     assert replay.status_code == 400
 
