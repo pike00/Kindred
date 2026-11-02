@@ -243,6 +243,53 @@ def test_stale_incomplete_delivery_claim_can_retry(
     assert delivery.interaction_id is not None
 
 
+def test_active_incomplete_delivery_returns_retryable_status(
+    client: TestClient,
+    session: Session,
+    api_key_headers: dict[str, str],
+) -> None:
+    webhook = _create_webhook(client, api_key_headers, name="Active lease")
+    contact = Contact(owner_id=webhook["owner_id"], first_name="Active")
+    session.add(contact)
+    session.commit()
+    session.refresh(contact)
+    session.add(
+        ContactField(
+            contact_id=contact.id,
+            field_type=ContactFieldType.EMAIL,
+            label="home",
+            value="active-lease@example.com",
+        )
+    )
+    session.commit()
+    payload = {
+        "event_id": f"event-{uuid.uuid4().hex}",
+        "contact_email": "active-lease@example.com",
+        "notes": "provider should retry",
+    }
+    session.add(
+        WebhookDelivery(
+            webhook_id=uuid.UUID(webhook["id"]),
+            delivery_id=payload["event_id"],
+            claimed_at=datetime.now(timezone.utc),
+        )
+    )
+    session.commit()
+    body = json.dumps(payload, separators=(",", ":"))
+
+    response = client.post(
+        f"/api/v1/webhooks/inbound/{webhook['api_key']}",
+        content=body,
+        headers={
+            "Content-Type": "application/json",
+            "X-Webhook-Signature": _inbound_signature("test-secret", body),
+        },
+    )
+
+    assert response.status_code == 503
+    assert "already being processed" in response.json()["detail"]
+
+
 def test_webhook_update_does_not_clear_existing_secret(
     client: TestClient,
     api_key_headers: dict[str, str],

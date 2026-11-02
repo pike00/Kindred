@@ -128,10 +128,9 @@ def _duplicate_delivery_response(
     delivery: WebhookDelivery,
 ) -> WebhookEventResponse:
     if delivery.interaction_id is None:
-        return WebhookEventResponse(
-            received=True,
-            matched=False,
-            error="Delivery is already being processed",
+        raise HTTPException(
+            status_code=503,
+            detail="Delivery is already being processed",
         )
     interaction = session.get(Interaction, delivery.interaction_id)
     if interaction is None:
