@@ -26,7 +26,8 @@
       "test-all"
     ],
     "on_pr": true,
-    "on_push": true
+    "on_push": true,
+    "required_check": null
   },
   "clean": {
     "enabled": true
@@ -35,6 +36,7 @@
     "backend": "none",
     "enabled": false
   },
+  "defaults_hash": "158ed062baedc71c034fce6561a378dfd2e7835bb19eacf0caa35f6faf950bf2",
   "delete_recipes": [
     "build",
     "deploy",
@@ -44,11 +46,20 @@
     "frontend-test"
   ],
   "deploy": {
+    "allow_legacy_apply": false,
+    "allow_shell": false,
     "cf_worker": null,
+    "command": [],
     "custom_command": null,
     "enabled": true,
-    "homelab_app": "kindred",
+    "homelab_app": "apps/kindred",
+    "homelab_mode": "bump",
+    "host": null,
     "pypi_package": null,
+    "remote_compose_root": "~/.local/share/project-kit-apps",
+    "shell_command": null,
+    "ssh_alias": null,
+    "sync_checkout": false,
     "target": "homelab"
   },
   "docs": {
@@ -61,6 +72,34 @@
     "source_dir": "docs"
   },
   "domain": "",
+  "execution": {
+    "targets": {}
+  },
+  "generated_files": {
+    ".project-kit/_lib.just": "9d757ce4098a84b9d6b7cc8cff4a167f0ae6cd52597b0f0c29937f2626ec54f1",
+    ".project-kit/build.just": "f84563d063806cff61292ca2c1c7f6d9985456709aa820012ab0bf91880b5c32",
+    ".project-kit/clean.just": "1e4656170741b74355f9042cb1104acbe2a1ce1c414b0170b91085a48551c74b",
+    ".project-kit/cliff.toml": "5ed3d4afa2fb29ce74e3848e4d372c5d6d9361687050d29fb516a667ca9431ec",
+    ".project-kit/db.just": "0055fd1e4bca45a525cebc31bb6bce14d95dc19365aea3d0756e52bd92ee708e",
+    ".project-kit/delivery.just": "0d1913a5a2abf701fc55c4b0517036bb68a84ce84aac2dfb124f5b09549ad7c0",
+    ".project-kit/deploy.just": "9709be6e4ec28dd7b631c6581674732201438b372554308f27e793592ebfec46",
+    ".project-kit/docs.just": "757f8a8724eadac14064d98862a27cdce3b4d219a7a6e2d9517400ee7089c8b5",
+    ".project-kit/preview.just": "88115572ba773f0dedfc1350b3d36a879d63b9ba3abbc30a98d5a6931df2fbba",
+    ".project-kit/release.just": "5b5de88b60308fa25c192c16b5e58d33dbc2e8dc838f5650919a5b0f577c8559",
+    ".project-kit/scripts/_runtime.py": "600f658ea913fc24efce29cde79b20ee27f39a2dd25e4857ccf1e60582af4a80",
+    ".project-kit/scripts/build-image.py": "111ff1941032af9b7bb8d029e49303518338d8ba7f8e1460e30de638fc7ea90e",
+    ".project-kit/scripts/delivery.py": "ae75e798683625149019c5f6b38789a7385de9a299470fdf34b084629dcbf18f",
+    ".project-kit/scripts/deploy-cloudflare.py": "f97643c8fd1ba9d8958965d6bbe93f1a24886ffd5fa858ad475ebe91a132d7c0",
+    ".project-kit/scripts/deploy-custom.py": "0b5e4c8e5cbd43f46e20b9e4f6ca1492ce7d6f839990e9fe2e35d8dd653dd469",
+    ".project-kit/scripts/deploy-ghcr.py": "83c2622a6bea27fb75198d5f9fa54069e2a1f2d638a1cdfc8136ef9439e46998",
+    ".project-kit/scripts/deploy-homelab.py": "57f4ac77856546b9838faf4990c603a7eda06cf12ea7f7b16aef7e2b03f75e28",
+    ".project-kit/scripts/deploy-pypi.py": "7313e03526c53ee61695464d83d354f4dedf721946c10a8ba38da2a9e9bb6cd7",
+    ".project-kit/scripts/deploy-remote-compose.py": "7ae8a6ff2396dbc5135f70d6b1580d85cb08dc3584d46fa472737704e547196b",
+    ".project-kit/scripts/doctor.py": "980b1fddae394ffcc7cd521ae34bdda521d67964b827a5f9c1bbc5cd252553d5",
+    ".project-kit/scripts/release.py": "767b178597a4ef359892b886e4b8620de555aad5940653530867e7eb17d66a06",
+    ".project-kit/setup.just": "a648d44e38e857db95b14765500bcc54928c29eaea7b6dca408d90e471021ba0",
+    ".project-kit/test.just": "1e659325610fd7bb3a0d1f1bd58f19483df75432f6f3fbf2401edf0d434e0736"
+  },
   "language": "python+ts",
   "managed_subsystems": [],
   "preview": {
@@ -75,17 +114,22 @@
     "test_command": "pytest",
     "test_service": null
   },
+  "project_kit_commit": "28eec7f6a289",
   "project_name": "kindred",
   "public": true,
-  "refreshed_at": "2026-06-27",
+  "refreshed_at": "2026-11-02",
   "release": {
+    "dedicated_llm_key": false,
     "enabled": true,
+    "git_cliff_version": "2.14.2",
     "install_command": null,
     "litellm_base_url": "",
     "litellm_model": "deepseek-v4-pro-cloud",
     "prod_homelab_env": "",
+    "prod_pypi_package": "",
     "prod_source": "none"
   },
+  "schema_version": 2,
   "setup": {
     "backend": "uv sync --project backend",
     "enabled": true,
@@ -93,7 +137,8 @@
     "hooks": false,
     "precommit": false
   },
-  "skill_version": "0.1.0",
+  "skill_version": "0.3.0",
+  "template_hash": "1817f928443c2a6b475d33ffc3f791787cd7015a1fac428ea786edb96835dab0",
   "test": {
     "backend": {
       "cmd": "docker compose -f compose.dev.yml exec -T backend pytest",
@@ -111,6 +156,14 @@
     "lint": {
       "cmd": "cd frontend && pnpm exec biome check src && cd ../backend && uvx ruff check app",
       "watch": null
+    },
+    "smoke": {
+      "command": null,
+      "enabled": false,
+      "endpoint": "/healthz",
+      "expected_status": 200,
+      "target": "preview",
+      "timeout_seconds": 30
     },
     "typecheck": {
       "cmd": "cd frontend && pnpm exec tsc --noEmit",

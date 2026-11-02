@@ -30,6 +30,7 @@ import '.project-kit/preview.just'
 import '.project-kit/release.just'
 import '.project-kit/test.just'
 import '.project-kit/deploy.just'
+import '.project-kit/delivery.just'
 import '.project-kit/build.just'
 import '.project-kit/db.just'
 import '.project-kit/setup.just'
@@ -38,6 +39,17 @@ import '.project-kit/clean.just'
 # END PROJECT-KIT
 
 # --- repo-specific ---
+
+# Regenerate docs/db/ from the live Postgres schema using tbls, then render
+# each .md to a standalone .html via pandoc. The helper follows the active
+# preview stack and reads credentials from its running DB container. Open
+# docs/db/index.html in a browser — no server needed.
+db-docs:
+    @bash scripts/db-docs.sh generate
+
+# Fail if docs/db/ is out of date with the live DB. Runs in the pre-push hook.
+db-docs-check:
+    @bash scripts/db-docs.sh check
 
 # Fast live development over the tailnet. Reuses existing images/containers,
 # starts Vite directly on the machine's Tailscale IP, and proxies /api to the
@@ -93,17 +105,6 @@ dev-tailnet:
     KINDRED_BACKEND_URL="http://127.0.0.1:${BACKEND_PORT}" \
         exec bun run dev -- --config vite.tailnet.config.ts --host "$tailnet_ip" --port "$tailnet_port" --strictPort
 
-# Regenerate docs/db/ from the live Postgres schema using tbls, then render
-# each .md to a standalone .html via pandoc. The helper follows the active
-# preview stack and reads credentials from its running DB container. Open
-# docs/db/index.html in a browser — no server needed.
-db-docs:
-    @bash scripts/db-docs.sh generate
-
-# Fail if docs/db/ is out of date with the live DB. Runs in the pre-push hook.
-db-docs-check:
-    @bash scripts/db-docs.sh check
-
 # Run frontend Vitest with v8 coverage. Writes report to frontend/coverage/.
 frontend-coverage *args:
     cd frontend && pnpm run test -- --coverage {{args}}
@@ -148,6 +149,16 @@ sdk-regen:
 [group('SDK')]
 sdk-test *args:
     cd sdk && uv sync --frozen --quiet && uv run pytest {{args}}
+
+# Build an exact-input local candidate; this never publishes or deploys.
+[group('Security')]
+security-build platform="linux/amd64" target="runtime":
+    bash docker/security/build.sh '{{platform}}' '{{target}}'
+
+# Offline verification with production identity and read-only filesystem.
+[group('Security')]
+security-test image="kindred-security:runtime-amd64":
+    docker run --rm -i --network none --read-only --security-opt no-new-privileges --memory 512m --memory-swap 512m --cpus 1 --tmpfs /tmp:rw,noexec,nosuid,size=64m --tmpfs /app/backend/uploads:rw,noexec,nosuid,uid=10001,gid=10001,size=16m --env PROJECT_NAME=security-test --env POSTGRES_SERVER=127.0.0.1 --env POSTGRES_USER=synthetic --env POSTGRES_PASSWORD=synthetic-test-password --env POSTGRES_DB=synthetic '{{image}}' python - < docker/security/test-runtime.py
 
 # Seed fake data for the FIRST_SUPERUSER. Safe to run repeatedly; adds more on top.
 seed count="500" email="":
@@ -205,13 +216,3 @@ sweep-review:
 [group('Deploy')]
 web-deploy:
     just -f website/justfile deploy
-
-# Build an exact-input local candidate; this never publishes or deploys.
-[group('Security')]
-security-build platform="linux/amd64" target="runtime":
-    bash docker/security/build.sh '{{platform}}' '{{target}}'
-
-# Offline verification with production identity and read-only filesystem.
-[group('Security')]
-security-test image="kindred-security:runtime-amd64":
-    docker run --rm -i --network none --read-only --security-opt no-new-privileges --memory 512m --memory-swap 512m --cpus 1 --tmpfs /tmp:rw,noexec,nosuid,size=64m --tmpfs /app/backend/uploads:rw,noexec,nosuid,uid=10001,gid=10001,size=16m --env PROJECT_NAME=security-test --env POSTGRES_SERVER=127.0.0.1 --env POSTGRES_USER=synthetic --env POSTGRES_PASSWORD=synthetic-test-password --env POSTGRES_DB=synthetic '{{image}}' python - < docker/security/test-runtime.py
