@@ -55,21 +55,38 @@ const directions = [
   { value: "outbound", label: "Outbound" },
 ] as const
 
-const schema = z
-  .object({
-    name: z.string().min(1, "Name is required"),
-    direction: z.enum(["inbound", "outbound"]),
-    url: z.string().optional(),
-    event_types: z.string().optional(),
-    secret: z.string().optional(),
-    is_active: z.boolean(),
-  })
-  .refine(
-    (d) => d.direction !== "outbound" || (d.url && d.url.trim().length > 0),
-    { path: ["url"], message: "Target URL is required for outbound webhooks" },
-  )
+const webhookFormSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  direction: z.enum(["inbound", "outbound"]),
+  url: z.string().optional(),
+  event_types: z.string().optional(),
+  secret: z.string().optional(),
+  is_active: z.boolean(),
+})
 
-type FormData = z.infer<typeof schema>
+const createWebhookSchema = webhookFormSchema.superRefine((data, ctx) => {
+  if (data.direction === "outbound" && !data.url?.trim()) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["url"],
+      message: "Target URL is required for outbound webhooks",
+    })
+  }
+  if (data.direction === "inbound" && !data.secret?.trim()) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["secret"],
+      message: "Signing secret is required for inbound webhooks",
+    })
+  }
+})
+
+const editWebhookSchema = webhookFormSchema.refine(
+  (data) => data.direction !== "outbound" || !!data.url?.trim(),
+  { path: ["url"], message: "Target URL is required for outbound webhooks" },
+)
+
+type FormData = z.infer<typeof webhookFormSchema>
 
 const emptyDefaults: FormData = {
   name: "",
@@ -101,9 +118,11 @@ function inboundUrl(apiKey: string): string {
 function WebhookFormFields({
   form,
   allowDirectionChange = true,
+  requireInboundSecret = false,
 }: {
   form: ReturnType<typeof useForm<FormData>>
   allowDirectionChange?: boolean
+  requireInboundSecret?: boolean
 }) {
   const direction = form.watch("direction")
   return (
@@ -193,10 +212,19 @@ function WebhookFormFields({
         name="secret"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Secret</FormLabel>
+            <FormLabel>
+              Secret
+              {requireInboundSecret && direction === "inbound" && (
+                <span className="text-destructive"> *</span>
+              )}
+            </FormLabel>
             <FormControl>
               <Input
-                placeholder="Required for inbound; leave empty to keep existing"
+                placeholder={
+                  requireInboundSecret
+                    ? "Required for inbound webhooks"
+                    : "Leave empty to keep the existing secret"
+                }
                 {...field}
                 value={field.value ?? ""}
               />
@@ -298,7 +326,7 @@ function AddWebhookDialog() {
   const { showErrorToast } = useCustomToast()
 
   const form = useForm<FormData>({
-    resolver: zodResolver(schema) as any,
+    resolver: zodResolver(createWebhookSchema) as any,
     defaultValues: emptyDefaults,
   })
 
@@ -338,7 +366,7 @@ function AddWebhookDialog() {
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
-              <WebhookFormFields form={form} />
+              <WebhookFormFields form={form} requireInboundSecret />
               <DialogFooter className="mt-4">
                 <DialogClose asChild>
                   <Button variant="outline" disabled={mutation.isPending}>
@@ -371,7 +399,7 @@ function EditWebhookDialog({
   const { showSuccessToast, showErrorToast } = useCustomToast()
 
   const form = useForm<FormData>({
-    resolver: zodResolver(schema) as any,
+    resolver: zodResolver(editWebhookSchema) as any,
     defaultValues: {
       name: webhook.name,
       direction: webhook.direction as "inbound" | "outbound",

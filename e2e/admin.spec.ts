@@ -203,6 +203,7 @@ test.describe("Admin · Webhooks", () => {
     await expect(dialog).toBeVisible()
     await dialog.getByLabel(/^name/i).fill(name)
     // Leave direction as inbound (default).
+    await dialog.getByLabel(/secret/i).fill(`secret-${Date.now()}`)
     await dialog.getByRole("button", { name: /^save$/i }).click()
 
     // The "created" key dialog appears next.
