@@ -1001,9 +1001,10 @@ describe("NotesCard", () => {
 
 it("syncs every verified account draft to its original contact", async () => {
   const { IDBFactory } = await import("fake-indexeddb")
-  vi.stubGlobal("indexedDB", new IDBFactory())
   const session = await import("@/lib/session")
   const db = await import("@/lib/offline-db")
+  await db.closeOfflineDB()
+  vi.stubGlobal("indexedDB", new IDBFactory())
   session.acceptIdentity("account-a")
   await db.addDraft({ id: "private-a", contactId: "contact-current", body: "private account A" })
   session.resetSession()

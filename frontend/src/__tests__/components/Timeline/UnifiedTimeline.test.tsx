@@ -1,8 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
+import { IDBFactory } from "fake-indexeddb"
 import { fireEvent, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { renderWithProviders } from "@/test/helpers"
 import { UnifiedTimeline } from "@/components/Timeline/UnifiedTimeline"
+
+vi.stubGlobal("indexedDB", new IDBFactory())
 
 // Mock API client services
 const mockListInteractions = vi.hoisted(() => vi.fn())
@@ -149,8 +152,11 @@ describe("UnifiedTimeline", () => {
     ],
   }
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks()
+    const session = await import("@/lib/session")
+    session.resetSession()
+    session.acceptIdentity(`timeline-test-${crypto.randomUUID()}`)
     mockListInteractions.mockResolvedValue({ data: [] })
     mockListNotes.mockResolvedValue({ data: [] })
     mockListGifts.mockResolvedValue({ data: [] })
@@ -262,7 +268,11 @@ describe("UnifiedTimeline", () => {
 
     await waitFor(() => {
       expect(mockCreateNote).toHaveBeenCalledWith({
-        requestBody: { contact_id: "c1", body: "A new timeline note" },
+        requestBody: {
+          contact_id: "c1",
+          body: "A new timeline note",
+          client_id: expect.any(String),
+        },
       })
     })
   })

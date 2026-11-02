@@ -62,7 +62,11 @@ function parseUtcOffset(input: string): string | null {
 // Utility: format current time in a given IANA timezone with smart day context
 export function formatLocalTime(
   tz: string,
-  options?: { includeDayDiff?: boolean; includeDayName?: boolean },
+  options?: {
+    includeDayDiff?: boolean
+    includeDayName?: boolean
+    viewerTimeZone?: string
+  },
 ): string | null {
   try {
     const now = new Date()
@@ -73,11 +77,18 @@ export function formatLocalTime(
       hour12: true,
     }).format(now)
 
-    // Compute day difference relative to local viewer wall-clock date
-    const y = now.getFullYear()
-    const m = String(now.getMonth() + 1).padStart(2, "0")
-    const d = String(now.getDate()).padStart(2, "0")
-    const localDateStr = `${y}-${m}-${d}`
+    // Compute day difference relative to the viewer's wall-clock date. The
+    // explicit viewer zone keeps this deterministic when the host timezone is
+    // not the user's; production defaults to the browser timezone.
+    const viewerTimeZone =
+      options?.viewerTimeZone ??
+      Intl.DateTimeFormat().resolvedOptions().timeZone
+    const localDateStr = new Intl.DateTimeFormat("en-CA", {
+      timeZone: viewerTimeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(now)
 
     const targetDateStr = new Intl.DateTimeFormat("en-CA", {
       timeZone: tz,

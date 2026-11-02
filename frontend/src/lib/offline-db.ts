@@ -17,6 +17,18 @@ const DB_NAME = "kindred-offline"
 const STORE_NAME = "draft-queue"
 let dbPromise: Promise<IDBDatabase> | null = null
 
+export async function closeOfflineDB(): Promise<void> {
+  const pending = dbPromise
+  dbPromise = null
+  if (!pending) return
+  try {
+    const db = await pending
+    db.close()
+  } catch {
+    // A failed open already cleared dbPromise and has no connection to close.
+  }
+}
+
 function openDB(): Promise<IDBDatabase> {
   if (dbPromise) return dbPromise
   dbPromise = new Promise((resolve, reject) => {
