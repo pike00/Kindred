@@ -167,6 +167,52 @@ def test_create_contact_share_is_idempotent(client: TestClient, db: Session) -> 
     assert len(shares) == 1
 
 
+def test_create_contact_share_handles_insert_race(
+    client: TestClient,
+    db: Session,
+    monkeypatch,
+) -> None:
+    alice = create_random_user(db)
+    bob = create_random_user(db)
+    alice_h = authentication_token_from_email(client=client, email=alice.email, db=db)
+
+    first = client.post(
+        f"{API}/contact-shares/",
+        headers=alice_h,
+        json={"grantee_email": bob.email},
+    )
+    assert first.status_code == 200
+
+    original_get = Session.get
+    missed = False
+
+    def get_with_one_race_miss(self, model, ident, *args, **kwargs):
+        nonlocal missed
+        if model is AllContactsShare and not missed:
+            missed = True
+            return None
+        return original_get(self, model, ident, *args, **kwargs)
+
+    monkeypatch.setattr(Session, "get", get_with_one_race_miss)
+
+    raced = client.post(
+        f"{API}/contact-shares/",
+        headers=alice_h,
+        json={"grantee_email": bob.email},
+    )
+
+    assert raced.status_code == 200
+    assert raced.json()["grantee_email"] == bob.email
+    assert (
+        len(
+            db.exec(
+                select(AllContactsShare).where(AllContactsShare.owner_id == alice.id)
+            ).all()
+        )
+        == 1
+    )
+
+
 def test_list_contact_shares_isolated_to_grantor(
     client: TestClient, db: Session
 ) -> None:

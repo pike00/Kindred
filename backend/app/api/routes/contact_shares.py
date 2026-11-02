@@ -2,6 +2,7 @@ import uuid
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict, EmailStr
+from sqlalchemy.exc import IntegrityError
 from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
@@ -23,9 +24,7 @@ class ContactShareIn(BaseModel):
 
 
 def _resolve_grantee(session: SessionDep, body: ContactShareIn) -> User | None:
-    return session.exec(
-        select(User).where(User.email == body.grantee_email)
-    ).first()
+    return session.exec(select(User).where(User.email == body.grantee_email)).first()
 
 
 @router.post("/", response_model=AllContactsSharePublic)
@@ -65,7 +64,17 @@ def create_contact_share(
             },
         )
     )
-    session.commit()
+    try:
+        session.commit()
+    except IntegrityError:
+        session.rollback()
+        existing = session.get(AllContactsShare, (current_user.id, grantee.id))
+        if existing is None:
+            raise
+        return AllContactsSharePublic(
+            grantee_email=grantee.email,
+            created_at=existing.created_at,
+        )
     session.refresh(share)
 
     return AllContactsSharePublic(
