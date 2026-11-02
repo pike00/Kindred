@@ -1003,6 +1003,8 @@ it("syncs every verified account draft to its original contact", async () => {
   const { IDBFactory } = await import("fake-indexeddb")
   const session = await import("@/lib/session")
   const db = await import("@/lib/offline-db")
+  const outbox = await import("@/lib/note-outbox")
+  await outbox.resetNoteOutbox()
   await db.closeOfflineDB()
   vi.stubGlobal("indexedDB", new IDBFactory())
   session.acceptIdentity("account-a")

@@ -164,3 +164,12 @@ export function stopNoteOutbox(): void {
   if (retryInterval !== null) window.clearInterval(retryInterval)
   retryInterval = null
 }
+
+export async function resetNoteOutbox(): Promise<void> {
+  stopNoteOutbox()
+  if (activeSync) {
+    await activeSync.catch(() => [])
+  }
+  activeSync = null
+  listeners.clear()
+}
