@@ -1020,10 +1020,11 @@ def test_create_and_update_contact_with_optional_birthday_year(
 def test_bulk_update_applies_saved_filter(
     client: TestClient, superuser_token_headers: dict[str, str]
 ) -> None:
+    company = f"Acme-{uuid.uuid4().hex[:8]}"
     first = client.post(
         f"{settings.API_V1_STR}/contacts/",
         headers=superuser_token_headers,
-        json={"first_name": "Acme Person", "company": "Acme"},
+        json={"first_name": "Acme Person", "company": company},
     ).json()
     second = client.post(
         f"{settings.API_V1_STR}/contacts/",
@@ -1037,7 +1038,7 @@ def test_bulk_update_applies_saved_filter(
             "name": "Acme only",
             "filter_json": {
                 "conditions": [
-                    {"field": "company", "operator": "equals", "value": "Acme"}
+                    {"field": "company", "operator": "equals", "value": company}
                 ],
                 "op": "and",
             },
