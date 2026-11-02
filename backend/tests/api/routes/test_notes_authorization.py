@@ -17,6 +17,23 @@ from tests.utils.user import authentication_token_from_email, create_random_user
 API = settings.API_V1_STR
 
 
+def test_note_client_id_metadata_is_owner_scoped() -> None:
+    indexes = {index.name: index for index in Note.__table__.indexes}
+    owner_client_index = indexes["uq_note_owner_client_id"]
+    assert owner_client_index.unique is True
+    assert [column.name for column in owner_client_index.columns] == [
+        "owner_id",
+        "client_id",
+    ]
+    assert all(
+        not (
+            column.name == "client_id"
+            and column.unique
+        )
+        for column in Note.__table__.columns
+    )
+
+
 def _contact(db: Session, owner: User, first_name: str) -> Contact:
     contact = Contact(first_name=first_name, owner_id=owner.id)
     db.add(contact)

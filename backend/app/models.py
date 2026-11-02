@@ -791,6 +791,11 @@ class Contact(SoftDeleteMixin, ContactBase, table=True):
         max_length=255,
         description="ETag from the CardDAV server for incremental sync.",
     )
+    vcard_href: str | None = Field(
+        default=None,
+        max_length=500,
+        description="Client-provided CardDAV href for stable round-trip lookup.",
+    )
     vcard_sha256: str | None = Field(
         default=None,
         max_length=64,
@@ -1879,6 +1884,15 @@ class Reminder(SoftDeleteMixin, ReminderBase, table=True):
         default=None,
         description="When the ARQ worker last fired this reminder.",
     )
+    delivery_attempts: int = Field(
+        default=0,
+        ge=0,
+        description="Consecutive failed delivery attempts for the current occurrence.",
+    )
+    next_delivery_at: datetime | None = Field(
+        default=None,
+        description="Earliest retry time after a failed delivery attempt.",
+    )
     snoozed_until: datetime | None = Field(
         default=None,
         description="If set, suppress firing until this time.",
@@ -2351,9 +2365,7 @@ class Note(SoftDeleteMixin, NoteBase, table=True):
     )
     client_id: str | None = Field(
         default=None,
-        index=True,
-        unique=True,
-        description="Client-generated UUID for idempotent POSTs; unique if set.",
+        description="Client-generated UUID for owner-scoped idempotent POSTs.",
     )
     contact_id: uuid.UUID = Field(
         foreign_key="contact.id",
@@ -2392,6 +2404,16 @@ class Note(SoftDeleteMixin, NoteBase, table=True):
         sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
         nullable=False,
         description="Auto-bumped on edit (UTC).",
+    )
+
+    __table_args__ = (
+        sa.Index(
+            "uq_note_owner_client_id",
+            "owner_id",
+            "client_id",
+            unique=True,
+            postgresql_where=sa.text("client_id IS NOT NULL"),
+        ),
     )
 
 
@@ -2602,6 +2624,12 @@ class WebhookDelivery(SQLModel, table=True):
         default_factory=get_datetime_utc,
         sa_type=DateTime(timezone=True),
         nullable=False,
+    )
+    claimed_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),
+        nullable=False,
+        description="When the current processing lease began (UTC).",
     )
 
     __table_args__ = (
