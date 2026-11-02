@@ -51,6 +51,7 @@ def _get_oauth_redis() -> Redis:
 
 @router.get("/oauth/authorize")
 def gmail_authorize(
+    request: Request,
     session: SessionDep,
     current_user: CurrentUser,
     response: Response,
@@ -86,7 +87,7 @@ def gmail_authorize(
         state,
         max_age=_OAUTH_STATE_TTL_SECONDS,
         httponly=True,
-        secure=settings.FRONTEND_HOST.startswith("https://"),
+        secure=request.url.scheme == "https",
         samesite="lax",
         path=f"{settings.API_V1_STR}/email/oauth",
     )
