@@ -139,7 +139,7 @@ export default defineConfig({
     ...(!isE2E
       ? [
           VitePWA({
-            registerType: "autoUpdate",
+            registerType: "prompt",
             // globPatterns already includes icons; adding absolute icon paths
             // again creates conflicting precache keys and prevents activation.
             includeManifestIcons: false,

@@ -1,3 +1,5 @@
+import { requestServiceWorkerActivation } from "./service-worker-update"
+
 const PROTOCOL = "KINDRED_PRIVATE_NETWORK_ONLY_V1"
 
 function workerIsSafe(worker: ServiceWorker): Promise<boolean> {
@@ -63,6 +65,7 @@ export async function ensurePrivateApiWorker(): Promise<void> {
     })
     if (previous !== workers.controller && (await currentIsSafe())) return
     await registration.update()
+    requestServiceWorkerActivation(registration)
     for (;;) {
       const beforeProbe = revision
       if (await currentIsSafe()) return

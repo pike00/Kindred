@@ -10,6 +10,7 @@ import PagePending from "./components/Common/PagePending"
 import { startNoteOutbox } from "./lib/note-outbox"
 import { queryClient } from "./lib/queryClient"
 import { ensurePrivateApiWorker } from "./lib/service-worker-session"
+import { activateServiceWorkerUpdate } from "./lib/service-worker-update"
 import {
   listenForSessionChanges,
   onSessionExit,
@@ -65,6 +66,7 @@ declare module "@tanstack/react-router" {
 
 function ServiceWorkerUpdatePrompt() {
   const [needRefresh, setNeedRefresh] = useState(false)
+  const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(null)
 
   useEffect(() => {
     if (isE2E) return
@@ -78,15 +80,12 @@ function ServiceWorkerUpdatePrompt() {
                 newWorker.state === "installed" &&
                 navigator.serviceWorker.controller
               ) {
+                setWaitingWorker(newWorker)
                 setNeedRefresh(true)
               }
             })
           }
         })
-      })
-
-      navigator.serviceWorker.addEventListener("controllerchange", () => {
-        reloadSession()
       })
     }
   }, [])
@@ -100,7 +99,13 @@ function ServiceWorkerUpdatePrompt() {
       <button
         type="button"
         className="mt-2 rounded bg-white px-3 py-1 text-xs font-medium text-primary"
-        onClick={() => window.location.reload()}
+        onClick={() => {
+          if (waitingWorker) {
+            activateServiceWorkerUpdate(waitingWorker, reloadSession)
+          } else {
+            window.location.reload()
+          }
+        }}
       >
         Refresh Now
       </button>

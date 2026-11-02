@@ -11,6 +11,7 @@ const listeners = new Set<() => void>()
 const exitListeners = new Set<() => void>()
 const identityListeners = new Set<() => void>()
 const SESSION_EVENT = "kindred-session-change"
+const VERIFIED_IDENTITY_KEY = "kindred_verified_identity_v1"
 
 export class SessionChangedError extends Error {
   constructor() {
@@ -34,6 +35,59 @@ function assertCredential(): void {
     reloadSession()
     throw new SessionChangedError()
   }
+}
+
+function credentialFingerprint(value: string): string {
+  let first = 0x811c9dc5
+  let second = 0x9e3779b9
+  for (let index = 0; index < value.length; index++) {
+    const code = value.charCodeAt(index)
+    first = Math.imul(first ^ code, 0x01000193)
+    second = Math.imul(second ^ code, 0x85ebca6b)
+  }
+  return `${value.length}:${first >>> 0}:${second >>> 0}`
+}
+
+function clearPersistedIdentity(): void {
+  if (typeof localStorage !== "undefined") {
+    localStorage.removeItem(VERIFIED_IDENTITY_KEY)
+  }
+}
+
+function persistIdentity(owner: string): void {
+  if (typeof localStorage === "undefined" || !credential) return
+  localStorage.setItem(
+    VERIFIED_IDENTITY_KEY,
+    JSON.stringify({
+      fingerprint: credentialFingerprint(credential),
+      ownerId: owner,
+    }),
+  )
+}
+
+function hydratePersistedIdentity(): void {
+  if (ownerId || typeof localStorage === "undefined") return
+  const token = localStorage.getItem("access_token")
+  if (!token) return
+  const serialized = localStorage.getItem(VERIFIED_IDENTITY_KEY)
+  if (!serialized) return
+  try {
+    const persisted = JSON.parse(serialized) as {
+      fingerprint?: unknown
+      ownerId?: unknown
+    }
+    if (
+      persisted.fingerprint === credentialFingerprint(token) &&
+      typeof persisted.ownerId === "string" &&
+      persisted.ownerId
+    ) {
+      ownerId = persisted.ownerId
+      return
+    }
+  } catch {
+    // Fall through and discard an unreadable or stale binding.
+  }
+  clearPersistedIdentity()
 }
 
 export function captureSession(): Session {
@@ -87,12 +141,16 @@ export function resetSession(): void {
 }
 
 export function currentAccountId(): string {
+  hydratePersistedIdentity()
   assertCredential()
   if (leaving || !ownerId) throw new SessionChangedError()
   return ownerId
 }
 
-export const getVerifiedAccountId = () => ownerId
+export const getVerifiedAccountId = () => {
+  hydratePersistedIdentity()
+  return ownerId
+}
 export function onIdentityChange(listener: () => void) {
   identityListeners.add(listener)
   return () => {
@@ -107,6 +165,7 @@ export function acceptIdentity(id: string): void {
     throw new SessionChangedError()
   }
   ownerId = id
+  persistIdentity(id)
   for (const listener of identityListeners) listener()
 }
 
@@ -114,6 +173,7 @@ export function leaveSession(url: string, broadcast = true): void {
   if (leaving) return
   assertCredential()
   localStorage.removeItem("access_token")
+  clearPersistedIdentity()
   resetSession()
   exitPage()
   if (broadcast) localStorage.setItem(SESSION_EVENT, crypto.randomUUID())
@@ -123,6 +183,7 @@ export function leaveSession(url: string, broadcast = true): void {
 
 export function completeLogin(token: string, session: Session): void {
   assertSession(session)
+  clearPersistedIdentity()
   resetSession()
   localStorage.setItem("access_token", token)
   localStorage.setItem(SESSION_EVENT, crypto.randomUUID())

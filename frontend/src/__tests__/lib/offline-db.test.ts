@@ -4,6 +4,20 @@ import { beforeEach, expect, it, vi } from "vitest"
 beforeEach(() => {
   vi.resetModules()
   vi.stubGlobal("indexedDB", new IDBFactory())
+  localStorage.clear()
+})
+
+it("restores a verified identity for the same bearer across an offline relaunch", async () => {
+  const session = await import("@/lib/session")
+  localStorage.setItem("access_token", "token-a")
+  session.acceptIdentity("account-a")
+
+  session.resetSession()
+  expect(session.getVerifiedAccountId()).toBe("account-a")
+
+  localStorage.setItem("access_token", "token-b")
+  session.resetSession()
+  expect(session.getVerifiedAccountId()).toBeNull()
 })
 
 it("keeps drafts with their verified owner across logout and account switching", async () => {

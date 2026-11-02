@@ -6,15 +6,15 @@ import {
   useNavigate,
   useRouterState,
 } from "@tanstack/react-router"
-import { useEffect, useMemo } from "react"
+import { useMemo } from "react"
 import { cfEnabled } from "@/auth/cf"
-import { ApiError, UsersService } from "@/client"
+import { UsersService } from "@/client"
 import { CommandPalette } from "@/components/CommandPalette/CommandPalette"
 import {
   CommandPaletteProvider,
   useCommandPalette,
 } from "@/components/CommandPalette/CommandPaletteContext"
-import ErrorComponent from "@/components/Common/ErrorComponent"
+import { AuthGuardError } from "@/components/Common/AuthGuardError"
 import { Footer } from "@/components/Common/Footer"
 import { QuickLogFAB } from "@/components/Common/QuickLogFAB"
 import KeyboardShortcutOverlay from "@/components/KeyboardShortcutOverlay"
@@ -30,7 +30,6 @@ import { VoiceRecordButton } from "@/components/VoiceRecorder/VoiceRecordButton"
 import { isLoggedIn } from "@/hooks/useAuth"
 import { useRegisterShortcuts } from "@/hooks/useKeyboardShortcuts"
 import { Search } from "@/lib/icons"
-import { leaveSession } from "@/lib/session"
 
 export function NavigationProgressBar() {
   const isPending = useRouterState({ select: (s) => s.status === "pending" })
@@ -47,26 +46,6 @@ export function NavigationProgressBar() {
       <div className="h-full w-full bg-primary animate-indeterminate origin-left" />
     </div>
   )
-}
-
-function AuthGuardError({ error }: { error: unknown }) {
-  useEffect(() => {
-    if (
-      error instanceof ApiError &&
-      (error.status === 401 || error.status === 403)
-    ) {
-      leaveSession(cfEnabled() ? "/" : "/login")
-    }
-  }, [error])
-
-  if (
-    error instanceof ApiError &&
-    (error.status === 401 || error.status === 403)
-  ) {
-    return null
-  }
-
-  return <ErrorComponent />
 }
 
 export const Route = createFileRoute("/_layout")({
