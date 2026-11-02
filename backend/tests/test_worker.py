@@ -457,3 +457,27 @@ def test_global_sink_only_receives_primary_superuser_reminders(
     db.refresh(other_reminder)
     assert primary_reminder.is_active is False
     assert other_reminder.is_active is True
+
+
+def test_notification_owner_skips_inactive_superusers(db: Session) -> None:
+    inactive = User(
+        email=f"inactive-owner-{uuid.uuid4().hex}@example.com",
+        hashed_password="unused",
+        is_active=False,
+        is_superuser=True,
+        created_at=datetime(1800, 1, 1, tzinfo=timezone.utc),
+    )
+    active = User(
+        email=f"active-owner-{uuid.uuid4().hex}@example.com",
+        hashed_password="unused",
+        is_active=True,
+        is_superuser=True,
+        created_at=datetime(1801, 1, 1, tzinfo=timezone.utc),
+    )
+    db.add(inactive)
+    db.add(active)
+    db.commit()
+    db.refresh(inactive)
+    db.refresh(active)
+
+    assert worker._notification_owner_id(db) == active.id

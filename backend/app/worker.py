@@ -44,7 +44,7 @@ def _notification_owner_id(session: Session) -> uuid.UUID | None:
     """Return the single owner whose data may use the global Apprise sink."""
     return session.exec(
         select(User.id)
-        .where(User.is_superuser.is_(True))
+        .where(User.is_superuser.is_(True), User.is_active.is_(True))
         .order_by(User.created_at.asc(), User.id.asc())
     ).first()
 
