@@ -583,4 +583,3 @@ export function InlineContactName({
     </div>
   )
 }
-
