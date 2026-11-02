@@ -103,6 +103,32 @@ def test_bulk_archive(
     assert contact2.is_archived is True
 
 
+def test_bulk_delete_moves_contacts_to_trash(
+    client: TestClient, superuser_token_headers: dict[str, str], db: Session
+) -> None:
+    user_id = get_superuser_id(db)
+    contact = create_test_contact(db, user_id, first_name="Trash")
+
+    response = client.patch(
+        f"/api/v1/contacts/bulk",
+        headers=superuser_token_headers,
+        json={
+            "contact_ids": [str(contact.id)],
+            "operations": {"set_deleted": True},
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    db.refresh(contact)
+    assert contact.deleted_at is not None
+    listed = client.get("/api/v1/contacts/", headers=superuser_token_headers)
+    assert all(row["id"] != str(contact.id) for row in listed.json()["data"])
+    trashed = client.get(
+        "/api/v1/contacts/?only_deleted=true", headers=superuser_token_headers
+    )
+    assert any(row["id"] == str(contact.id) for row in trashed.json()["data"])
+
+
 def test_bulk_unarchive(
     client: TestClient, superuser_token_headers: dict[str, str], db: Session
 ) -> None:
