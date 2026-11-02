@@ -124,6 +124,25 @@ compose.dev.yml Dev-against-homelab overlay (bind-mounted source, --reload, fron
 .env.sops      Production secrets, encrypted with sops + age
 ```
 
+## Architecture map
+
+Use [Floorplan](https://github.com/haydenschmitty/floorplan) to generate an interactive, plain-English map of the frontend, API, background jobs, CardDAV bridge, SDK, screens, routes, data stores and external services.
+
+Install the plugin once:
+
+```bash
+codex plugin marketplace add haydenschmitty/floorplan
+codex plugin add floorplan@floorplan
+```
+
+From the repository root, ask Codex to "make a floorplan of this app" or invoke `$floorplan`. After code changes, ask it to "update the floorplan". The map's Ask bar uses the local Codex sign-in in a read-only sandbox.
+
+Floorplan writes its generated map and analysis data to `floorplan/`. That folder ignores itself and is intentionally not committed because it is a local, regenerable view of the current checkout. To serve an existing map manually:
+
+```bash
+node floorplan/serve.mjs
+```
+
 ## Running the stack
 Production (homelab default):
 
