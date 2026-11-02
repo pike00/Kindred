@@ -160,7 +160,7 @@ start_preview_e2e_frontend() {
 
     e2e_server_log="$(mktemp)"
     local backend_target="${E2E_API_URL:-http://127.0.0.1:${backend_port}}"
-    setsid bash -c '
+    python3 -c 'import os, sys; os.setsid(); os.execvp(sys.argv[1], sys.argv[1:])' bash -c '
         repo_root="$1"
         backend_target="$2"
         port="$3"
@@ -173,7 +173,8 @@ start_preview_e2e_frontend() {
             VITE_AUTH_MODE="${AUTH_MODE:-local}" \
             E2E_API_TARGET="$backend_target" \
                 $pkg_cmd run build >/dev/null && \
-            uv run "$repo_root/scripts/check-bundle-placeholders.py" && \
+            uv run "$repo_root/scripts/check-bundle-placeholders.py" \
+                --dist "$repo_root/frontend/dist" && \
             exec env \
                 VITE_E2E="true" \
                 E2E_API_TARGET="$backend_target" \
