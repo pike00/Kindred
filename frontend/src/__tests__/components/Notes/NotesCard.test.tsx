@@ -1016,13 +1016,15 @@ it("syncs every verified account draft to its original contact", async () => {
   mockListNotes.mockResolvedValue({ data: [], count: 0 })
   mockCreateNote.mockResolvedValue({ id: "created" })
   const view = renderWithProviders(<NotesCard contactId="contact-current" />)
-  await waitFor(() => expect(mockCreateNote).toHaveBeenCalledWith({
-    requestBody: { contact_id: "contact-current", body: "account B note", client_id: "current-b" },
-  }))
-  expect(mockCreateNote).toHaveBeenCalledWith({
-    requestBody: { contact_id: "contact-other", body: "another contact", client_id: "other-contact" },
+  await waitFor(() => {
+    expect(mockCreateNote).toHaveBeenCalledWith({
+      requestBody: { contact_id: "contact-current", body: "account B note", client_id: "current-b" },
+    })
+    expect(mockCreateNote).toHaveBeenCalledWith({
+      requestBody: { contact_id: "contact-other", body: "another contact", client_id: "other-contact" },
+    })
+    expect(mockCreateNote).toHaveBeenCalledTimes(2)
   })
-  expect(mockCreateNote).toHaveBeenCalledTimes(2)
   view.unmount()
   const pending = await db.getPendingDrafts()
   expect(pending).toEqual([])
