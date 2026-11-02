@@ -8,7 +8,7 @@ import type {
   InteractionCreate,
   InteractionPublic,
 } from "@/client"
-import { ContactsService, InteractionsService } from "@/client"
+import { InteractionsService } from "@/client"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/popover"
 import { Textarea } from "@/components/ui/textarea"
 import useCustomToast from "@/hooks/useCustomToast"
+import { contactSearchQueryOptions } from "@/lib/contactQueries"
 import { Loader2, Plus, RotateCcw, Sparkles, X } from "@/lib/icons"
 import { toLocalDateTimeInput } from "@/lib/utils"
 import { parseVoiceTranscription } from "./parseVoiceTranscription"
@@ -93,10 +94,7 @@ export function VoiceReviewModal({
   const { showSuccessToast, showErrorToast } = useCustomToast()
   const queryClient = useQueryClient()
 
-  const { data: contactsData } = useQuery({
-    queryKey: ["contacts"],
-    queryFn: () => ContactsService.listContacts({ limit: 200 }),
-  })
+  const { data: contactsData } = useQuery(contactSearchQueryOptions("", 200))
 
   const contacts = useMemo(() => contactsData?.data ?? [], [contactsData])
 

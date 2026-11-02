@@ -111,8 +111,13 @@ vi.mock("@/components/ui/popover", () => ({
 // Mock Command components (CommandInput crashes in jsdom)
 vi.mock("@/components/ui/command", () => ({
   Command: ({ children }: any) => <div data-testid="command">{children}</div>,
-  CommandInput: ({ placeholder }: any) => (
-    <input placeholder={placeholder} data-testid="command-input" />
+  CommandInput: ({ placeholder, value, onValueChange }: any) => (
+    <input
+      placeholder={placeholder}
+      data-testid="command-input"
+      value={value ?? ""}
+      onChange={(e) => onValueChange?.(e.target.value)}
+    />
   ),
   CommandList: ({ children }: any) => <div>{children}</div>,
   CommandEmpty: ({ children }: any) => (
@@ -528,6 +533,21 @@ describe("AddInteractionDialog", () => {
     // Should show empty state
     await waitFor(() => {
       expect(screen.getByText(/no matches/i)).toBeInTheDocument()
+    })
+  })
+
+  it("searches attendees on the server", async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<AddInteractionDialog />)
+
+    await user.click(screen.getByRole("button", { name: /log interaction/i }))
+    await user.type(screen.getByTestId("command-input"), "Alice")
+
+    await waitFor(() => {
+      expect(mockListContacts).toHaveBeenCalledWith({
+        limit: 50,
+        search: "Alice",
+      })
     })
   })
 

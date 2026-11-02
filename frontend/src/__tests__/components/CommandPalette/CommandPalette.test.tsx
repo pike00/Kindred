@@ -19,6 +19,9 @@ vi.mock("@/client", async () => {
     ContactsService: {
       listContacts: vi.fn(),
     },
+    SearchService: {
+      search: vi.fn(),
+    },
   }
 })
 
@@ -46,8 +49,12 @@ vi.mock("@/components/ui/command", () => ({
         {children}
       </div>
     ) : null,
-  CommandInput: ({ placeholder }: any) => (
-    <input data-testid="command-input" placeholder={placeholder} />
+  CommandInput: ({ placeholder, onChangeCapture }: any) => (
+    <input
+      data-testid="command-input"
+      placeholder={placeholder}
+      onChange={onChangeCapture}
+    />
   ),
   CommandList: ({ children }: any) => <div data-testid="command-list">{children}</div>,
   CommandEmpty: ({ children }: any) => <div data-testid="command-empty">{children}</div>,
@@ -73,6 +80,11 @@ vi.mock("@/components/ui/command", () => ({
 describe("CommandPalette", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(ContactsService.SearchService.search).mockResolvedValue({
+      results: [],
+      total: 0,
+      query: "",
+    } as any)
     mockFns.useAuth.mockReturnValue({
       user: makeUser({ is_superuser: false }),
     })
@@ -893,6 +905,64 @@ describe("CommandPalette", () => {
       const item = screen.getByTestId("command-item-contact:c4 Eve Miller Friend Colleague")
       // contactHaystack spreads tag names into the haystack
       expect(item).toBeInTheDocument()
+    })
+  })
+
+  it("searches contacts on the server while typing", async () => {
+    vi.mocked(ContactsService.ContactsService.listContacts).mockResolvedValue({
+      data: [],
+    } as any)
+
+    renderWithProviders(
+      <CommandPaletteProvider>
+        <CommandPalette />
+      </CommandPaletteProvider>,
+    )
+
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
+    const input = await screen.findByTestId("command-input")
+    fireEvent.change(input, { target: { value: "Alice" } })
+
+    await waitFor(() => {
+      expect(
+        vi.mocked(ContactsService.ContactsService.listContacts),
+      ).toHaveBeenLastCalledWith({ limit: 50, search: "Alice" })
+    })
+  })
+
+  it("navigates note search results through their contact", async () => {
+    vi.mocked(ContactsService.ContactsService.listContacts).mockResolvedValue({
+      data: [],
+    } as any)
+    vi.mocked(ContactsService.SearchService.search).mockResolvedValue({
+      results: [
+        {
+          id: "note-1",
+          contact_id: "contact-1",
+          type: "note",
+          title: "Note",
+        },
+      ],
+      total: 1,
+      query: "note",
+    } as any)
+
+    renderWithProviders(
+      <CommandPaletteProvider>
+        <CommandPalette />
+      </CommandPaletteProvider>,
+    )
+
+    fireEvent.keyDown(window, { key: "k", code: "KeyK", metaKey: true })
+    const input = await screen.findByTestId("command-input")
+    fireEvent.change(input, { target: { value: "note" } })
+
+    const noteItem = await screen.findByTestId(/^command-item-search:note:note-1/)
+    fireEvent.click(noteItem)
+
+    expect(mockFns.navigate).toHaveBeenCalledWith({
+      to: "/contacts/$contactId",
+      params: { contactId: "contact-1" },
     })
   })
 

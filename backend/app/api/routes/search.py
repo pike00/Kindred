@@ -32,6 +32,7 @@ class SearchResultItem(SQLModel):
     rank: float | None = None
     created_at: str | None = None
     updated_at: str | None = None
+    contact_id: str | None = None
 
 
 class SearchResponse(SQLModel):
@@ -143,6 +144,7 @@ def _search_notes(
             {
                 "id": str(row.id),
                 "type": "note",
+                "contact_id": str(row.contact_id),
                 "title": f"Note on contact {row.contact_id}",
                 "snippet": snippet,
                 "rank": float(row.rank) if row.rank else None,

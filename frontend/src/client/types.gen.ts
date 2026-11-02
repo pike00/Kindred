@@ -1886,6 +1886,7 @@ export type SearchResultItem = {
     rank?: (number | null);
     created_at?: (string | null);
     updated_at?: (string | null);
+    contact_id?: (string | null);
 };
 
 export type SetupSubmit = {

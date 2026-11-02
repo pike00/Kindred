@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 import {
   type ContactPublic,
-  ContactsService,
   type InteractionCreate,
   InteractionsService,
 } from "@/client"
@@ -33,7 +32,12 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import useCustomToast from "@/hooks/useCustomToast"
+import {
+  CONTACT_PICKER_LIMIT,
+  contactSearchQueryOptions,
+} from "@/lib/contactQueries"
 import { MessageSquarePlus, Send, X } from "@/lib/icons"
+import { useDebouncedValue } from "@/lib/useDebouncedValue"
 import { cn } from "@/lib/utils"
 
 const channels = [
@@ -82,14 +86,14 @@ export function QuickLogFAB() {
   const [open, setOpen] = useState(false)
   const [contactPickerOpen, setContactPickerOpen] = useState(false)
   const [contactQuery, setContactQuery] = useState("")
+  const debouncedContactQuery = useDebouncedValue(contactQuery)
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
   const noteInputRef = useRef<HTMLInputElement>(null)
 
-  const { data: contactsData } = useQuery({
-    queryKey: ["contacts"],
-    queryFn: () => ContactsService.listContacts({ limit: 100 }),
-  })
+  const { data: contactsData } = useQuery(
+    contactSearchQueryOptions(debouncedContactQuery, CONTACT_PICKER_LIMIT),
+  )
   const contacts = useMemo(() => contactsData?.data ?? [], [contactsData])
 
   const sortedContacts = useMemo(
@@ -132,14 +136,15 @@ export function QuickLogFAB() {
       showErrorToast(
         error instanceof Error ? error.message : "Failed to log interaction",
       ),
-    onSettled: () => {
+    onSettled: (_data, _error, variables) => {
       queryClient.invalidateQueries({ queryKey: ["interactions"] })
-      if (selectedContactId) {
+      queryClient.invalidateQueries({ queryKey: ["contacts"] })
+      for (const attendeeId of variables.attendee_ids) {
         queryClient.invalidateQueries({
-          queryKey: ["interactions", selectedContactId],
+          queryKey: ["interactions", attendeeId],
         })
         queryClient.invalidateQueries({
-          queryKey: ["contact", selectedContactId],
+          queryKey: ["contacts", attendeeId],
         })
       }
     },

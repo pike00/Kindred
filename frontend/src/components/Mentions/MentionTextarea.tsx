@@ -8,8 +8,13 @@ import {
   useState,
 } from "react"
 
-import { type ContactPublic, ContactsService } from "@/client"
+import type { ContactPublic } from "@/client"
 import { Textarea } from "@/components/ui/textarea"
+import {
+  CONTACT_PICKER_LIMIT,
+  contactSearchQueryOptions,
+} from "@/lib/contactQueries"
+import { useDebouncedValue } from "@/lib/useDebouncedValue"
 import { cn } from "@/lib/utils"
 import { findActiveTrigger, formatMentionToken } from "./mentionToken"
 
@@ -67,10 +72,10 @@ export const MentionTextarea = forwardRef<
     triggerStart: number
   } | null>(null)
   const [highlight, setHighlight] = useState(0)
+  const debouncedQuery = useDebouncedValue(trigger?.query ?? "")
 
   const { data } = useQuery({
-    queryKey: ["contacts"],
-    queryFn: () => ContactsService.listContacts(),
+    ...contactSearchQueryOptions(debouncedQuery, CONTACT_PICKER_LIMIT),
     enabled: trigger !== null,
   })
 

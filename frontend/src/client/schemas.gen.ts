@@ -7295,6 +7295,17 @@ export const SearchResultItemSchema = {
                 }
             ],
             title: 'Updated At'
+        },
+        contact_id: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Contact Id'
         }
     },
     type: 'object',

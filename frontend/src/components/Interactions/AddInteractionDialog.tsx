@@ -4,7 +4,7 @@ import { useMemo, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import type { ContactPublic, InteractionCreate } from "@/client"
-import { ContactsService, InteractionsService } from "@/client"
+import { InteractionsService } from "@/client"
 import { MentionTextarea } from "@/components/Mentions/MentionTextarea"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -39,7 +39,12 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import useCustomToast from "@/hooks/useCustomToast"
+import {
+  CONTACT_PICKER_LIMIT,
+  contactSearchQueryOptions,
+} from "@/lib/contactQueries"
 import { Plus, X } from "@/lib/icons"
+import { useDebouncedValue } from "@/lib/useDebouncedValue"
 import { toLocalDateTimeInput } from "@/lib/utils"
 
 export const channels = [
@@ -376,10 +381,11 @@ export function AttendeePicker({
   seedContact?: ContactPublic
 }) {
   const [pickerOpen, setPickerOpen] = useState(false)
-  const { data } = useQuery({
-    queryKey: ["contacts"],
-    queryFn: () => ContactsService.listContacts(),
-  })
+  const [contactQuery, setContactQuery] = useState("")
+  const debouncedContactQuery = useDebouncedValue(contactQuery)
+  const { data } = useQuery(
+    contactSearchQueryOptions(debouncedContactQuery, CONTACT_PICKER_LIMIT),
+  )
   const contacts = useMemo(() => data?.data ?? [], [data])
   const contactById = useMemo(() => {
     const m = new Map<string, ContactPublic>()
@@ -424,7 +430,13 @@ export function AttendeePicker({
                   </Badge>
                 )
               })}
-              <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
+              <Popover
+                open={pickerOpen}
+                onOpenChange={(open) => {
+                  setPickerOpen(open)
+                  if (!open) setContactQuery("")
+                }}
+              >
                 <PopoverTrigger asChild>
                   <Button
                     type="button"
@@ -438,7 +450,11 @@ export function AttendeePicker({
                 </PopoverTrigger>
                 <PopoverContent className="w-72 p-0" align="start">
                   <Command>
-                    <CommandInput placeholder="Search contacts..." />
+                    <CommandInput
+                      placeholder="Search contacts..."
+                      value={contactQuery}
+                      onValueChange={setContactQuery}
+                    />
                     <CommandList>
                       <CommandEmpty>No matches.</CommandEmpty>
                       <CommandGroup>
@@ -448,6 +464,8 @@ export function AttendeePicker({
                             value={`${contactLabel(c)} ${c.company ?? ""}`}
                             onSelect={() => {
                               toggle(c)
+                              setPickerOpen(false)
+                              setContactQuery("")
                             }}
                           >
                             <span className="truncate">{contactLabel(c)}</span>

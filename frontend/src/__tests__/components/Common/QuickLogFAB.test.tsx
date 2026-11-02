@@ -139,7 +139,7 @@ describe("QuickLogFAB", () => {
     })
   })
 
-  it("loads contacts on mount with limit 100", async () => {
+  it("loads contacts on mount with the canonical picker limit", async () => {
     vi.mocked(ContactsService.ContactsService.listContacts).mockResolvedValue({
       data: [],
     } as any)
@@ -149,7 +149,24 @@ describe("QuickLogFAB", () => {
     await waitFor(() => {
       expect(
         vi.mocked(ContactsService.ContactsService.listContacts)
-      ).toHaveBeenCalledWith({ limit: 100 })
+      ).toHaveBeenCalledWith({ limit: 50 })
+    })
+  })
+
+  it("searches contacts on the server after typing", async () => {
+    vi.mocked(ContactsService.ContactsService.listContacts).mockResolvedValue({
+      data: [],
+    } as any)
+
+    renderWithProviders(<QuickLogFAB />)
+
+    const input = await screen.findByTestId("command-input")
+    await userEvent.type(input, "alice")
+
+    await waitFor(() => {
+      expect(
+        vi.mocked(ContactsService.ContactsService.listContacts)
+      ).toHaveBeenCalledWith({ limit: 50, search: "alice" })
     })
   })
 
@@ -651,7 +668,7 @@ describe("QuickLogFAB", () => {
         expect.objectContaining({ queryKey: ["interactions", "contact-123"] })
       )
       expect(invalidateSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ queryKey: ["contact", "contact-123"] })
+        expect.objectContaining({ queryKey: ["contacts", "contact-123"] })
       )
     })
 
