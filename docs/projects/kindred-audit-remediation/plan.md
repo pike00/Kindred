@@ -630,4 +630,3 @@ Run the affected tests, `just lint`, and `just typecheck`.
 - [ ] Dispatch an independent whole-branch review using `requesting-code-review`/`cast-review`.
 - [ ] Fix all Critical and Important findings; re-review.
 - [ ] Commit with `gcommit`, open the PR through `agent-workflow`, merge after checks, and verify the merged state.
-
