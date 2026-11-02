@@ -42,7 +42,7 @@ export function ContactSharingPanel() {
         ) : shares.length > 0 ? (
           <div className="grid gap-3">
             {shares.map((share) => (
-              <ContactShareRow key={share.grantee_id} share={share} />
+              <ContactShareRow key={share.grantee_email} share={share} />
             ))}
           </div>
         ) : (

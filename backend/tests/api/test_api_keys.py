@@ -341,11 +341,24 @@ def test_self_registered_user_cannot_grant_admin_impersonation(
         json={"grantee_email": settings.FIRST_SUPERUSER},
     )
     assert shared.status_code == 200
+    assert set(shared.json()) == {"grantee_email", "created_at"}
+    admin = crud.get_user_by_email(session=db, email=settings.FIRST_SUPERUSER)
+    assert admin is not None
+    assert str(admin.id) not in shared.text
+
+    logs = client.get(
+        f"{settings.API_V1_STR}/activity-logs/",
+        headers=headers,
+        params={"entity_type": "AllContactsShare"},
+    )
+    assert logs.status_code == 200
+    assert logs.json()["count"] == 1
+    assert str(admin.id) not in logs.text
 
     created = client.post(
         f"{settings.API_V1_STR}/users/me/api-keys/",
         headers=headers,
-        json={"name": "escalation", "can_impersonate": [shared.json()["grantee_id"]]},
+        json={"name": "escalation", "can_impersonate": [str(admin.id)]},
     )
 
     assert created.status_code == 403

@@ -94,7 +94,6 @@ describe("ContactSharingPanel", () => {
     mockListContactShares.mockResolvedValue({
       data: [
         {
-          grantee_id: "user-2",
           grantee_email: "bob@example.com",
           created_at: "2026-07-01T00:00:00Z",
         },
@@ -118,7 +117,6 @@ describe("ContactSharingPanel", () => {
       .mockResolvedValueOnce({
         data: [
           {
-            grantee_id: "user-3",
             grantee_email: "friend@example.com",
             created_at: "2026-08-01T00:00:00Z",
           },
@@ -126,7 +124,6 @@ describe("ContactSharingPanel", () => {
         count: 1,
       })
     mockCreateContactShare.mockResolvedValue({
-      grantee_id: "user-3",
       grantee_email: "friend@example.com",
       created_at: "2026-08-01T00:00:00Z",
     })
@@ -197,8 +194,7 @@ describe("ContactSharingPanel", () => {
     mockListContactShares.mockResolvedValue({
       data: [
         {
-          grantee_id: "user-9",
-          grantee_email: "remove-me@example.com",
+          grantee_email: "user@example.com",
           created_at: "2026-06-15T00:00:00Z",
         },
       ],
@@ -227,8 +223,7 @@ describe("ContactSharingPanel", () => {
     mockListContactShares.mockResolvedValue({
       data: [
         {
-          grantee_id: "user-9",
-          grantee_email: "remove-me@example.com",
+          grantee_email: "user@example.com",
           created_at: "2026-06-15T00:00:00Z",
         },
       ],
@@ -251,13 +246,13 @@ describe("ContactSharingPanel", () => {
 
     await waitFor(() => {
       expect(mockDeleteContactShare).toHaveBeenCalledWith({
-        granteeId: "user-9",
+        granteeEmail: "user@example.com",
       })
       expect(invalidateSpy).toHaveBeenCalledWith({
         queryKey: ["contact-shares"],
       })
       expect(mockShowSuccessToast).toHaveBeenCalledWith(
-        "Removed access for remove-me@example.com",
+        "Removed access for user@example.com",
       )
     })
   })
