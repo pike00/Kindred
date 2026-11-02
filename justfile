@@ -160,7 +160,7 @@ client-check:
     set -euo pipefail
     bash scripts/generate-client.sh
     (cd sdk && ./scripts/regen.sh)
-    git diff --exit-code -- frontend/openapi.json frontend/src/client sdk/src/kindred/_generated
+    test -z "$(git status --porcelain --untracked-files=all -- frontend/openapi.json frontend/src/client sdk/src/kindred/_generated)"
 
 # Run the SDK's pytest suite.
 [group('SDK')]

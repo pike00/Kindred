@@ -11,11 +11,16 @@ from pytest_httpx import HTTPXMock
 
 from kindred import UNSET, KindredClient
 from kindred._generated.api.contacts import (
-    contacts_get_contact,
-    contacts_list_contacts,
+    get_api_v1_contacts as contacts_list_contacts,
+    get_api_v1_contacts_contact_id as contacts_get_contact,
 )
-from kindred._generated.api.contact_shares import contact_shares_delete_contact_share
-from kindred._generated.api.utils import utils_health_check, utils_status
+from kindred._generated.api.contact_shares import (
+    delete_api_v1_contact_shares as contact_shares_delete_contact_share,
+)
+from kindred._generated.api.utils import (
+    get_api_v1_utils_health_check as utils_health_check,
+    get_api_v1_utils_status as utils_status,
+)
 from kindred._generated.errors import UnexpectedStatus
 
 BASE = "https://kindred.example.com"
@@ -93,6 +98,14 @@ def test_from_env_reads_on_behalf_of(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("KINDRED_ON_BEHALF_OF", str(user_id))
     with KindredClient.from_env() as k:
         assert k.raw.get_httpx_client().headers["X-On-Behalf-Of"] == str(user_id)
+
+
+def test_on_behalf_of_must_be_uuid(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setenv("KINDRED_BASE_URL", BASE)
+    monkeypatch.setenv("KINDRED_API_KEY", API_KEY)
+    monkeypatch.setenv("KINDRED_ON_BEHALF_OF", "not-a-uuid")
+    with pytest.raises(ValueError, match="must be a UUID"):
+        KindredClient.from_env()
 
 
 def test_context_manager_yields_self(client):

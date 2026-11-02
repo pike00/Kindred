@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 
 import { cfEnabled } from "@/auth/cf"
-import type { Body_login_login_access_token as AccessToken } from "@/client"
+import type { Body_post_api_v1_login_access_token as AccessToken } from "@/client"
 import { AuthLayout } from "@/components/Common/AuthLayout"
 import { Button } from "@/components/ui/button"
 import {

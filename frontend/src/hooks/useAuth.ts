@@ -3,7 +3,7 @@ import { useNavigate } from "@tanstack/react-router"
 
 import { cfEnabled, logout as cfLogout } from "@/auth/cf"
 import {
-  type Body_login_login_access_token as AccessToken,
+  type Body_post_api_v1_login_access_token as AccessToken,
   LoginService,
   type UserPublic,
   type UserRegister,

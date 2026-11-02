@@ -17,36 +17,20 @@ export default defineConfig({
       classNameBuilder: "{{name}}Service",
       methodNameBuilder: (operation) => {
         // @ts-expect-error
-        const name: string = operation.name || operation.id || ""
-
-        // The operation.name is in camelCase like "listContactsContactsGet"
-        // We want to extract just the action part (e.g., "list", "create", "update", "delete")
-        // by finding the service name and removing it along with the HTTP method suffix
-
-        // @ts-expect-error
-        const service: string = operation.service || ""
-
-        if (service && name) {
-          // Convert service to camelCase for matching
-          const serviceCamel =
-            service.charAt(0).toLowerCase() + service.slice(1)
-
-          // Remove the service name from the middle of the operation name
-          // e.g., "listContactsContactsGet" -> remove "Contacts" -> "listContactsGet"
-          const withoutService = name.replace(serviceCamel, "")
-
-          // Now remove the HTTP method suffix (Get, Post, Patch, Delete)
-          const result = withoutService.replace(
-            /(Get|Post|Patch|Delete|Put)$/,
-            "",
-          )
-
-          if (result && result.length > 0) {
-            return result.charAt(0).toLowerCase() + result.slice(1)
-          }
+        const summary: string = operation.summary || ""
+        const words = summary.split(/[^A-Za-z0-9]+/).filter(Boolean)
+        if (words.length > 0) {
+          return words
+            .map((word, index) =>
+              index === 0
+                ? word.charAt(0).toLowerCase() + word.slice(1)
+                : word.charAt(0).toUpperCase() + word.slice(1),
+            )
+            .join("")
         }
-
-        return name ? name.charAt(0).toLowerCase() + name.slice(1) : "operation"
+        // @ts-expect-error
+        const id: string = operation.id || "operation"
+        return id.charAt(0).toLowerCase() + id.slice(1)
       },
     },
     {
