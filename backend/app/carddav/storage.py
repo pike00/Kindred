@@ -119,7 +119,7 @@ class Collection(BaseCollection):
 
         # Get vCard UID for source_external_id
         vcard_uid = parsed.get("uid")
-        source_external_id = str(vcard_uid) if vcard_uid else None
+        source_external_id = str(vcard_uid or item.uid or href)
 
         with self._storage.get_session() as session:
             user = session.exec(select(User).where(User.email == self._user)).first()
@@ -232,13 +232,16 @@ class Collection(BaseCollection):
             else:
                 # Create new contact
                 contact_data = parsed["contact"]
-                Contact(
+                contact = Contact(
                     owner_id=user.id,
+                    source=ContactSource.CARDDAV,
+                    source_external_id=source_external_id,
                     vcard_raw=vcard_text,
                     vcard_etag=item.etag,
                     vcard_sha256=compute_vcard_hash(vcard_text),
                     **contact_data,
                 )
+                session.add(contact)
 
             session.commit()
 
