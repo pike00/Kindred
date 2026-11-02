@@ -55,6 +55,7 @@ def list_notes(
     statement = (
         select(Note)
         .where(where_clause)
+        .where(Note.owner_id == current_user.id)
         .where(Note.deleted_at == None)  # noqa: E711
         .order_by(Note.created_at.desc())
         .offset(skip)
@@ -65,6 +66,7 @@ def list_notes(
     count_statement = (
         select(func.count(Note.id.distinct()))
         .where(where_clause)
+        .where(Note.owner_id == current_user.id)
         .where(Note.deleted_at == None)  # noqa: E711
     )
     count = session.exec(count_statement).one()

@@ -97,6 +97,31 @@ def test_restore_note_rejects_other_owner(
     assert note.deleted_at is not None
 
 
+def test_contact_notes_hide_other_owners_notes_on_the_contact(
+    client: TestClient,
+    db: Session,
+) -> None:
+    contact_owner = create_random_user(db)
+    other_owner = create_random_user(db)
+    contact = _contact(db, contact_owner, "Owned contact")
+    db.add(
+        Note(
+            body="legacy note from another account",
+            contact_id=contact.id,
+            owner_id=other_owner.id,
+        )
+    )
+    db.commit()
+
+    response = client.get(
+        f"{API}/notes/contact/{contact.id}",
+        headers=_headers(client, db, contact_owner),
+    )
+
+    assert response.status_code == 200
+    assert response.json()["data"] == []
+
+
 def test_contact_mentions_do_not_expose_other_users_notes(
     client: TestClient,
     db: Session,
