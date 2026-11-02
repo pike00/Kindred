@@ -36,6 +36,7 @@ from app.models import (
     DebtCreate,
     EmailOAuthToken,
     EmailOAuthTokenCreate,
+    EmailOAuthTokenUpdate,
     Gift,
     GiftCreate,
     IcalImportLog,
@@ -948,9 +949,47 @@ def create_email_oauth_token(
     owner_id: uuid.UUID,
     contact_id: uuid.UUID,
 ) -> EmailOAuthToken:
-    token = EmailOAuthToken.model_validate(
-        token_in, update={"owner_id": owner_id, "contact_id": contact_id}
+    from app.core.encryption import encrypt_refresh_token, encrypt_token
+
+    token = EmailOAuthToken(
+        provider=token_in.provider,
+        email_address=token_in.email_address,
+        token_expires_at=token_in.token_expires_at,
+        encrypted_access_token=encrypt_token(token_in.access_token),
+        encrypted_refresh_token=encrypt_refresh_token(token_in.refresh_token),
+        owner_id=owner_id,
+        contact_id=contact_id,
     )
+    session.add(token)
+    session.commit()
+    session.refresh(token)
+    return token
+
+
+def update_email_oauth_token(
+    *,
+    session: Session,
+    token_id: uuid.UUID,
+    access_token: str,
+    refresh_token: str | None,
+    expires_at: datetime | None,
+) -> EmailOAuthToken | None:
+    """Encrypt and persist refreshed OAuth credentials."""
+    from app.core.encryption import encrypt_refresh_token, encrypt_token
+
+    token_in = EmailOAuthTokenUpdate(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_expires_at=expires_at,
+    )
+    token = session.get(EmailOAuthToken, token_id)
+    if token is None:
+        return None
+    token.encrypted_access_token = encrypt_token(token_in.access_token or "")
+    if token_in.refresh_token is not None:
+        token.encrypted_refresh_token = encrypt_refresh_token(token_in.refresh_token)
+    token.token_expires_at = token_in.token_expires_at
+    token.updated_at = datetime.now(timezone.utc)
     session.add(token)
     session.commit()
     session.refresh(token)

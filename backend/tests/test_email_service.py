@@ -7,6 +7,7 @@ from app.email_service import (
     build_gmail_contact_query,
     interaction_exists,
     parse_email_addresses,
+    poll_all_email_accounts,
 )
 from app.models import Contact, Interaction, InteractionAttendee, InteractionChannel
 
@@ -46,3 +47,58 @@ def test_interaction_exists_matches_attendee_link(session, user) -> None:
     session.commit()
 
     assert interaction_exists(session, contact.id, interaction.message_id) is True
+
+
+def test_poll_all_can_be_scoped_to_one_owner(
+    session,
+    user,
+    monkeypatch,
+) -> None:
+    own_contact = Contact(
+        owner_id=user.id,
+        first_name=f"Own-{uuid.uuid4().hex[:8]}",
+        auto_log_email=True,
+    )
+    session.add(own_contact)
+    session.commit()
+
+    calls: list[uuid.UUID] = []
+
+    def _process(*, session, owner_id, token_row):
+        del session, token_row
+        calls.append(owner_id)
+        return 1
+
+    monkeypatch.setattr(
+        "app.email_service.process_email_for_contact",
+        _process,
+    )
+    # A token is required for a contact to be considered.
+    from app.crud import create_email_oauth_token
+    from app.models import EmailOAuthTokenCreate
+
+    create_email_oauth_token(
+        session=session,
+        token_in=EmailOAuthTokenCreate(
+            provider="gmail",
+            email_address="owner@example.com",
+            access_token="access",
+        ),
+        owner_id=user.id,
+        contact_id=own_contact.id,
+    )
+    from app.models import ContactField, ContactFieldType
+
+    session.add(
+        ContactField(
+            contact_id=own_contact.id,
+            field_type=ContactFieldType.EMAIL,
+            label="home",
+            value="owner@example.com",
+        )
+    )
+    session.commit()
+
+    poll_all_email_accounts(session=session, owner_id=user.id)
+
+    assert calls == [user.id]

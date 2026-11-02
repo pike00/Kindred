@@ -3,14 +3,18 @@
 Handles Gmail OAuth2 flow, IMAP configuration, and email polling.
 """
 
+import json
 import logging
+import secrets
 import uuid
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
+from redis import Redis
 from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
+from app.core.config import settings
 from app.crud import (
     create_email_oauth_token,
     delete_email_oauth_token,
@@ -32,6 +36,15 @@ from app.models import (
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/email", tags=["email"])
+_OAUTH_STATE_TTL_SECONDS = 600
+
+
+def _oauth_state_key(state: str) -> str:
+    return f"kindred:gmail-oauth-state:{state}"
+
+
+def _get_oauth_redis() -> Redis:
+    return Redis.from_url(settings.REDIS_URL, decode_responses=True)
 
 
 @router.get("/oauth/authorize")
@@ -51,7 +64,19 @@ def gmail_authorize(
     if not contact or contact.owner_id != current_user.id:
         raise HTTPException(status_code=404, detail="Contact not found")
 
-    state = f"{contact_id}:{email_address}"
+    state = secrets.token_urlsafe(32)
+    redis = _get_oauth_redis()
+    redis.set(
+        _oauth_state_key(state),
+        json.dumps(
+            {
+                "user_id": str(current_user.id),
+                "contact_id": str(contact_id),
+                "email_address": email_address,
+            }
+        ),
+        ex=_OAUTH_STATE_TTL_SECONDS,
+    )
     auth_url, _ = get_gmail_auth_url(state)
     return {"authorization_url": auth_url, "state": state}
 
@@ -65,12 +90,18 @@ def gmail_callback(
 ) -> dict[str, Any]:
     """Handle Gmail OAuth2 callback and store encrypted tokens.
 
-    State format: "{contact_id}:{email_address}"
+    The state is an opaque, one-time server-side value.
     """
     try:
-        contact_id_str, email_address = state.split(":", 1)
-        contact_id = uuid.UUID(contact_id_str)
-    except (ValueError, AttributeError):
+        redis = _get_oauth_redis()
+        serialized_state = redis.getdel(_oauth_state_key(state))
+        if not serialized_state:
+            raise ValueError("State not found or expired")
+        state_data = json.loads(serialized_state)
+        if state_data.get("user_id") != str(current_user.id):
+            raise ValueError("State belongs to a different user")
+        contact_id = uuid.UUID(str(state_data["contact_id"]))
+    except (KeyError, TypeError, ValueError, json.JSONDecodeError):
         raise HTTPException(status_code=400, detail="Invalid state parameter")
 
     # Verify contact exists and belongs to user
@@ -87,12 +118,19 @@ def gmail_callback(
             status_code=400, detail="Failed to exchange authorization code"
         )
 
-    # Store encrypted tokens
+    verified_email_address = token_data.get("email_address")
+    if not verified_email_address:
+        raise HTTPException(
+            status_code=400,
+            detail="Could not verify the Gmail account address",
+        )
+
+    # Encryption happens in the persistence boundary.
     token_in = EmailOAuthTokenCreate(
         provider="gmail",
-        email_address=email_address,
-        encrypted_access_token=token_data["access_token"],
-        encrypted_refresh_token=token_data.get("refresh_token"),
+        email_address=verified_email_address,
+        access_token=token_data["access_token"],
+        refresh_token=token_data.get("refresh_token"),
         token_expires_at=token_data.get("token_expires_at"),
     )
 
@@ -106,7 +144,7 @@ def gmail_callback(
     return {
         "ok": True,
         "token_id": str(token_row.id),
-        "email_address": email_address,
+        "email_address": verified_email_address,
         "message": "Gmail account connected successfully",
     }
 
@@ -145,6 +183,25 @@ def delete_email_token(
         raise HTTPException(status_code=500, detail="Failed to delete token")
 
     return {"ok": "true"}
+
+
+@router.post("/poll/all")
+def poll_all_emails(
+    session: SessionDep,
+    current_user: CurrentUser,
+) -> dict[str, Any]:
+    """Poll every auto-logged email account owned by the current user."""
+    from app.email_service import poll_all_email_accounts
+
+    results = poll_all_email_accounts(session=session, owner_id=current_user.id)
+    total = sum(results.values())
+
+    return {
+        "ok": True,
+        "total_new_interactions": total,
+        "results": results,
+        "message": f"Created {total} new interaction(s) from email",
+    }
 
 
 @router.post("/poll/{contact_id}")
@@ -193,23 +250,4 @@ def poll_contact_email(
         "ok": True,
         "new_interactions": count,
         "message": f"Created {count} new interaction(s) from email",
-    }
-
-
-@router.post("/poll/all")
-def poll_all_emails(
-    session: SessionDep,
-    _current_user: CurrentUser,
-) -> dict[str, Any]:
-    """Manually trigger email polling for all contacts with auto_log_email enabled."""
-    from app.email_service import poll_all_email_accounts
-
-    results = poll_all_email_accounts(session=session)
-    total = sum(results.values())
-
-    return {
-        "ok": True,
-        "total_new_interactions": total,
-        "results": results,
-        "message": f"Created {total} new interaction(s) from email",
     }

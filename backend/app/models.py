@@ -2633,7 +2633,7 @@ class ActivityLogsPublic(SQLModel):
 
 
 class EmailOAuthTokenBase(SQLModel):
-    """Encrypted OAuth tokens for Gmail API access."""
+    """Public metadata for a linked email account."""
 
     provider: str = Field(
         default="gmail",
@@ -2644,13 +2644,6 @@ class EmailOAuthTokenBase(SQLModel):
         max_length=255,
         description="The email address these tokens are for.",
     )
-    encrypted_access_token: str = Field(
-        description="Encrypted access token for the Gmail API.",
-    )
-    encrypted_refresh_token: str | None = Field(
-        default=None,
-        description="Encrypted refresh token for obtaining new access tokens.",
-    )
     token_expires_at: datetime | None = Field(
         default=None,
         description="When the access token expires (UTC).",
@@ -2658,12 +2651,13 @@ class EmailOAuthTokenBase(SQLModel):
 
 
 class EmailOAuthTokenCreate(EmailOAuthTokenBase):
-    pass
+    access_token: str
+    refresh_token: str | None = None
 
 
 class EmailOAuthTokenUpdate(SQLModel):
-    encrypted_access_token: str | None = None
-    encrypted_refresh_token: str | None = None
+    access_token: str | None = None
+    refresh_token: str | None = None
     token_expires_at: datetime | None = None
 
 
@@ -2688,6 +2682,13 @@ class EmailOAuthToken(EmailOAuthTokenBase, table=True):
         nullable=False,
         ondelete="CASCADE",
         description="Contact these tokens belong to; cascades on delete.",
+    )
+    encrypted_access_token: str = Field(
+        description="Encrypted access token for the Gmail API.",
+    )
+    encrypted_refresh_token: str | None = Field(
+        default=None,
+        description="Encrypted refresh token for obtaining new access tokens.",
     )
     created_at: datetime = Field(
         default_factory=get_datetime_utc,

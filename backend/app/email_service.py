@@ -16,14 +16,14 @@ from email.header import decode_header
 from typing import Any
 
 try:
-    from google.auth.transport.requests import Request
+    from google.auth.transport.requests import AuthorizedSession, Request
     from google.oauth2.credentials import Credentials
     from google_auth_oauthlib.flow import Flow
 
     _GOOGLE_AVAILABLE = True
 except ImportError:
     _GOOGLE_AVAILABLE = False
-    Request = Credentials = Flow = None  # type: ignore[assignment,misc]
+    AuthorizedSession = Request = Credentials = Flow = None  # type: ignore[assignment,misc]
 
 from sqlalchemy import func, select
 from sqlmodel import Session
@@ -44,6 +44,7 @@ logger = logging.getLogger(__name__)
 
 # Gmail API scopes
 GMAIL_SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
+GMAIL_MAX_MESSAGES_PER_POLL = 500
 
 # OAuth2 redirect URI
 OAUTH_REDIRECT_URI = f"{settings.SERVER_HOST}/api/v1/email/oauth/callback"
@@ -97,9 +98,17 @@ def exchange_gmail_code(code: str) -> dict[str, Any]:
     flow.fetch_token(code=code)
 
     creds = flow.credentials
+    session = AuthorizedSession(creds)
+    profile = session.get(
+        "https://gmail.googleapis.com/gmail/v1/users/me/profile",
+        timeout=10,
+    )
+    profile.raise_for_status()
+    email_address = profile.json()["emailAddress"]
     return {
         "access_token": creds.token,
         "refresh_token": creds.refresh_token,
+        "email_address": email_address,
         "token_expires_at": (
             creds.expiry.replace(tzinfo=timezone.utc) if creds.expiry else None
         ),
@@ -410,6 +419,12 @@ def create_interaction_from_email(
 
     Returns the created Interaction, or None if deduplicated.
     """
+    contact = session.exec(
+        select(Contact).where(Contact.id == contact.id).with_for_update()
+    ).first()
+    if contact is None:
+        return None
+
     message_id = email_data.get("message_id", "")
     if message_id and interaction_exists(session, contact.id, message_id):
         logger.debug(
@@ -464,6 +479,13 @@ def process_email_for_contact(
 
     Returns count of new interactions created.
     """
+    if token_row.owner_id != owner_id:
+        logger.warning("Skipping OAuth token owned by a different user")
+        return 0
+    contact = session.get(Contact, token_row.contact_id)
+    if contact is None or contact.owner_id != owner_id:
+        logger.warning("Skipping OAuth token for an inaccessible contact")
+        return 0
     if token_row.provider == "gmail":
         return _process_gmail(session, owner_id, token_row)
     else:
@@ -513,7 +535,11 @@ def _process_gmail(
         addresses = {field.value for field in email_fields if field.value}
         query = build_gmail_contact_query(addresses)
 
-    messages = fetch_gmail_messages(creds, query=query)
+    messages = fetch_gmail_messages(
+        creds,
+        query=query,
+        max_results=GMAIL_MAX_MESSAGES_PER_POLL,
+    )
     return _process_messages(session, owner_id, messages)
 
 
@@ -544,42 +570,54 @@ def _process_messages(
     return created_count
 
 
-def poll_all_email_accounts(session: Session) -> dict[str, int]:
+def poll_all_email_accounts(
+    session: Session,
+    owner_id: uuid.UUID | None = None,
+) -> dict[str, int]:
     """Poll all configured email accounts and create interactions.
 
     Returns dict with stats: {contact_id: new_interactions_count}
     """
     # Get all contacts with auto_log_email=True
-    contacts_with_email = session.exec(
-        select(Contact)
-        .join(ContactField)
-        .where(
-            Contact.auto_log_email.is_(True),
-            ContactField.field_type == ContactFieldType.EMAIL,
-        )
-        .distinct()
-    ).all()
+    email_contact_ids = select(ContactField.contact_id).where(
+        ContactField.field_type == ContactFieldType.EMAIL
+    )
+    contacts_stmt = select(Contact.id).where(
+        Contact.auto_log_email.is_(True),
+        Contact.id.in_(email_contact_ids),
+    )
+    if owner_id is not None:
+        contacts_stmt = contacts_stmt.where(Contact.owner_id == owner_id)
+    contact_ids = session.scalars(contacts_stmt).all()
 
     results = {}
-    for contact in contacts_with_email:
+    for contact_id in contact_ids:
+        contact = session.get(Contact, contact_id)
+        if contact is None:
+            continue
         # Find OAuth token for this contact's email
-        email_fields = session.exec(
-            select(ContactField).where(
+        email_values = session.scalars(
+            select(ContactField.value).where(
                 ContactField.contact_id == contact.id,
                 ContactField.field_type == ContactFieldType.EMAIL,
             )
         ).all()
 
-        for email_field in email_fields:
+        for email_value in email_values:
             token_row = session.exec(
                 select(EmailOAuthToken).where(
                     EmailOAuthToken.contact_id == contact.id,
-                    EmailOAuthToken.email_address == email_field.value,
+                    EmailOAuthToken.email_address == email_value,
+                    EmailOAuthToken.owner_id == contact.owner_id,
                 )
             ).first()
 
             if token_row:
-                count = process_email_for_contact(session, contact.owner_id, token_row)
+                count = process_email_for_contact(
+                    session=session,
+                    owner_id=contact.owner_id,
+                    token_row=token_row,
+                )
                 if count > 0:
                     results[str(contact.id)] = results.get(str(contact.id), 0) + count
 
