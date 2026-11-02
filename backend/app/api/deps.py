@@ -95,9 +95,11 @@ def _get_current_user_api_key(request: Request, session: Session, token: str) ->
     ):
         raise HTTPException(status_code=401, detail="API key has expired")
 
-    api_key.last_used_at = datetime.now(timezone.utc)
-    session.add(api_key)
-    session.flush()
+    owner = session.get(User, api_key.owned_by_user_id)
+    if owner is None:
+        raise HTTPException(status_code=404, detail="API key owner not found")
+    if not owner.is_active:
+        raise HTTPException(status_code=400, detail="Inactive user")
 
     on_behalf_of = request.headers.get("X-On-Behalf-Of")
     if on_behalf_of:
@@ -108,6 +110,12 @@ def _get_current_user_api_key(request: Request, session: Session, token: str) ->
         except ValueError:
             raise HTTPException(
                 status_code=400, detail="X-On-Behalf-Of must be a valid UUID"
+            )
+        # Recheck the owner's authority on every request, including old keys
+        # issued before impersonation grants required a superuser.
+        if not owner.is_superuser:
+            raise HTTPException(
+                status_code=403, detail="Only superusers can use impersonation"
             )
         allowed = crud.get_api_key_impersonate_targets(
             session=session, api_key_id=api_key.id
@@ -123,12 +131,14 @@ def _get_current_user_api_key(request: Request, session: Session, token: str) ->
                 status_code=404, detail="Impersonation target user not found"
             )
     else:
-        user = session.get(User, api_key.owned_by_user_id)
-        if user is None:
-            raise HTTPException(status_code=404, detail="API key owner not found")
+        user = owner
 
     if not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
+
+    api_key.last_used_at = datetime.now(timezone.utc)
+    session.add(api_key)
+    session.flush()
 
     session.info["acting_api_key_id"] = api_key.id
     return user

@@ -949,16 +949,16 @@ export class ContactSharesService {
     /**
      * Delete Contact Share
      * @param data The data for the request.
-     * @param data.granteeId
+     * @param data.granteeEmail
      * @returns Message Successful Response
      * @throws ApiError
      */
     public static deleteContactShare(data: ContactSharesDeleteContactShareData): CancelablePromise<ContactSharesDeleteContactShareResponse> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/api/v1/contact-shares/{grantee_id}',
-            path: {
-                grantee_id: data.granteeId
+            url: '/api/v1/contact-shares/',
+            query: {
+                grantee_email: data.granteeEmail
             },
             errors: {
                 422: 'Validation Error'

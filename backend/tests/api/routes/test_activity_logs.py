@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session
 
 from app.core.config import settings
+from app.models import ActivityLog
 from tests.utils.user import authentication_token_from_email, create_random_user
 
 API = settings.API_V1_STR
@@ -324,26 +325,30 @@ def test_grantor_sees_all_contacts_share_create_and_delete_logs(
     create_response = client.post(
         f"{API}/contact-shares/",
         headers=alice_h,
-        json={"grantee_id": str(bob.id)},
+        json={"grantee_email": bob.email},
     )
     assert create_response.status_code == 200
 
-    delete_response = client.delete(f"{API}/contact-shares/{bob.id}", headers=alice_h)
+    delete_response = client.delete(
+        f"{API}/contact-shares/",
+        headers=alice_h,
+        params={"grantee_email": bob.email},
+    )
     assert delete_response.status_code == 200
 
     logs = _get_logs(
         client,
         alice_h,
         entity_type="AllContactsShare",
-        entity_id=bob.id,
     )
     actions = [entry["action"] for entry in logs]
     assert actions.count("create") == 1
     assert actions.count("delete") == 1
     for entry in logs:
         assert entry["changes_json"]["scope"] == "all_contacts"
-        assert entry["changes_json"]["grantee_id"] == str(bob.id)
+        assert "grantee_id" not in entry["changes_json"]
         assert entry["changes_json"]["grantee_email"] == bob.email
+        assert str(bob.id) not in str(entry)
 
 
 def test_other_user_cannot_inspect_grantors_all_contacts_share_logs(
@@ -360,14 +365,70 @@ def test_other_user_cannot_inspect_grantors_all_contacts_share_logs(
     create_response = client.post(
         f"{API}/contact-shares/",
         headers=alice_h,
-        json={"grantee_id": str(bob.id)},
+        json={"grantee_email": bob.email},
     )
     assert create_response.status_code == 200
 
     r = client.get(
         f"{API}/activity-logs/",
         headers=charlie_h,
-        params={"entity_type": "AllContactsShare", "entity_id": str(bob.id)},
+        params={"entity_type": "AllContactsShare"},
     )
     assert r.status_code == 200
     assert r.json()["count"] == 0
+
+
+def test_all_contacts_share_logs_redact_historical_grantee_uuid(
+    client: TestClient, db: Session
+) -> None:
+    alice = create_random_user(db)
+    bob = create_random_user(db)
+    alice_h = authentication_token_from_email(client=client, email=alice.email, db=db)
+    share_response = client.post(
+        f"{API}/contact-shares/",
+        headers=alice_h,
+        json={"grantee_email": bob.email},
+    )
+    assert share_response.status_code == 200
+    db.add(
+        ActivityLog(
+            owner_id=alice.id,
+            actor_id=alice.id,
+            entity_type="AllContactsShare",
+            entity_id=bob.id,
+            action="create",
+            changes_json={
+                "scope": "all_contacts",
+                "grantee_id": str(bob.id),
+                "grantee_email": bob.email,
+            },
+        )
+    )
+    db.commit()
+
+    response = client.get(
+        f"{API}/activity-logs/",
+        headers=alice_h,
+        params={
+            "entity_type": "AllContactsShare",
+            "entity_id": str(alice.id),
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["count"] == 2
+    for entry in response.json()["data"]:
+        assert entry["entity_id"] == str(alice.id)
+        assert "grantee_id" not in entry["changes_json"]
+    assert str(bob.id) not in response.text
+
+    grantee_filtered = client.get(
+        f"{API}/activity-logs/",
+        headers=alice_h,
+        params={
+            "entity_type": "AllContactsShare",
+            "entity_id": str(bob.id),
+        },
+    )
+    assert grantee_filtered.status_code == 200
+    assert grantee_filtered.json()["count"] == 0

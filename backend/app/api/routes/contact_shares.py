@@ -1,7 +1,7 @@
 import uuid
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, ConfigDict, EmailStr
 from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
@@ -18,26 +18,14 @@ router = APIRouter(prefix="/contact-shares", tags=["contact-shares"])
 
 
 class ContactShareIn(BaseModel):
-    grantee_id: uuid.UUID | None = None
-    grantee_email: str | None = None
-
-    @model_validator(mode="after")
-    def validate_grantee_selector(self) -> "ContactShareIn":
-        has_grantee_id = self.grantee_id is not None
-        has_grantee_email = self.grantee_email is not None
-        if has_grantee_id == has_grantee_email:
-            raise ValueError("Provide exactly one of grantee_id or grantee_email")
-        return self
+    model_config = ConfigDict(extra="forbid")
+    grantee_email: EmailStr
 
 
 def _resolve_grantee(session: SessionDep, body: ContactShareIn) -> User | None:
-    if body.grantee_id is not None:
-        return session.get(User, body.grantee_id)
-    if body.grantee_email is not None:
-        return session.exec(
-            select(User).where(User.email == body.grantee_email)
-        ).first()
-    return None
+    return session.exec(
+        select(User).where(User.email == body.grantee_email)
+    ).first()
 
 
 @router.post("/", response_model=AllContactsSharePublic)
@@ -58,7 +46,6 @@ def create_contact_share(
     existing = session.get(AllContactsShare, (current_user.id, grantee.id))
     if existing is not None:
         return AllContactsSharePublic(
-            grantee_id=existing.grantee_id,
             grantee_email=grantee.email,
             created_at=existing.created_at,
         )
@@ -70,11 +57,10 @@ def create_contact_share(
             owner_id=current_user.id,
             actor_id=current_user.id,
             entity_type="AllContactsShare",
-            entity_id=grantee.id,
+            entity_id=current_user.id,
             action="create",
             changes_json={
                 "scope": "all_contacts",
-                "grantee_id": str(grantee.id),
                 "grantee_email": grantee.email,
             },
         )
@@ -83,7 +69,6 @@ def create_contact_share(
     session.refresh(share)
 
     return AllContactsSharePublic(
-        grantee_id=share.grantee_id,
         grantee_email=grantee.email,
         created_at=share.created_at,
     )
@@ -102,7 +87,6 @@ def list_contact_shares(
     ).all()
     data = [
         AllContactsSharePublic(
-            grantee_id=share.grantee_id,
             grantee_email=grantee.email,
             created_at=share.created_at,
         )
@@ -111,32 +95,74 @@ def list_contact_shares(
     return AllContactsSharesPublic(data=data, count=len(data))
 
 
-@router.delete("/{grantee_id}", response_model=Message)
-def delete_contact_share(
+def _delete_share(
     *,
     session: SessionDep,
-    current_user: CurrentUser,
-    grantee_id: uuid.UUID,
+    current_user: User,
+    share: AllContactsShare,
+    grantee: User,
 ) -> Message:
-    share = session.get(AllContactsShare, (current_user.id, grantee_id))
-    if share is None:
-        raise HTTPException(status_code=404, detail="Share not found")
-
-    grantee = session.get(User, grantee_id)
     session.delete(share)
     session.add(
         ActivityLog(
             owner_id=current_user.id,
             actor_id=current_user.id,
             entity_type="AllContactsShare",
-            entity_id=grantee_id,
+            entity_id=current_user.id,
             action="delete",
             changes_json={
                 "scope": "all_contacts",
-                "grantee_id": str(grantee_id),
-                "grantee_email": grantee.email if grantee is not None else "unknown",
+                "grantee_email": grantee.email,
             },
         )
     )
     session.commit()
     return Message(message="Share removed")
+
+
+@router.delete("/", response_model=Message)
+def delete_contact_share(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    grantee_email: EmailStr,
+) -> Message:
+    row = session.exec(
+        select(AllContactsShare, User)
+        .join(User, User.id == AllContactsShare.grantee_id)
+        .where(
+            AllContactsShare.owner_id == current_user.id,
+            User.email == grantee_email,
+        )
+    ).first()
+    if row is None:
+        raise HTTPException(status_code=404, detail="Share not found")
+
+    share, grantee = row
+    return _delete_share(
+        session=session,
+        current_user=current_user,
+        share=share,
+        grantee=grantee,
+    )
+
+
+@router.delete("/{grantee_id}", response_model=Message, include_in_schema=False)
+def delete_contact_share_by_grantee_id(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    grantee_id: uuid.UUID,
+) -> Message:
+    """Compatibility path for clients holding IDs from before the disclosure fix."""
+    share = session.get(AllContactsShare, (current_user.id, grantee_id))
+    grantee = session.get(User, grantee_id)
+    if share is None or grantee is None:
+        raise HTTPException(status_code=404, detail="Share not found")
+
+    return _delete_share(
+        session=session,
+        current_user=current_user,
+        share=share,
+        grantee=grantee,
+    )

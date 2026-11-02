@@ -21,26 +21,6 @@ def _create_inactive_user(db: Session):
     )
 
 
-def test_create_contact_share_by_grantee_id(client: TestClient, db: Session) -> None:
-    alice = create_random_user(db)
-    bob = create_random_user(db)
-    alice_h = authentication_token_from_email(client=client, email=alice.email, db=db)
-
-    r = client.post(
-        f"{API}/contact-shares/",
-        headers=alice_h,
-        json={"grantee_id": str(bob.id)},
-    )
-
-    assert r.status_code == 200
-    body = r.json()
-    assert body["grantee_id"] == str(bob.id)
-    assert body["grantee_email"] == bob.email
-
-    share = db.get(AllContactsShare, (alice.id, bob.id))
-    assert share is not None
-
-
 def test_create_contact_share_by_grantee_email(client: TestClient, db: Session) -> None:
     alice = create_random_user(db)
     bob = create_random_user(db)
@@ -53,8 +33,12 @@ def test_create_contact_share_by_grantee_email(client: TestClient, db: Session) 
     )
 
     assert r.status_code == 200
-    assert r.json()["grantee_id"] == str(bob.id)
+    assert set(r.json()) == {"grantee_email", "created_at"}
     assert r.json()["grantee_email"] == bob.email
+    assert str(bob.id) not in r.text
+
+    share = db.get(AllContactsShare, (alice.id, bob.id))
+    assert share is not None
 
 
 def test_create_contact_share_rejects_missing_grantee_selector(
@@ -70,10 +54,10 @@ def test_create_contact_share_rejects_missing_grantee_selector(
     )
 
     assert r.status_code == 422
-    assert "exactly one of grantee_id or grantee_email" in str(r.json()["detail"])
+    assert "grantee_email" in str(r.json()["detail"])
 
 
-def test_create_contact_share_rejects_both_grantee_id_and_email(
+def test_create_contact_share_rejects_internal_grantee_id(
     client: TestClient, db: Session
 ) -> None:
     alice = create_random_user(db)
@@ -87,7 +71,7 @@ def test_create_contact_share_rejects_both_grantee_id_and_email(
     )
 
     assert r.status_code == 422
-    assert "exactly one of grantee_id or grantee_email" in str(r.json()["detail"])
+    assert "grantee_id" in str(r.json()["detail"])
 
 
 def test_create_contact_share_rejects_conflicting_grantee_id_and_email(
@@ -105,7 +89,7 @@ def test_create_contact_share_rejects_conflicting_grantee_id_and_email(
     )
 
     assert r.status_code == 422
-    assert "exactly one of grantee_id or grantee_email" in str(r.json()["detail"])
+    assert "grantee_id" in str(r.json()["detail"])
 
 
 def test_create_contact_share_rejects_unknown_grantee(
@@ -134,7 +118,7 @@ def test_create_contact_share_rejects_inactive_grantee(
     r = client.post(
         f"{API}/contact-shares/",
         headers=alice_h,
-        json={"grantee_id": str(inactive.id)},
+        json={"grantee_email": inactive.email},
     )
 
     assert r.status_code == 404
@@ -150,7 +134,7 @@ def test_create_contact_share_rejects_self_share(
     r = client.post(
         f"{API}/contact-shares/",
         headers=alice_h,
-        json={"grantee_id": str(alice.id)},
+        json={"grantee_email": alice.email},
     )
 
     assert r.status_code == 400
@@ -165,7 +149,7 @@ def test_create_contact_share_is_idempotent(client: TestClient, db: Session) -> 
     first = client.post(
         f"{API}/contact-shares/",
         headers=alice_h,
-        json={"grantee_id": str(bob.id)},
+        json={"grantee_email": bob.email},
     )
     second = client.post(
         f"{API}/contact-shares/",
@@ -196,7 +180,7 @@ def test_list_contact_shares_isolated_to_grantor(
         client.post(
             f"{API}/contact-shares/",
             headers=alice_h,
-            json={"grantee_id": str(bob.id)},
+            json={"grantee_email": bob.email},
         ).status_code
         == 200
     )
@@ -204,7 +188,7 @@ def test_list_contact_shares_isolated_to_grantor(
         client.post(
             f"{API}/contact-shares/",
             headers=bob_h,
-            json={"grantee_id": str(charlie.id)},
+            json={"grantee_email": charlie.email},
         ).status_code
         == 200
     )
@@ -216,8 +200,16 @@ def test_list_contact_shares_isolated_to_grantor(
     assert bob_list.status_code == 200
     assert alice_list.json()["count"] == 1
     assert bob_list.json()["count"] == 1
-    assert alice_list.json()["data"][0]["grantee_id"] == str(bob.id)
-    assert bob_list.json()["data"][0]["grantee_id"] == str(charlie.id)
+    assert alice_list.json()["data"][0] == {
+        "grantee_email": bob.email,
+        "created_at": alice_list.json()["data"][0]["created_at"],
+    }
+    assert bob_list.json()["data"][0] == {
+        "grantee_email": charlie.email,
+        "created_at": bob_list.json()["data"][0]["created_at"],
+    }
+    assert str(bob.id) not in alice_list.text
+    assert str(charlie.id) not in bob_list.text
 
 
 def test_delete_contact_share_restricted_to_grantor(
@@ -233,18 +225,46 @@ def test_delete_contact_share_restricted_to_grantor(
         client.post(
             f"{API}/contact-shares/",
             headers=alice_h,
-            json={"grantee_id": str(charlie.id)},
+            json={"grantee_email": charlie.email},
         ).status_code
         == 200
     )
 
-    forbidden = client.delete(f"{API}/contact-shares/{charlie.id}", headers=bob_h)
-    allowed = client.delete(f"{API}/contact-shares/{charlie.id}", headers=alice_h)
+    forbidden = client.delete(
+        f"{API}/contact-shares/",
+        params={"grantee_email": charlie.email},
+        headers=bob_h,
+    )
+    allowed = client.delete(
+        f"{API}/contact-shares/",
+        params={"grantee_email": charlie.email},
+        headers=alice_h,
+    )
 
     assert forbidden.status_code == 404
     assert allowed.status_code == 200
     assert allowed.json() == {"message": "Share removed"}
     assert db.get(AllContactsShare, (alice.id, charlie.id)) is None
+
+
+def test_legacy_delete_contact_share_by_grantee_id(
+    client: TestClient, db: Session
+) -> None:
+    alice = create_random_user(db)
+    bob = create_random_user(db)
+    alice_h = authentication_token_from_email(client=client, email=alice.email, db=db)
+    create_response = client.post(
+        f"{API}/contact-shares/",
+        headers=alice_h,
+        json={"grantee_email": bob.email},
+    )
+    assert create_response.status_code == 200
+
+    response = client.delete(f"{API}/contact-shares/{bob.id}", headers=alice_h)
+
+    assert response.status_code == 200
+    assert response.json() == {"message": "Share removed"}
+    assert db.get(AllContactsShare, (alice.id, bob.id)) is None
 
 
 def test_grantee_cannot_revoke_grantors_contact_share(
@@ -258,11 +278,15 @@ def test_grantee_cannot_revoke_grantors_contact_share(
     create_response = client.post(
         f"{API}/contact-shares/",
         headers=alice_h,
-        json={"grantee_id": str(bob.id)},
+        json={"grantee_email": bob.email},
     )
     assert create_response.status_code == 200
 
-    revoke_response = client.delete(f"{API}/contact-shares/{bob.id}", headers=bob_h)
+    revoke_response = client.delete(
+        f"{API}/contact-shares/",
+        params={"grantee_email": bob.email},
+        headers=bob_h,
+    )
 
     assert revoke_response.status_code == 404
     assert db.get(AllContactsShare, (alice.id, bob.id)) is not None

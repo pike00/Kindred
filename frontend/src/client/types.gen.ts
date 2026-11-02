@@ -130,7 +130,6 @@ export type AddressUpdate = {
 };
 
 export type AllContactsSharePublic = {
-    grantee_id: string;
     grantee_email: string;
     created_at: string;
 };
@@ -584,8 +583,7 @@ export type ContactsGeoResponse = {
 };
 
 export type ContactShareIn = {
-    grantee_id?: (string | null);
-    grantee_email?: (string | null);
+    grantee_email: string;
 };
 
 /**
@@ -2497,7 +2495,7 @@ export type ContactSharesCreateContactShareData = {
 export type ContactSharesCreateContactShareResponse = (AllContactsSharePublic);
 
 export type ContactSharesDeleteContactShareData = {
-    granteeId: string;
+    granteeEmail: string;
 };
 
 export type ContactSharesDeleteContactShareResponse = (Message);

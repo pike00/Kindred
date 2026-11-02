@@ -14,6 +14,7 @@ from kindred._generated.api.contacts import (
     contacts_get_contact,
     contacts_list_contacts,
 )
+from kindred._generated.api.contact_shares import contact_shares_delete_contact_share
 from kindred._generated.api.utils import utils_health_check, utils_status
 from kindred._generated.errors import UnexpectedStatus
 
@@ -160,6 +161,27 @@ def test_contacts_get_404_raises_unexpected(httpx_mock: HTTPXMock, client):
     with pytest.raises(UnexpectedStatus) as exc_info:
         contacts_get_contact.sync(client=client.raw, contact_id=CONTACT_ID)
     assert exc_info.value.status_code == 404
+
+
+def test_contact_share_delete_uses_email_query(httpx_mock: HTTPXMock, client):
+    httpx_mock.add_response(
+        method="DELETE",
+        url=re.compile(
+            rf"{re.escape(BASE)}/api/v1/contact-shares/\?grantee_email=bob(%40|@)example.com"
+        ),
+        json={"message": "Share removed"},
+    )
+
+    result = contact_shares_delete_contact_share.sync(
+        client=client.raw,
+        grantee_email="bob@example.com",
+    )
+
+    assert result is not None
+    assert result.message == "Share removed"
+    request = httpx_mock.get_request()
+    assert request is not None
+    assert request.url.params["grantee_email"] == "bob@example.com"
 
 
 # ── UNSET sentinel re-export still works ────────────────────────────────────

@@ -1,6 +1,5 @@
 from http import HTTPStatus
 from typing import Any, cast
-from urllib.parse import quote
 
 import httpx
 
@@ -10,19 +9,21 @@ from ... import errors
 
 from ...models.http_validation_error import HTTPValidationError
 from ...models.message import Message
-from typing import cast
-from uuid import UUID
-
-
 def _get_kwargs(
-    grantee_id: UUID,
+    *,
+    grantee_email: str,
 ) -> dict[str, Any]:
+
+    params: dict[str, Any] = {}
+
+    params["grantee_email"] = grantee_email
+
+    params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
 
     _kwargs: dict[str, Any] = {
         "method": "delete",
-        "url": "/api/v1/contact-shares/{grantee_id}".format(
-            grantee_id=quote(str(grantee_id), safe=""),
-        ),
+        "url": "/api/v1/contact-shares/",
+        "params": params,
     }
 
     return _kwargs
@@ -59,14 +60,14 @@ def _build_response(
 
 
 def sync_detailed(
-    grantee_id: UUID,
     *,
     client: AuthenticatedClient,
+    grantee_email: str,
 ) -> Response[HTTPValidationError | Message]:
     """Delete Contact Share
 
     Args:
-        grantee_id (UUID):
+        grantee_email (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -77,7 +78,7 @@ def sync_detailed(
     """
 
     kwargs = _get_kwargs(
-        grantee_id=grantee_id,
+        grantee_email=grantee_email,
     )
 
     response = client.get_httpx_client().request(
@@ -88,14 +89,14 @@ def sync_detailed(
 
 
 def sync(
-    grantee_id: UUID,
     *,
     client: AuthenticatedClient,
+    grantee_email: str,
 ) -> HTTPValidationError | Message | None:
     """Delete Contact Share
 
     Args:
-        grantee_id (UUID):
+        grantee_email (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -106,20 +107,20 @@ def sync(
     """
 
     return sync_detailed(
-        grantee_id=grantee_id,
         client=client,
+        grantee_email=grantee_email,
     ).parsed
 
 
 async def asyncio_detailed(
-    grantee_id: UUID,
     *,
     client: AuthenticatedClient,
+    grantee_email: str,
 ) -> Response[HTTPValidationError | Message]:
     """Delete Contact Share
 
     Args:
-        grantee_id (UUID):
+        grantee_email (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -130,7 +131,7 @@ async def asyncio_detailed(
     """
 
     kwargs = _get_kwargs(
-        grantee_id=grantee_id,
+        grantee_email=grantee_email,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -139,14 +140,14 @@ async def asyncio_detailed(
 
 
 async def asyncio(
-    grantee_id: UUID,
     *,
     client: AuthenticatedClient,
+    grantee_email: str,
 ) -> HTTPValidationError | Message | None:
     """Delete Contact Share
 
     Args:
-        grantee_id (UUID):
+        grantee_email (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -158,7 +159,7 @@ async def asyncio(
 
     return (
         await asyncio_detailed(
-            grantee_id=grantee_id,
             client=client,
+            grantee_email=grantee_email,
         )
     ).parsed

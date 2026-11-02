@@ -126,7 +126,7 @@ test.describe("Contact sharing", () => {
 				.click();
 
 			const activeShareRow = page.getByTestId(
-				`contact-share-row-${recipientUser.id}`,
+				`contact-share-row-${recipientUser.email}`,
 			);
 			await expect(activeShareRow).toBeVisible({ timeout: 10_000 });
 			await expect(
@@ -229,7 +229,7 @@ test.describe("Contact sharing", () => {
 			await expect(refreshedSharingTab).toBeVisible();
 			await refreshedSharingTab.click({ force: true });
 			const shareRow = page.getByTestId(
-				`contact-share-row-${recipientUser.id}`,
+				`contact-share-row-${recipientUser.email}`,
 			);
 			await expect(shareRow).toBeVisible();
 			await shareRow.getByRole("button", { name: /revoke access/i }).click();
@@ -251,10 +251,10 @@ test.describe("Contact sharing", () => {
 						);
 						if (!sharesResponse.ok()) return true;
 						const shares = (await sharesResponse.json()) as {
-							data?: Array<{ recipient_id: string }>;
+							data?: Array<{ grantee_email: string }>;
 						};
 						return (shares.data ?? []).some(
-							(share) => share.recipient_id === recipientUser.id,
+							(share) => share.grantee_email === recipientUser.email,
 						);
 					},
 					{ timeout: 10_000 },
@@ -263,7 +263,7 @@ test.describe("Contact sharing", () => {
 			await page.reload();
 			await page.getByRole("tab", { name: /^sharing$/i }).click();
 			await expect(
-				page.getByTestId(`contact-share-row-${recipientUser.id}`),
+				page.getByTestId(`contact-share-row-${recipientUser.email}`),
 			).toHaveCount(0, { timeout: 10_000 });
 
 			const ownerContactRes = await request.get(

@@ -663,11 +663,6 @@ export const AddressesPublicSchema = {
 
 export const AllContactsSharePublicSchema = {
     properties: {
-        grantee_id: {
-            type: 'string',
-            format: 'uuid',
-            title: 'Grantee Id'
-        },
         grantee_email: {
             type: 'string',
             title: 'Grantee Email'
@@ -679,7 +674,7 @@ export const AllContactsSharePublicSchema = {
         }
     },
     type: 'object',
-    required: ['grantee_id', 'grantee_email', 'created_at'],
+    required: ['grantee_email', 'created_at'],
     title: 'AllContactsSharePublic'
 } as const;
 
@@ -2297,31 +2292,13 @@ export const ContactPublicSchema = {
 
 export const ContactShareInSchema = {
     properties: {
-        grantee_id: {
-            anyOf: [
-                {
-                    type: 'string',
-                    format: 'uuid'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Grantee Id'
-        },
         grantee_email: {
-            anyOf: [
-                {
-                    type: 'string'
-                },
-                {
-                    type: 'null'
-                }
-            ],
+            type: 'string',
             title: 'Grantee Email'
         }
     },
     type: 'object',
+    required: ['grantee_email'],
     title: 'ContactShareIn'
 } as const;
 

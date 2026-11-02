@@ -3,6 +3,7 @@
 Keys are owned by the calling user. They authenticate as that user by
 default; with ``X-On-Behalf-Of: <user_id>`` they act as a different user
 listed in the key's impersonation whitelist.
+Only active superusers may grant or use impersonation permissions.
 
 The plaintext key is returned **only** in the create response. After
 that, only the prefix is visible — losing the plaintext means rotating
@@ -52,6 +53,11 @@ def create_my_api_key(
     key_in: APIKeyCreate,
 ) -> APIKeyCreated:
     """Create a new API key. Returns the plaintext token once — store it now."""
+    if key_in.can_impersonate and not current_user.is_superuser:
+        raise HTTPException(
+            status_code=403, detail="Only superusers can grant impersonation"
+        )
+
     # Validate every requested impersonation target exists and is active.
     for target_id in key_in.can_impersonate:
         if target_id == current_user.id:
