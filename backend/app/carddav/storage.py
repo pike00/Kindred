@@ -41,6 +41,7 @@ def _find_contact_by_href(
     *,
     user: User,
     href: str,
+    include_deleted: bool = False,
 ) -> Contact | None:
     conditions = [
         Contact.vcard_href == href,
@@ -50,12 +51,13 @@ def _find_contact_by_href(
         conditions.append(Contact.id == uuid_mod.UUID(href.removesuffix(".vcf")))
     except ValueError:
         pass
-    return session.exec(
-        select(Contact).where(
-            Contact.owner_id == user.id,
-            or_(*conditions),
-        )
-    ).first()
+    statement = select(Contact).where(
+        Contact.owner_id == user.id,
+        or_(*conditions),
+    )
+    if not include_deleted:
+        statement = statement.where(Contact.deleted_at.is_(None))
+    return session.exec(statement).first()
 
 
 def _sync_contact_children(
@@ -147,6 +149,7 @@ class Collection(BaseCollection):
             contacts = session.exec(
                 select(Contact).where(
                     Contact.owner_id == user.id,
+                    Contact.deleted_at.is_(None),
                     Contact.vcard_raw.is_not(None),
                 )
             ).all()
@@ -179,13 +182,12 @@ class Collection(BaseCollection):
 
             # A client may change or omit the vCard UID while reusing the same
             # resource href. Treat the href as the stable identity in that case.
-            existing = session.exec(
-                select(Contact).where(
-                    Contact.owner_id == user.id,
-                    Contact.vcard_href == href,
-                    Contact.deleted_at.is_(None),
-                )
-            ).first()
+            existing = _find_contact_by_href(
+                session,
+                user=user,
+                href=href,
+                include_deleted=True,
+            )
 
             # Then check the vCard UID so the same logical contact can move to a
             # different href without creating a duplicate.
@@ -195,7 +197,6 @@ class Collection(BaseCollection):
                         Contact.owner_id == user.id,
                         Contact.source == ContactSource.CARDDAV,
                         Contact.source_external_id == source_external_id,
-                        Contact.deleted_at.is_(None),
                     )
                 ).first()
 
@@ -216,6 +217,8 @@ class Collection(BaseCollection):
             old_item = None
 
             if existing:
+                # A CardDAV PUT restores a contact deleted in the CRM UI.
+                existing.deleted_at = None
                 # Update existing contact
                 if existing.vcard_raw:
                     old_item = radicale_item.Item(

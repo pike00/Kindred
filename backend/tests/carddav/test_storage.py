@@ -60,9 +60,7 @@ END:VCARD"""
         select(ContactField).where(ContactField.contact_id == stored[0].id)
     ).all()
     assert any(field.value == "carddav@example.com" for field in fields)
-    addresses = db.exec(
-        select(Address).where(Address.contact_id == stored[0].id)
-    ).all()
+    addresses = db.exec(select(Address).where(Address.contact_id == stored[0].id)).all()
     assert len(addresses) == 1
     assert addresses[0].city == "Chicago"
 
@@ -96,3 +94,41 @@ END:VCARD"""
     assert len(stored) == 1
     assert stored[0].first_name == "CardDAV Updated"
     assert stored[0].source_external_id == "new-carddav-contact-v2@example.com"
+
+
+def test_carddav_soft_delete_hides_and_restores_existing_contact(
+    db: Session,
+    user: User,
+) -> None:
+    collection = Collection(
+        _SessionStorage(db),
+        path=f"{user.email}/contacts",
+        user=str(user.email),
+    )
+    vcard = """BEGIN:VCARD
+VERSION:3.0
+UID:soft-delete-carddav@example.com
+FN:CardDAV Restore
+N:Restore;CardDAV;;;
+EMAIL;TYPE=HOME:restore@example.com
+END:VCARD"""
+    uploaded = radicale_item.Item(
+        collection_path=collection.path,
+        text=vcard,
+        href="soft-delete-carddav.vcf",
+        etag='"soft-delete-etag"',
+        uid="soft-delete-carddav@example.com",
+    )
+
+    collection.upload("soft-delete-carddav.vcf", uploaded)
+    contact = db.exec(select(Contact).where(Contact.owner_id == user.id)).one()
+    contact.deleted_at = contact.updated_at
+    db.add(contact)
+    db.commit()
+
+    assert list(collection.get_all()) == []
+
+    collection.upload("soft-delete-carddav.vcf", uploaded)
+    restored = db.exec(select(Contact).where(Contact.owner_id == user.id)).one()
+    assert restored.deleted_at is None
+    assert restored.vcard_href == "soft-delete-carddav.vcf"
