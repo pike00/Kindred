@@ -467,4 +467,51 @@ describe("EditContactDialog", () => {
     // exercising the false branch of valueAsNumber.
     expect(freqInput).toBeInTheDocument()
   })
+
+  it("pre-fills and submits birthday without a year", async () => {
+    const { ContactsService } = await import("@/client")
+    const mockUpdateContact = vi.mocked(ContactsService.updateContact)
+    mockUpdateContact.mockResolvedValue(
+      makeContact({
+        id: "c-1",
+        first_name: "John",
+        birthday: "0001-05-14",
+      }),
+    )
+
+    const user = userEvent.setup()
+    const contact = makeContact({
+      id: "c-1",
+      first_name: "John",
+      birthday: "0001-05-14",
+    })
+    renderWithProviders(<EditContactDialog contact={contact} />)
+
+    const editButton = screen.getByRole("button", { name: /edit/i })
+    await user.click(editButton)
+
+    const monthSelect = screen.getByLabelText("Birthday month") as HTMLSelectElement
+    const daySelect = screen.getByLabelText("Birthday day") as HTMLSelectElement
+    const yearInput = screen.getByLabelText("Birthday year") as HTMLInputElement
+
+    expect(monthSelect.value).toBe("5")
+    expect(daySelect.value).toBe("14")
+    expect(yearInput.value).toBe("")
+
+    // Change day to 20
+    await user.selectOptions(daySelect, "20")
+
+    const submitButton = screen.getByRole("button", { name: /update contact/i })
+    await user.click(submitButton)
+
+    await waitFor(() => {
+      expect(mockUpdateContact).toHaveBeenCalledWith({
+        contactId: "c-1",
+        requestBody: expect.objectContaining({
+          birthday: "0001-05-20",
+        }),
+      })
+    })
+  })
 })
+

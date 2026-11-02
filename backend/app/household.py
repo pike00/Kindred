@@ -77,7 +77,7 @@ MAX_DEPTH = 10
 
 def _calculate_age(birthday: date | None) -> int | None:
     """Calculate age from birthday, returning None if birthday is unknown."""
-    if birthday is None:
+    if birthday is None or birthday.year <= 4 or birthday.year < 1900:
         return None
     today = date.today()
     age = today.year - birthday.year

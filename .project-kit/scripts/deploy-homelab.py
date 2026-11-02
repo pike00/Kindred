@@ -73,7 +73,7 @@ def main(
     target_host = "ares"
     if current_host != target_host:
         typer.echo(f"deploying {HOMELAB_APP} tag={target_tag} env={env} on host {target_host} via SSH…")
-        subprocess.run(["ssh", target_host, f"cd {HOMELAB_PATH} && just deploy {target_tag}"], check=True)
+        subprocess.run(["ssh", target_host, f"cd ~/Documents/Homelab/apps/{HOMELAB_APP} && just deploy {target_tag}"], check=True)
     else:
         typer.echo(f"deploying {HOMELAB_APP} tag={target_tag} env={env}…")
         subprocess.run(["just", "deploy", target_tag], cwd=HOMELAB_PATH, check=True)

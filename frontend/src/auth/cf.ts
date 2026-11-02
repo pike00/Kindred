@@ -7,6 +7,8 @@
 // from the Cf-Access-Jwt-Assertion header the edge injects. No frontend
 // JWT handling.
 
+import { leaveSession } from "@/lib/session"
+
 export const cfEnabled = (): boolean => {
   const authMode = import.meta.env.VITE_AUTH_MODE as string | undefined
   const cfLogoutUrl = import.meta.env.VITE_CF_LOGOUT_URL as string | undefined
@@ -17,9 +19,8 @@ export const logout = (): void => {
   const cfLogoutUrl = import.meta.env.VITE_CF_LOGOUT_URL as string | undefined
   if (cfEnabled() && cfLogoutUrl) {
     const returnTo = encodeURIComponent(window.location.origin)
-    window.location.href = `${cfLogoutUrl}?returnTo=${returnTo}`
+    leaveSession(`${cfLogoutUrl}?returnTo=${returnTo}`)
     return
   }
-  localStorage.removeItem("access_token")
-  window.location.href = "/"
+  leaveSession("/")
 }

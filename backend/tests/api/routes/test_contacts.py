@@ -5,8 +5,9 @@ import uuid
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
+from app import crud
 from app.core.config import settings
-from app.models import AllContactsShare
+from app.models import AllContactsShare, Contact, Reminder
 from tests.utils.user import authentication_token_from_email, create_random_user
 
 
@@ -134,6 +135,49 @@ def test_list_contacts(
         assert "tags" in contact
         # Regression: no legacy `groups` field after the 2026-05-06 merge.
         assert "groups" not in contact
+
+
+def test_list_contacts_uses_id_as_stable_name_tiebreaker(
+    client: TestClient,
+    db: Session,
+    superuser_token_headers: dict[str, str],
+) -> None:
+    superuser = crud.get_user_by_email(session=db, email=settings.FIRST_SUPERUSER)
+    assert superuser is not None
+
+    contact_ids = [
+        uuid.UUID("ffffffff-ffff-4fff-8fff-fffffffffff1"),
+        uuid.UUID("00000000-0000-4000-8000-000000000001"),
+    ]
+    for contact_id in contact_ids:
+        db.add(
+            Contact(
+                id=contact_id,
+                owner_id=superuser.id,
+                first_name="StablePaginationTie",
+                last_name="",
+            )
+        )
+    db.commit()
+
+    response = client.get(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=superuser_token_headers,
+        params={"search": "StablePaginationTie", "limit": 1},
+    )
+    assert response.status_code == 200
+    first_page = response.json()
+
+    response = client.get(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=superuser_token_headers,
+        params={"search": "StablePaginationTie", "skip": 1, "limit": 1},
+    )
+    assert response.status_code == 200
+    second_page = response.json()
+
+    returned_ids = [first_page["data"][0]["id"], second_page["data"][0]["id"]]
+    assert returned_ids == sorted(str(contact_id) for contact_id in contact_ids)
 
 
 def test_list_contacts_excludes_archived(
@@ -798,6 +842,18 @@ def test_snoozed_contact_excluded_from_overdue(
     assert r.status_code == 200
     contact_id = r.json()["id"]
 
+    # Create past interaction to set last_contacted_at
+    r_int = client.post(
+        f"{settings.API_V1_STR}/interactions/",
+        headers=superuser_token_headers,
+        json={
+            "channel": "call",
+            "occurred_at": "2020-01-01T00:00:00Z",
+            "attendee_ids": [contact_id],
+        },
+    )
+    assert r_int.status_code == 200
+
     # Verify contact is currently overdue
     r_overdue = client.get(
         f"{settings.API_V1_STR}/contacts/overdue",
@@ -821,3 +877,141 @@ def test_snoozed_contact_excluded_from_overdue(
     overdue_ids2 = [c["id"] for c in r_overdue2.json()["data"]]
     assert contact_id not in overdue_ids2
 
+
+def test_do_not_contact_excluded_from_follow_up_surfaces(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
+    """A paused contact is absent from overdue and losing-touch lists."""
+    r = client.post(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=superuser_token_headers,
+        json={
+            "first_name": "PausedContact",
+            "last_contacted_at": "2020-01-01T00:00:00Z",
+            "contact_frequency_days": 7,
+            "do_not_contact": True,
+        },
+    )
+    assert r.status_code == 200
+    contact_id = r.json()["id"]
+
+    overdue = client.get(
+        f"{settings.API_V1_STR}/contacts/overdue",
+        headers=superuser_token_headers,
+    )
+    losing_touch = client.get(
+        f"{settings.API_V1_STR}/contacts/losing-touch",
+        headers=superuser_token_headers,
+    )
+
+    assert contact_id not in [contact["id"] for contact in overdue.json()["data"]]
+    assert contact_id not in [contact["id"] for contact in losing_touch.json()["data"]]
+
+
+def test_marking_contact_do_not_contact_clears_linked_reminders(
+    client: TestClient,
+    db: Session,
+    superuser_token_headers: dict[str, str],
+) -> None:
+    """Enabling reminder suppression soft-deletes only linked reminders."""
+    contact_response = client.post(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=superuser_token_headers,
+        json={"first_name": "ReminderContact"},
+    )
+    assert contact_response.status_code == 200
+    contact_id = contact_response.json()["id"]
+
+    linked_response = client.post(
+        f"{settings.API_V1_STR}/reminders/",
+        headers=superuser_token_headers,
+        json={
+            "title": "Linked follow-up",
+            "remind_at": "2020-01-01T00:00:00Z",
+            "contact_id": contact_id,
+        },
+    )
+    standalone_response = client.post(
+        f"{settings.API_V1_STR}/reminders/",
+        headers=superuser_token_headers,
+        json={
+            "title": "Standalone follow-up",
+            "remind_at": "2020-01-01T00:00:00Z",
+        },
+    )
+    assert linked_response.status_code == 200
+    assert standalone_response.status_code == 200
+
+    snooze_response = client.post(
+        f"{settings.API_V1_STR}/contacts/{contact_id}/snooze",
+        headers=superuser_token_headers,
+        json={"duration": "indefinitely"},
+    )
+    assert snooze_response.status_code == 200
+    assert snooze_response.json()["snoozed_until"] is not None
+
+    update_response = client.patch(
+        f"{settings.API_V1_STR}/contacts/{contact_id}",
+        headers=superuser_token_headers,
+        json={"do_not_contact": True},
+    )
+    assert update_response.status_code == 200
+    assert update_response.json()["snoozed_until"] is None
+
+    linked = db.get(Reminder, uuid.UUID(linked_response.json()["id"]))
+    standalone = db.get(Reminder, uuid.UUID(standalone_response.json()["id"]))
+    assert linked is not None
+    assert linked.deleted_at is not None
+    assert linked.is_active is False
+    assert standalone is not None
+    assert standalone.deleted_at is None
+
+
+def test_create_and_update_contact_with_optional_birthday_year(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
+    # 1. Create with full year
+    r = client.post(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=superuser_token_headers,
+        json={"first_name": "FullYear", "birthday": "1990-05-14"},
+    )
+    assert r.status_code == 200
+    cid1 = r.json()["id"]
+    assert r.json()["birthday"] == "1990-05-14"
+
+    # 2. Create with sentinel year 0001
+    r = client.post(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=superuser_token_headers,
+        json={"first_name": "SentinelYear", "birthday": "0001-08-20"},
+    )
+    assert r.status_code == 200
+    assert r.json()["birthday"] == "0001-08-20"
+
+    # 3. Create with partial ISO format --08-20
+    r = client.post(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=superuser_token_headers,
+        json={"first_name": "PartialISO", "birthday": "--08-20"},
+    )
+    assert r.status_code == 200
+    assert r.json()["birthday"] == "0001-08-20"
+
+    # 4. Update contact from full year to year-less
+    r_patch = client.patch(
+        f"{settings.API_V1_STR}/contacts/{cid1}",
+        headers=superuser_token_headers,
+        json={"birthday": "0001-05-14"},
+    )
+    assert r_patch.status_code == 200
+    assert r_patch.json()["birthday"] == "0001-05-14"
+
+    # 5. Update contact to clear birthday
+    r_clear = client.patch(
+        f"{settings.API_V1_STR}/contacts/{cid1}",
+        headers=superuser_token_headers,
+        json={"birthday": None},
+    )
+    assert r_clear.status_code == 200
+    assert r_clear.json()["birthday"] is None

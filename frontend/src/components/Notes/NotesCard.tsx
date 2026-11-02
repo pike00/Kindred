@@ -1,5 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { useCallback, useEffect, useState } from "react"
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react"
 import type { NotePublic } from "@/client"
 import { NotesService } from "@/client"
 import { EmptyState } from "@/components/Common/EmptyState"
@@ -28,6 +34,14 @@ import {
   markDraftSynced,
   type OfflineDraft,
 } from "@/lib/offline-db"
+import {
+  assertSession,
+  captureSession,
+  currentAccountId,
+  getVerifiedAccountId,
+  onIdentityChange,
+  SessionChangedError,
+} from "@/lib/session"
 import { formatDateWithRelative } from "@/lib/utils"
 
 function formatDate(iso: string) {
@@ -35,11 +49,15 @@ function formatDate(iso: string) {
 }
 
 export function QuickCapture({ contactId }: { contactId: string }) {
+  const ownerId = useSyncExternalStore(onIdentityChange, getVerifiedAccountId)
   const [body, setBody] = useState("")
   const [isOffline, setIsOffline] = useState(!navigator.onLine)
   const [pendingDrafts, setPendingDrafts] = useState<OfflineDraft[]>([])
   const queryClient = useQueryClient()
   const { showErrorToast, showSuccessToast } = useCustomToast()
+  const errorToast = useRef(showErrorToast)
+  errorToast.current = showErrorToast
+  const syncing = useRef(false)
 
   // Monitor online/offline status
   useEffect(() => {
@@ -55,18 +73,48 @@ export function QuickCapture({ contactId }: { contactId: string }) {
 
   // Load pending drafts
   useEffect(() => {
-    getPendingDrafts().then(setPendingDrafts).catch(console.error)
-  }, [])
+    if (!ownerId) return
+    let mounted = true
+    getPendingDrafts()
+      .then((drafts) => {
+        if (mounted)
+          setPendingDrafts(
+            drafts.filter((draft) => draft.contactId === contactId),
+          )
+        if (localStorage.getItem("kindred-legacy-drafts-quarantined")) {
+          localStorage.removeItem("kindred-legacy-drafts-quarantined")
+          errorToast.current(
+            "Older offline drafts were set aside because their account could not be verified. They will not sync automatically.",
+          )
+        }
+      })
+      .catch((error: unknown) => {
+        if (mounted && !(error instanceof SessionChangedError)) {
+          errorToast.current(
+            error instanceof Error
+              ? error.message
+              : "Offline drafts are unavailable.",
+          )
+        }
+      })
+    return () => {
+      mounted = false
+    }
+  }, [contactId, ownerId])
 
   const syncMutation = useMutation({
     mutationFn: async (draft: OfflineDraft) => {
+      if (draft.ownerId !== currentAccountId())
+        throw new Error("Draft belongs to another account")
+      const session = captureSession()
       await NotesService.createNoteRoute({
         requestBody: {
-          contact_id: contactId,
+          contact_id: draft.contactId,
           body: draft.body,
           client_id: draft.id,
         },
       })
+      assertSession(session)
       return { draft }
     },
     onSuccess: async ({ draft }) => {
@@ -75,7 +123,10 @@ export function QuickCapture({ contactId }: { contactId: string }) {
       queryClient.invalidateQueries({ queryKey: ["notes", contactId] })
     },
     onError: (err, variables) => {
-      if (variables) {
+      if (
+        !(err instanceof SessionChangedError) &&
+        variables?.ownerId === getVerifiedAccountId()
+      ) {
         markDraftError(
           (variables as OfflineDraft).id,
           err instanceof Error ? err.message : "Sync failed",
@@ -84,12 +135,21 @@ export function QuickCapture({ contactId }: { contactId: string }) {
     },
   })
 
+  const syncDraft = syncMutation.mutateAsync
   const syncAllPending = useCallback(async () => {
-    const drafts = await getPendingDrafts()
-    for (const draft of drafts) {
-      syncMutation.mutate(draft)
+    if (syncing.current) return
+    syncing.current = true
+    try {
+      const session = captureSession()
+      const drafts = await getPendingDrafts()
+      for (const draft of drafts) {
+        assertSession(session)
+        if (draft.contactId === contactId) await syncDraft(draft)
+      }
+    } finally {
+      syncing.current = false
     }
-  }, [syncMutation])
+  }, [syncDraft, contactId])
 
   const mutation = useMutation({
     mutationFn: async (text: string) => {
@@ -100,13 +160,12 @@ export function QuickCapture({ contactId }: { contactId: string }) {
         })
       }
       // Offline: save to IndexedDB
-      const draft: OfflineDraft = {
+      const draft = await addDraft({
         id: generateUUID(),
         contactId,
         body: text,
         createdAt: new Date().toISOString(),
-      }
-      await addDraft(draft)
+      })
       setPendingDrafts((prev) => [...prev, draft])
       return null
     },
@@ -129,11 +188,12 @@ export function QuickCapture({ contactId }: { contactId: string }) {
   // Auto-sync when coming back online
   useEffect(() => {
     if (!isOffline && pendingDrafts.length > 0) {
-      syncAllPending()
+      void syncAllPending().catch(() => {})
     }
   }, [isOffline, syncAllPending, pendingDrafts.length])
   const trimmed = body.trim()
-  const canSave = trimmed.length > 0 && !mutation.isPending
+  const canSave =
+    trimmed.length > 0 && !mutation.isPending && (!isOffline || !!ownerId)
 
   return (
     <div className="space-y-2">

@@ -140,13 +140,9 @@ export default defineConfig({
       ? [
           VitePWA({
             registerType: "autoUpdate",
-            includeAssets: [
-              "/assets/icons/android-chrome-192x192.png",
-              "/assets/icons/android-chrome-512x512.png",
-              "/assets/icons/apple-touch-icon.png",
-              "/assets/icons/maskable-192.png",
-              "/assets/icons/maskable-512.png",
-            ],
+            // globPatterns already includes icons; adding absolute icon paths
+            // again creates conflicting precache keys and prevents activation.
+            includeManifestIcons: false,
             manifest: {
               name: "Kindred",
               short_name: "Kindred",
@@ -183,22 +179,17 @@ export default defineConfig({
                 },
               ],
             },
+            devOptions: {
+              enabled: false,
+            },
             workbox: {
               globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+              importScripts: ["/sw-session-cleanup.js"],
+              navigateFallbackDenylist: [/^\/api\//],
               runtimeCaching: [
                 {
                   urlPattern: ({ url }) => url.pathname.startsWith("/api/"),
-                  handler: "NetworkFirst",
-                  options: {
-                    cacheName: "api-cache",
-                    expiration: {
-                      maxEntries: 100,
-                      maxAgeSeconds: 60 * 60 * 24, // 24 hours
-                    },
-                    cacheableResponse: {
-                      statuses: [0, 200],
-                    },
-                  },
+                  handler: "NetworkOnly",
                 },
               ],
             },

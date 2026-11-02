@@ -1,164 +1,163 @@
-/**
- * IndexedDB utility for offline draft queue
- * Stores notes drafted offline with sync status
- */
+import { assertSession, captureSession, currentAccountId } from "./session"
 
 export interface OfflineDraft {
-  id: string // client-generated UUID
+  id: string
+  ownerId: string
   contactId: string
   body: string
-  createdAt: string // ISO timestamp
-  syncedAt?: string // ISO timestamp when synced
-  error?: string // error message if sync failed
+  createdAt: string
+  syncedAt?: string
+  error?: string
 }
 
 const DB_NAME = "kindred-offline"
-const DB_VERSION = 1
 const STORE_NAME = "draft-queue"
-
 let dbPromise: Promise<IDBDatabase> | null = null
 
 function openDB(): Promise<IDBDatabase> {
   if (dbPromise) return dbPromise
-
   dbPromise = new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION)
-
-    request.onupgradeneeded = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        const store = db.createObjectStore(STORE_NAME, { keyPath: "id" })
-        store.createIndex("contactId", "contactId", { unique: false })
-        store.createIndex("syncedAt", "syncedAt", { unique: false })
+    let blocked = false
+    const request = indexedDB.open(DB_NAME, 2)
+    request.onupgradeneeded = () => {
+      if (blocked) {
+        request.transaction?.abort()
+        return
       }
+      const db = request.result
+      // Version 1 never stored an owner. It cannot be safely attributed to any
+      // subsequent login. Quarantine it without exposing it through account APIs.
+      if (db.objectStoreNames.contains(STORE_NAME)) {
+        request.transaction!.objectStore(STORE_NAME).name =
+          "unowned-draft-quarantine"
+        localStorage.setItem("kindred-legacy-drafts-quarantined", "true")
+      }
+      const store = db.createObjectStore(STORE_NAME, {
+        keyPath: ["ownerId", "id"],
+      })
+      store.createIndex("ownerId", "ownerId")
     }
-
-    request.onsuccess = () => resolve(request.result)
-    request.onerror = () => reject(request.error)
+    request.onblocked = () => {
+      blocked = true
+      dbPromise = null
+      reject(
+        new Error(
+          "Close other Kindred tabs and reload to update offline drafts safely.",
+        ),
+      )
+    }
+    request.onsuccess = () => {
+      request.result.onversionchange = () => {
+        request.result.close()
+        dbPromise = null
+      }
+      resolve(request.result)
+    }
+    request.onerror = () => {
+      dbPromise = null
+      reject(request.error)
+    }
   })
-
   return dbPromise
 }
 
-export async function addDraft(
-  draft: Omit<OfflineDraft, "createdAt"> & { createdAt?: string },
-): Promise<OfflineDraft> {
+async function withStore<T>(
+  mode: IDBTransactionMode,
+  operation: (
+    store: IDBObjectStore,
+    ownerId: string,
+    done: (value: T) => void,
+  ) => void,
+): Promise<T> {
+  const session = captureSession()
+  const ownerId = currentAccountId()
   const db = await openDB()
-  const fullDraft: OfflineDraft = {
-    ...draft,
-    createdAt: draft.createdAt || new Date().toISOString(),
-  }
-
+  assertSession(session)
   return new Promise((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, "readwrite")
-    const store = transaction.objectStore(STORE_NAME)
-    const request = store.put(fullDraft)
+    const transaction = db.transaction(STORE_NAME, mode)
+    let result: T
+    transaction.oncomplete = () => {
+      try {
+        assertSession(session)
+        resolve(result)
+      } catch (error) {
+        reject(error)
+      }
+    }
+    transaction.onerror = () => reject(transaction.error)
+    transaction.onabort = () => reject(transaction.error)
+    operation(transaction.objectStore(STORE_NAME), ownerId, (value) => {
+      result = value
+    })
+  })
+}
 
-    request.onsuccess = () => resolve(fullDraft)
-    request.onerror = () => reject(request.error)
+export function addDraft(
+  draft: Omit<OfflineDraft, "ownerId" | "createdAt"> & { createdAt?: string },
+): Promise<OfflineDraft> {
+  return withStore("readwrite", (store, ownerId, done) => {
+    const fullDraft = {
+      ...draft,
+      ownerId,
+      createdAt: draft.createdAt || new Date().toISOString(),
+    }
+    store.put(fullDraft)
+    done(fullDraft)
+  })
+}
+
+export function getAllDrafts(): Promise<OfflineDraft[]> {
+  return withStore("readonly", (store, ownerId, done) => {
+    const request = store.index("ownerId").getAll(ownerId)
+    request.onsuccess = () => done(request.result as OfflineDraft[])
   })
 }
 
 export async function getPendingDrafts(): Promise<OfflineDraft[]> {
-  const db = await openDB()
-
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, "readonly")
-    const store = transaction.objectStore(STORE_NAME)
-    const index = store.index("syncedAt")
-    const request = index.getAll(null)
-
-    request.onsuccess = () => {
-      const allDrafts = request.result as OfflineDraft[]
-      // Return drafts that haven't been synced (syncedAt is undefined)
-      const pending = allDrafts.filter((d) => !d.syncedAt)
-      resolve(pending)
-    }
-    request.onerror = () => reject(request.error)
-  })
+  // Missing syncedAt values have no index entry; enumerate the owner's records.
+  return (await getAllDrafts()).filter((draft) => !draft.syncedAt)
 }
 
-export async function markDraftSynced(
+function updateDraft(
   id: string,
-  syncedAt: string = new Date().toISOString(),
+  update: (draft: OfflineDraft) => void,
 ): Promise<void> {
-  const db = await openDB()
-
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, "readwrite")
-    const store = transaction.objectStore(STORE_NAME)
-    const getRequest = store.get(id)
-
-    getRequest.onsuccess = () => {
-      const draft = getRequest.result as OfflineDraft
+  return withStore("readwrite", (store, ownerId, done) => {
+    const request = store.get([ownerId, id])
+    request.onsuccess = () => {
+      const draft = request.result as OfflineDraft | undefined
       if (draft) {
-        draft.syncedAt = syncedAt
-        draft.error = undefined // Clear any previous errors
-        const putRequest = store.put(draft)
-        putRequest.onsuccess = () => resolve()
-        putRequest.onerror = () => reject(putRequest.error)
-      } else {
-        resolve()
+        update(draft)
+        store.put(draft)
       }
+      done(undefined)
     }
-    getRequest.onerror = () => reject(getRequest.error)
   })
 }
 
-export async function markDraftError(id: string, error: string): Promise<void> {
-  const db = await openDB()
-
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, "readwrite")
-    const store = transaction.objectStore(STORE_NAME)
-    const getRequest = store.get(id)
-
-    getRequest.onsuccess = () => {
-      const draft = getRequest.result as OfflineDraft
-      if (draft) {
-        draft.error = error
-        const putRequest = store.put(draft)
-        putRequest.onsuccess = () => resolve()
-        putRequest.onerror = () => reject(putRequest.error)
-      } else {
-        resolve()
-      }
-    }
-    getRequest.onerror = () => reject(getRequest.error)
+export function markDraftSynced(
+  id: string,
+  syncedAt = new Date().toISOString(),
+): Promise<void> {
+  return updateDraft(id, (draft) => {
+    draft.syncedAt = syncedAt
+    draft.error = undefined
   })
 }
 
-export async function removeDraft(id: string): Promise<void> {
-  const db = await openDB()
-
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, "readwrite")
-    const store = transaction.objectStore(STORE_NAME)
-    const request = store.delete(id)
-
-    request.onsuccess = () => resolve()
-    request.onerror = () => reject(request.error)
+export function markDraftError(id: string, error: string): Promise<void> {
+  return updateDraft(id, (draft) => {
+    draft.error = error
   })
 }
 
-export async function getAllDrafts(): Promise<OfflineDraft[]> {
-  const db = await openDB()
-
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, "readonly")
-    const store = transaction.objectStore(STORE_NAME)
-    const request = store.getAll()
-
-    request.onsuccess = () => resolve(request.result as OfflineDraft[])
-    request.onerror = () => reject(request.error)
+export function removeDraft(id: string): Promise<void> {
+  return withStore("readwrite", (store, ownerId, done) => {
+    store.delete([ownerId, id])
+    done(undefined)
   })
 }
 
 export function generateUUID(): string {
-  // Simple UUID v4 generation for client-side use
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0
-    const v = c === "x" ? r : (r & 0x3) | 0x8
-    return v.toString(16)
-  })
+  return crypto.randomUUID()
 }

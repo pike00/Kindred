@@ -152,6 +152,37 @@ def test_due_includes_contact_summary(
     assert matched["contact"]["last_name"] == "Tester"
 
 
+def test_reminder_lists_exclude_do_not_contact_contacts(
+    client: TestClient,
+    superuser_token_headers: dict[str, str],
+) -> None:
+    contact_response = client.post(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=superuser_token_headers,
+        json={"first_name": "Suppressed", "do_not_contact": True},
+    )
+    assert contact_response.status_code == 200
+    contact_id = contact_response.json()["id"]
+    rem = _create_reminder(
+        client,
+        superuser_token_headers,
+        title="Suppressed follow-up",
+        remind_at=_now() - timedelta(minutes=10),
+        contact_id=contact_id,
+    )
+
+    due = client.get(
+        f"{settings.API_V1_STR}/reminders/due",
+        headers=superuser_token_headers,
+    )
+    listed = client.get(
+        f"{settings.API_V1_STR}/reminders/",
+        headers=superuser_token_headers,
+    )
+    assert rem["id"] not in [item["id"] for item in due.json()["data"]]
+    assert rem["id"] not in [item["id"] for item in listed.json()["data"]]
+
+
 def test_due_handles_standalone_reminder(
     client: TestClient,
     superuser_token_headers: dict[str, str],

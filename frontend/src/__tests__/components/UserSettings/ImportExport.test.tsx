@@ -24,6 +24,7 @@ vi.mock("@/client", () => ({
 describe("ImportExport", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    localStorage.setItem("access_token", "test-token")
   })
 
   it("renders import section heading", () => {
@@ -445,6 +446,7 @@ describe("ImportExport", () => {
     const { OpenAPI } = await import("@/client")
     const tokenFn = vi.fn().mockResolvedValue("function-token")
     ;(OpenAPI as any).TOKEN = tokenFn
+    localStorage.setItem("access_token", "function-token")
 
     const mockBlob = new Blob(["vcard data"], { type: "text/vcard" })
     global.fetch = vi.fn().mockResolvedValueOnce({
@@ -462,9 +464,10 @@ describe("ImportExport", () => {
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining("/api/v1/import-export/export/vcard"),
         expect.objectContaining({
-          headers: expect.objectContaining({ Authorization: "Bearer function-token" }),
+          headers: expect.any(Headers),
         }),
       )
+      expect(new Headers(vi.mocked(global.fetch).mock.calls[0][1]?.headers).get("Authorization")).toBe("Bearer function-token")
     })
 
     // Restore string token for other tests
@@ -474,6 +477,7 @@ describe("ImportExport", () => {
   it("sends empty Authorization when OpenAPI.TOKEN is empty string", async () => {
     const { OpenAPI } = await import("@/client")
     ;(OpenAPI as any).TOKEN = ""
+    localStorage.removeItem("access_token")
 
     const mockBlob = new Blob(["vcard data"], { type: "text/vcard" })
     global.fetch = vi.fn().mockResolvedValueOnce({
@@ -491,9 +495,10 @@ describe("ImportExport", () => {
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining("/api/v1/import-export/export/vcard"),
         expect.objectContaining({
-          headers: expect.not.objectContaining({ Authorization: expect.anything() }),
+          headers: expect.any(Headers),
         }),
       )
+      expect(new Headers(vi.mocked(global.fetch).mock.calls[0][1]?.headers).get("Authorization")).toBeNull()
     })
 
     // Restore
