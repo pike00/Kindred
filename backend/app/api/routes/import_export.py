@@ -8,6 +8,7 @@ from fastapi.responses import Response
 from sqlmodel import SQLModel, select
 
 from app.api.deps import CurrentUser, SessionDep
+from app.core.uploads import ensure_item_limit, read_upload_bounded
 from app.crud import upsert_contact
 from app.csv_utils import (
     build_contact_from_row,
@@ -33,6 +34,10 @@ from app.vcard import contact_to_vcard, vcard_to_contact_data
 
 router = APIRouter(prefix="/import-export", tags=["import-export"])
 
+MAX_IMPORT_UPLOAD_BYTES = 10 * 1024 * 1024
+MAX_CSV_ROWS = 50_000
+MAX_VCARD_CARDS = 10_000
+
 
 class VCardImportResponse(SQLModel):
     """Result of a vCard bulk import."""
@@ -55,13 +60,19 @@ async def import_vcard(
     file: UploadFile = File(...),
 ) -> VCardImportResponse:
     """Import contacts from a .vcf file (supports multiple vCards in one file)."""
-    content = await file.read()
+    content = await read_upload_bounded(
+        file,
+        max_bytes=MAX_IMPORT_UPLOAD_BYTES,
+        label="vCard file",
+    )
     text = content.decode("utf-8", errors="replace")
+    cards = _split_vcards(text)
+    ensure_item_limit(count=len(cards), max_items=MAX_VCARD_CARDS, label="vCard file")
 
     imported = 0
     errors = []
 
-    for card_text in _split_vcards(text):
+    for card_text in cards:
         try:
             parsed = vcard_to_contact_data(card_text)
             contact_data = parsed["contact"]
@@ -237,14 +248,20 @@ class CSVPreviewResponse(SQLModel):
 @router.post("/import/csv/preview", response_model=CSVPreviewResponse)
 async def preview_csv_import(
     *,
+    current_user: CurrentUser,  # noqa: ARG001
     file: UploadFile = File(...),
 ) -> Any:
     """Preview CSV import: detect columns and show sample rows.
 
     Returns the detected column mapping and first few rows for user confirmation.
     """
-    content = await file.read()
+    content = await read_upload_bounded(
+        file,
+        max_bytes=MAX_IMPORT_UPLOAD_BYTES,
+        label="CSV file",
+    )
     headers, rows, encoding = parse_csv_content(content)
+    ensure_item_limit(count=len(rows), max_items=MAX_CSV_ROWS, label="CSV file")
 
     # Detect column mapping
     column_mapping = detect_column_mapping(headers)
@@ -301,8 +318,13 @@ async def import_csv(
     - **merge_duplicates**: Update existing contacts with matching email (default: False).
     - **create_missing_tags**: Auto-create tags that don't exist (default: True).
     """
-    content = await file.read()
+    content = await read_upload_bounded(
+        file,
+        max_bytes=MAX_IMPORT_UPLOAD_BYTES,
+        label="CSV file",
+    )
     headers, rows, _ = parse_csv_content(content)
+    ensure_item_limit(count=len(rows), max_items=MAX_CSV_ROWS, label="CSV file")
 
     # Use provided mapping or auto-detect
     if column_mapping:

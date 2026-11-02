@@ -5,6 +5,8 @@ from unittest.mock import AsyncMock, patch
 import httpx
 from fastapi.testclient import TestClient
 
+from app.api.routes import transcribe as transcribe_routes
+
 
 class TestTranscribeAudio:
     """Tests for POST /api/v1/transcribe/."""
@@ -69,3 +71,19 @@ class TestTranscribeAudio:
 
             assert response.status_code == 503
             assert "unavailable" in response.json()["detail"].lower()
+
+    def test_transcribe_rejects_oversized_upload(
+        self,
+        client: TestClient,
+        user_headers: dict,
+        monkeypatch,
+    ):
+        monkeypatch.setattr(transcribe_routes, "MAX_AUDIO_UPLOAD_BYTES", 8)
+
+        response = client.post(
+            "/api/v1/transcribe/",
+            files={"file": ("large.webm", b"123456789", "audio/webm")},
+            headers=user_headers,
+        )
+
+        assert response.status_code == 413

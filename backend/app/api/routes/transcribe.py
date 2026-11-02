@@ -12,6 +12,7 @@ from fastapi import APIRouter, HTTPException, UploadFile
 
 from app.api.deps import CurrentUser
 from app.core.config import settings
+from app.core.uploads import read_upload_bounded
 
 router = APIRouter(prefix="/transcribe", tags=["transcribe"])
 
@@ -20,6 +21,7 @@ logger = logging.getLogger(__name__)
 # Internal Whisper service URL — configurable via WHISPER_URL (default points
 # at the "whisper" service on the Docker network).
 WHISPER_URL = f"{settings.WHISPER_URL.rstrip('/')}/transcribe"
+MAX_AUDIO_UPLOAD_BYTES = 25 * 1024 * 1024
 
 
 @router.post("/")
@@ -38,7 +40,11 @@ async def transcribe_audio(
         raise HTTPException(status_code=400, detail="No file provided")
 
     # Read the uploaded file
-    content = await file.read()
+    content = await read_upload_bounded(
+        file,
+        max_bytes=MAX_AUDIO_UPLOAD_BYTES,
+        label="Audio file",
+    )
     if not content:
         raise HTTPException(status_code=400, detail="Empty file")
 

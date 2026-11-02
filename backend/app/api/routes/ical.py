@@ -10,6 +10,7 @@ from icalendar import Calendar, Event
 from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
+from app.core.uploads import ensure_item_limit, read_upload_bounded
 from app.crud import visible_contact_ids
 from app.models import (
     Contact,
@@ -25,6 +26,8 @@ router = APIRouter(prefix="/ical", tags=["ical"])
 
 # Fuzzy matching threshold (0-100 scale from python-rapidfuzz)
 FUZZY_MATCH_THRESHOLD = 80
+MAX_ICAL_UPLOAD_BYTES = 10 * 1024 * 1024
+MAX_ICAL_EVENTS = 10_000
 
 
 def _extract_attendees(vevent: Event) -> list[dict]:
@@ -295,7 +298,11 @@ async def upload_ical(
         )
 
     # Read and parse
-    content = await file.read()
+    content = await read_upload_bounded(
+        file,
+        max_bytes=MAX_ICAL_UPLOAD_BYTES,
+        label="iCalendar file",
+    )
     try:
         cal = Calendar.from_ical(content)
     except Exception as e:
@@ -320,12 +327,14 @@ async def upload_ical(
     skipped_future = 0
     parse_errors = []
 
-    for component in cal.walk():
-        if component.name != "VEVENT":
-            continue
+    events = [component for component in cal.walk() if component.name == "VEVENT"]
+    ensure_item_limit(
+        count=len(events),
+        max_items=MAX_ICAL_EVENTS,
+        label="iCalendar file",
+    )
 
-        vevent: Event = component
-
+    for vevent in events:
         # Extract basic event info
         summary = str(vevent.get("SUMMARY", ""))
         description = (
