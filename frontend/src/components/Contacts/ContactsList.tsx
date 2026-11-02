@@ -336,7 +336,7 @@ export const ContactsList = () => {
             operations.set_is_favorite = false
             break
           case "delete":
-            operations.set_is_archived = true
+            operations.set_deleted = true
             break
         }
 
@@ -560,9 +560,9 @@ export const ContactsList = () => {
             <DialogDescription>
               {previewModal.action === "delete" ? (
                 <>
-                  This will archive{" "}
+                  This will move{" "}
                   <strong>{previewModal.count || selectedCount}</strong>{" "}
-                  contacts. This action cannot be undone.
+                  contacts to Trash. You can restore them later.
                 </>
               ) : (
                 <>

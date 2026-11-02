@@ -164,6 +164,29 @@ describe("ContactsList", () => {
     })
   })
 
+  it("bulk delete moves selected contacts to trash", async () => {
+    const user = userEvent.setup()
+    const contacts = [makeContact({ id: "trash-1", first_name: "Alice" })]
+    mockListContacts.mockResolvedValue({ data: contacts, count: 1 })
+
+    renderContactsListWithData(contacts)
+
+    await user.click(
+      screen.getByRole("checkbox", { name: "Select all loaded contacts" }),
+    )
+    await user.click(screen.getByRole("button", { name: /^Delete$/ }))
+    await user.click(screen.getByRole("button", { name: "Confirm" }))
+
+    await waitFor(() => {
+      expect(mockBulkUpdateContacts).toHaveBeenCalledWith({
+        requestBody: expect.objectContaining({
+          contact_ids: ["trash-1"],
+          operations: { set_deleted: true },
+        }),
+      })
+    })
+  })
+
   it("applies the saved filter to every paginated request", async () => {
     mockUseSearch.mockReturnValue({ saved_filter_id: "filter-1" })
     mockListSavedFilters.mockResolvedValue({

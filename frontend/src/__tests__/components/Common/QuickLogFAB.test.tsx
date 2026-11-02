@@ -32,18 +32,27 @@ vi.mock("@/hooks/useCustomToast", () => ({
 // Mock popover and command UI to render inline
 vi.mock("@/components/ui/popover", () => {
   const React = require("react")
+  const PopoverContext = React.createContext(null)
   return {
-    Popover: ({ open, children }: any) => {
+    Popover: ({ open, onOpenChange, children }: any) => {
       return (
-        <div data-testid="popover-root" data-open={open?.toString()}>
-          {Array.isArray(children) ? children : [children]}
-        </div>
+        <PopoverContext.Provider value={onOpenChange}>
+          <div data-testid="popover-root" data-open={open?.toString()}>
+            {Array.isArray(children) ? children : [children]}
+          </div>
+        </PopoverContext.Provider>
       )
     },
     PopoverTrigger: ({ asChild, children, onClick }: any) => {
+      const onOpenChange = React.useContext(PopoverContext)
       // If asChild, just render the child (button) directly
       if (asChild && React.isValidElement(children)) {
-        return children
+        return React.cloneElement(children, {
+          onClick: (event: any) => {
+            children.props?.onClick?.(event)
+            onOpenChange?.(true)
+          },
+        })
       }
       return (
         <div data-testid="popover-trigger" onClick={onClick}>
@@ -80,6 +89,12 @@ vi.mock("@/components/ui/command", () => ({
 describe("QuickLogFAB", () => {
   let platformBackup: string
 
+  async function renderQuickLogWithPicker() {
+    const view = renderWithProviders(<QuickLogFAB />)
+    await userEvent.click(await screen.findByTestId("contact-picker-button"))
+    return view
+  }
+
   beforeEach(() => {
     vi.clearAllMocks()
     mockShowSuccessToast.mockClear()
@@ -101,7 +116,7 @@ describe("QuickLogFAB", () => {
       data: [],
     } as any)
 
-    renderWithProviders(<QuickLogFAB />)
+    await renderQuickLogWithPicker()
 
     await waitFor(() => {
       const fabButton = screen.getByRole("button", { name: /Quick log interaction/ })
@@ -114,7 +129,7 @@ describe("QuickLogFAB", () => {
       data: [],
     } as any)
 
-    renderWithProviders(<QuickLogFAB />)
+    await renderQuickLogWithPicker()
 
     await waitFor(() => {
       expect(screen.getByText("Quick Log")).toBeInTheDocument()
@@ -130,7 +145,7 @@ describe("QuickLogFAB", () => {
       data: [],
     } as any)
 
-    renderWithProviders(<QuickLogFAB />)
+    await renderQuickLogWithPicker()
 
     await waitFor(() => {
       const buttons = screen.getAllByRole("button")
@@ -139,13 +154,17 @@ describe("QuickLogFAB", () => {
     })
   })
 
-  it("loads contacts on mount with the canonical picker limit", async () => {
+  it("loads contacts only when the picker opens", async () => {
     vi.mocked(ContactsService.ContactsService.listContacts).mockResolvedValue({
       data: [],
     } as any)
 
     renderWithProviders(<QuickLogFAB />)
 
+    expect(
+      vi.mocked(ContactsService.ContactsService.listContacts)
+    ).not.toHaveBeenCalled()
+    await userEvent.click(await screen.findByTestId("contact-picker-button"))
     await waitFor(() => {
       expect(
         vi.mocked(ContactsService.ContactsService.listContacts)
@@ -158,8 +177,9 @@ describe("QuickLogFAB", () => {
       data: [],
     } as any)
 
-    renderWithProviders(<QuickLogFAB />)
+    await renderQuickLogWithPicker()
 
+    await userEvent.click(await screen.findByTestId("contact-picker-button"))
     const input = await screen.findByTestId("command-input")
     await userEvent.type(input, "alice")
 
@@ -180,7 +200,7 @@ describe("QuickLogFAB", () => {
       data: [],
     } as any)
 
-    renderWithProviders(<QuickLogFAB />)
+    await renderQuickLogWithPicker()
 
     await waitFor(() => {
       expect(screen.getByText("⌘+Enter to submit")).toBeInTheDocument()
@@ -197,7 +217,7 @@ describe("QuickLogFAB", () => {
       data: [],
     } as any)
 
-    renderWithProviders(<QuickLogFAB />)
+    await renderQuickLogWithPicker()
 
     await waitFor(() => {
       expect(screen.getByText("Ctrl+Enter to submit")).toBeInTheDocument()
@@ -210,7 +230,7 @@ describe("QuickLogFAB", () => {
       data: [contact],
     } as any)
 
-    renderWithProviders(<QuickLogFAB />)
+    await renderQuickLogWithPicker()
 
     // Wait for contacts to load
     await waitFor(() => {
@@ -248,7 +268,7 @@ describe("QuickLogFAB", () => {
       data: [contact],
     } as any)
 
-    renderWithProviders(<QuickLogFAB />)
+    await renderQuickLogWithPicker()
 
     // Wait for contacts to load
     await waitFor(() => {
@@ -285,7 +305,7 @@ describe("QuickLogFAB", () => {
       id: "interaction-1",
     } as any)
 
-    renderWithProviders(<QuickLogFAB />)
+    await renderQuickLogWithPicker()
 
     // Wait for contacts to load
     await waitFor(() => {
@@ -343,7 +363,7 @@ describe("QuickLogFAB", () => {
       id: "interaction-1",
     } as any)
 
-    renderWithProviders(<QuickLogFAB />)
+    await renderQuickLogWithPicker()
 
     // Wait for contacts to load
     await waitFor(() => {
@@ -384,7 +404,7 @@ describe("QuickLogFAB", () => {
       ContactsService.InteractionsService.createInteractionRoute
     ).mockRejectedValue(new Error(errorMessage))
 
-    renderWithProviders(<QuickLogFAB />)
+    await renderQuickLogWithPicker()
 
     // Wait for contacts to load
     await waitFor(() => {
@@ -424,7 +444,7 @@ describe("QuickLogFAB", () => {
       ContactsService.InteractionsService.createInteractionRoute
     ).mockRejectedValue("plain-string-error")
 
-    renderWithProviders(<QuickLogFAB />)
+    await renderQuickLogWithPicker()
 
     await waitFor(() => {
       expect(
@@ -463,7 +483,7 @@ describe("QuickLogFAB", () => {
       data: [contact],
     } as any)
 
-    renderWithProviders(<QuickLogFAB />)
+    await renderQuickLogWithPicker()
 
     // Wait for contacts to load
     await waitFor(() => {
@@ -507,7 +527,7 @@ describe("QuickLogFAB", () => {
       data: contacts,
     } as any)
 
-    renderWithProviders(<QuickLogFAB />)
+    await renderQuickLogWithPicker()
 
     // Wait for contacts to load
     await waitFor(() => {
@@ -541,7 +561,7 @@ describe("QuickLogFAB", () => {
       data: contacts,
     } as any)
 
-    renderWithProviders(<QuickLogFAB />)
+    await renderQuickLogWithPicker()
 
     // Wait for contacts to load
     await waitFor(() => {
@@ -591,7 +611,7 @@ describe("QuickLogFAB", () => {
       configurable: true,
     })
 
-    renderWithProviders(<QuickLogFAB />)
+    await renderQuickLogWithPicker()
 
     // Wait for contacts to load
     await waitFor(() => {
@@ -636,7 +656,7 @@ describe("QuickLogFAB", () => {
       id: "interaction-1",
     } as any)
 
-    const { queryClient } = renderWithProviders(<QuickLogFAB />)
+    const { queryClient } = await renderQuickLogWithPicker()
 
     // Spy on invalidateQueries
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries")
@@ -686,7 +706,7 @@ describe("QuickLogFAB", () => {
       data: [contact],
     } as any)
 
-    renderWithProviders(<QuickLogFAB />)
+    await renderQuickLogWithPicker()
 
     // Wait for contacts to load
     await waitFor(() => {
@@ -716,7 +736,7 @@ describe("QuickLogFAB", () => {
       data: [contact],
     } as any)
 
-    renderWithProviders(<QuickLogFAB />)
+    await renderQuickLogWithPicker()
 
     // Wait for contacts to load
     await waitFor(() => {
@@ -744,7 +764,7 @@ describe("QuickLogFAB", () => {
       data: contacts,
     } as any)
 
-    renderWithProviders(<QuickLogFAB />)
+    await renderQuickLogWithPicker()
 
     // Wait for contacts to load
     await waitFor(() => {
@@ -772,7 +792,7 @@ describe("QuickLogFAB", () => {
       id: "interaction-1",
     } as any)
 
-    renderWithProviders(<QuickLogFAB />)
+    await renderQuickLogWithPicker()
 
     // Wait for contacts to load
     await waitFor(() => {

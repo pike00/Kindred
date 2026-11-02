@@ -91,9 +91,10 @@ export function QuickLogFAB() {
   const { showSuccessToast, showErrorToast } = useCustomToast()
   const noteInputRef = useRef<HTMLInputElement>(null)
 
-  const { data: contactsData } = useQuery(
-    contactSearchQueryOptions(debouncedContactQuery, CONTACT_PICKER_LIMIT),
-  )
+  const { data: contactsData } = useQuery({
+    ...contactSearchQueryOptions(debouncedContactQuery, CONTACT_PICKER_LIMIT),
+    enabled: contactPickerOpen,
+  })
   const contacts = useMemo(() => contactsData?.data ?? [], [contactsData])
 
   const sortedContacts = useMemo(

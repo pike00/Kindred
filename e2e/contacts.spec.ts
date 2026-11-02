@@ -155,7 +155,7 @@ test.describe("Contacts list", () => {
 
     const confirm = page.getByRole("dialog", { name: /confirm bulk action/i })
     await expect(confirm).toBeVisible()
-    await expect(confirm.getByText(/cannot be undone/i)).toBeVisible()
+    await expect(confirm.getByText(/move.*contacts to trash/i)).toBeVisible()
 
     await confirm.getByRole("button", { name: /cancel/i }).click()
     await expect(confirm).not.toBeVisible()

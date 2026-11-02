@@ -17,11 +17,19 @@ export const contactSearchQueryOptions = (
   const search = query.trim()
   return queryOptions({
     queryKey: ["contacts", "search", search, limit],
-    queryFn: () =>
-      ContactsService.listContacts({
+    queryFn: ({ signal }) => {
+      const request = ContactsService.listContacts({
         limit,
         ...(search ? { search } : {}),
-      }),
+      })
+      if (signal.aborted) {
+        request.cancel()
+        return Promise.reject(new DOMException("Aborted", "AbortError"))
+      }
+      const cancel = () => request.cancel()
+      signal.addEventListener("abort", cancel, { once: true })
+      return request.finally(() => signal.removeEventListener("abort", cancel))
+    },
     staleTime: 30_000,
   })
 }

@@ -1,5 +1,7 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 
+const listContacts = vi.hoisted(() => vi.fn())
+vi.mock("@/client", () => ({ ContactsService: { listContacts } }))
 import { contactSearchQueryOptions } from "@/lib/contactQueries"
 
 describe("contactSearchQueryOptions", () => {
@@ -16,5 +18,23 @@ describe("contactSearchQueryOptions", () => {
     expect(contactSearchQueryOptions("  alice  ", 50).queryKey).toEqual(
       contactSearchQueryOptions("alice", 50).queryKey,
     )
+  })
+
+  it("cancels the generated request when the query signal aborts", async () => {
+    const cancel = vi.fn()
+    listContacts.mockReturnValue(
+      Object.assign(Promise.resolve({ data: [], count: 0 }), { cancel }),
+    )
+    const controller = new AbortController()
+    const query = contactSearchQueryOptions("alice", 50)
+
+    const result = query.queryFn!({
+      signal: controller.signal,
+    } as never)
+    controller.abort()
+
+    await result
+    expect(cancel).toHaveBeenCalledOnce()
+    expect(listContacts).toHaveBeenCalledWith({ limit: 50, search: "alice" })
   })
 })
