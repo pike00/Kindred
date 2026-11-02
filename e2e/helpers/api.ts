@@ -41,6 +41,56 @@ function authHeaders(token: string) {
   return { Authorization: `Bearer ${token}` }
 }
 
+export async function createTestUser(
+  request: APIRequestContext,
+  adminToken: string,
+  data: { email: string; password: string; fullName: string },
+) {
+  const res = await request.post(`${API_URL}/api/v1/users/`, {
+    headers: authHeaders(adminToken),
+    data: {
+      email: data.email,
+      password: data.password,
+      full_name: data.fullName,
+      is_active: true,
+      is_superuser: false,
+    },
+  })
+  if (!res.ok()) {
+    throw new Error(`createTestUser failed ${res.status()}: ${await res.text()}`)
+  }
+  return res.json() as Promise<{ id: string; email: string }>
+}
+
+export async function loginUser(
+  request: APIRequestContext,
+  email: string,
+  password: string,
+): Promise<string> {
+  const res = await request.post(`${API_URL}/api/v1/login/access-token`, {
+    form: { username: email, password },
+  })
+  if (!res.ok()) {
+    throw new Error(`loginUser failed ${res.status()}: ${await res.text()}`)
+  }
+  const body = (await res.json()) as { access_token?: string }
+  if (!body.access_token) throw new Error("loginUser returned no access token")
+  return body.access_token
+}
+
+export async function deleteTestUser(
+  request: APIRequestContext,
+  adminToken: string,
+  userId: string,
+) {
+  const res = await request.delete(`${API_URL}/api/v1/users/${userId}`, {
+    headers: authHeaders(adminToken),
+  })
+  if (!res.ok()) {
+    throw new Error(`deleteTestUser failed ${res.status()}: ${await res.text()}`)
+  }
+}
+
 // ─── Contacts ────────────────────────────────────────────────────────────────
 
 export async function createContact(

@@ -70,7 +70,7 @@ test.describe("Contacts list", () => {
     // All form fields
     await expect(dialog.getByLabel(/first name/i)).toBeVisible()
     await expect(dialog.getByLabel(/last name/i)).toBeVisible()
-    await expect(dialog.getByLabel(/birthday/i)).toBeVisible()
+    await expect(dialog.getByLabel("Birthday month")).toBeVisible()
     // TimezoneInput is a searchable combobox button, not a native labelled
     // input. Its accessible name exposes the empty-state placeholder.
     await expect(dialog.getByText(/search city or timezone/i)).toBeVisible()
@@ -135,7 +135,7 @@ test.describe("Contacts list", () => {
     ).toBeVisible()
     await expect(page.getByRole("button", { name: /^delete$/i })).toBeVisible()
     await expect(
-      page.getByRole("button", { name: /export csv/i }),
+      page.getByRole("button", { name: /export all csv/i }),
     ).toBeVisible()
   })
 

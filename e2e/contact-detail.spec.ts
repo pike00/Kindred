@@ -106,24 +106,25 @@ test.describe("Contact detail header", () => {
   test("page loads and shows the contact's name", async ({ page }) => {
     await openContact(page, contactId)
     await expect(
-      page.getByRole("heading", { name: /AAADetailSpec Primary/i, level: 1 }),
+      page.getByRole("button", { name: /AAADetailSpec Primary/i }),
     ).toBeVisible({ timeout: CONTACT_PAGE_TIMEOUT })
   })
 
-  test("Download PDF button is present", async ({ page }) => {
+  test("avatar and Edit actions are present", async ({ page }) => {
     await openContact(page, contactId)
     await expect(
-      page.getByRole("button", { name: /download pdf/i }),
+      page.getByRole("button", { name: /upload avatar/i }),
     ).toBeVisible({ timeout: CONTACT_PAGE_TIMEOUT })
+    await expect(page.getByRole("button", { name: /^edit$/i })).toBeVisible()
   })
 
   test("Edit button opens the edit-contact dialog", async ({ page }) => {
     await openContact(page, contactId)
-    // Use the contact name heading as an anchor — we know the page rendered
+    // Use the contact name control as an anchor — we know the page rendered
     // before searching for the Edit button. The Edit button is alongside
-    // the Download PDF button in the header.
+    // the contact identity in the header.
     await expect(
-      page.getByRole("heading", { name: /AAADetailSpec Primary/i, level: 1 }),
+      page.getByRole("button", { name: /AAADetailSpec Primary/i }),
     ).toBeVisible({ timeout: 10000 })
     await page
       .getByRole("button", { name: /^edit$/i, exact: false })

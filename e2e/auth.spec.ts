@@ -1,5 +1,6 @@
 import type { Locator, Page } from "@playwright/test"
 import { test, expect } from "./fixtures"
+import { createTestUser, deleteTestUser, getToken } from "./helpers/api.js"
 
 // Most auth tests run WITHOUT stored credentials.
 const authTest = test.extend({
@@ -407,32 +408,54 @@ authTest.describe("Unauthenticated route guard", () => {
 // ─── Logout (requires an authenticated session) ──────────────────────────────
 
 test.describe("Logout", () => {
+  // Logout revokes every local token for the account. Use a disposable user so
+  // the shared storage state remains valid for other specs running in parallel.
+  test.use({ storageState: { cookies: [], origins: [] } })
+
   test("opening user menu then clicking 'Log Out' clears token and redirects to /login", async ({
     page,
+    request,
   }, testInfo) => {
     // Logout navigates / → /login, which can hit the same Vite dev-server
     // dynamic-import flake described elsewhere in this file.
     testInfo.annotations.push({ type: "allow-page-errors" })
-    // The menu is global; use the lightweight tags route instead of the
-    // dashboard's multi-query loader.
-    // Wait for the sidebar to hydrate before opening the menu. The first
-    // cold route load can resolve before the layout's dynamic chunk mounts.
-    await gotoAndWait(page, "/tags", page.getByTestId("user-menu"))
+    const adminToken = await getToken(request)
+    const suffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    const email = `logout-e2e+${suffix}@example.com`
+    const password = `LogoutPass-${suffix}`
+    const user = await createTestUser(request, adminToken, {
+      email,
+      password,
+      fullName: "Logout E2E User",
+    })
 
-    // Confirm we ARE logged in — token present.
-    const tokenBefore = await page.evaluate(() =>
-      localStorage.getItem("access_token"),
-    )
-    expect(tokenBefore).toBeTruthy()
+    try {
+      await gotoAndWait(page, "/login", page.getByTestId("email-input"))
+      await page.getByTestId("email-input").fill(email)
+      await page.getByTestId("password-input").fill(password)
+      await page.getByRole("button", { name: /^log in$/i }).click()
+      await expect(page).toHaveURL(/\/$/, { timeout: 15_000 })
 
-    // The user menu lives in the sidebar footer with a stable data-testid.
-    await page.getByTestId("user-menu").click()
-    await page.getByRole("menuitem", { name: /log out/i }).click()
+      // The menu is global; use the lightweight tags route instead of the
+      // dashboard's multi-query loader. Wait for the sidebar to hydrate before
+      // opening the menu after the cold route load.
+      await gotoAndWait(page, "/tags", page.getByTestId("user-menu"))
 
-    await expect(page).toHaveURL(/\/login/, { timeout: 5000 })
-    const tokenAfter = await page.evaluate(() =>
-      localStorage.getItem("access_token"),
-    )
-    expect(tokenAfter).toBeNull()
+      const tokenBefore = await page.evaluate(() =>
+        localStorage.getItem("access_token"),
+      )
+      expect(tokenBefore).toBeTruthy()
+
+      await page.getByTestId("user-menu").click()
+      await page.getByRole("menuitem", { name: /log out/i }).click()
+
+      await expect(page).toHaveURL(/\/login/, { timeout: 5000 })
+      const tokenAfter = await page.evaluate(() =>
+        localStorage.getItem("access_token"),
+      )
+      expect(tokenAfter).toBeNull()
+    } finally {
+      await deleteTestUser(request, adminToken, user.id)
+    }
   })
 })
