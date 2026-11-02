@@ -125,13 +125,11 @@ def test_search_uses_canonical_contact_visibility_and_hides_trash(
     assert shared.status_code == 200
     assert {result["type"] for result in shared.json()["results"]} == {
         "contact",
-        "note",
         "interaction",
     }
+    assert all(result["type"] != "note" for result in shared.json()["results"])
 
-    note = db.exec(
-        select(Note).where(Note.contact_id == contact_id)
-    ).first()
+    note = db.exec(select(Note).where(Note.contact_id == contact_id)).first()
     assert note is not None
     note.deleted_at = datetime.now(timezone.utc)
     interaction = db.exec(

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import uuid
+
 from fastapi import APIRouter, Depends, Query
 from sqlmodel import Session, SQLModel, func, select
 
@@ -97,6 +99,7 @@ def _search_notes(
     query: str,
     visible_ids: object,
     limit: int,
+    owner_id: uuid.UUID,
 ) -> list[dict]:
     """Search Note table using tsvector."""
     ts_query = func.plainto_tsquery("english", query)
@@ -112,6 +115,7 @@ def _search_notes(
         .where(
             Note.search_vector.op("@@")(ts_query),
             Note.deleted_at.is_(None),
+            Note.owner_id == owner_id,
             Note.contact_id.in_(visible_ids),  # type: ignore[arg-type]
         )
         .order_by(func.ts_rank(Note.search_vector, ts_query).desc())
@@ -205,7 +209,7 @@ def search(
 
     # Run searches in parallel (they're independent)
     contacts = _search_contacts(session, q, visible_ids, limit)
-    notes = _search_notes(session, q, visible_ids, limit)
+    notes = _search_notes(session, q, visible_ids, limit, current_user.id)
     interactions = _search_interactions(session, q, visible_ids, limit)
 
     # Merge and sort by rank (descending), then by type for stable ordering
