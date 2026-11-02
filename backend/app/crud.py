@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from sqlalchemy import and_, func, or_, union
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql.elements import ColumnElement
 from sqlmodel import Session, select
 from sqlmodel import delete as sql_delete
@@ -434,9 +435,17 @@ def _extract_mention_ids(body: str | None) -> set[uuid.UUID]:
     return ids
 
 
-def _sync_note_mentions(*, session: Session, note: Note) -> None:
+def _sync_note_mentions(*, session: Session, note: Note, owner_id: uuid.UUID) -> None:
     session.exec(sql_delete(NoteMention).where(NoteMention.note_id == note.id))
-    for cid in _extract_mention_ids(note.body):
+    owner = session.get(User, owner_id)
+    if owner is None:
+        return
+    visible_ids = set(
+        session.exec(
+            select(Contact.id).where(Contact.id.in_(visible_contact_ids(owner)))
+        ).all()
+    )
+    for cid in _extract_mention_ids(note.body) & visible_ids:
         session.add(NoteMention(note_id=note.id, contact_id=cid))
 
 
@@ -444,15 +453,36 @@ def create_note(*, session: Session, note_in: NoteCreate, owner_id: uuid.UUID) -
     # Check for idempotent POST: if client_id is provided, check for existing note
     if note_in.client_id:
         existing = session.exec(
-            select(Note).where(Note.client_id == note_in.client_id)
+            select(Note).where(
+                Note.owner_id == owner_id,
+                Note.client_id == note_in.client_id,
+            )
         ).first()
         if existing:
+            if existing.deleted_at is not None:
+                existing.deleted_at = None
+                session.add(existing)
+                session.commit()
+                session.refresh(existing)
             return existing
     db_obj = Note.model_validate(note_in, update={"owner_id": owner_id})
     session.add(db_obj)
-    session.flush()
-    _sync_note_mentions(session=session, note=db_obj)
-    session.commit()
+    try:
+        session.flush()
+        _sync_note_mentions(session=session, note=db_obj, owner_id=owner_id)
+        session.commit()
+    except IntegrityError:
+        session.rollback()
+        if note_in.client_id:
+            existing = session.exec(
+                select(Note).where(
+                    Note.owner_id == owner_id,
+                    Note.client_id == note_in.client_id,
+                )
+            ).first()
+            if existing is not None:
+                return existing
+        raise
     session.refresh(db_obj)
     return db_obj
 
@@ -463,7 +493,11 @@ def update_note(*, session: Session, note: Note, note_in: NoteUpdate) -> Note:
     session.add(note)
     session.flush()
     if "body" in update_data:
-        _sync_note_mentions(session=session, note=note)
+        _sync_note_mentions(
+            session=session,
+            note=note,
+            owner_id=note.owner_id,
+        )
     session.commit()
     session.refresh(note)
     return note

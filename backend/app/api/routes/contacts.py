@@ -858,8 +858,11 @@ def list_contact_mentions(
         select(NoteMention, Note, Contact)
         .join(Note, NoteMention.note_id == Note.id)
         .join(Contact, Note.contact_id == Contact.id)
-        .where(NoteMention.contact_id == contact_id)
-        .where(Note.deleted_at.is_(None))
+        .where(
+            NoteMention.contact_id == contact_id,
+            Note.owner_id == current_user.id,
+            Note.deleted_at.is_(None),
+        )
         .order_by(Note.created_at.desc())
     ).all()
 

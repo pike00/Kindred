@@ -42,7 +42,10 @@ def list_notes(
     # contact via note_mention. Self-mentions (notes whose contact_id already
     # matches) are deduped by the OR condition's exclusive arms.
     mention_subq = select(NoteMention.note_id).where(
-        NoteMention.contact_id == contact_id
+        NoteMention.contact_id == contact_id,
+        NoteMention.note_id.in_(
+            select(Note.id).where(Note.owner_id == current_user.id)
+        ),
     )
     where_clause = or_(
         Note.contact_id == contact_id,
@@ -131,17 +134,19 @@ def delete_note(
 @router.post("/{note_id}/restore")
 def restore_note(
     session: SessionDep,
+    current_user: CurrentUser,
     note_id: uuid.UUID,
 ) -> Any:
     """Restore a soft-deleted note by clearing deleted_at."""
-    from sqlalchemy import text, update
-
-    result = session.exec(
-        text("SELECT id FROM note WHERE id = :id AND deleted_at IS NOT NULL"),
-        params={"id": str(note_id)},
+    note = session.exec(
+        select(Note).where(
+            Note.id == note_id,
+            Note.owner_id == current_user.id,
+        )
     ).first()
-    if result is None:
+    if note is None or note.deleted_at is None:
         raise HTTPException(status_code=404, detail="Note not found or not deleted")
-    session.exec(update(Note).where(Note.id == note_id).values(deleted_at=None))
+    note.deleted_at = None
+    session.add(note)
     session.commit()
     return Ok()
