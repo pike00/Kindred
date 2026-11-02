@@ -4,6 +4,8 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     env_file: .env
+    working_dir: /app/backend
+    command: ["bash", "scripts/migrate.sh"]
     networks:
       - kindred-internal-crm
     security_opt:
