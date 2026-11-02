@@ -5,7 +5,7 @@ import uuid
 from fastapi.testclient import TestClient
 from sqlmodel import Session, select
 
-from app.models import Contact, IcalImportLog, InteractionAttendee
+from app.models import AllContactsShare, Contact, IcalImportLog, InteractionAttendee
 from tests.utils.user import create_random_user
 
 
@@ -248,6 +248,45 @@ class TestUploadIcal:
         data = response.json()
         assert len(data["proposals"]) == 1
         assert data["proposals"][0]["already_imported"] is True
+
+    def test_upload_matches_visible_shared_contact(
+        self, client: TestClient, db: Session, user_headers: dict, user: Contact
+    ):
+        owner = create_random_user(db)
+        shared_contact = _create_contact(
+            db,
+            owner.id,
+            "Shared",
+            "Person",
+            "shared-person@example.com",
+        )
+        db.add(AllContactsShare(owner_id=owner.id, grantee_id=user.id))
+        db.commit()
+        content = _make_ics_content(
+            [
+                {
+                    "uid": "shared-upload",
+                    "summary": "Shared meeting",
+                    "dtstart": "20240115T100000Z",
+                    "attendees": [
+                        {
+                            "cn": "Shared Person",
+                            "email": "shared-person@example.com",
+                        }
+                    ],
+                }
+            ]
+        )
+
+        response = client.post(
+            "/api/v1/ical/upload",
+            files={"file": ("test.ics", content, "text/calendar")},
+            headers=user_headers,
+        )
+
+        assert response.status_code == 200
+        matches = response.json()["proposals"][0]["attendees"][0]["matches"]
+        assert any(match["contact_id"] == str(shared_contact.id) for match in matches)
 
     def test_upload_does_not_match_another_users_email(
         self, client: TestClient, db: Session, user_headers: dict

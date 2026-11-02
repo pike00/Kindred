@@ -311,9 +311,11 @@ async def upload_ical(
             content={"detail": f"Failed to parse .ics file: {str(e)}"},
         )
 
-    # Get all contacts for this user (for matching)
+    # Match only contacts visible to this user, including shared contacts.
     contacts = session.exec(
-        select(Contact).where(Contact.owner_id == current_user.id)
+        select(Contact).where(
+            Contact.id.in_(visible_contact_ids(current_user, include_deleted=False))
+        )
     ).all()
 
     # Get existing UIDs to detect duplicates
