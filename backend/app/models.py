@@ -2862,6 +2862,7 @@ class Token(SQLModel):
 class TokenPayload(SQLModel):
     sub: str | None = None
     ver: int = 0
+    type: str = "access"
 
 
 class NewPassword(SQLModel):

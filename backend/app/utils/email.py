@@ -22,6 +22,12 @@ class EmailData:
     subject: str
 
 
+@dataclass(frozen=True)
+class PasswordResetClaims:
+    email: str
+    session_version: int
+
+
 def render_email_template(*, template_name: str, context: dict[str, Any]) -> str:
     template_str = (
         Path(__file__).parent.parent / "email-templates" / "build" / template_name
@@ -100,24 +106,38 @@ def generate_new_account_email(
     return EmailData(html_content=html_content, subject=subject)
 
 
-def generate_password_reset_token(email: str) -> str:
+def generate_password_reset_token(email: str, session_version: int) -> str:
     delta = timedelta(hours=settings.EMAIL_RESET_TOKEN_EXPIRE_HOURS)
     now = datetime.now(timezone.utc)
     expires = now + delta
     exp = expires.timestamp()
     encoded_jwt = jwt.encode(
-        {"exp": exp, "nbf": now, "sub": email},
+        {
+            "exp": exp,
+            "nbf": now,
+            "sub": email,
+            "type": "password_reset",
+            "ver": session_version,
+        },
         settings.SECRET_KEY,
         algorithm=security.ALGORITHM,
     )
     return encoded_jwt
 
 
-def verify_password_reset_token(token: str) -> str | None:
+def verify_password_reset_token(token: str) -> PasswordResetClaims | None:
     try:
         decoded_token = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
         )
-        return str(decoded_token["sub"])
+        email = decoded_token.get("sub")
+        session_version = decoded_token.get("ver")
+        if (
+            decoded_token.get("type") != "password_reset"
+            or not isinstance(email, str)
+            or not isinstance(session_version, int)
+        ):
+            return None
+        return PasswordResetClaims(email=email, session_version=session_version)
     except InvalidTokenError:
         return None
