@@ -3,16 +3,15 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query
-from sqlmodel import Session, SQLModel, func, or_, select
+from sqlmodel import Session, SQLModel, func, select
 
 from app.api.deps import get_current_user, get_db
+from app.crud import visible_contact_ids
 from app.models import (
     Contact,
-    ContactTag,
     Interaction,
     InteractionAttendee,
     Note,
-    TagShare,
     User,
 )
 
@@ -46,22 +45,10 @@ class SearchResponse(SQLModel):
 # ─── Helpers ────────────────────────────────────────────────────────────
 
 
-def _get_shared_contact_ids(session: Session, user_id: str) -> list[str]:
-    """Return contact IDs the user can see via TagShare grants."""
-    stmt = (
-        select(ContactTag.contact_id)
-        .join(TagShare, TagShare.tag_id == ContactTag.tag_id)
-        .where(TagShare.grantee_id == user_id)
-        .distinct()
-    )
-    return [str(row[0]) for row in session.exec(stmt)]
-
-
 def _search_contacts(
     session: Session,
     query: str,
-    owner_id: str,
-    shared_contact_ids: list[str],
+    visible_ids: object,
     limit: int,
 ) -> list[dict]:
     """Search Contact table using tsvector."""
@@ -78,10 +65,8 @@ def _search_contacts(
         )
         .where(
             Contact.search_vector.op("@@")(ts_query),
-            or_(
-                Contact.owner_id == owner_id,
-                Contact.id.in_(shared_contact_ids),  # type: ignore[arg-type]
-            ),
+            Contact.deleted_at.is_(None),
+            Contact.id.in_(visible_ids),  # type: ignore[arg-type]
         )
         .order_by(func.ts_rank(Contact.search_vector, ts_query).desc())
         .limit(limit)
@@ -110,13 +95,11 @@ def _search_contacts(
 def _search_notes(
     session: Session,
     query: str,
-    owner_id: str,
-    shared_contact_ids: list[str],
+    visible_ids: object,
     limit: int,
 ) -> list[dict]:
     """Search Note table using tsvector."""
     ts_query = func.plainto_tsquery("english", query)
-    # Notes are scoped to owner, or to a contact the user can see via TagShare
     stmt = (
         select(
             Note.id,
@@ -128,10 +111,8 @@ def _search_notes(
         )
         .where(
             Note.search_vector.op("@@")(ts_query),
-            or_(
-                Note.owner_id == owner_id,
-                Note.contact_id.in_(shared_contact_ids),  # type: ignore[arg-type]
-            ),
+            Note.deleted_at.is_(None),
+            Note.contact_id.in_(visible_ids),  # type: ignore[arg-type]
         )
         .order_by(func.ts_rank(Note.search_vector, ts_query).desc())
         .limit(limit)
@@ -158,8 +139,7 @@ def _search_notes(
 def _search_interactions(
     session: Session,
     query: str,
-    owner_id: str,
-    shared_contact_ids: list[str],
+    visible_ids: object,
     limit: int,
 ) -> list[dict]:
     """Search Interaction table using tsvector."""
@@ -167,7 +147,7 @@ def _search_interactions(
     # Interactions have no direct contact_id (attendees are many-to-many via
     # interaction_attendee) and no updated_at column.
     shared_interaction_ids = select(InteractionAttendee.interaction_id).where(
-        InteractionAttendee.contact_id.in_(shared_contact_ids)  # type: ignore[arg-type]
+        InteractionAttendee.contact_id.in_(visible_ids)  # type: ignore[arg-type]
     )
     stmt = (
         select(
@@ -179,10 +159,8 @@ def _search_interactions(
         )
         .where(
             Interaction.search_vector.op("@@")(ts_query),
-            or_(
-                Interaction.owner_id == owner_id,
-                Interaction.id.in_(shared_interaction_ids),  # type: ignore[arg-type]
-            ),
+            Interaction.deleted_at.is_(None),
+            Interaction.id.in_(shared_interaction_ids),  # type: ignore[arg-type]
         )
         .order_by(func.ts_rank(Interaction.search_vector, ts_query).desc())
         .limit(limit)
@@ -223,13 +201,12 @@ def search(
     Results are scoped to the authenticated user (owner) or contacts shared
     via TagShare grants. Journal entries are owner-only (not contact-scoped).
     """
-    owner_id = str(current_user.id)
-    shared_contact_ids = _get_shared_contact_ids(session, owner_id)
+    visible_ids = visible_contact_ids(current_user)
 
     # Run searches in parallel (they're independent)
-    contacts = _search_contacts(session, q, owner_id, shared_contact_ids, limit)
-    notes = _search_notes(session, q, owner_id, shared_contact_ids, limit)
-    interactions = _search_interactions(session, q, owner_id, shared_contact_ids, limit)
+    contacts = _search_contacts(session, q, visible_ids, limit)
+    notes = _search_notes(session, q, visible_ids, limit)
+    interactions = _search_interactions(session, q, visible_ids, limit)
 
     # Merge and sort by rank (descending), then by type for stable ordering
     all_results = contacts + notes + interactions
