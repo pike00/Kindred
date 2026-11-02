@@ -61,11 +61,11 @@ cleanup_e2e_frontend() {
 trap cleanup_e2e_frontend EXIT
 
 frontend_up() {
-    curl -fsS -o /dev/null "$frontend_url"
+    curl -fsS --max-time 5 -o /dev/null "$frontend_url"
 }
 
 backend_up() {
-    curl -fsS "$backend_url" >/dev/null 2>&1
+    curl -fsS --max-time 5 "$backend_url" >/dev/null 2>&1
 }
 
 # The project-kit preview stack uses offset ports. Prefer the current
