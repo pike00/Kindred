@@ -41,7 +41,7 @@ frontend_port="${E2E_FRONTEND_PORT:-5173}"
 backend_port="${E2E_BACKEND_PORT:-8001}"
 frontend_base_url="${E2E_BASE_URL:-http://localhost:${frontend_port}}"
 api_base_url="${E2E_API_URL:-http://localhost:${backend_port}}"
-backend_url="${api_base_url%/}/api/v1/utils/health-check/"
+backend_url="${api_base_url%/}/api/v1/utils/ready/"
 frontend_url="${frontend_base_url%/}/"
 e2e_server_pid=""
 e2e_server_log=""
@@ -133,7 +133,7 @@ configure_backend_port() {
     backend_port="$1"
     if [ -z "${E2E_API_URL:-}" ]; then
         api_base_url="http://localhost:${backend_port}"
-        backend_url="${api_base_url%/}/api/v1/utils/health-check/"
+        backend_url="${api_base_url%/}/api/v1/utils/ready/"
     fi
 }
 
