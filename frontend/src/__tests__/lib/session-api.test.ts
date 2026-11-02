@@ -53,15 +53,46 @@ it("rejects a request queued before a credential change before it is sent", asyn
   expect(transport.defaults.adapter).not.toHaveBeenCalled()
 })
 
-it.each([401, 403])("auth failure %s clears private cache and exits the document", async (status) => {
+it("401 clears private cache and exits the document", async () => {
   const { OpenAPI, request, queryClient } = await setup()
   localStorage.setItem("access_token", "token-a")
   queryClient.setQueryData(["contacts"], { secret: "A" })
-  const transport = axios.create({ adapter: async (config) => ({ data: {}, status, statusText: "Denied", headers: {}, config }) })
+  const transport = axios.create({ adapter: async (config) => ({ data: {}, status: 401, statusText: "Denied", headers: {}, config }) })
   await expect(request(OpenAPI, { method: "GET", url: "/api/v1/contacts" }, transport)).rejects.toThrow()
   expect(queryClient.getQueryData(["contacts"])).toBeUndefined()
   expect(localStorage.getItem("access_token")).toBeNull()
   expect(window.location.assign).toHaveBeenCalledWith("/login")
+})
+
+it("403 remains a local permission error without logging out", async () => {
+  const { session, queryClient } = await setup()
+  localStorage.setItem("access_token", "token-a")
+  session.acceptIdentity("account-a")
+  queryClient.setQueryData(["contacts"], { secret: "A" })
+  const { ApiError } = await import("@/client")
+  const error = new ApiError(
+    { method: "GET", url: "/api/v1/private" },
+    {
+      url: "/api/v1/private",
+      ok: false,
+      status: 403,
+      statusText: "Forbidden",
+      body: {},
+    },
+    "Forbidden",
+  )
+
+  await expect(
+    queryClient.fetchQuery({
+      queryKey: ["private"],
+      queryFn: () => Promise.reject(error),
+      retry: false,
+    }),
+  ).rejects.toThrow("Forbidden")
+
+  expect(queryClient.getQueryData(["contacts"])).toEqual({ secret: "A" })
+  expect(localStorage.getItem("access_token")).toBe("token-a")
+  expect(window.location.assign).not.toHaveBeenCalled()
 })
 
 it("rejects a Cloudflare identity change before returning its response", async () => {

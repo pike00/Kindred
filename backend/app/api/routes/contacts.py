@@ -45,6 +45,7 @@ from app.models import (
     OverdueContactsPublic,
     Relationship,
     SavedFilter,
+    TagShare,
     User,
     derive_handle_contact_field,
 )
@@ -89,6 +90,7 @@ class BulkFilters(SQLModel):
 class BulkUpdateRequest(SQLModel):
     contact_ids: list[uuid.UUID] | None = None
     select_all_filtered: bool = False
+    saved_filter_id: uuid.UUID | None = None
     filters: BulkFilters | None = None
     operations: BulkOperations
     limit: int = Field(default=500, ge=1, le=2000)
@@ -171,6 +173,26 @@ def _remove_contact_safe(contact_id: str) -> None:
         logger.warning(f"Meilisearch removal failed: {e}")
 
 
+def _resolve_saved_filter(
+    session: SessionDep, current_user: CurrentUser, saved_filter_id: uuid.UUID
+) -> SavedFilter:
+    saved_filter = session.get(SavedFilter, saved_filter_id)
+    if not saved_filter:
+        raise HTTPException(status_code=404, detail="Saved filter not found")
+    if saved_filter.owner_id != current_user.id:
+        if saved_filter.tag_id is None:
+            raise HTTPException(status_code=403, detail="Not enough permissions")
+        share = session.exec(
+            select(TagShare).where(
+                TagShare.tag_id == saved_filter.tag_id,
+                TagShare.grantee_id == current_user.id,
+            )
+        ).first()
+        if not share:
+            raise HTTPException(status_code=403, detail="Not enough permissions")
+    return saved_filter
+
+
 @router.get("/", response_model=ContactsPublic)
 def list_contacts(
     session: SessionDep,
@@ -228,54 +250,8 @@ def list_contacts(
     if tag_id:
         statement = statement.join(ContactTag).where(ContactTag.tag_id == tag_id)
 
-    # Apply saved filter if requested
     if saved_filter_id is not None:
-        saved_filter = session.get(SavedFilter, saved_filter_id)
-        if not saved_filter:
-            raise HTTPException(status_code=404, detail="Saved filter not found")
-        # Check permissions: owner or shared via tag
-        if saved_filter.owner_id != current_user.id:
-            if saved_filter.tag_id is None:
-                raise HTTPException(status_code=403, detail="Not enough permissions")
-            # Check TagShare access
-            from sqlmodel import select as sql_select
-
-            from app.models import TagShare
-
-            share = session.exec(
-                sql_select(TagShare).where(
-                    TagShare.tag_id == saved_filter.tag_id,
-                    TagShare.grantee_id == current_user.id,
-                )
-            ).first()
-            if not share:
-                raise HTTPException(status_code=403, detail="Not enough permissions")
-        # Apply the filter_json to the statement
-        statement = apply_filter_json(statement, saved_filter.filter_json)
-
-    # Apply saved filter if requested
-    if saved_filter_id is not None:
-        saved_filter = session.get(SavedFilter, saved_filter_id)
-        if not saved_filter:
-            raise HTTPException(status_code=404, detail="Saved filter not found")
-        # Check permissions: owner or shared via tag
-        if saved_filter.owner_id != current_user.id:
-            if saved_filter.tag_id is None:
-                raise HTTPException(status_code=403, detail="Not enough permissions")
-            # Check TagShare access
-            from sqlmodel import select as sql_select
-
-            from app.models import TagShare
-
-            share = session.exec(
-                sql_select(TagShare).where(
-                    TagShare.tag_id == saved_filter.tag_id,
-                    TagShare.grantee_id == current_user.id,
-                )
-            ).first()
-            if not share:
-                raise HTTPException(status_code=403, detail="Not enough permissions")
-        # Apply the filter_json to the statement
+        saved_filter = _resolve_saved_filter(session, current_user, saved_filter_id)
         statement = apply_filter_json(statement, saved_filter.filter_json)
 
     # Count (before pagination)
@@ -461,7 +437,11 @@ def bulk_update_contacts(
     request: BulkUpdateRequest,
 ) -> Any:
     """Bulk update contacts by explicit IDs or filtered selection."""
-    if not request.contact_ids and not request.select_all_filtered:
+    if (
+        not request.contact_ids
+        and not request.select_all_filtered
+        and request.saved_filter_id is None
+    ):
         raise HTTPException(
             status_code=400,
             detail="Must provide contact_ids or set select_all_filtered=true",
@@ -473,6 +453,11 @@ def bulk_update_contacts(
 
     if request.contact_ids:
         stmt = stmt.where(Contact.id.in_(request.contact_ids))
+    elif request.saved_filter_id is not None:
+        saved_filter = _resolve_saved_filter(
+            session, current_user, request.saved_filter_id
+        )
+        stmt = apply_filter_json(stmt, saved_filter.filter_json)
     elif request.select_all_filtered and request.filters:
         f = request.filters
         if f.search:
@@ -489,6 +474,8 @@ def bulk_update_contacts(
             stmt = stmt.where(Contact.is_favorite == f.is_favorite)
         if f.stage is not None:
             stmt = stmt.where(Contact.stage == f.stage)
+    elif request.select_all_filtered:
+        stmt = stmt.where(Contact.is_archived.is_(False))
 
     stmt = stmt.limit(request.limit)
     contacts = session.exec(stmt).all()

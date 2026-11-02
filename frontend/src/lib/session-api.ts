@@ -18,10 +18,7 @@ const snapshots = new Map<string, Session>()
 let requestId = 0
 
 function authFailure(status: number, url = "") {
-  if (
-    (status === 401 || status === 403) &&
-    !url.includes("/login/access-token")
-  ) {
+  if (status === 401 && !url.includes("/login/access-token")) {
     leaveSession(cfEnabled() ? "/" : "/login")
     throw new SessionChangedError()
   }

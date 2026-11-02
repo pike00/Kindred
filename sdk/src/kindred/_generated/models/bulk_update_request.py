@@ -27,6 +27,7 @@ class BulkUpdateRequest:
         operations (BulkOperations):
         contact_ids (list[UUID] | None | Unset):
         select_all_filtered (bool | Unset):  Default: False.
+        saved_filter_id (None | Unset | UUID):
         filters (BulkFilters | None | Unset):
         limit (int | Unset):  Default: 500.
     """
@@ -34,6 +35,7 @@ class BulkUpdateRequest:
     operations: BulkOperations
     contact_ids: list[UUID] | None | Unset = UNSET
     select_all_filtered: bool | Unset = False
+    saved_filter_id: None | Unset | UUID = UNSET
     filters: BulkFilters | None | Unset = UNSET
     limit: int | Unset = 500
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
@@ -58,6 +60,14 @@ class BulkUpdateRequest:
 
         select_all_filtered = self.select_all_filtered
 
+        saved_filter_id: None | str | Unset
+        if isinstance(self.saved_filter_id, Unset):
+            saved_filter_id = UNSET
+        elif isinstance(self.saved_filter_id, UUID):
+            saved_filter_id = str(self.saved_filter_id)
+        else:
+            saved_filter_id = self.saved_filter_id
+
         filters: dict[str, Any] | None | Unset
         if isinstance(self.filters, Unset):
             filters = UNSET
@@ -79,6 +89,8 @@ class BulkUpdateRequest:
             field_dict["contact_ids"] = contact_ids
         if select_all_filtered is not UNSET:
             field_dict["select_all_filtered"] = select_all_filtered
+        if saved_filter_id is not UNSET:
+            field_dict["saved_filter_id"] = saved_filter_id
         if filters is not UNSET:
             field_dict["filters"] = filters
         if limit is not UNSET:
@@ -118,6 +130,23 @@ class BulkUpdateRequest:
 
         select_all_filtered = d.pop("select_all_filtered", UNSET)
 
+        def _parse_saved_filter_id(data: object) -> None | Unset | UUID:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, str):
+                    raise TypeError()
+                saved_filter_id_type_0 = UUID(data)
+
+                return saved_filter_id_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(None | Unset | UUID, data)
+
+        saved_filter_id = _parse_saved_filter_id(d.pop("saved_filter_id", UNSET))
+
         def _parse_filters(data: object) -> BulkFilters | None | Unset:
             if data is None:
                 return data
@@ -141,6 +170,7 @@ class BulkUpdateRequest:
             operations=operations,
             contact_ids=contact_ids,
             select_all_filtered=select_all_filtered,
+            saved_filter_id=saved_filter_id,
             filters=filters,
             limit=limit,
         )

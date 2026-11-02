@@ -24,7 +24,15 @@ function workerIsSafe(worker: ServiceWorker): Promise<boolean> {
 // controller after its own successful handshake, regardless of event ordering.
 export async function ensurePrivateApiWorker(): Promise<void> {
   const workers = navigator.serviceWorker
-  if (!workers?.controller) return
+  if (!workers?.controller) {
+    if (navigator.onLine === false && workers?.ready) {
+      await Promise.race([
+        workers.ready,
+        new Promise<void>((resolve) => setTimeout(resolve, 1500)),
+      ])
+    }
+    if (!workers?.controller) return
+  }
   let revision = 0
   let wake!: () => void
   let change = new Promise<void>((resolve) => {

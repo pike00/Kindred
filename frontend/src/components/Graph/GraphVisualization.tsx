@@ -49,7 +49,10 @@ export function GraphVisualization({
   const svgRef = useRef<SVGSVGElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const simulationRef = useRef<any>(null)
+  const zoomBehaviorRef = useRef<any>(null)
+  const onNodeClickRef = useRef(onNodeClick)
   const [selectedNode, setSelectedNode] = useState<string | null>(null)
+  onNodeClickRef.current = onNodeClick
 
   // Get unique relationship types for legend
   const relationshipTypes = useMemo(() => {
@@ -81,6 +84,7 @@ export function GraphVisualization({
         g.attr("transform", event.transform)
       })
 
+    zoomBehaviorRef.current = zoomBehavior
     svg.call(zoomBehavior)
 
     // Prepare nodes with initial positions
@@ -157,7 +161,7 @@ export function GraphVisualization({
       .on("click", (event: any, d: any) => {
         event.stopPropagation()
         setSelectedNode(d.id)
-        if (onNodeClick) onNodeClick(d.id)
+        onNodeClickRef.current?.(d.id)
       })
 
     // Node circles
@@ -166,11 +170,9 @@ export function GraphVisualization({
       .attr("r", (d: any) => d.radius)
       .attr("fill", (d: any) => (d.is_favorite ? "#f59e0b" : "#3b82f6"))
       .attr("stroke", (d: any) =>
-        d.id === selectedNode || d.id === rootContactId ? "#ef4444" : "#1e293b",
+        d.id === rootContactId ? "#ef4444" : "#1e293b",
       )
-      .attr("stroke-width", (d: any) =>
-        d.id === selectedNode || d.id === rootContactId ? 3 : 2,
-      )
+      .attr("stroke-width", (d: any) => (d.id === rootContactId ? 3 : 2))
 
     // Node labels
     nodeSelection
@@ -233,26 +235,49 @@ export function GraphVisualization({
 
     return () => {
       simulation.stop()
+      simulationRef.current = null
     }
-  }, [nodes, edges, selectedNode, rootContactId, onNodeClick])
+  }, [nodes, edges, rootContactId])
+
+  useEffect(() => {
+    if (!svgRef.current) return
+    select(svgRef.current)
+      .selectAll("g.node")
+      .select("circle")
+      .attr("stroke", (d: any) =>
+        d.id === selectedNode || d.id === rootContactId ? "#ef4444" : "#1e293b",
+      )
+      .attr("stroke-width", (d: any) =>
+        d.id === selectedNode || d.id === rootContactId ? 3 : 2,
+      )
+  }, [selectedNode, rootContactId])
 
   const handleZoomIn = () => {
-    if (!svgRef.current) return
-    select(svgRef.current).transition().call(zoom().scaleBy, 1.3)
+    if (!svgRef.current || !zoomBehaviorRef.current) return
+    select(svgRef.current)
+      .transition()
+      .call(zoomBehaviorRef.current.scaleBy, 1.3)
   }
 
   const handleZoomOut = () => {
-    if (!svgRef.current) return
-    select(svgRef.current).transition().call(zoom().scaleBy, 0.7)
+    if (!svgRef.current || !zoomBehaviorRef.current) return
+    select(svgRef.current)
+      .transition()
+      .call(zoomBehaviorRef.current.scaleBy, 0.7)
   }
 
   const handleReset = () => {
-    if (!svgRef.current) return
-    select(svgRef.current).transition().call(zoom().transform, zoomIdentity)
+    if (!svgRef.current || !zoomBehaviorRef.current) return
+    select(svgRef.current)
+      .transition()
+      .call(zoomBehaviorRef.current.transform, zoomIdentity)
+    simulationRef.current?.alpha(1).restart()
+    setSelectedNode(null)
   }
 
   const handleFocusNode = (nodeId: string) => {
-    if (!svgRef.current || !simulationRef.current) return
+    if (!svgRef.current || !simulationRef.current || !zoomBehaviorRef.current)
+      return
     const node = simulationRef.current.nodes().find((n: any) => n.id === nodeId)
     if (!node) return
     const svg = select(svgRef.current)
@@ -266,7 +291,10 @@ export function GraphVisualization({
     svg
       .transition()
       .duration(750)
-      .call(zoom().transform, zoomIdentity.translate(x, y).scale(scale))
+      .call(
+        zoomBehaviorRef.current.transform,
+        zoomIdentity.translate(x, y).scale(scale),
+      )
     setSelectedNode(nodeId)
   }
 

@@ -5,13 +5,20 @@ import { ContactsList } from "@/components/Contacts/ContactsList"
 import { createQueryClient, makeContact, makeTag, renderWithProviders } from "@/test/helpers"
 
 // Use hoisted variables for mocks
-const { mockNavigate, mockUseSearch, mockListContacts, mockListSavedFilters } =
+const {
+  mockNavigate,
+  mockUseSearch,
+  mockListContacts,
+  mockListSavedFilters,
+  mockBulkUpdateContacts,
+} =
   vi.hoisted(() => {
     return {
       mockNavigate: vi.fn(),
       mockUseSearch: vi.fn(() => ({})),
       mockListContacts: vi.fn(),
       mockListSavedFilters: vi.fn(),
+      mockBulkUpdateContacts: vi.fn(),
     }
   })
 
@@ -34,6 +41,7 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
 vi.mock("@/client", () => ({
   ContactsService: {
     listContacts: mockListContacts,
+    bulkUpdateContacts: mockBulkUpdateContacts,
   },
   SavedFiltersService: {
     listSavedFilters: mockListSavedFilters,
@@ -105,6 +113,7 @@ describe("ContactsList", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockListSavedFilters.mockResolvedValue({ data: [] })
+    mockBulkUpdateContacts.mockResolvedValue({ updated_count: 2 })
     mockNavigate.mockReset()
     mockUseSearch.mockReturnValue({})
   })
@@ -127,6 +136,32 @@ describe("ContactsList", () => {
     })
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument()
     expect(screen.getByTestId("add-contact-dialog")).toBeInTheDocument()
+  })
+
+  it("applies a bulk action to the selected contacts", async () => {
+    const user = userEvent.setup()
+    const contacts = [
+      makeContact({ id: "bulk-1", first_name: "Alice" }),
+      makeContact({ id: "bulk-2", first_name: "Bob" }),
+    ]
+    mockListContacts.mockResolvedValue({ data: contacts, count: contacts.length })
+
+    renderContactsListWithData(contacts)
+
+    await user.click(
+      screen.getByRole("checkbox", { name: "Select all loaded contacts" }),
+    )
+    await user.click(screen.getByRole("button", { name: /Favorite/ }))
+    await user.click(screen.getByRole("button", { name: "Confirm" }))
+
+    await waitFor(() => {
+      expect(mockBulkUpdateContacts).toHaveBeenCalledWith({
+        requestBody: expect.objectContaining({
+          contact_ids: ["bulk-1", "bulk-2"],
+          operations: { set_is_favorite: true },
+        }),
+      })
+    })
   })
 
   it("applies the saved filter to every paginated request", async () => {
@@ -700,7 +735,7 @@ it("exports CSV with the logged-in bearer and preserves the session", async () =
   const { queryClient } = renderContactsListWithData([makeContact({ id: "csv-a" })])
   const user = userEvent.setup()
   await user.click(screen.getByRole("checkbox", { name: "Select all loaded contacts" }))
-  await user.click(screen.getByRole("button", { name: "Export CSV" }))
+  await user.click(screen.getByRole("button", { name: "Export All CSV" }))
   await waitFor(() => expect(createUrl).toHaveBeenCalledOnce())
   expect(new Headers(fetchMock.mock.calls[0][1]?.headers).get("Authorization")).toBe("Bearer csv-token-a")
   expect(click).toHaveBeenCalledOnce()

@@ -17,6 +17,22 @@ it("allows a first visit without a controlling service worker", async () => {
   await expect(ensurePrivateApiWorker()).resolves.toBeUndefined()
 })
 
+it("waits for an installed worker on a cold offline start", async () => {
+  const workers: any = {
+    controller: null,
+    ready: Promise.resolve().then(() => {
+      workers.controller = safeWorker
+      return { active: safeWorker }
+    }),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    register: vi.fn(),
+  }
+  vi.stubGlobal("navigator", { onLine: false, serviceWorker: workers })
+  await expect(ensurePrivateApiWorker()).resolves.toBeUndefined()
+  expect(workers.register).not.toHaveBeenCalled()
+})
+
 it("allows an installed worker only after its NetworkOnly handshake", async () => {
   const register = vi.fn()
   vi.stubGlobal("navigator", { serviceWorker: { controller: safeWorker, register, addEventListener: vi.fn(), removeEventListener: vi.fn() } })

@@ -51,7 +51,9 @@ def list_debts(
         payments = session.exec(payments_stmt).all()
         debt_public.payments = [DebtPaymentPublic.model_validate(p) for p in payments]
         debt_public.paid_amount = sum(p.amount for p in payments)
-        debt_public.is_settled = debt_public.paid_amount >= debt.amount
+        debt_public.is_settled = (
+            debt.is_settled or debt_public.paid_amount >= debt.amount
+        )
         debt_publics.append(debt_public)
 
     return DebtsPublic(
@@ -99,6 +101,8 @@ def update_debt(
     payments_stmt = select(DebtPayment).where(DebtPayment.debt_id == debt.id)
     payments = session.exec(payments_stmt).all()
     debt_public.payments = [DebtPaymentPublic.model_validate(p) for p in payments]
+    debt_public.paid_amount = sum(p.amount for p in payments)
+    debt_public.is_settled = debt.is_settled or debt_public.paid_amount >= debt.amount
 
     return debt_public
 

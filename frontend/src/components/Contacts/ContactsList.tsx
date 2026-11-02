@@ -1,11 +1,16 @@
 import {
+  useQueryClient,
   useSuspenseInfiniteQuery,
   useSuspenseQuery,
 } from "@tanstack/react-query"
 import { Link, useNavigate, useSearch } from "@tanstack/react-router"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "sonner"
-import type { ContactPublic } from "@/client"
+import {
+  type BulkUpdateRequest,
+  type ContactPublic,
+  ContactsService,
+} from "@/client"
 import type { SavedFilterPublic } from "@/client/types.gen"
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
 import { EmptyState } from "@/components/Common/EmptyState"
@@ -45,15 +50,6 @@ type BulkActionId =
   | "delete"
   | "export"
 
-interface BulkContactRequest {
-  operations: {
-    set_is_archived?: boolean
-    set_is_favorite?: boolean
-  }
-  contact_ids?: string[]
-  select_all_filtered?: boolean
-}
-
 interface PreviewModalState {
   open: boolean
   action: BulkActionId | null
@@ -67,7 +63,7 @@ const BULK_ACTIONS = [
   { id: "favorite", label: "Favorite", icon: Star, color: "" },
   { id: "unfavorite", label: "Unfavorite", icon: Star, color: "" },
   { id: "delete", label: "Delete", icon: Trash2, color: "text-destructive" },
-  { id: "export", label: "Export CSV", icon: Users, color: "" },
+  { id: "export", label: "Export All CSV", icon: Users, color: "" },
 ]
 
 function fullName(contact: ContactPublic): string {
@@ -181,6 +177,7 @@ export const ContactsList = () => {
   const seedMutation = useSeedDemo()
 
   const navigate = useNavigate({ from: "/contacts" })
+  const queryClient = useQueryClient()
   const { saved_filter_id: urlFilterId } = useSearch({
     from: "/_layout/contacts/",
   })
@@ -273,27 +270,21 @@ export const ContactsList = () => {
     if (selectAllFiltered) {
       setSelectedIds(new Set())
       setSelectAllFiltered(false)
+      setPreviewModal((prev) => ({ ...prev, count: 0, contacts: [] }))
     } else {
-      // Preview how many contacts would be selected
-      try {
-        // TODO: backend bulk preview endpoint not yet implemented
-        toast.error("Bulk select all is not yet supported")
-        return
-      } catch (_error) {
-        toast.error("Failed to preview contacts")
-      }
+      setSelectedIds(new Set())
+      setSelectAllFiltered(true)
+      setPreviewModal((prev) => ({
+        ...prev,
+        count: totalCount,
+        contacts: allContacts,
+      }))
     }
-  }, [selectAllFiltered])
+  }, [allContacts, selectAllFiltered, totalCount])
 
   const handleExportCsv = useCallback(async () => {
     try {
-      // Build query string
-      const params = new URLSearchParams()
-      if (selectAllFiltered) params.append("select_all_filtered", "true")
-
-      const response = await sessionFetch(
-        `/api/v1/import-export/export/csv?${params.toString()}`,
-      )
+      const response = await sessionFetch("/api/v1/import-export/export/csv")
 
       if (!response.ok) throw new Error("Failed to export CSV")
 
@@ -313,7 +304,7 @@ export const ContactsList = () => {
     } catch (_error) {
       toast.error("Failed to export CSV")
     }
-  }, [selectAllFiltered])
+  }, [])
 
   const handleBulkAction = useCallback(
     async (actionId: BulkActionId) => {
@@ -329,7 +320,7 @@ export const ContactsList = () => {
 
       setIsLoading(true)
       try {
-        const operations: BulkContactRequest["operations"] = {}
+        const operations: BulkUpdateRequest["operations"] = {}
 
         switch (actionId) {
           case "archive":
@@ -349,15 +340,21 @@ export const ContactsList = () => {
             break
         }
 
-        const body: BulkContactRequest = {
+        const body: BulkUpdateRequest = {
           operations,
           select_all_filtered: selectAllFiltered || undefined,
           contact_ids: selectAllFiltered ? undefined : Array.from(selectedIds),
+          saved_filter_id:
+            selectAllFiltered && activeFilterId ? activeFilterId : undefined,
         }
 
-        // TODO: backend bulk update endpoint not yet implemented
-        void body
-        toast.error("Bulk operations are not yet supported")
+        const result = await ContactsService.bulkUpdateContacts({
+          requestBody: body,
+        })
+        toast.success(
+          `${result.updated_count} ${result.updated_count === 1 ? "contact" : "contacts"} updated`,
+        )
+        queryClient.invalidateQueries({ queryKey: ["contacts"] })
 
         // Clear selection
         setSelectedIds(new Set())
@@ -369,7 +366,14 @@ export const ContactsList = () => {
         setPreviewModal({ open: false, action: null, count: 0, contacts: [] })
       }
     },
-    [selectedCount, selectAllFiltered, selectedIds, handleExportCsv],
+    [
+      selectedCount,
+      selectAllFiltered,
+      selectedIds,
+      activeFilterId,
+      queryClient,
+      handleExportCsv,
+    ],
   )
 
   const handlePreviewAction = useCallback(

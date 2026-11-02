@@ -7,10 +7,7 @@ import { leaveSession, onSessionReset } from "./session"
 // `ensureQueryData` into the cache the components read from. A second client
 // would warm a different cache and the components would still suspend.
 const handleApiError = (error: Error) => {
-  if (
-    error instanceof ApiError &&
-    (error.status === 401 || error.status === 403)
-  ) {
+  if (error instanceof ApiError && error.status === 401) {
     leaveSession(cfEnabled() ? "/" : "/login")
   }
 }

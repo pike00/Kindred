@@ -97,3 +97,31 @@ def test_unshared_user_cannot_update_or_delete_other_users_debt(
 
     response = client.delete(f"{settings.API_V1_STR}/debts/{debt_id}", headers=bob_h)
     assert response.status_code == 404
+
+
+def test_settled_debt_remains_settled_without_payment_rows(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
+    contact_id = _create_contact(client, superuser_token_headers)
+    response = client.post(
+        f"{settings.API_V1_STR}/debts/",
+        headers=superuser_token_headers,
+        json={
+            "contact_id": contact_id,
+            "direction": "they_owe",
+            "amount": 42.5,
+            "reason": "Paid in cash",
+            "is_settled": True,
+            "settled_at": "2026-11-01",
+        },
+    )
+    assert response.status_code == 200
+
+    listed = client.get(
+        f"{settings.API_V1_STR}/debts/contact/{contact_id}",
+        headers=superuser_token_headers,
+    )
+    assert listed.status_code == 200
+    debt = listed.json()["data"][0]
+    assert debt["is_settled"] is True
+    assert debt["paid_amount"] == 0

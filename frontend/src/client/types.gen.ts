@@ -228,6 +228,7 @@ export type BulkOperations = {
 export type BulkUpdateRequest = {
     contact_ids?: (Array<(string)> | null);
     select_all_filtered?: boolean;
+    saved_filter_id?: (string | null);
     filters?: (BulkFilters | null);
     operations: BulkOperations;
     limit?: number;

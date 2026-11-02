@@ -983,6 +983,18 @@ export const BulkUpdateRequestSchema = {
             title: 'Select All Filtered',
             default: false
         },
+        saved_filter_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'uuid'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Saved Filter Id'
+        },
         filters: {
             anyOf: [
                 {

@@ -1,13 +1,12 @@
 import { useSuspenseQuery } from "@tanstack/react-query"
 // @ts-expect-error
 import L from "leaflet"
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useMemo, useRef, useState } from "react"
 import {
   MapContainer as MapContainerBase,
   Marker as MarkerBase,
   Popup as PopupBase,
   TileLayer as TileLayerBase,
-  useMap,
   useMapEvent,
 } from "react-leaflet"
 
@@ -137,41 +136,30 @@ function ContactMarker({ point }: ContactMarkerProps) {
   )
 }
 
-// Component to update map view when center/zoom changes
-function ChangeView({
-  center,
-  zoom,
-}: {
-  center: [number, number]
-  zoom: number
-}) {
-  const map = useMap()
-  useEffect(() => {
-    map.setView(center, zoom)
-  }, [center, zoom, map])
-  return null
-}
-
 // Component to track map bounds for filtering
 function MapBoundsTracker({
   onBoundsChange,
 }: {
-  onBoundsChange: (bounds: MapBounds) => void
+  onBoundsChange: (bounds: MapBounds, zoom: number) => void
 }) {
   const map = useMapEvent("moveend", () => {
     const bounds = map.getBounds()
-    onBoundsChange({
-      minLat: bounds.getSouth(),
-      maxLat: bounds.getNorth(),
-      minLng: bounds.getWest(),
-      maxLng: bounds.getEast(),
-    })
+    onBoundsChange(
+      {
+        minLat: bounds.getSouth(),
+        maxLat: bounds.getNorth(),
+        minLng: bounds.getWest(),
+        maxLng: bounds.getEast(),
+      },
+      map.getZoom(),
+    )
   })
   return null
 }
 
 export function ContactsMap({ bounds: initialBounds }: ContactsMapProps) {
   const [bounds, setBounds] = useState<MapBounds>(initialBounds || {})
+  const [zoom, setZoom] = useState(initialBounds ? 10 : 4)
   const mapRef = useRef<L.Map | null>(null)
 
   const { data } = useSuspenseQuery(contactsGeoQueryOptions(bounds))
@@ -210,51 +198,54 @@ export function ContactsMap({ bounds: initialBounds }: ContactsMapProps) {
 
   // Get clusters for current map view
   const clusters = useMemo(() => {
-    if (!clusterIndex || !mapRef.current) return []
-
-    const map = mapRef.current
-    const zoom = map.getZoom()
-    const bounds = map.getBounds()
+    if (
+      !clusterIndex ||
+      bounds.minLng === undefined ||
+      bounds.minLat === undefined ||
+      bounds.maxLng === undefined ||
+      bounds.maxLat === undefined
+    )
+      return []
     const bbox: [number, number, number, number] = [
-      bounds.getWest(),
-      bounds.getSouth(),
-      bounds.getEast(),
-      bounds.getNorth(),
+      bounds.minLng,
+      bounds.minLat,
+      bounds.maxLng,
+      bounds.maxLat,
     ]
 
     return clusterIndex.getClusters(bbox, Math.round(zoom))
-  }, [clusterIndex])
+  }, [clusterIndex, bounds, zoom])
 
   // Default center (US center) if no points
   const defaultCenter: [number, number] = [39.8283, -98.5795]
   const defaultZoom = 4
 
-  // Calculate center from points if available
-  const center: [number, number] =
-    points.length > 0
+  const initialCenter: [number, number] =
+    initialBounds?.minLat !== undefined &&
+    initialBounds.maxLat !== undefined &&
+    initialBounds.minLng !== undefined &&
+    initialBounds.maxLng !== undefined
       ? [
-          points.reduce((sum, p) => sum + p.latitude, 0) / points.length,
-          points.reduce((sum, p) => sum + p.longitude, 0) / points.length,
+          (initialBounds.minLat + initialBounds.maxLat) / 2,
+          (initialBounds.minLng + initialBounds.maxLng) / 2,
         ]
       : defaultCenter
 
-  const zoom = points.length > 0 ? 10 : defaultZoom
-
-  const handleBoundsChange = (newBounds: MapBounds) => {
+  const handleBoundsChange = (newBounds: MapBounds, newZoom: number) => {
     setBounds(newBounds)
+    setZoom(newZoom)
   }
 
   return (
     <div className="h-[600px] w-full rounded-lg overflow-hidden border relative">
       <MapContainer
-        center={center}
-        zoom={zoom}
+        center={initialCenter}
+        zoom={initialBounds ? 10 : defaultZoom}
         className="h-full w-full"
         ref={(map: any) => {
           if (map) mapRef.current = map
         }}
       >
-        <ChangeView center={center} zoom={zoom} />
         <MapBoundsTracker onBoundsChange={handleBoundsChange} />
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
