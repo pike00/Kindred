@@ -1,8 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
+import { IDBFactory } from "fake-indexeddb"
 import { screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { renderWithProviders } from "@/test/helpers"
 import { NotesCard } from "@/components/Notes/NotesCard"
+
+vi.stubGlobal("indexedDB", new IDBFactory())
 
 // Mock API client services
 const mockListNotes = vi.hoisted(() => vi.fn())
@@ -149,8 +152,11 @@ describe("NotesCard", () => {
     ],
   }
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks()
+    const session = await import("@/lib/session")
+    session.resetSession()
+    session.acceptIdentity(`test-account-${crypto.randomUUID()}`)
     mockShowSuccessToast.mockClear()
     mockShowErrorToast.mockClear()
     mockListNotes.mockResolvedValue({ data: [] })
@@ -240,10 +246,11 @@ describe("NotesCard", () => {
     await waitFor(() => {
       expect(mockCreateNote).toHaveBeenCalledWith(
         expect.objectContaining({
-          requestBody: {
+          requestBody: expect.objectContaining({
             contact_id: "c1",
             body: "Test note text",
-          },
+            client_id: expect.any(String),
+          }),
         }),
       )
     })
@@ -284,7 +291,7 @@ describe("NotesCard", () => {
     })
   })
 
-  it("shows error toast when note creation fails", async () => {
+  it("preserves a failed note in the outbox", async () => {
     const user = userEvent.setup()
     mockListNotes.mockResolvedValueOnce({ data: [] })
     mockCreateNote.mockRejectedValueOnce(new Error("Network error"))
@@ -298,11 +305,13 @@ describe("NotesCard", () => {
     await user.click(submitBtn)
 
     await waitFor(() => {
-      expect(mockShowErrorToast).toHaveBeenCalledWith("Network error")
+      expect(mockCreateNote).toHaveBeenCalled()
+      expect(screen.getByText(/1 pending draft/)).toBeInTheDocument()
     })
+    expect(mockShowErrorToast).not.toHaveBeenCalled()
   })
 
-  it("uses fallback message when note creation rejects with non-Error value", async () => {
+  it("preserves a non-Error sync failure in the outbox", async () => {
     const user = userEvent.setup()
     mockListNotes.mockResolvedValueOnce({ data: [] })
     mockCreateNote.mockRejectedValueOnce("plain-string")
@@ -316,8 +325,10 @@ describe("NotesCard", () => {
     await user.click(submitBtn)
 
     await waitFor(() => {
-      expect(mockShowErrorToast).toHaveBeenCalledWith("Failed to save note")
+      expect(mockCreateNote).toHaveBeenCalled()
+      expect(screen.getByText(/1 pending draft/)).toBeInTheDocument()
     })
+    expect(mockShowErrorToast).not.toHaveBeenCalled()
   })
 
   it("disables submit button when textarea is empty", async () => {
@@ -904,10 +915,11 @@ describe("NotesCard", () => {
     await waitFor(() => {
       expect(mockCreateNote).toHaveBeenCalledWith(
         expect.objectContaining({
-          requestBody: {
+          requestBody: expect.objectContaining({
             contact_id: "c1",
             body: "Test note with spaces",
-          },
+            client_id: expect.any(String),
+          }),
         }),
       )
     })
@@ -987,7 +999,7 @@ describe("NotesCard", () => {
   })
 })
 
-it("syncs only the verified account's draft to its original contact", async () => {
+it("syncs every verified account draft to its original contact", async () => {
   const { IDBFactory } = await import("fake-indexeddb")
   vi.stubGlobal("indexedDB", new IDBFactory())
   const session = await import("@/lib/session")
@@ -1004,10 +1016,13 @@ it("syncs only the verified account's draft to its original contact", async () =
   await waitFor(() => expect(mockCreateNote).toHaveBeenCalledWith({
     requestBody: { contact_id: "contact-current", body: "account B note", client_id: "current-b" },
   }))
-  expect(mockCreateNote).toHaveBeenCalledOnce()
+  expect(mockCreateNote).toHaveBeenCalledWith({
+    requestBody: { contact_id: "contact-other", body: "another contact", client_id: "other-contact" },
+  })
+  expect(mockCreateNote).toHaveBeenCalledTimes(2)
   view.unmount()
   const pending = await db.getPendingDrafts()
-  expect(pending.map((draft) => draft.id)).toEqual(["other-contact"])
+  expect(pending).toEqual([])
   session.resetSession()
   session.acceptIdentity("account-a")
   expect((await db.getPendingDrafts()).map((draft) => draft.id)).toEqual(["private-a"])

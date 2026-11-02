@@ -7,6 +7,7 @@ import { ThemeProvider } from "./components/theme-provider"
 import { ShortcutRegistryProvider } from "./hooks/useKeyboardShortcuts"
 import "./index.css"
 import PagePending from "./components/Common/PagePending"
+import { startNoteOutbox } from "./lib/note-outbox"
 import { queryClient } from "./lib/queryClient"
 import { ensurePrivateApiWorker } from "./lib/service-worker-session"
 import {
@@ -37,6 +38,7 @@ OpenAPI.TOKEN = async () => {
 }
 installSessionApi()
 listenForSessionChanges()
+startNoteOutbox()
 
 const router = createRouter({
   routeTree,

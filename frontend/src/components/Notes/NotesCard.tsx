@@ -27,17 +27,12 @@ import { Skeleton } from "@/components/ui/skeleton"
 import useCustomToast from "@/hooks/useCustomToast"
 import { NotebookPen, Pencil, RefreshCw, Trash2, WifiOff } from "@/lib/icons"
 import {
-  addDraft,
-  generateUUID,
-  getPendingDrafts,
-  markDraftError,
-  markDraftSynced,
-  type OfflineDraft,
-} from "@/lib/offline-db"
+  enqueueNote,
+  subscribeNoteOutbox,
+  syncNoteOutbox,
+} from "@/lib/note-outbox"
+import { getPendingDrafts, type OfflineDraft } from "@/lib/offline-db"
 import {
-  assertSession,
-  captureSession,
-  currentAccountId,
   getVerifiedAccountId,
   onIdentityChange,
   SessionChangedError,
@@ -53,15 +48,36 @@ export function QuickCapture({ contactId }: { contactId: string }) {
   const [body, setBody] = useState("")
   const [isOffline, setIsOffline] = useState(!navigator.onLine)
   const [pendingDrafts, setPendingDrafts] = useState<OfflineDraft[]>([])
-  const queryClient = useQueryClient()
   const { showErrorToast, showSuccessToast } = useCustomToast()
   const errorToast = useRef(showErrorToast)
   errorToast.current = showErrorToast
-  const syncing = useRef(false)
+
+  const refreshPendingDrafts = useCallback(async () => {
+    if (!ownerId) {
+      setPendingDrafts([])
+      return
+    }
+    try {
+      const drafts = await getPendingDrafts()
+      setPendingDrafts(drafts.filter((draft) => draft.contactId === contactId))
+    } catch (error) {
+      if (!(error instanceof SessionChangedError)) {
+        errorToast.current(
+          error instanceof Error
+            ? error.message
+            : "Offline drafts are unavailable.",
+        )
+      }
+    }
+  }, [contactId, ownerId])
 
   // Monitor online/offline status
   useEffect(() => {
-    const handleOnline = () => setIsOffline(false)
+    const handleOnline = () => {
+      setIsOffline(false)
+      void syncNoteOutbox().catch(() => {})
+      void refreshPendingDrafts()
+    }
     const handleOffline = () => setIsOffline(true)
     window.addEventListener("online", handleOnline)
     window.addEventListener("offline", handleOffline)
@@ -69,115 +85,67 @@ export function QuickCapture({ contactId }: { contactId: string }) {
       window.removeEventListener("online", handleOnline)
       window.removeEventListener("offline", handleOffline)
     }
+  }, [refreshPendingDrafts])
+
+  // Load the account-wide outbox and keep this contact's view in sync.
+  useEffect(() => {
+    if (!ownerId) {
+      setPendingDrafts([])
+      return
+    }
+    void refreshPendingDrafts()
+    void syncNoteOutbox().catch((error: unknown) => {
+      if (!(error instanceof SessionChangedError) && import.meta.env.DEV) {
+        console.error(error)
+      }
+    })
+    const unsubscribe = subscribeNoteOutbox(() => void refreshPendingDrafts())
+    return () => {
+      unsubscribe()
+    }
+  }, [ownerId, refreshPendingDrafts])
+
+  useEffect(() => {
+    if (localStorage.getItem("kindred-legacy-drafts-quarantined")) {
+      localStorage.removeItem("kindred-legacy-drafts-quarantined")
+      errorToast.current(
+        "Older offline drafts were set aside because their account could not be verified. They will not sync automatically.",
+      )
+    }
   }, [])
 
-  // Load pending drafts
-  useEffect(() => {
-    if (!ownerId) return
-    let mounted = true
-    getPendingDrafts()
-      .then((drafts) => {
-        if (mounted)
-          setPendingDrafts(
-            drafts.filter((draft) => draft.contactId === contactId),
-          )
-        if (localStorage.getItem("kindred-legacy-drafts-quarantined")) {
-          localStorage.removeItem("kindred-legacy-drafts-quarantined")
-          errorToast.current(
-            "Older offline drafts were set aside because their account could not be verified. They will not sync automatically.",
-          )
-        }
-      })
-      .catch((error: unknown) => {
-        if (mounted && !(error instanceof SessionChangedError)) {
-          errorToast.current(
-            error instanceof Error
-              ? error.message
-              : "Offline drafts are unavailable.",
-          )
-        }
-      })
-    return () => {
-      mounted = false
-    }
-  }, [contactId, ownerId])
-
   const syncMutation = useMutation({
-    mutationFn: async (draft: OfflineDraft) => {
-      if (draft.ownerId !== currentAccountId())
-        throw new Error("Draft belongs to another account")
-      const session = captureSession()
-      await NotesService.createNoteRoute({
-        requestBody: {
-          contact_id: draft.contactId,
-          body: draft.body,
-          client_id: draft.id,
-        },
-      })
-      assertSession(session)
-      return { draft }
-    },
-    onSuccess: async ({ draft }) => {
-      await markDraftSynced(draft.id)
-      setPendingDrafts((prev) => prev.filter((d) => d.id !== draft.id))
-      queryClient.invalidateQueries({ queryKey: ["notes", contactId] })
-    },
-    onError: (err, variables) => {
-      if (
-        !(err instanceof SessionChangedError) &&
-        variables?.ownerId === getVerifiedAccountId()
-      ) {
-        markDraftError(
-          (variables as OfflineDraft).id,
-          err instanceof Error ? err.message : "Sync failed",
-        ).catch(console.error)
+    mutationFn: () => syncNoteOutbox({ force: true }),
+    onSettled: () => refreshPendingDrafts(),
+    onError: (error) => {
+      if (!(error instanceof SessionChangedError)) {
+        showErrorToast(
+          error instanceof Error ? error.message : "Failed to sync notes",
+        )
       }
     },
   })
 
-  const syncDraft = syncMutation.mutateAsync
-  const syncAllPending = useCallback(async () => {
-    if (syncing.current) return
-    syncing.current = true
-    try {
-      const session = captureSession()
-      const drafts = await getPendingDrafts()
-      for (const draft of drafts) {
-        assertSession(session)
-        if (draft.contactId === contactId) await syncDraft(draft)
-      }
-    } finally {
-      syncing.current = false
-    }
-  }, [syncDraft, contactId])
-
   const mutation = useMutation({
     mutationFn: async (text: string) => {
-      // Try online first, fall back to offline draft
-      if (navigator.onLine) {
-        return NotesService.createNoteRoute({
-          requestBody: { contact_id: contactId, body: text },
-        })
-      }
-      // Offline: save to IndexedDB
-      const draft = await addDraft({
-        id: generateUUID(),
-        contactId,
-        body: text,
-        createdAt: new Date().toISOString(),
-      })
-      setPendingDrafts((prev) => [...prev, draft])
-      return null
+      if (!getVerifiedAccountId()) throw new SessionChangedError()
+      return enqueueNote(contactId, text)
     },
-    onSuccess: (data) => {
-      if (data) {
-        setBody("")
-        queryClient.invalidateQueries({ queryKey: ["notes", contactId] })
-      } else {
-        // Offline draft was saved
-        setBody("")
-        showSuccessToast("Note saved offline. Will sync when online.")
-      }
+    onSuccess: (draft) => {
+      setBody("")
+      void refreshPendingDrafts()
+      showSuccessToast(
+        isOffline
+          ? "Note saved offline. Will sync when online."
+          : "Note saved. Syncing…",
+      )
+      void syncNoteOutbox({ force: true, ids: [draft.id] }).catch(
+        (error: unknown) => {
+          if (!(error instanceof SessionChangedError) && import.meta.env.DEV) {
+            console.error(error)
+          }
+        },
+      )
     },
     onError: (err) =>
       showErrorToast(
@@ -188,12 +156,11 @@ export function QuickCapture({ contactId }: { contactId: string }) {
   // Auto-sync when coming back online
   useEffect(() => {
     if (!isOffline && pendingDrafts.length > 0) {
-      void syncAllPending().catch(() => {})
+      void syncNoteOutbox().catch(() => {})
     }
-  }, [isOffline, syncAllPending, pendingDrafts.length])
+  }, [isOffline, pendingDrafts.length])
   const trimmed = body.trim()
-  const canSave =
-    trimmed.length > 0 && !mutation.isPending && (!isOffline || !!ownerId)
+  const canSave = trimmed.length > 0 && !mutation.isPending && !!ownerId
 
   return (
     <div className="space-y-2">
@@ -207,7 +174,7 @@ export function QuickCapture({ contactId }: { contactId: string }) {
             size="sm"
             variant="outline"
             loading={syncMutation.isPending}
-            onClick={syncAllPending}
+            onClick={() => syncMutation.mutate()}
           >
             <RefreshCw className="size-3 mr-1" /> Sync now
           </LoadingButton>

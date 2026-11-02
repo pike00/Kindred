@@ -8,6 +8,9 @@ export interface OfflineDraft {
   createdAt: string
   syncedAt?: string
   error?: string
+  attempts?: number
+  lastAttemptAt?: string
+  nextAttemptAt?: string
 }
 
 const DB_NAME = "kindred-offline"
@@ -115,7 +118,16 @@ export function getAllDrafts(): Promise<OfflineDraft[]> {
 
 export async function getPendingDrafts(): Promise<OfflineDraft[]> {
   // Missing syncedAt values have no index entry; enumerate the owner's records.
-  return (await getAllDrafts()).filter((draft) => !draft.syncedAt)
+  return (await getAllDrafts())
+    .filter((draft) => !draft.syncedAt)
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+}
+
+export function getDraft(id: string): Promise<OfflineDraft | undefined> {
+  return withStore("readonly", (store, ownerId, done) => {
+    const request = store.get([ownerId, id])
+    request.onsuccess = () => done(request.result as OfflineDraft | undefined)
+  })
 }
 
 function updateDraft(
@@ -148,6 +160,39 @@ export function markDraftSynced(
 export function markDraftError(id: string, error: string): Promise<void> {
   return updateDraft(id, (draft) => {
     draft.error = error
+  })
+}
+
+export function markDraftAttempt(
+  id: string,
+  {
+    error,
+    attempts,
+    attemptedAt,
+    nextAttemptAt,
+  }: {
+    error: string
+    attempts: number
+    attemptedAt: string
+    nextAttemptAt: string
+  },
+): Promise<void> {
+  return updateDraft(id, (draft) => {
+    draft.error = error
+    draft.attempts = attempts
+    draft.lastAttemptAt = attemptedAt
+    draft.nextAttemptAt = nextAttemptAt
+  })
+}
+
+/** Remove only the current account's drafts; used for tests and resets. */
+export function clearDrafts(): Promise<void> {
+  return withStore("readwrite", (store, ownerId, done) => {
+    const request = store.index("ownerId").getAllKeys(ownerId)
+    request.onsuccess = () => {
+      for (const key of request.result) store.delete(key)
+      done(undefined)
+    }
   })
 }
 
