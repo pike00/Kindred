@@ -3,7 +3,7 @@
 import hashlib
 import hmac
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import phonenumbers
@@ -35,6 +35,7 @@ from app.models import (
 router = APIRouter(prefix="/webhooks", tags=["webhooks"])
 
 RedisDep = Depends(lambda: Redis.from_url(f"{settings.REDIS_URL}/0"))
+_DELIVERY_CLAIM_TTL = timedelta(minutes=5)
 
 
 # ─── Twilio Helpers ────────────────────────────────────────────────────
@@ -77,18 +78,32 @@ def _claim_delivery(
     webhook_id: uuid.UUID,
     delivery_id: str,
 ) -> tuple[WebhookDelivery, bool]:
+    now = datetime.now(timezone.utc)
     existing = session.exec(
-        select(WebhookDelivery).where(
+        select(WebhookDelivery)
+        .where(
             WebhookDelivery.webhook_id == webhook_id,
             WebhookDelivery.delivery_id == delivery_id,
         )
+        .with_for_update()
     ).first()
     if existing is not None:
+        if (
+            existing.interaction_id is None
+            and existing.claimed_at <= now - _DELIVERY_CLAIM_TTL
+        ):
+            existing.claimed_at = now
+            session.add(existing)
+            session.commit()
+            session.refresh(existing)
+            return existing, True
+        session.commit()
         return existing, False
 
     delivery = WebhookDelivery(
         webhook_id=webhook_id,
         delivery_id=delivery_id,
+        claimed_at=now,
     )
     session.add(delivery)
     try:

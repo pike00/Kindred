@@ -6,12 +6,19 @@ import hashlib
 import hmac
 import json
 import uuid
+from datetime import datetime, timedelta, timezone
 
 from fastapi.testclient import TestClient
 from sqlmodel import Session, select
 
 from app.api.routes.webhooks import _compute_twilio_signature
-from app.models import Contact, ContactField, ContactFieldType, Interaction
+from app.models import (
+    Contact,
+    ContactField,
+    ContactFieldType,
+    Interaction,
+    WebhookDelivery,
+)
 
 
 def _create_webhook(
@@ -184,6 +191,56 @@ def test_generic_inbound_requires_signature_and_deduplicates(
     assert first.status_code == 200
     assert second.status_code == 200
     assert second.json()["interaction_id"] == first.json()["interaction_id"]
+
+
+def test_stale_incomplete_delivery_claim_can_retry(
+    client: TestClient,
+    session: Session,
+    api_key_headers: dict[str, str],
+) -> None:
+    webhook = _create_webhook(client, api_key_headers, name="Lease recovery")
+    contact = Contact(owner_id=webhook["owner_id"], first_name="Lease")
+    session.add(contact)
+    session.commit()
+    session.refresh(contact)
+    session.add(
+        ContactField(
+            contact_id=contact.id,
+            field_type=ContactFieldType.EMAIL,
+            label="home",
+            value="lease-recovery@example.com",
+        )
+    )
+    session.commit()
+
+    payload = {
+        "event_id": f"event-{uuid.uuid4().hex}",
+        "contact_email": "lease-recovery@example.com",
+        "channel": "call",
+        "notes": "recovered after a failed attempt",
+    }
+    body = json.dumps(payload, separators=(",", ":"))
+    delivery = WebhookDelivery(
+        webhook_id=uuid.UUID(webhook["id"]),
+        delivery_id=payload["event_id"],
+        claimed_at=datetime.now(timezone.utc) - timedelta(minutes=10),
+    )
+    session.add(delivery)
+    session.commit()
+
+    response = client.post(
+        f"/api/v1/webhooks/inbound/{webhook['api_key']}",
+        content=body,
+        headers={
+            "Content-Type": "application/json",
+            "X-Webhook-Signature": _inbound_signature("test-secret", body),
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    assert response.json()["matched"] is True
+    session.refresh(delivery)
+    assert delivery.interaction_id is not None
 
 
 def test_webhook_update_does_not_clear_existing_secret(
