@@ -8,7 +8,7 @@ from radicale import item as radicale_item
 from sqlmodel import Session, select
 
 from app.carddav.storage import Collection
-from app.models import Contact, ContactSource, User
+from app.models import Address, Contact, ContactField, ContactSource, User
 
 
 class _SessionStorage:
@@ -35,6 +35,7 @@ UID:new-carddav-contact@example.com
 FN:CardDAV Person
 N:Person;CardDAV;;;
 EMAIL;TYPE=HOME:carddav@example.com
+ADR;TYPE=HOME:;;123 Main St;Chicago;IL;60601;USA
 END:VCARD"""
     uploaded = radicale_item.Item(
         collection_path=collection.path,
@@ -52,8 +53,24 @@ END:VCARD"""
     assert stored[0].last_name == "Person"
     assert stored[0].source == ContactSource.CARDDAV
     assert stored[0].source_external_id == "new-carddav-contact@example.com"
+    assert stored[0].vcard_href == "new-carddav-contact.vcf"
     assert stored[0].vcard_sha256
+
+    fields = db.exec(
+        select(ContactField).where(ContactField.contact_id == stored[0].id)
+    ).all()
+    assert any(field.value == "carddav@example.com" for field in fields)
+    addresses = db.exec(
+        select(Address).where(Address.contact_id == stored[0].id)
+    ).all()
+    assert len(addresses) == 1
+    assert addresses[0].city == "Chicago"
+
+    round_trip = list(collection.get_multi(["new-carddav-contact.vcf"]))
+    assert round_trip[0][1] is not None
+    assert "FN:CardDAV Person" in round_trip[0][1].serialize()
 
     items = list(collection.get_all())
     assert len(items) == 1
     assert "FN:CardDAV Person" in items[0].serialize()
+    assert items[0].href == "new-carddav-contact.vcf"
