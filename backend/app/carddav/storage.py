@@ -310,7 +310,8 @@ class Collection(BaseCollection):
 
             contact = _find_contact_by_href(session, user=user, href=href)
             if contact:
-                session.delete(contact)
+                contact.deleted_at = datetime.now(timezone.utc)
+                session.add(contact)
                 session.commit()
 
     def get_meta(self, key: str | None = None):

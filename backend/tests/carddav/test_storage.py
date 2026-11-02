@@ -132,3 +132,38 @@ END:VCARD"""
     restored = db.exec(select(Contact).where(Contact.owner_id == user.id)).one()
     assert restored.deleted_at is None
     assert restored.vcard_href == "soft-delete-carddav.vcf"
+
+
+def test_carddav_delete_soft_deletes_and_can_restore(
+    db: Session,
+    user: User,
+) -> None:
+    collection = Collection(
+        _SessionStorage(db),
+        path=f"{user.email}/contacts",
+        user=str(user.email),
+    )
+    vcard = """BEGIN:VCARD
+VERSION:3.0
+UID:delete-carddav@example.com
+FN:CardDAV Delete
+N:Delete;CardDAV;;;
+END:VCARD"""
+    uploaded = radicale_item.Item(
+        collection_path=collection.path,
+        text=vcard,
+        href="delete-carddav.vcf",
+        etag='"delete-etag"',
+        uid="delete-carddav@example.com",
+    )
+
+    collection.upload("delete-carddav.vcf", uploaded)
+    collection.delete("delete-carddav.vcf")
+
+    contact = db.exec(select(Contact).where(Contact.owner_id == user.id)).one()
+    assert contact.deleted_at is not None
+    assert list(collection.get_all()) == []
+
+    collection.upload("delete-carddav.vcf", uploaded)
+    db.refresh(contact)
+    assert contact.deleted_at is None
