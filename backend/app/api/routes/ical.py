@@ -1,5 +1,6 @@
 """iCal importer routes for uploading and confirming calendar event imports."""
 
+import uuid
 from datetime import date, datetime, timezone
 from typing import Any
 
@@ -9,6 +10,7 @@ from icalendar import Calendar, Event
 from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
+from app.crud import visible_contact_ids
 from app.models import (
     Contact,
     ContactField,
@@ -233,11 +235,13 @@ def _match_attendee_to_contacts(
     cn = attendee.get("cn")
 
     # First pass: exact email match
-    if email:
+    contact_ids = [contact.id for contact in contacts]
+    if email and contact_ids:
         contact_fields = session.exec(
             select(ContactField)
             .where(ContactField.field_type == ContactFieldType.EMAIL)
             .where(ContactField.value == email)
+            .where(ContactField.contact_id.in_(contact_ids))
         ).all()
 
         for cf in contact_fields:
@@ -401,6 +405,11 @@ async def confirm_ical_import(
 
     # Track processed UIDs to avoid duplicates within this request
     processed_uids: set[str] = set()
+    visible_ids = set(
+        session.exec(
+            select(Contact.id).where(Contact.id.in_(visible_contact_ids(current_user)))
+        ).all()
+    )
 
     for prop in proposals:
         uid = prop.get("uid")
@@ -411,10 +420,6 @@ async def confirm_ical_import(
             skipped_duplicates += 1
             continue
 
-        # Check if this UID was already imported
-        if uid and uid in processed_uids:
-            skipped_duplicates += 1
-            continue
         if uid:
             existing = session.exec(
                 select(IcalImportLog).where(
@@ -440,13 +445,29 @@ async def confirm_ical_import(
             continue
 
         # Get confirmed contact IDs
-        contact_ids = []
+        contact_ids: list[uuid.UUID] = []
+        inaccessible_contact = False
         for att_match in prop.get("attendees", []):
             # Use the first confirmed match, or the user-selected one
             matches = att_match.get("matches", [])
             if matches:
                 # Use the first match (highest confidence)
-                contact_ids.append(matches[0]["contact_id"])
+                try:
+                    contact_id = uuid.UUID(str(matches[0]["contact_id"]))
+                except (KeyError, TypeError, ValueError):
+                    inaccessible_contact = True
+                    break
+                if contact_id not in visible_ids:
+                    inaccessible_contact = True
+                    break
+                if contact_id not in contact_ids:
+                    contact_ids.append(contact_id)
+
+        if inaccessible_contact:
+            errors.append(
+                f"Contact not accessible for event: {prop.get('summary', 'Unknown')}"
+            )
+            continue
 
         if not contact_ids:
             errors.append(
@@ -476,8 +497,7 @@ async def confirm_ical_import(
                     notes="\n\n".join(notes_parts) if notes_parts else None,
                 )
                 session.add(interaction)
-                session.commit()
-                session.refresh(interaction)
+                session.flush()
 
                 # Add attendees
                 from app.models import InteractionAttendee
