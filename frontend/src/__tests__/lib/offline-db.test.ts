@@ -3,6 +3,7 @@ import { beforeEach, expect, it, vi } from "vitest"
 
 beforeEach(() => {
   vi.resetModules()
+  vi.unstubAllEnvs()
   vi.stubGlobal("indexedDB", new IDBFactory())
   localStorage.clear()
 })
@@ -18,6 +19,18 @@ it("restores a verified identity for the same bearer across an offline relaunch"
   localStorage.setItem("access_token", "token-b")
   session.resetSession()
   expect(session.getVerifiedAccountId()).toBeNull()
+})
+
+it("restores a verified identity across an offline cookie-auth relaunch", async () => {
+  vi.stubEnv("VITE_AUTH_MODE", "oidc")
+  const session = await import("@/lib/session")
+  session.acceptIdentity("account-a")
+
+  session.resetSession()
+  expect(session.getVerifiedAccountId()).toBe("account-a")
+
+  session.acceptIdentity("account-b")
+  expect(session.getVerifiedAccountId()).toBe("account-b")
 })
 
 it("keeps drafts with their verified owner across logout and account switching", async () => {

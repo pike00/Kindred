@@ -13,6 +13,11 @@ const identityListeners = new Set<() => void>()
 const SESSION_EVENT = "kindred-session-change"
 const VERIFIED_IDENTITY_KEY = "kindred_verified_identity_v1"
 
+function cookieAuthEnabled(): boolean {
+  const authMode = import.meta.env.VITE_AUTH_MODE
+  return authMode === "oidc" || authMode === "both"
+}
+
 export class SessionChangedError extends Error {
   constructor() {
     super("The authenticated session changed. Please try again.")
@@ -55,31 +60,38 @@ function clearPersistedIdentity(): void {
 }
 
 function persistIdentity(owner: string): void {
-  if (typeof localStorage === "undefined" || !credential) return
-  localStorage.setItem(
-    VERIFIED_IDENTITY_KEY,
-    JSON.stringify({
-      fingerprint: credentialFingerprint(credential),
-      ownerId: owner,
-    }),
-  )
+  if (typeof localStorage === "undefined") return
+  const persisted = credential
+    ? {
+        kind: "bearer",
+        fingerprint: credentialFingerprint(credential),
+        ownerId: owner,
+      }
+    : cookieAuthEnabled()
+      ? { kind: "cookie", ownerId: owner }
+      : null
+  if (!persisted) return
+  localStorage.setItem(VERIFIED_IDENTITY_KEY, JSON.stringify(persisted))
 }
 
 function hydratePersistedIdentity(): void {
   if (ownerId || typeof localStorage === "undefined") return
   const token = localStorage.getItem("access_token")
-  if (!token) return
   const serialized = localStorage.getItem(VERIFIED_IDENTITY_KEY)
   if (!serialized) return
   try {
     const persisted = JSON.parse(serialized) as {
+      kind?: unknown
       fingerprint?: unknown
       ownerId?: unknown
     }
     if (
-      persisted.fingerprint === credentialFingerprint(token) &&
       typeof persisted.ownerId === "string" &&
-      persisted.ownerId
+      persisted.ownerId &&
+      ((token &&
+        persisted.kind === "bearer" &&
+        persisted.fingerprint === credentialFingerprint(token)) ||
+        (!token && cookieAuthEnabled() && persisted.kind === "cookie"))
     ) {
       ownerId = persisted.ownerId
       return
@@ -161,8 +173,14 @@ export function onIdentityChange(listener: () => void) {
 export function acceptIdentity(id: string): void {
   assertCredential()
   if (ownerId && ownerId !== id) {
-    leaveSession("/")
-    throw new SessionChangedError()
+    if (credential || !cookieAuthEnabled()) {
+      leaveSession("/")
+      throw new SessionChangedError()
+    }
+    ownerId = id
+    persistIdentity(id)
+    for (const listener of identityListeners) listener()
+    return
   }
   ownerId = id
   persistIdentity(id)
