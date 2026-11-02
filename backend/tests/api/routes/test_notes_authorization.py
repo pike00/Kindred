@@ -26,10 +26,7 @@ def test_note_client_id_metadata_is_owner_scoped() -> None:
         "client_id",
     ]
     assert all(
-        not (
-            column.name == "client_id"
-            and column.unique
-        )
+        not (column.name == "client_id" and column.unique)
         for column in Note.__table__.columns
     )
 
@@ -126,6 +123,33 @@ def test_contact_mentions_do_not_expose_other_users_notes(
     response = client.get(
         f"{API}/contacts/{bob.id}/mentions",
         headers=mallory_headers,
+    )
+
+    assert response.status_code == 200
+    assert response.json() == []
+
+
+def test_contact_mentions_hide_notes_whose_source_contact_is_not_visible(
+    client: TestClient,
+    db: Session,
+) -> None:
+    note_owner = create_random_user(db)
+    other_owner = create_random_user(db)
+    mentioned = _contact(db, note_owner, "Mentioned")
+    foreign_source = _contact(db, other_owner, "Foreign source")
+    note = Note(
+        body="stale cross-owner note",
+        contact_id=foreign_source.id,
+        owner_id=note_owner.id,
+    )
+    db.add(note)
+    db.flush()
+    db.add(NoteMention(note_id=note.id, contact_id=mentioned.id))
+    db.commit()
+
+    response = client.get(
+        f"{API}/contacts/{mentioned.id}/mentions",
+        headers=_headers(client, db, note_owner),
     )
 
     assert response.status_code == 200

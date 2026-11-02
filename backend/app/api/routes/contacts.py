@@ -127,6 +127,7 @@ def _validate_owner_tags(
             detail="Tags must belong to the contact owner",
         )
 
+
 # ─── Bulk operations models ────────────────────────────────────────────────
 
 logger = logging.getLogger(__name__)
@@ -538,9 +539,7 @@ def bulk_update_contacts(
     contacts = session.exec(stmt).all()
 
     ops = request.operations
-    has_tag_operations = (
-        ops.add_tag_ids is not None or ops.remove_tag_ids is not None
-    )
+    has_tag_operations = ops.add_tag_ids is not None or ops.remove_tag_ids is not None
     if has_tag_operations:
         _validate_owner_tags(
             session,
@@ -562,9 +561,7 @@ def bulk_update_contacts(
             contact.is_archived = ops.set_is_archived
             changed = True
         if ops.set_deleted is not None:
-            contact.deleted_at = (
-                datetime.now(timezone.utc) if ops.set_deleted else None
-            )
+            contact.deleted_at = datetime.now(timezone.utc) if ops.set_deleted else None
             changed = True
         if ops.set_stage is not None:
             contact.stage = ops.set_stage
@@ -989,16 +986,22 @@ def list_contact_mentions(
             NoteMention.contact_id == contact_id,
             Note.owner_id == current_user.id,
             Note.deleted_at.is_(None),
+            Contact.id.in_(visible_contact_ids(current_user, include_deleted=False)),
         )
         .order_by(Note.created_at.desc())
     ).all()
 
+    visible_shared_tag_ids = shared_tag_ids(session, current_user)
     return [
         _MentionPublic(
             note_id=note.id,
             note_body=note.body,
             note_created_at=note.created_at,
-            source_contact=ContactPublic.model_validate(source),
+            source_contact=contact_public(
+                contact=source,
+                user=current_user,
+                shared_ids=visible_shared_tag_ids,
+            ),
         )
         for note_mention, note, source in rows
     ]
