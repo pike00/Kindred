@@ -81,14 +81,16 @@ const emptyDefaults: FormData = {
 }
 
 function toPayload(data: FormData): WebhookEndpointBase {
-  return {
+  const payload: WebhookEndpointBase = {
     name: data.name,
     direction: data.direction,
     url: data.direction === "outbound" ? data.url || null : null,
     event_types: data.event_types?.trim() ? data.event_types.trim() : null,
-    secret: data.secret?.trim() ? data.secret.trim() : null,
     is_active: data.is_active,
   }
+  const secret = data.secret?.trim()
+  if (secret) payload.secret = secret
+  return payload
 }
 
 function inboundUrl(apiKey: string): string {
@@ -194,7 +196,7 @@ function WebhookFormFields({
             <FormLabel>Secret</FormLabel>
             <FormControl>
               <Input
-                placeholder="Optional shared secret"
+                placeholder="Required for inbound; leave empty to keep existing"
                 {...field}
                 value={field.value ?? ""}
               />

@@ -820,6 +820,8 @@ describe("Webhooks", () => {
         }),
       })
     })
+    const updateCall = vi.mocked(WebhooksService.updateWebhook).mock.calls[0][0]
+    expect(updateCall.requestBody).not.toHaveProperty("secret")
 
     // Toast is called via showSuccessToast hook, verify it was triggered
     await waitFor(() => {

@@ -2573,6 +2573,40 @@ class WebhookEventResponse(SQLModel):
     error: str | None = None
 
 
+class WebhookDelivery(SQLModel, table=True):
+    """Idempotency record for one provider delivery to one webhook."""
+
+    __tablename__ = "webhook_delivery"
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    webhook_id: uuid.UUID = Field(
+        foreign_key="webhook_endpoint.id",
+        nullable=False,
+        ondelete="CASCADE",
+        index=True,
+    )
+    delivery_id: str = Field(max_length=255, nullable=False)
+    interaction_id: uuid.UUID | None = Field(
+        default=None,
+        foreign_key="interaction.id",
+        nullable=True,
+        ondelete="SET NULL",
+    )
+    created_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),
+        nullable=False,
+    )
+
+    __table_args__ = (
+        sa.UniqueConstraint(
+            "webhook_id",
+            "delivery_id",
+            name="uq_webhook_delivery_event",
+        ),
+    )
+
+
 class ActivityLog(SQLModel, table=True):
     """Immutable record of a create/update/delete on any audited entity."""
 

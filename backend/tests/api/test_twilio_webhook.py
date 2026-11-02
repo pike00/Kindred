@@ -212,6 +212,31 @@ class TestTwilioWebhook:
         assert response.status_code == 401
         assert "Invalid Twilio signature" in response.json()["detail"]
 
+    def test_twilio_webhook_requires_configured_signature_secret(
+        self, client: TestClient, session: Session, user
+    ):
+        from app.models import WebhookEndpoint
+
+        webhook = WebhookEndpoint(
+            name="Legacy unsigned Twilio",
+            direction="inbound",
+            owner_id=user.id,
+            api_key="legacy-unsigned-twilio",
+            is_active=True,
+        )
+        session.add(webhook)
+        session.commit()
+
+        response = client.post(
+            "/api/v1/webhooks/twilio/legacy-unsigned-twilio",
+            data={
+                "MessageSid": "SM-unsigned",
+                "From": "+14155552671",
+                "Body": "unsigned",
+            },
+        )
+        assert response.status_code == 401
+
     def test_unknown_number_creates_placeholder_contact(
         self, client: TestClient, session: Session, api_key_headers
     ):
