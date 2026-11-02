@@ -31,11 +31,13 @@ class _FakeSession:
         *,
         primary_rows: list[Any] | None = None,
         contacts_by_id: dict[uuid.UUID, Contact] | None = None,
+        refresh_reminder: Any | None = None,
     ) -> None:
         self._primary_rows = primary_rows or []
         self._contacts_by_id = contacts_by_id or {}
         self._call_count = 0
         self.commits = 0
+        self._refresh_reminder = refresh_reminder
 
     def exec(self, _statement: Any) -> _Result:
         self._call_count += 1
@@ -51,6 +53,10 @@ class _FakeSession:
 
     def commit(self) -> None:
         self.commits += 1
+
+    def refresh(self, obj: Any) -> None:
+        if self._refresh_reminder is not None:
+            self._refresh_reminder(obj)
 
     def reset_queries(self) -> None:
         self._call_count = 0
@@ -132,8 +138,36 @@ def test_failed_once_reminder_is_not_consumed(monkeypatch) -> None:
     assert reminder.is_active is True
     assert reminder.last_sent_at is None
     assert reminder.remind_at == now - timedelta(minutes=5)
+    assert reminder.delivery_attempts == 1
+    assert reminder.next_delivery_at == now + timedelta(minutes=1)
     assert session.commits >= 1
     assert not redis.claims
+
+
+def test_failed_reminder_stops_after_bounded_retries(monkeypatch) -> None:
+    now = datetime(2026, 1, 15, 12, 0, tzinfo=timezone.utc)
+    contact = Contact(first_name="Alice Brady", owner_id=uuid.uuid4())
+    reminder = Reminder(
+        owner_id=contact.owner_id,
+        contact_id=contact.id,
+        title="Call Alice Brady",
+        remind_at=now - timedelta(minutes=5),
+        frequency=ReminderFrequency.ONCE,
+        is_active=True,
+        delivery_attempts=4,
+    )
+    session = _FakeSession(
+        primary_rows=[reminder],
+        contacts_by_id={contact.id: contact},
+    )
+    notifier = _Notifier(result=False)
+    redis = _install_fakes(monkeypatch, session, notifier)
+
+    asyncio.run(worker._check_reminders({"engine": object(), "redis": redis}, now=now))
+
+    assert reminder.delivery_attempts == 5
+    assert reminder.is_active is False
+    assert reminder.next_delivery_at is None
 
 
 def test_successful_recurring_reminder_advances(monkeypatch) -> None:
@@ -159,6 +193,38 @@ def test_successful_recurring_reminder_advances(monkeypatch) -> None:
     assert reminder.is_active is True
     assert reminder.last_sent_at == now
     assert reminder.remind_at == now + timedelta(weeks=1)
+    assert reminder.delivery_attempts == 0
+    assert reminder.next_delivery_at is None
+
+
+def test_stale_reminder_row_is_rechecked_after_claim(monkeypatch) -> None:
+    now = datetime(2026, 1, 15, 12, 0, tzinfo=timezone.utc)
+    contact = Contact(first_name="Alice", owner_id=uuid.uuid4())
+    reminder = Reminder(
+        owner_id=contact.owner_id,
+        contact_id=contact.id,
+        title="Call Alice",
+        remind_at=now - timedelta(minutes=5),
+        frequency=ReminderFrequency.ONCE,
+        is_active=True,
+    )
+
+    def mark_already_sent(row: Reminder) -> None:
+        row.is_active = False
+        row.last_sent_at = now
+
+    session = _FakeSession(
+        primary_rows=[reminder],
+        contacts_by_id={contact.id: contact},
+        refresh_reminder=mark_already_sent,
+    )
+    notifier = _Notifier(result=True)
+    redis = _install_fakes(monkeypatch, session, notifier)
+
+    asyncio.run(worker._check_reminders({"engine": object(), "redis": redis}, now=now))
+
+    assert notifier.items == []
+    assert not redis.claims
 
 
 def test_deleted_contact_reminder_is_deactivated(monkeypatch) -> None:

@@ -21,6 +21,10 @@ from app.models import (  # noqa: E402
     ReminderFrequency,
 )
 
+_REMINDER_MAX_DELIVERY_ATTEMPTS = 5
+_REMINDER_RETRY_BASE_SECONDS = 60
+_REMINDER_RETRY_MAX_SECONDS = 3600
+
 
 def _get_apprise() -> apprise.Apprise:
     """Initialize Apprise with configured notification URLs."""
@@ -49,6 +53,27 @@ async def _release_job_claim(redis: Any, key: str) -> None:
         await redis.delete(key)
 
 
+def _reminder_still_due(reminder: Reminder, now: datetime) -> bool:
+    return bool(
+        reminder.is_active
+        and reminder.deleted_at is None
+        and reminder.remind_at <= now
+        and (reminder.snoozed_until is None or reminder.snoozed_until <= now)
+        and (
+            reminder.next_delivery_at is None
+            or reminder.next_delivery_at <= now
+        )
+    )
+
+
+def _reminder_retry_delay(attempts: int) -> timedelta:
+    seconds = min(
+        _REMINDER_RETRY_MAX_SECONDS,
+        _REMINDER_RETRY_BASE_SECONDS * 2 ** max(attempts - 1, 0),
+    )
+    return timedelta(seconds=seconds)
+
+
 async def _check_reminders(ctx: dict, *, now: datetime) -> None:
     engine = ctx["engine"]
     redis = ctx.get("redis")
@@ -60,6 +85,8 @@ async def _check_reminders(ctx: dict, *, now: datetime) -> None:
                 Reminder.deleted_at.is_(None),
                 Reminder.remind_at <= now,
                 (Reminder.snoozed_until.is_(None)) | (Reminder.snoozed_until <= now),
+                (Reminder.next_delivery_at.is_(None))
+                | (Reminder.next_delivery_at <= now),
             )
         ).all()
 
@@ -71,6 +98,14 @@ async def _check_reminders(ctx: dict, *, now: datetime) -> None:
         for reminder in due_reminders:
             claim_key = f"kindred:reminder-delivery:{reminder.id}"
             if not await _claim_job(redis, claim_key, ttl_seconds=300):
+                continue
+
+            # A worker may have read this row before another worker committed
+            # a send. Refresh after taking the claim so stale rows cannot send
+            # the same occurrence twice.
+            session.refresh(reminder)
+            if not _reminder_still_due(reminder, now):
+                await _release_job_claim(redis, claim_key)
                 continue
 
             # Build notification
@@ -125,11 +160,22 @@ async def _check_reminders(ctx: dict, *, now: datetime) -> None:
                 )
 
             if not delivered:
-                await _release_job_claim(redis, claim_key)
+                reminder.delivery_attempts += 1
+                if reminder.delivery_attempts >= _REMINDER_MAX_DELIVERY_ATTEMPTS:
+                    reminder.is_active = False
+                    reminder.next_delivery_at = None
+                else:
+                    reminder.next_delivery_at = now + _reminder_retry_delay(
+                        reminder.delivery_attempts
+                    )
+                session.add(reminder)
                 session.commit()
+                await _release_job_claim(redis, claim_key)
                 continue
 
             reminder.last_sent_at = now
+            reminder.delivery_attempts = 0
+            reminder.next_delivery_at = None
 
             # Handle recurring reminders
             if reminder.frequency == ReminderFrequency.ONCE:
