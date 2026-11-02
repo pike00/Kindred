@@ -27,7 +27,9 @@ export function ContactShareRow({ share }: ContactShareRowProps) {
 
   const revokeMutation = useMutation({
     mutationFn: () =>
-      ContactSharesService.deleteContactShare({ granteeId: share.grantee_id }),
+      ContactSharesService.deleteContactShare({
+        granteeEmail: share.grantee_email,
+      }),
     onSuccess: () => {
       showSuccessToast(`Removed access for ${share.grantee_email}`)
       queryClient.invalidateQueries({ queryKey: ["contact-shares"] })
@@ -47,7 +49,7 @@ export function ContactShareRow({ share }: ContactShareRowProps) {
   return (
     <>
       <div
-        data-testid={`contact-share-row-${share.grantee_id}`}
+        data-testid={`contact-share-row-${share.grantee_email}`}
         className="flex items-start justify-between gap-4 rounded-lg border p-4"
       >
         <div className="space-y-1">
