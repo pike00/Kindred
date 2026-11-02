@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import and_, func, or_, union
+from sqlalchemy import and_, func, or_, union, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql.elements import ColumnElement
 from sqlmodel import Session, select
@@ -24,6 +24,7 @@ from app.models import (
     ContactCreate,
     ContactField,
     ContactFieldCreate,
+    ContactPublic,
     ContactSource,
     ContactStageEvent,
     ContactStageEventCreate,
@@ -161,9 +162,29 @@ def authenticate(*, session: Session, email: str, password: str) -> User | None:
 # ─── Contact CRUD ─────────────────────────────────────────────────────────────
 
 
+def _validate_contact_tag_ownership(
+    *, session: Session, owner_id: uuid.UUID, tag_ids: list[uuid.UUID] | None
+) -> None:
+    unique_ids = set(tag_ids or [])
+    if not unique_ids:
+        return
+    count = session.exec(
+        select(func.count())
+        .select_from(Tag)
+        .where(Tag.id.in_(unique_ids), Tag.owner_id == owner_id)
+    ).one()
+    if count != len(unique_ids):
+        raise ValueError("Tags must belong to the contact owner")
+
+
 def create_contact(
     *, session: Session, contact_in: ContactCreate, owner_id: uuid.UUID
 ) -> Contact:
+    _validate_contact_tag_ownership(
+        session=session,
+        owner_id=owner_id,
+        tag_ids=contact_in.tag_ids,
+    )
     db_obj = Contact.model_validate(contact_in, update={"owner_id": owner_id})
     # Compute vcard_sha256 if vcard_raw is present
     if db_obj.vcard_raw:
@@ -187,6 +208,11 @@ def upsert_contact(
 
     If source_external_id is None, falls through to a plain create.
     """
+    _validate_contact_tag_ownership(
+        session=session,
+        owner_id=owner_id,
+        tag_ids=contact_in.tag_ids,
+    )
     existing: Contact | None = None
     if contact_in.source_external_id is not None:
         existing = session.exec(
@@ -310,7 +336,9 @@ def create_custom_field_value(
 
 def recompute_last_contacted_at(*, session: Session, contact_id: uuid.UUID) -> None:
     """Reset contact.last_contacted_at to the most recent attended interaction."""
-    contact = session.get(Contact, contact_id)
+    contact = session.exec(
+        select(Contact).where(Contact.id == contact_id).with_for_update()
+    ).first()
     if contact is None:
         return
     stmt = (
@@ -326,8 +354,9 @@ def recompute_last_contacted_at(*, session: Session, contact_id: uuid.UUID) -> N
         .limit(1)
     )
     latest = session.exec(stmt).first()
-    contact.last_contacted_at = latest
-    session.add(contact)
+    if contact.last_contacted_at != latest:
+        contact.last_contacted_at = latest
+        session.add(contact)
 
 
 def create_interaction(
@@ -341,19 +370,25 @@ def create_interaction(
         update={"owner_id": owner_id},
     )
     session.add(db_obj)
-    for attendee_id in set(interaction_in.attendee_ids):
+    for attendee_id in sorted(set(interaction_in.attendee_ids)):
         session.add(
             InteractionAttendee(interaction_id=db_obj.id, contact_id=attendee_id)
         )
         # Drafts do not affect last_contacted_at; only confirmed interactions do.
         if not db_obj.is_draft:
-            contact = session.get(Contact, attendee_id)
-            if contact and (
-                contact.last_contacted_at is None
-                or db_obj.occurred_at > contact.last_contacted_at
-            ):
-                contact.last_contacted_at = db_obj.occurred_at
-                session.add(contact)
+            # GREATEST-equivalent update avoids the read/compare/write race when
+            # two interactions for the same contact are created concurrently.
+            session.exec(
+                update(Contact)
+                .where(
+                    Contact.id == attendee_id,
+                    or_(
+                        Contact.last_contacted_at.is_(None),
+                        Contact.last_contacted_at < db_obj.occurred_at,
+                    ),
+                )
+                .values(last_contacted_at=db_obj.occurred_at)
+            )
     session.commit()
     session.refresh(db_obj)
     return db_obj
@@ -545,8 +580,12 @@ def visible_contact_ids(user: User, *, include_deleted: bool = False) -> Any:
     shared = (
         select(ContactTag.contact_id)
         .join(TagShare, TagShare.tag_id == ContactTag.tag_id)  # type: ignore[arg-type]
+        .join(Tag, Tag.id == ContactTag.tag_id)  # type: ignore[arg-type]
         .join(Contact, Contact.id == ContactTag.contact_id)  # type: ignore[arg-type]
-        .where(TagShare.grantee_id == user.id)
+        .where(
+            TagShare.grantee_id == user.id,
+            Tag.owner_id == Contact.owner_id,
+        )
     )
     all_shared = (
         select(Contact.id)
@@ -558,6 +597,31 @@ def visible_contact_ids(user: User, *, include_deleted: bool = False) -> Any:
         shared = shared.where(Contact.deleted_at.is_(None))
         all_shared = all_shared.where(Contact.deleted_at.is_(None))
     return union(owned, shared, all_shared)
+
+
+def shared_tag_ids(session: Session, user: User) -> set[uuid.UUID]:
+    return set(
+        session.exec(
+            select(TagShare.tag_id).where(TagShare.grantee_id == user.id)
+        ).all()
+    )
+
+
+def contact_public(
+    *,
+    contact: Contact,
+    user: User,
+    shared_ids: set[uuid.UUID] | None = None,
+) -> ContactPublic:
+    """Serialize a contact without exposing tags private to its owner."""
+    visible_shared_ids = shared_ids if shared_ids is not None else set()
+    tags = [
+        tag
+        for tag in contact.tags
+        if tag.owner_id == contact.owner_id
+        and (contact.owner_id == user.id or tag.id in visible_shared_ids)
+    ]
+    return ContactPublic.model_validate(contact, update={"tags": tags})
 
 
 def contact_visible(

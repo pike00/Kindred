@@ -23,7 +23,9 @@ from app.api.deps import CurrentUser, SessionDep
 from app.core.config import settings as app_settings
 from app.crud import (
     clear_contact_reminders,
+    contact_public,
     contact_reminders_enabled_filter,
+    shared_tag_ids,
     visible_contact_ids,
 )
 from app.filter_compiler import apply_filter_json
@@ -45,6 +47,7 @@ from app.models import (
     OverdueContactsPublic,
     Relationship,
     SavedFilter,
+    Tag,
     TagShare,
     User,
     derive_handle_contact_field,
@@ -75,6 +78,7 @@ class AvatarUploadResponse(SQLModel):
 class BulkOperations(SQLModel):
     set_is_favorite: bool | None = None
     set_is_archived: bool | None = None
+    set_deleted: bool | None = None
     set_stage: str | None = None
     add_tag_ids: list[uuid.UUID] | None = None
     remove_tag_ids: list[uuid.UUID] | None = None
@@ -102,6 +106,26 @@ class BulkUpdateResponse(SQLModel):
 
 
 logger = logging.getLogger(__name__)
+
+
+def _validate_owner_tags(
+    session: SessionDep,
+    owner_id: uuid.UUID,
+    tag_ids: list[uuid.UUID] | set[uuid.UUID],
+) -> None:
+    unique_ids = set(tag_ids)
+    if not unique_ids:
+        return
+    count = session.exec(
+        select(func.count())
+        .select_from(Tag)
+        .where(Tag.id.in_(unique_ids), Tag.owner_id == owner_id)
+    ).one()
+    if count != len(unique_ids):
+        raise HTTPException(
+            status_code=422,
+            detail="Tags must belong to the contact owner",
+        )
 
 # ─── Bulk operations models ────────────────────────────────────────────────
 
@@ -273,7 +297,18 @@ def list_contacts(
     )
 
     contacts = session.exec(statement).all()
-    return ContactsPublic(data=contacts, count=count)
+    visible_shared_tag_ids = shared_tag_ids(session, current_user)
+    return ContactsPublic(
+        data=[
+            contact_public(
+                contact=contact,
+                user=current_user,
+                shared_ids=visible_shared_tag_ids,
+            )
+            for contact in contacts
+        ],
+        count=count,
+    )
 
 
 @router.get("/overdue", response_model=OverdueContactsPublic)
@@ -301,7 +336,18 @@ def list_overdue_contacts(
         .order_by(Contact.last_contacted_at.asc())
     )
     contacts = session.exec(stmt).all()
-    return OverdueContactsPublic(data=contacts, count=len(contacts))
+    visible_shared_tag_ids = shared_tag_ids(session, current_user)
+    return OverdueContactsPublic(
+        data=[
+            contact_public(
+                contact=contact,
+                user=current_user,
+                shared_ids=visible_shared_tag_ids,
+            )
+            for contact in contacts
+        ],
+        count=len(contacts),
+    )
 
 
 @router.get("/losing-touch", response_model=ContactsPublic)
@@ -331,7 +377,18 @@ def list_losing_touch_contacts(
         if c.last_contacted_at is None
         or (now - c.last_contacted_at).days >= c.contact_frequency_days
     ]
-    return ContactsPublic(data=losing, count=len(losing))
+    visible_shared_tag_ids = shared_tag_ids(session, current_user)
+    return ContactsPublic(
+        data=[
+            contact_public(
+                contact=contact,
+                user=current_user,
+                shared_ids=visible_shared_tag_ids,
+            )
+            for contact in losing
+        ],
+        count=len(losing),
+    )
 
 
 def _snooze_contact_impl(
@@ -481,6 +538,20 @@ def bulk_update_contacts(
     contacts = session.exec(stmt).all()
 
     ops = request.operations
+    has_tag_operations = (
+        ops.add_tag_ids is not None or ops.remove_tag_ids is not None
+    )
+    if has_tag_operations:
+        _validate_owner_tags(
+            session,
+            current_user.id,
+            set(ops.add_tag_ids or []) | set(ops.remove_tag_ids or []),
+        )
+        if any(contact.owner_id != current_user.id for contact in contacts):
+            raise HTTPException(
+                status_code=403,
+                detail="Only the contact owner can change contact tags",
+            )
     updated = 0
     for contact in contacts:
         changed = False
@@ -489,6 +560,11 @@ def bulk_update_contacts(
             changed = True
         if ops.set_is_archived is not None:
             contact.is_archived = ops.set_is_archived
+            changed = True
+        if ops.set_deleted is not None:
+            contact.deleted_at = (
+                datetime.now(timezone.utc) if ops.set_deleted else None
+            )
             changed = True
         if ops.set_stage is not None:
             contact.stage = ops.set_stage
@@ -536,6 +612,8 @@ def create_contact(
     """Create a new contact."""
     create_data = contact_in.model_dump(exclude_unset=True)
     tag_ids = create_data.pop("tag_ids", None)
+    if tag_ids is not None:
+        _validate_owner_tags(session, current_user.id, tag_ids)
     contact = Contact.model_validate(contact_in, update={"owner_id": current_user.id})
     session.add(contact)
     session.flush()
@@ -552,7 +630,11 @@ def create_contact(
     session.commit()
     session.refresh(contact)
     background_tasks.add_task(_enqueue_contact_index, contact)
-    return contact
+    return contact_public(
+        contact=contact,
+        user=current_user,
+        shared_ids=shared_tag_ids(session, current_user),
+    )
 
 
 class ContactGeoPoint(BaseModel):
@@ -680,7 +762,11 @@ def get_contact(
     ).first()
     if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
-    return contact
+    return contact_public(
+        contact=contact,
+        user=current_user,
+        shared_ids=shared_tag_ids(session, current_user),
+    )
 
 
 @router.post("/{contact_id}/restore", response_model=ContactPublic)
@@ -711,7 +797,7 @@ def restore_contact(
 def update_contact(
     *,
     session: SessionDep,
-    current_user: CurrentUser,  # noqa: ARG001
+    current_user: CurrentUser,
     contact_id: uuid.UUID,
     contact_in: ContactUpdate,
     background_tasks: BackgroundTasks,
@@ -740,7 +826,12 @@ def update_contact(
 
     # Sync tags if tag_ids was provided
     if tag_ids is not None:
-        session.exec(select(ContactTag).where(ContactTag.contact_id == contact_id))
+        if contact.owner_id != current_user.id:
+            raise HTTPException(
+                status_code=403,
+                detail="Only the contact owner can change contact tags",
+            )
+        _validate_owner_tags(session, contact.owner_id, tag_ids)
         existing_tags = session.exec(
             select(ContactTag).where(ContactTag.contact_id == contact_id)
         ).all()
@@ -773,7 +864,11 @@ def update_contact(
     session.commit()
     session.refresh(contact)
     background_tasks.add_task(_enqueue_contact_index, contact)
-    return contact
+    return contact_public(
+        contact=contact,
+        user=current_user,
+        shared_ids=shared_tag_ids(session, current_user),
+    )
 
 
 @router.delete("/{contact_id}", response_model=dict)
