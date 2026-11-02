@@ -358,10 +358,7 @@ def list_losing_touch_contacts(
     return ContactsPublic(data=losing, count=len(losing))
 
 
-@router.post("/{contact_id}/snooze", response_model=ContactPublic)
-@router.patch("/{contact_id}/snooze", response_model=ContactPublic)
-@router.patch("/{contact_id}/skip", response_model=ContactPublic)
-def snooze_contact(
+def _snooze_contact_impl(
     *,
     session: SessionDep,
     current_user: CurrentUser,
@@ -406,6 +403,54 @@ def snooze_contact(
     session.commit()
     session.refresh(contact)
     return contact
+
+
+@router.post("/{contact_id}/snooze", response_model=ContactPublic)
+def create_contact_snooze(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    contact_id: uuid.UUID,
+    body: ContactSnoozeRequest | None = None,
+) -> Any:
+    return _snooze_contact_impl(
+        session=session,
+        current_user=current_user,
+        contact_id=contact_id,
+        body=body,
+    )
+
+
+@router.patch("/{contact_id}/snooze", response_model=ContactPublic)
+def update_contact_snooze(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    contact_id: uuid.UUID,
+    body: ContactSnoozeRequest | None = None,
+) -> Any:
+    return _snooze_contact_impl(
+        session=session,
+        current_user=current_user,
+        contact_id=contact_id,
+        body=body,
+    )
+
+
+@router.patch("/{contact_id}/skip", response_model=ContactPublic)
+def skip_contact(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    contact_id: uuid.UUID,
+    body: ContactSnoozeRequest | None = None,
+) -> Any:
+    return _snooze_contact_impl(
+        session=session,
+        current_user=current_user,
+        contact_id=contact_id,
+        body=body,
+    )
 
 
 @router.patch("/bulk", response_model=BulkUpdateResponse)

@@ -9,6 +9,7 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 from ..types import UNSET, Unset
+from dateutil.parser import isoparse
 from typing import cast
 from uuid import UUID
 import datetime
@@ -93,7 +94,7 @@ class ContactStageEventPublic:
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
-        occurred_at = datetime.datetime.fromisoformat(d.pop("occurred_at"))
+        occurred_at = isoparse(d.pop("occurred_at"))
 
         id = UUID(d.pop("id"))
 
@@ -101,7 +102,7 @@ class ContactStageEventPublic:
 
         owner_id = UUID(d.pop("owner_id"))
 
-        created_at = datetime.datetime.fromisoformat(d.pop("created_at"))
+        created_at = isoparse(d.pop("created_at"))
 
         def _parse_from_stage(data: object) -> None | str | Unset:
             if data is None:

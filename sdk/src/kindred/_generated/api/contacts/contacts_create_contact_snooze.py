@@ -24,7 +24,7 @@ def _get_kwargs(
     headers: dict[str, Any] = {}
 
     _kwargs: dict[str, Any] = {
-        "method": "patch",
+        "method": "post",
         "url": "/api/v1/contacts/{contact_id}/snooze".format(
             contact_id=quote(str(contact_id), safe=""),
         ),
@@ -77,10 +77,7 @@ def sync_detailed(
     client: AuthenticatedClient,
     body: ContactSnoozeRequest | None | Unset = UNSET,
 ) -> Response[ContactPublic | HTTPValidationError]:
-    """Snooze Contact
-
-     Snooze a contact for a specified duration ('1w', '2w', '1m', '3m', '6m', 'indefinitely') or explicit
-    datetime.
+    """Create Contact Snooze
 
     Args:
         contact_id (UUID):
@@ -112,10 +109,7 @@ def sync(
     client: AuthenticatedClient,
     body: ContactSnoozeRequest | None | Unset = UNSET,
 ) -> ContactPublic | HTTPValidationError | None:
-    """Snooze Contact
-
-     Snooze a contact for a specified duration ('1w', '2w', '1m', '3m', '6m', 'indefinitely') or explicit
-    datetime.
+    """Create Contact Snooze
 
     Args:
         contact_id (UUID):
@@ -142,10 +136,7 @@ async def asyncio_detailed(
     client: AuthenticatedClient,
     body: ContactSnoozeRequest | None | Unset = UNSET,
 ) -> Response[ContactPublic | HTTPValidationError]:
-    """Snooze Contact
-
-     Snooze a contact for a specified duration ('1w', '2w', '1m', '3m', '6m', 'indefinitely') or explicit
-    datetime.
+    """Create Contact Snooze
 
     Args:
         contact_id (UUID):
@@ -175,10 +166,7 @@ async def asyncio(
     client: AuthenticatedClient,
     body: ContactSnoozeRequest | None | Unset = UNSET,
 ) -> ContactPublic | HTTPValidationError | None:
-    """Snooze Contact
-
-     Snooze a contact for a specified duration ('1w', '2w', '1m', '3m', '6m', 'indefinitely') or explicit
-    datetime.
+    """Create Contact Snooze
 
     Args:
         contact_id (UUID):

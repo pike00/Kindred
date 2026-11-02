@@ -10,6 +10,7 @@ from ..types import UNSET, Unset
 
 from ..models.gift_status import GiftStatus
 from ..types import UNSET, Unset
+from dateutil.parser import isoparse
 from typing import cast
 from uuid import UUID
 import datetime
@@ -185,7 +186,7 @@ class GiftPublic:
 
         contact_id = UUID(d.pop("contact_id"))
 
-        created_at = datetime.datetime.fromisoformat(d.pop("created_at"))
+        created_at = isoparse(d.pop("created_at"))
 
         def _parse_description(data: object) -> None | str | Unset:
             if data is None:
@@ -220,7 +221,7 @@ class GiftPublic:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                gift_date_type_0 = datetime.date.fromisoformat(data)
+                gift_date_type_0 = isoparse(data).date()
 
                 return gift_date_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -257,7 +258,7 @@ class GiftPublic:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                deleted_at_type_0 = datetime.datetime.fromisoformat(data)
+                deleted_at_type_0 = isoparse(data)
 
                 return deleted_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -274,7 +275,7 @@ class GiftPublic:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                contact_birthday_type_0 = datetime.date.fromisoformat(data)
+                contact_birthday_type_0 = isoparse(data).date()
 
                 return contact_birthday_type_0
             except (TypeError, ValueError, AttributeError, KeyError):

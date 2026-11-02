@@ -2413,26 +2413,26 @@ export type ContactsListOverdueContactsResponse = (OverdueContactsPublic);
 
 export type ContactsListLosingTouchContactsResponse = (ContactsPublic);
 
-export type ContactsSnoozeContactData = {
+export type ContactsCreateContactSnoozeData = {
     contactId: string;
     requestBody?: (ContactSnoozeRequest | null);
 };
 
-export type ContactsSnoozeContactResponse = (ContactPublic);
+export type ContactsCreateContactSnoozeResponse = (ContactPublic);
 
-export type ContactsSnoozeContact1Data = {
+export type ContactsUpdateContactSnoozeData = {
     contactId: string;
     requestBody?: (ContactSnoozeRequest | null);
 };
 
-export type ContactsSnoozeContact1Response = (ContactPublic);
+export type ContactsUpdateContactSnoozeResponse = (ContactPublic);
 
-export type ContactsSnoozeContact2Data = {
+export type ContactsSkipContactData = {
     contactId: string;
     requestBody?: (ContactSnoozeRequest | null);
 };
 
-export type ContactsSnoozeContact2Response = (ContactPublic);
+export type ContactsSkipContactResponse = (ContactPublic);
 
 export type ContactsBulkUpdateContactsData = {
     requestBody: BulkUpdateRequest;

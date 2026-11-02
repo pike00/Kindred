@@ -59,7 +59,7 @@ def _build_response(
 def sync_detailed(
     note_id: UUID,
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
 ) -> Response[Any | HTTPValidationError]:
     """Restore Note
 
@@ -90,7 +90,7 @@ def sync_detailed(
 def sync(
     note_id: UUID,
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
 ) -> Any | HTTPValidationError | None:
     """Restore Note
 
@@ -116,7 +116,7 @@ def sync(
 async def asyncio_detailed(
     note_id: UUID,
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
 ) -> Response[Any | HTTPValidationError]:
     """Restore Note
 
@@ -145,7 +145,7 @@ async def asyncio_detailed(
 async def asyncio(
     note_id: UUID,
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
 ) -> Any | HTTPValidationError | None:
     """Restore Note
 

@@ -8,6 +8,7 @@ from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
+from dateutil.parser import isoparse
 from typing import cast
 from uuid import UUID
 import datetime
@@ -132,7 +133,7 @@ class ActivityLogPublic:
 
         changes_json = _parse_changes_json(d.pop("changes_json"))
 
-        occurred_at = datetime.datetime.fromisoformat(d.pop("occurred_at"))
+        occurred_at = isoparse(d.pop("occurred_at"))
 
         activity_log_public = cls(
             id=id,

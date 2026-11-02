@@ -86,6 +86,15 @@ def test_from_env_timeout_override(monkeypatch: pytest.MonkeyPatch):
     assert k.raw._timeout == 5.5
 
 
+def test_from_env_reads_on_behalf_of(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setenv("KINDRED_BASE_URL", BASE)
+    monkeypatch.setenv("KINDRED_API_KEY", API_KEY)
+    user_id = uuid.uuid4()
+    monkeypatch.setenv("KINDRED_ON_BEHALF_OF", str(user_id))
+    with KindredClient.from_env() as k:
+        assert k.raw.get_httpx_client().headers["X-On-Behalf-Of"] == str(user_id)
+
+
 def test_context_manager_yields_self(client):
     # `client` fixture already entered the with block.
     assert client.raw.get_httpx_client() is not None

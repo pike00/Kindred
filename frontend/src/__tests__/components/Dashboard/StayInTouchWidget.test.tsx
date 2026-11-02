@@ -25,7 +25,7 @@ vi.mock("@tanstack/react-router", () => ({
 vi.mock("@/client", () => ({
   ContactsService: {
     listOverdueContacts: mockListOverdueContacts,
-    snoozeContact: mockSnoozeContact,
+    updateContactSnooze: mockSnoozeContact,
   },
 }))
 
@@ -151,7 +151,7 @@ describe("StayInTouchWidget", () => {
     expect(within(contactLink).getByText("Acme Corp")).toBeInTheDocument()
   })
 
-  it("calls ContactsService.snoozeContact when a snooze option is selected", async () => {
+  it("calls ContactsService.updateContactSnooze when a snooze option is selected", async () => {
     const user = userEvent.setup()
     mockListOverdueContacts.mockReturnValue(
       cancelable({

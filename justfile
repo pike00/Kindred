@@ -103,7 +103,7 @@ dev-tailnet:
     TAILNET_HOST="$tailnet_ip" \
     TAILNET_MAGICDNS="$tailnet_host" \
     KINDRED_BACKEND_URL="http://127.0.0.1:${BACKEND_PORT}" \
-        exec bun run dev -- --config vite.tailnet.config.ts --host "$tailnet_ip" --port "$tailnet_port" --strictPort
+        exec pnpm exec vite --config vite.tailnet.config.ts --host "$tailnet_ip" --port "$tailnet_port" --strictPort
 
 # Run frontend Vitest with v8 coverage. Writes report to frontend/coverage/.
 frontend-coverage *args:
@@ -152,6 +152,15 @@ sdk-install-local:
 [group('SDK')]
 sdk-regen:
     cd sdk && ./scripts/regen.sh
+
+# Fail if committed OpenAPI clients drift from the backend schema.
+[group('SDK')]
+client-check:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    bash scripts/generate-client.sh
+    (cd sdk && ./scripts/regen.sh)
+    git diff --exit-code -- frontend/openapi.json frontend/src/client sdk/src/kindred/_generated
 
 # Run the SDK's pytest suite.
 [group('SDK')]

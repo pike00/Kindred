@@ -8,36 +8,25 @@ from ...client import AuthenticatedClient, Client
 from ...types import Response, UNSET
 from ... import errors
 
-from ...models.http_validation_error import HTTPValidationError
+from ...models.ready_info import ReadyInfo
 from typing import cast
-from uuid import UUID
 
 
-def _get_kwargs(
-    contact_id: UUID,
-) -> dict[str, Any]:
+def _get_kwargs() -> dict[str, Any]:
 
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": "/api/v1/contacts/{contact_id}.pdf".format(
-            contact_id=quote(str(contact_id), safe=""),
-        ),
+        "url": "/api/v1/utils/ready/",
     }
 
     return _kwargs
 
 
-def _parse_response(
-    *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Any | HTTPValidationError | None:
+def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> ReadyInfo | None:
     if response.status_code == 200:
-        response_200 = response.json()
+        response_200 = ReadyInfo.from_dict(response.json())
+
         return response_200
-
-    if response.status_code == 422:
-        response_422 = HTTPValidationError.from_dict(response.json())
-
-        return response_422
 
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
@@ -45,9 +34,7 @@ def _parse_response(
         return None
 
 
-def _build_response(
-    *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Response[Any | HTTPValidationError]:
+def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[ReadyInfo]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -57,28 +44,22 @@ def _build_response(
 
 
 def sync_detailed(
-    contact_id: UUID,
     *,
-    client: AuthenticatedClient,
-) -> Response[Any | HTTPValidationError]:
-    """Get Contact Pdf
+    client: AuthenticatedClient | Client,
+) -> Response[ReadyInfo]:
+    """Readiness Check
 
-     Generate a printable PDF one-pager for a contact.
-
-    Args:
-        contact_id (UUID):
+     Return ready only when required backing services are reachable.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Any | HTTPValidationError]
+        Response[ReadyInfo]
     """
 
-    kwargs = _get_kwargs(
-        contact_id=contact_id,
-    )
+    kwargs = _get_kwargs()
 
     response = client.get_httpx_client().request(
         **kwargs,
@@ -88,54 +69,43 @@ def sync_detailed(
 
 
 def sync(
-    contact_id: UUID,
     *,
-    client: AuthenticatedClient,
-) -> Any | HTTPValidationError | None:
-    """Get Contact Pdf
+    client: AuthenticatedClient | Client,
+) -> ReadyInfo | None:
+    """Readiness Check
 
-     Generate a printable PDF one-pager for a contact.
-
-    Args:
-        contact_id (UUID):
+     Return ready only when required backing services are reachable.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Any | HTTPValidationError
+        ReadyInfo
     """
 
     return sync_detailed(
-        contact_id=contact_id,
         client=client,
     ).parsed
 
 
 async def asyncio_detailed(
-    contact_id: UUID,
     *,
-    client: AuthenticatedClient,
-) -> Response[Any | HTTPValidationError]:
-    """Get Contact Pdf
+    client: AuthenticatedClient | Client,
+) -> Response[ReadyInfo]:
+    """Readiness Check
 
-     Generate a printable PDF one-pager for a contact.
-
-    Args:
-        contact_id (UUID):
+     Return ready only when required backing services are reachable.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Any | HTTPValidationError]
+        Response[ReadyInfo]
     """
 
-    kwargs = _get_kwargs(
-        contact_id=contact_id,
-    )
+    kwargs = _get_kwargs()
 
     response = await client.get_async_httpx_client().request(**kwargs)
 
@@ -143,28 +113,23 @@ async def asyncio_detailed(
 
 
 async def asyncio(
-    contact_id: UUID,
     *,
-    client: AuthenticatedClient,
-) -> Any | HTTPValidationError | None:
-    """Get Contact Pdf
+    client: AuthenticatedClient | Client,
+) -> ReadyInfo | None:
+    """Readiness Check
 
-     Generate a printable PDF one-pager for a contact.
-
-    Args:
-        contact_id (UUID):
+     Return ready only when required backing services are reachable.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Any | HTTPValidationError
+        ReadyInfo
     """
 
     return (
         await asyncio_detailed(
-            contact_id=contact_id,
             client=client,
         )
     ).parsed

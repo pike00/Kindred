@@ -81,7 +81,12 @@ class KindredClient:
                 f"Missing required env var: {exc.args[0]}. "
                 "Set KINDRED_BASE_URL and KINDRED_API_KEY."
             ) from None
-        return cls(base_url=base_url, api_key=api_key, **overrides)  # type: ignore[arg-type]
+        options = dict(overrides)
+        if options.get("on_behalf_of") is None:
+            on_behalf_of = os.environ.get("KINDRED_ON_BEHALF_OF")
+            if on_behalf_of:
+                options["on_behalf_of"] = on_behalf_of
+        return cls(base_url=base_url, api_key=api_key, **options)  # type: ignore[arg-type]
 
     def close(self) -> None:
         self.raw.get_httpx_client().close()

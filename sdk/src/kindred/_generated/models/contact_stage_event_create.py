@@ -9,6 +9,7 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 from ..types import UNSET, Unset
+from dateutil.parser import isoparse
 from typing import cast
 from uuid import UUID
 import datetime
@@ -78,7 +79,7 @@ class ContactStageEventCreate:
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
-        occurred_at = datetime.datetime.fromisoformat(d.pop("occurred_at"))
+        occurred_at = isoparse(d.pop("occurred_at"))
 
         contact_id = UUID(d.pop("contact_id"))
 

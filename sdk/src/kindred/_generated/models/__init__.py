@@ -160,6 +160,7 @@ from .pet_update import PetUpdate
 from .pets_public import PetsPublic
 from .private_seed_data_response_private_seed_data import PrivateSeedDataResponsePrivateSeedData
 from .private_user_create import PrivateUserCreate
+from .ready_info import ReadyInfo
 from .relationship_create import RelationshipCreate
 from .relationship_public import RelationshipPublic
 from .relationship_update import RelationshipUpdate
@@ -364,6 +365,7 @@ __all__ = (
     "PetUpdate",
     "PrivateSeedDataResponsePrivateSeedData",
     "PrivateUserCreate",
+    "ReadyInfo",
     "RelationshipCreate",
     "RelationshipPublic",
     "RelationshipsLookupInverseResponseRelationshipsLookupInverse",

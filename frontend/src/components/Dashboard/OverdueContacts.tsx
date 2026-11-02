@@ -66,7 +66,7 @@ export function OverdueContacts() {
   const handleSnooze = async (contactId: string, duration: string) => {
     setSnoozingId(contactId)
     try {
-      await ContactsService.snoozeContact({
+      await ContactsService.updateContactSnooze({
         contactId,
         requestBody: { duration },
       })

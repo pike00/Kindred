@@ -10,6 +10,7 @@ from ..types import UNSET, Unset
 
 from ..models.interaction_channel import InteractionChannel
 from ..types import UNSET, Unset
+from dateutil.parser import isoparse
 from typing import cast
 from uuid import UUID
 import datetime
@@ -26,6 +27,9 @@ class InteractionUpdate:
         occurred_at (datetime.datetime | None | Unset):
         notes (None | str | Unset):
         duration_minutes (int | None | Unset):
+        location_label (None | str | Unset):
+        latitude (float | None | Unset):
+        longitude (float | None | Unset):
         attendee_ids (list[UUID] | None | Unset): Replace the attendee set; must have at least one if provided.
     """
 
@@ -33,6 +37,9 @@ class InteractionUpdate:
     occurred_at: datetime.datetime | None | Unset = UNSET
     notes: None | str | Unset = UNSET
     duration_minutes: int | None | Unset = UNSET
+    location_label: None | str | Unset = UNSET
+    latitude: float | None | Unset = UNSET
+    longitude: float | None | Unset = UNSET
     attendee_ids: list[UUID] | None | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -65,6 +72,24 @@ class InteractionUpdate:
         else:
             duration_minutes = self.duration_minutes
 
+        location_label: None | str | Unset
+        if isinstance(self.location_label, Unset):
+            location_label = UNSET
+        else:
+            location_label = self.location_label
+
+        latitude: float | None | Unset
+        if isinstance(self.latitude, Unset):
+            latitude = UNSET
+        else:
+            latitude = self.latitude
+
+        longitude: float | None | Unset
+        if isinstance(self.longitude, Unset):
+            longitude = UNSET
+        else:
+            longitude = self.longitude
+
         attendee_ids: list[str] | None | Unset
         if isinstance(self.attendee_ids, Unset):
             attendee_ids = UNSET
@@ -88,6 +113,12 @@ class InteractionUpdate:
             field_dict["notes"] = notes
         if duration_minutes is not UNSET:
             field_dict["duration_minutes"] = duration_minutes
+        if location_label is not UNSET:
+            field_dict["location_label"] = location_label
+        if latitude is not UNSET:
+            field_dict["latitude"] = latitude
+        if longitude is not UNSET:
+            field_dict["longitude"] = longitude
         if attendee_ids is not UNSET:
             field_dict["attendee_ids"] = attendee_ids
 
@@ -122,7 +153,7 @@ class InteractionUpdate:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                occurred_at_type_0 = datetime.datetime.fromisoformat(data)
+                occurred_at_type_0 = isoparse(data)
 
                 return occurred_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -148,6 +179,33 @@ class InteractionUpdate:
             return cast(int | None | Unset, data)
 
         duration_minutes = _parse_duration_minutes(d.pop("duration_minutes", UNSET))
+
+        def _parse_location_label(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        location_label = _parse_location_label(d.pop("location_label", UNSET))
+
+        def _parse_latitude(data: object) -> float | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(float | None | Unset, data)
+
+        latitude = _parse_latitude(d.pop("latitude", UNSET))
+
+        def _parse_longitude(data: object) -> float | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(float | None | Unset, data)
+
+        longitude = _parse_longitude(d.pop("longitude", UNSET))
 
         def _parse_attendee_ids(data: object) -> list[UUID] | None | Unset:
             if data is None:
@@ -176,6 +234,9 @@ class InteractionUpdate:
             occurred_at=occurred_at,
             notes=notes,
             duration_minutes=duration_minutes,
+            location_label=location_label,
+            latitude=latitude,
+            longitude=longitude,
             attendee_ids=attendee_ids,
         )
 

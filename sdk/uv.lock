@@ -168,7 +168,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "openapi-python-client", specifier = ">=0.28" },
+    { name = "openapi-python-client", specifier = "==0.28.4" },
     { name = "pytest", specifier = ">=8" },
     { name = "pytest-httpx", specifier = ">=0.30" },
     { name = "ruff", specifier = ">=0.5" },

@@ -9,6 +9,7 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 from ..types import UNSET, Unset
+from dateutil.parser import isoparse
 from typing import cast
 from uuid import UUID
 import datetime
@@ -112,7 +113,7 @@ class VCardConflictPublic:
 
         id = UUID(d.pop("id"))
 
-        created_at = datetime.datetime.fromisoformat(d.pop("created_at"))
+        created_at = isoparse(d.pop("created_at"))
 
         def _parse_resolved_at(data: object) -> datetime.datetime | None | Unset:
             if data is None:
@@ -122,7 +123,7 @@ class VCardConflictPublic:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                resolved_at_type_0 = datetime.datetime.fromisoformat(data)
+                resolved_at_type_0 = isoparse(data)
 
                 return resolved_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):

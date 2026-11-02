@@ -10,6 +10,7 @@ from ..types import UNSET, Unset
 
 from ..models.contact_source import ContactSource
 from ..types import UNSET, Unset
+from dateutil.parser import isoparse
 from typing import cast
 from uuid import UUID
 import datetime
@@ -365,7 +366,7 @@ class ContactCreate:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                birthday_type_0 = datetime.date.fromisoformat(data)
+                birthday_type_0 = isoparse(data).date()
 
                 return birthday_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -397,7 +398,7 @@ class ContactCreate:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                deceased_at_type_0 = datetime.date.fromisoformat(data)
+                deceased_at_type_0 = isoparse(data).date()
 
                 return deceased_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -479,7 +480,7 @@ class ContactCreate:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                snoozed_until_type_0 = datetime.datetime.fromisoformat(data)
+                snoozed_until_type_0 = isoparse(data)
 
                 return snoozed_until_type_0
             except (TypeError, ValueError, AttributeError, KeyError):

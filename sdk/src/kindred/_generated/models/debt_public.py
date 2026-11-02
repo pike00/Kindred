@@ -10,6 +10,7 @@ from ..types import UNSET, Unset
 
 from ..models.debt_direction import DebtDirection
 from ..types import UNSET, Unset
+from dateutil.parser import isoparse
 from typing import cast
 from uuid import UUID
 import datetime
@@ -142,7 +143,7 @@ class DebtPublic:
 
         contact_id = UUID(d.pop("contact_id"))
 
-        created_at = datetime.datetime.fromisoformat(d.pop("created_at"))
+        created_at = isoparse(d.pop("created_at"))
 
         currency = d.pop("currency", UNSET)
 
@@ -165,7 +166,7 @@ class DebtPublic:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                settled_at_type_0 = datetime.date.fromisoformat(data)
+                settled_at_type_0 = isoparse(data).date()
 
                 return settled_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -182,7 +183,7 @@ class DebtPublic:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                deleted_at_type_0 = datetime.datetime.fromisoformat(data)
+                deleted_at_type_0 = isoparse(data)
 
                 return deleted_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):

@@ -9,6 +9,7 @@ from ...types import Response, UNSET
 from ... import errors
 
 from ...models.http_validation_error import HTTPValidationError
+from dateutil.parser import isoparse
 from typing import cast
 from uuid import UUID
 import datetime
@@ -47,7 +48,7 @@ def _parse_response(
                     try:
                         if not isinstance(data, str):
                             raise TypeError()
-                        response_200_item_item_type_0 = datetime.datetime.fromisoformat(data)
+                        response_200_item_item_type_0 = isoparse(data)
 
                         return response_200_item_item_type_0
                     except (TypeError, ValueError, AttributeError, KeyError):

@@ -10,6 +10,7 @@ from ..types import UNSET, Unset
 
 from ..models.media_category import MediaCategory
 from ..types import UNSET, Unset
+from dateutil.parser import isoparse
 from typing import cast
 import datetime
 
@@ -142,7 +143,7 @@ class MediaRecommendationUpdate:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                recommended_at_type_0 = datetime.date.fromisoformat(data)
+                recommended_at_type_0 = isoparse(data).date()
 
                 return recommended_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
