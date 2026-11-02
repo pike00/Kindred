@@ -7,8 +7,10 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+from sqlmodel import Session
+
 from app import worker
-from app.models import Contact, Reminder, ReminderFrequency
+from app.models import Contact, Reminder, ReminderFrequency, User
 
 
 class _Result:
@@ -108,8 +110,12 @@ def _install_fakes(
     notifier: _Notifier,
 ) -> _FakeRedis:
     redis = _FakeRedis()
+    owner_id = (
+        session._primary_rows[0].owner_id if session._primary_rows else uuid.uuid4()
+    )
     monkeypatch.setattr(worker, "Session", lambda _engine: _SessionContext(session))
     monkeypatch.setattr(worker, "_get_apprise", lambda: notifier)
+    monkeypatch.setattr(worker, "_notification_owner_id", lambda _session: owner_id)
     return redis
 
 
@@ -364,3 +370,90 @@ def test_cadence_waits_until_local_nine_am(monkeypatch) -> None:
         )
     )
     assert [item["title"] for item in notifier.items] == ["Losing touch: Chicago"]
+
+
+def test_unconfigured_notifications_do_not_consume_reminders(monkeypatch) -> None:
+    now = datetime(2026, 1, 15, 12, 0, tzinfo=timezone.utc)
+    contact = Contact(first_name="No Sink", owner_id=uuid.uuid4())
+    reminder = Reminder(
+        owner_id=contact.owner_id,
+        contact_id=contact.id,
+        title="Keep me due",
+        remind_at=now - timedelta(minutes=5),
+        frequency=ReminderFrequency.ONCE,
+        is_active=True,
+    )
+    session = _FakeSession(
+        primary_rows=[reminder],
+        contacts_by_id={contact.id: contact},
+    )
+    monkeypatch.setattr(worker, "Session", lambda _engine: _SessionContext(session))
+    monkeypatch.setattr(worker, "_get_apprise", lambda: None)
+    monkeypatch.setattr(
+        worker, "_notification_owner_id", lambda _session: contact.owner_id
+    )
+
+    asyncio.run(worker._check_reminders({"engine": object(), "redis": None}, now=now))
+
+    assert reminder.is_active is True
+    assert reminder.delivery_attempts == 0
+    assert reminder.next_delivery_at is None
+
+
+def test_global_sink_only_receives_primary_superuser_reminders(
+    db: Session,
+    monkeypatch,
+) -> None:
+    now = datetime(2026, 1, 15, 12, 0, tzinfo=timezone.utc)
+    primary = User(
+        email=f"primary-{uuid.uuid4().hex}@example.com",
+        hashed_password="unused",
+        is_active=True,
+        is_superuser=True,
+        created_at=datetime(1900, 1, 1, tzinfo=timezone.utc),
+    )
+    other = User(
+        email=f"other-{uuid.uuid4().hex}@example.com",
+        hashed_password="unused",
+        is_active=True,
+        is_superuser=False,
+        created_at=datetime(1900, 1, 2, tzinfo=timezone.utc),
+    )
+    db.add(primary)
+    db.add(other)
+    db.commit()
+    db.refresh(primary)
+    db.refresh(other)
+    primary_reminder = Reminder(
+        owner_id=primary.id,
+        title="Admin reminder",
+        remind_at=now - timedelta(minutes=5),
+        frequency=ReminderFrequency.ONCE,
+        is_active=True,
+    )
+    other_reminder = Reminder(
+        owner_id=other.id,
+        title="Other tenant reminder",
+        remind_at=now - timedelta(minutes=5),
+        frequency=ReminderFrequency.ONCE,
+        is_active=True,
+    )
+    db.add(primary_reminder)
+    db.add(other_reminder)
+    db.commit()
+
+    notifier = _Notifier(result=True)
+    monkeypatch.setattr(worker, "_get_apprise", lambda: notifier)
+
+    asyncio.run(
+        worker._check_reminders(
+            {"engine": db.get_bind(), "redis": None},
+            now=now,
+        )
+    )
+
+    assert [item["title"] for item in notifier.items] == ["Reminder: Admin reminder"]
+    db.refresh(primary_reminder)
+    db.refresh(other_reminder)
+    assert primary_reminder.is_active is False
+    assert other_reminder.is_active is True

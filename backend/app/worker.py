@@ -1,6 +1,7 @@
 """ARQ background worker for processing reminders, cadence checks, and search indexing."""
 
 import logging
+import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -19,6 +20,7 @@ from app.models import (  # noqa: E402
     Contact,
     Reminder,
     ReminderFrequency,
+    User,
 )
 
 _REMINDER_MAX_DELIVERY_ATTEMPTS = 5
@@ -26,15 +28,25 @@ _REMINDER_RETRY_BASE_SECONDS = 60
 _REMINDER_RETRY_MAX_SECONDS = 3600
 
 
-def _get_apprise() -> apprise.Apprise:
+def _get_apprise() -> apprise.Apprise | None:
     """Initialize Apprise with configured notification URLs."""
+    if not settings.APPRISE_URLS:
+        return None
     apobj = apprise.Apprise()
-    if settings.APPRISE_URLS:
-        for url in settings.APPRISE_URLS.split(","):
-            url = url.strip()
-            if url:
-                apobj.add(url)
+    for url in settings.APPRISE_URLS.split(","):
+        url = url.strip()
+        if url:
+            apobj.add(url)
     return apobj
+
+
+def _notification_owner_id(session: Session) -> uuid.UUID | None:
+    """Return the single owner whose data may use the global Apprise sink."""
+    return session.exec(
+        select(User.id)
+        .where(User.is_superuser.is_(True))
+        .order_by(User.created_at.asc(), User.id.asc())
+    ).first()
 
 
 async def check_reminders(ctx: dict) -> None:
@@ -59,10 +71,7 @@ def _reminder_still_due(reminder: Reminder, now: datetime) -> bool:
         and reminder.deleted_at is None
         and reminder.remind_at <= now
         and (reminder.snoozed_until is None or reminder.snoozed_until <= now)
-        and (
-            reminder.next_delivery_at is None
-            or reminder.next_delivery_at <= now
-        )
+        and (reminder.next_delivery_at is None or reminder.next_delivery_at <= now)
     )
 
 
@@ -79,8 +88,12 @@ async def _check_reminders(ctx: dict, *, now: datetime) -> None:
     redis = ctx.get("redis")
 
     with Session(engine) as session:
+        notification_owner_id = _notification_owner_id(session)
+        if notification_owner_id is None:
+            return
         due_reminders = session.exec(
             select(Reminder).where(
+                Reminder.owner_id == notification_owner_id,
                 Reminder.is_active.is_(True),
                 Reminder.deleted_at.is_(None),
                 Reminder.remind_at <= now,
@@ -90,10 +103,9 @@ async def _check_reminders(ctx: dict, *, now: datetime) -> None:
             )
         ).all()
 
-        if not due_reminders:
-            return
-
         apobj = _get_apprise()
+        if apobj is None or not due_reminders:
+            return
 
         for reminder in due_reminders:
             claim_key = f"kindred:reminder-delivery:{reminder.id}"
@@ -216,8 +228,12 @@ async def _check_cadences(ctx: dict, *, now: datetime) -> None:
     redis = ctx.get("redis")
 
     with Session(engine) as session:
+        notification_owner_id = _notification_owner_id(session)
+        if notification_owner_id is None:
+            return
         contacts = session.exec(
             select(Contact).where(
+                Contact.owner_id == notification_owner_id,
                 Contact.is_archived.is_(False),
                 Contact.contact_frequency_days.is_not(None),
                 Contact.deleted_at.is_(None),
@@ -225,6 +241,8 @@ async def _check_cadences(ctx: dict, *, now: datetime) -> None:
         ).all()
 
         apobj = _get_apprise()
+        if apobj is None:
+            return
 
         for contact in contacts:
             # Skip if do-not-contact is set
