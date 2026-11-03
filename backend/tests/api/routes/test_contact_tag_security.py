@@ -42,9 +42,7 @@ def test_shared_contact_tags_cannot_be_mutated_or_disclosed(
     alice_headers = authentication_token_from_email(
         client=client, email=alice.email, db=db
     )
-    bob_headers = authentication_token_from_email(
-        client=client, email=bob.email, db=db
-    )
+    bob_headers = authentication_token_from_email(client=client, email=bob.email, db=db)
     charlie_headers = authentication_token_from_email(
         client=client, email=charlie.email, db=db
     )

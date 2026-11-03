@@ -100,9 +100,7 @@ def test_reported_contact_share_to_api_key_escalation_chain_is_blocked(
     assert promoted.status_code == 403, promoted.text
     assert promoted.json()["detail"] == "Only superusers can use impersonation"
 
-    persisted = client.get(
-        f"{settings.API_V1_STR}/users/me", headers=attacker_headers
-    )
+    persisted = client.get(f"{settings.API_V1_STR}/users/me", headers=attacker_headers)
     assert persisted.status_code == 200, persisted.text
     assert persisted.json()["is_superuser"] is False
 

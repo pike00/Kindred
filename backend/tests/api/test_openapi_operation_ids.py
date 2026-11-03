@@ -19,17 +19,11 @@ def test_operation_ids_are_unique() -> None:
         for method, operation in operations.items():
             if not isinstance(operation, dict):
                 continue
-            normalized_path = re.sub(
-                r"[^a-z0-9]+", "_", path.strip("/").lower()
-            ).strip("_")
+            normalized_path = re.sub(r"[^a-z0-9]+", "_", path.strip("/").lower()).strip(
+                "_"
+            )
             assert operation["operationId"] == f"{method}_{normalized_path}"
 
     snooze = schema["paths"]["/api/v1/contacts/{contact_id}/snooze"]
-    assert (
-        snooze["patch"]["operationId"]
-        == "patch_api_v1_contacts_contact_id_snooze"
-    )
-    assert (
-        snooze["post"]["operationId"]
-        == "post_api_v1_contacts_contact_id_snooze"
-    )
+    assert snooze["patch"]["operationId"] == "patch_api_v1_contacts_contact_id_snooze"
+    assert snooze["post"]["operationId"] == "post_api_v1_contacts_contact_id_snooze"

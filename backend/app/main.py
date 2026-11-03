@@ -42,9 +42,9 @@ def _git_hash() -> str:
 
 
 def custom_generate_unique_id(route: APIRoute) -> str:
-    normalized_path = re.sub(
-        r"[^a-z0-9]+", "_", route.path.strip("/").lower()
-    ).strip("_")
+    normalized_path = re.sub(r"[^a-z0-9]+", "_", route.path.strip("/").lower()).strip(
+        "_"
+    )
     methods = sorted(
         method.lower()
         for method in (route.methods or {"GET"})
