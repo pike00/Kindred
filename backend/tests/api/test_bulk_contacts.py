@@ -110,7 +110,7 @@ def test_bulk_delete_moves_contacts_to_trash(
     contact = create_test_contact(db, user_id, first_name="Trash")
 
     response = client.patch(
-        f"/api/v1/contacts/bulk",
+        "/api/v1/contacts/bulk",
         headers=superuser_token_headers,
         json={
             "contact_ids": [str(contact.id)],

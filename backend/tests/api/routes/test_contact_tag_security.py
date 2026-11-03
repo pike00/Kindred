@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session, select
 
 from app.core.config import settings
-from app.models import Contact, ContactTag, Tag, TagShare
+from app.models import ContactTag, TagShare
 from tests.utils.user import authentication_token_from_email, create_random_user
 
 API = settings.API_V1_STR
