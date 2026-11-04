@@ -49,3 +49,4 @@ PROJECT_NAME=audit POSTGRES_SERVER=127.0.0.1
 Path.home
 self.home
 python-build-standalone/releases/download/20261026
+cpython-3.14.10
