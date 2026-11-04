@@ -68,6 +68,7 @@ class OverdueContactPublic:
         imessage_synced_at (datetime.datetime | None | Unset):
         imessage_profile (None | OverdueContactPublicImessageProfileType0 | Unset):
         days_overdue (int | None | Unset):
+        last_interaction_notes (None | str | Unset):
     """
 
     first_name: str
@@ -108,6 +109,7 @@ class OverdueContactPublic:
     imessage_synced_at: datetime.datetime | None | Unset = UNSET
     imessage_profile: None | OverdueContactPublicImessageProfileType0 | Unset = UNSET
     days_overdue: int | None | Unset = UNSET
+    last_interaction_notes: None | str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -318,6 +320,12 @@ class OverdueContactPublic:
         else:
             days_overdue = self.days_overdue
 
+        last_interaction_notes: None | str | Unset
+        if isinstance(self.last_interaction_notes, Unset):
+            last_interaction_notes = UNSET
+        else:
+            last_interaction_notes = self.last_interaction_notes
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -394,6 +402,8 @@ class OverdueContactPublic:
             field_dict["imessage_profile"] = imessage_profile
         if days_overdue is not UNSET:
             field_dict["days_overdue"] = days_overdue
+        if last_interaction_notes is not UNSET:
+            field_dict["last_interaction_notes"] = last_interaction_notes
 
         return field_dict
 
@@ -735,6 +745,15 @@ class OverdueContactPublic:
 
         days_overdue = _parse_days_overdue(d.pop("days_overdue", UNSET))
 
+        def _parse_last_interaction_notes(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        last_interaction_notes = _parse_last_interaction_notes(d.pop("last_interaction_notes", UNSET))
+
         overdue_contact_public = cls(
             first_name=first_name,
             id=id,
@@ -774,6 +793,7 @@ class OverdueContactPublic:
             imessage_synced_at=imessage_synced_at,
             imessage_profile=imessage_profile,
             days_overdue=days_overdue,
+            last_interaction_notes=last_interaction_notes,
         )
 
         overdue_contact_public.additional_properties = d

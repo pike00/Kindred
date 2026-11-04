@@ -10,6 +10,7 @@ import pytest
 from pytest_httpx import HTTPXMock
 
 from kindred import UNSET, KindredClient
+from kindred._generated.api.contact_shares import contact_shares_delete_contact_share
 from kindred._generated.api.contacts import (
     get_api_v1_contacts as contacts_list_contacts,
     get_api_v1_contacts_contact_id as contacts_get_contact,
@@ -197,21 +198,21 @@ def test_contact_share_delete_uses_email_query(httpx_mock: HTTPXMock, client):
     httpx_mock.add_response(
         method="DELETE",
         url=re.compile(
-            rf"{re.escape(BASE)}/api/v1/contact-shares/\?grantee_email=bob(%40|@)example.com"
+            rf"{re.escape(BASE)}/api/v1/contact-shares/\?grantee_email=user(%40|@)example.com"
         ),
         json={"message": "Share removed"},
     )
 
     result = contact_shares_delete_contact_share.sync(
         client=client.raw,
-        grantee_email="bob@example.com",
+        grantee_email="user@example.com",
     )
 
     assert result is not None
     assert result.message == "Share removed"
     request = httpx_mock.get_request()
     assert request is not None
-    assert request.url.params["grantee_email"] == "bob@example.com"
+    assert request.url.params["grantee_email"] == "user@example.com"
 
 
 # ── UNSET sentinel re-export still works ────────────────────────────────────

@@ -1,3 +1,4 @@
+import { randomId } from "./random-id"
 import { assertSession, captureSession, currentAccountId } from "./session"
 
 export interface OfflineDraft {
@@ -216,5 +217,5 @@ export function removeDraft(id: string): Promise<void> {
 }
 
 export function generateUUID(): string {
-  return crypto.randomUUID()
+  return randomId()
 }

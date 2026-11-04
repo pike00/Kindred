@@ -37,6 +37,7 @@ from app.api.routes import (
     users,
     utils,
     vcard_conflicts,
+    voice_captures,
     webhooks,
 )
 from app.core.config import settings
@@ -92,6 +93,7 @@ api_router.include_router(import_export.router)
 api_router.include_router(webhooks.router)
 
 api_router.include_router(transcribe.router)
+api_router.include_router(voice_captures.router)
 api_router.include_router(activity_logs.router)
 api_router.include_router(vcard_conflicts.router)
 api_router.include_router(calendar.router)

@@ -191,3 +191,10 @@ sdk/src/kindred/_generated/api/webhooks/webhooks_update_webhook.py	sdk/src/kindr
 sdk/src/kindred/_generated/api/webhooks/webhooks_create_webhook.py	sdk/src/kindred/_generated/api/webhooks/post_api_v1_webhooks.py
 sdk/src/kindred/_generated/api/webhooks/webhooks_inbound_webhook.py	sdk/src/kindred/_generated/api/webhooks/post_api_v1_webhooks_inbound_api_key.py
 sdk/src/kindred/_generated/api/webhooks/webhooks_twilio_webhook.py	sdk/src/kindred/_generated/api/webhooks/post_api_v1_webhooks_twilio_api_key.py
+sdk/src/kindred/_generated/api/voice_captures/voice_captures_create_voice_capture.py	sdk/src/kindred/_generated/api/voice_captures/post_api_v1_voice_captures.py
+sdk/src/kindred/_generated/api/voice_captures/voice_captures_list_voice_captures.py	sdk/src/kindred/_generated/api/voice_captures/get_api_v1_voice_captures.py
+sdk/src/kindred/_generated/api/voice_captures/voice_captures_get_voice_capture.py	sdk/src/kindred/_generated/api/voice_captures/get_api_v1_voice_captures_capture_id.py
+sdk/src/kindred/_generated/api/voice_captures/voice_captures_update_voice_capture.py	sdk/src/kindred/_generated/api/voice_captures/put_api_v1_voice_captures_capture_id.py
+sdk/src/kindred/_generated/api/voice_captures/voice_captures_delete_voice_capture.py	sdk/src/kindred/_generated/api/voice_captures/delete_api_v1_voice_captures_capture_id.py
+sdk/src/kindred/_generated/api/voice_captures/voice_captures_analyze_voice_capture.py	sdk/src/kindred/_generated/api/voice_captures/post_api_v1_voice_captures_capture_id_analyze.py
+sdk/src/kindred/_generated/api/voice_captures/voice_captures_commit_voice_capture.py	sdk/src/kindred/_generated/api/voice_captures/post_api_v1_voice_captures_capture_id_commit.py

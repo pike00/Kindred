@@ -595,11 +595,6 @@
           "name": "snoozed_until",
           "type": "timestamp with time zone",
           "nullable": true
-        },
-        {
-          "name": "vcard_href",
-          "type": "varchar(500)",
-          "nullable": true
         }
       ],
       "indexes": [
@@ -6581,7 +6576,7 @@
       ]
     },
     {
-      "name": "public.webhook_delivery",
+      "name": "public.voice_capture",
       "type": "BASE TABLE",
       "columns": [
         {
@@ -6590,156 +6585,253 @@
           "nullable": false
         },
         {
-          "name": "webhook_id",
+          "name": "owner_id",
           "type": "uuid",
           "nullable": false
         },
         {
-          "name": "delivery_id",
-          "type": "varchar(255)",
+          "name": "raw_text",
+          "type": "text",
           "nullable": false
         },
         {
-          "name": "interaction_id",
-          "type": "uuid",
-          "nullable": true
+          "name": "corrected_text",
+          "type": "text",
+          "nullable": false
+        },
+        {
+          "name": "timezone",
+          "type": "varchar(100)",
+          "nullable": false
+        },
+        {
+          "name": "recorded_at",
+          "type": "timestamp with time zone",
+          "nullable": false
         },
         {
           "name": "created_at",
           "type": "timestamp with time zone",
-          "nullable": false,
-          "default": "now()"
+          "nullable": false
         },
         {
-          "name": "claimed_at",
+          "name": "updated_at",
           "type": "timestamp with time zone",
+          "nullable": false
+        },
+        {
+          "name": "status",
+          "type": "varchar(20)",
           "nullable": false,
-          "default": "now()"
+          "default": "'draft'::character varying"
+        },
+        {
+          "name": "revision",
+          "type": "integer",
+          "nullable": false,
+          "default": "1"
+        },
+        {
+          "name": "actions",
+          "type": "jsonb",
+          "nullable": false,
+          "default": "'{}'::jsonb"
+        },
+        {
+          "name": "warnings",
+          "type": "jsonb",
+          "nullable": false,
+          "default": "'[]'::jsonb"
+        },
+        {
+          "name": "analysis_error",
+          "type": "varchar(500)",
+          "nullable": true
+        },
+        {
+          "name": "committed_at",
+          "type": "timestamp with time zone",
+          "nullable": true
+        },
+        {
+          "name": "commit_hash",
+          "type": "varchar(64)",
+          "nullable": true
+        },
+        {
+          "name": "results",
+          "type": "jsonb",
+          "nullable": true
         }
       ],
       "indexes": [
         {
-          "name": "webhook_delivery_pkey",
-          "def": "CREATE UNIQUE INDEX webhook_delivery_pkey ON public.webhook_delivery USING btree (id)",
-          "table": "public.webhook_delivery",
+          "name": "voice_capture_pkey",
+          "def": "CREATE UNIQUE INDEX voice_capture_pkey ON public.voice_capture USING btree (id)",
+          "table": "public.voice_capture",
           "columns": [
             "id"
           ]
         },
         {
-          "name": "uq_webhook_delivery_event",
-          "def": "CREATE UNIQUE INDEX uq_webhook_delivery_event ON public.webhook_delivery USING btree (webhook_id, delivery_id)",
-          "table": "public.webhook_delivery",
+          "name": "ix_voice_capture_owner_id",
+          "def": "CREATE INDEX ix_voice_capture_owner_id ON public.voice_capture USING btree (owner_id)",
+          "table": "public.voice_capture",
           "columns": [
-            "webhook_id",
-            "delivery_id"
+            "owner_id"
           ]
         },
         {
-          "name": "ix_webhook_delivery_webhook_id",
-          "def": "CREATE INDEX ix_webhook_delivery_webhook_id ON public.webhook_delivery USING btree (webhook_id)",
-          "table": "public.webhook_delivery",
+          "name": "ix_voice_capture_commit_hash",
+          "def": "CREATE INDEX ix_voice_capture_commit_hash ON public.voice_capture USING btree (commit_hash)",
+          "table": "public.voice_capture",
           "columns": [
-            "webhook_id"
+            "commit_hash"
           ]
         }
       ],
       "constraints": [
         {
-          "name": "webhook_delivery_claimed_at_not_null",
+          "name": "voice_capture_actions_not_null",
           "type": "n",
-          "def": "NOT NULL claimed_at",
-          "table": "public.webhook_delivery",
+          "def": "NOT NULL actions",
+          "table": "public.voice_capture",
           "referenced_table": "",
           "columns": [
-            "claimed_at"
+            "actions"
           ]
         },
         {
-          "name": "webhook_delivery_created_at_not_null",
+          "name": "voice_capture_corrected_text_not_null",
+          "type": "n",
+          "def": "NOT NULL corrected_text",
+          "table": "public.voice_capture",
+          "referenced_table": "",
+          "columns": [
+            "corrected_text"
+          ]
+        },
+        {
+          "name": "voice_capture_created_at_not_null",
           "type": "n",
           "def": "NOT NULL created_at",
-          "table": "public.webhook_delivery",
+          "table": "public.voice_capture",
           "referenced_table": "",
           "columns": [
             "created_at"
           ]
         },
         {
-          "name": "webhook_delivery_delivery_id_not_null",
-          "type": "n",
-          "def": "NOT NULL delivery_id",
-          "table": "public.webhook_delivery",
-          "referenced_table": "",
-          "columns": [
-            "delivery_id"
-          ]
-        },
-        {
-          "name": "webhook_delivery_id_not_null",
+          "name": "voice_capture_id_not_null",
           "type": "n",
           "def": "NOT NULL id",
-          "table": "public.webhook_delivery",
+          "table": "public.voice_capture",
           "referenced_table": "",
           "columns": [
             "id"
           ]
         },
         {
-          "name": "webhook_delivery_webhook_id_not_null",
+          "name": "voice_capture_owner_id_not_null",
           "type": "n",
-          "def": "NOT NULL webhook_id",
-          "table": "public.webhook_delivery",
+          "def": "NOT NULL owner_id",
+          "table": "public.voice_capture",
           "referenced_table": "",
           "columns": [
-            "webhook_id"
+            "owner_id"
           ]
         },
         {
-          "name": "webhook_delivery_interaction_id_fkey",
-          "type": "FOREIGN KEY",
-          "def": "FOREIGN KEY (interaction_id) REFERENCES interaction(id) ON DELETE SET NULL",
-          "table": "public.webhook_delivery",
-          "referenced_table": "public.interaction",
+          "name": "voice_capture_raw_text_not_null",
+          "type": "n",
+          "def": "NOT NULL raw_text",
+          "table": "public.voice_capture",
+          "referenced_table": "",
           "columns": [
-            "interaction_id"
+            "raw_text"
+          ]
+        },
+        {
+          "name": "voice_capture_recorded_at_not_null",
+          "type": "n",
+          "def": "NOT NULL recorded_at",
+          "table": "public.voice_capture",
+          "referenced_table": "",
+          "columns": [
+            "recorded_at"
+          ]
+        },
+        {
+          "name": "voice_capture_revision_not_null",
+          "type": "n",
+          "def": "NOT NULL revision",
+          "table": "public.voice_capture",
+          "referenced_table": "",
+          "columns": [
+            "revision"
+          ]
+        },
+        {
+          "name": "voice_capture_status_not_null",
+          "type": "n",
+          "def": "NOT NULL status",
+          "table": "public.voice_capture",
+          "referenced_table": "",
+          "columns": [
+            "status"
+          ]
+        },
+        {
+          "name": "voice_capture_timezone_not_null",
+          "type": "n",
+          "def": "NOT NULL timezone",
+          "table": "public.voice_capture",
+          "referenced_table": "",
+          "columns": [
+            "timezone"
+          ]
+        },
+        {
+          "name": "voice_capture_updated_at_not_null",
+          "type": "n",
+          "def": "NOT NULL updated_at",
+          "table": "public.voice_capture",
+          "referenced_table": "",
+          "columns": [
+            "updated_at"
+          ]
+        },
+        {
+          "name": "voice_capture_warnings_not_null",
+          "type": "n",
+          "def": "NOT NULL warnings",
+          "table": "public.voice_capture",
+          "referenced_table": "",
+          "columns": [
+            "warnings"
+          ]
+        },
+        {
+          "name": "voice_capture_owner_id_fkey",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (owner_id) REFERENCES \"user\"(id) ON DELETE CASCADE",
+          "table": "public.voice_capture",
+          "referenced_table": "public.user",
+          "columns": [
+            "owner_id"
           ],
           "referenced_columns": [
             "id"
           ]
         },
         {
-          "name": "webhook_delivery_webhook_id_fkey",
-          "type": "FOREIGN KEY",
-          "def": "FOREIGN KEY (webhook_id) REFERENCES webhook_endpoint(id) ON DELETE CASCADE",
-          "table": "public.webhook_delivery",
-          "referenced_table": "public.webhook_endpoint",
-          "columns": [
-            "webhook_id"
-          ],
-          "referenced_columns": [
-            "id"
-          ]
-        },
-        {
-          "name": "webhook_delivery_pkey",
+          "name": "voice_capture_pkey",
           "type": "PRIMARY KEY",
           "def": "PRIMARY KEY (id)",
-          "table": "public.webhook_delivery",
+          "table": "public.voice_capture",
           "referenced_table": "",
           "columns": [
             "id"
-          ]
-        },
-        {
-          "name": "uq_webhook_delivery_event",
-          "type": "UNIQUE",
-          "def": "UNIQUE (webhook_id, delivery_id)",
-          "table": "public.webhook_delivery",
-          "referenced_table": "",
-          "columns": [
-            "webhook_id",
-            "delivery_id"
           ]
         }
       ]
@@ -7514,30 +7606,17 @@
       "def": "FOREIGN KEY (owner_id) REFERENCES \"user\"(id) ON DELETE CASCADE"
     },
     {
-      "table": "public.webhook_delivery",
+      "table": "public.voice_capture",
       "columns": [
-        "interaction_id"
+        "owner_id"
       ],
       "cardinality": "zero_or_more",
-      "parent_table": "public.interaction",
-      "parent_columns": [
-        "id"
-      ],
-      "parent_cardinality": "zero_or_one",
-      "def": "FOREIGN KEY (interaction_id) REFERENCES interaction(id) ON DELETE SET NULL"
-    },
-    {
-      "table": "public.webhook_delivery",
-      "columns": [
-        "webhook_id"
-      ],
-      "cardinality": "zero_or_more",
-      "parent_table": "public.webhook_endpoint",
+      "parent_table": "public.user",
       "parent_columns": [
         "id"
       ],
       "parent_cardinality": "exactly_one",
-      "def": "FOREIGN KEY (webhook_id) REFERENCES webhook_endpoint(id) ON DELETE CASCADE"
+      "def": "FOREIGN KEY (owner_id) REFERENCES \"user\"(id) ON DELETE CASCADE"
     }
   ],
   "functions": [

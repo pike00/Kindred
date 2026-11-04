@@ -95,7 +95,6 @@ erDiagram
   tsvector search_vector
   boolean auto_log_email
   timestamp_with_time_zone snoozed_until
-  varchar_500_ vcard_href
 }
 ```
 

@@ -1,5 +1,4 @@
 set shell := ["bash", "-uc"]
-# `release` / `version` / changelog recipes come from release.just (shared).
 # `dev` / `down` / `down-clean` / `logs` / `ps` / `shell` / `pytest` /
 # `worktree` / `worktree-rm` / `pr` come from preview.just. preview-kit
 # threads GIT_HASH + APP_VERSION as build args.
@@ -16,9 +15,8 @@ _dc := "docker compose -f " + compose
 #   just -f website/justfile deploy    # push to Cloudflare Pages
 # ─── Release / build / deploy ────────────────────────────────────────────
 #
-# `release` comes from release.just (release-kit cut: preflight, git-cliff
-# CHANGELOG, LLM notes, tag, push, GH release). `build` and `deploy` are
-# inline because they reference repo-specific paths.
+# Project-kit provides guarded release preparation, publishing, changelog,
+# build, and deploy recipes through the imports below.
 # ─── Python SDK (sdk/) ───────────────────────────────────────────────────
 
 default:
@@ -39,6 +37,23 @@ import '.project-kit/clean.just'
 # END PROJECT-KIT
 
 # --- repo-specific ---
+
+ci-backend:
+    cd backend && uv run --frozen bash scripts/tests-start.sh
+    just sdk-test
+    just --justfile whisper-service/justfile test coverage
+    uv run --project backend pytest scripts/tests -q
+
+ci-backend-coverage:
+    cd backend && uv run --frozen coverage report --fail-under=60
+
+# CI uses its own Postgres/Redis/Meilisearch services, without a preview stack.
+ci-backend-prepare:
+    cd backend && uv run --frozen bash scripts/prestart.sh
+
+# Focused authorization regressions against an explicitly configured test DB.
+test-security *args:
+    cd backend && uv run --frozen pytest tests/api/test_api_keys.py tests/api/routes/test_contact_shares.py tests/api/routes/test_users.py tests/api/test_deps_auth_mode.py {{args}}
 
 # Regenerate docs/db/ from the live Postgres schema using tbls, then render
 # each .md to a standalone .html via pandoc. The helper follows the active
@@ -103,7 +118,7 @@ dev-tailnet:
     TAILNET_HOST="$tailnet_ip" \
     TAILNET_MAGICDNS="$tailnet_host" \
     KINDRED_BACKEND_URL="http://127.0.0.1:${BACKEND_PORT}" \
-        exec pnpm exec vite --config vite.tailnet.config.ts --host "$tailnet_ip" --port "$tailnet_port" --strictPort
+        exec bun run dev -- --config vite.tailnet.config.ts --host "$tailnet_ip" --port "$tailnet_port" --strictPort
 
 # Run frontend Vitest with v8 coverage. Writes report to frontend/coverage/.
 frontend-coverage *args:

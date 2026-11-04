@@ -172,7 +172,7 @@ services:
       retries: 5
 
   meilisearch:
-    image: getmeili/meilisearch:v1.53
+    image: getmeili/meilisearch:v1.56
     restart: unless-stopped
     env_file: .env
     environment:

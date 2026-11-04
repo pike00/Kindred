@@ -2,6 +2,7 @@ import { screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import ApiKeys from "@/components/UserSettings/ApiKeys"
+import { resetSession } from "@/lib/session"
 import { renderWithProviders } from "@/test/helpers"
 
 const authState = vi.hoisted(() => ({
@@ -104,18 +105,18 @@ vi.mock("@/client", () => ({
 describe("ApiKeys", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    authState.user = { is_superuser: true }
+    resetSession()
     localStorage.setItem("access_token", "test-token")
+    authState.user = { is_superuser: true }
     global.fetch = vi.fn()
   })
 
   it.each([false, undefined])(
     "does not request or offer impersonation when superuser is %s",
     async (isSuperuser) => {
-      authState.user =
-        isSuperuser === undefined
-          ? undefined
-          : { is_superuser: isSuperuser }
+      authState.user = isSuperuser === undefined
+        ? undefined
+        : { is_superuser: isSuperuser }
       const { UsersService } = await import("@/client")
       vi.mocked(global.fetch).mockResolvedValue({
         ok: true,
@@ -129,9 +130,19 @@ describe("ApiKeys", () => {
       expect(screen.getByText("Create API key")).toBeInTheDocument()
       expect(UsersService.readUsers).not.toHaveBeenCalled()
       expect(screen.queryByText("Can act on behalf of")).not.toBeInTheDocument()
-      expect(
-        screen.queryByText(/Optionally allow the key/),
-      ).not.toBeInTheDocument()
+      expect(screen.queryByText(/Optionally allow the key/)).not.toBeInTheDocument()
+
+      await user.type(screen.getByPlaceholderText("janet bot"), "Personal key")
+      await user.click(screen.getByRole("button", { name: /^Create$/ }))
+      await waitFor(() => {
+        expect(global.fetch).toHaveBeenCalledWith(
+          expect.stringContaining("/api/v1/users/me/api-keys/"),
+          expect.objectContaining({
+            method: "POST",
+            body: JSON.stringify({ name: "Personal key", can_impersonate: [] }),
+          }),
+        )
+      })
     },
   )
 

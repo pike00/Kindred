@@ -19,4 +19,3 @@ from pathlib import Path
 for path in Path("frontend/src/client").glob("*.gen.ts"):
     path.write_text("\n".join(line if line.strip() else "" for line in path.read_text().splitlines()) + "\n")
 PY
-

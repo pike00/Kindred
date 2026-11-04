@@ -13,7 +13,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { type RenderOptions, render } from "@testing-library/react"
 import { Suspense, type ReactElement, type ReactNode } from "react"
-import type { CancelablePromise, ContactPublic, TagPublic } from "@/client"
+import type { CancelablePromise, ContactPublic, OverdueContactPublic, TagPublic } from "@/client"
 import { ShortcutRegistryProvider } from "@/hooks/useKeyboardShortcuts"
 
 // ---------------------------------------------------------------------------
@@ -67,10 +67,10 @@ export function renderWithProviders(
 // Common mock factories
 // ---------------------------------------------------------------------------
 
-/** Factory for a minimal ContactPublic object. Typed so it stays in sync. */
+/** Factory for a minimal ContactPublic / OverdueContactPublic object. Typed so it stays in sync. */
 export function makeContact(
-  overrides: Partial<ContactPublic> = {},
-): ContactPublic {
+  overrides: Partial<ContactPublic & OverdueContactPublic> = {},
+): ContactPublic & OverdueContactPublic {
   return {
     id: "test-contact-id",
     first_name: "Alice",
@@ -96,6 +96,8 @@ export function makeContact(
     created_at: "2026-01-01T00:00:00Z",
     updated_at: "2026-01-01T00:00:00Z",
     tags: [],
+    days_overdue: null,
+    last_interaction_notes: null,
     ...overrides,
   }
 }

@@ -16,8 +16,8 @@ import typer
 from _runtime import execution_host, flush_events, log
 
 PROJECT_NAME = "kindred"
-DEPLOY_HOST = "".lower()
-DEPLOY_SSH_ALIAS = ""
+DEPLOY_HOST = "ares".lower()
+DEPLOY_SSH_ALIAS = "ares.savannah-mimosa.ts.net"
 REMOTE_APP_DIR = f"~/.local/share/project-kit-apps/{PROJECT_NAME}"
 LOKI_URL = "http://127.0.0.1:3100/loki/api/v1/push"
 

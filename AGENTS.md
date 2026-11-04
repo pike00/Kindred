@@ -3,16 +3,20 @@
 <!-- BEGIN PROJECT-KIT — generated, do not edit by hand -->
 ## Project-kit recipes
 
-This repo is managed by project-kit (skill version: 0.3.0, last refreshed: 2026-11-02).
+This repo is managed by project-kit (skill version: 0.3.0, last refreshed: 2026-10-08).
 Project-kit-managed operations go through `just`.
 
 ### Execution context
 
-Managed recipes run execution-context checks themselves; invoke them directly.
-For unmanaged host-dependent actions, run `just context` first.
-Recheck unmanaged actions when the host, checkout, target, or configuration
-changes. Host roles describe execution locations; the actual hostname and
-configured target determine where an action runs.
+Run `just context` before every host-dependent action.
+Pass a named target, for example `just context deploy`, when checking a specific action.
+Managed recipes enforce their checks automatically. Host roles are descriptive
+rather than exclusive; the actual hostname and configured target determine where
+an action runs.
+
+| Target | Host | Repository path | Remote route |
+|---|---|---|---|
+| `deploy` | `ares` | `/home/will/projects/kindred` | `ssh ares.savannah-mimosa.ts.net` |
 
 ### Quick reference
 
@@ -31,6 +35,7 @@ configured target determine where an action runs.
 | E2E tests | `just test-e2e` |
 | Lint | `just lint` |
 | Typecheck | `just typecheck` |
+| Read-only production smoke | `just smoke production vX.Y.Z` |
 | Prepare release PR | `just release-prepare patch` |
 | Publish merged release | `just release-publish vX.Y.Z` |
 | Update CHANGELOG | `just changelog` |
@@ -155,23 +160,23 @@ All changes must strictly follow the standard delivery pipeline:
 3. **Push**: Push branch to origin.
 4. **PR**: Open a pull request (e.g. via `just pr` or `gh pr create`).
 5. **Merge**: Merge the PR into main after checks pass.
-6. **Deploy**: Deploy to production (e.g. `just release` or `just deploy`).
+6. **Deploy**: Prepare and publish releases with the guarded `just release-prepare` and `just release-publish` recipes. Build images with `just build-image`; deploy through the canonical `~/projects/Homelab` checkout using its guarded Kindred recipe.
 
 Do not push code directly to `main` without following this branch, commit, push, PR, merge, deploy pipeline.
 
 ## Release / publish / deploy
 
-Three recipes, defined in `justfile` (see also `release.just`):
+Project-kit manages the release and build recipes. Run `just context <target>` before host-dependent actions and use the guarded recipes:
 
 ```bash
-just release v0.2.0     # tag + push + build Dockerfile.prod + push :v0.2.0 + :sha-<short> to GHCR
-just publish v0.2.0     # build + push only (tag must already exist)
-just bump v0.2.0        # delegates to ~/Documents/Homelab/apps/kindred/justfile (pg-dump, pull, healthcheck)
+just release-prepare patch       # prepare a versioned release PR
+just release-publish v0.2.0      # publish a prepared release
+just build-image v0.2.0          # build and verify the tagged images
 ```
 
-`release` enforces tag format `vX.Y.Z[-prerelease]`, blocks pre-existing tags, requires a clean working tree, and requires HEAD pushed to origin. No `:latest` tag is published — homelab compose uses `${IMAGE_TAG:?}` so every deploy is explicit.
+Each image is published with its immutable SemVer tag. The mutable `:latest` alias is promoted only after both image digests have been verified against that release. Production compose always uses the explicit `${IMAGE_TAG:?}` pin. Deploy through the canonical `~/projects/Homelab` checkout; do not mutate production from a worktree.
 
-CI mirror: `.github/workflows/release.yml` runs on tag push via the **self-hosted GHA runner on ares** and produces the same image. `just publish` is the host-side equivalent for when the runner is unavailable.
+Release preparation and publication use the project-kit guarded recipes; there is no repository `.github/workflows/release.yml` mirror.
 
 ## Pre-push gates
 

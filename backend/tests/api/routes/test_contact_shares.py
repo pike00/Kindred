@@ -21,7 +21,9 @@ def _create_inactive_user(db: Session):
     )
 
 
-def test_create_contact_share_by_grantee_email(client: TestClient, db: Session) -> None:
+def test_create_contact_share_by_grantee_email(
+    client: TestClient, db: Session
+) -> None:
     alice = create_random_user(db)
     bob = create_random_user(db)
     alice_h = authentication_token_from_email(client=client, email=alice.email, db=db)
@@ -222,22 +224,16 @@ def test_list_contact_shares_isolated_to_grantor(
     alice_h = authentication_token_from_email(client=client, email=alice.email, db=db)
     bob_h = authentication_token_from_email(client=client, email=bob.email, db=db)
 
-    assert (
-        client.post(
-            f"{API}/contact-shares/",
-            headers=alice_h,
+    assert client.post(
+        f"{API}/contact-shares/",
+        headers=alice_h,
             json={"grantee_email": bob.email},
-        ).status_code
-        == 200
-    )
-    assert (
-        client.post(
-            f"{API}/contact-shares/",
-            headers=bob_h,
+    ).status_code == 200
+    assert client.post(
+        f"{API}/contact-shares/",
+        headers=bob_h,
             json={"grantee_email": charlie.email},
-        ).status_code
-        == 200
-    )
+    ).status_code == 200
 
     alice_list = client.get(f"{API}/contact-shares/", headers=alice_h)
     bob_list = client.get(f"{API}/contact-shares/", headers=bob_h)
@@ -267,14 +263,11 @@ def test_delete_contact_share_restricted_to_grantor(
     alice_h = authentication_token_from_email(client=client, email=alice.email, db=db)
     bob_h = authentication_token_from_email(client=client, email=bob.email, db=db)
 
-    assert (
-        client.post(
-            f"{API}/contact-shares/",
-            headers=alice_h,
-            json={"grantee_email": charlie.email},
-        ).status_code
-        == 200
-    )
+    assert client.post(
+        f"{API}/contact-shares/",
+        headers=alice_h,
+        json={"grantee_email": charlie.email},
+    ).status_code == 200
 
     forbidden = client.delete(
         f"{API}/contact-shares/",

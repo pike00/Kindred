@@ -1,0 +1,185 @@
+from http import HTTPStatus
+from typing import Any, cast
+from urllib.parse import quote
+
+import httpx
+
+from ...client import AuthenticatedClient, Client
+from ...types import Response, UNSET
+from ... import errors
+
+from ...models.http_validation_error import HTTPValidationError
+from ...models.review_capture import ReviewCapture
+from ...models.voice_capture_public import VoiceCapturePublic
+from typing import cast
+from uuid import UUID
+
+
+def _get_kwargs(
+    capture_id: UUID,
+    *,
+    body: ReviewCapture,
+) -> dict[str, Any]:
+    headers: dict[str, Any] = {}
+
+    _kwargs: dict[str, Any] = {
+        "method": "post",
+        "url": "/api/v1/voice-captures/{capture_id}/commit".format(
+            capture_id=quote(str(capture_id), safe=""),
+        ),
+    }
+
+    _kwargs["json"] = body.to_dict()
+
+    headers["Content-Type"] = "application/json"
+
+    _kwargs["headers"] = headers
+    return _kwargs
+
+
+def _parse_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> HTTPValidationError | VoiceCapturePublic | None:
+    if response.status_code == 200:
+        response_200 = VoiceCapturePublic.from_dict(response.json())
+
+        return response_200
+
+    if response.status_code == 422:
+        response_422 = HTTPValidationError.from_dict(response.json())
+
+        return response_422
+
+    if client.raise_on_unexpected_status:
+        raise errors.UnexpectedStatus(response.status_code, response.content)
+    else:
+        return None
+
+
+def _build_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> Response[HTTPValidationError | VoiceCapturePublic]:
+    return Response(
+        status_code=HTTPStatus(response.status_code),
+        content=response.content,
+        headers=response.headers,
+        parsed=_parse_response(client=client, response=response),
+    )
+
+
+def sync_detailed(
+    capture_id: UUID,
+    *,
+    client: AuthenticatedClient,
+    body: ReviewCapture,
+) -> Response[HTTPValidationError | VoiceCapturePublic]:
+    """Commit Voice Capture
+
+    Args:
+        capture_id (UUID):
+        body (ReviewCapture):
+
+    Raises:
+        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+    Returns:
+        Response[HTTPValidationError | VoiceCapturePublic]
+    """
+
+    kwargs = _get_kwargs(
+        capture_id=capture_id,
+        body=body,
+    )
+
+    response = client.get_httpx_client().request(
+        **kwargs,
+    )
+
+    return _build_response(client=client, response=response)
+
+
+def sync(
+    capture_id: UUID,
+    *,
+    client: AuthenticatedClient,
+    body: ReviewCapture,
+) -> HTTPValidationError | VoiceCapturePublic | None:
+    """Commit Voice Capture
+
+    Args:
+        capture_id (UUID):
+        body (ReviewCapture):
+
+    Raises:
+        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+    Returns:
+        HTTPValidationError | VoiceCapturePublic
+    """
+
+    return sync_detailed(
+        capture_id=capture_id,
+        client=client,
+        body=body,
+    ).parsed
+
+
+async def asyncio_detailed(
+    capture_id: UUID,
+    *,
+    client: AuthenticatedClient,
+    body: ReviewCapture,
+) -> Response[HTTPValidationError | VoiceCapturePublic]:
+    """Commit Voice Capture
+
+    Args:
+        capture_id (UUID):
+        body (ReviewCapture):
+
+    Raises:
+        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+    Returns:
+        Response[HTTPValidationError | VoiceCapturePublic]
+    """
+
+    kwargs = _get_kwargs(
+        capture_id=capture_id,
+        body=body,
+    )
+
+    response = await client.get_async_httpx_client().request(**kwargs)
+
+    return _build_response(client=client, response=response)
+
+
+async def asyncio(
+    capture_id: UUID,
+    *,
+    client: AuthenticatedClient,
+    body: ReviewCapture,
+) -> HTTPValidationError | VoiceCapturePublic | None:
+    """Commit Voice Capture
+
+    Args:
+        capture_id (UUID):
+        body (ReviewCapture):
+
+    Raises:
+        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+    Returns:
+        HTTPValidationError | VoiceCapturePublic
+    """
+
+    return (
+        await asyncio_detailed(
+            capture_id=capture_id,
+            client=client,
+            body=body,
+        )
+    ).parsed

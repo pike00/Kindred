@@ -59,6 +59,41 @@ kindred contacts losing-touch | jq -r '.first_name + " " + (.last_name // "")'
 
 `--pretty` switches to indented JSON.
 
+### Voice capture review
+
+```bash
+kindred voice transcribe recording.wav --timezone America/Chicago
+# Or preserve an existing transcript, including its original whitespace:
+kindred voice create --file transcript.txt --timezone America/Chicago
+kindred voice list --limit 50 --skip 0
+kindred voice get <capture-uuid> --pretty
+kindred voice analyze <capture-uuid> --revision 1 --pretty
+```
+
+Analysis proposes interactions, notes, contact field changes, life events, and
+reminders. It preserves the original transcript and does not write CRM records.
+For revised wording, add `--file corrected.txt` to `analyze`. Files may be `-`
+to read stdin. Transcription can take repeated `--contact <uuid>` options for
+up to 20 visible contact name hints.
+
+Create a review JSON file containing `revision`, `corrected_text`, and `actions`
+from the returned capture. Edit destinations and fields, or set an action's
+`enabled` flag to `false`. Contact field changes use a `fields` list such as
+`[{"field": "company", "value": "Acme"}]`; explicit `null` clears that field.
+
+```bash
+kindred voice update <capture-uuid> --file review.json --pretty
+# Update review.json to the returned revision before a subsequent request.
+kindred voice commit <capture-uuid> --file review.json --pretty
+kindred voice delete <uncommitted-capture-uuid>
+```
+
+Confirmation saves all enabled actions in one transaction. If the response is
+lost, retry with the identical review file; the API returns the same saved IDs.
+Changed retries and stale drafts return a nonzero CLI exit. Analysis and audio
+upload allow 120 seconds for the service response. Committed receipts remain
+available through `get` and cannot be deleted by the draft command.
+
 ### Using from a justfile
 
 ```just

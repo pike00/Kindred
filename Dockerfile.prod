@@ -90,15 +90,42 @@ LABEL org.opencontainers.image.revision=${BUILD_REVISION}
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PATH="/app/.venv/bin:$PATH" \
-    STATIC_DIR=/app/static \
-    HOME=/home/kindred
-RUN groupadd --gid 10001 kindred \
-    && useradd --uid 10001 --gid 10001 --home-dir /home/kindred --create-home --shell /usr/sbin/nologin kindred \
-    && install -d -o 10001 -g 10001 /app/backend/uploads
-COPY --from=dependency-builder /app /app
+    STATIC_DIR=/app/static
+
+# System deps: libpq for psycopg, curl for healthchecks, build-essential for
+# any sdist that needs compiling. Cleaned up to keep the image lean.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      build-essential libpq-dev curl ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY --from=ghcr.io/astral-sh/uv:0.9.26 /uv /uvx /bin/
+
+WORKDIR /app
+
+# Workspace metadata first (cached by uv layer)
+COPY pyproject.toml uv.lock ./
+
+# Install only the `app` workspace member (skips dev deps)
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-install-workspace --package app --no-dev
+
+# Copy backend source after deps so code edits don't bust the dep cache
+COPY backend/scripts /app/backend/scripts
+COPY backend/pyproject.toml backend/alembic.ini /app/backend/
+COPY backend/app /app/backend/app
+
+# Materialize the workspace member install
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --package app --no-dev
 
 # Built SPA → /app/static (served by FastAPI's StaticFiles when STATIC_DIR is set)
 COPY --from=frontend-builder /build/frontend/dist /app/static
+
+ARG APP_VERSION=
+ARG GIT_HASH=
+ENV APP_VERSION=${APP_VERSION} \
+    GIT_HASH=${GIT_HASH}
 
 WORKDIR /app/backend
 USER 10001:10001

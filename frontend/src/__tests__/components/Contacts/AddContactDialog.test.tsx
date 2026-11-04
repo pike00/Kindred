@@ -378,12 +378,10 @@ describe("AddContactDialog", () => {
   it("shows creating text while submission is pending", async () => {
     const { ContactsService } = await import("@/client")
     const mockCreateContact = vi.mocked(ContactsService.createContact)
-    mockCreateContact.mockImplementation(
-      () =>
-        new Promise((r) => setTimeout(r, 1000)) as unknown as ReturnType<
-          typeof ContactsService.createContact
-        >,
-    )
+    let resolveCreate!: (value: ReturnType<typeof makeContact>) => void
+    mockCreateContact.mockImplementation(() => new Promise((resolve) => {
+      resolveCreate = resolve
+    }) as unknown as ReturnType<typeof ContactsService.createContact>)
 
     const user = userEvent.setup()
     renderWithProviders(<AddContactDialog />)
@@ -400,6 +398,7 @@ describe("AddContactDialog", () => {
     await waitFor(() => {
       expect(screen.getByText("Creating...")).toBeInTheDocument()
     })
+    resolveCreate(makeContact({ id: "created", first_name: "Bob" }))
   })
 
   it("handles optional last_name and birthday fields", async () => {

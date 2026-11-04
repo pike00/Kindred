@@ -358,13 +358,13 @@ def main() -> int:
         _warn("gh CLI not on $PATH")
         warns += 1
     _section("test")
-    warns += _check_cmd("backend", "docker compose -f compose.dev.yml exec -T backend pytest")
+    warns += _check_cmd("backend", "just pytest \u0026\u0026 just sdk-test \u0026\u0026 just --justfile whisper-service/justfile test coverage \u0026\u0026 uv run --project backend pytest scripts/tests -q")
     warns += _check_cmd("frontend", "cd frontend \u0026\u0026 pnpm run test")
     warns += _check_cmd("e2e", "bash scripts/run-e2e-prepush.sh")
     _section("deploy")
-    deploy_host = "".lower()
+    deploy_host = "ares".lower()
     execution_host = socket.gethostname().split(".", 1)[0].lower()
-    ssh_alias = ""
+    ssh_alias = "ares.savannah-mimosa.ts.net"
     try:
         resolution = _stack_resolution(
             deploy_host,
@@ -378,9 +378,11 @@ def main() -> int:
         fails += 1
     else:
         _ok(f"homelab stack resolves to {resolved_stack}")
+    _ok("deployment checkout configured at /home/will/projects/kindred")
     _section("build")
     dockerfiles = [
         "Dockerfile.prod",
+        "whisper-service/Dockerfile",
     ]
     missing_dockerfiles = [path for path in dockerfiles if not (repo / path).is_file()]
     if not dockerfiles:

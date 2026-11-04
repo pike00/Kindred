@@ -50,7 +50,6 @@ Core contact entity — the subject of everything else in the CRM.
 | search_vector | tsvector |  | true |  |  |  |
 | auto_log_email | boolean | false | false |  |  |  |
 | snoozed_until | timestamp with time zone |  | true |  |  |  |
-| vcard_href | varchar(500) |  | true |  |  |  |
 
 ## Constraints
 
@@ -169,7 +168,6 @@ erDiagram
   tsvector search_vector
   boolean auto_log_email
   timestamp_with_time_zone snoozed_until
-  varchar_500_ vcard_href
 }
 "public.contact_tag" {
   uuid contact_id FK

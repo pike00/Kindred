@@ -3,11 +3,6 @@ import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { StayInTouchWidget } from "@/components/Dashboard/StayInTouchWidget"
 import { cancelable, makeContact, renderWithProviders } from "@/test/helpers"
-import type { ContactPublic } from "@/client"
-
-function makeOverdueContact({ days_overdue, ...contact }: Partial<ContactPublic> & { days_overdue: number }) {
-  return { ...makeContact(contact), days_overdue }
-}
 
 const { mockListOverdueContacts, mockSnoozeContact } = vi.hoisted(() => ({
   mockListOverdueContacts: vi.fn(),
@@ -48,8 +43,8 @@ describe("StayInTouchWidget", () => {
 
   it("renders all contacts when count is 2 or less", async () => {
     const contacts = [
-      makeOverdueContact({ id: "1", first_name: "Alice", last_name: "", days_overdue: 5 }),
-      makeOverdueContact({ id: "2", first_name: "Bob", last_name: "", days_overdue: 10 }),
+      makeContact({ id: "1", first_name: "Alice", last_name: "" }),
+      makeContact({ id: "2", first_name: "Bob", last_name: "" }),
     ]
     mockListOverdueContacts.mockReturnValue(
       cancelable({ data: contacts, count: 2 }),
@@ -93,11 +88,11 @@ describe("StayInTouchWidget", () => {
 
   it("limits displayed contacts to 2 and shows +X more overdue button when count > 2", async () => {
     const contacts = [
-      makeOverdueContact({ id: "1", first_name: "Alice", last_name: "", days_overdue: 5 }),
-      makeOverdueContact({ id: "2", first_name: "Bob", last_name: "", days_overdue: 10 }),
-      makeOverdueContact({ id: "3", first_name: "Charlie", last_name: "", days_overdue: 15 }),
-      makeOverdueContact({ id: "4", first_name: "Diana", last_name: "", days_overdue: 20 }),
-      makeOverdueContact({ id: "5", first_name: "Evan", last_name: "", days_overdue: 25 }),
+      makeContact({ id: "1", first_name: "Alice", last_name: "" }),
+      makeContact({ id: "2", first_name: "Bob", last_name: "" }),
+      makeContact({ id: "3", first_name: "Charlie", last_name: "" }),
+      makeContact({ id: "4", first_name: "Diana", last_name: "" }),
+      makeContact({ id: "5", first_name: "Evan", last_name: "" }),
     ]
     mockListOverdueContacts.mockReturnValue(
       cancelable({ data: contacts, count: 5 }),
@@ -183,4 +178,91 @@ describe("StayInTouchWidget", () => {
     })
   })
 
+  it("renders overdue days note and last interaction snippet with date", async () => {
+    // 45 days ago relative to fixed now
+    const fortyFiveDaysAgo = new Date(Date.now() - 45 * 86_400_000).toISOString()
+    const d = new Date(fortyFiveDaysAgo)
+    const shortDate = `${d.getMonth() + 1}/${d.getDate()}`
+
+    mockListOverdueContacts.mockReturnValue(
+      cancelable({
+        count: 1,
+        data: [
+          makeContact({
+            id: "contact-1",
+            first_name: "Matt",
+            last_name: "Statz",
+            days_overdue: 15,
+            last_contacted_at: fortyFiveDaysAgo,
+            last_interaction_notes: "Discussed project updates",
+          }),
+        ],
+      }),
+    )
+
+    renderWithProviders(<StayInTouchWidget />)
+
+    await waitFor(() => {
+      expect(screen.getByText("Matt Statz")).toBeInTheDocument()
+      expect(screen.getByText("15 days overdue")).toBeInTheDocument()
+      expect(
+        screen.getByText(`Last interacted 45 days ago (${shortDate}: Discussed project updates)`),
+      ).toBeInTheDocument()
+    })
+  })
+
+  it("renders 'No interactions yet' when last_contacted_at is null", async () => {
+    mockListOverdueContacts.mockReturnValue(
+      cancelable({
+        count: 1,
+        data: [
+          makeContact({
+            id: "contact-2",
+            first_name: "Brisa",
+            last_name: "Bodell",
+            days_overdue: 0,
+            last_contacted_at: null,
+          }),
+        ],
+      }),
+    )
+
+    renderWithProviders(<StayInTouchWidget />)
+
+    await waitFor(() => {
+      expect(screen.getByText("Brisa Bodell")).toBeInTheDocument()
+      expect(screen.getByText("0 days overdue")).toBeInTheDocument()
+      expect(screen.getByText("No interactions yet")).toBeInTheDocument()
+    })
+  })
+
+  it("renders interaction date without note text when notes are null", async () => {
+    const tenDaysAgo = new Date(Date.now() - 10 * 86_400_000).toISOString()
+    const d = new Date(tenDaysAgo)
+    const shortDate = `${d.getMonth() + 1}/${d.getDate()}`
+
+    mockListOverdueContacts.mockReturnValue(
+      cancelable({
+        count: 1,
+        data: [
+          makeContact({
+            id: "contact-3",
+            first_name: "Jane",
+            last_name: "Doe",
+            days_overdue: 5,
+            last_contacted_at: tenDaysAgo,
+            last_interaction_notes: null,
+          }),
+        ],
+      }),
+    )
+
+    renderWithProviders(<StayInTouchWidget />)
+
+    await waitFor(() => {
+      expect(screen.getByText("Jane Doe")).toBeInTheDocument()
+      expect(screen.getByText("5 days overdue")).toBeInTheDocument()
+      expect(screen.getByText(`Last interacted 10 days ago (${shortDate})`)).toBeInTheDocument()
+    })
+  })
 })

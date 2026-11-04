@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { GetApiV1ActivityLogsData, GetApiV1ActivityLogsResponse, GetApiV1AddressesContactContactIdData, GetApiV1AddressesContactContactIdResponse, PostApiV1AddressesData, PostApiV1AddressesResponse, PatchApiV1AddressesAddressIdData, PatchApiV1AddressesAddressIdResponse, DeleteApiV1AddressesAddressIdData, DeleteApiV1AddressesAddressIdResponse, PostApiV1AddressesAddressIdGeocodeData, PostApiV1AddressesAddressIdGeocodeResponse, PostApiV1AddressesGeocodeMissingResponse, GetApiV1UsersMeApiKeysResponse, PostApiV1UsersMeApiKeysData, PostApiV1UsersMeApiKeysResponse, DeleteApiV1UsersMeApiKeysApiKeyIdData, DeleteApiV1UsersMeApiKeysApiKeyIdResponse, GetApiV1CalendarMonthYyyyMmData, GetApiV1CalendarMonthYyyyMmResponse, PostApiV1CalendarTokenData, PostApiV1CalendarTokenResponse, GetApiV1CalendarTokensResponse, DeleteApiV1CalendarTokenTokenIdData, DeleteApiV1CalendarTokenTokenIdResponse, GetApiV1CalendarCalendarIcsData, GetApiV1CalendarCalendarIcsResponse, GetWellKnownCarddavResponse, GetApiV1ContactsContactIdCommunicationPreferenceData, GetApiV1ContactsContactIdCommunicationPreferenceResponse, PatchApiV1ContactsContactIdCommunicationPreferenceData, PatchApiV1ContactsContactIdCommunicationPreferenceResponse, DeleteApiV1ContactsContactIdCommunicationPreferenceData, DeleteApiV1ContactsContactIdCommunicationPreferenceResponse, GetApiV1ContactFieldsContactContactIdData, GetApiV1ContactFieldsContactContactIdResponse, PostApiV1ContactFieldsData, PostApiV1ContactFieldsResponse, PatchApiV1ContactFieldsFieldIdData, PatchApiV1ContactFieldsFieldIdResponse, DeleteApiV1ContactFieldsFieldIdData, DeleteApiV1ContactFieldsFieldIdResponse, GetApiV1ContactsStagesDistinctResponse, GetApiV1ContactsKanbanData, GetApiV1ContactsKanbanResponse, GetApiV1ContactsContactIdStageEventsData, GetApiV1ContactsContactIdStageEventsResponse, GetApiV1ContactsData, GetApiV1ContactsResponse, PostApiV1ContactsData, PostApiV1ContactsResponse, GetApiV1ContactsOverdueData, GetApiV1ContactsOverdueResponse, GetApiV1ContactsLosingTouchResponse, PostApiV1ContactsContactIdSnoozeData, PostApiV1ContactsContactIdSnoozeResponse, PatchApiV1ContactsContactIdSnoozeData, PatchApiV1ContactsContactIdSnoozeResponse, PatchApiV1ContactsContactIdSkipData, PatchApiV1ContactsContactIdSkipResponse, PatchApiV1ContactsBulkData, PatchApiV1ContactsBulkResponse, GetApiV1ContactsGeoData, GetApiV1ContactsGeoResponse, GetApiV1ContactsContactIdData, GetApiV1ContactsContactIdResponse, PatchApiV1ContactsContactIdData, PatchApiV1ContactsContactIdResponse, DeleteApiV1ContactsContactIdData, DeleteApiV1ContactsContactIdResponse, PostApiV1ContactsContactIdRestoreData, PostApiV1ContactsContactIdRestoreResponse, GetApiV1ContactsContactIdHeatmapData, GetApiV1ContactsContactIdHeatmapResponse, GetApiV1ContactsContactIdMentionsData, GetApiV1ContactsContactIdMentionsResponse, PostApiV1ContactsImessageSyncData, PostApiV1ContactsImessageSyncResponse, GetApiV1ContactsContactIdImessageProfileData, GetApiV1ContactsContactIdImessageProfileResponse, PostApiV1ContactSharesData, PostApiV1ContactSharesResponse, GetApiV1ContactSharesResponse, DeleteApiV1ContactSharesData, DeleteApiV1ContactSharesResponse, PostApiV1ContactsContactIdStageEventsData, PostApiV1ContactsContactIdStageEventsResponse, GetApiV1ContactsContactIdStageHistoryData, GetApiV1ContactsContactIdStageHistoryResponse, GetApiV1ContactsContactIdStageHistoryLatestData, GetApiV1ContactsContactIdStageHistoryLatestResponse, GetApiV1ContactsContactIdStageDurationStageData, GetApiV1ContactsContactIdStageDurationStageResponse, PostApiV1ContactsBackfillStageEventsResponse, GetApiV1ContactsContactIdStageAnalyticsData, GetApiV1ContactsContactIdStageAnalyticsResponse, GetApiV1CustomFieldsDefinitionsResponse, PostApiV1CustomFieldsDefinitionsData, PostApiV1CustomFieldsDefinitionsResponse, PatchApiV1CustomFieldsDefinitionsDefIdData, PatchApiV1CustomFieldsDefinitionsDefIdResponse, DeleteApiV1CustomFieldsDefinitionsDefIdData, DeleteApiV1CustomFieldsDefinitionsDefIdResponse, GetApiV1CustomFieldsValuesContactContactIdData, GetApiV1CustomFieldsValuesContactContactIdResponse, PostApiV1CustomFieldsValuesData, PostApiV1CustomFieldsValuesResponse, PatchApiV1CustomFieldsValuesValueIdData, PatchApiV1CustomFieldsValuesValueIdResponse, DeleteApiV1CustomFieldsValuesValueIdData, DeleteApiV1CustomFieldsValuesValueIdResponse, GetApiV1DebtsContactContactIdData, GetApiV1DebtsContactContactIdResponse, PostApiV1DebtsData, PostApiV1DebtsResponse, PatchApiV1DebtsDebtIdData, PatchApiV1DebtsDebtIdResponse, DeleteApiV1DebtsDebtIdData, DeleteApiV1DebtsDebtIdResponse, PostApiV1DebtsDebtIdRestoreData, PostApiV1DebtsDebtIdRestoreResponse, GetApiV1EmailOauthAuthorizeData, GetApiV1EmailOauthAuthorizeResponse, GetApiV1EmailOauthCallbackData, GetApiV1EmailOauthCallbackResponse, GetApiV1EmailTokensData, GetApiV1EmailTokensResponse, DeleteApiV1EmailTokensTokenIdData, DeleteApiV1EmailTokensTokenIdResponse, PostApiV1EmailPollAllResponse, PostApiV1EmailPollContactIdData, PostApiV1EmailPollContactIdResponse, GetApiV1GiftsContactContactIdData, GetApiV1GiftsContactContactIdResponse, PostApiV1GiftsData, PostApiV1GiftsResponse, PatchApiV1GiftsGiftIdData, PatchApiV1GiftsGiftIdResponse, DeleteApiV1GiftsGiftIdData, DeleteApiV1GiftsGiftIdResponse, PostApiV1GiftsGiftIdRestoreData, PostApiV1GiftsGiftIdRestoreResponse, GetApiV1GiftsKanbanResponse, PostApiV1GiftsGiftIdChangeStatusData, PostApiV1GiftsGiftIdChangeStatusResponse, GetApiV1GraphContactsData, GetApiV1GraphContactsResponse, GetApiV1GraphContactsContactIdData, GetApiV1GraphContactsContactIdResponse, PostApiV1IcalUploadData, PostApiV1IcalUploadResponse, PostApiV1IcalConfirmData, PostApiV1IcalConfirmResponse, PostApiV1ImportExportImportVcardData, PostApiV1ImportExportImportVcardResponse, GetApiV1ImportExportExportVcardResponse, GetApiV1ImportExportExportJsonResponse, PostApiV1ImportExportImportCsvPreviewData, PostApiV1ImportExportImportCsvPreviewResponse, PostApiV1ImportExportImportCsvData, PostApiV1ImportExportImportCsvResponse, GetApiV1ImportExportExportCsvData, GetApiV1ImportExportExportCsvResponse, GetApiV1InteractionsData, GetApiV1InteractionsResponse, PostApiV1InteractionsData, PostApiV1InteractionsResponse, PatchApiV1InteractionsInteractionIdData, PatchApiV1InteractionsInteractionIdResponse, DeleteApiV1InteractionsInteractionIdData, DeleteApiV1InteractionsInteractionIdResponse, PostApiV1InteractionsInteractionIdConfirmData, PostApiV1InteractionsInteractionIdConfirmResponse, PostApiV1InteractionsInteractionIdRestoreData, PostApiV1InteractionsInteractionIdRestoreResponse, GetApiV1LifeEventsContactContactIdData, GetApiV1LifeEventsContactContactIdResponse, PostApiV1LifeEventsData, PostApiV1LifeEventsResponse, PatchApiV1LifeEventsEventIdData, PatchApiV1LifeEventsEventIdResponse, DeleteApiV1LifeEventsEventIdData, DeleteApiV1LifeEventsEventIdResponse, PostApiV1LifeEventsEventIdRestoreData, PostApiV1LifeEventsEventIdRestoreResponse, PostApiV1LoginAccessTokenData, PostApiV1LoginAccessTokenResponse, PostApiV1LoginTestTokenResponse, PostApiV1PasswordRecoveryEmailData, PostApiV1PasswordRecoveryEmailResponse, PostApiV1ResetPasswordData, PostApiV1ResetPasswordResponse, PostApiV1PasswordRecoveryHtmlContentEmailData, PostApiV1PasswordRecoveryHtmlContentEmailResponse, GetApiV1MediaRecommendationsContactContactIdData, GetApiV1MediaRecommendationsContactContactIdResponse, PostApiV1MediaRecommendationsData, PostApiV1MediaRecommendationsResponse, PatchApiV1MediaRecommendationsRecIdData, PatchApiV1MediaRecommendationsRecIdResponse, DeleteApiV1MediaRecommendationsRecIdData, DeleteApiV1MediaRecommendationsRecIdResponse, GetApiV1NotesContactContactIdData, GetApiV1NotesContactContactIdResponse, PostApiV1NotesData, PostApiV1NotesResponse, PatchApiV1NotesNoteIdData, PatchApiV1NotesNoteIdResponse, DeleteApiV1NotesNoteIdData, DeleteApiV1NotesNoteIdResponse, PostApiV1NotesNoteIdRestoreData, PostApiV1NotesNoteIdRestoreResponse, GetApiV1OrganizationsData, GetApiV1OrganizationsResponse, PostApiV1OrganizationsData, PostApiV1OrganizationsResponse, GetApiV1OrganizationsOrganizationIdData, GetApiV1OrganizationsOrganizationIdResponse, PatchApiV1OrganizationsOrganizationIdData, PatchApiV1OrganizationsOrganizationIdResponse, DeleteApiV1OrganizationsOrganizationIdData, DeleteApiV1OrganizationsOrganizationIdResponse, GetApiV1OrganizationsOrganizationIdContactsData, GetApiV1OrganizationsOrganizationIdContactsResponse, GetApiV1PetsContactContactIdData, GetApiV1PetsContactContactIdResponse, PostApiV1PetsData, PostApiV1PetsResponse, PatchApiV1PetsPetIdData, PatchApiV1PetsPetIdResponse, DeleteApiV1PetsPetIdData, DeleteApiV1PetsPetIdResponse, PostApiV1PrivateUsersData, PostApiV1PrivateUsersResponse, PostApiV1PrivateSeedData, PostApiV1PrivateSeedResponse, GetApiV1RelationshipInverseMapData, GetApiV1RelationshipInverseMapResponse, PostApiV1RelationshipInverseMapData, PostApiV1RelationshipInverseMapResponse, GetApiV1RelationshipInverseMapMapIdData, GetApiV1RelationshipInverseMapMapIdResponse, PatchApiV1RelationshipInverseMapMapIdData, PatchApiV1RelationshipInverseMapMapIdResponse, DeleteApiV1RelationshipInverseMapMapIdData, DeleteApiV1RelationshipInverseMapMapIdResponse, PostApiV1RelationshipInverseMapSeedResponse, GetApiV1RelationshipInverseMapLookupRelationshipTypeData, GetApiV1RelationshipInverseMapLookupRelationshipTypeResponse, GetApiV1RelationshipsInverseData, GetApiV1RelationshipsInverseResponse, GetApiV1RelationshipsContactContactIdData, GetApiV1RelationshipsContactContactIdResponse, PostApiV1RelationshipsData, PostApiV1RelationshipsResponse, PatchApiV1RelationshipsRelIdData, PatchApiV1RelationshipsRelIdResponse, DeleteApiV1RelationshipsRelIdData, DeleteApiV1RelationshipsRelIdResponse, GetApiV1RemindersData, GetApiV1RemindersResponse, PostApiV1RemindersData, PostApiV1RemindersResponse, GetApiV1RemindersDueData, GetApiV1RemindersDueResponse, PostApiV1RemindersReminderIdDismissData, PostApiV1RemindersReminderIdDismissResponse, PatchApiV1RemindersReminderIdData, PatchApiV1RemindersReminderIdResponse, DeleteApiV1RemindersReminderIdData, DeleteApiV1RemindersReminderIdResponse, PostApiV1RemindersReminderIdSnoozeData, PostApiV1RemindersReminderIdSnoozeResponse, GetApiV1RemindersReminderIdSnoozeHistoryData, GetApiV1RemindersReminderIdSnoozeHistoryResponse, GetApiV1RemindersSnoozeStatsData, GetApiV1RemindersSnoozeStatsResponse, GetApiV1RemindersChronicSnoozersData, GetApiV1RemindersChronicSnoozersResponse, PostApiV1RemindersReminderIdRestoreData, PostApiV1RemindersReminderIdRestoreResponse, GetApiV1SavedFiltersData, GetApiV1SavedFiltersResponse, PostApiV1SavedFiltersData, PostApiV1SavedFiltersResponse, PatchApiV1SavedFiltersFilterIdData, PatchApiV1SavedFiltersFilterIdResponse, DeleteApiV1SavedFiltersFilterIdData, DeleteApiV1SavedFiltersFilterIdResponse, GetApiV1SearchData, GetApiV1SearchResponse, GetSetupData, GetSetupResponse, PostSetupData, PostSetupResponse, GetApiV1TagsData, GetApiV1TagsResponse, PostApiV1TagsData, PostApiV1TagsResponse, PatchApiV1TagsTagIdData, PatchApiV1TagsTagIdResponse, DeleteApiV1TagsTagIdData, DeleteApiV1TagsTagIdResponse, GetApiV1TagSharesPreviewTagIdData, GetApiV1TagSharesPreviewTagIdResponse, PostApiV1TagSharesData, PostApiV1TagSharesResponse, GetApiV1TagSharesData, GetApiV1TagSharesResponse, DeleteApiV1TagSharesTagIdGranteeIdData, DeleteApiV1TagSharesTagIdGranteeIdResponse, PostApiV1TagSharesTagIdGranteeIdAuditData, PostApiV1TagSharesTagIdGranteeIdAuditResponse, PostApiV1TranscribeData, PostApiV1TranscribeResponse, GetApiV1UsersData, GetApiV1UsersResponse, PostApiV1UsersData, PostApiV1UsersResponse, GetApiV1UsersMeResponse, DeleteApiV1UsersMeResponse, PatchApiV1UsersMeData, PatchApiV1UsersMeResponse, PatchApiV1UsersMePasswordData, PatchApiV1UsersMePasswordResponse, PostApiV1UsersMeLogoutResponse, PostApiV1UsersSignupData, PostApiV1UsersSignupResponse, GetApiV1UsersUserIdData, GetApiV1UsersUserIdResponse, PatchApiV1UsersUserIdData, PatchApiV1UsersUserIdResponse, DeleteApiV1UsersUserIdData, DeleteApiV1UsersUserIdResponse, GetApiV1HealthResponse, GetApiV1StatusResponse, PostApiV1UtilsTestEmailData, PostApiV1UtilsTestEmailResponse, GetApiV1UtilsHealthCheckResponse, GetApiV1UtilsReadyResponse, GetApiV1UtilsStatusResponse, GetApiV1UtilsEnvironmentResponse, GetApiV1UtilsInfoResponse, GetApiV1VcardConflictsData, GetApiV1VcardConflictsResponse, PostApiV1VcardConflictsConflictIdResolveData, PostApiV1VcardConflictsConflictIdResolveResponse, DeleteApiV1VcardConflictsConflictIdData, DeleteApiV1VcardConflictsConflictIdResponse, PostApiV1WebhooksTwilioApiKeyData, PostApiV1WebhooksTwilioApiKeyResponse, GetApiV1WebhooksResponse, PostApiV1WebhooksData, PostApiV1WebhooksResponse, PatchApiV1WebhooksWebhookIdData, PatchApiV1WebhooksWebhookIdResponse, DeleteApiV1WebhooksWebhookIdData, DeleteApiV1WebhooksWebhookIdResponse, PostApiV1WebhooksInboundApiKeyData, PostApiV1WebhooksInboundApiKeyResponse } from './types.gen';
+import type { GetApiV1ActivityLogsData, GetApiV1ActivityLogsResponse, GetApiV1AddressesContactContactIdData, GetApiV1AddressesContactContactIdResponse, PostApiV1AddressesData, PostApiV1AddressesResponse, PatchApiV1AddressesAddressIdData, PatchApiV1AddressesAddressIdResponse, DeleteApiV1AddressesAddressIdData, DeleteApiV1AddressesAddressIdResponse, PostApiV1AddressesAddressIdGeocodeData, PostApiV1AddressesAddressIdGeocodeResponse, PostApiV1AddressesGeocodeMissingResponse, GetApiV1UsersMeApiKeysResponse, PostApiV1UsersMeApiKeysData, PostApiV1UsersMeApiKeysResponse, DeleteApiV1UsersMeApiKeysApiKeyIdData, DeleteApiV1UsersMeApiKeysApiKeyIdResponse, GetApiV1CalendarMonthYyyyMmData, GetApiV1CalendarMonthYyyyMmResponse, PostApiV1CalendarTokenData, PostApiV1CalendarTokenResponse, GetApiV1CalendarTokensResponse, DeleteApiV1CalendarTokenTokenIdData, DeleteApiV1CalendarTokenTokenIdResponse, GetApiV1CalendarCalendarIcsData, GetApiV1CalendarCalendarIcsResponse, GetWellKnownCarddavResponse, GetApiV1ContactsContactIdCommunicationPreferenceData, GetApiV1ContactsContactIdCommunicationPreferenceResponse, PatchApiV1ContactsContactIdCommunicationPreferenceData, PatchApiV1ContactsContactIdCommunicationPreferenceResponse, DeleteApiV1ContactsContactIdCommunicationPreferenceData, DeleteApiV1ContactsContactIdCommunicationPreferenceResponse, GetApiV1ContactFieldsContactContactIdData, GetApiV1ContactFieldsContactContactIdResponse, PostApiV1ContactFieldsData, PostApiV1ContactFieldsResponse, PatchApiV1ContactFieldsFieldIdData, PatchApiV1ContactFieldsFieldIdResponse, DeleteApiV1ContactFieldsFieldIdData, DeleteApiV1ContactFieldsFieldIdResponse, GetApiV1ContactsStagesDistinctResponse, GetApiV1ContactsKanbanData, GetApiV1ContactsKanbanResponse, GetApiV1ContactsContactIdStageEventsData, GetApiV1ContactsContactIdStageEventsResponse, GetApiV1ContactsData, GetApiV1ContactsResponse, PostApiV1ContactsData, PostApiV1ContactsResponse, GetApiV1ContactsOverdueData, GetApiV1ContactsOverdueResponse, GetApiV1ContactsLosingTouchResponse, PatchApiV1ContactsContactIdSkipData, PatchApiV1ContactsContactIdSkipResponse, PatchApiV1ContactsContactIdSnoozeData, PatchApiV1ContactsContactIdSnoozeResponse, PostApiV1ContactsContactIdSnoozeData, PostApiV1ContactsContactIdSnoozeResponse, PatchApiV1ContactsBulkData, PatchApiV1ContactsBulkResponse, GetApiV1ContactsGeoData, GetApiV1ContactsGeoResponse, GetApiV1ContactsContactIdData, GetApiV1ContactsContactIdResponse, PatchApiV1ContactsContactIdData, PatchApiV1ContactsContactIdResponse, DeleteApiV1ContactsContactIdData, DeleteApiV1ContactsContactIdResponse, PostApiV1ContactsContactIdRestoreData, PostApiV1ContactsContactIdRestoreResponse, GetApiV1ContactsContactIdHeatmapData, GetApiV1ContactsContactIdHeatmapResponse, GetApiV1ContactsContactIdMentionsData, GetApiV1ContactsContactIdMentionsResponse, PostApiV1ContactsImessageSyncData, PostApiV1ContactsImessageSyncResponse, GetApiV1ContactsContactIdImessageProfileData, GetApiV1ContactsContactIdImessageProfileResponse, PostApiV1ContactSharesData, PostApiV1ContactSharesResponse, GetApiV1ContactSharesResponse, DeleteApiV1ContactSharesData, DeleteApiV1ContactSharesResponse, PostApiV1ContactsContactIdStageEventsData, PostApiV1ContactsContactIdStageEventsResponse, GetApiV1ContactsContactIdStageHistoryData, GetApiV1ContactsContactIdStageHistoryResponse, GetApiV1ContactsContactIdStageHistoryLatestData, GetApiV1ContactsContactIdStageHistoryLatestResponse, GetApiV1ContactsContactIdStageDurationStageData, GetApiV1ContactsContactIdStageDurationStageResponse, PostApiV1ContactsBackfillStageEventsResponse, GetApiV1ContactsContactIdStageAnalyticsData, GetApiV1ContactsContactIdStageAnalyticsResponse, GetApiV1CustomFieldsDefinitionsResponse, PostApiV1CustomFieldsDefinitionsData, PostApiV1CustomFieldsDefinitionsResponse, PatchApiV1CustomFieldsDefinitionsDefIdData, PatchApiV1CustomFieldsDefinitionsDefIdResponse, DeleteApiV1CustomFieldsDefinitionsDefIdData, DeleteApiV1CustomFieldsDefinitionsDefIdResponse, GetApiV1CustomFieldsValuesContactContactIdData, GetApiV1CustomFieldsValuesContactContactIdResponse, PostApiV1CustomFieldsValuesData, PostApiV1CustomFieldsValuesResponse, PatchApiV1CustomFieldsValuesValueIdData, PatchApiV1CustomFieldsValuesValueIdResponse, DeleteApiV1CustomFieldsValuesValueIdData, DeleteApiV1CustomFieldsValuesValueIdResponse, GetApiV1DebtsContactContactIdData, GetApiV1DebtsContactContactIdResponse, PostApiV1DebtsData, PostApiV1DebtsResponse, PatchApiV1DebtsDebtIdData, PatchApiV1DebtsDebtIdResponse, DeleteApiV1DebtsDebtIdData, DeleteApiV1DebtsDebtIdResponse, PostApiV1DebtsDebtIdRestoreData, PostApiV1DebtsDebtIdRestoreResponse, GetApiV1EmailOauthAuthorizeData, GetApiV1EmailOauthAuthorizeResponse, GetApiV1EmailOauthCallbackData, GetApiV1EmailOauthCallbackResponse, GetApiV1EmailTokensData, GetApiV1EmailTokensResponse, DeleteApiV1EmailTokensTokenIdData, DeleteApiV1EmailTokensTokenIdResponse, PostApiV1EmailPollAllResponse, PostApiV1EmailPollContactIdData, PostApiV1EmailPollContactIdResponse, GetApiV1GiftsContactContactIdData, GetApiV1GiftsContactContactIdResponse, PostApiV1GiftsData, PostApiV1GiftsResponse, PatchApiV1GiftsGiftIdData, PatchApiV1GiftsGiftIdResponse, DeleteApiV1GiftsGiftIdData, DeleteApiV1GiftsGiftIdResponse, PostApiV1GiftsGiftIdRestoreData, PostApiV1GiftsGiftIdRestoreResponse, GetApiV1GiftsKanbanResponse, PostApiV1GiftsGiftIdChangeStatusData, PostApiV1GiftsGiftIdChangeStatusResponse, GetApiV1GraphContactsData, GetApiV1GraphContactsResponse, GetApiV1GraphContactsContactIdData, GetApiV1GraphContactsContactIdResponse, PostApiV1IcalUploadData, PostApiV1IcalUploadResponse, PostApiV1IcalConfirmData, PostApiV1IcalConfirmResponse, PostApiV1ImportExportImportVcardData, PostApiV1ImportExportImportVcardResponse, GetApiV1ImportExportExportVcardResponse, GetApiV1ImportExportExportJsonResponse, PostApiV1ImportExportImportCsvPreviewData, PostApiV1ImportExportImportCsvPreviewResponse, PostApiV1ImportExportImportCsvData, PostApiV1ImportExportImportCsvResponse, GetApiV1ImportExportExportCsvData, GetApiV1ImportExportExportCsvResponse, GetApiV1InteractionsData, GetApiV1InteractionsResponse, PostApiV1InteractionsData, PostApiV1InteractionsResponse, PatchApiV1InteractionsInteractionIdData, PatchApiV1InteractionsInteractionIdResponse, DeleteApiV1InteractionsInteractionIdData, DeleteApiV1InteractionsInteractionIdResponse, PostApiV1InteractionsInteractionIdConfirmData, PostApiV1InteractionsInteractionIdConfirmResponse, PostApiV1InteractionsInteractionIdRestoreData, PostApiV1InteractionsInteractionIdRestoreResponse, GetApiV1LifeEventsContactContactIdData, GetApiV1LifeEventsContactContactIdResponse, PostApiV1LifeEventsData, PostApiV1LifeEventsResponse, PatchApiV1LifeEventsEventIdData, PatchApiV1LifeEventsEventIdResponse, DeleteApiV1LifeEventsEventIdData, DeleteApiV1LifeEventsEventIdResponse, PostApiV1LifeEventsEventIdRestoreData, PostApiV1LifeEventsEventIdRestoreResponse, PostApiV1LoginAccessTokenData, PostApiV1LoginAccessTokenResponse, PostApiV1LoginTestTokenResponse, PostApiV1PasswordRecoveryEmailData, PostApiV1PasswordRecoveryEmailResponse, PostApiV1ResetPasswordData, PostApiV1ResetPasswordResponse, PostApiV1PasswordRecoveryHtmlContentEmailData, PostApiV1PasswordRecoveryHtmlContentEmailResponse, GetApiV1MediaRecommendationsContactContactIdData, GetApiV1MediaRecommendationsContactContactIdResponse, PostApiV1MediaRecommendationsData, PostApiV1MediaRecommendationsResponse, PatchApiV1MediaRecommendationsRecIdData, PatchApiV1MediaRecommendationsRecIdResponse, DeleteApiV1MediaRecommendationsRecIdData, DeleteApiV1MediaRecommendationsRecIdResponse, GetApiV1NotesContactContactIdData, GetApiV1NotesContactContactIdResponse, PostApiV1NotesData, PostApiV1NotesResponse, PatchApiV1NotesNoteIdData, PatchApiV1NotesNoteIdResponse, DeleteApiV1NotesNoteIdData, DeleteApiV1NotesNoteIdResponse, PostApiV1NotesNoteIdRestoreData, PostApiV1NotesNoteIdRestoreResponse, GetApiV1OrganizationsData, GetApiV1OrganizationsResponse, PostApiV1OrganizationsData, PostApiV1OrganizationsResponse, GetApiV1OrganizationsOrganizationIdData, GetApiV1OrganizationsOrganizationIdResponse, PatchApiV1OrganizationsOrganizationIdData, PatchApiV1OrganizationsOrganizationIdResponse, DeleteApiV1OrganizationsOrganizationIdData, DeleteApiV1OrganizationsOrganizationIdResponse, GetApiV1OrganizationsOrganizationIdContactsData, GetApiV1OrganizationsOrganizationIdContactsResponse, GetApiV1PetsContactContactIdData, GetApiV1PetsContactContactIdResponse, PostApiV1PetsData, PostApiV1PetsResponse, PatchApiV1PetsPetIdData, PatchApiV1PetsPetIdResponse, DeleteApiV1PetsPetIdData, DeleteApiV1PetsPetIdResponse, PostApiV1PrivateUsersData, PostApiV1PrivateUsersResponse, PostApiV1PrivateSeedData, PostApiV1PrivateSeedResponse, GetApiV1RelationshipInverseMapData, GetApiV1RelationshipInverseMapResponse, PostApiV1RelationshipInverseMapData, PostApiV1RelationshipInverseMapResponse, GetApiV1RelationshipInverseMapMapIdData, GetApiV1RelationshipInverseMapMapIdResponse, PatchApiV1RelationshipInverseMapMapIdData, PatchApiV1RelationshipInverseMapMapIdResponse, DeleteApiV1RelationshipInverseMapMapIdData, DeleteApiV1RelationshipInverseMapMapIdResponse, PostApiV1RelationshipInverseMapSeedResponse, GetApiV1RelationshipInverseMapLookupRelationshipTypeData, GetApiV1RelationshipInverseMapLookupRelationshipTypeResponse, GetApiV1RelationshipsInverseData, GetApiV1RelationshipsInverseResponse, GetApiV1RelationshipsContactContactIdData, GetApiV1RelationshipsContactContactIdResponse, PostApiV1RelationshipsData, PostApiV1RelationshipsResponse, PatchApiV1RelationshipsRelIdData, PatchApiV1RelationshipsRelIdResponse, DeleteApiV1RelationshipsRelIdData, DeleteApiV1RelationshipsRelIdResponse, GetApiV1RemindersData, GetApiV1RemindersResponse, PostApiV1RemindersData, PostApiV1RemindersResponse, GetApiV1RemindersDueData, GetApiV1RemindersDueResponse, PostApiV1RemindersReminderIdDismissData, PostApiV1RemindersReminderIdDismissResponse, PatchApiV1RemindersReminderIdData, PatchApiV1RemindersReminderIdResponse, DeleteApiV1RemindersReminderIdData, DeleteApiV1RemindersReminderIdResponse, PostApiV1RemindersReminderIdSnoozeData, PostApiV1RemindersReminderIdSnoozeResponse, GetApiV1RemindersReminderIdSnoozeHistoryData, GetApiV1RemindersReminderIdSnoozeHistoryResponse, GetApiV1RemindersSnoozeStatsData, GetApiV1RemindersSnoozeStatsResponse, GetApiV1RemindersChronicSnoozersData, GetApiV1RemindersChronicSnoozersResponse, PostApiV1RemindersReminderIdRestoreData, PostApiV1RemindersReminderIdRestoreResponse, GetApiV1SavedFiltersData, GetApiV1SavedFiltersResponse, PostApiV1SavedFiltersData, PostApiV1SavedFiltersResponse, PatchApiV1SavedFiltersFilterIdData, PatchApiV1SavedFiltersFilterIdResponse, DeleteApiV1SavedFiltersFilterIdData, DeleteApiV1SavedFiltersFilterIdResponse, GetApiV1SearchData, GetApiV1SearchResponse, GetSetupData, GetSetupResponse, PostSetupData, PostSetupResponse, GetApiV1TagsData, GetApiV1TagsResponse, PostApiV1TagsData, PostApiV1TagsResponse, PatchApiV1TagsTagIdData, PatchApiV1TagsTagIdResponse, DeleteApiV1TagsTagIdData, DeleteApiV1TagsTagIdResponse, GetApiV1TagSharesPreviewTagIdData, GetApiV1TagSharesPreviewTagIdResponse, PostApiV1TagSharesData, PostApiV1TagSharesResponse, GetApiV1TagSharesData, GetApiV1TagSharesResponse, DeleteApiV1TagSharesTagIdGranteeIdData, DeleteApiV1TagSharesTagIdGranteeIdResponse, PostApiV1TagSharesTagIdGranteeIdAuditData, PostApiV1TagSharesTagIdGranteeIdAuditResponse, PostApiV1TranscribeData, PostApiV1TranscribeResponse, GetApiV1UsersData, GetApiV1UsersResponse, PostApiV1UsersData, PostApiV1UsersResponse, GetApiV1UsersMeResponse, DeleteApiV1UsersMeResponse, PatchApiV1UsersMeData, PatchApiV1UsersMeResponse, PatchApiV1UsersMePasswordData, PatchApiV1UsersMePasswordResponse, PostApiV1UsersMeLogoutResponse, PostApiV1UsersSignupData, PostApiV1UsersSignupResponse, GetApiV1UsersUserIdData, GetApiV1UsersUserIdResponse, PatchApiV1UsersUserIdData, PatchApiV1UsersUserIdResponse, DeleteApiV1UsersUserIdData, DeleteApiV1UsersUserIdResponse, GetApiV1HealthResponse, GetApiV1StatusResponse, PostApiV1UtilsTestEmailData, PostApiV1UtilsTestEmailResponse, GetApiV1UtilsHealthCheckResponse, GetApiV1UtilsReadyResponse, GetApiV1UtilsStatusResponse, GetApiV1UtilsEnvironmentResponse, GetApiV1UtilsInfoResponse, GetApiV1VcardConflictsData, GetApiV1VcardConflictsResponse, PostApiV1VcardConflictsConflictIdResolveData, PostApiV1VcardConflictsConflictIdResolveResponse, DeleteApiV1VcardConflictsConflictIdData, DeleteApiV1VcardConflictsConflictIdResponse, PostApiV1VoiceCapturesData, PostApiV1VoiceCapturesResponse, GetApiV1VoiceCapturesData, GetApiV1VoiceCapturesResponse, GetApiV1VoiceCapturesCaptureIdData, GetApiV1VoiceCapturesCaptureIdResponse, PutApiV1VoiceCapturesCaptureIdData, PutApiV1VoiceCapturesCaptureIdResponse, DeleteApiV1VoiceCapturesCaptureIdData, DeleteApiV1VoiceCapturesCaptureIdResponse, PostApiV1VoiceCapturesCaptureIdAnalyzeData, PostApiV1VoiceCapturesCaptureIdAnalyzeResponse, PostApiV1VoiceCapturesCaptureIdCommitData, PostApiV1VoiceCapturesCaptureIdCommitResponse, PostApiV1WebhooksTwilioApiKeyData, PostApiV1WebhooksTwilioApiKeyResponse, GetApiV1WebhooksResponse, PostApiV1WebhooksData, PostApiV1WebhooksResponse, PatchApiV1WebhooksWebhookIdData, PatchApiV1WebhooksWebhookIdResponse, DeleteApiV1WebhooksWebhookIdData, DeleteApiV1WebhooksWebhookIdResponse, PostApiV1WebhooksInboundApiKeyData, PostApiV1WebhooksInboundApiKeyResponse } from './types.gen';
 
 export class ActivityLogsService {
     /**
@@ -644,17 +644,18 @@ export class ContactsService {
     }
 
     /**
-     * Create Contact Snooze
+     * Skip Contact
+     * Snooze a contact for a specified duration ('1w', '2w', '1m', '3m', '6m', 'indefinitely') or explicit datetime.
      * @param data The data for the request.
      * @param data.contactId
      * @param data.requestBody
      * @returns ContactPublic Successful Response
      * @throws ApiError
      */
-    public static createContactSnooze(data: PostApiV1ContactsContactIdSnoozeData): CancelablePromise<PostApiV1ContactsContactIdSnoozeResponse> {
+    public static skipContact(data: PatchApiV1ContactsContactIdSkipData): CancelablePromise<PatchApiV1ContactsContactIdSkipResponse> {
         return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v1/contacts/{contact_id}/snooze',
+            method: 'PATCH',
+            url: '/api/v1/contacts/{contact_id}/skip',
             path: {
                 contact_id: data.contactId
             },
@@ -668,6 +669,7 @@ export class ContactsService {
 
     /**
      * Update Contact Snooze
+     * Snooze a contact for a specified duration ('1w', '2w', '1m', '3m', '6m', 'indefinitely') or explicit datetime.
      * @param data The data for the request.
      * @param data.contactId
      * @param data.requestBody
@@ -690,17 +692,18 @@ export class ContactsService {
     }
 
     /**
-     * Skip Contact
+     * Snooze Contact
+     * Snooze a contact for a specified duration ('1w', '2w', '1m', '3m', '6m', 'indefinitely') or explicit datetime.
      * @param data The data for the request.
      * @param data.contactId
      * @param data.requestBody
      * @returns ContactPublic Successful Response
      * @throws ApiError
      */
-    public static skipContact(data: PatchApiV1ContactsContactIdSkipData): CancelablePromise<PatchApiV1ContactsContactIdSkipResponse> {
+    public static snoozeContact(data: PostApiV1ContactsContactIdSnoozeData): CancelablePromise<PostApiV1ContactsContactIdSnoozeResponse> {
         return __request(OpenAPI, {
-            method: 'PATCH',
-            url: '/api/v1/contacts/{contact_id}/skip',
+            method: 'POST',
+            url: '/api/v1/contacts/{contact_id}/snooze',
             path: {
                 contact_id: data.contactId
             },
@@ -3600,10 +3603,10 @@ export class TranscribeService {
      * Transcribe an audio file using the Whisper service.
      *
      * Accepts WAV, MP3, or any audio format supported by ffmpeg.
-     * Returns the transcribed text for review before saving as an Interaction.
+     * Returns the original text and a durable capture for reviewing proposed records.
      * @param data The data for the request.
      * @param data.formData
-     * @returns unknown Successful Response
+     * @returns TranscriptionResponse Successful Response
      * @throws ApiError
      */
     public static transcribeAudio(data: PostApiV1TranscribeData): CancelablePromise<PostApiV1TranscribeResponse> {
@@ -4003,6 +4006,158 @@ export class VCardConflictsService {
             path: {
                 conflict_id: data.conflictId
             },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+}
+
+export class VoiceCapturesService {
+    /**
+     * Create Voice Capture
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns VoiceCapturePublic Successful Response
+     * @throws ApiError
+     */
+    public static createVoiceCapture(data: PostApiV1VoiceCapturesData): CancelablePromise<PostApiV1VoiceCapturesResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/voice-captures/',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+
+    /**
+     * List Voice Captures
+     * @param data The data for the request.
+     * @param data.skip
+     * @param data.limit
+     * @returns VoiceCapturesPublic Successful Response
+     * @throws ApiError
+     */
+    public static listVoiceCaptures(data: GetApiV1VoiceCapturesData = {}): CancelablePromise<GetApiV1VoiceCapturesResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/voice-captures/',
+            query: {
+                skip: data.skip,
+                limit: data.limit
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+
+    /**
+     * Get Voice Capture
+     * @param data The data for the request.
+     * @param data.captureId
+     * @returns VoiceCapturePublic Successful Response
+     * @throws ApiError
+     */
+    public static getVoiceCapture(data: GetApiV1VoiceCapturesCaptureIdData): CancelablePromise<GetApiV1VoiceCapturesCaptureIdResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/voice-captures/{capture_id}',
+            path: {
+                capture_id: data.captureId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+
+    /**
+     * Update Voice Capture
+     * @param data The data for the request.
+     * @param data.captureId
+     * @param data.requestBody
+     * @returns VoiceCapturePublic Successful Response
+     * @throws ApiError
+     */
+    public static updateVoiceCapture(data: PutApiV1VoiceCapturesCaptureIdData): CancelablePromise<PutApiV1VoiceCapturesCaptureIdResponse> {
+        return __request(OpenAPI, {
+            method: 'PUT',
+            url: '/api/v1/voice-captures/{capture_id}',
+            path: {
+                capture_id: data.captureId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+
+    /**
+     * Delete Voice Capture
+     * @param data The data for the request.
+     * @param data.captureId
+     * @returns void Successful Response
+     * @throws ApiError
+     */
+    public static deleteVoiceCapture(data: DeleteApiV1VoiceCapturesCaptureIdData): CancelablePromise<DeleteApiV1VoiceCapturesCaptureIdResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/voice-captures/{capture_id}',
+            path: {
+                capture_id: data.captureId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+
+    /**
+     * Analyze Voice Capture
+     * @param data The data for the request.
+     * @param data.captureId
+     * @param data.requestBody
+     * @returns VoiceCapturePublic Successful Response
+     * @throws ApiError
+     */
+    public static analyzeVoiceCapture(data: PostApiV1VoiceCapturesCaptureIdAnalyzeData): CancelablePromise<PostApiV1VoiceCapturesCaptureIdAnalyzeResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/voice-captures/{capture_id}/analyze',
+            path: {
+                capture_id: data.captureId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+
+    /**
+     * Commit Voice Capture
+     * @param data The data for the request.
+     * @param data.captureId
+     * @param data.requestBody
+     * @returns VoiceCapturePublic Successful Response
+     * @throws ApiError
+     */
+    public static commitVoiceCapture(data: PostApiV1VoiceCapturesCaptureIdCommitData): CancelablePromise<PostApiV1VoiceCapturesCaptureIdCommitResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/voice-captures/{capture_id}/commit',
+            path: {
+                capture_id: data.captureId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
             errors: {
                 422: 'Validation Error'
             }

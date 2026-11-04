@@ -77,7 +77,10 @@ def sync_detailed(
     client: AuthenticatedClient,
     body: ContactSnoozeRequest | None | Unset = UNSET,
 ) -> Response[ContactPublic | HTTPValidationError]:
-    """Create Contact Snooze
+    """Snooze Contact
+
+     Snooze a contact for a specified duration ('1w', '2w', '1m', '3m', '6m', 'indefinitely') or explicit
+    datetime.
 
     Args:
         contact_id (UUID):
@@ -109,7 +112,10 @@ def sync(
     client: AuthenticatedClient,
     body: ContactSnoozeRequest | None | Unset = UNSET,
 ) -> ContactPublic | HTTPValidationError | None:
-    """Create Contact Snooze
+    """Snooze Contact
+
+     Snooze a contact for a specified duration ('1w', '2w', '1m', '3m', '6m', 'indefinitely') or explicit
+    datetime.
 
     Args:
         contact_id (UUID):
@@ -136,7 +142,10 @@ async def asyncio_detailed(
     client: AuthenticatedClient,
     body: ContactSnoozeRequest | None | Unset = UNSET,
 ) -> Response[ContactPublic | HTTPValidationError]:
-    """Create Contact Snooze
+    """Snooze Contact
+
+     Snooze a contact for a specified duration ('1w', '2w', '1m', '3m', '6m', 'indefinitely') or explicit
+    datetime.
 
     Args:
         contact_id (UUID):
@@ -166,7 +175,10 @@ async def asyncio(
     client: AuthenticatedClient,
     body: ContactSnoozeRequest | None | Unset = UNSET,
 ) -> ContactPublic | HTTPValidationError | None:
-    """Create Contact Snooze
+    """Snooze Contact
+
+     Snooze a contact for a specified duration ('1w', '2w', '1m', '3m', '6m', 'indefinitely') or explicit
+    datetime.
 
     Args:
         contact_id (UUID):

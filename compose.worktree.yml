@@ -89,8 +89,8 @@ services:
         condition: service_completed_successfully
 
   frontend:
-    image: node:26-slim
-    working_dir: /app
+    image: node:22-slim
+    working_dir: /app/frontend
     env_file: .env
     environment:
       # Browser hits https://${WORKTREE_HOST} → Traefik → frontend container,
@@ -114,15 +114,15 @@ services:
       - ./pnpm-lock.yaml:/app/pnpm-lock.yaml:ro
       - ./pnpm-workspace.yaml:/app/pnpm-workspace.yaml:ro
       - ./frontend:/app/frontend
-      - frontend-node-modules:/app/node_modules
-      - frontend-cache:/app/frontend/node_modules
+      - frontend-pnpm-root-modules:/app/node_modules
+      - frontend-pnpm-workspace-modules:/app/frontend/node_modules
     command:
       - sh
       - -c
       - |
         npm install -g pnpm@11.3.0 &&
         pnpm install --frozen-lockfile &&
-        pnpm --filter frontend dev --host 0.0.0.0 --port 5173
+        pnpm exec vite --host 0.0.0.0 --port 5173
     networks:
       - default
       - pikenet-private
@@ -194,7 +194,7 @@ services:
       retries: 5
 
   meilisearch:
-    image: getmeili/meilisearch:v1.53
+    image: getmeili/meilisearch:v1.56
     env_file: .env
     environment:
       - MEILI_ENV=development
@@ -231,8 +231,8 @@ volumes:
   db-data:
   redis-data:
   meili-data:
-  frontend-node-modules:
-  frontend-cache:
+  frontend-pnpm-root-modules:
+  frontend-pnpm-workspace-modules:
 
 networks:
   default:

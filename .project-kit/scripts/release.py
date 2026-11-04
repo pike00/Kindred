@@ -52,7 +52,7 @@ INSTALL_COMMAND = None
 PROD_SOURCE = "none"
 PROD_HOMELAB_ENV = ""
 PROD_PYPI_PACKAGE = "kindred"
-REQUIRED_CHECK = None
+REQUIRED_CHECK = "test-backend"
 BAKED_LITELLM_BASE_URL: HttpUrl | None = None
 
 

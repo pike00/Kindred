@@ -10,6 +10,7 @@ from ... import errors
 
 from ...models.body_post_api_v1_transcribe import BodyPostApiV1Transcribe
 from ...models.http_validation_error import HTTPValidationError
+from ...models.transcription_response import TranscriptionResponse
 from typing import cast
 
 
@@ -32,9 +33,10 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Any | HTTPValidationError | None:
+) -> HTTPValidationError | TranscriptionResponse | None:
     if response.status_code == 200:
-        response_200 = response.json()
+        response_200 = TranscriptionResponse.from_dict(response.json())
+
         return response_200
 
     if response.status_code == 422:
@@ -50,7 +52,7 @@ def _parse_response(
 
 def _build_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Response[Any | HTTPValidationError]:
+) -> Response[HTTPValidationError | TranscriptionResponse]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -63,13 +65,13 @@ def sync_detailed(
     *,
     client: AuthenticatedClient,
     body: BodyPostApiV1Transcribe,
-) -> Response[Any | HTTPValidationError]:
+) -> Response[HTTPValidationError | TranscriptionResponse]:
     """Transcribe Audio
 
      Transcribe an audio file using the Whisper service.
 
     Accepts WAV, MP3, or any audio format supported by ffmpeg.
-    Returns the transcribed text for review before saving as an Interaction.
+    Returns the original text and a durable capture for reviewing proposed records.
 
     Args:
         body (BodyPostApiV1Transcribe):
@@ -79,7 +81,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Any | HTTPValidationError]
+        Response[HTTPValidationError | TranscriptionResponse]
     """
 
     kwargs = _get_kwargs(
@@ -97,13 +99,13 @@ def sync(
     *,
     client: AuthenticatedClient,
     body: BodyPostApiV1Transcribe,
-) -> Any | HTTPValidationError | None:
+) -> HTTPValidationError | TranscriptionResponse | None:
     """Transcribe Audio
 
      Transcribe an audio file using the Whisper service.
 
     Accepts WAV, MP3, or any audio format supported by ffmpeg.
-    Returns the transcribed text for review before saving as an Interaction.
+    Returns the original text and a durable capture for reviewing proposed records.
 
     Args:
         body (BodyPostApiV1Transcribe):
@@ -113,7 +115,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Any | HTTPValidationError
+        HTTPValidationError | TranscriptionResponse
     """
 
     return sync_detailed(
@@ -126,13 +128,13 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
     body: BodyPostApiV1Transcribe,
-) -> Response[Any | HTTPValidationError]:
+) -> Response[HTTPValidationError | TranscriptionResponse]:
     """Transcribe Audio
 
      Transcribe an audio file using the Whisper service.
 
     Accepts WAV, MP3, or any audio format supported by ffmpeg.
-    Returns the transcribed text for review before saving as an Interaction.
+    Returns the original text and a durable capture for reviewing proposed records.
 
     Args:
         body (BodyPostApiV1Transcribe):
@@ -142,7 +144,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Any | HTTPValidationError]
+        Response[HTTPValidationError | TranscriptionResponse]
     """
 
     kwargs = _get_kwargs(
@@ -158,13 +160,13 @@ async def asyncio(
     *,
     client: AuthenticatedClient,
     body: BodyPostApiV1Transcribe,
-) -> Any | HTTPValidationError | None:
+) -> HTTPValidationError | TranscriptionResponse | None:
     """Transcribe Audio
 
      Transcribe an audio file using the Whisper service.
 
     Accepts WAV, MP3, or any audio format supported by ffmpeg.
-    Returns the transcribed text for review before saving as an Interaction.
+    Returns the original text and a durable capture for reviewing proposed records.
 
     Args:
         body (BodyPostApiV1Transcribe):
@@ -174,7 +176,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Any | HTTPValidationError
+        HTTPValidationError | TranscriptionResponse
     """
 
     return (

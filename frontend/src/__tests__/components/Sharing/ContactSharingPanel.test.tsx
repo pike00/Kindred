@@ -194,7 +194,7 @@ describe("ContactSharingPanel", () => {
     mockListContactShares.mockResolvedValue({
       data: [
         {
-          grantee_email: "remove-me@example.com",
+          grantee_email: "user@example.com",
           created_at: "2026-06-15T00:00:00Z",
         },
       ],
@@ -223,7 +223,7 @@ describe("ContactSharingPanel", () => {
     mockListContactShares.mockResolvedValue({
       data: [
         {
-          grantee_email: "remove-me@example.com",
+          grantee_email: "user@example.com",
           created_at: "2026-06-15T00:00:00Z",
         },
       ],
@@ -246,13 +246,13 @@ describe("ContactSharingPanel", () => {
 
     await waitFor(() => {
       expect(mockDeleteContactShare).toHaveBeenCalledWith({
-        granteeEmail: "remove-me@example.com",
+        granteeEmail: "user@example.com",
       })
       expect(invalidateSpy).toHaveBeenCalledWith({
         queryKey: ["contact-shares"],
       })
       expect(mockShowSuccessToast).toHaveBeenCalledWith(
-        "Removed access for remove-me@example.com",
+        "Removed access for user@example.com",
       )
     })
   })

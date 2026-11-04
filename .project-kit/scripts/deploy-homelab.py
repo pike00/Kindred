@@ -20,11 +20,11 @@ HOMELAB_APP = "apps/kindred"
 HOMELAB_MODE = "bump"
 ALLOW_LEGACY_APPLY = False
 SYNC_CHECKOUT = False
-DEPLOY_REPO_PATH = ""
+DEPLOY_REPO_PATH = "/home/will/projects/kindred"
 
 DEPLOY_BRANCH = "main"
-DEPLOY_HOST = "".lower()
-DEPLOY_SSH_ALIAS = ""
+DEPLOY_HOST = "ares".lower()
+DEPLOY_SSH_ALIAS = "ares.savannah-mimosa.ts.net"
 HOMELAB_ROOT = Path.home() / "projects" / "Homelab"
 HL_PATH = HOMELAB_ROOT / "infra" / "scripts" / "hl"
 RESOLVER_PATH = HOMELAB_ROOT / "infra" / "scripts" / "resolve-stack.py"

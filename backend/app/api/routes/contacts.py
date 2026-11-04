@@ -44,6 +44,7 @@ from app.models import (
     ContactUpdate,
     Interaction,
     InteractionAttendee,
+    OverdueContactPublic,
     OverdueContactsPublic,
     Relationship,
     SavedFilter,
@@ -337,18 +338,47 @@ def list_overdue_contacts(
         .order_by(Contact.last_contacted_at.asc())
     )
     contacts = session.exec(stmt).all()
-    visible_shared_tag_ids = shared_tag_ids(session, current_user)
-    return OverdueContactsPublic(
-        data=[
-            contact_public(
-                contact=contact,
-                user=current_user,
-                shared_ids=visible_shared_tag_ids,
+    contact_ids = [c.id for c in contacts]
+    latest_interaction_notes: dict[uuid.UUID, str | None] = {}
+    if contact_ids:
+        ix_stmt = (
+            select(InteractionAttendee.contact_id, Interaction.notes)
+            .join(Interaction, Interaction.id == InteractionAttendee.interaction_id)
+            .where(
+                InteractionAttendee.contact_id.in_(contact_ids),
+                Interaction.deleted_at.is_(None),
+                Interaction.is_draft == False,  # noqa: E712
             )
-            for contact in contacts
-        ],
-        count=len(contacts),
-    )
+            .order_by(InteractionAttendee.contact_id, Interaction.occurred_at.desc())
+        )
+        for cid, notes in session.exec(ix_stmt).all():
+            if cid not in latest_interaction_notes:
+                latest_interaction_notes[cid] = notes
+
+    res = []
+    for c in contacts:
+        last_dt = (
+            c.last_contacted_at.replace(tzinfo=timezone.utc)
+            if c.last_contacted_at and c.last_contacted_at.tzinfo is None
+            else c.last_contacted_at
+        )
+        if last_dt:
+            days_since = (now - last_dt).days
+            cadence = c.contact_frequency_days if c.contact_frequency_days is not None else days
+            days_overdue = max(0, days_since - cadence)
+        else:
+            days_overdue = None
+
+        res.append(
+            OverdueContactPublic.model_validate(
+                c,
+                update={
+                    "days_overdue": days_overdue,
+                    "last_interaction_notes": latest_interaction_notes.get(c.id),
+                },
+            )
+        )
+    return OverdueContactsPublic(data=res, count=len(res))
 
 
 @router.get("/losing-touch", response_model=ContactsPublic)
@@ -392,7 +422,25 @@ def list_losing_touch_contacts(
     )
 
 
-def _snooze_contact_impl(
+@router.post(
+    "/{contact_id}/snooze",
+    response_model=ContactPublic,
+    operation_id="post_api_v1_contacts_contact_id_snooze",
+    summary="Snooze Contact",
+)
+@router.patch(
+    "/{contact_id}/snooze",
+    response_model=ContactPublic,
+    operation_id="patch_api_v1_contacts_contact_id_snooze",
+    summary="Update Contact Snooze",
+)
+@router.patch(
+    "/{contact_id}/skip",
+    response_model=ContactPublic,
+    operation_id="patch_api_v1_contacts_contact_id_skip",
+    summary="Skip Contact",
+)
+def snooze_contact(
     *,
     session: SessionDep,
     current_user: CurrentUser,
@@ -437,54 +485,6 @@ def _snooze_contact_impl(
     session.commit()
     session.refresh(contact)
     return contact
-
-
-@router.post("/{contact_id}/snooze", response_model=ContactPublic)
-def create_contact_snooze(
-    *,
-    session: SessionDep,
-    current_user: CurrentUser,
-    contact_id: uuid.UUID,
-    body: ContactSnoozeRequest | None = None,
-) -> Any:
-    return _snooze_contact_impl(
-        session=session,
-        current_user=current_user,
-        contact_id=contact_id,
-        body=body,
-    )
-
-
-@router.patch("/{contact_id}/snooze", response_model=ContactPublic)
-def update_contact_snooze(
-    *,
-    session: SessionDep,
-    current_user: CurrentUser,
-    contact_id: uuid.UUID,
-    body: ContactSnoozeRequest | None = None,
-) -> Any:
-    return _snooze_contact_impl(
-        session=session,
-        current_user=current_user,
-        contact_id=contact_id,
-        body=body,
-    )
-
-
-@router.patch("/{contact_id}/skip", response_model=ContactPublic)
-def skip_contact(
-    *,
-    session: SessionDep,
-    current_user: CurrentUser,
-    contact_id: uuid.UUID,
-    body: ContactSnoozeRequest | None = None,
-) -> Any:
-    return _snooze_contact_impl(
-        session=session,
-        current_user=current_user,
-        contact_id=contact_id,
-        body=body,
-    )
 
 
 @router.patch("/bulk", response_model=BulkUpdateResponse)

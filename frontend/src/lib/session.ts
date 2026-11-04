@@ -1,3 +1,5 @@
+import { randomId } from "./random-id"
+
 // A generation belongs to one page's authenticated session. Never transfer work
 // (including callbacks which ignore AbortSignal) across an authentication change.
 let generation = 0
@@ -194,7 +196,7 @@ export function leaveSession(url: string, broadcast = true): void {
   clearPersistedIdentity()
   resetSession()
   exitPage()
-  if (broadcast) localStorage.setItem(SESSION_EVENT, crypto.randomUUID())
+  if (broadcast) localStorage.setItem(SESSION_EVENT, randomId())
   // A document navigation discards router loaders and all component-local data.
   window.location.assign(url)
 }
@@ -204,7 +206,7 @@ export function completeLogin(token: string, session: Session): void {
   clearPersistedIdentity()
   resetSession()
   localStorage.setItem("access_token", token)
-  localStorage.setItem(SESSION_EVENT, crypto.randomUUID())
+  localStorage.setItem(SESSION_EVENT, randomId())
   exitPage()
   window.location.assign("/")
 }
