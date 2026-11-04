@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
 import { useMemo, useState } from "react"
-import { type ContactPublic, ContactsService, SearchService } from "@/client"
+import { type ContactPublic, SearchService } from "@/client"
 import { ContactAvatar } from "@/components/Common/ContactAvatar"
 import {
   CommandDialog,
@@ -15,6 +15,10 @@ import {
 import useAuth from "@/hooks/useAuth"
 import { useRegisterShortcuts } from "@/hooks/useKeyboardShortcuts"
 import {
+  CONTACT_PICKER_LIMIT,
+  contactSearchQueryOptions,
+} from "@/lib/contactQueries"
+import {
   Bell,
   Home,
   MessagesSquare,
@@ -24,6 +28,7 @@ import {
   Tag,
   Users,
 } from "@/lib/icons"
+import { useDebouncedValue } from "@/lib/useDebouncedValue"
 import { useCommandPalette } from "./CommandPaletteContext"
 import { SearchBadge } from "./SearchBadge"
 
@@ -74,17 +79,21 @@ export function CommandPalette() {
   const { user } = useAuth()
   const queryClient = useQueryClient()
   const [searchQuery, setSearchQuery] = useState("")
+  const debouncedSearchQuery = useDebouncedValue(searchQuery)
 
   const { data: contactsData } = useQuery({
-    queryKey: ["contacts"],
-    queryFn: () => ContactsService.listContacts({ limit: 500 }),
+    ...contactSearchQueryOptions(
+      debouncedSearchQuery,
+      debouncedSearchQuery ? CONTACT_PICKER_LIMIT : CONTACT_LIMIT,
+    ),
     enabled: open,
   })
 
   const { data: searchData, isLoading: searchLoading } = useQuery({
-    queryKey: ["palette-search", searchQuery],
-    queryFn: () => SearchService.search({ q: searchQuery, limit: 10 }),
-    enabled: open && searchQuery.length >= 2,
+    queryKey: ["palette-search", debouncedSearchQuery],
+    queryFn: () => SearchService.search({ q: debouncedSearchQuery, limit: 10 }),
+    enabled: open && debouncedSearchQuery.length >= 2,
+    staleTime: 30_000,
   })
   const searchResults = searchData?.results ?? []
 
@@ -94,7 +103,7 @@ export function CommandPalette() {
     setOpen(false)
     // Clear search state
     setSearchQuery("")
-    queryClient.removeQueries({ queryKey: ["search"] })
+    queryClient.removeQueries({ queryKey: ["palette-search"] })
     action()
   }
 
@@ -111,7 +120,7 @@ export function CommandPalette() {
         <CommandEmpty>No results.</CommandEmpty>
 
         {/* Full-text search results */}
-        {searchQuery.length >= 1 && (
+        {debouncedSearchQuery.length >= 2 && (
           <>
             <CommandGroup heading="Search Results">
               {searchLoading && (
@@ -138,11 +147,14 @@ export function CommandPalette() {
                           params: { contactId: result.id },
                         })
                       } else if (result.type === "note") {
-                        // Notes are displayed on contact page
-                        navigate({
-                          to: "/contacts/$contactId",
-                          params: { contactId: result.id },
-                        })
+                        if (result.contact_id) {
+                          navigate({
+                            to: "/contacts/$contactId",
+                            params: { contactId: result.contact_id },
+                          })
+                        } else {
+                          navigate({ to: "/contacts" })
+                        }
                       } else if (result.type === "interaction") {
                         navigate({ to: "/interactions" })
                       }
@@ -166,7 +178,7 @@ export function CommandPalette() {
         {/* Contact quick access — render all when searching so CMDK can filter them */}
         {contacts.length > 0 && (
           <CommandGroup heading="Contacts">
-            {(searchQuery.length >= 1
+            {(debouncedSearchQuery.length >= 1
               ? contacts
               : contacts.slice(0, CONTACT_LIMIT)
             ).map((contact) => (

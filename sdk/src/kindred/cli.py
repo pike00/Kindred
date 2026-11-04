@@ -33,47 +33,51 @@ import httpx
 
 from .client import KindredClient
 from ._generated.api.contacts import (
-    contacts_create_contact,
-    contacts_get_contact,
-    contacts_list_contacts,
-    contacts_list_losing_touch_contacts,
-    contacts_list_overdue_contacts,
-    contacts_update_contact,
+    get_api_v1_contacts as contacts_list_contacts,
+    get_api_v1_contacts_contact_id as contacts_get_contact,
+    get_api_v1_contacts_losing_touch as contacts_list_losing_touch_contacts,
+    get_api_v1_contacts_overdue as contacts_list_overdue_contacts,
+    patch_api_v1_contacts_contact_id as contacts_update_contact,
+    post_api_v1_contacts as contacts_create_contact,
 )
 from ._generated.api.interactions import (
-    interactions_create_interaction_route,
-    interactions_delete_interaction,
-    interactions_list_interactions,
-    interactions_update_interaction,
+    delete_api_v1_interactions_interaction_id as interactions_delete_interaction,
+    get_api_v1_interactions as interactions_list_interactions,
+    patch_api_v1_interactions_interaction_id as interactions_update_interaction,
+    post_api_v1_interactions as interactions_create_interaction_route,
 )
 from ._generated.api.notes import (
-    notes_create_note_route,
-    notes_delete_note,
-    notes_list_notes,
-    notes_update_note_route,
+    delete_api_v1_notes_note_id as notes_delete_note,
+    get_api_v1_notes_contact_contact_id as notes_list_notes,
+    patch_api_v1_notes_note_id as notes_update_note_route,
+    post_api_v1_notes as notes_create_note_route,
 )
 from ._generated.api.reminders import (
-    reminders_create_reminder_route,
-    reminders_delete_reminder,
-    reminders_dismiss_reminder,
-    reminders_get_chronic_snoozers,
-    reminders_get_snooze_history,
-    reminders_get_snooze_stats,
-    reminders_list_due_reminders,
-    reminders_list_reminders,
-    reminders_snooze_reminder,
+    delete_api_v1_reminders_reminder_id as reminders_delete_reminder,
+    get_api_v1_reminders as reminders_list_reminders,
+    get_api_v1_reminders_chronic_snoozers as reminders_get_chronic_snoozers,
+    get_api_v1_reminders_due as reminders_list_due_reminders,
+    get_api_v1_reminders_reminder_id_snooze_history as reminders_get_snooze_history,
+    get_api_v1_reminders_snooze_stats as reminders_get_snooze_stats,
+    post_api_v1_reminders as reminders_create_reminder_route,
+    post_api_v1_reminders_reminder_id_dismiss as reminders_dismiss_reminder,
+    post_api_v1_reminders_reminder_id_snooze as reminders_snooze_reminder,
 )
-from ._generated.api.tags import tags_list_tags
+from ._generated.api.tags import get_api_v1_tags as tags_list_tags
 from ._generated.api.users import (
-    users_create_user,
-    users_read_user_by_id,
-    users_read_user_me,
-    users_read_users,
+    get_api_v1_users as users_read_users,
+    get_api_v1_users_me as users_read_user_me,
+    get_api_v1_users_user_id as users_read_user_by_id,
+    post_api_v1_users as users_create_user,
 )
 from ._generated.api.api_keys import (
-    api_keys_create_my_api_key,
-    api_keys_list_my_api_keys,
-    api_keys_revoke_my_api_key,
+    delete_api_v1_users_me_api_keys_api_key_id as api_keys_revoke_my_api_key,
+    get_api_v1_users_me_api_keys as api_keys_list_my_api_keys,
+    post_api_v1_users_me_api_keys as api_keys_create_my_api_key,
+)
+from ._generated.api.utils import (
+    get_api_v1_utils_health_check as utils_health_check,
+    get_api_v1_utils_status as utils_status,
 )
 from ._generated.api.utils import utils_health_check, utils_status
 from ._generated.api.transcribe import transcribe_transcribe_audio
@@ -87,10 +91,10 @@ from ._generated.api.voice_captures import (
     voice_captures_update_voice_capture,
 )
 from ._generated.api.webhooks import (
-    webhooks_create_webhook,
-    webhooks_delete_webhook,
-    webhooks_list_webhooks,
-    webhooks_update_webhook,
+    delete_api_v1_webhooks_webhook_id as webhooks_delete_webhook,
+    get_api_v1_webhooks as webhooks_list_webhooks,
+    patch_api_v1_webhooks_webhook_id as webhooks_update_webhook,
+    post_api_v1_webhooks as webhooks_create_webhook,
 )
 from ._generated.errors import UnexpectedStatus
 from ._generated.models.contact_create import ContactCreate
@@ -106,7 +110,7 @@ from ._generated.models.webhook_endpoint_base import WebhookEndpointBase
 from ._generated.models.api_key_create import APIKeyCreate
 from ._generated.models.user_create import UserCreate
 from ._generated.models.analyze_capture import AnalyzeCapture
-from ._generated.models.body_transcribe_transcribe_audio import BodyTranscribeTranscribeAudio
+from ._generated.models.body_post_api_v1_transcribe import BodyPostApiV1Transcribe
 from ._generated.models.create_capture import CreateCapture
 from ._generated.models.review_capture import ReviewCapture
 from ._generated.types import UNSET, File
@@ -300,7 +304,7 @@ def voice_transcribe(
     if contact and len(contact) > 20:
         raise typer.BadParameter("At most 20 contact hints are allowed.", param_hint="--contact")
     with audio.open("rb") as stream:
-        body = BodyTranscribeTranscribeAudio(
+        body = BodyPostApiV1Transcribe(
             file=File(
                 payload=stream,
                 file_name=audio.name,

@@ -4,7 +4,7 @@ import { useMemo, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import type { ContactPublic, InteractionCreate } from "@/client"
-import { ContactsService, InteractionsService } from "@/client"
+import { InteractionsService } from "@/client"
 import { MentionTextarea } from "@/components/Mentions/MentionTextarea"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -39,12 +39,13 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import useCustomToast from "@/hooks/useCustomToast"
+import {
+  CONTACT_PICKER_LIMIT,
+  contactSearchQueryOptions,
+} from "@/lib/contactQueries"
 import { Plus, X } from "@/lib/icons"
-
-export const toLocalDateTimeInput = (d: Date) => {
-  const pad = (n: number) => String(n).padStart(2, "0")
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
-}
+import { useDebouncedValue } from "@/lib/useDebouncedValue"
+import { toLocalDateTimeInput } from "@/lib/utils"
 
 export const channels = [
   { value: "call", label: "Call" },
@@ -58,7 +59,10 @@ export const channels = [
 ]
 
 export const interactionCreateSchema = z.object({
-  attendee_ids: z.array(z.string().uuid()).min(1, "Pick at least one attendee"),
+  attendee_ids: z
+    .array(z.string().uuid())
+    .min(1, "Pick at least one attendee")
+    .max(1000),
   channel: z.string().min(1, "Select a channel"),
   occurred_at: z.string().min(1, "Date is required"),
   notes: z.string().optional(),
@@ -102,8 +106,8 @@ export const AddInteractionDialog = ({
     else setInternalOpen(o)
   }
   const [osmStatus, setOsmStatus] = useState<OsmStatus>("idle")
-  const [_resolvedLat, setResolvedLat] = useState<number | null>(null)
-  const [_resolvedLng, setResolvedLng] = useState<number | null>(null)
+  const [resolvedLat, setResolvedLat] = useState<number | null>(null)
+  const [resolvedLng, setResolvedLng] = useState<number | null>(null)
   const [resolvedName, setResolvedName] = useState<string | null>(null)
   const osmAbortRef = useRef<AbortController | null>(null)
   const { showSuccessToast, showErrorToast } = useCustomToast()
@@ -117,6 +121,7 @@ export const AddInteractionDialog = ({
       occurred_at: toLocalDateTimeInput(new Date()),
       notes: "",
       duration_minutes: "",
+      location_label: "",
     },
   })
 
@@ -209,7 +214,7 @@ export const AddInteractionDialog = ({
   })
 
   const onSubmit = (data: InteractionCreateFormData) => {
-    addMutation.mutate({
+    const payload: InteractionCreate = {
       attendee_ids: data.attendee_ids,
       channel: data.channel as InteractionCreate["channel"],
       occurred_at: new Date(data.occurred_at).toISOString(),
@@ -217,7 +222,11 @@ export const AddInteractionDialog = ({
       duration_minutes: data.duration_minutes
         ? parseInt(data.duration_minutes, 10)
         : null,
-    })
+      location_label: data.location_label?.trim() || null,
+      latitude: resolvedLat,
+      longitude: resolvedLng,
+    }
+    addMutation.mutate(payload)
   }
 
   return (
@@ -372,10 +381,11 @@ export function AttendeePicker({
   seedContact?: ContactPublic
 }) {
   const [pickerOpen, setPickerOpen] = useState(false)
-  const { data } = useQuery({
-    queryKey: ["contacts"],
-    queryFn: () => ContactsService.listContacts(),
-  })
+  const [contactQuery, setContactQuery] = useState("")
+  const debouncedContactQuery = useDebouncedValue(contactQuery)
+  const { data } = useQuery(
+    contactSearchQueryOptions(debouncedContactQuery, CONTACT_PICKER_LIMIT),
+  )
   const contacts = useMemo(() => data?.data ?? [], [data])
   const contactById = useMemo(() => {
     const m = new Map<string, ContactPublic>()
@@ -420,7 +430,13 @@ export function AttendeePicker({
                   </Badge>
                 )
               })}
-              <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
+              <Popover
+                open={pickerOpen}
+                onOpenChange={(open) => {
+                  setPickerOpen(open)
+                  if (!open) setContactQuery("")
+                }}
+              >
                 <PopoverTrigger asChild>
                   <Button
                     type="button"
@@ -434,7 +450,11 @@ export function AttendeePicker({
                 </PopoverTrigger>
                 <PopoverContent className="w-72 p-0" align="start">
                   <Command>
-                    <CommandInput placeholder="Search contacts..." />
+                    <CommandInput
+                      placeholder="Search contacts..."
+                      value={contactQuery}
+                      onValueChange={setContactQuery}
+                    />
                     <CommandList>
                       <CommandEmpty>No matches.</CommandEmpty>
                       <CommandGroup>
@@ -444,6 +464,8 @@ export function AttendeePicker({
                             value={`${contactLabel(c)} ${c.company ?? ""}`}
                             onSelect={() => {
                               toggle(c)
+                              setPickerOpen(false)
+                              setContactQuery("")
                             }}
                           >
                             <span className="truncate">{contactLabel(c)}</span>

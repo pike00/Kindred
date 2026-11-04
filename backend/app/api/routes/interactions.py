@@ -205,7 +205,7 @@ def update_interaction(
         affected |= current_attendees
 
     session.flush()
-    for aid in affected:
+    for aid in sorted(affected):
         recompute_last_contacted_at(session=session, contact_id=aid)
     session.commit()
     session.refresh(interaction)
@@ -238,7 +238,7 @@ def delete_interaction(
     interaction.deleted_at = datetime.now(timezone.utc)
     session.add(interaction)
     session.flush()
-    for aid in attendee_ids:
+    for aid in sorted(attendee_ids):
         recompute_last_contacted_at(session=session, contact_id=aid)
     session.commit()
     return {"ok": True}
@@ -273,7 +273,7 @@ def confirm_draft_interaction(
     interaction.draft_source = None
     session.add(interaction)
     session.flush()
-    for aid in attendee_ids:
+    for aid in sorted(attendee_ids):
         recompute_last_contacted_at(session=session, contact_id=aid)
     session.commit()
     session.refresh(interaction)
@@ -309,7 +309,7 @@ def restore_interaction(
     interaction.deleted_at = None
     session.add(interaction)
     session.flush()
-    for aid in attendee_ids:
+    for aid in sorted(attendee_ids):
         recompute_last_contacted_at(session=session, contact_id=aid)
     session.commit()
     return {"ok": True}

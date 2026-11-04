@@ -129,8 +129,11 @@ def test_contact_snooze_openapi_operation_ids_are_unique():
         paths["/api/v1/contacts/{contact_id}/snooze"]["patch"]["operationId"],
         paths["/api/v1/contacts/{contact_id}/skip"]["patch"]["operationId"],
     }
-    assert len(ids) == 3
-    assert "contacts-snooze_contact" in ids
+    assert ids == {
+        "post_api_v1_contacts_contact_id_snooze",
+        "patch_api_v1_contacts_contact_id_snooze",
+        "patch_api_v1_contacts_contact_id_skip",
+    }
 
 
 def test_action_discriminators_and_aware_datetime_validation():

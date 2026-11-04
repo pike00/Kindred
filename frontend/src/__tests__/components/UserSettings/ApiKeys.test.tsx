@@ -2,6 +2,7 @@ import { screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import ApiKeys from "@/components/UserSettings/ApiKeys"
+import { resetSession } from "@/lib/session"
 import { renderWithProviders } from "@/test/helpers"
 
 const authState = vi.hoisted(() => ({
@@ -104,6 +105,8 @@ vi.mock("@/client", () => ({
 describe("ApiKeys", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    resetSession()
+    localStorage.setItem("access_token", "test-token")
     authState.user = { is_superuser: true }
     global.fetch = vi.fn()
   })
@@ -475,11 +478,11 @@ describe("ApiKeys", () => {
         expect.stringContaining("/api/v1/users/me/api-keys/"),
         expect.objectContaining({
           method: "POST",
-          headers: expect.objectContaining({
-            "Content-Type": "application/json",
-          }),
+          headers: expect.any(Headers),
         }),
       )
+      const sent = vi.mocked(global.fetch).mock.calls.find(([, init]) => init?.method === "POST")
+      expect(new Headers(sent?.[1]?.headers).get("Content-Type")).toBe("application/json")
     })
   })
 

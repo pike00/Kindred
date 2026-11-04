@@ -5,7 +5,7 @@
 | Name | Columns | Comment | Type |
 | ---- | ------- | ------- | ---- |
 | [public.alembic_version](public.alembic_version.md) | 1 |  | BASE TABLE |
-| [public.user](public.user.md) | 9 | Authenticated user; tenant-scope owner of every row below. | BASE TABLE |
+| [public.user](public.user.md) | 10 | Authenticated user; tenant-scope owner of every row below. | BASE TABLE |
 | [public.tag](public.tag.md) | 6 | User-defined tag for grouping contacts. | BASE TABLE |
 | [public.contact](public.contact.md) | 42 | Core contact entity — the subject of everything else in the CRM. | BASE TABLE |
 | [public.contact_tag](public.contact_tag.md) | 2 | Many-to-many link between contacts and tags. | BASE TABLE |
@@ -16,7 +16,7 @@
 | [public.custom_field_definition](public.custom_field_definition.md) | 8 | User-defined custom field schema, scoped to one owner. | BASE TABLE |
 | [public.custom_field_value](public.custom_field_value.md) | 4 | Value of a custom field for a specific contact (one per contact per definition). | BASE TABLE |
 | [public.interaction](public.interaction.md) | 19 | Logged touchpoint with one or more contacts (call, meeting, text, etc.). Attendees are attached via interaction_attendee. | BASE TABLE |
-| [public.reminder](public.reminder.md) | 12 | Scheduled reminder; contact-specific or standalone. | BASE TABLE |
+| [public.reminder](public.reminder.md) | 14 | Scheduled reminder; contact-specific or standalone. | BASE TABLE |
 | [public.gift](public.gift.md) | 13 | Gift idea or record for a contact. | BASE TABLE |
 | [public.debt](public.debt.md) | 11 | Money owed to or from a contact. | BASE TABLE |
 | [public.life_event](public.life_event.md) | 10 | Milestone on a contact's timeline (job change, wedding, move, etc.). | BASE TABLE |
@@ -154,6 +154,7 @@ erDiagram
   timestamp_with_time_zone created_at
   varchar_512_ oidc_iss
   varchar_255_ oidc_sub
+  integer session_version
 }
 "public.tag" {
   uuid id
@@ -299,6 +300,8 @@ erDiagram
   timestamp_with_time_zone snoozed_until
   timestamp_with_time_zone created_at
   timestamp_without_time_zone deleted_at
+  integer delivery_attempts
+  timestamp_with_time_zone next_delivery_at
 }
 "public.gift" {
   uuid id

@@ -7,7 +7,6 @@ from app.api.routes import (
     calendar,
     communication_preferences,
     contact_fields,
-    contact_pdf,
     contact_shares,
     contact_stage_events,
     contacts,
@@ -66,11 +65,10 @@ api_router.include_router(utils.router)
 
 # CRM routes
 # These routers also use the "/contacts" prefix and declare literal sub-paths
-# ("/contacts/{contact_id}.pdf", "/contacts/kanban", "/contacts/stages/distinct").
+# such as "/contacts/kanban" and "/contacts/stages/distinct".
 # They MUST be included before contacts.router, otherwise the dynamic
 # "/contacts/{contact_id}" route matches first and the literal segment fails
 # UUID validation with a 422.
-api_router.include_router(contact_pdf.router)
 api_router.include_router(contacts_kanban.router)
 api_router.include_router(contacts.router)
 api_router.include_router(contact_stage_events.router)

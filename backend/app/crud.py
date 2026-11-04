@@ -1,9 +1,11 @@
+import hashlib
 import re
 import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import and_, func, or_, union
+from sqlalchemy import and_, func, or_, union, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql.elements import ColumnElement
 from sqlmodel import Session, select
 from sqlmodel import delete as sql_delete
@@ -23,6 +25,7 @@ from app.models import (
     ContactCreate,
     ContactField,
     ContactFieldCreate,
+    ContactPublic,
     ContactSource,
     ContactStageEvent,
     ContactStageEventCreate,
@@ -35,6 +38,7 @@ from app.models import (
     DebtCreate,
     EmailOAuthToken,
     EmailOAuthTokenCreate,
+    EmailOAuthTokenUpdate,
     Gift,
     GiftCreate,
     IcalImportLog,
@@ -118,8 +122,19 @@ def update_user(*, session: Session, db_user: User, user_in: UserUpdate) -> Any:
         password = user_data["password"]
         hashed_password = get_password_hash(password)
         extra_data["hashed_password"] = hashed_password
-    db_user.sqlmodel_update(user_data, update=extra_data)
-    session.add(db_user)
+    if "password" in user_data:
+        values = {
+            key: value for key, value in user_data.items() if key != "password"
+        }
+        values.update(extra_data)
+        session.execute(
+            update(User)
+            .where(User.id == db_user.id)
+            .values(**values, session_version=User.session_version + 1)
+        )
+    else:
+        db_user.sqlmodel_update(user_data, update=extra_data)
+        session.add(db_user)
     session.commit()
     session.refresh(db_user)
     return db_user
@@ -157,9 +172,29 @@ def authenticate(*, session: Session, email: str, password: str) -> User | None:
 # ─── Contact CRUD ─────────────────────────────────────────────────────────────
 
 
+def _validate_contact_tag_ownership(
+    *, session: Session, owner_id: uuid.UUID, tag_ids: list[uuid.UUID] | None
+) -> None:
+    unique_ids = set(tag_ids or [])
+    if not unique_ids:
+        return
+    count = session.exec(
+        select(func.count())
+        .select_from(Tag)
+        .where(Tag.id.in_(unique_ids), Tag.owner_id == owner_id)
+    ).one()
+    if count != len(unique_ids):
+        raise ValueError("Tags must belong to the contact owner")
+
+
 def create_contact(
     *, session: Session, contact_in: ContactCreate, owner_id: uuid.UUID
 ) -> Contact:
+    _validate_contact_tag_ownership(
+        session=session,
+        owner_id=owner_id,
+        tag_ids=contact_in.tag_ids,
+    )
     db_obj = Contact.model_validate(contact_in, update={"owner_id": owner_id})
     # Compute vcard_sha256 if vcard_raw is present
     if db_obj.vcard_raw:
@@ -183,6 +218,11 @@ def upsert_contact(
 
     If source_external_id is None, falls through to a plain create.
     """
+    _validate_contact_tag_ownership(
+        session=session,
+        owner_id=owner_id,
+        tag_ids=contact_in.tag_ids,
+    )
     existing: Contact | None = None
     if contact_in.source_external_id is not None:
         existing = session.exec(
@@ -306,7 +346,9 @@ def create_custom_field_value(
 
 def recompute_last_contacted_at(*, session: Session, contact_id: uuid.UUID) -> None:
     """Reset contact.last_contacted_at to the most recent attended interaction."""
-    contact = session.get(Contact, contact_id)
+    contact = session.exec(
+        select(Contact).where(Contact.id == contact_id).with_for_update()
+    ).first()
     if contact is None:
         return
     stmt = (
@@ -322,8 +364,9 @@ def recompute_last_contacted_at(*, session: Session, contact_id: uuid.UUID) -> N
         .limit(1)
     )
     latest = session.exec(stmt).first()
-    contact.last_contacted_at = latest
-    session.add(contact)
+    if contact.last_contacted_at != latest:
+        contact.last_contacted_at = latest
+        session.add(contact)
 
 
 def create_interaction(
@@ -337,19 +380,25 @@ def create_interaction(
         update={"owner_id": owner_id},
     )
     session.add(db_obj)
-    for attendee_id in set(interaction_in.attendee_ids):
+    for attendee_id in sorted(set(interaction_in.attendee_ids)):
         session.add(
             InteractionAttendee(interaction_id=db_obj.id, contact_id=attendee_id)
         )
         # Drafts do not affect last_contacted_at; only confirmed interactions do.
         if not db_obj.is_draft:
-            contact = session.get(Contact, attendee_id)
-            if contact and (
-                contact.last_contacted_at is None
-                or db_obj.occurred_at > contact.last_contacted_at
-            ):
-                contact.last_contacted_at = db_obj.occurred_at
-                session.add(contact)
+            # GREATEST-equivalent update avoids the read/compare/write race when
+            # two interactions for the same contact are created concurrently.
+            session.exec(
+                update(Contact)
+                .where(
+                    Contact.id == attendee_id,
+                    or_(
+                        Contact.last_contacted_at.is_(None),
+                        Contact.last_contacted_at < db_obj.occurred_at,
+                    ),
+                )
+                .values(last_contacted_at=db_obj.occurred_at)
+            )
     session.commit()
     session.refresh(db_obj)
     return db_obj
@@ -434,9 +483,17 @@ def _extract_mention_ids(body: str | None) -> set[uuid.UUID]:
     return ids
 
 
-def _sync_note_mentions(*, session: Session, note: Note) -> None:
+def _sync_note_mentions(*, session: Session, note: Note, owner_id: uuid.UUID) -> None:
     session.exec(sql_delete(NoteMention).where(NoteMention.note_id == note.id))
-    for cid in _extract_mention_ids(note.body):
+    owner = session.get(User, owner_id)
+    if owner is None:
+        return
+    visible_ids = set(
+        session.exec(
+            select(Contact.id).where(Contact.id.in_(visible_contact_ids(owner)))
+        ).all()
+    )
+    for cid in _extract_mention_ids(note.body) & visible_ids:
         session.add(NoteMention(note_id=note.id, contact_id=cid))
 
 
@@ -444,15 +501,32 @@ def create_note(*, session: Session, note_in: NoteCreate, owner_id: uuid.UUID) -
     # Check for idempotent POST: if client_id is provided, check for existing note
     if note_in.client_id:
         existing = session.exec(
-            select(Note).where(Note.client_id == note_in.client_id)
+            select(Note).where(
+                Note.owner_id == owner_id,
+                Note.client_id == note_in.client_id,
+            )
         ).first()
         if existing:
+            # A retry must not resurrect a note the owner explicitly deleted.
             return existing
     db_obj = Note.model_validate(note_in, update={"owner_id": owner_id})
     session.add(db_obj)
-    session.flush()
-    _sync_note_mentions(session=session, note=db_obj)
-    session.commit()
+    try:
+        session.flush()
+        _sync_note_mentions(session=session, note=db_obj, owner_id=owner_id)
+        session.commit()
+    except IntegrityError:
+        session.rollback()
+        if note_in.client_id:
+            existing = session.exec(
+                select(Note).where(
+                    Note.owner_id == owner_id,
+                    Note.client_id == note_in.client_id,
+                )
+            ).first()
+            if existing is not None:
+                return existing
+        raise
     session.refresh(db_obj)
     return db_obj
 
@@ -463,7 +537,11 @@ def update_note(*, session: Session, note: Note, note_in: NoteUpdate) -> Note:
     session.add(note)
     session.flush()
     if "body" in update_data:
-        _sync_note_mentions(session=session, note=note)
+        _sync_note_mentions(
+            session=session,
+            note=note,
+            owner_id=note.owner_id,
+        )
     session.commit()
     session.refresh(note)
     return note
@@ -508,8 +586,12 @@ def visible_contact_ids(user: User, *, include_deleted: bool = False) -> Any:
     shared = (
         select(ContactTag.contact_id)
         .join(TagShare, TagShare.tag_id == ContactTag.tag_id)  # type: ignore[arg-type]
+        .join(Tag, Tag.id == ContactTag.tag_id)  # type: ignore[arg-type]
         .join(Contact, Contact.id == ContactTag.contact_id)  # type: ignore[arg-type]
-        .where(TagShare.grantee_id == user.id)
+        .where(
+            TagShare.grantee_id == user.id,
+            Tag.owner_id == Contact.owner_id,
+        )
     )
     all_shared = (
         select(Contact.id)
@@ -521,6 +603,31 @@ def visible_contact_ids(user: User, *, include_deleted: bool = False) -> Any:
         shared = shared.where(Contact.deleted_at.is_(None))
         all_shared = all_shared.where(Contact.deleted_at.is_(None))
     return union(owned, shared, all_shared)
+
+
+def shared_tag_ids(session: Session, user: User) -> set[uuid.UUID]:
+    return set(
+        session.exec(
+            select(TagShare.tag_id).where(TagShare.grantee_id == user.id)
+        ).all()
+    )
+
+
+def contact_public(
+    *,
+    contact: Contact,
+    user: User,
+    shared_ids: set[uuid.UUID] | None = None,
+) -> ContactPublic:
+    """Serialize a contact without exposing tags private to its owner."""
+    visible_shared_ids = shared_ids if shared_ids is not None else set()
+    tags = [
+        tag
+        for tag in contact.tags
+        if tag.owner_id == contact.owner_id
+        and (contact.owner_id == user.id or tag.id in visible_shared_ids)
+    ]
+    return ContactPublic.model_validate(contact, update={"tags": tags})
 
 
 def contact_visible(
@@ -625,6 +732,11 @@ def get_chronic_snooze_contacts(
     ]
 
 
+def _oidc_placeholder_email(sub: str) -> str:
+    digest = hashlib.sha256(sub.encode()).hexdigest()[:32]
+    return f"oidc-{digest}@users.kindred.dev"
+
+
 def get_or_create_user_from_claims(
     *, session: Session, claims: dict[str, object]
 ) -> User:
@@ -643,7 +755,8 @@ def get_or_create_user_from_claims(
     if existing:
         return existing
 
-    if email:
+    email_verified = claims.get("email_verified") is True
+    if email and email_verified:
         merge = session.exec(
             select(User).where(User.email == email, User.oidc_sub.is_(None))  # type: ignore[union-attr]
         ).first()
@@ -657,8 +770,12 @@ def get_or_create_user_from_claims(
 
     from app.core.config import settings
 
+    new_email = email or _oidc_placeholder_email(sub)
+    if email and session.exec(select(User).where(User.email == email)).first():
+        new_email = _oidc_placeholder_email(sub)
+
     new_user = User(
-        email=email or f"{sub}@oidc.invalid",
+        email=new_email,
         full_name=str(claims.get("name", "")) or None,
         is_active=settings.OIDC_JIT_ACTIVE,
         is_superuser=False,
@@ -907,9 +1024,47 @@ def create_email_oauth_token(
     owner_id: uuid.UUID,
     contact_id: uuid.UUID,
 ) -> EmailOAuthToken:
-    token = EmailOAuthToken.model_validate(
-        token_in, update={"owner_id": owner_id, "contact_id": contact_id}
+    from app.core.encryption import encrypt_refresh_token, encrypt_token
+
+    token = EmailOAuthToken(
+        provider=token_in.provider,
+        email_address=token_in.email_address,
+        token_expires_at=token_in.token_expires_at,
+        encrypted_access_token=encrypt_token(token_in.access_token),
+        encrypted_refresh_token=encrypt_refresh_token(token_in.refresh_token),
+        owner_id=owner_id,
+        contact_id=contact_id,
     )
+    session.add(token)
+    session.commit()
+    session.refresh(token)
+    return token
+
+
+def update_email_oauth_token(
+    *,
+    session: Session,
+    token_id: uuid.UUID,
+    access_token: str,
+    refresh_token: str | None,
+    expires_at: datetime | None,
+) -> EmailOAuthToken | None:
+    """Encrypt and persist refreshed OAuth credentials."""
+    from app.core.encryption import encrypt_refresh_token, encrypt_token
+
+    token_in = EmailOAuthTokenUpdate(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_expires_at=expires_at,
+    )
+    token = session.get(EmailOAuthToken, token_id)
+    if token is None:
+        return None
+    token.encrypted_access_token = encrypt_token(token_in.access_token or "")
+    if token_in.refresh_token is not None:
+        token.encrypted_refresh_token = encrypt_refresh_token(token_in.refresh_token)
+    token.token_expires_at = token_in.token_expires_at
+    token.updated_at = datetime.now(timezone.utc)
     session.add(token)
     session.commit()
     session.refresh(token)

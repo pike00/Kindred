@@ -3,12 +3,13 @@
 import hashlib
 import hmac
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import phonenumbers
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from redis import Redis
+from sqlalchemy.exc import IntegrityError
 from sqlmodel import col, select
 
 from app.api.deps import CurrentUser, SessionDep
@@ -22,6 +23,7 @@ from app.models import (
     InteractionAttendee,
     InteractionChannel,
     Ok,
+    WebhookDelivery,
     WebhookEndpoint,
     WebhookEndpointBase,
     WebhookEndpointCreated,
@@ -33,6 +35,7 @@ from app.models import (
 router = APIRouter(prefix="/webhooks", tags=["webhooks"])
 
 RedisDep = Depends(lambda: Redis.from_url(f"{settings.REDIS_URL}/0"))
+_DELIVERY_CLAIM_TTL = timedelta(minutes=5)
 
 
 # ─── Twilio Helpers ────────────────────────────────────────────────────
@@ -62,6 +65,92 @@ def _verify_twilio_signature(
     """Verify X-Twilio-Signature header."""
     computed = _compute_twilio_signature(request_url, params, auth_token)
     return hmac.compare_digest(computed, expected_sig)
+
+
+def _verify_inbound_signature(secret: str, body: bytes, signature: str) -> bool:
+    computed = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(computed, signature)
+
+
+def _claim_delivery(
+    session: SessionDep,
+    *,
+    webhook_id: uuid.UUID,
+    delivery_id: str,
+) -> tuple[WebhookDelivery, bool]:
+    now = datetime.now(timezone.utc)
+    existing = session.exec(
+        select(WebhookDelivery)
+        .where(
+            WebhookDelivery.webhook_id == webhook_id,
+            WebhookDelivery.delivery_id == delivery_id,
+        )
+        .with_for_update()
+    ).first()
+    if existing is not None:
+        if (
+            existing.interaction_id is None
+            and existing.claimed_at <= now - _DELIVERY_CLAIM_TTL
+        ):
+            existing.claimed_at = now
+            session.add(existing)
+            session.commit()
+            session.refresh(existing)
+            return existing, True
+        session.commit()
+        return existing, False
+
+    delivery = WebhookDelivery(
+        webhook_id=webhook_id,
+        delivery_id=delivery_id,
+        claimed_at=now,
+    )
+    session.add(delivery)
+    try:
+        session.commit()
+        session.refresh(delivery)
+        return delivery, True
+    except IntegrityError:
+        session.rollback()
+        existing = session.exec(
+            select(WebhookDelivery).where(
+                WebhookDelivery.webhook_id == webhook_id,
+                WebhookDelivery.delivery_id == delivery_id,
+            )
+        ).first()
+        if existing is None:
+            raise
+        return existing, False
+
+
+def _duplicate_delivery_response(
+    session: SessionDep,
+    delivery: WebhookDelivery,
+) -> WebhookEventResponse:
+    if delivery.interaction_id is None:
+        raise HTTPException(
+            status_code=503,
+            detail="Delivery is already being processed",
+        )
+    interaction = session.get(Interaction, delivery.interaction_id)
+    if interaction is None:
+        return WebhookEventResponse(
+            received=True,
+            matched=False,
+            error="Delivery was already processed",
+        )
+    attendee = session.exec(
+        select(InteractionAttendee).where(
+            InteractionAttendee.interaction_id == interaction.id
+        )
+    ).first()
+    return WebhookEventResponse(
+        received=True,
+        matched=True,
+        channel=interaction.channel.value,
+        contact_id=str(attendee.contact_id) if attendee else None,
+        interaction_id=str(interaction.id),
+    )
 
 
 def _normalize_phone(raw: str, region: str = "US") -> str | None:
@@ -204,18 +293,22 @@ async def twilio_webhook(
     form_data = await request.form()
     params = dict(form_data)
 
-    # Verify Twilio signature if secret is configured
-    if webhook.secret:
-        twilio_sig = request.headers.get("X-Twilio-Signature", "")
-        if not twilio_sig:
-            raise HTTPException(status_code=401, detail="Missing X-Twilio-Signature")
+    if not webhook.secret:
+        raise HTTPException(
+            status_code=401,
+            detail="Twilio webhook has no signature secret configured",
+        )
+    twilio_sig = request.headers.get("X-Twilio-Signature", "")
+    if not twilio_sig:
+        raise HTTPException(status_code=401, detail="Missing X-Twilio-Signature")
 
-        # Get the full URL for signature verification
-        # Use the original URL as Twilio signed it
-        url = str(request.url)
-
-        if not _verify_twilio_signature(url, params, twilio_sig, webhook.secret):
-            raise HTTPException(status_code=401, detail="Invalid Twilio signature")
+    if not _verify_twilio_signature(
+        str(request.url),
+        params,
+        twilio_sig,
+        webhook.secret,
+    ):
+        raise HTTPException(status_code=401, detail="Invalid Twilio signature")
 
     owner_id = webhook.owner_id
 
@@ -240,15 +333,20 @@ async def twilio_webhook(
     if not _check_rate_limit(redis, rate_key, limit=10, window=60):
         return Response(status_code=429, content="Rate limited")
 
-    # Find or create contact
-    contact = _find_contact_by_phone(session, owner_id, from_e164)
-
-    if not contact:
-        # Create unknown contact
-        contact = _create_unknown_contact(session, owner_id, from_e164)
-
     # Handle SMS
     if message_sid:
+        delivery_id = f"sms:{message_sid}"
+        delivery, claimed = _claim_delivery(
+            session,
+            webhook_id=webhook.id,
+            delivery_id=delivery_id,
+        )
+        if not claimed:
+            return _duplicate_delivery_response(session, delivery)
+
+        contact = _find_contact_by_phone(session, owner_id, from_e164)
+        if not contact:
+            contact = _create_unknown_contact(session, owner_id, from_e164)
         body = params.get("Body", "")
 
         interaction = Interaction(
@@ -271,6 +369,8 @@ async def twilio_webhook(
             contact.last_contacted_at = interaction.occurred_at
             session.add(contact)
 
+        delivery.interaction_id = interaction.id
+        session.add(delivery)
         session.commit()
 
         return WebhookEventResponse(
@@ -283,18 +383,40 @@ async def twilio_webhook(
 
     # Handle Call
     if call_sid:
-        call_status = params.get("CallStatus", "")
-
-        # Check if this is a StatusCallback (call completed)
-        is_status_callback = params.get(
-            "CallbackSource"
-        ) == "call-progress-events" or call_status in (
-            "completed",
-            "busy",
-            "no-answer",
-            "failed",
-            "canceled",
+        delivery_id = f"call:{call_sid}"
+        delivery, claimed = _claim_delivery(
+            session,
+            webhook_id=webhook.id,
+            delivery_id=delivery_id,
         )
+        if not claimed and delivery.interaction_id is not None:
+            existing_interaction = session.get(Interaction, delivery.interaction_id)
+            if existing_interaction is not None:
+                duration_seconds = params.get("CallDuration", "")
+                call_status = params.get("CallStatus", "")
+                if duration_seconds:
+                    try:
+                        existing_interaction.duration_minutes = max(
+                            1, round(int(duration_seconds) / 60)
+                        )
+                    except (ValueError, TypeError):
+                        pass
+                if call_status:
+                    note = f"Status: {call_status}"
+                    if note not in (existing_interaction.notes or ""):
+                        existing_interaction.notes = "\n".join(
+                            part for part in (existing_interaction.notes, note) if part
+                        )
+                session.add(existing_interaction)
+                session.commit()
+                return _duplicate_delivery_response(session, delivery)
+        if not claimed:
+            return _duplicate_delivery_response(session, delivery)
+
+        contact = _find_contact_by_phone(session, owner_id, from_e164)
+        if not contact:
+            contact = _create_unknown_contact(session, owner_id, from_e164)
+        call_status = params.get("CallStatus", "")
 
         # Get call duration if available (from StatusCallback)
         duration_seconds = params.get("CallDuration", "")
@@ -305,34 +427,17 @@ async def twilio_webhook(
             except (ValueError, TypeError):
                 pass
 
-        # For initial call webhook (not StatusCallback), just log the call
-        # For StatusCallback, update the existing interaction with duration
-        if is_status_callback and duration_minutes:
-            # Try to find existing call interaction by looking for recent calls with same CallSid
-            # For simplicity, create a new interaction for the completed call
-            notes = f"Call from {from_number}"
-            if call_status:
-                notes += f" (status: {call_status})"
+        notes = f"Call from {from_number}"
+        if call_status:
+            notes += f" (status: {call_status})"
 
-            interaction = Interaction(
-                owner_id=owner_id,
-                channel=InteractionChannel.CALL,
-                occurred_at=datetime.now(timezone.utc),
-                notes=notes,
-                duration_minutes=duration_minutes,
-            )
-        else:
-            # Initial call webhook
-            notes = f"Call from {from_number}"
-            if call_status:
-                notes += f" (status: {call_status})"
-
-            interaction = Interaction(
-                owner_id=owner_id,
-                channel=InteractionChannel.CALL,
-                occurred_at=datetime.now(timezone.utc),
-                notes=notes,
-            )
+        interaction = Interaction(
+            owner_id=owner_id,
+            channel=InteractionChannel.CALL,
+            occurred_at=datetime.now(timezone.utc),
+            notes=notes,
+            duration_minutes=duration_minutes,
+        )
 
         session.add(interaction)
         session.flush()
@@ -348,6 +453,8 @@ async def twilio_webhook(
             contact.last_contacted_at = interaction.occurred_at
             session.add(contact)
 
+        delivery.interaction_id = interaction.id
+        session.add(delivery)
         session.commit()
 
         return WebhookEventResponse(
@@ -402,6 +509,12 @@ def create_webhook(
     """Create a new webhook endpoint."""
     import secrets
 
+    if webhook_in.direction == "inbound" and not webhook_in.secret:
+        raise HTTPException(
+            status_code=422,
+            detail="Inbound webhooks require a signing secret",
+        )
+
     api_key = secrets.token_urlsafe(32)
     webhook = WebhookEndpoint(
         owner_id=current_user.id,
@@ -442,6 +555,15 @@ def update_webhook(
         raise HTTPException(status_code=403, detail="Not enough permissions")
 
     update_data = webhook_in.model_dump(exclude_unset=True)
+    if not update_data.get("secret"):
+        update_data.pop("secret", None)
+    if update_data.get("direction", webhook.direction) == "inbound" and not (
+        update_data.get("secret") or webhook.secret
+    ):
+        raise HTTPException(
+            status_code=422,
+            detail="Inbound webhooks require a signing secret",
+        )
     webhook.sqlmodel_update(update_data)
     session.add(webhook)
     session.commit()
@@ -480,6 +602,7 @@ def delete_webhook(
 
 @router.post("/inbound/{api_key}", response_model=WebhookEventResponse)
 async def inbound_webhook(
+    request: Request,
     session: SessionDep,
     api_key: str,
     payload: dict[str, Any],
@@ -502,6 +625,20 @@ async def inbound_webhook(
         raise HTTPException(status_code=401, detail="Invalid API key")
     if not webhook.is_active:
         raise HTTPException(status_code=410, detail="Webhook is inactive")
+
+    if not webhook.secret:
+        raise HTTPException(
+            status_code=401,
+            detail="Inbound webhook has no signing secret configured",
+        )
+    signature = request.headers.get("X-Webhook-Signature", "")
+    body = await request.body()
+    if not signature or not _verify_inbound_signature(
+        webhook.secret,
+        body,
+        signature,
+    ):
+        raise HTTPException(status_code=401, detail="Invalid webhook signature")
 
     # Find the contact
     contact = None
@@ -540,6 +677,15 @@ async def inbound_webhook(
             error="No matching contact found",
         )
 
+    delivery_id = str(payload.get("event_id") or hashlib.sha256(body).hexdigest())
+    delivery, claimed = _claim_delivery(
+        session,
+        webhook_id=webhook.id,
+        delivery_id=delivery_id,
+    )
+    if not claimed:
+        return _duplicate_delivery_response(session, delivery)
+
     # Create interaction
     channel = payload.get("channel", "other")
     try:
@@ -573,6 +719,8 @@ async def inbound_webhook(
         contact.last_contacted_at = occurred_at
         session.add(contact)
 
+    delivery.interaction_id = interaction.id
+    session.add(delivery)
     session.commit()
 
     return WebhookEventResponse(

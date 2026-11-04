@@ -541,6 +541,17 @@ def parse_date_flexible(date_str: str) -> date | None:
     return None
 
 
+def _spreadsheet_safe(value: Any) -> Any:
+    """Prefix text that spreadsheet apps could interpret as a formula."""
+    if isinstance(value, str):
+        candidate = value.lstrip()
+        if value.startswith(("\t", "\r", "\n")) or (
+            candidate and candidate.startswith(("=", "+", "-", "@"))
+        ):
+            return f"'{value}"
+    return value
+
+
 def export_contacts_to_csv(
     session: Session,
     owner_id: str,
@@ -617,7 +628,7 @@ def export_contacts_to_csv(
             tag_names = [tag.name for tag in contact.tags]
             row["tag_names"] = "; ".join(tag_names)
 
-        writer.writerow(row)
+        writer.writerow({key: _spreadsheet_safe(value) for key, value in row.items()})
 
     # Add UTF-8 BOM for Excel compatibility
     csv_str = output.getvalue()

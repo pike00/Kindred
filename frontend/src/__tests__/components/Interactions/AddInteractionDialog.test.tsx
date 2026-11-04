@@ -111,8 +111,13 @@ vi.mock("@/components/ui/popover", () => ({
 // Mock Command components (CommandInput crashes in jsdom)
 vi.mock("@/components/ui/command", () => ({
   Command: ({ children }: any) => <div data-testid="command">{children}</div>,
-  CommandInput: ({ placeholder }: any) => (
-    <input placeholder={placeholder} data-testid="command-input" />
+  CommandInput: ({ placeholder, value, onValueChange }: any) => (
+    <input
+      placeholder={placeholder}
+      data-testid="command-input"
+      value={value ?? ""}
+      onChange={(e) => onValueChange?.(e.target.value)}
+    />
   ),
   CommandList: ({ children }: any) => <div>{children}</div>,
   CommandEmpty: ({ children }: any) => (
@@ -342,6 +347,59 @@ describe("AddInteractionDialog", () => {
     }
   })
 
+  it("submits geocoded location data", async () => {
+    const user = userEvent.setup()
+    const contact = makeContact({ id: UUID_C1 })
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify([
+          {
+            lat: "41.8781",
+            lon: "-87.6298",
+            display_name: "Chicago, Illinois, United States",
+          },
+        ]),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
+    )
+
+    renderWithProviders(<AddInteractionDialog seedContact={contact} />)
+
+    await user.click(screen.getByRole("button", { name: /log interaction/i }))
+    await user.click(screen.getByRole("button", { name: /^call$/i }))
+    await user.type(
+      screen.getByPlaceholderText(/starbucks on 5th/i),
+      "Chicago",
+    )
+    await user.tab()
+
+    await waitFor(() => {
+      expect(screen.getByText(/found: chicago/i)).toBeInTheDocument()
+    })
+
+    const logButton = screen
+      .getAllByRole("button")
+      .find(
+        (btn) => btn.textContent === "Log Interaction" && btn.closest("form"),
+      )
+    expect(logButton).toBeDefined()
+    await user.click(logButton as HTMLButtonElement)
+
+    await waitFor(() => {
+      expect(mockCreateInteraction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          requestBody: expect.objectContaining({
+            location_label: "Chicago",
+            latitude: 41.8781,
+            longitude: -87.6298,
+          }),
+        }),
+      )
+    })
+
+    fetchMock.mockRestore()
+  })
+
   it("closes dialog on successful submission", async () => {
     const user = userEvent.setup()
     const contact = makeContact({ id: UUID_C1 })
@@ -475,6 +533,21 @@ describe("AddInteractionDialog", () => {
     // Should show empty state
     await waitFor(() => {
       expect(screen.getByText(/no matches/i)).toBeInTheDocument()
+    })
+  })
+
+  it("searches attendees on the server", async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<AddInteractionDialog />)
+
+    await user.click(screen.getByRole("button", { name: /log interaction/i }))
+    await user.type(screen.getByTestId("command-input"), "Alice")
+
+    await waitFor(() => {
+      expect(mockListContacts).toHaveBeenCalledWith({
+        limit: 50,
+        search: "Alice",
+      })
     })
   })
 

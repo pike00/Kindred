@@ -102,6 +102,12 @@
           "type": "varchar(255)",
           "nullable": true,
           "comment": "OIDC subject; paired with oidc_iss forms the unique external identity."
+        },
+        {
+          "name": "session_version",
+          "type": "integer",
+          "nullable": false,
+          "default": "0"
         }
       ],
       "indexes": [
@@ -186,6 +192,16 @@
           "referenced_table": "",
           "columns": [
             "id"
+          ]
+        },
+        {
+          "name": "user_session_version_not_null",
+          "type": "n",
+          "def": "NOT NULL session_version",
+          "table": "public.user",
+          "referenced_table": "",
+          "columns": [
+            "session_version"
           ]
         },
         {
@@ -670,6 +686,15 @@
           "table": "public.contact",
           "columns": [
             "search_vector"
+          ]
+        },
+        {
+          "name": "uq_contact_owner_carddav_href",
+          "def": "CREATE UNIQUE INDEX uq_contact_owner_carddav_href ON public.contact USING btree (owner_id, vcard_href) WHERE (vcard_href IS NOT NULL)",
+          "table": "public.contact",
+          "columns": [
+            "owner_id",
+            "vcard_href"
           ]
         }
       ],
@@ -2162,6 +2187,17 @@
           "name": "deleted_at",
           "type": "timestamp without time zone",
           "nullable": true
+        },
+        {
+          "name": "delivery_attempts",
+          "type": "integer",
+          "nullable": false,
+          "default": "0"
+        },
+        {
+          "name": "next_delivery_at",
+          "type": "timestamp with time zone",
+          "nullable": true
         }
       ],
       "indexes": [
@@ -2223,6 +2259,16 @@
           "referenced_table": "",
           "columns": [
             "created_at"
+          ]
+        },
+        {
+          "name": "reminder_delivery_attempts_not_null",
+          "type": "n",
+          "def": "NOT NULL delivery_attempts",
+          "table": "public.reminder",
+          "referenced_table": "",
+          "columns": [
+            "delivery_attempts"
           ]
         },
         {
@@ -3127,6 +3173,15 @@
           "table": "public.note",
           "columns": [
             "search_vector"
+          ]
+        },
+        {
+          "name": "uq_note_owner_client_id",
+          "def": "CREATE UNIQUE INDEX uq_note_owner_client_id ON public.note USING btree (owner_id, client_id) WHERE (client_id IS NOT NULL)",
+          "table": "public.note",
+          "columns": [
+            "owner_id",
+            "client_id"
           ]
         }
       ],

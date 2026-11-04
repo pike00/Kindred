@@ -30,7 +30,7 @@ class RemindersDuePublic:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.reminder_due_public import ReminderDuePublic  # noqa: PLC0415
+        from ..models.reminder_due_public import ReminderDuePublic
 
         data = []
         for data_item_data in self.data:
@@ -52,7 +52,7 @@ class RemindersDuePublic:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.reminder_due_public import ReminderDuePublic  # noqa: PLC0415
+        from ..models.reminder_due_public import ReminderDuePublic
 
         d = dict(src_dict)
         data = []

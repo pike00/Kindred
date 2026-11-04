@@ -9,42 +9,60 @@ on:
 jobs:
   test-backend:
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: changethis
-          POSTGRES_DB: crm
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+    # One network namespace per job: no shared-network service aliases or host ports.
+    container:
+      image: postgres:18.6-trixie@sha256:9770878138a2e83abcb10856d30cc3f24dae0d317bb956db6ab9159de6c3c80d
     env:
-      POSTGRES_SERVER: postgres
+      CI: "true"
+      PROJECT_NAME: Kindred CI
+      POSTGRES_SERVER: 127.0.0.1
       POSTGRES_PORT: 5432
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: changethis
-      POSTGRES_DB: crm
+      POSTGRES_USER: kindred_ci_${{ github.run_id }}
+      POSTGRES_PASSWORD: synthetic-ci-password-0123456789
+      POSTGRES_DB: kindred_ci_${{ github.run_id }}
+      POSTGRES_TEST_DB: kindred_ci_test_${{ github.run_id }}
+      REDIS_URL: redis://127.0.0.1:6379
+      MEILI_URL: http://127.0.0.1:7700
       ENVIRONMENT: local
       FIRST_SUPERUSER: ci@example.com
-      FIRST_SUPERUSER_PASSWORD: changethis
-      SECRET_KEY: changethis
+      FIRST_SUPERUSER_PASSWORD: synthetic-ci-password-0123456789
+      SECRET_KEY: synthetic-ci-signing-key-0123456789-abcdefghijklmnopqrstuvwxyz
+      UV_PYTHON_DOWNLOADS: never
     defaults:
       run:
-        working-directory: backend
+        shell: bash
     steps:
+      - name: Bootstrap the disposable job's Actions runtime
+        # Shell steps work before Node actions. Never start distro service daemons.
+        run: |
+          test -f /.dockerenv
+          printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d
+          chmod 755 /usr/sbin/policy-rc.d
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            nodejs git curl ca-certificates redis-server build-essential
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v7
         with:
-          enable-cache: true
+          persist-credentials: false
+      - name: Install pinned Python, uv and search binaries
+        run: bash .gitea/scripts/ci-services.sh install
+      - name: Start this job's loopback services
+        run: bash .gitea/scripts/ci-services.sh start
       - run: uv lock --check
-      - run: uv sync --frozen --extra dev
-      - run: uv run ruff check .
-      - run: uv run ruff format --check .
-      - name: Run migrations
-        run: uv run alembic upgrade head
-      - run: uv run pytest -v
+      - run: uv sync --frozen --package app --group dev
+      - run: uv run --no-sync ruff check .
+        working-directory: backend
+      - run: uv run --no-sync ruff format --check .
+        working-directory: backend
+      - name: Verify disposable service identity before database changes
+        run: bash .gitea/scripts/ci-services.sh verify
+      - name: Run both migration heads
+        run: uv run --no-sync alembic upgrade heads
+        working-directory: backend
+      - run: uv run --no-sync coverage run --source=app -m pytest -v
+        working-directory: backend
+      - run: uv run --no-sync coverage report --fail-under=60
+        working-directory: backend
+      - name: Stop this job's service processes
+        if: always()
+        run: bash .gitea/scripts/ci-services.sh stop

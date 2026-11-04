@@ -9,7 +9,6 @@ import {
   channels,
   type InteractionCreateFormData,
   interactionCreateSchema,
-  toLocalDateTimeInput,
 } from "@/components/Interactions/AddInteractionDialog"
 import { MentionTextarea } from "@/components/Mentions/MentionTextarea"
 import { Button } from "@/components/ui/button"
@@ -33,6 +32,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import useCustomToast from "@/hooks/useCustomToast"
+import { toLocalDateTimeInput } from "@/lib/utils"
 
 interface EditInteractionDialogProps {
   interaction: InteractionPublic
@@ -92,7 +92,7 @@ export function EditInteractionDialog({
   })
 
   const onSubmit = (data: InteractionCreateFormData) => {
-    mutation.mutate({
+    const payload: InteractionUpdate = {
       attendee_ids: data.attendee_ids,
       channel: data.channel as InteractionUpdate["channel"],
       occurred_at: new Date(data.occurred_at).toISOString(),
@@ -100,7 +100,11 @@ export function EditInteractionDialog({
       duration_minutes: data.duration_minutes
         ? parseInt(data.duration_minutes, 10)
         : null,
-    })
+      location_label: data.location_label?.trim() || null,
+      latitude: interaction.latitude,
+      longitude: interaction.longitude,
+    }
+    mutation.mutate(payload)
   }
 
   return (

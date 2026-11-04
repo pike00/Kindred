@@ -156,6 +156,29 @@ describe("MentionTextarea", () => {
     })
   })
 
+  it("searches contacts on the server for the active mention query", async () => {
+    vi.mocked(ContactsService.listContacts).mockResolvedValue({
+      data: [makeContact({ id: "1", first_name: "Alice", last_name: "Smith" })],
+      count: 1,
+    })
+
+    const handleChange = vi.fn()
+    const { rerender } = renderWithProviders(
+      <MentionTextarea value="" onChange={handleChange} />,
+    )
+
+    const textarea = screen.getByRole("textbox") as HTMLTextAreaElement
+    fireEvent.change(textarea, { target: { value: "@ali" } })
+    rerender(<MentionTextarea value="@ali" onChange={handleChange} />)
+
+    await waitFor(() => {
+      expect(ContactsService.listContacts).toHaveBeenCalledWith({
+        limit: 50,
+        search: "ali",
+      })
+    })
+  })
+
   // ============================================================================
   // Suggestions List: Visibility & Content
   // ============================================================================

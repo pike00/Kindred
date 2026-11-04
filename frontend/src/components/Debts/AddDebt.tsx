@@ -32,6 +32,7 @@ import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import useCustomToast from "@/hooks/useCustomToast"
 import { Plus } from "@/lib/icons"
+import { localDateKey } from "@/lib/utils"
 
 const schema = z.object({
   direction: z.enum(["i_owe", "they_owe"]),
@@ -45,7 +46,7 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>
 
 function today() {
-  return new Date().toISOString().slice(0, 10)
+  return localDateKey(new Date())
 }
 
 function debtToDefaults(d: DebtPublic): FormData {

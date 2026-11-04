@@ -61,6 +61,61 @@ def test_create_interaction_single_attendee(
     assert [a["id"] for a in content["attendees"]] == [contact_id]
 
 
+def test_create_interaction_persists_location(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
+    contact_id = _create_contact(client, superuser_token_headers)
+    data = {
+        "attendee_ids": [contact_id],
+        "channel": "in_person",
+        "occurred_at": datetime.now(timezone.utc).isoformat(),
+        "location_label": "Chicago",
+        "latitude": 41.8781,
+        "longitude": -87.6298,
+    }
+    r = client.post(
+        f"{settings.API_V1_STR}/interactions/",
+        headers=superuser_token_headers,
+        json=data,
+    )
+    assert r.status_code == 200
+    content = r.json()
+    assert content["location_label"] == "Chicago"
+    assert content["latitude"] == 41.8781
+    assert content["longitude"] == -87.6298
+
+
+def test_update_interaction_persists_location(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
+    contact_id = _create_contact(client, superuser_token_headers)
+    r = client.post(
+        f"{settings.API_V1_STR}/interactions/",
+        headers=superuser_token_headers,
+        json={
+            "attendee_ids": [contact_id],
+            "channel": "in_person",
+            "occurred_at": datetime.now(timezone.utc).isoformat(),
+        },
+    )
+    interaction_id = r.json()["id"]
+
+    r = client.patch(
+        f"{settings.API_V1_STR}/interactions/{interaction_id}",
+        headers=superuser_token_headers,
+        json={
+            "location_label": "Millennium Park",
+            "latitude": 41.8826,
+            "longitude": -87.6226,
+        },
+    )
+    assert r.status_code == 200
+    content = r.json()
+    assert content["location_label"] == "Millennium Park"
+    assert content["latitude"] == 41.8826
+    assert content["longitude"] == -87.6226
+
+
 def test_create_interaction_multiple_attendees(
     client: TestClient, superuser_token_headers: dict[str, str]
 ) -> None:

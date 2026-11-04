@@ -31,7 +31,7 @@ class VCardConflictsPublic:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.v_card_conflict_public import VCardConflictPublic  # noqa: PLC0415
+        from ..models.v_card_conflict_public import VCardConflictPublic
 
         data = []
         for data_item_data in self.data:
@@ -53,7 +53,7 @@ class VCardConflictsPublic:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.v_card_conflict_public import VCardConflictPublic  # noqa: PLC0415
+        from ..models.v_card_conflict_public import VCardConflictPublic
 
         d = dict(src_dict)
         data = []

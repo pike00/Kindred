@@ -1,6 +1,7 @@
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import update
 from sqlmodel import col, func, select
 
 from app import crud
@@ -112,10 +113,34 @@ def update_password_me(
             status_code=400, detail="New password cannot be the same as the current one"
         )
     hashed_password = get_password_hash(body.new_password)
-    current_user.hashed_password = hashed_password
-    session.add(current_user)
+    result = session.execute(
+        update(User)
+        .where(
+            User.id == current_user.id,
+            User.session_version == current_user.session_version,
+        )
+        .values(
+            hashed_password=hashed_password,
+            session_version=User.session_version + 1,
+        )
+    )
+    if result.rowcount != 1:
+        session.rollback()
+        raise HTTPException(status_code=409, detail="Session has been revoked")
     session.commit()
     return Message(message="Password updated successfully")
+
+
+@router.post("/me/logout", response_model=Message)
+def logout_me(*, session: SessionDep, current_user: CurrentUser) -> Message:
+    """Revoke all local access tokens for the current user."""
+    session.execute(
+        update(User)
+        .where(User.id == current_user.id)
+        .values(session_version=User.session_version + 1)
+    )
+    session.commit()
+    return Message(message="Logged out")
 
 
 @router.get("/me", response_model=UserPublic)
@@ -145,6 +170,11 @@ def register_user(session: SessionDep, user_in: UserRegister) -> UserPublic:
     """
     Create new user without the need to be logged in.
     """
+    if not settings.USERS_OPEN_REGISTRATION:
+        raise HTTPException(
+            status_code=403,
+            detail="Open user registration is forbidden on this server",
+        )
     user = crud.get_user_by_email(session=session, email=user_in.email)
     if user:
         raise HTTPException(

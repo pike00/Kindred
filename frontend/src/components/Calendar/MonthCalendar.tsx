@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Cake, CalendarHeart, ChevronLeft, ChevronRight } from "@/lib/icons"
 import { calendarMonthQueryOptions } from "@/lib/queries"
-import { cn } from "@/lib/utils"
+import { cn, localDateKey } from "@/lib/utils"
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
@@ -49,7 +49,7 @@ export function MonthCalendar({ month }: { month: string }) {
 
   const { data } = useSuspenseQuery(calendarMonthQueryOptions(month))
 
-  const today = new Date().toISOString().slice(0, 10)
+  const today = localDateKey(new Date())
   const monthName = new Date(year, mo - 1, 1).toLocaleString("default", {
     month: "long",
   })

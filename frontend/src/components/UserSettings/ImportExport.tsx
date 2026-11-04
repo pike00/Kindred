@@ -3,6 +3,8 @@ import { useRef, useState } from "react"
 import { ImportExportService, OpenAPI } from "@/client"
 import { LoadingButton } from "@/components/ui/loading-button"
 import useCustomToast from "@/hooks/useCustomToast"
+import { sessionFetch } from "@/lib/session-api"
+import { localDateKey } from "@/lib/utils"
 
 type ImportResult = {
   imported: number
@@ -21,18 +23,17 @@ function downloadBlob(blob: Blob, filename: string) {
 }
 
 async function downloadAuthed(path: string, filename: string, accept: string) {
-  const token =
-    typeof OpenAPI.TOKEN === "function"
-      ? await (OpenAPI.TOKEN as () => Promise<string>)()
-      : OpenAPI.TOKEN || ""
-  const res = await fetch(`${OpenAPI.BASE}${path}`, {
-    method: "GET",
-    credentials: "include",
-    headers: {
-      Accept: accept,
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  const res = await sessionFetch(
+    `${OpenAPI.BASE}${path}`,
+    {
+      method: "GET",
+      credentials: "include",
+      headers: {
+        Accept: accept,
+      },
     },
-  })
+    OpenAPI.TOKEN,
+  )
   if (!res.ok) {
     throw new Error(`Export failed (${res.status})`)
   }
@@ -67,7 +68,7 @@ export default function ImportExport() {
     mutationFn: () =>
       downloadAuthed(
         "/api/v1/import-export/export/vcard",
-        `contacts-${new Date().toISOString().slice(0, 10)}.vcf`,
+        `contacts-${localDateKey(new Date())}.vcf`,
         "text/vcard",
       ),
     onSuccess: () => showSuccessToast("vCard export downloaded"),
@@ -79,7 +80,7 @@ export default function ImportExport() {
     mutationFn: () =>
       downloadAuthed(
         "/api/v1/import-export/export/json",
-        `contacts-${new Date().toISOString().slice(0, 10)}.json`,
+        `contacts-${localDateKey(new Date())}.json`,
         "application/json",
       ),
     onSuccess: () => showSuccessToast("JSON export downloaded"),

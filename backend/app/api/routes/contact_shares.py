@@ -2,6 +2,7 @@ import uuid
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict, EmailStr
+from sqlalchemy.exc import IntegrityError
 from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
@@ -37,7 +38,9 @@ def create_contact_share(
     if grantee is None or not grantee.is_active:
         raise HTTPException(status_code=404, detail="Grantee not found")
     if grantee.id == current_user.id:
-        raise HTTPException(status_code=400, detail="Cannot share contacts with yourself")
+        raise HTTPException(
+            status_code=400, detail="Cannot share contacts with yourself"
+        )
 
     existing = session.get(AllContactsShare, (current_user.id, grantee.id))
     if existing is not None:
@@ -61,7 +64,17 @@ def create_contact_share(
             },
         )
     )
-    session.commit()
+    try:
+        session.commit()
+    except IntegrityError:
+        session.rollback()
+        existing = session.get(AllContactsShare, (current_user.id, grantee.id))
+        if existing is None:
+            raise
+        return AllContactsSharePublic(
+            grantee_email=grantee.email,
+            created_at=existing.created_at,
+        )
     session.refresh(share)
 
     return AllContactsSharePublic(

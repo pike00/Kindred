@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
 
+from app.api.routes import utils as utils_routes
 from app.core.config import settings
 
 
@@ -40,3 +41,42 @@ def test_utils_info_endpoint(client: TestClient) -> None:
     assert "version" in data
     assert "git_hash" in data
     assert "hash" in data
+
+
+def test_readiness_endpoint_reports_ready_when_dependencies_pass(
+    client: TestClient,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(utils_routes, "_database_ready", lambda: True)
+    monkeypatch.setattr(utils_routes, "_redis_ready", lambda: True)
+
+    response = client.get(f"{settings.API_V1_STR}/utils/ready/")
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "ready"}
+
+
+def test_readiness_endpoint_fails_when_database_is_unavailable(
+    client: TestClient,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(utils_routes, "_database_ready", lambda: False)
+    monkeypatch.setattr(utils_routes, "_redis_ready", lambda: True)
+
+    response = client.get(f"{settings.API_V1_STR}/utils/ready/")
+
+    assert response.status_code == 503
+    assert "database" in response.json()["detail"].lower()
+
+
+def test_readiness_endpoint_fails_when_redis_is_unavailable(
+    client: TestClient,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(utils_routes, "_database_ready", lambda: True)
+    monkeypatch.setattr(utils_routes, "_redis_ready", lambda: False)
+
+    response = client.get(f"{settings.API_V1_STR}/utils/ready/")
+
+    assert response.status_code == 503
+    assert "redis" in response.json()["detail"].lower()

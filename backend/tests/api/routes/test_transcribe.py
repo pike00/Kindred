@@ -6,6 +6,8 @@ from uuid import uuid4
 import httpx
 from fastapi.testclient import TestClient
 
+from app.api.routes import transcribe as transcribe_routes
+
 
 class TestTranscribeAudio:
     """Tests for POST /api/v1/transcribe/."""

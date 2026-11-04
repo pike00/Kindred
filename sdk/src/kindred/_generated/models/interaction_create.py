@@ -30,6 +30,9 @@ class InteractionCreate:
         duration_minutes (int | None | Unset): Length of the interaction in minutes.
         is_draft (bool | Unset):  Default: False.
         draft_source (None | str | Unset):
+        location_label (None | str | Unset):
+        latitude (float | None | Unset):
+        longitude (float | None | Unset):
     """
 
     channel: InteractionChannel
@@ -39,6 +42,9 @@ class InteractionCreate:
     duration_minutes: int | None | Unset = UNSET
     is_draft: bool | Unset = False
     draft_source: None | str | Unset = UNSET
+    location_label: None | str | Unset = UNSET
+    latitude: float | None | Unset = UNSET
+    longitude: float | None | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -71,6 +77,24 @@ class InteractionCreate:
         else:
             draft_source = self.draft_source
 
+        location_label: None | str | Unset
+        if isinstance(self.location_label, Unset):
+            location_label = UNSET
+        else:
+            location_label = self.location_label
+
+        latitude: float | None | Unset
+        if isinstance(self.latitude, Unset):
+            latitude = UNSET
+        else:
+            latitude = self.latitude
+
+        longitude: float | None | Unset
+        if isinstance(self.longitude, Unset):
+            longitude = UNSET
+        else:
+            longitude = self.longitude
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -88,6 +112,12 @@ class InteractionCreate:
             field_dict["is_draft"] = is_draft
         if draft_source is not UNSET:
             field_dict["draft_source"] = draft_source
+        if location_label is not UNSET:
+            field_dict["location_label"] = location_label
+        if latitude is not UNSET:
+            field_dict["latitude"] = latitude
+        if longitude is not UNSET:
+            field_dict["longitude"] = longitude
 
         return field_dict
 
@@ -134,6 +164,33 @@ class InteractionCreate:
 
         draft_source = _parse_draft_source(d.pop("draft_source", UNSET))
 
+        def _parse_location_label(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        location_label = _parse_location_label(d.pop("location_label", UNSET))
+
+        def _parse_latitude(data: object) -> float | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(float | None | Unset, data)
+
+        latitude = _parse_latitude(d.pop("latitude", UNSET))
+
+        def _parse_longitude(data: object) -> float | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(float | None | Unset, data)
+
+        longitude = _parse_longitude(d.pop("longitude", UNSET))
+
         interaction_create = cls(
             channel=channel,
             occurred_at=occurred_at,
@@ -142,6 +199,9 @@ class InteractionCreate:
             duration_minutes=duration_minutes,
             is_draft=is_draft,
             draft_source=draft_source,
+            location_label=location_label,
+            latitude=latitude,
+            longitude=longitude,
         )
 
         interaction_create.additional_properties = d

@@ -30,7 +30,9 @@ def two_users():
         s.commit()
 
 
-def visible_ids(session: Session, user: User, *, include_deleted: bool = False) -> set[uuid.UUID]:
+def visible_ids(
+    session: Session, user: User, *, include_deleted: bool = False
+) -> set[uuid.UUID]:
     return set(
         session.exec(
             select(Contact.id).where(
@@ -190,19 +192,21 @@ def test_jit_user_creation():
 def test_email_merge_existing_local_user():
     with Session(engine) as s:
         email = f"merge-{uuid.uuid4()}@t.x"
+        oidc_sub = f"merge-{uuid.uuid4()}"
         local = User(email=email, hashed_password=get_password_hash("x"))
         s.add(local)
         s.commit()
         s.refresh(local)
         claims = {
             "iss": "https://team.cloudflareaccess.com",
-            "sub": "merge-sub",
+            "sub": oidc_sub,
             "email": email,
+            "email_verified": True,
             "name": "Merged",
         }
         u = crud.get_or_create_user_from_claims(session=s, claims=claims)
         s.refresh(u)
         assert u.id == local.id
-        assert u.oidc_sub == "merge-sub"
+        assert u.oidc_sub == oidc_sub
         s.delete(u)
         s.commit()

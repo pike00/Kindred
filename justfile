@@ -168,10 +168,29 @@ sdk-install-local:
 sdk-regen:
     cd sdk && ./scripts/regen.sh
 
+# Fail if committed OpenAPI clients drift from the backend schema.
+[group('SDK')]
+client-check:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    bash scripts/generate-client.sh
+    (cd sdk && ./scripts/regen.sh)
+    test -z "$(git status --porcelain --untracked-files=all -- frontend/openapi.json frontend/src/client sdk/src/kindred/_generated)"
+
 # Run the SDK's pytest suite.
 [group('SDK')]
 sdk-test *args:
     cd sdk && uv sync --frozen --quiet && uv run pytest {{args}}
+
+# Build an exact-input local candidate; this never publishes or deploys.
+[group('Security')]
+security-build platform="linux/amd64" target="runtime":
+    bash docker/security/build.sh '{{platform}}' '{{target}}'
+
+# Offline verification with production identity and read-only filesystem.
+[group('Security')]
+security-test image="kindred-security:runtime-amd64":
+    docker run --rm -i --network none --read-only --security-opt no-new-privileges --memory 512m --memory-swap 512m --cpus 1 --tmpfs /tmp:rw,noexec,nosuid,size=64m --tmpfs /app/backend/uploads:rw,noexec,nosuid,uid=10001,gid=10001,size=16m --env PROJECT_NAME=security-test --env POSTGRES_SERVER=127.0.0.1 --env POSTGRES_USER=synthetic --env POSTGRES_PASSWORD=synthetic-test-password --env POSTGRES_DB=synthetic '{{image}}' python - < docker/security/test-runtime.py
 
 # Seed fake data for the FIRST_SUPERUSER. Safe to run repeatedly; adds more on top.
 seed count="500" email="":

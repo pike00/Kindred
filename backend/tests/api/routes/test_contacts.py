@@ -1056,3 +1056,56 @@ def test_create_and_update_contact_with_optional_birthday_year(
     )
     assert r_clear.status_code == 200
     assert r_clear.json()["birthday"] is None
+
+
+def test_bulk_update_applies_saved_filter(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
+    company = f"Acme-{uuid.uuid4().hex[:8]}"
+    first = client.post(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=superuser_token_headers,
+        json={"first_name": "Acme Person", "company": company},
+    ).json()
+    second = client.post(
+        f"{settings.API_V1_STR}/contacts/",
+        headers=superuser_token_headers,
+        json={"first_name": "Other Person", "company": "Other"},
+    ).json()
+    saved_filter = client.post(
+        f"{settings.API_V1_STR}/saved-filters/",
+        headers=superuser_token_headers,
+        json={
+            "name": "Acme only",
+            "filter_json": {
+                "conditions": [
+                    {"field": "company", "operator": "equals", "value": company}
+                ],
+                "op": "and",
+            },
+        },
+    )
+    assert saved_filter.status_code == 200
+
+    response = client.patch(
+        f"{settings.API_V1_STR}/contacts/bulk",
+        headers=superuser_token_headers,
+        json={
+            "select_all_filtered": True,
+            "saved_filter_id": saved_filter.json()["id"],
+            "operations": {"set_is_favorite": True},
+        },
+    )
+    assert response.status_code == 200
+    assert response.json()["updated_count"] == 1
+
+    first_after = client.get(
+        f"{settings.API_V1_STR}/contacts/{first['id']}",
+        headers=superuser_token_headers,
+    ).json()
+    second_after = client.get(
+        f"{settings.API_V1_STR}/contacts/{second['id']}",
+        headers=superuser_token_headers,
+    ).json()
+    assert first_after["is_favorite"] is True
+    assert second_after["is_favorite"] is False

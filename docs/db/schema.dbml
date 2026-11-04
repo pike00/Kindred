@@ -68,6 +68,7 @@ Table "user" {
   "created_at" timestamptz
   "oidc_iss" varchar(512)
   "oidc_sub" varchar(255)
+  "session_version" int4 [not null, default: 0]
 
   Indexes {
     (oidc_iss, oidc_sub) [type: btree, unique, name: "uq_user_oidc_identity"]
@@ -134,6 +135,7 @@ Table "contact" {
   "snoozed_until" timestamptz
 
   Indexes {
+    (owner_id, vcard_href) [type: btree, unique, name: "uq_contact_owner_carddav_href"]
     (owner_id, source, source_external_id) [type: btree, unique, name: "uq_contact_owner_source_external_id"]
     contact_frequency_days [type: btree, name: "ix_contact_contact_frequency_days"]
     deleted_at [type: btree, name: "ix_contact_deleted_at"]
@@ -289,6 +291,8 @@ Table "reminder" {
   "snoozed_until" timestamptz
   "created_at" timestamptz [not null]
   "deleted_at" timestamp
+  "delivery_attempts" int4 [not null, default: 0]
+  "next_delivery_at" timestamptz
 
   Indexes {
     contact_id [type: btree, name: "ix_reminder_contact_id"]
@@ -375,6 +379,7 @@ Table "note" {
   "search_vector" tsvector
 
   Indexes {
+    (owner_id, client_id) [type: btree, unique, name: "uq_note_owner_client_id"]
     client_id [type: btree, name: "ix_note_client_id"]
     contact_id [type: btree, name: "ix_note_contact_id"]
     created_at [type: btree, name: "ix_note_created_at"]

@@ -1,7 +1,7 @@
 """Thin ergonomic wrapper around the generated AuthenticatedClient.
 
-The generated client lives at ``kindred._generated`` and exposes one function
-per API operation (e.g. ``kindred.api.contacts.contacts_list_contacts.sync``).
+The generated client lives at ``kindred._generated`` and exposes one module
+per API operation (e.g. ``kindred.api.contacts.get_api_v1_contacts.sync``).
 This module provides the env-driven construction and context-manager ergonomics
 that the generator output doesn't ship with.
 """
@@ -26,10 +26,10 @@ class KindredClient:
     Usage::
 
         from kindred import KindredClient
-        from kindred.api.contacts import contacts_list_contacts
+        from kindred.api.contacts import get_api_v1_contacts
 
         with KindredClient.from_env() as k:
-            page = contacts_list_contacts.sync(client=k.raw, limit=50)
+            page = get_api_v1_contacts.sync(client=k.raw, limit=50)
 
     Construct explicitly with ``KindredClient(base_url=..., api_key=...)`` when
     not relying on environment variables.
@@ -52,7 +52,14 @@ class KindredClient:
         backend returns 403. The CLI populates this from ``--on-behalf-of`` /
         the ``KINDRED_ON_BEHALF_OF`` env var (see ``cli.py``).
         """
-        headers = {"X-On-Behalf-Of": str(on_behalf_of)} if on_behalf_of is not None else {}
+        if on_behalf_of is None:
+            headers: dict[str, str] = {}
+        else:
+            try:
+                impersonated_user_id = UUID(str(on_behalf_of))
+            except ValueError as exc:
+                raise ValueError("on_behalf_of must be a UUID") from exc
+            headers = {"X-On-Behalf-Of": str(impersonated_user_id)}
 
         self.raw = AuthenticatedClient(
             base_url=base_url.rstrip("/"),
@@ -81,7 +88,12 @@ class KindredClient:
                 f"Missing required env var: {exc.args[0]}. "
                 "Set KINDRED_BASE_URL and KINDRED_API_KEY."
             ) from None
-        return cls(base_url=base_url, api_key=api_key, **overrides)  # type: ignore[arg-type]
+        options = dict(overrides)
+        if options.get("on_behalf_of") is None:
+            on_behalf_of = os.environ.get("KINDRED_ON_BEHALF_OF")
+            if on_behalf_of:
+                options["on_behalf_of"] = on_behalf_of
+        return cls(base_url=base_url, api_key=api_key, **options)  # type: ignore[arg-type]
 
     def close(self) -> None:
         self.raw.get_httpx_client().close()

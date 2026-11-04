@@ -397,7 +397,7 @@ def _persist_action(session: Session, owner_id: uuid.UUID, action: VoiceAction):
         row = Note(contact_id=action.contact_id, owner_id=owner_id, body=action.body)
         session.add(row)
         session.flush()
-        _sync_note_mentions(session=session, note=row)
+        _sync_note_mentions(session=session, note=row, owner_id=owner_id)
         return row
     if isinstance(action, ContactUpdateAction):
         row = _owned_contact(session, owner_id, action.contact_id)  # type: ignore[arg-type]

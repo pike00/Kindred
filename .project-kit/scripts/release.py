@@ -69,6 +69,7 @@ class PublicationTarget:
     branch: str
     tag: str
     oid: str
+    remote: str
     base_ref: str
 
 
@@ -193,9 +194,32 @@ def _run(cmd: list[str]) -> subprocess.CompletedProcess[str]:
     return subprocess.run(cmd, check=True, capture_output=True, text=True)
 
 
+def _release_remote() -> str:
+    remotes = set(_run(["git", "remote"]).stdout.split())
+    return "github" if "github" in remotes else "origin"
+
+
+def _github_repository() -> str:
+    remote_url = _run(["git", "remote", "get-url", _release_remote()]).stdout.strip()
+    match = re.search(r"github\.com[:/]([^/]+)/([^/]+?)(?:\.git)?$", remote_url)
+    if match is None:
+        typer.echo(f"error: release remote is not GitHub: {remote_url}", err=True)
+        raise typer.Exit(code=1)
+    return f"{match.group(1)}/{match.group(2)}"
+
+
 def _github_release(version: str) -> GitHubRelease | None:
     result = subprocess.run(
-        ["gh", "release", "view", version, "--json", "isDraft,tagName,url"],
+        [
+            "gh",
+            "release",
+            "view",
+            version,
+            "--repo",
+            _github_repository(),
+            "--json",
+            "isDraft,tagName,url",
+        ],
         capture_output=True,
         check=False,
         text=True,
@@ -218,9 +242,7 @@ def _require_successful_check(oid: str) -> None:
     """Require the configured GitHub check run to succeed for exact ``oid``."""
     if REQUIRED_CHECK is None:
         return
-    repo = _run(
-        ["gh", "repo", "view", "--json", "nameWithOwner", "-q", ".nameWithOwner"]
-    ).stdout.strip()
+    repo = _github_repository()
     endpoint = f"repos/{repo}/commits/{oid}/check-runs?per_page=100"
     try:
         payload = json.loads(
@@ -314,7 +336,7 @@ def _remote_tag_target(tag: str) -> str | None:
             "ls-remote",
             "--exit-code",
             "--tags",
-            "origin",
+            _release_remote(),
             direct_ref,
             peeled_ref,
         ],
@@ -454,19 +476,26 @@ def preflight_publish(tag: str) -> PublicationTarget:
     if not _is_linked_worktree():
         typer.echo("error: release publication requires a linked task worktree", err=True)
         raise typer.Exit(code=1)
-    release_ref = f"refs/remotes/origin/{BRANCH}"
-    _run(["git", "fetch", "origin", f"refs/heads/{BRANCH}:{release_ref}"])
+    remote = _release_remote()
+    release_ref = f"refs/remotes/{remote}/{BRANCH}"
+    _run(["git", "fetch", remote, f"refs/heads/{BRANCH}:{release_ref}"])
     head_oid = _revision("HEAD")
     if head_oid != _revision(release_ref):
         typer.echo(
-            f"error: HEAD must exactly match updated origin/{BRANCH}; start a fresh publication worktree",
+            f"error: HEAD must exactly match updated {remote}/{BRANCH}; start a fresh publication worktree",
             err=True,
         )
         raise typer.Exit(code=1)
     if not _release_is_in_changelog(release_ref, tag):
-        typer.echo(f"error: {tag} is not present in origin/{BRANCH}:CHANGELOG.md", err=True)
+        typer.echo(f"error: {tag} is not present in {remote}/{BRANCH}:CHANGELOG.md", err=True)
         raise typer.Exit(code=1)
-    target = PublicationTarget(branch=branch, tag=tag, oid=head_oid, base_ref=release_ref)
+    target = PublicationTarget(
+        branch=branch,
+        tag=tag,
+        oid=head_oid,
+        remote=remote,
+        base_ref=release_ref,
+    )
     _require_successful_check(target.oid)
     _validate_tag_state(target)
     typer.echo("       ok")
@@ -478,7 +507,7 @@ def revalidate_publish(target: PublicationTarget) -> bool:
     if not _is_clean() or not _is_linked_worktree() or _current_branch() != target.branch:
         typer.echo("error: publication worktree changed after preflight", err=True)
         raise typer.Exit(code=1)
-    _run(["git", "fetch", "origin", f"refs/heads/{BRANCH}:{target.base_ref}"])
+    _run(["git", "fetch", target.remote, f"refs/heads/{BRANCH}:{target.base_ref}"])
     if _revision("HEAD") != target.oid or _revision(target.base_ref) != target.oid:
         typer.echo("error: HEAD or authoritative base changed after preflight", err=True)
         raise typer.Exit(code=1)
@@ -582,16 +611,34 @@ def publish(
         typer.echo(f"error: local tag {tag} changed before publication", err=True)
         raise typer.Exit(code=1)
     if not remote_tag_exists:
-        _run(["git", "push", "origin", f"{tag_ref}:{tag_ref}"])
+        _run(["git", "push", target.remote, f"{tag_ref}:{tag_ref}"])
     typer.echo(f"[3/4] ensuring GitHub release {tag}…")
     existing = _github_release(tag)
     if existing is not None and existing.tag_name != tag:
         typer.echo(f"error: GitHub release does not match {tag}", err=True)
         raise typer.Exit(code=1)
     if existing is not None and existing.is_draft and not draft:
-        _run(["gh", "release", "edit", tag, "--draft=false"])
+        _run(
+            [
+                "gh",
+                "release",
+                "edit",
+                tag,
+                "--repo",
+                _github_repository(),
+                "--draft=false",
+            ]
+        )
     elif existing is None:
-        cmd = ["gh", "release", "create", tag, "--generate-notes"]
+        cmd = [
+            "gh",
+            "release",
+            "create",
+            tag,
+            "--repo",
+            _github_repository(),
+            "--generate-notes",
+        ]
         if draft:
             cmd.append("--draft")
         _run(cmd)

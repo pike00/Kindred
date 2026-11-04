@@ -8,7 +8,7 @@ from app import crud
 from app.core.config import settings
 from app.core.security import verify_password
 from app.models import User, UserCreate
-from tests.utils.user import create_random_user
+from tests.utils.user import create_random_user, user_authentication_headers
 from tests.utils.utils import random_email, random_lower_string
 
 
@@ -214,6 +214,7 @@ def test_update_user_me(
     assert updated_user["email"] == email
     assert updated_user["full_name"] == full_name
 
+    db.expire_all()
     user_query = select(User).where(User.email == email)
     user_db = db.exec(user_query).first()
     assert user_db
@@ -221,46 +222,39 @@ def test_update_user_me(
     assert user_db.full_name == full_name
 
 
-def test_update_password_me(
-    client: TestClient, superuser_token_headers: dict[str, str], db: Session
-) -> None:
+def test_update_password_me(client: TestClient, db: Session) -> None:
+    email = random_email()
+    old_password = random_lower_string()
+    user = crud.create_user(
+        session=db,
+        user_create=UserCreate(email=email, password=old_password),
+    )
+    headers = user_authentication_headers(
+        client=client,
+        email=email,
+        password=old_password,
+    )
     new_password = random_lower_string()
     data = {
-        "current_password": settings.FIRST_SUPERUSER_PASSWORD,
+        "current_password": old_password,
         "new_password": new_password,
     }
     r = client.patch(
         f"{settings.API_V1_STR}/users/me/password",
-        headers=superuser_token_headers,
+        headers=headers,
         json=data,
     )
     assert r.status_code == 200
     updated_user = r.json()
     assert updated_user["message"] == "Password updated successfully"
 
-    user_query = select(User).where(User.email == settings.FIRST_SUPERUSER)
+    db.expire_all()
+    user_query = select(User).where(User.email == email)
     user_db = db.exec(user_query).first()
     assert user_db
-    assert user_db.email == settings.FIRST_SUPERUSER
+    assert user_db.email == email
+    assert user_db.id == user.id
     verified, _ = verify_password(new_password, user_db.hashed_password)
-    assert verified
-
-    # Revert to the old password to keep consistency in test
-    old_data = {
-        "current_password": new_password,
-        "new_password": settings.FIRST_SUPERUSER_PASSWORD,
-    }
-    r = client.patch(
-        f"{settings.API_V1_STR}/users/me/password",
-        headers=superuser_token_headers,
-        json=old_data,
-    )
-    db.refresh(user_db)
-
-    assert r.status_code == 200
-    verified, _ = verify_password(
-        settings.FIRST_SUPERUSER_PASSWORD, user_db.hashed_password
-    )
     assert verified
 
 
@@ -316,6 +310,21 @@ def test_update_password_me_same_password_error(
     )
 
 
+@patch.object(settings, "USERS_OPEN_REGISTRATION", False)
+def test_registration_is_closed_by_default(client: TestClient) -> None:
+    assert type(settings).model_fields["USERS_OPEN_REGISTRATION"].default is False
+    with patch("app.api.routes.users.crud.get_user_by_email") as lookup:
+        with patch("app.api.routes.users.crud.create_user") as create:
+            response = client.post(
+                f"{settings.API_V1_STR}/users/signup",
+                json={"email": random_email(), "password": random_lower_string()},
+            )
+    assert response.status_code == 403
+    lookup.assert_not_called()
+    create.assert_not_called()
+
+
+@patch.object(settings, "USERS_OPEN_REGISTRATION", True)
 def test_register_user(client: TestClient, db: Session) -> None:
     username = random_email()
     password = random_lower_string()
@@ -339,6 +348,7 @@ def test_register_user(client: TestClient, db: Session) -> None:
     assert verified
 
 
+@patch.object(settings, "USERS_OPEN_REGISTRATION", True)
 def test_register_user_already_exists_error(client: TestClient) -> None:
     password = random_lower_string()
     full_name = random_lower_string()

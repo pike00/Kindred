@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import {
   cn,
   describeContactSource,
@@ -6,6 +6,8 @@ import {
   formatDateISO,
   formatDateWithRelative,
   formatPhone,
+  localDateKey,
+  toLocalDateTimeInput,
 } from "../../lib/utils"
 
 describe("cn", () => {
@@ -137,6 +139,34 @@ describe("formatDateISO", () => {
     expect(
       formatDateWithRelative("2024-01-08", new Date(2024, 0, 8, 23, 59)),
     ).toBe("2024-01-08 (today)")
+  })
+})
+
+describe("local date helpers", () => {
+  it("formats datetime-local values from local date parts", () => {
+    const localDate = {
+      getFullYear: () => 2026,
+      getMonth: () => 10,
+      getDate: () => 1,
+      getHours: () => 22,
+      getMinutes: () => 5,
+      toISOString: vi.fn(() => "2026-11-02T04:05:00.000Z"),
+    } as unknown as Date
+
+    expect(toLocalDateTimeInput(localDate)).toBe("2026-11-01T22:05")
+    expect(localDate.toISOString).not.toHaveBeenCalled()
+  })
+
+  it("builds date keys from local calendar parts", () => {
+    const localDate = {
+      getFullYear: () => 2026,
+      getMonth: () => 10,
+      getDate: () => 1,
+      toISOString: vi.fn(() => "2026-11-02T04:05:00.000Z"),
+    } as unknown as Date
+
+    expect(localDateKey(localDate)).toBe("2026-11-01")
+    expect(localDate.toISOString).not.toHaveBeenCalled()
   })
 })
 

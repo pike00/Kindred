@@ -2,12 +2,15 @@ import importlib.metadata
 import os
 import subprocess
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from pydantic.networks import EmailStr
+from redis import Redis
+from sqlalchemy import text
 
 from app.api.deps import get_current_active_superuser
 from app.core.config import settings
+from app.core.db import engine
 from app.models import Message
 from app.utils import generate_test_email, send_email
 
@@ -29,6 +32,10 @@ class VersionInfo(BaseModel):
     version: str
     git_hash: str
     hash: str
+
+
+class ReadyInfo(BaseModel):
+    status: str = "ready"
 
 
 def get_version() -> str:
@@ -93,6 +100,37 @@ def test_email(email_to: EmailStr) -> Message:
 @router.get("/health-check/")
 async def health_check() -> bool:
     return True
+
+
+def _database_ready() -> bool:
+    try:
+        with engine.connect() as connection:
+            connection.execute(text("SELECT 1"))
+        return True
+    except Exception:
+        return False
+
+
+def _redis_ready() -> bool:
+    try:
+        client = Redis.from_url(
+            settings.REDIS_URL,
+            socket_connect_timeout=1,
+            socket_timeout=1,
+        )
+        return bool(client.ping())
+    except Exception:
+        return False
+
+
+@router.get("/ready/", response_model=ReadyInfo)
+def readiness_check() -> ReadyInfo:
+    """Return ready only when required backing services are reachable."""
+    if not _database_ready():
+        raise HTTPException(status_code=503, detail="Database is not ready")
+    if not _redis_ready():
+        raise HTTPException(status_code=503, detail="Redis is not ready")
+    return ReadyInfo()
 
 
 @router.get("/status/")

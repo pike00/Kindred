@@ -14,6 +14,7 @@ from time import mktime
 from radicale import item as radicale_item
 from radicale import types as radicale_types
 from radicale.storage import BaseCollection, BaseStorage
+from sqlalchemy import or_
 from sqlmodel import Session, create_engine, select
 
 from app.core.config import settings
@@ -33,6 +34,71 @@ def _http_datetime(dt: datetime) -> str:
     """Format a datetime as an HTTP-date string."""
     stamp = mktime(dt.timetuple())
     return formatdate(timeval=stamp, localtime=False, usegmt=True)
+
+
+def _find_contact_by_href(
+    session: Session,
+    *,
+    user: User,
+    href: str,
+    include_deleted: bool = False,
+) -> Contact | None:
+    conditions = [
+        Contact.vcard_href == href,
+        Contact.source_external_id == href.removesuffix(".vcf"),
+    ]
+    try:
+        conditions.append(Contact.id == uuid_mod.UUID(href.removesuffix(".vcf")))
+    except ValueError:
+        pass
+    statement = select(Contact).where(
+        Contact.owner_id == user.id,
+        or_(*conditions),
+    )
+    if not include_deleted:
+        statement = statement.where(Contact.deleted_at.is_(None))
+    return session.exec(statement).first()
+
+
+def _sync_contact_children(
+    session: Session,
+    *,
+    contact_id: uuid_mod.UUID,
+    fields_data: list[dict],
+    addresses_data: list[dict],
+) -> None:
+    for field in session.exec(
+        select(ContactField).where(ContactField.contact_id == contact_id)
+    ).all():
+        session.delete(field)
+    for field_info in fields_data:
+        session.add(
+            ContactField(
+                contact_id=contact_id,
+                field_type=ContactFieldType(field_info["field_type"]),
+                label=field_info["label"],
+                value=field_info["value"],
+                is_primary=field_info.get("is_primary", False),
+            )
+        )
+
+    for address in session.exec(
+        select(Address).where(Address.contact_id == contact_id)
+    ).all():
+        session.delete(address)
+    for addr_info in addresses_data:
+        session.add(
+            Address(
+                contact_id=contact_id,
+                label=addr_info["label"],
+                street=addr_info.get("street"),
+                extended=addr_info.get("extended"),
+                city=addr_info.get("city"),
+                region=addr_info.get("region"),
+                postal_code=addr_info.get("postal_code"),
+                country=addr_info.get("country"),
+            )
+        )
 
 
 class Collection(BaseCollection):
@@ -61,20 +127,7 @@ class Collection(BaseCollection):
                 return
 
             for href in hrefs:
-                # href format: "{uuid}.vcf"
-                uid_str = href.replace(".vcf", "")
-                try:
-                    uid = uuid_mod.UUID(uid_str)
-                except ValueError:
-                    yield (href, None)
-                    continue
-
-                contact = session.exec(
-                    select(Contact).where(
-                        Contact.id == uid,
-                        Contact.owner_id == user.id,
-                    )
-                ).first()
+                contact = _find_contact_by_href(session, user=user, href=href)
 
                 if contact and contact.vcard_raw:
                     item = radicale_item.Item(
@@ -96,6 +149,7 @@ class Collection(BaseCollection):
             contacts = session.exec(
                 select(Contact).where(
                     Contact.owner_id == user.id,
+                    Contact.deleted_at.is_(None),
                     Contact.vcard_raw.is_not(None),
                 )
             ).all()
@@ -104,7 +158,7 @@ class Collection(BaseCollection):
                 yield radicale_item.Item(
                     collection_path=self._path,
                     text=contact.vcard_raw,
-                    href=f"{contact.id}.vcf",
+                    href=contact.vcard_href or f"{contact.id}.vcf",
                     uid=str(contact.id),
                 )
 
@@ -119,16 +173,25 @@ class Collection(BaseCollection):
 
         # Get vCard UID for source_external_id
         vcard_uid = parsed.get("uid")
-        source_external_id = str(vcard_uid) if vcard_uid else None
+        source_external_id = str(vcard_uid or item.uid or href)
 
         with self._storage.get_session() as session:
             user = session.exec(select(User).where(User.email == self._user)).first()
             if not user:
                 raise ValueError(f"User {self._user} not found")
 
-            # Check if contact exists by (owner_id, source, source_external_id)
-            existing = None
-            if source_external_id:
+            # A client may change or omit the vCard UID while reusing the same
+            # resource href. Treat the href as the stable identity in that case.
+            existing = _find_contact_by_href(
+                session,
+                user=user,
+                href=href,
+                include_deleted=True,
+            )
+
+            # Then check the vCard UID so the same logical contact can move to a
+            # different href without creating a duplicate.
+            if not existing and source_external_id:
                 existing = session.exec(
                     select(Contact).where(
                         Contact.owner_id == user.id,
@@ -154,12 +217,14 @@ class Collection(BaseCollection):
             old_item = None
 
             if existing:
+                # A CardDAV PUT restores a contact deleted in the CRM UI.
+                existing.deleted_at = None
                 # Update existing contact
                 if existing.vcard_raw:
                     old_item = radicale_item.Item(
                         collection_path=self._path,
                         text=existing.vcard_raw,
-                        href=href,
+                        href=existing.vcard_href or href,
                     )
                 # Update fields from parsed vCard
                 contact_data = parsed["contact"]
@@ -189,55 +254,40 @@ class Collection(BaseCollection):
                     if hasattr(existing, key):
                         setattr(existing, key, value)
 
-                # Update ContactField entries (phone/email)
-                # First, remove existing fields for this contact
-                for f in session.exec(
-                    select(ContactField).where(ContactField.contact_id == existing.id)
-                ).all():
-                    session.delete(f)
-                # Then add new fields from vCard
-                for field_info in fields_data:
-                    field = ContactField(
-                        contact_id=existing.id,
-                        field_type=ContactFieldType(field_info["field_type"]),
-                        label=field_info["label"],
-                        value=field_info["value"],
-                        is_primary=field_info.get("is_primary", False),
-                    )
-                    session.add(field)
-
-                # Update Address entries
-                # First, remove existing addresses for this contact
-                for a in session.exec(
-                    select(Address).where(Address.contact_id == existing.id)
-                ).all():
-                    session.delete(a)
-                # Then add new addresses from vCard
-                for addr_info in addresses_data:
-                    addr = Address(
-                        contact_id=existing.id,
-                        label=addr_info["label"],
-                        street=addr_info.get("street"),
-                        extended=addr_info.get("extended"),
-                        city=addr_info.get("city"),
-                        region=addr_info.get("region"),
-                        postal_code=addr_info.get("postal_code"),
-                        country=addr_info.get("country"),
-                    )
-                    session.add(addr)
+                _sync_contact_children(
+                    session,
+                    contact_id=existing.id,
+                    fields_data=fields_data,
+                    addresses_data=addresses_data,
+                )
 
                 existing.vcard_raw = vcard_text
                 existing.vcard_etag = item.etag
+                existing.vcard_href = href
+                existing.source_external_id = source_external_id
                 existing.vcard_sha256 = incoming_hash
             else:
                 # Create new contact
                 contact_data = parsed["contact"]
-                Contact(
+                fields_data = parsed.get("fields", [])
+                addresses_data = parsed.get("addresses", [])
+                contact = Contact(
                     owner_id=user.id,
+                    source=ContactSource.CARDDAV,
+                    source_external_id=source_external_id,
                     vcard_raw=vcard_text,
                     vcard_etag=item.etag,
+                    vcard_href=href,
                     vcard_sha256=compute_vcard_hash(vcard_text),
                     **contact_data,
+                )
+                session.add(contact)
+                session.flush()
+                _sync_contact_children(
+                    session,
+                    contact_id=contact.id,
+                    fields_data=fields_data,
+                    addresses_data=addresses_data,
                 )
 
             session.commit()
@@ -258,20 +308,10 @@ class Collection(BaseCollection):
             if not user:
                 return
 
-            uid_str = href.replace(".vcf", "")
-            try:
-                uid = uuid_mod.UUID(uid_str)
-            except ValueError:
-                return
-
-            contact = session.exec(
-                select(Contact).where(
-                    Contact.id == uid,
-                    Contact.owner_id == user.id,
-                )
-            ).first()
+            contact = _find_contact_by_href(session, user=user, href=href)
             if contact:
-                session.delete(contact)
+                contact.deleted_at = datetime.now(timezone.utc)
+                session.add(contact)
                 session.commit()
 
     def get_meta(self, key: str | None = None):

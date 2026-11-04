@@ -1,7 +1,7 @@
-from enum import StrEnum
+from enum import Enum
 
 
-class ContactFieldType(StrEnum):
+class ContactFieldType(str, Enum):
     EMAIL = "email"
     PHONE = "phone"
 

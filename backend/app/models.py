@@ -168,6 +168,11 @@ class User(UserBase, table=True):
         index=True,
         description="OIDC subject; paired with oidc_iss forms the unique external identity.",
     )
+    session_version: int = Field(
+        default=0,
+        nullable=False,
+        description="Incremented to revoke previously issued local access tokens.",
+    )
     created_at: datetime | None = Field(
         default_factory=get_datetime_utc,
         sa_type=DateTime(timezone=True),  # type: ignore
@@ -824,6 +829,11 @@ class Contact(SoftDeleteMixin, ContactBase, table=True):
         max_length=255,
         description="ETag from the CardDAV server for incremental sync.",
     )
+    vcard_href: str | None = Field(
+        default=None,
+        max_length=500,
+        description="Client-provided CardDAV href for stable round-trip lookup.",
+    )
     vcard_sha256: str | None = Field(
         default=None,
         max_length=64,
@@ -878,6 +888,16 @@ class Contact(SoftDeleteMixin, ContactBase, table=True):
     tags: list[Tag] = Relationship(
         back_populates=None,
         link_model=ContactTag,
+    )
+
+    __table_args__ = (
+        sa.Index(
+            "uq_contact_owner_carddav_href",
+            "owner_id",
+            "vcard_href",
+            unique=True,
+            postgresql_where=sa.text("vcard_href IS NOT NULL"),
+        ),
     )
 
 
@@ -1697,6 +1717,9 @@ class InteractionCreate(InteractionBase):
     )
     is_draft: bool = False
     draft_source: str | None = Field(default=None, max_length=32)
+    location_label: str | None = Field(default=None, max_length=500)
+    latitude: float | None = Field(default=None, ge=-90, le=90)
+    longitude: float | None = Field(default=None, ge=-180, le=180)
 
 
 class InteractionUpdate(SQLModel):
@@ -1704,6 +1727,9 @@ class InteractionUpdate(SQLModel):
     occurred_at: datetime | None = None
     notes: str | None = None
     duration_minutes: int | None = None
+    location_label: str | None = Field(default=None, max_length=500)
+    latitude: float | None = Field(default=None, ge=-90, le=90)
+    longitude: float | None = Field(default=None, ge=-180, le=180)
     attendee_ids: list[uuid.UUID] | None = Field(
         default=None,
         min_length=1,
@@ -1906,6 +1932,15 @@ class Reminder(SoftDeleteMixin, ReminderBase, table=True):
     last_sent_at: datetime | None = Field(
         default=None,
         description="When the ARQ worker last fired this reminder.",
+    )
+    delivery_attempts: int = Field(
+        default=0,
+        ge=0,
+        description="Consecutive failed delivery attempts for the current occurrence.",
+    )
+    next_delivery_at: datetime | None = Field(
+        default=None,
+        description="Earliest retry time after a failed delivery attempt.",
     )
     snoozed_until: datetime | None = Field(
         default=None,
@@ -2379,9 +2414,7 @@ class Note(SoftDeleteMixin, NoteBase, table=True):
     )
     client_id: str | None = Field(
         default=None,
-        index=True,
-        unique=True,
-        description="Client-generated UUID for idempotent POSTs; unique if set.",
+        description="Client-generated UUID for owner-scoped idempotent POSTs.",
     )
     contact_id: uuid.UUID = Field(
         foreign_key="contact.id",
@@ -2420,6 +2453,16 @@ class Note(SoftDeleteMixin, NoteBase, table=True):
         sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
         nullable=False,
         description="Auto-bumped on edit (UTC).",
+    )
+
+    __table_args__ = (
+        sa.Index(
+            "uq_note_owner_client_id",
+            "owner_id",
+            "client_id",
+            unique=True,
+            postgresql_where=sa.text("client_id IS NOT NULL"),
+        ),
     )
 
 
@@ -2607,6 +2650,46 @@ class WebhookEventResponse(SQLModel):
     error: str | None = None
 
 
+class WebhookDelivery(SQLModel, table=True):
+    """Idempotency record for one provider delivery to one webhook."""
+
+    __tablename__ = "webhook_delivery"
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    webhook_id: uuid.UUID = Field(
+        foreign_key="webhook_endpoint.id",
+        nullable=False,
+        ondelete="CASCADE",
+        index=True,
+    )
+    delivery_id: str = Field(max_length=255, nullable=False)
+    interaction_id: uuid.UUID | None = Field(
+        default=None,
+        foreign_key="interaction.id",
+        nullable=True,
+        ondelete="SET NULL",
+    )
+    created_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),
+        nullable=False,
+    )
+    claimed_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),
+        nullable=False,
+        description="When the current processing lease began (UTC).",
+    )
+
+    __table_args__ = (
+        sa.UniqueConstraint(
+            "webhook_id",
+            "delivery_id",
+            name="uq_webhook_delivery_event",
+        ),
+    )
+
+
 class ActivityLog(SQLModel, table=True):
     """Immutable record of a create/update/delete on any audited entity."""
 
@@ -2667,7 +2750,7 @@ class ActivityLogsPublic(SQLModel):
 
 
 class EmailOAuthTokenBase(SQLModel):
-    """Encrypted OAuth tokens for Gmail API access."""
+    """Public metadata for a linked email account."""
 
     provider: str = Field(
         default="gmail",
@@ -2678,13 +2761,6 @@ class EmailOAuthTokenBase(SQLModel):
         max_length=255,
         description="The email address these tokens are for.",
     )
-    encrypted_access_token: str = Field(
-        description="Encrypted access token for the Gmail API.",
-    )
-    encrypted_refresh_token: str | None = Field(
-        default=None,
-        description="Encrypted refresh token for obtaining new access tokens.",
-    )
     token_expires_at: datetime | None = Field(
         default=None,
         description="When the access token expires (UTC).",
@@ -2692,12 +2768,13 @@ class EmailOAuthTokenBase(SQLModel):
 
 
 class EmailOAuthTokenCreate(EmailOAuthTokenBase):
-    pass
+    access_token: str
+    refresh_token: str | None = None
 
 
 class EmailOAuthTokenUpdate(SQLModel):
-    encrypted_access_token: str | None = None
-    encrypted_refresh_token: str | None = None
+    access_token: str | None = None
+    refresh_token: str | None = None
     token_expires_at: datetime | None = None
 
 
@@ -2722,6 +2799,13 @@ class EmailOAuthToken(EmailOAuthTokenBase, table=True):
         nullable=False,
         ondelete="CASCADE",
         description="Contact these tokens belong to; cascades on delete.",
+    )
+    encrypted_access_token: str = Field(
+        description="Encrypted access token for the Gmail API.",
+    )
+    encrypted_refresh_token: str | None = Field(
+        default=None,
+        description="Encrypted refresh token for obtaining new access tokens.",
     )
     created_at: datetime = Field(
         default_factory=get_datetime_utc,
@@ -2816,6 +2900,8 @@ class Token(SQLModel):
 # Contents of JWT token
 class TokenPayload(SQLModel):
     sub: str | None = None
+    ver: int = 0
+    type: str = "access"
 
 
 class NewPassword(SQLModel):

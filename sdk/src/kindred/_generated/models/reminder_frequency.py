@@ -1,7 +1,7 @@
-from enum import StrEnum
+from enum import Enum
 
 
-class ReminderFrequency(StrEnum):
+class ReminderFrequency(str, Enum):
     DAILY = "daily"
     MONTHLY = "monthly"
     ONCE = "once"

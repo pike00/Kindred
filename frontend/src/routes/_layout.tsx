@@ -6,14 +6,15 @@ import {
   useNavigate,
   useRouterState,
 } from "@tanstack/react-router"
-import { useEffect, useMemo } from "react"
-import { ApiError } from "@/client"
+import { useMemo } from "react"
+import { cfEnabled } from "@/auth/cf"
+import { UsersService } from "@/client"
 import { CommandPalette } from "@/components/CommandPalette/CommandPalette"
 import {
   CommandPaletteProvider,
   useCommandPalette,
 } from "@/components/CommandPalette/CommandPaletteContext"
-import ErrorComponent from "@/components/Common/ErrorComponent"
+import { AuthGuardError } from "@/components/Common/AuthGuardError"
 import { Footer } from "@/components/Common/Footer"
 import { QuickLogFAB } from "@/components/Common/QuickLogFAB"
 import KeyboardShortcutOverlay from "@/components/KeyboardShortcutOverlay"
@@ -47,29 +48,6 @@ export function NavigationProgressBar() {
   )
 }
 
-function AuthGuardError({ error }: { error: unknown }) {
-  const navigate = useNavigate()
-
-  useEffect(() => {
-    if (
-      error instanceof ApiError &&
-      (error.status === 401 || error.status === 403)
-    ) {
-      localStorage.removeItem("access_token")
-      navigate({ to: "/login", replace: true })
-    }
-  }, [error, navigate])
-
-  if (
-    error instanceof ApiError &&
-    (error.status === 401 || error.status === 403)
-  ) {
-    return null
-  }
-
-  return <ErrorComponent />
-}
-
 export const Route = createFileRoute("/_layout")({
   component: Layout,
   errorComponent: AuthGuardError,
@@ -77,6 +55,8 @@ export const Route = createFileRoute("/_layout")({
     if (!isLoggedIn()) {
       throw redirect({ to: "/login" })
     }
+    // Verify cookie-backed identity before any private child loader can reuse data.
+    if (cfEnabled()) await UsersService.readUserMe()
   },
 })
 

@@ -253,11 +253,11 @@ test.describe("QuickLog FAB", () => {
 // ─── Voice recorder ───────────────────────────────────────────────────────────
 
 test.describe("Voice recorder button", () => {
-  test("is visible with the 'Hold to record voice' aria-label", async ({
+  test("is visible with the 'Start voice recording' aria-label", async ({
     page,
   }) => {
     // Idle state — accessible name comes from the aria-label.
-    const btn = page.getByRole("button", { name: /hold to record voice/i })
+    const btn = page.getByRole("button", { name: /start voice recording/i })
     await expect(btn).toBeVisible()
   })
 

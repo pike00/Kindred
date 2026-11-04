@@ -22,6 +22,7 @@ class BulkOperations:
     Attributes:
         set_is_favorite (bool | None | Unset):
         set_is_archived (bool | None | Unset):
+        set_deleted (bool | None | Unset):
         set_stage (None | str | Unset):
         add_tag_ids (list[UUID] | None | Unset):
         remove_tag_ids (list[UUID] | None | Unset):
@@ -29,6 +30,7 @@ class BulkOperations:
 
     set_is_favorite: bool | None | Unset = UNSET
     set_is_archived: bool | None | Unset = UNSET
+    set_deleted: bool | None | Unset = UNSET
     set_stage: None | str | Unset = UNSET
     add_tag_ids: list[UUID] | None | Unset = UNSET
     remove_tag_ids: list[UUID] | None | Unset = UNSET
@@ -46,6 +48,12 @@ class BulkOperations:
             set_is_archived = UNSET
         else:
             set_is_archived = self.set_is_archived
+
+        set_deleted: bool | None | Unset
+        if isinstance(self.set_deleted, Unset):
+            set_deleted = UNSET
+        else:
+            set_deleted = self.set_deleted
 
         set_stage: None | str | Unset
         if isinstance(self.set_stage, Unset):
@@ -84,6 +92,8 @@ class BulkOperations:
             field_dict["set_is_favorite"] = set_is_favorite
         if set_is_archived is not UNSET:
             field_dict["set_is_archived"] = set_is_archived
+        if set_deleted is not UNSET:
+            field_dict["set_deleted"] = set_deleted
         if set_stage is not UNSET:
             field_dict["set_stage"] = set_stage
         if add_tag_ids is not UNSET:
@@ -114,6 +124,15 @@ class BulkOperations:
             return cast(bool | None | Unset, data)
 
         set_is_archived = _parse_set_is_archived(d.pop("set_is_archived", UNSET))
+
+        def _parse_set_deleted(data: object) -> bool | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(bool | None | Unset, data)
+
+        set_deleted = _parse_set_deleted(d.pop("set_deleted", UNSET))
 
         def _parse_set_stage(data: object) -> None | str | Unset:
             if data is None:
@@ -171,6 +190,7 @@ class BulkOperations:
         bulk_operations = cls(
             set_is_favorite=set_is_favorite,
             set_is_archived=set_is_archived,
+            set_deleted=set_deleted,
             set_stage=set_stage,
             add_tag_ids=add_tag_ids,
             remove_tag_ids=remove_tag_ids,

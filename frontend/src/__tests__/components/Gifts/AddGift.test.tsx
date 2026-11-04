@@ -243,7 +243,7 @@ describe("AddGift", () => {
       expect(mockCreateGift).toHaveBeenCalledWith(
         expect.objectContaining({
           requestBody: expect.objectContaining({
-            date: "2024-12-25",
+            gift_date: "2024-12-25",
           }),
         }),
       )

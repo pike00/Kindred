@@ -8,7 +8,7 @@ Inbound or outbound webhook configuration.
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | uuid |  | false |  |  | Primary key. |
+| id | uuid |  | false | [public.webhook_delivery](public.webhook_delivery.md) |  | Primary key. |
 | owner_id | uuid |  | false |  | [public.user](public.user.md) | Owner user; cascades on delete. |
 | name | varchar(255) |  | false |  |  | Human-readable endpoint name. |
 | url | varchar(2048) |  | true |  |  | Target URL for outbound webhooks; null for inbound. |
@@ -46,6 +46,7 @@ Inbound or outbound webhook configuration.
 ```mermaid
 erDiagram
 
+"public.webhook_delivery" }o--|| "public.webhook_endpoint" : "FOREIGN KEY (webhook_id) REFERENCES webhook_endpoint(id) ON DELETE CASCADE"
 "public.webhook_endpoint" }o--|| "public.user" : "FOREIGN KEY (owner_id) REFERENCES #quot;user#quot;(id) ON DELETE CASCADE"
 
 "public.webhook_endpoint" {
@@ -60,6 +61,14 @@ erDiagram
   varchar_255_ api_key
   timestamp_with_time_zone created_at
 }
+"public.webhook_delivery" {
+  uuid id
+  uuid webhook_id FK
+  varchar_255_ delivery_id
+  uuid interaction_id FK
+  timestamp_with_time_zone created_at
+  timestamp_with_time_zone claimed_at
+}
 "public.user" {
   varchar_255_ email
   boolean is_active
@@ -70,6 +79,7 @@ erDiagram
   timestamp_with_time_zone created_at
   varchar_512_ oidc_iss
   varchar_255_ oidc_sub
+  integer session_version
 }
 ```
 

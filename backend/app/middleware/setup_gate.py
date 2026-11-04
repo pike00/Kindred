@@ -33,6 +33,8 @@ _GATE_ALLOW_EXACT = frozenset(
         f"{settings.API_V1_STR}/utils/info/",
         f"{settings.API_V1_STR}/utils/health-check",
         f"{settings.API_V1_STR}/utils/health-check/",
+        f"{settings.API_V1_STR}/utils/ready",
+        f"{settings.API_V1_STR}/utils/ready/",
         # FastAPI docs surfaces — handy for an operator poking around.
         "/docs",
         "/redoc",

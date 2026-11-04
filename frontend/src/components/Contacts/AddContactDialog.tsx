@@ -39,7 +39,7 @@ const contactCreateSchema = z.object({
   birthday: z.string().nullable().optional(),
   pronouns: z.string().max(100).optional(),
   timezone: z.string().optional(),
-  tag_ids: z.array(z.string()),
+  tag_ids: z.array(z.string()).max(1000),
 })
 
 type ContactCreateFormData = z.infer<typeof contactCreateSchema>

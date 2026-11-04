@@ -1,4 +1,23 @@
 services:
+  migrate:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file: .env
+    environment:
+      - ENVIRONMENT=local
+    volumes:
+      - ./backend/app:/app/backend/app
+      - ./backend/scripts:/app/backend/scripts
+      - ./backend/alembic.ini:/app/backend/alembic.ini:ro
+    working_dir: /app/backend
+    command: ["bash", "scripts/migrate.sh"]
+    networks:
+      - kindred-internal-crm
+    depends_on:
+      db:
+        condition: service_healthy
+
   backend:
     build:
       context: .
@@ -18,7 +37,7 @@ services:
       - ./backend/tests:/app/backend/tests
       - ./backend/alembic.ini:/app/backend/alembic.ini:ro
     working_dir: /app/backend
-    command: ["bash", "-c", "bash scripts/prestart.sh && fastapi run --reload app/main.py"]
+    command: ["fastapi", "run", "--reload", "app/main.py"]
     # Loopback-only port so the puppeteer e2e suite can hit the API without
     # going through Traefik. Traefik still fronts the canonical hostname.
     ports:
@@ -36,7 +55,7 @@ services:
       - "traefik.http.services.crm-api.loadbalancer.server.port=8000"
       - "traefik.docker.network=pikenet-private"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/utils/health-check/"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/utils/ready/"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -46,6 +65,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
   frontend:
     image: node:26-slim
@@ -132,6 +153,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
   redis:
     image: redis:7-alpine

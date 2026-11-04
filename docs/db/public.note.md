@@ -43,6 +43,7 @@ Timestamped freeform note attached to a specific contact.
 | ix_note_deleted_at | CREATE INDEX ix_note_deleted_at ON public.note USING btree (deleted_at) |
 | ix_note_client_id | CREATE INDEX ix_note_client_id ON public.note USING btree (client_id) |
 | ix_note_search_vector | CREATE INDEX ix_note_search_vector ON public.note USING gin (search_vector) |
+| uq_note_owner_client_id | CREATE UNIQUE INDEX uq_note_owner_client_id ON public.note USING btree (owner_id, client_id) WHERE (client_id IS NOT NULL) |
 
 ## Triggers
 
@@ -84,6 +85,7 @@ erDiagram
   timestamp_with_time_zone created_at
   varchar_512_ oidc_iss
   varchar_255_ oidc_sub
+  integer session_version
 }
 "public.contact" {
   uuid id

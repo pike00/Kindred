@@ -5,6 +5,18 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+/** Local datetime string accepted by `<input type="datetime-local">`. */
+export function toLocalDateTimeInput(date: Date): string {
+  const pad = (value: number) => String(value).padStart(2, "0")
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
+/** Local calendar date key (`YYYY-MM-DD`) without converting through UTC. */
+export function localDateKey(date: Date): string {
+  const pad = (value: number) => String(value).padStart(2, "0")
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}
+
 function parseISODate(iso: string): Date {
   const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso)
   if (dateOnly) {

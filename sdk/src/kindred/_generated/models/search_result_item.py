@@ -27,6 +27,7 @@ class SearchResultItem:
         rank (float | None | Unset):
         created_at (None | str | Unset):
         updated_at (None | str | Unset):
+        contact_id (None | str | Unset):
     """
 
     id: str
@@ -36,6 +37,7 @@ class SearchResultItem:
     rank: float | None | Unset = UNSET
     created_at: None | str | Unset = UNSET
     updated_at: None | str | Unset = UNSET
+    contact_id: None | str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -69,6 +71,12 @@ class SearchResultItem:
         else:
             updated_at = self.updated_at
 
+        contact_id: None | str | Unset
+        if isinstance(self.contact_id, Unset):
+            contact_id = UNSET
+        else:
+            contact_id = self.contact_id
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -86,6 +94,8 @@ class SearchResultItem:
             field_dict["created_at"] = created_at
         if updated_at is not UNSET:
             field_dict["updated_at"] = updated_at
+        if contact_id is not UNSET:
+            field_dict["contact_id"] = contact_id
 
         return field_dict
 
@@ -134,6 +144,15 @@ class SearchResultItem:
 
         updated_at = _parse_updated_at(d.pop("updated_at", UNSET))
 
+        def _parse_contact_id(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        contact_id = _parse_contact_id(d.pop("contact_id", UNSET))
+
         search_result_item = cls(
             id=id,
             type_=type_,
@@ -142,6 +161,7 @@ class SearchResultItem:
             rank=rank,
             created_at=created_at,
             updated_at=updated_at,
+            contact_id=contact_id,
         )
 
         search_result_item.additional_properties = d

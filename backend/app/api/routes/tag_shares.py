@@ -2,6 +2,7 @@ import uuid
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from sqlalchemy.exc import IntegrityError
 from sqlmodel import func, select
 
 from app.api.deps import CurrentUser, SessionDep
@@ -87,7 +88,13 @@ def _compute_share_preview(session: SessionDep, tag_id: uuid.UUID) -> dict:
 
     # Notes
     note_count = session.exec(
-        select(func.count(Note.id)).where(Note.contact_id.in_(contact_ids))
+        select(func.count(Note.id))
+        .join(Contact, Contact.id == Note.contact_id)
+        .where(
+            Note.contact_id.in_(contact_ids),
+            Note.owner_id == Contact.owner_id,
+            Note.deleted_at.is_(None),
+        )
     ).one()
     entities.append({"entity_type": "Note", "count": note_count})
     total_related += note_count
@@ -237,26 +244,35 @@ def create_tag_share(
     session.add(share)
 
     # Compute preview for audit log
-    preview = _compute_share_preview(session, body.tag_id)
-
-    # Log to activity log
-    log = ActivityLog(
-        owner_id=current_user.id,
-        actor_id=current_user.id,
-        entity_type="TagShare",
-        entity_id=str(tag.id),
-        action="create",
-        changes_json={
-            "grantee_email": grantee.email,
-            "grantee_id": str(grantee.id),
-            "tag_name": tag.name,
-            "contact_count": preview["contact_count"],
-            "total_related_rows": preview["total_related_rows"],
-        },
-    )
-    session.add(log)
-
-    session.commit()
+    try:
+        preview = _compute_share_preview(session, body.tag_id)
+        log = ActivityLog(
+            owner_id=current_user.id,
+            actor_id=current_user.id,
+            entity_type="TagShare",
+            entity_id=str(tag.id),
+            action="create",
+            changes_json={
+                "grantee_email": grantee.email,
+                "grantee_id": str(grantee.id),
+                "tag_name": tag.name,
+                "contact_count": preview["contact_count"],
+                "total_related_rows": preview["total_related_rows"],
+            },
+        )
+        session.add(log)
+        session.commit()
+    except IntegrityError:
+        session.rollback()
+        existing = session.get(TagShare, (body.tag_id, grantee.id))
+        if existing is None:
+            raise
+        return TagSharePublic(
+            tag_id=existing.tag_id,
+            grantee_id=existing.grantee_id,
+            grantee_email=grantee.email,
+            created_at=existing.created_at,
+        )
     session.refresh(share)
 
     return TagSharePublic(

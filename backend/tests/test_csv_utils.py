@@ -1,10 +1,18 @@
 """Tests for CSV import/export utilities."""
 
+import csv
+import io
 from datetime import date
 
 import pytest
+from sqlmodel import Session
 
-from app.csv_utils import detect_column_mapping, parse_date_flexible
+from app.csv_utils import (
+    detect_column_mapping,
+    export_contacts_to_csv,
+    parse_date_flexible,
+)
+from app.models import Contact, Tag, User
 
 
 @pytest.mark.parametrize(
@@ -46,3 +54,42 @@ def test_detect_column_mapping_common_aliases() -> None:
     assert mapping["state"] == "region"
     assert mapping["tags"] == "tag_names"
     assert mapping["birthday"] == "birthday"
+
+
+def test_csv_export_escapes_spreadsheet_formulas(
+    db: Session,
+    user: User,
+) -> None:
+    contact = Contact(
+        first_name='=HYPERLINK("https://example.com")',
+        last_name="+SUM(1,1)",
+        company="-2+3",
+        how_we_met="@SUM(1,1)",
+        owner_id=user.id,
+    )
+    contact.tags.append(Tag(name="=private-tag", owner_id=user.id))
+    db.add(contact)
+    db.commit()
+
+    _, csv_bytes = export_contacts_to_csv(
+        session=db,
+        owner_id=str(user.id),
+        include_fields=False,
+        include_tags=True,
+    )
+    rows = list(
+        csv.DictReader(io.StringIO(csv_bytes.decode("utf-8-sig"))),
+    )
+
+    assert rows[0]["first_name"].startswith("'=")
+    assert rows[0]["last_name"].startswith("'+")
+    assert rows[0]["company"].startswith("'-")
+    assert rows[0]["how_we_met"].startswith("'@")
+    assert rows[0]["tag_names"].startswith("'=")
+
+
+def test_csv_export_neutralizes_line_feed_formula_prefixes() -> None:
+    from app.csv_utils import _spreadsheet_safe
+
+    for value in ("\n=1+1", "\n+SUM(1,1)", "\n-2+3", "\n@SUM(1,1)"):
+        assert _spreadsheet_safe(value) == f"'{value}"

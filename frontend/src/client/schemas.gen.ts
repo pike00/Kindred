@@ -750,7 +750,7 @@ export const BirthdayFieldChangeSchema = {
     title: 'BirthdayFieldChange'
 } as const;
 
-export const Body_ical_upload_icalSchema = {
+export const Body_post_api_v1_ical_uploadSchema = {
     properties: {
         file: {
             type: 'string',
@@ -760,10 +760,10 @@ export const Body_ical_upload_icalSchema = {
     },
     type: 'object',
     required: ['file'],
-    title: 'Body_ical-upload_ical'
+    title: 'Body_post_api_v1_ical_upload'
 } as const;
 
-export const Body_import_export_import_csvSchema = {
+export const Body_post_api_v1_import_export_import_csvSchema = {
     properties: {
         file: {
             type: 'string',
@@ -794,10 +794,10 @@ export const Body_import_export_import_csvSchema = {
     },
     type: 'object',
     required: ['file'],
-    title: 'Body_import-export-import_csv'
+    title: 'Body_post_api_v1_import_export_import_csv'
 } as const;
 
-export const Body_import_export_import_vcardSchema = {
+export const Body_post_api_v1_import_export_import_csv_previewSchema = {
     properties: {
         file: {
             type: 'string',
@@ -807,10 +807,10 @@ export const Body_import_export_import_vcardSchema = {
     },
     type: 'object',
     required: ['file'],
-    title: 'Body_import-export-import_vcard'
+    title: 'Body_post_api_v1_import_export_import_csv_preview'
 } as const;
 
-export const Body_import_export_preview_csv_importSchema = {
+export const Body_post_api_v1_import_export_import_vcardSchema = {
     properties: {
         file: {
             type: 'string',
@@ -820,10 +820,10 @@ export const Body_import_export_preview_csv_importSchema = {
     },
     type: 'object',
     required: ['file'],
-    title: 'Body_import-export-preview_csv_import'
+    title: 'Body_post_api_v1_import_export_import_vcard'
 } as const;
 
-export const Body_login_login_access_tokenSchema = {
+export const Body_post_api_v1_login_access_tokenSchema = {
     properties: {
         grant_type: {
             anyOf: [
@@ -877,10 +877,10 @@ export const Body_login_login_access_tokenSchema = {
     },
     type: 'object',
     required: ['username', 'password'],
-    title: 'Body_login-login_access_token'
+    title: 'Body_post_api_v1_login_access_token'
 } as const;
 
-export const Body_transcribe_transcribe_audioSchema = {
+export const Body_post_api_v1_transcribeSchema = {
     properties: {
         file: {
             type: 'string',
@@ -905,7 +905,7 @@ export const Body_transcribe_transcribe_audioSchema = {
     },
     type: 'object',
     required: ['file'],
-    title: 'Body_transcribe-transcribe_audio'
+    title: 'Body_post_api_v1_transcribe'
 } as const;
 
 export const BulkFiltersSchema = {
@@ -983,6 +983,17 @@ export const BulkOperationsSchema = {
             ],
             title: 'Set Is Archived'
         },
+        set_deleted: {
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Set Deleted'
+        },
         set_stage: {
             anyOf: [
                 {
@@ -1050,6 +1061,18 @@ export const BulkUpdateRequestSchema = {
             type: 'boolean',
             title: 'Select All Filtered',
             default: false
+        },
+        saved_filter_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'uuid'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Saved Filter Id'
         },
         filters: {
             anyOf: [
@@ -3640,23 +3663,6 @@ export const EmailOAuthTokenPublicSchema = {
             title: 'Email Address',
             description: 'The email address these tokens are for.'
         },
-        encrypted_access_token: {
-            type: 'string',
-            title: 'Encrypted Access Token',
-            description: 'Encrypted access token for the Gmail API.'
-        },
-        encrypted_refresh_token: {
-            anyOf: [
-                {
-                    type: 'string'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Encrypted Refresh Token',
-            description: 'Encrypted refresh token for obtaining new access tokens.'
-        },
         token_expires_at: {
             anyOf: [
                 {
@@ -3692,7 +3698,7 @@ export const EmailOAuthTokenPublicSchema = {
         }
     },
     type: 'object',
-    required: ['email_address', 'encrypted_access_token', 'id', 'contact_id', 'created_at', 'updated_at'],
+    required: ['email_address', 'id', 'contact_id', 'created_at', 'updated_at'],
     title: 'EmailOAuthTokenPublic'
 } as const;
 
@@ -4601,6 +4607,44 @@ export const InteractionCreateSchema = {
                 }
             ],
             title: 'Draft Source'
+        },
+        location_label: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 500
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Location Label'
+        },
+        latitude: {
+            anyOf: [
+                {
+                    type: 'number',
+                    maximum: 90,
+                    minimum: -90
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Latitude'
+        },
+        longitude: {
+            anyOf: [
+                {
+                    type: 'number',
+                    maximum: 180,
+                    minimum: -180
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Longitude'
         }
     },
     type: 'object',
@@ -4776,6 +4820,44 @@ export const InteractionUpdateSchema = {
                 }
             ],
             title: 'Duration Minutes'
+        },
+        location_label: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 500
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Location Label'
+        },
+        latitude: {
+            anyOf: [
+                {
+                    type: 'number',
+                    maximum: 90,
+                    minimum: -90
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Latitude'
+        },
+        longitude: {
+            anyOf: [
+                {
+                    type: 'number',
+                    maximum: 180,
+                    minimum: -180
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Longitude'
         },
         attendee_ids: {
             anyOf: [
@@ -6836,6 +6918,18 @@ export const PrivateUserCreateSchema = {
     title: 'PrivateUserCreate'
 } as const;
 
+export const ReadyInfoSchema = {
+    properties: {
+        status: {
+            type: 'string',
+            title: 'Status',
+            default: 'ready'
+        }
+    },
+    type: 'object',
+    title: 'ReadyInfo'
+} as const;
+
 export const RelationshipCreateSchema = {
     properties: {
         relationship_type: {
@@ -7822,6 +7916,17 @@ export const SearchResultItemSchema = {
                 }
             ],
             title: 'Updated At'
+        },
+        contact_id: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Contact Id'
         }
     },
     type: 'object',

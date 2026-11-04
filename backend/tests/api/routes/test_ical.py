@@ -5,7 +5,8 @@ import uuid
 from fastapi.testclient import TestClient
 from sqlmodel import Session, select
 
-from app.models import Contact, IcalImportLog
+from app.models import AllContactsShare, Contact, IcalImportLog, InteractionAttendee
+from tests.utils.user import create_random_user
 
 
 def _create_contact(
@@ -248,6 +249,82 @@ class TestUploadIcal:
         assert len(data["proposals"]) == 1
         assert data["proposals"][0]["already_imported"] is True
 
+    def test_upload_matches_visible_shared_contact(
+        self, client: TestClient, db: Session, user_headers: dict, user: Contact
+    ):
+        owner = create_random_user(db)
+        shared_contact = _create_contact(
+            db,
+            owner.id,
+            "Shared",
+            "Person",
+            "shared-person@example.com",
+        )
+        db.add(AllContactsShare(owner_id=owner.id, grantee_id=user.id))
+        db.commit()
+        content = _make_ics_content(
+            [
+                {
+                    "uid": "shared-upload",
+                    "summary": "Shared meeting",
+                    "dtstart": "20240115T100000Z",
+                    "attendees": [
+                        {
+                            "cn": "Shared Person",
+                            "email": "shared-person@example.com",
+                        }
+                    ],
+                }
+            ]
+        )
+
+        response = client.post(
+            "/api/v1/ical/upload",
+            files={"file": ("test.ics", content, "text/calendar")},
+            headers=user_headers,
+        )
+
+        assert response.status_code == 200
+        matches = response.json()["proposals"][0]["attendees"][0]["matches"]
+        assert any(match["contact_id"] == str(shared_contact.id) for match in matches)
+
+    def test_upload_does_not_match_another_users_email(
+        self, client: TestClient, db: Session, user_headers: dict
+    ):
+        victim = create_random_user(db)
+        victim_contact = _create_contact(
+            db,
+            victim.id,
+            "Private",
+            "Person",
+            "private-person@example.com",
+        )
+        content = _make_ics_content(
+            [
+                {
+                    "uid": "cross-owner-upload",
+                    "summary": "Private meeting",
+                    "dtstart": "20240115T100000Z",
+                    "attendees": [
+                        {
+                            "cn": "Private Person",
+                            "email": "private-person@example.com",
+                        }
+                    ],
+                }
+            ]
+        )
+
+        response = client.post(
+            "/api/v1/ical/upload",
+            files={"file": ("test.ics", content, "text/calendar")},
+            headers=user_headers,
+        )
+
+        assert response.status_code == 200
+        matches = response.json()["proposals"][0]["attendees"][0]["matches"]
+        assert all(match["contact_id"] != str(victim_contact.id) for match in matches)
+
 
 class TestConfirmIcalImport:
     """Tests for POST /api/v1/ical/confirm."""
@@ -455,3 +532,59 @@ class TestConfirmIcalImport:
         data = response.json()
         assert len(data["errors"]) > 0
         assert "Missing occurred_at" in data["errors"][0]
+
+    def test_confirm_rejects_another_users_contact_id(
+        self, client: TestClient, db: Session, user_headers: dict
+    ):
+        victim = create_random_user(db)
+        victim_contact = _create_contact(
+            db,
+            victim.id,
+            "Forged",
+            "Recipient",
+            "forged-recipient@example.com",
+        )
+        proposal = {
+            "uid": "cross-owner-confirm",
+            "summary": "Injected private interaction",
+            "description": "This must not appear in the victim's timeline.",
+            "occurred_at": "2024-01-15T10:00:00+00:00",
+            "attendees": [
+                {
+                    "attendee": {
+                        "email": "forged-recipient@example.com",
+                        "cn": "Forged Recipient",
+                        "role": None,
+                    },
+                    "matches": [
+                        {
+                            "contact_id": str(victim_contact.id),
+                            "contact_name": "Forged Recipient",
+                            "confidence": 100.0,
+                            "match_method": "email_exact",
+                        }
+                    ],
+                }
+            ],
+            "classification": "interaction",
+            "event_type": "meeting",
+            "channel": "other",
+            "skipped": False,
+            "already_imported": False,
+        }
+
+        response = client.post(
+            "/api/v1/ical/confirm",
+            json=[proposal],
+            headers=user_headers,
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["created_interactions"] == 0
+        attendees = db.exec(
+            select(InteractionAttendee).where(
+                InteractionAttendee.contact_id == victim_contact.id
+            )
+        ).all()
+        assert attendees == []

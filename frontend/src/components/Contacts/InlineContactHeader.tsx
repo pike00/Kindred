@@ -9,7 +9,6 @@ import { EditContactDialog } from "@/components/Contacts/EditContactDialog"
 import { InteractionHeatmap } from "@/components/Contacts/InteractionHeatmap"
 import { formatLocalTime } from "@/components/Contacts/TimezoneInput"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { InlineContactName, InlineText } from "@/components/ui/inline-edit"
 import useCustomToast from "@/hooks/useCustomToast"
 import {
@@ -18,7 +17,6 @@ import {
   Cake,
   Camera,
   Clock,
-  Download,
   MessagesSquare,
   Star,
   UserRoundSearch,
@@ -220,16 +218,6 @@ export function InlineContactHeader({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                window.open(`/api/v1/contacts/${contact.id}.pdf`, "_blank")
-              }}
-            >
-              <Download className="size-4 mr-2" />
-              Download PDF
-            </Button>
             <EditContactDialog contact={contact} />
           </div>
         </div>

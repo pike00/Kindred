@@ -320,8 +320,9 @@ def test_normal_user_cannot_grant_impersonation(
 
 
 def test_self_registered_user_cannot_grant_admin_impersonation(
-    client: TestClient, db: Session
+    client: TestClient, db: Session, monkeypatch
 ) -> None:
+    monkeypatch.setattr(settings, "USERS_OPEN_REGISTRATION", True)
     email, password = random_email(), random_lower_string()
     registered = client.post(
         f"{settings.API_V1_STR}/users/signup",

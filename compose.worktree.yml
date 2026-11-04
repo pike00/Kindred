@@ -7,7 +7,7 @@
 #
 # Host ports are ALSO published (offset-based) for direct CLI access:
 #   psql -h localhost -p ${DB_PORT}   redis-cli -p ${REDIS_PORT}
-#   curl http://localhost:${BACKEND_PORT}/api/v1/utils/health-check/
+#   curl http://localhost:${BACKEND_PORT}/api/v1/utils/ready/
 #
 # Driven by the just recipes (`just up` / `just down` / etc), which compute
 # SLUG, WORKTREE_HOST, COMPOSE_PROJECT_NAME, and the *_PORT env vars from the
@@ -16,6 +16,26 @@
 # Run `just down-clean` to delete those volumes.
 
 services:
+  migrate:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file: .env
+    environment:
+      - ENVIRONMENT=local
+      - FRONTEND_HOST=https://${WORKTREE_HOST:?run via 'just up' so WORKTREE_HOST is set}
+    volumes:
+      - ./backend/app:/app/backend/app
+      - ./backend/scripts:/app/backend/scripts
+      - ./backend/alembic.ini:/app/backend/alembic.ini:ro
+    working_dir: /app/backend
+    command: ["bash", "scripts/migrate.sh"]
+    networks:
+      - default
+    depends_on:
+      db:
+        condition: service_healthy
+
   backend:
     build:
       context: .
@@ -36,7 +56,7 @@ services:
       - ./backend/tests:/app/backend/tests
       - ./backend/alembic.ini:/app/backend/alembic.ini:ro
     working_dir: /app/backend
-    command: ["bash", "-c", "bash scripts/prestart.sh && fastapi run --host 0.0.0.0 --port 8000 --reload app/main.py"]
+    command: ["fastapi", "run", "--host", "0.0.0.0", "--port", "8000", "--reload", "app/main.py"]
     networks:
       - default
       - pikenet-private
@@ -55,7 +75,7 @@ services:
       - "traefik.http.routers.${SLUG}-api.middlewares=admin-ipallowlist@file"
       - "traefik.http.services.${SLUG}-api.loadbalancer.server.port=8000"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/utils/health-check/"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/utils/ready/"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -65,6 +85,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
   frontend:
     image: node:22-slim
@@ -154,6 +176,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
   redis:
     image: redis:7-alpine

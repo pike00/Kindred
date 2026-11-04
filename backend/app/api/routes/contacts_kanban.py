@@ -8,10 +8,9 @@ from sqlalchemy.orm import selectinload
 from sqlmodel import col, select
 
 from app.api.deps import CurrentUser, SessionDep
-from app.crud import visible_contact_ids
+from app.crud import contact_public, shared_tag_ids, visible_contact_ids
 from app.models import (
     Contact,
-    ContactPublic,
     ContactsPublic,
     ContactStageEvent,
     ContactStageEventPublic,
@@ -67,6 +66,7 @@ def get_kanban_board(
         stages = default_stages
 
     result: dict[str, ContactsPublic] = {}
+    visible_shared_tag_ids = shared_tag_ids(session, current_user)
 
     for stage in stages:
         statement = (
@@ -96,7 +96,14 @@ def get_kanban_board(
 
         contacts = session.exec(statement).all()
         result[stage] = ContactsPublic(
-            data=[ContactPublic.model_validate(c) for c in contacts],
+            data=[
+                contact_public(
+                    contact=contact,
+                    user=current_user,
+                    shared_ids=visible_shared_tag_ids,
+                )
+                for contact in contacts
+            ],
             count=len(contacts),
         )
 

@@ -1,8 +1,10 @@
 """ARQ background worker for processing reminders, cadence checks, and search indexing."""
 
 import logging
+import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any
+from zoneinfo import ZoneInfo
 
 import apprise
 from arq import cron
@@ -18,77 +20,174 @@ from app.models import (  # noqa: E402
     Contact,
     Reminder,
     ReminderFrequency,
+    User,
 )
 
+_REMINDER_MAX_DELIVERY_ATTEMPTS = 5
+_REMINDER_RETRY_BASE_SECONDS = 60
+_REMINDER_RETRY_MAX_SECONDS = 3600
 
-def _get_apprise() -> apprise.Apprise:
+
+def _get_apprise() -> apprise.Apprise | None:
     """Initialize Apprise with configured notification URLs."""
+    if not settings.APPRISE_URLS:
+        return None
     apobj = apprise.Apprise()
-    if settings.APPRISE_URLS:
-        for url in settings.APPRISE_URLS.split(","):
-            url = url.strip()
-            if url:
-                apobj.add(url)
+    for url in settings.APPRISE_URLS.split(","):
+        url = url.strip()
+        if url:
+            apobj.add(url)
     return apobj
+
+
+def _notification_owner_id(session: Session) -> uuid.UUID | None:
+    """Return the single owner whose data may use the global Apprise sink."""
+    return session.exec(
+        select(User.id)
+        .where(User.is_superuser.is_(True), User.is_active.is_(True))
+        .order_by(User.created_at.asc(), User.id.asc())
+    ).first()
 
 
 async def check_reminders(ctx: dict) -> None:
     """Check for due reminders and send notifications via Apprise."""
+    await _check_reminders(ctx, now=datetime.now(timezone.utc))
+
+
+async def _claim_job(redis: Any, key: str, ttl_seconds: int) -> bool:
+    if redis is None:
+        return True
+    return bool(await redis.set(key, "1", nx=True, ex=ttl_seconds))
+
+
+async def _release_job_claim(redis: Any, key: str) -> None:
+    if redis is not None:
+        await redis.delete(key)
+
+
+def _reminder_still_due(reminder: Reminder, now: datetime) -> bool:
+    return bool(
+        reminder.is_active
+        and reminder.deleted_at is None
+        and reminder.remind_at <= now
+        and (reminder.snoozed_until is None or reminder.snoozed_until <= now)
+        and (reminder.next_delivery_at is None or reminder.next_delivery_at <= now)
+    )
+
+
+def _reminder_retry_delay(attempts: int) -> timedelta:
+    seconds = min(
+        _REMINDER_RETRY_MAX_SECONDS,
+        _REMINDER_RETRY_BASE_SECONDS * 2 ** max(attempts - 1, 0),
+    )
+    return timedelta(seconds=seconds)
+
+
+async def _check_reminders(ctx: dict, *, now: datetime) -> None:
     engine = ctx["engine"]
-    now = datetime.now(timezone.utc)
+    redis = ctx.get("redis")
 
     with Session(engine) as session:
+        notification_owner_id = _notification_owner_id(session)
+        if notification_owner_id is None:
+            return
         due_reminders = session.exec(
             select(Reminder).where(
+                Reminder.owner_id == notification_owner_id,
                 Reminder.is_active.is_(True),
                 Reminder.deleted_at.is_(None),
                 Reminder.remind_at <= now,
                 (Reminder.snoozed_until.is_(None)) | (Reminder.snoozed_until <= now),
+                (Reminder.next_delivery_at.is_(None))
+                | (Reminder.next_delivery_at <= now),
             )
         ).all()
 
-        if not due_reminders:
+        apobj = _get_apprise()
+        if apobj is None or not due_reminders:
             return
 
-        apobj = _get_apprise()
-
         for reminder in due_reminders:
+            claim_key = f"kindred:reminder-delivery:{reminder.id}"
+            if not await _claim_job(redis, claim_key, ttl_seconds=300):
+                continue
+
+            # A worker may have read this row before another worker committed
+            # a send. Refresh after taking the claim so stale rows cannot send
+            # the same occurrence twice.
+            session.refresh(reminder)
+            if not _reminder_still_due(reminder, now):
+                await _release_job_claim(redis, claim_key)
+                continue
+
             # Build notification
             title = f"Reminder: {reminder.title}"
             body = reminder.description or reminder.title
 
             if reminder.contact_id:
                 contact = session.get(Contact, reminder.contact_id)
-                if contact:
-                    if contact.do_not_contact:
-                        logger.info(
-                            f"Skipping reminder {reminder.id}: "
-                            f"contact {contact.id} has reminders paused"
-                        )
-                        continue
-                    # Skip if do-not-contact is set
-                    pref = session.exec(
-                        select(CommunicationPreference).where(
-                            CommunicationPreference.contact_id == contact.id
-                        )
-                    ).first()
-                    if pref and pref.do_not_contact:
-                        logger.info(
-                            f"Skipping reminder {reminder.id}: "
-                            f"contact {contact.id} has do-not-contact set"
-                        )
-                        continue
-                    _ = f"{contact.first_name} {contact.last_name or ''}".strip()
+                if contact is None or contact.deleted_at is not None:
+                    reminder.is_active = False
+                    session.add(reminder)
+                    session.commit()
+                    await _release_job_claim(redis, claim_key)
+                    continue
+                if contact.do_not_contact:
+                    logger.info(
+                        "Skipping reminder %s: contact %s has reminders paused",
+                        reminder.id,
+                        contact.id,
+                    )
+                    reminder.is_active = False
+                    session.add(reminder)
+                    session.commit()
+                    await _release_job_claim(redis, claim_key)
+                    continue
+                pref = session.exec(
+                    select(CommunicationPreference).where(
+                        CommunicationPreference.contact_id == contact.id
+                    )
+                ).first()
+                if pref and pref.do_not_contact:
+                    logger.info(
+                        "Skipping reminder %s: contact %s has do-not-contact set",
+                        reminder.id,
+                        contact.id,
+                    )
+                    reminder.is_active = False
+                    session.add(reminder)
+                    session.commit()
+                    await _release_job_claim(redis, claim_key)
+                    continue
+                contact_name = f"{contact.first_name} {contact.last_name or ''}".strip()
+                body = f"{contact_name}: {body}" if contact_name else body
+
             # Send notification (don't let failures corrupt scheduling)
+            delivered = False
             try:
-                apobj.notify(title=title, body=body)
+                delivered = bool(apobj.notify(title=title, body=body))
             except Exception as e:
                 logger.error(
                     f"Failed to send notification for reminder {reminder.id}: {e}"
                 )
 
-            # Always update scheduling regardless of notification success
+            if not delivered:
+                reminder.delivery_attempts += 1
+                if reminder.delivery_attempts >= _REMINDER_MAX_DELIVERY_ATTEMPTS:
+                    reminder.is_active = False
+                    reminder.next_delivery_at = None
+                else:
+                    reminder.next_delivery_at = now + _reminder_retry_delay(
+                        reminder.delivery_attempts
+                    )
+                session.add(reminder)
+                session.commit()
+                await _release_job_claim(redis, claim_key)
+                continue
+
             reminder.last_sent_at = now
+            reminder.delivery_attempts = 0
+            reminder.next_delivery_at = None
 
             # Handle recurring reminders
             if reminder.frequency == ReminderFrequency.ONCE:
@@ -105,34 +204,45 @@ async def check_reminders(ctx: dict) -> None:
                 )
 
             session.add(reminder)
-
-        session.commit()
+            session.commit()
+            await _release_job_claim(redis, claim_key)
 
 
 async def check_cadences(ctx: dict) -> None:
     """Check for contacts whose cadence has been exceeded and notify."""
-    engine = ctx["engine"]
-    now = datetime.now(timezone.utc)
-    from zoneinfo import ZoneInfo
+    await _check_cadences(ctx, now=datetime.now(timezone.utc))
 
-    def _contact_now(contact_tz: str | None) -> datetime:
-        """Return current time in the contact's timezone, or UTC."""
-        if contact_tz:
-            try:
-                return datetime.now(ZoneInfo(contact_tz))
-            except Exception:
-                pass
-        return datetime.now(timezone.utc)
+
+def _contact_now(contact_tz: str | None, now: datetime) -> datetime:
+    """Return now in the contact's timezone, or UTC when unknown."""
+    if contact_tz:
+        try:
+            return now.astimezone(ZoneInfo(contact_tz))
+        except Exception:
+            pass
+    return now
+
+
+async def _check_cadences(ctx: dict, *, now: datetime) -> None:
+    engine = ctx["engine"]
+    redis = ctx.get("redis")
 
     with Session(engine) as session:
+        notification_owner_id = _notification_owner_id(session)
+        if notification_owner_id is None:
+            return
         contacts = session.exec(
             select(Contact).where(
+                Contact.owner_id == notification_owner_id,
                 Contact.is_archived.is_(False),
                 Contact.contact_frequency_days.is_not(None),
+                Contact.deleted_at.is_(None),
             )
         ).all()
 
         apobj = _get_apprise()
+        if apobj is None:
+            return
 
         for contact in contacts:
             # Skip if do-not-contact is set
@@ -149,6 +259,9 @@ async def check_cadences(ctx: dict) -> None:
             if contact.snoozed_until and contact.snoozed_until > now:
                 continue
 
+            contact_now = _contact_now(contact.timezone, now)
+            if contact_now.hour < 9:
+                continue
 
             if contact.last_contacted_at is None:
                 overdue = True
@@ -157,30 +270,34 @@ async def check_cadences(ctx: dict) -> None:
                 deadline = contact.last_contacted_at + timedelta(
                     days=contact.contact_frequency_days
                 )
-                # Get current time in contact's timezone
-                contact_now = _contact_now(contact.timezone)
-                # 9am in contact's local time, converted to UTC
-                try:
-                    local_tz = (
-                        ZoneInfo(contact.timezone) if contact.timezone else timezone.utc
-                    )
-                except Exception:
-                    local_tz = timezone.utc
-                nine_am_local = contact_now.astimezone(local_tz).replace(
-                    hour=9, minute=0, second=0, microsecond=0
-                )
-                nine_am_utc = nine_am_local.astimezone(timezone.utc)
-                overdue = (now > deadline) and (now > nine_am_utc)
-        if overdue:
+                overdue = now > deadline
+
+            if not overdue:
+                continue
+
+            claim_key = f"kindred:cadence:{contact.id}:{contact_now.date().isoformat()}"
+            if not await _claim_job(redis, claim_key, ttl_seconds=172800):
+                continue
+
             name = f"{contact.first_name} {contact.last_name or ''}".strip()
             try:
-                apobj.notify(
-                    title=f"Losing touch: {name}",
-                    body=f"You haven't contacted {name} in over {contact.contact_frequency_days} days.",
+                delivered = bool(
+                    apobj.notify(
+                        title=f"Losing touch: {name}",
+                        body=(
+                            f"You haven't contacted {name} in over "
+                            f"{contact.contact_frequency_days} days."
+                        ),
+                    )
                 )
+                if not delivered:
+                    await _release_job_claim(redis, claim_key)
             except Exception as e:
+                await _release_job_claim(redis, claim_key)
                 logger.error(
-                    f"Failed to send cadence notification for contact {contact.id}: {e}"
+                    "Failed to send cadence notification for contact %s: %s",
+                    contact.id,
+                    e,
                 )
 
 
@@ -240,7 +357,7 @@ class WorkerSettings:
     ]
     cron_jobs = [
         cron(check_reminders, minute={0, 30}),  # Every 30 minutes
-        cron(check_cadences, hour={9}, minute={0}),  # Daily at 9 AM UTC
+        cron(check_cadences, minute={0}),  # Hourly; each contact is gated at local 9 AM
         cron(poll_email_accounts, hour={6, 12, 18}, minute={0}),  # 6AM, noon, 6PM UTC
     ]
     redis_settings = RedisSettings.from_dsn(settings.REDIS_URL)

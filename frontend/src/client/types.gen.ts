@@ -188,26 +188,26 @@ export type BirthdayFieldChange = {
     value: (string | null);
 };
 
-export type Body_ical_upload_ical = {
+export type Body_post_api_v1_ical_upload = {
     file: string;
 };
 
-export type Body_import_export_import_csv = {
+export type Body_post_api_v1_import_export_import_csv = {
     file: string;
     column_mapping?: ({
     [key: string]: (string | null);
 } | null);
 };
 
-export type Body_import_export_import_vcard = {
+export type Body_post_api_v1_import_export_import_csv_preview = {
     file: string;
 };
 
-export type Body_import_export_preview_csv_import = {
+export type Body_post_api_v1_import_export_import_vcard = {
     file: string;
 };
 
-export type Body_login_login_access_token = {
+export type Body_post_api_v1_login_access_token = {
     grant_type?: (string | null);
     username: string;
     password: string;
@@ -216,7 +216,7 @@ export type Body_login_login_access_token = {
     client_secret?: (string | null);
 };
 
-export type Body_transcribe_transcribe_audio = {
+export type Body_post_api_v1_transcribe = {
     file: (Blob | File);
     timezone?: string;
     contact_ids?: Array<(string)>;
@@ -232,6 +232,7 @@ export type BulkFilters = {
 export type BulkOperations = {
     set_is_favorite?: (boolean | null);
     set_is_archived?: (boolean | null);
+    set_deleted?: (boolean | null);
     set_stage?: (string | null);
     add_tag_ids?: (Array<(string)> | null);
     remove_tag_ids?: (Array<(string)> | null);
@@ -240,6 +241,7 @@ export type BulkOperations = {
 export type BulkUpdateRequest = {
     contact_ids?: (Array<(string)> | null);
     select_all_filtered?: boolean;
+    saved_filter_id?: (string | null);
     filters?: (BulkFilters | null);
     operations: BulkOperations;
     limit?: number;
@@ -929,14 +931,6 @@ export type EmailOAuthTokenPublic = {
      */
     email_address: string;
     /**
-     * Encrypted access token for the Gmail API.
-     */
-    encrypted_access_token: string;
-    /**
-     * Encrypted refresh token for obtaining new access tokens.
-     */
-    encrypted_refresh_token?: (string | null);
-    /**
      * When the access token expires (UTC).
      */
     token_expires_at?: (string | null);
@@ -1193,6 +1187,9 @@ export type InteractionCreate = {
     attendee_ids: Array<(string)>;
     is_draft?: boolean;
     draft_source?: (string | null);
+    location_label?: (string | null);
+    latitude?: (number | null);
+    longitude?: (number | null);
 };
 
 export type InteractionPublic = {
@@ -1233,6 +1230,9 @@ export type InteractionUpdate = {
     occurred_at?: (string | null);
     notes?: (string | null);
     duration_minutes?: (number | null);
+    location_label?: (string | null);
+    latitude?: (number | null);
+    longitude?: (number | null);
     /**
      * Replace the attendee set; must have at least one if provided.
      */
@@ -1726,6 +1726,10 @@ export type PrivateUserCreate = {
     is_verified?: boolean;
 };
 
+export type ReadyInfo = {
+    status?: string;
+};
+
 export type RelationshipCreate = {
     /**
      * Kind of relationship: spouse, child, parent, sibling, friend, colleague, etc.
@@ -1974,6 +1978,7 @@ export type SearchResultItem = {
     rank?: (number | null);
     created_at?: (string | null);
     updated_at?: (string | null);
+    contact_id?: (string | null);
 };
 
 export type SetupSubmit = {
@@ -2357,7 +2362,7 @@ export type WebhookEventResponse = {
     error?: (string | null);
 };
 
-export type ActivityLogsListActivityLogsData = {
+export type GetApiV1ActivityLogsData = {
     entityId?: (string | null);
     entityType?: (string | null);
     limit?: number;
@@ -2365,158 +2370,152 @@ export type ActivityLogsListActivityLogsData = {
     tagId?: (string | null);
 };
 
-export type ActivityLogsListActivityLogsResponse = (ActivityLogsPublic);
+export type GetApiV1ActivityLogsResponse = (ActivityLogsPublic);
 
-export type AddressesListAddressesData = {
+export type GetApiV1AddressesContactContactIdData = {
     contactId: string;
 };
 
-export type AddressesListAddressesResponse = (AddressesPublic);
+export type GetApiV1AddressesContactContactIdResponse = (AddressesPublic);
 
-export type AddressesCreateAddressRouteData = {
+export type PostApiV1AddressesData = {
     requestBody: AddressCreate;
 };
 
-export type AddressesCreateAddressRouteResponse = (AddressPublic);
+export type PostApiV1AddressesResponse = (AddressPublic);
 
-export type AddressesUpdateAddressData = {
+export type PatchApiV1AddressesAddressIdData = {
     addressId: string;
     requestBody: AddressUpdate;
 };
 
-export type AddressesUpdateAddressResponse = (AddressPublic);
+export type PatchApiV1AddressesAddressIdResponse = (AddressPublic);
 
-export type AddressesDeleteAddressData = {
+export type DeleteApiV1AddressesAddressIdData = {
     addressId: string;
 };
 
-export type AddressesDeleteAddressResponse = (Ok);
+export type DeleteApiV1AddressesAddressIdResponse = (Ok);
 
-export type AddressesGeocodeAddressManualData = {
+export type PostApiV1AddressesAddressIdGeocodeData = {
     addressId: string;
 };
 
-export type AddressesGeocodeAddressManualResponse = (AddressPublic);
+export type PostApiV1AddressesAddressIdGeocodeResponse = (AddressPublic);
 
-export type AddressesGeocodeMissingCoordinatesResponse = ({
+export type PostApiV1AddressesGeocodeMissingResponse = ({
     [key: string]: unknown;
 });
 
-export type ApiKeysListMyApiKeysResponse = (APIKeysPublic);
+export type GetApiV1UsersMeApiKeysResponse = (APIKeysPublic);
 
-export type ApiKeysCreateMyApiKeyData = {
+export type PostApiV1UsersMeApiKeysData = {
     requestBody: APIKeyCreate;
 };
 
-export type ApiKeysCreateMyApiKeyResponse = (APIKeyCreated);
+export type PostApiV1UsersMeApiKeysResponse = (APIKeyCreated);
 
-export type ApiKeysRevokeMyApiKeyData = {
+export type DeleteApiV1UsersMeApiKeysApiKeyIdData = {
     apiKeyId: string;
 };
 
-export type ApiKeysRevokeMyApiKeyResponse = (Message);
+export type DeleteApiV1UsersMeApiKeysApiKeyIdResponse = (Message);
 
-export type CalendarGetCalendarMonthData = {
+export type GetApiV1CalendarMonthYyyyMmData = {
     yyyyMm: string;
 };
 
-export type CalendarGetCalendarMonthResponse = (CalendarMonthResponse);
+export type GetApiV1CalendarMonthYyyyMmResponse = (CalendarMonthResponse);
 
-export type CalendarCreateCalendarTokenData = {
+export type PostApiV1CalendarTokenData = {
     requestBody: CalendarTokenCreate;
 };
 
-export type CalendarCreateCalendarTokenResponse = (CalendarTokenPublic);
+export type PostApiV1CalendarTokenResponse = (CalendarTokenPublic);
 
-export type CalendarListCalendarTokensResponse = (CalendarTokensPublic);
+export type GetApiV1CalendarTokensResponse = (CalendarTokensPublic);
 
-export type CalendarRevokeCalendarTokenData = {
+export type DeleteApiV1CalendarTokenTokenIdData = {
     tokenId: string;
 };
 
-export type CalendarRevokeCalendarTokenResponse = (unknown);
+export type DeleteApiV1CalendarTokenTokenIdResponse = (unknown);
 
-export type CalendarGetCalendarIcsData = {
+export type GetApiV1CalendarCalendarIcsData = {
     /**
      * Optional timezone for output (e.g., America/Chicago)
      */
     tz?: (string | null);
 };
 
-export type CalendarGetCalendarIcsResponse = (unknown);
+export type GetApiV1CalendarCalendarIcsResponse = (unknown);
 
-export type CarddavWellKnownCarddavResponse = (unknown);
+export type GetWellKnownCarddavResponse = (unknown);
 
-export type CommunicationPreferencesGetCommunicationPreferenceData = {
+export type GetApiV1ContactsContactIdCommunicationPreferenceData = {
     contactId: string;
 };
 
-export type CommunicationPreferencesGetCommunicationPreferenceResponse = ((CommunicationPreferencePublic | null));
+export type GetApiV1ContactsContactIdCommunicationPreferenceResponse = ((CommunicationPreferencePublic | null));
 
-export type CommunicationPreferencesUpsertCommunicationPreferenceData = {
+export type PatchApiV1ContactsContactIdCommunicationPreferenceData = {
     contactId: string;
     requestBody: CommunicationPreferenceUpdate;
 };
 
-export type CommunicationPreferencesUpsertCommunicationPreferenceResponse = (CommunicationPreferencePublic);
+export type PatchApiV1ContactsContactIdCommunicationPreferenceResponse = (CommunicationPreferencePublic);
 
-export type CommunicationPreferencesDeleteCommunicationPreferenceData = {
+export type DeleteApiV1ContactsContactIdCommunicationPreferenceData = {
     contactId: string;
 };
 
-export type CommunicationPreferencesDeleteCommunicationPreferenceResponse = (unknown);
+export type DeleteApiV1ContactsContactIdCommunicationPreferenceResponse = (unknown);
 
-export type ContactFieldsListContactFieldsData = {
+export type GetApiV1ContactFieldsContactContactIdData = {
     contactId: string;
     limit?: number;
     skip?: number;
 };
 
-export type ContactFieldsListContactFieldsResponse = (ContactFieldsPublic);
+export type GetApiV1ContactFieldsContactContactIdResponse = (ContactFieldsPublic);
 
-export type ContactFieldsCreateContactFieldRouteData = {
+export type PostApiV1ContactFieldsData = {
     requestBody: ContactFieldCreate;
 };
 
-export type ContactFieldsCreateContactFieldRouteResponse = (ContactFieldPublic);
+export type PostApiV1ContactFieldsResponse = (ContactFieldPublic);
 
-export type ContactFieldsUpdateContactFieldData = {
+export type PatchApiV1ContactFieldsFieldIdData = {
     fieldId: string;
     requestBody: ContactFieldUpdate;
 };
 
-export type ContactFieldsUpdateContactFieldResponse = (ContactFieldPublic);
+export type PatchApiV1ContactFieldsFieldIdResponse = (ContactFieldPublic);
 
-export type ContactFieldsDeleteContactFieldData = {
+export type DeleteApiV1ContactFieldsFieldIdData = {
     fieldId: string;
 };
 
-export type ContactFieldsDeleteContactFieldResponse = (Ok);
+export type DeleteApiV1ContactFieldsFieldIdResponse = (Ok);
 
-export type ContactsGetContactPdfData = {
-    contactId: string;
-};
+export type GetApiV1ContactsStagesDistinctResponse = (Array<(string)>);
 
-export type ContactsGetContactPdfResponse = (unknown);
-
-export type ContactsGetDistinctStagesResponse = (Array<(string)>);
-
-export type ContactsGetKanbanBoardData = {
+export type GetApiV1ContactsKanbanData = {
     search?: (string | null);
     tagId?: (string | null);
 };
 
-export type ContactsGetKanbanBoardResponse = ({
+export type GetApiV1ContactsKanbanResponse = ({
     [key: string]: ContactsPublic;
 });
 
-export type ContactsGetContactStageEventsData = {
+export type GetApiV1ContactsContactIdStageEventsData = {
     contactId: string;
 };
 
-export type ContactsGetContactStageEventsResponse = (ContactStageEventsPublic);
+export type GetApiV1ContactsContactIdStageEventsResponse = (ContactStageEventsPublic);
 
-export type ContactsListContactsData = {
+export type GetApiV1ContactsData = {
     ids?: (Array<(string)> | null);
     includeDeleted?: boolean;
     isArchived?: (boolean | null);
@@ -2530,50 +2529,50 @@ export type ContactsListContactsData = {
     tagId?: (string | null);
 };
 
-export type ContactsListContactsResponse = (ContactsPublic);
+export type GetApiV1ContactsResponse = (ContactsPublic);
 
-export type ContactsCreateContactData = {
+export type PostApiV1ContactsData = {
     requestBody: ContactCreate;
 };
 
-export type ContactsCreateContactResponse = (ContactPublic);
+export type PostApiV1ContactsResponse = (ContactPublic);
 
-export type ContactsListOverdueContactsData = {
+export type GetApiV1ContactsOverdueData = {
     days?: number;
 };
 
-export type ContactsListOverdueContactsResponse = (OverdueContactsPublic);
+export type GetApiV1ContactsOverdueResponse = (OverdueContactsPublic);
 
-export type ContactsListLosingTouchContactsResponse = (ContactsPublic);
+export type GetApiV1ContactsLosingTouchResponse = (ContactsPublic);
 
-export type ContactsSkipContactData = {
+export type PatchApiV1ContactsContactIdSkipData = {
     contactId: string;
     requestBody?: (ContactSnoozeRequest | null);
 };
 
-export type ContactsSkipContactResponse = (ContactPublic);
+export type PatchApiV1ContactsContactIdSkipResponse = (ContactPublic);
 
-export type ContactsPatchSnoozeContactData = {
+export type PatchApiV1ContactsContactIdSnoozeData = {
     contactId: string;
     requestBody?: (ContactSnoozeRequest | null);
 };
 
-export type ContactsPatchSnoozeContactResponse = (ContactPublic);
+export type PatchApiV1ContactsContactIdSnoozeResponse = (ContactPublic);
 
-export type ContactsSnoozeContactData = {
+export type PostApiV1ContactsContactIdSnoozeData = {
     contactId: string;
     requestBody?: (ContactSnoozeRequest | null);
 };
 
-export type ContactsSnoozeContactResponse = (ContactPublic);
+export type PostApiV1ContactsContactIdSnoozeResponse = (ContactPublic);
 
-export type ContactsBulkUpdateContactsData = {
+export type PatchApiV1ContactsBulkData = {
     requestBody: BulkUpdateRequest;
 };
 
-export type ContactsBulkUpdateContactsResponse = (BulkUpdateResponse);
+export type PatchApiV1ContactsBulkResponse = (BulkUpdateResponse);
 
-export type ContactsListContactsGeoData = {
+export type GetApiV1ContactsGeoData = {
     /**
      * Maximum latitude for bounding box filter
      */
@@ -2592,193 +2591,193 @@ export type ContactsListContactsGeoData = {
     minLng?: (number | null);
 };
 
-export type ContactsListContactsGeoResponse = (ContactsGeoResponse);
+export type GetApiV1ContactsGeoResponse = (ContactsGeoResponse);
 
-export type ContactsGetContactData = {
+export type GetApiV1ContactsContactIdData = {
     contactId: string;
 };
 
-export type ContactsGetContactResponse = (ContactPublic);
+export type GetApiV1ContactsContactIdResponse = (ContactPublic);
 
-export type ContactsUpdateContactData = {
+export type PatchApiV1ContactsContactIdData = {
     contactId: string;
     requestBody: ContactUpdate;
 };
 
-export type ContactsUpdateContactResponse = (ContactPublic);
+export type PatchApiV1ContactsContactIdResponse = (ContactPublic);
 
-export type ContactsDeleteContactData = {
+export type DeleteApiV1ContactsContactIdData = {
     contactId: string;
 };
 
-export type ContactsDeleteContactResponse = ({
+export type DeleteApiV1ContactsContactIdResponse = ({
     [key: string]: unknown;
 });
 
-export type ContactsRestoreContactData = {
+export type PostApiV1ContactsContactIdRestoreData = {
     contactId: string;
 };
 
-export type ContactsRestoreContactResponse = (ContactPublic);
+export type PostApiV1ContactsContactIdRestoreResponse = (ContactPublic);
 
-export type ContactsGetContactHeatmapData = {
+export type GetApiV1ContactsContactIdHeatmapData = {
     contactId: string;
 };
 
-export type ContactsGetContactHeatmapResponse = (ContactHeatmapResponse);
+export type GetApiV1ContactsContactIdHeatmapResponse = (ContactHeatmapResponse);
 
-export type ContactsListContactMentionsData = {
+export type GetApiV1ContactsContactIdMentionsData = {
     contactId: string;
 };
 
-export type ContactsListContactMentionsResponse = (Array<_MentionPublic>);
+export type GetApiV1ContactsContactIdMentionsResponse = (Array<_MentionPublic>);
 
-export type ContactsSyncImessageContactsData = {
+export type PostApiV1ContactsImessageSyncData = {
     requestBody: IMessageSyncRequest;
 };
 
-export type ContactsSyncImessageContactsResponse = (IMessageSyncResult);
+export type PostApiV1ContactsImessageSyncResponse = (IMessageSyncResult);
 
-export type ContactsGetImessageProfileData = {
+export type GetApiV1ContactsContactIdImessageProfileData = {
     contactId: string;
 };
 
-export type ContactsGetImessageProfileResponse = (IMessageProfileResponse);
+export type GetApiV1ContactsContactIdImessageProfileResponse = (IMessageProfileResponse);
 
-export type ContactSharesCreateContactShareData = {
+export type PostApiV1ContactSharesData = {
     requestBody: ContactShareIn;
 };
 
-export type ContactSharesCreateContactShareResponse = (AllContactsSharePublic);
+export type PostApiV1ContactSharesResponse = (AllContactsSharePublic);
 
-export type ContactSharesListContactSharesResponse = (AllContactsSharesPublic);
+export type GetApiV1ContactSharesResponse = (AllContactsSharesPublic);
 
-export type ContactSharesDeleteContactShareData = {
+export type DeleteApiV1ContactSharesData = {
     granteeEmail: string;
 };
 
-export type ContactSharesDeleteContactShareResponse = (Message);
+export type DeleteApiV1ContactSharesResponse = (Message);
 
-export type ContactStageEventsCreateContactStageEventData = {
+export type PostApiV1ContactsContactIdStageEventsData = {
     contactId: string;
     requestBody: ContactStageEventCreate;
 };
 
-export type ContactStageEventsCreateContactStageEventResponse = (ContactStageEventPublic);
+export type PostApiV1ContactsContactIdStageEventsResponse = (ContactStageEventPublic);
 
-export type ContactStageEventsListContactStageHistoryData = {
+export type GetApiV1ContactsContactIdStageHistoryData = {
     contactId: string;
 };
 
-export type ContactStageEventsListContactStageHistoryResponse = (ContactStageEventsPublic);
+export type GetApiV1ContactsContactIdStageHistoryResponse = (ContactStageEventsPublic);
 
-export type ContactStageEventsGetLatestStageData = {
+export type GetApiV1ContactsContactIdStageHistoryLatestData = {
     contactId: string;
 };
 
-export type ContactStageEventsGetLatestStageResponse = (ContactStageEventPublic);
+export type GetApiV1ContactsContactIdStageHistoryLatestResponse = (ContactStageEventPublic);
 
-export type ContactStageEventsGetStageDurationRouteData = {
+export type GetApiV1ContactsContactIdStageDurationStageData = {
     contactId: string;
     stage: string;
 };
 
-export type ContactStageEventsGetStageDurationRouteResponse = (Array<[
+export type GetApiV1ContactsContactIdStageDurationStageResponse = (Array<[
     string,
     (string | null),
     (number | null)
 ]>);
 
-export type ContactStageEventsBackfillStageEventsRouteResponse = ({
+export type PostApiV1ContactsBackfillStageEventsResponse = ({
     [key: string]: (number);
 });
 
-export type ContactStageEventsGetStageAnalyticsData = {
+export type GetApiV1ContactsContactIdStageAnalyticsData = {
     contactId: string;
 };
 
-export type ContactStageEventsGetStageAnalyticsResponse = ({
+export type GetApiV1ContactsContactIdStageAnalyticsResponse = ({
     [key: string]: Array<Array<unknown>>;
 });
 
-export type CustomFieldsListFieldDefinitionsResponse = (CustomFieldDefinitionsPublic);
+export type GetApiV1CustomFieldsDefinitionsResponse = (CustomFieldDefinitionsPublic);
 
-export type CustomFieldsCreateFieldDefinitionData = {
+export type PostApiV1CustomFieldsDefinitionsData = {
     requestBody: CustomFieldDefinitionCreate;
 };
 
-export type CustomFieldsCreateFieldDefinitionResponse = (CustomFieldDefinitionPublic);
+export type PostApiV1CustomFieldsDefinitionsResponse = (CustomFieldDefinitionPublic);
 
-export type CustomFieldsUpdateFieldDefinitionData = {
+export type PatchApiV1CustomFieldsDefinitionsDefIdData = {
     defId: string;
     requestBody: CustomFieldDefinitionUpdate;
 };
 
-export type CustomFieldsUpdateFieldDefinitionResponse = (CustomFieldDefinitionPublic);
+export type PatchApiV1CustomFieldsDefinitionsDefIdResponse = (CustomFieldDefinitionPublic);
 
-export type CustomFieldsDeleteFieldDefinitionData = {
+export type DeleteApiV1CustomFieldsDefinitionsDefIdData = {
     defId: string;
 };
 
-export type CustomFieldsDeleteFieldDefinitionResponse = (Ok);
+export type DeleteApiV1CustomFieldsDefinitionsDefIdResponse = (Ok);
 
-export type CustomFieldsListFieldValuesData = {
+export type GetApiV1CustomFieldsValuesContactContactIdData = {
     contactId: string;
 };
 
-export type CustomFieldsListFieldValuesResponse = (CustomFieldValuesPublic);
+export type GetApiV1CustomFieldsValuesContactContactIdResponse = (CustomFieldValuesPublic);
 
-export type CustomFieldsCreateFieldValueData = {
+export type PostApiV1CustomFieldsValuesData = {
     requestBody: CustomFieldValueCreate;
 };
 
-export type CustomFieldsCreateFieldValueResponse = (CustomFieldValuePublic);
+export type PostApiV1CustomFieldsValuesResponse = (CustomFieldValuePublic);
 
-export type CustomFieldsUpdateFieldValueData = {
+export type PatchApiV1CustomFieldsValuesValueIdData = {
     requestBody: CustomFieldValueUpdate;
     valueId: string;
 };
 
-export type CustomFieldsUpdateFieldValueResponse = (CustomFieldValuePublic);
+export type PatchApiV1CustomFieldsValuesValueIdResponse = (CustomFieldValuePublic);
 
-export type CustomFieldsDeleteFieldValueData = {
+export type DeleteApiV1CustomFieldsValuesValueIdData = {
     valueId: string;
 };
 
-export type CustomFieldsDeleteFieldValueResponse = (Ok);
+export type DeleteApiV1CustomFieldsValuesValueIdResponse = (Ok);
 
-export type DebtsListDebtsData = {
+export type GetApiV1DebtsContactContactIdData = {
     contactId: string;
 };
 
-export type DebtsListDebtsResponse = (DebtsPublic);
+export type GetApiV1DebtsContactContactIdResponse = (DebtsPublic);
 
-export type DebtsCreateDebtRouteData = {
+export type PostApiV1DebtsData = {
     requestBody: DebtCreate;
 };
 
-export type DebtsCreateDebtRouteResponse = (DebtPublic);
+export type PostApiV1DebtsResponse = (DebtPublic);
 
-export type DebtsUpdateDebtData = {
+export type PatchApiV1DebtsDebtIdData = {
     debtId: string;
     requestBody: DebtUpdate;
 };
 
-export type DebtsUpdateDebtResponse = (DebtPublic);
+export type PatchApiV1DebtsDebtIdResponse = (DebtPublic);
 
-export type DebtsDeleteDebtData = {
+export type DeleteApiV1DebtsDebtIdData = {
     debtId: string;
 };
 
-export type DebtsDeleteDebtResponse = (Ok);
+export type DeleteApiV1DebtsDebtIdResponse = (Ok);
 
-export type DebtsRestoreDebtData = {
+export type PostApiV1DebtsDebtIdRestoreData = {
     debtId: string;
 };
 
-export type DebtsRestoreDebtResponse = (unknown);
+export type PostApiV1DebtsDebtIdRestoreResponse = (unknown);
 
-export type EmailGmailAuthorizeData = {
+export type GetApiV1EmailOauthAuthorizeData = {
     /**
      * Contact ID to associate with this email
      */
@@ -2789,88 +2788,88 @@ export type EmailGmailAuthorizeData = {
     emailAddress: string;
 };
 
-export type EmailGmailAuthorizeResponse = ({
+export type GetApiV1EmailOauthAuthorizeResponse = ({
     [key: string]: unknown;
 });
 
-export type EmailGmailCallbackData = {
+export type GetApiV1EmailOauthCallbackData = {
     code: string;
     state: string;
 };
 
-export type EmailGmailCallbackResponse = ({
+export type GetApiV1EmailOauthCallbackResponse = ({
     [key: string]: unknown;
 });
 
-export type EmailListEmailTokensData = {
+export type GetApiV1EmailTokensData = {
     contactId?: (string | null);
 };
 
-export type EmailListEmailTokensResponse = (EmailOAuthTokensPublic);
+export type GetApiV1EmailTokensResponse = (EmailOAuthTokensPublic);
 
-export type EmailDeleteEmailTokenData = {
+export type DeleteApiV1EmailTokensTokenIdData = {
     tokenId: string;
 };
 
-export type EmailDeleteEmailTokenResponse = ({
+export type DeleteApiV1EmailTokensTokenIdResponse = ({
     [key: string]: (string);
 });
 
-export type EmailPollContactEmailData = {
-    contactId: string;
-};
-
-export type EmailPollContactEmailResponse = ({
+export type PostApiV1EmailPollAllResponse = ({
     [key: string]: unknown;
 });
 
-export type EmailPollAllEmailsResponse = ({
-    [key: string]: unknown;
-});
-
-export type GiftsListGiftsData = {
+export type PostApiV1EmailPollContactIdData = {
     contactId: string;
 };
 
-export type GiftsListGiftsResponse = (GiftsPublic);
+export type PostApiV1EmailPollContactIdResponse = ({
+    [key: string]: unknown;
+});
 
-export type GiftsCreateGiftRouteData = {
+export type GetApiV1GiftsContactContactIdData = {
+    contactId: string;
+};
+
+export type GetApiV1GiftsContactContactIdResponse = (GiftsPublic);
+
+export type PostApiV1GiftsData = {
     requestBody: GiftCreate;
 };
 
-export type GiftsCreateGiftRouteResponse = (GiftPublic);
+export type PostApiV1GiftsResponse = (GiftPublic);
 
-export type GiftsUpdateGiftData = {
+export type PatchApiV1GiftsGiftIdData = {
     giftId: string;
     requestBody: GiftUpdate;
 };
 
-export type GiftsUpdateGiftResponse = (GiftPublic);
+export type PatchApiV1GiftsGiftIdResponse = (GiftPublic);
 
-export type GiftsDeleteGiftData = {
+export type DeleteApiV1GiftsGiftIdData = {
     giftId: string;
 };
 
-export type GiftsDeleteGiftResponse = (Ok);
+export type DeleteApiV1GiftsGiftIdResponse = (Ok);
 
-export type GiftsRestoreGiftData = {
+export type PostApiV1GiftsGiftIdRestoreData = {
     giftId: string;
 };
 
-export type GiftsRestoreGiftResponse = (unknown);
+export type PostApiV1GiftsGiftIdRestoreResponse = (unknown);
 
-export type GiftsGetKanbanBoardResponse = ({
+export type GetApiV1GiftsKanbanResponse = ({
     [key: string]: unknown;
 });
 
-export type GiftsChangeGiftStatusData = {
+export type PostApiV1GiftsGiftIdChangeStatusData = {
     giftId: string;
     newStatus: GiftStatus;
 };
 
-export type GiftsChangeGiftStatusResponse = (GiftPublic);
+export type PostApiV1GiftsGiftIdChangeStatusResponse = (GiftPublic);
 
-export type GraphGetContactsGraphData = {
+export type GetApiV1GraphContactsData = {
     /**
      * Hops from seed contacts (1-3)
      */
@@ -2881,9 +2880,9 @@ export type GraphGetContactsGraphData = {
     rootContactId?: (string | null);
 };
 
-export type GraphGetContactsGraphResponse = (unknown);
+export type GetApiV1GraphContactsResponse = (unknown);
 
-export type GraphGetContactGraphData = {
+export type GetApiV1GraphContactsContactIdData = {
     contactId: string;
     /**
      * Hops from the contact (1-3)
@@ -2891,281 +2890,281 @@ export type GraphGetContactGraphData = {
     depth?: number;
 };
 
-export type GraphGetContactGraphResponse = (unknown);
+export type GetApiV1GraphContactsContactIdResponse = (unknown);
 
-export type IcalUploadIcalData = {
-    formData: Body_ical_upload_ical;
+export type PostApiV1IcalUploadData = {
+    formData: Body_post_api_v1_ical_upload;
 };
 
-export type IcalUploadIcalResponse = (unknown);
+export type PostApiV1IcalUploadResponse = (unknown);
 
-export type IcalConfirmIcalImportData = {
+export type PostApiV1IcalConfirmData = {
     requestBody: Array<{
         [key: string]: unknown;
     }>;
 };
 
-export type IcalConfirmIcalImportResponse = (unknown);
+export type PostApiV1IcalConfirmResponse = (unknown);
 
-export type ImportExportImportVcardData = {
-    formData: Body_import_export_import_vcard;
+export type PostApiV1ImportExportImportVcardData = {
+    formData: Body_post_api_v1_import_export_import_vcard;
 };
 
-export type ImportExportImportVcardResponse = (VCardImportResponse);
+export type PostApiV1ImportExportImportVcardResponse = (VCardImportResponse);
 
-export type ImportExportExportVcardResponse = (unknown);
+export type GetApiV1ImportExportExportVcardResponse = (unknown);
 
-export type ImportExportExportJsonResponse = (JsonExportResponse);
+export type GetApiV1ImportExportExportJsonResponse = (JsonExportResponse);
 
-export type ImportExportPreviewCsvImportData = {
-    formData: Body_import_export_preview_csv_import;
+export type PostApiV1ImportExportImportCsvPreviewData = {
+    formData: Body_post_api_v1_import_export_import_csv_preview;
 };
 
-export type ImportExportPreviewCsvImportResponse = (CSVPreviewResponse);
+export type PostApiV1ImportExportImportCsvPreviewResponse = (CSVPreviewResponse);
 
-export type ImportExportImportCsvData = {
+export type PostApiV1ImportExportImportCsvData = {
     createMissingTags?: boolean;
-    formData: Body_import_export_import_csv;
+    formData: Body_post_api_v1_import_export_import_csv;
     mergeDuplicates?: boolean;
     skipDuplicates?: boolean;
 };
 
-export type ImportExportImportCsvResponse = (CSVImportResponse);
+export type PostApiV1ImportExportImportCsvResponse = (CSVImportResponse);
 
-export type ImportExportExportCsvData = {
+export type GetApiV1ImportExportExportCsvData = {
     includeFields?: boolean;
     includeTags?: boolean;
 };
 
-export type ImportExportExportCsvResponse = (unknown);
+export type GetApiV1ImportExportExportCsvResponse = (unknown);
 
-export type InteractionsListInteractionsData = {
+export type GetApiV1InteractionsData = {
     contactId?: (string | null);
     isDraft?: (boolean | null);
     limit?: number;
     skip?: number;
 };
 
-export type InteractionsListInteractionsResponse = (InteractionsPublic);
+export type GetApiV1InteractionsResponse = (InteractionsPublic);
 
-export type InteractionsCreateInteractionRouteData = {
+export type PostApiV1InteractionsData = {
     requestBody: InteractionCreate;
 };
 
-export type InteractionsCreateInteractionRouteResponse = (InteractionPublic);
+export type PostApiV1InteractionsResponse = (InteractionPublic);
 
-export type InteractionsUpdateInteractionData = {
+export type PatchApiV1InteractionsInteractionIdData = {
     interactionId: string;
     requestBody: InteractionUpdate;
 };
 
-export type InteractionsUpdateInteractionResponse = (InteractionPublic);
+export type PatchApiV1InteractionsInteractionIdResponse = (InteractionPublic);
 
-export type InteractionsDeleteInteractionData = {
+export type DeleteApiV1InteractionsInteractionIdData = {
     interactionId: string;
 };
 
-export type InteractionsDeleteInteractionResponse = (Ok);
+export type DeleteApiV1InteractionsInteractionIdResponse = (Ok);
 
-export type InteractionsConfirmDraftInteractionData = {
+export type PostApiV1InteractionsInteractionIdConfirmData = {
     interactionId: string;
 };
 
-export type InteractionsConfirmDraftInteractionResponse = (InteractionPublic);
+export type PostApiV1InteractionsInteractionIdConfirmResponse = (InteractionPublic);
 
-export type InteractionsRestoreInteractionData = {
+export type PostApiV1InteractionsInteractionIdRestoreData = {
     interactionId: string;
 };
 
-export type InteractionsRestoreInteractionResponse = (unknown);
+export type PostApiV1InteractionsInteractionIdRestoreResponse = (unknown);
 
-export type LifeEventsListLifeEventsData = {
+export type GetApiV1LifeEventsContactContactIdData = {
     contactId: string;
 };
 
-export type LifeEventsListLifeEventsResponse = (LifeEventsPublic);
+export type GetApiV1LifeEventsContactContactIdResponse = (LifeEventsPublic);
 
-export type LifeEventsCreateLifeEventRouteData = {
+export type PostApiV1LifeEventsData = {
     requestBody: LifeEventCreate;
 };
 
-export type LifeEventsCreateLifeEventRouteResponse = (LifeEventPublic);
+export type PostApiV1LifeEventsResponse = (LifeEventPublic);
 
-export type LifeEventsUpdateLifeEventData = {
+export type PatchApiV1LifeEventsEventIdData = {
     eventId: string;
     requestBody: LifeEventUpdate;
 };
 
-export type LifeEventsUpdateLifeEventResponse = (LifeEventPublic);
+export type PatchApiV1LifeEventsEventIdResponse = (LifeEventPublic);
 
-export type LifeEventsDeleteLifeEventData = {
+export type DeleteApiV1LifeEventsEventIdData = {
     eventId: string;
 };
 
-export type LifeEventsDeleteLifeEventResponse = (Ok);
+export type DeleteApiV1LifeEventsEventIdResponse = (Ok);
 
-export type LifeEventsRestoreLifeEventData = {
+export type PostApiV1LifeEventsEventIdRestoreData = {
     eventId: string;
 };
 
-export type LifeEventsRestoreLifeEventResponse = (unknown);
+export type PostApiV1LifeEventsEventIdRestoreResponse = (unknown);
 
-export type LoginLoginAccessTokenData = {
-    formData: Body_login_login_access_token;
+export type PostApiV1LoginAccessTokenData = {
+    formData: Body_post_api_v1_login_access_token;
 };
 
-export type LoginLoginAccessTokenResponse = (Token);
+export type PostApiV1LoginAccessTokenResponse = (Token);
 
-export type LoginTestTokenResponse = (UserPublic);
+export type PostApiV1LoginTestTokenResponse = (UserPublic);
 
-export type LoginRecoverPasswordData = {
+export type PostApiV1PasswordRecoveryEmailData = {
     email: string;
 };
 
-export type LoginRecoverPasswordResponse = (Message);
+export type PostApiV1PasswordRecoveryEmailResponse = (Message);
 
-export type LoginResetPasswordData = {
+export type PostApiV1ResetPasswordData = {
     requestBody: NewPassword;
 };
 
-export type LoginResetPasswordResponse = (Message);
+export type PostApiV1ResetPasswordResponse = (Message);
 
-export type LoginRecoverPasswordHtmlContentData = {
+export type PostApiV1PasswordRecoveryHtmlContentEmailData = {
     email: string;
 };
 
-export type LoginRecoverPasswordHtmlContentResponse = (string);
+export type PostApiV1PasswordRecoveryHtmlContentEmailResponse = (string);
 
-export type MediaRecommendationsListMediaRecommendationsData = {
+export type GetApiV1MediaRecommendationsContactContactIdData = {
     contactId: string;
 };
 
-export type MediaRecommendationsListMediaRecommendationsResponse = (MediaRecommendationsPublic);
+export type GetApiV1MediaRecommendationsContactContactIdResponse = (MediaRecommendationsPublic);
 
-export type MediaRecommendationsCreateMediaRecommendationRouteData = {
+export type PostApiV1MediaRecommendationsData = {
     requestBody: MediaRecommendationCreate;
 };
 
-export type MediaRecommendationsCreateMediaRecommendationRouteResponse = (MediaRecommendationPublic);
+export type PostApiV1MediaRecommendationsResponse = (MediaRecommendationPublic);
 
-export type MediaRecommendationsUpdateMediaRecommendationData = {
+export type PatchApiV1MediaRecommendationsRecIdData = {
     recId: string;
     requestBody: MediaRecommendationUpdate;
 };
 
-export type MediaRecommendationsUpdateMediaRecommendationResponse = (MediaRecommendationPublic);
+export type PatchApiV1MediaRecommendationsRecIdResponse = (MediaRecommendationPublic);
 
-export type MediaRecommendationsDeleteMediaRecommendationData = {
+export type DeleteApiV1MediaRecommendationsRecIdData = {
     recId: string;
 };
 
-export type MediaRecommendationsDeleteMediaRecommendationResponse = (Ok);
+export type DeleteApiV1MediaRecommendationsRecIdResponse = (Ok);
 
-export type NotesListNotesData = {
+export type GetApiV1NotesContactContactIdData = {
     contactId: string;
     limit?: number;
     skip?: number;
 };
 
-export type NotesListNotesResponse = (NotesPublic);
+export type GetApiV1NotesContactContactIdResponse = (NotesPublic);
 
-export type NotesCreateNoteRouteData = {
+export type PostApiV1NotesData = {
     requestBody: NoteCreate;
 };
 
-export type NotesCreateNoteRouteResponse = (NotePublic);
+export type PostApiV1NotesResponse = (NotePublic);
 
-export type NotesUpdateNoteRouteData = {
+export type PatchApiV1NotesNoteIdData = {
     noteId: string;
     requestBody: NoteUpdate;
 };
 
-export type NotesUpdateNoteRouteResponse = (NotePublic);
+export type PatchApiV1NotesNoteIdResponse = (NotePublic);
 
-export type NotesDeleteNoteData = {
+export type DeleteApiV1NotesNoteIdData = {
     noteId: string;
 };
 
-export type NotesDeleteNoteResponse = (Ok);
+export type DeleteApiV1NotesNoteIdResponse = (Ok);
 
-export type NotesRestoreNoteData = {
+export type PostApiV1NotesNoteIdRestoreData = {
     noteId: string;
 };
 
-export type NotesRestoreNoteResponse = (unknown);
+export type PostApiV1NotesNoteIdRestoreResponse = (unknown);
 
-export type OrganizationsListOrganizationsData = {
+export type GetApiV1OrganizationsData = {
     limit?: number;
     skip?: number;
 };
 
-export type OrganizationsListOrganizationsResponse = (OrganizationsPublic);
+export type GetApiV1OrganizationsResponse = (OrganizationsPublic);
 
-export type OrganizationsCreateOrganizationData = {
+export type PostApiV1OrganizationsData = {
     requestBody: OrganizationCreate;
 };
 
-export type OrganizationsCreateOrganizationResponse = (OrganizationPublic);
+export type PostApiV1OrganizationsResponse = (OrganizationPublic);
 
-export type OrganizationsGetOrganizationData = {
+export type GetApiV1OrganizationsOrganizationIdData = {
     organizationId: string;
 };
 
-export type OrganizationsGetOrganizationResponse = (OrganizationPublic);
+export type GetApiV1OrganizationsOrganizationIdResponse = (OrganizationPublic);
 
-export type OrganizationsUpdateOrganizationData = {
+export type PatchApiV1OrganizationsOrganizationIdData = {
     organizationId: string;
     requestBody: OrganizationUpdate;
 };
 
-export type OrganizationsUpdateOrganizationResponse = (OrganizationPublic);
+export type PatchApiV1OrganizationsOrganizationIdResponse = (OrganizationPublic);
 
-export type OrganizationsDeleteOrganizationData = {
+export type DeleteApiV1OrganizationsOrganizationIdData = {
     organizationId: string;
 };
 
-export type OrganizationsDeleteOrganizationResponse = (unknown);
+export type DeleteApiV1OrganizationsOrganizationIdResponse = (unknown);
 
-export type OrganizationsGetOrganizationWithContactsData = {
+export type GetApiV1OrganizationsOrganizationIdContactsData = {
     organizationId: string;
 };
 
-export type OrganizationsGetOrganizationWithContactsResponse = ({
+export type GetApiV1OrganizationsOrganizationIdContactsResponse = ({
     [key: string]: unknown;
 });
 
-export type PetsListPetsData = {
+export type GetApiV1PetsContactContactIdData = {
     contactId: string;
 };
 
-export type PetsListPetsResponse = (PetsPublic);
+export type GetApiV1PetsContactContactIdResponse = (PetsPublic);
 
-export type PetsCreatePetRouteData = {
+export type PostApiV1PetsData = {
     requestBody: PetCreate;
 };
 
-export type PetsCreatePetRouteResponse = (PetPublic);
+export type PostApiV1PetsResponse = (PetPublic);
 
-export type PetsUpdatePetData = {
+export type PatchApiV1PetsPetIdData = {
     petId: string;
     requestBody: PetUpdate;
 };
 
-export type PetsUpdatePetResponse = (PetPublic);
+export type PatchApiV1PetsPetIdResponse = (PetPublic);
 
-export type PetsDeletePetData = {
+export type DeleteApiV1PetsPetIdData = {
     petId: string;
 };
 
-export type PetsDeletePetResponse = (Ok);
+export type DeleteApiV1PetsPetIdResponse = (Ok);
 
-export type PrivateCreateUserData = {
+export type PostApiV1PrivateUsersData = {
     requestBody: PrivateUserCreate;
 };
 
-export type PrivateCreateUserResponse = (UserPublic);
+export type PostApiV1PrivateUsersResponse = (UserPublic);
 
-export type PrivateSeedDataData = {
+export type PostApiV1PrivateSeedData = {
     /**
      * Number of contacts to seed
      */
@@ -3180,183 +3179,183 @@ export type PrivateSeedDataData = {
     rngSeed?: (number | null);
 };
 
-export type PrivateSeedDataResponse = ({
+export type PostApiV1PrivateSeedResponse = ({
     [key: string]: unknown;
 });
 
-export type RelationshipInverseMapListInverseMapsData = {
+export type GetApiV1RelationshipInverseMapData = {
     limit?: number;
     skip?: number;
 };
 
-export type RelationshipInverseMapListInverseMapsResponse = (InverseRelationshipMapsPublic);
+export type GetApiV1RelationshipInverseMapResponse = (InverseRelationshipMapsPublic);
 
-export type RelationshipInverseMapCreateInverseMapData = {
+export type PostApiV1RelationshipInverseMapData = {
     requestBody: InverseRelationshipMapCreate;
 };
 
-export type RelationshipInverseMapCreateInverseMapResponse = (InverseRelationshipMapPublic);
+export type PostApiV1RelationshipInverseMapResponse = (InverseRelationshipMapPublic);
 
-export type RelationshipInverseMapGetInverseMapData = {
+export type GetApiV1RelationshipInverseMapMapIdData = {
     mapId: string;
 };
 
-export type RelationshipInverseMapGetInverseMapResponse = (InverseRelationshipMapPublic);
+export type GetApiV1RelationshipInverseMapMapIdResponse = (InverseRelationshipMapPublic);
 
-export type RelationshipInverseMapUpdateInverseMapData = {
+export type PatchApiV1RelationshipInverseMapMapIdData = {
     mapId: string;
     requestBody: InverseRelationshipMapUpdate;
 };
 
-export type RelationshipInverseMapUpdateInverseMapResponse = (InverseRelationshipMapPublic);
+export type PatchApiV1RelationshipInverseMapMapIdResponse = (InverseRelationshipMapPublic);
 
-export type RelationshipInverseMapDeleteInverseMapData = {
+export type DeleteApiV1RelationshipInverseMapMapIdData = {
     mapId: string;
 };
 
-export type RelationshipInverseMapDeleteInverseMapResponse = (unknown);
+export type DeleteApiV1RelationshipInverseMapMapIdResponse = (unknown);
 
-export type RelationshipInverseMapSeedInverseMapEndpointResponse = (unknown);
+export type PostApiV1RelationshipInverseMapSeedResponse = (unknown);
 
-export type RelationshipInverseMapLookupInverseData = {
+export type GetApiV1RelationshipInverseMapLookupRelationshipTypeData = {
     relationshipType: string;
 };
 
-export type RelationshipInverseMapLookupInverseResponse = (unknown);
+export type GetApiV1RelationshipInverseMapLookupRelationshipTypeResponse = (unknown);
 
-export type RelationshipsLookupInverseData = {
+export type GetApiV1RelationshipsInverseData = {
     type: string;
 };
 
-export type RelationshipsLookupInverseResponse = ({
+export type GetApiV1RelationshipsInverseResponse = ({
     [key: string]: (string | null);
 });
 
-export type RelationshipsListRelationshipsData = {
+export type GetApiV1RelationshipsContactContactIdData = {
     contactId: string;
 };
 
-export type RelationshipsListRelationshipsResponse = (RelationshipsPublic);
+export type GetApiV1RelationshipsContactContactIdResponse = (RelationshipsPublic);
 
-export type RelationshipsCreateRelationshipRouteData = {
+export type PostApiV1RelationshipsData = {
     requestBody: RelationshipCreate;
 };
 
-export type RelationshipsCreateRelationshipRouteResponse = (RelationshipPublic);
+export type PostApiV1RelationshipsResponse = (RelationshipPublic);
 
-export type RelationshipsUpdateRelationshipData = {
+export type PatchApiV1RelationshipsRelIdData = {
     relId: string;
     requestBody: RelationshipUpdate;
 };
 
-export type RelationshipsUpdateRelationshipResponse = (RelationshipPublic);
+export type PatchApiV1RelationshipsRelIdResponse = (RelationshipPublic);
 
-export type RelationshipsDeleteRelationshipData = {
+export type DeleteApiV1RelationshipsRelIdData = {
     relId: string;
 };
 
-export type RelationshipsDeleteRelationshipResponse = (Ok);
+export type DeleteApiV1RelationshipsRelIdResponse = (Ok);
 
-export type RemindersListRemindersData = {
+export type GetApiV1RemindersData = {
     isActive?: (boolean | null);
     limit?: number;
     skip?: number;
 };
 
-export type RemindersListRemindersResponse = (RemindersPublic);
+export type GetApiV1RemindersResponse = (RemindersPublic);
 
-export type RemindersCreateReminderRouteData = {
+export type PostApiV1RemindersData = {
     requestBody: ReminderCreate;
 };
 
-export type RemindersCreateReminderRouteResponse = (ReminderPublic);
+export type PostApiV1RemindersResponse = (ReminderPublic);
 
-export type RemindersListDueRemindersData = {
+export type GetApiV1RemindersDueData = {
     limit?: number;
     skip?: number;
 };
 
-export type RemindersListDueRemindersResponse = (RemindersDuePublic);
+export type GetApiV1RemindersDueResponse = (RemindersDuePublic);
 
-export type RemindersDismissReminderData = {
+export type PostApiV1RemindersReminderIdDismissData = {
     reminderId: string;
 };
 
-export type RemindersDismissReminderResponse = (unknown);
+export type PostApiV1RemindersReminderIdDismissResponse = (unknown);
 
-export type RemindersUpdateReminderData = {
+export type PatchApiV1RemindersReminderIdData = {
     reminderId: string;
     requestBody: ReminderUpdate;
 };
 
-export type RemindersUpdateReminderResponse = (ReminderPublic);
+export type PatchApiV1RemindersReminderIdResponse = (ReminderPublic);
 
-export type RemindersDeleteReminderData = {
+export type DeleteApiV1RemindersReminderIdData = {
     reminderId: string;
 };
 
-export type RemindersDeleteReminderResponse = (unknown);
+export type DeleteApiV1RemindersReminderIdResponse = (unknown);
 
-export type RemindersSnoozeReminderData = {
+export type PostApiV1RemindersReminderIdSnoozeData = {
     minutes?: (number | null);
     reminderId: string;
     requestBody?: (ReminderSnoozeRequest | null);
 };
 
-export type RemindersSnoozeReminderResponse = (ReminderPublic);
+export type PostApiV1RemindersReminderIdSnoozeResponse = (ReminderPublic);
 
-export type RemindersGetSnoozeHistoryData = {
+export type GetApiV1RemindersReminderIdSnoozeHistoryData = {
     reminderId: string;
 };
 
-export type RemindersGetSnoozeHistoryResponse = (unknown);
+export type GetApiV1RemindersReminderIdSnoozeHistoryResponse = (unknown);
 
-export type RemindersGetSnoozeStatsData = {
+export type GetApiV1RemindersSnoozeStatsData = {
     days?: number;
 };
 
-export type RemindersGetSnoozeStatsResponse = (unknown);
+export type GetApiV1RemindersSnoozeStatsResponse = (unknown);
 
-export type RemindersGetChronicSnoozersData = {
+export type GetApiV1RemindersChronicSnoozersData = {
     days?: number;
     threshold?: number;
 };
 
-export type RemindersGetChronicSnoozersResponse = (unknown);
+export type GetApiV1RemindersChronicSnoozersResponse = (unknown);
 
-export type RemindersRestoreReminderData = {
+export type PostApiV1RemindersReminderIdRestoreData = {
     reminderId: string;
 };
 
-export type RemindersRestoreReminderResponse = (unknown);
+export type PostApiV1RemindersReminderIdRestoreResponse = (unknown);
 
-export type SavedFiltersListSavedFiltersData = {
+export type GetApiV1SavedFiltersData = {
     limit?: number;
     skip?: number;
 };
 
-export type SavedFiltersListSavedFiltersResponse = (SavedFiltersPublic);
+export type GetApiV1SavedFiltersResponse = (SavedFiltersPublic);
 
-export type SavedFiltersCreateSavedFilterRouteData = {
+export type PostApiV1SavedFiltersData = {
     requestBody: SavedFilterCreate;
 };
 
-export type SavedFiltersCreateSavedFilterRouteResponse = (SavedFilterPublic);
+export type PostApiV1SavedFiltersResponse = (SavedFilterPublic);
 
-export type SavedFiltersUpdateSavedFilterRouteData = {
+export type PatchApiV1SavedFiltersFilterIdData = {
     filterId: string;
     requestBody: SavedFilterUpdate;
 };
 
-export type SavedFiltersUpdateSavedFilterRouteResponse = (SavedFilterPublic);
+export type PatchApiV1SavedFiltersFilterIdResponse = (SavedFilterPublic);
 
-export type SavedFiltersDeleteSavedFilterRouteData = {
+export type DeleteApiV1SavedFiltersFilterIdData = {
     filterId: string;
 };
 
-export type SavedFiltersDeleteSavedFilterRouteResponse = (unknown);
+export type DeleteApiV1SavedFiltersFilterIdResponse = (unknown);
 
-export type SearchSearchData = {
+export type GetApiV1SearchData = {
     /**
      * Max results per type
      */
@@ -3367,258 +3366,262 @@ export type SearchSearchData = {
     q: string;
 };
 
-export type SearchSearchResponse = (SearchResponse);
+export type GetApiV1SearchResponse = (SearchResponse);
 
-export type SetupSetupPageData = {
+export type GetSetupData = {
     token: string;
 };
 
-export type SetupSetupPageResponse = (string);
+export type GetSetupResponse = (string);
 
-export type SetupSetupSubmitData = {
+export type PostSetupData = {
     requestBody: SetupSubmit;
 };
 
-export type SetupSetupSubmitResponse = (UserPublic);
+export type PostSetupResponse = (UserPublic);
 
-export type TagsListTagsData = {
+export type GetApiV1TagsData = {
     limit?: number;
     skip?: number;
 };
 
-export type TagsListTagsResponse = (TagsPublic);
+export type GetApiV1TagsResponse = (TagsPublic);
 
-export type TagsCreateTagRouteData = {
+export type PostApiV1TagsData = {
     requestBody: TagCreate;
 };
 
-export type TagsCreateTagRouteResponse = (TagPublic);
+export type PostApiV1TagsResponse = (TagPublic);
 
-export type TagsUpdateTagData = {
+export type PatchApiV1TagsTagIdData = {
     requestBody: TagUpdate;
     tagId: string;
 };
 
-export type TagsUpdateTagResponse = (TagPublic);
+export type PatchApiV1TagsTagIdResponse = (TagPublic);
 
-export type TagsDeleteTagData = {
+export type DeleteApiV1TagsTagIdData = {
     tagId: string;
 };
 
-export type TagsDeleteTagResponse = (Ok);
+export type DeleteApiV1TagsTagIdResponse = (Ok);
 
-export type TagSharesPreviewTagShareData = {
+export type GetApiV1TagSharesPreviewTagIdData = {
     tagId: string;
 };
 
-export type TagSharesPreviewTagShareResponse = (TagSharePreview);
+export type GetApiV1TagSharesPreviewTagIdResponse = (TagSharePreview);
 
-export type TagSharesCreateTagShareData = {
+export type PostApiV1TagSharesData = {
     requestBody: _ShareIn;
 };
 
-export type TagSharesCreateTagShareResponse = (TagSharePublic);
+export type PostApiV1TagSharesResponse = (TagSharePublic);
 
-export type TagSharesListTagSharesData = {
+export type GetApiV1TagSharesData = {
     tagId: string;
 };
 
-export type TagSharesListTagSharesResponse = (TagSharesPublic);
+export type GetApiV1TagSharesResponse = (TagSharesPublic);
 
-export type TagSharesDeleteTagShareData = {
+export type DeleteApiV1TagSharesTagIdGranteeIdData = {
     granteeId: string;
     tagId: string;
 };
 
-export type TagSharesDeleteTagShareResponse = ({
+export type DeleteApiV1TagSharesTagIdGranteeIdResponse = ({
     [key: string]: (string);
 });
 
-export type TagSharesLogTagShareAuditData = {
+export type PostApiV1TagSharesTagIdGranteeIdAuditData = {
     granteeId: string;
     tagId: string;
 };
 
-export type TagSharesLogTagShareAuditResponse = ({
+export type PostApiV1TagSharesTagIdGranteeIdAuditResponse = ({
     [key: string]: (string);
 });
 
-export type TranscribeTranscribeAudioData = {
-    formData: Body_transcribe_transcribe_audio;
+export type PostApiV1TranscribeData = {
+    formData: Body_post_api_v1_transcribe;
 };
 
-export type TranscribeTranscribeAudioResponse = (TranscriptionResponse);
+export type PostApiV1TranscribeResponse = (TranscriptionResponse);
 
-export type UsersReadUsersData = {
+export type GetApiV1UsersData = {
     limit?: number;
     skip?: number;
 };
 
-export type UsersReadUsersResponse = (UsersPublic);
+export type GetApiV1UsersResponse = (UsersPublic);
 
-export type UsersCreateUserData = {
+export type PostApiV1UsersData = {
     requestBody: UserCreate;
 };
 
-export type UsersCreateUserResponse = (UserPublic);
+export type PostApiV1UsersResponse = (UserPublic);
 
-export type UsersReadUserMeResponse = (UserPublic);
+export type GetApiV1UsersMeResponse = (UserPublic);
 
-export type UsersDeleteUserMeResponse = (Message);
+export type DeleteApiV1UsersMeResponse = (Message);
 
-export type UsersUpdateUserMeData = {
+export type PatchApiV1UsersMeData = {
     requestBody: UserUpdateMe;
 };
 
-export type UsersUpdateUserMeResponse = (UserPublic);
+export type PatchApiV1UsersMeResponse = (UserPublic);
 
-export type UsersUpdatePasswordMeData = {
+export type PatchApiV1UsersMePasswordData = {
     requestBody: UpdatePassword;
 };
 
-export type UsersUpdatePasswordMeResponse = (Message);
+export type PatchApiV1UsersMePasswordResponse = (Message);
 
-export type UsersRegisterUserData = {
+export type PostApiV1UsersMeLogoutResponse = (Message);
+
+export type PostApiV1UsersSignupData = {
     requestBody: UserRegister;
 };
 
-export type UsersRegisterUserResponse = (UserPublic);
+export type PostApiV1UsersSignupResponse = (UserPublic);
 
-export type UsersReadUserByIdData = {
+export type GetApiV1UsersUserIdData = {
     userId: string;
 };
 
-export type UsersReadUserByIdResponse = (UserPublic);
+export type GetApiV1UsersUserIdResponse = (UserPublic);
 
-export type UsersUpdateUserData = {
+export type PatchApiV1UsersUserIdData = {
     requestBody: UserUpdate;
     userId: string;
 };
 
-export type UsersUpdateUserResponse = (UserPublic);
+export type PatchApiV1UsersUserIdResponse = (UserPublic);
 
-export type UsersDeleteUserData = {
+export type DeleteApiV1UsersUserIdData = {
     userId: string;
 };
 
-export type UsersDeleteUserResponse = (Message);
+export type DeleteApiV1UsersUserIdResponse = (Message);
 
-export type UtilsHealthResponse = (boolean);
+export type GetApiV1HealthResponse = (boolean);
 
-export type UtilsApiStatusResponse = (StatusInfo);
+export type GetApiV1StatusResponse = (StatusInfo);
 
-export type UtilsTestEmailData = {
+export type PostApiV1UtilsTestEmailData = {
     emailTo: string;
 };
 
-export type UtilsTestEmailResponse = (Message);
+export type PostApiV1UtilsTestEmailResponse = (Message);
 
-export type UtilsHealthCheckResponse = (boolean);
+export type GetApiV1UtilsHealthCheckResponse = (boolean);
 
-export type UtilsStatusResponse = (StatusInfo);
+export type GetApiV1UtilsReadyResponse = (ReadyInfo);
 
-export type UtilsEnvironmentResponse = (EnvironmentInfo);
+export type GetApiV1UtilsStatusResponse = (StatusInfo);
 
-export type UtilsVersionInfoResponse = (VersionInfo);
+export type GetApiV1UtilsEnvironmentResponse = (EnvironmentInfo);
 
-export type VCardConflictsListVcardConflictsData = {
+export type GetApiV1UtilsInfoResponse = (VersionInfo);
+
+export type GetApiV1VcardConflictsData = {
     limit?: number;
     skip?: number;
 };
 
-export type VCardConflictsListVcardConflictsResponse = (VCardConflictsPublic);
+export type GetApiV1VcardConflictsResponse = (VCardConflictsPublic);
 
-export type VCardConflictsResolveVcardConflictData = {
+export type PostApiV1VcardConflictsConflictIdResolveData = {
     conflictId: string;
     resolutionType: string;
 };
 
-export type VCardConflictsResolveVcardConflictResponse = (VCardConflictPublic);
+export type PostApiV1VcardConflictsConflictIdResolveResponse = (VCardConflictPublic);
 
-export type VCardConflictsDeleteVcardConflictData = {
+export type DeleteApiV1VcardConflictsConflictIdData = {
     conflictId: string;
 };
 
-export type VCardConflictsDeleteVcardConflictResponse = (void);
+export type DeleteApiV1VcardConflictsConflictIdResponse = (void);
 
-export type VoiceCapturesCreateVoiceCaptureData = {
+export type PostApiV1VoiceCapturesData = {
     requestBody: CreateCapture;
 };
 
-export type VoiceCapturesCreateVoiceCaptureResponse = (VoiceCapturePublic);
+export type PostApiV1VoiceCapturesResponse = (VoiceCapturePublic);
 
-export type VoiceCapturesListVoiceCapturesData = {
+export type GetApiV1VoiceCapturesData = {
     limit?: number;
     skip?: number;
 };
 
-export type VoiceCapturesListVoiceCapturesResponse = (VoiceCapturesPublic);
+export type GetApiV1VoiceCapturesResponse = (VoiceCapturesPublic);
 
-export type VoiceCapturesGetVoiceCaptureData = {
+export type GetApiV1VoiceCapturesCaptureIdData = {
     captureId: string;
 };
 
-export type VoiceCapturesGetVoiceCaptureResponse = (VoiceCapturePublic);
+export type GetApiV1VoiceCapturesCaptureIdResponse = (VoiceCapturePublic);
 
-export type VoiceCapturesUpdateVoiceCaptureData = {
+export type PutApiV1VoiceCapturesCaptureIdData = {
     captureId: string;
     requestBody: ReviewCapture;
 };
 
-export type VoiceCapturesUpdateVoiceCaptureResponse = (VoiceCapturePublic);
+export type PutApiV1VoiceCapturesCaptureIdResponse = (VoiceCapturePublic);
 
-export type VoiceCapturesDeleteVoiceCaptureData = {
+export type DeleteApiV1VoiceCapturesCaptureIdData = {
     captureId: string;
 };
 
-export type VoiceCapturesDeleteVoiceCaptureResponse = (void);
+export type DeleteApiV1VoiceCapturesCaptureIdResponse = (void);
 
-export type VoiceCapturesAnalyzeVoiceCaptureData = {
+export type PostApiV1VoiceCapturesCaptureIdAnalyzeData = {
     captureId: string;
     requestBody: AnalyzeCapture;
 };
 
-export type VoiceCapturesAnalyzeVoiceCaptureResponse = (VoiceCapturePublic);
+export type PostApiV1VoiceCapturesCaptureIdAnalyzeResponse = (VoiceCapturePublic);
 
-export type VoiceCapturesCommitVoiceCaptureData = {
+export type PostApiV1VoiceCapturesCaptureIdCommitData = {
     captureId: string;
     requestBody: ReviewCapture;
 };
 
-export type VoiceCapturesCommitVoiceCaptureResponse = (VoiceCapturePublic);
+export type PostApiV1VoiceCapturesCaptureIdCommitResponse = (VoiceCapturePublic);
 
-export type WebhooksTwilioWebhookData = {
+export type PostApiV1WebhooksTwilioApiKeyData = {
     apiKey: string;
 };
 
-export type WebhooksTwilioWebhookResponse = (WebhookEventResponse);
+export type PostApiV1WebhooksTwilioApiKeyResponse = (WebhookEventResponse);
 
-export type WebhooksListWebhooksResponse = (WebhookEndpointsPublic);
+export type GetApiV1WebhooksResponse = (WebhookEndpointsPublic);
 
-export type WebhooksCreateWebhookData = {
+export type PostApiV1WebhooksData = {
     requestBody: WebhookEndpointBase;
 };
 
-export type WebhooksCreateWebhookResponse = (WebhookEndpointCreated);
+export type PostApiV1WebhooksResponse = (WebhookEndpointCreated);
 
-export type WebhooksUpdateWebhookData = {
+export type PatchApiV1WebhooksWebhookIdData = {
     requestBody: WebhookEndpointBase;
     webhookId: string;
 };
 
-export type WebhooksUpdateWebhookResponse = (WebhookEndpointPublic);
+export type PatchApiV1WebhooksWebhookIdResponse = (WebhookEndpointPublic);
 
-export type WebhooksDeleteWebhookData = {
+export type DeleteApiV1WebhooksWebhookIdData = {
     webhookId: string;
 };
 
-export type WebhooksDeleteWebhookResponse = (Ok);
+export type DeleteApiV1WebhooksWebhookIdResponse = (Ok);
 
-export type WebhooksInboundWebhookData = {
+export type PostApiV1WebhooksInboundApiKeyData = {
     apiKey: string;
     requestBody: {
         [key: string]: unknown;
     };
 };
 
-export type WebhooksInboundWebhookResponse = (WebhookEventResponse);
+export type PostApiV1WebhooksInboundApiKeyResponse = (WebhookEventResponse);

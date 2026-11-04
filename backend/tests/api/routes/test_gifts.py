@@ -26,7 +26,10 @@ def _grant_all_contacts_share(db: Session, *, owner_id: str, grantee_id: str) ->
 
 
 def _create_gift(
-    client: TestClient, headers: dict[str, str], contact_id: str, name: str = "Gift idea"
+    client: TestClient,
+    headers: dict[str, str],
+    contact_id: str,
+    name: str = "Gift idea",
 ) -> str:
     response = client.post(
         f"{settings.API_V1_STR}/gifts/",

@@ -9,3 +9,44 @@ support@github.com
 
 # Allowlist documentation address in OpenAPI/SDK docstrings
 user@example.com
+
+# Reserved test-fixture addresses and synthetic credentials. These are
+# deterministic values used only by the audit regression suite and CI.
+delete-carddav@example.com
+soft-delete-carddav@example.com
+restore@example.com
+new-carddav-contact@example.com
+new-carddav-contact-v2@example.com
+carddav-updated@example.com
+carddav@example.com
+shared-person@example.com
+private-person@example.com
+forged-recipient@example.com
+active-lease@example.com
+lease-recovery@example.com
+inbound@example.com
+owner@example.com
+brisa@example.com
+other@example.com
+gmail-owner@example.com
+untrusted@example.com
+remove-me@example.com
+bob@example.com
+synthetic@example.com
+synthetic-password
+synthetic-test-password
+synthetic-ci-password-0123456789
+secure-postgres-password
+secure-first-superuser-password
+secure-password
+old-password
+new-password
+hashed_password="unused"
+victim@example.com
+PROJECT_NAME=audit POSTGRES_SERVER=127.0.0.1
+
+# False-positive path and release URL fragments matched by private-data rules.
+Path.home
+self.home
+python-build-standalone/releases/download/20261026
+cpython-3.14.10

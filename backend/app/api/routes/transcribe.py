@@ -14,6 +14,7 @@ from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.core.config import settings
+from app.core.uploads import read_upload_bounded
 from app.crud import visible_contact_ids
 from app.models import Contact
 from app.voice_capture.schemas import (
@@ -32,6 +33,7 @@ logger = logging.getLogger(__name__)
 # Internal Whisper service URL — configurable via WHISPER_URL (default points
 # at the "whisper" service on the Docker network).
 WHISPER_URL = f"{settings.WHISPER_URL.rstrip('/')}/transcribe"
+MAX_AUDIO_UPLOAD_BYTES = 25 * 1024 * 1024
 
 
 def _contact_initial_prompt(
@@ -94,7 +96,11 @@ async def transcribe_audio(
         )
 
     # Read the uploaded file
-    content = await file.read()
+    content = await read_upload_bounded(
+        file,
+        max_bytes=MAX_AUDIO_UPLOAD_BYTES,
+        label="Audio file",
+    )
     if not content:
         raise HTTPException(status_code=400, detail="Empty file")
     initial_prompt = _contact_initial_prompt(session, current_user, contact_ids)

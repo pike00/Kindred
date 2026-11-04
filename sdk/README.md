@@ -117,11 +117,11 @@ remind-overdue:
 
 ```python
 from kindred import KindredClient
-from kindred._generated.api.contacts import contacts_list_contacts, contacts_get_contact
+from kindred._generated.api.contacts import get_api_v1_contacts
 from kindred._generated.models import ContactCreate
 
 with KindredClient.from_env() as k:
-    page = contacts_list_contacts.sync(client=k.raw, limit=50, search="Alice")
+    page = get_api_v1_contacts.sync(client=k.raw, limit=50, search="Alice")
     for c in page.data:
         print(c.first_name, c.id)
 ```

@@ -69,7 +69,7 @@ trap 'exit 143' TERM
 (
     cd frontend
     VITE_API_URL="" VITE_E2E=true VITE_AUTH_MODE="${AUTH_MODE:-local}" pnpm run build
-    uv run "$repo_root/scripts/check-bundle-placeholders.py"
+    uv run "$repo_root/scripts/check-bundle-placeholders.py" --dist "$repo_root/frontend/dist"
 )
 
 # Bash job control creates an owned process group on macOS and Linux.

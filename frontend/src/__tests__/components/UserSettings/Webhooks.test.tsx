@@ -15,6 +15,7 @@ vi.mock("sonner", () => ({
 // Mock Dialog component to render inline
 vi.mock("@/components/ui/dialog", () => {
   const React = require("react")
+  const DialogContext = React.createContext(null)
   return {
     Dialog: ({ children, open, onOpenChange }: any) => {
       const arr = React.Children.toArray(children)
@@ -30,10 +31,9 @@ vi.mock("@/components/ui/dialog", () => {
         : trigger
 
       return React.createElement(
-        "div",
-        null,
-        enhancedTrigger,
-        open ? content : null,
+        DialogContext.Provider,
+        { value: onOpenChange },
+        React.createElement("div", null, enhancedTrigger, open ? content : null),
       )
     },
     DialogTrigger: ({ children, _onOpenChange }: any) => {
@@ -56,14 +56,17 @@ vi.mock("@/components/ui/dialog", () => {
       React.createElement("p", null, children),
     DialogFooter: ({ children }: any) =>
       React.createElement("div", null, children),
-    DialogClose: ({ children }: any) =>
-      React.isValidElement(children)
+    DialogClose: ({ children }: any) => {
+      const onOpenChange = React.useContext(DialogContext)
+      return React.isValidElement(children)
         ? React.cloneElement(children, {
             onClick: (e: any) => {
               children.props?.onClick?.(e)
+              onOpenChange?.(false)
             },
           })
-        : children,
+        : children
+    },
   }
 })
 
@@ -99,6 +102,16 @@ describe("Webhooks", () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
+
+  async function fillInboundSecret(
+    user: ReturnType<typeof userEvent.setup>,
+    secret = "test-signing-secret",
+  ) {
+    await user.type(
+      screen.getByPlaceholderText("Required for inbound webhooks"),
+      secret,
+    )
+  }
 
   it("renders section heading and description", async () => {
     const { WebhooksService } = await import("@/client")
@@ -384,6 +397,33 @@ describe("Webhooks", () => {
     })
   })
 
+  it("requires a signing secret for inbound webhooks", async () => {
+    const { WebhooksService } = await import("@/client")
+    vi.mocked(WebhooksService.listWebhooks).mockResolvedValueOnce({
+      data: [],
+      count: 0,
+    })
+
+    const user = userEvent.setup()
+    renderWithProviders(<Webhooks />)
+
+    const addButton = await screen.findByRole("button", { name: /Add webhook/ })
+    await user.click(addButton)
+
+    const nameInput = await screen.findByPlaceholderText("n8n call logger")
+    await user.type(nameInput, "Inbound Webhook")
+
+    const saveButton = await screen.findByRole("button", { name: /^Save$/ })
+    await user.click(saveButton)
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("Signing secret is required for inbound webhooks"),
+      ).toBeInTheDocument()
+    })
+    expect(WebhooksService.createWebhook).not.toHaveBeenCalled()
+  })
+
   it("does not require URL for inbound webhooks", async () => {
     const { WebhooksService } = await import("@/client")
     vi.mocked(WebhooksService.listWebhooks).mockResolvedValueOnce({
@@ -411,6 +451,10 @@ describe("Webhooks", () => {
 
     const nameInput = await screen.findByPlaceholderText("n8n call logger")
     await user.type(nameInput, "Inbound Webhook")
+    await user.type(
+      screen.getByPlaceholderText(/Required for inbound/i),
+      "inbound-signing-secret",
+    )
 
     const saveButton = await screen.findByRole("button", { name: /^Save$/ })
     await user.click(saveButton)
@@ -504,6 +548,7 @@ describe("Webhooks", () => {
 
     const nameInput = await screen.findByPlaceholderText("n8n call logger")
     await user.type(nameInput, "Inbound Webhook")
+    await fillInboundSecret(user)
 
     const saveButton = await screen.findByRole("button", { name: /^Save$/ })
     await user.click(saveButton)
@@ -544,6 +589,7 @@ describe("Webhooks", () => {
 
     const nameInput = await screen.findByPlaceholderText("n8n call logger")
     await user.type(nameInput, "Inbound Webhook")
+    await fillInboundSecret(user)
 
     const saveButton = await screen.findByRole("button", { name: /^Save$/ })
     await user.click(saveButton)
@@ -581,6 +627,7 @@ describe("Webhooks", () => {
 
     const nameInput = await screen.findByPlaceholderText("n8n call logger")
     await user.type(nameInput, "Inbound Webhook")
+    await fillInboundSecret(user)
 
     const saveButton = await screen.findByRole("button", { name: /^Save$/ })
     await user.click(saveButton)
@@ -623,6 +670,7 @@ describe("Webhooks", () => {
 
     const nameInput = await screen.findByPlaceholderText("n8n call logger")
     await user.type(nameInput, "Inbound Webhook")
+    await fillInboundSecret(user)
 
     const saveButton = await screen.findByRole("button", { name: /^Save$/ })
     await user.click(saveButton)
@@ -820,6 +868,8 @@ describe("Webhooks", () => {
         }),
       })
     })
+    const updateCall = vi.mocked(WebhooksService.updateWebhook).mock.calls[0][0]
+    expect(updateCall.requestBody).not.toHaveProperty("secret")
 
     // Toast is called via showSuccessToast hook, verify it was triggered
     await waitFor(() => {
@@ -971,6 +1021,7 @@ describe("Webhooks", () => {
 
     const nameInput = await screen.findByPlaceholderText("n8n call logger")
     await user.type(nameInput, "Test Webhook")
+    await fillInboundSecret(user)
 
     const saveButton = await screen.findByRole("button", { name: /^Save$/ })
     await user.click(saveButton)
@@ -1438,6 +1489,7 @@ describe("Webhooks", () => {
 
     const nameInput = await screen.findByPlaceholderText("n8n call logger")
     await user.type(nameInput, "Inbound Webhook")
+    await fillInboundSecret(user)
 
     const saveButton = await screen.findByRole("button", { name: /^Save$/ })
     await user.click(saveButton)

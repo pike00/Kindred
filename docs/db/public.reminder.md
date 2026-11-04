@@ -20,12 +20,15 @@ Scheduled reminder; contact-specific or standalone.
 | snoozed_until | timestamp with time zone |  | true |  |  | If set, suppress firing until this time. |
 | created_at | timestamp with time zone |  | false |  |  | When the reminder was created (UTC). |
 | deleted_at | timestamp without time zone |  | true |  |  |  |
+| delivery_attempts | integer | 0 | false |  |  |  |
+| next_delivery_at | timestamp with time zone |  | true |  |  |  |
 
 ## Constraints
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
 | reminder_created_at_not_null | n | NOT NULL created_at |
+| reminder_delivery_attempts_not_null | n | NOT NULL delivery_attempts |
 | reminder_frequency_not_null | n | NOT NULL frequency |
 | reminder_id_not_null | n | NOT NULL id |
 | reminder_is_active_not_null | n | NOT NULL is_active |
@@ -69,6 +72,8 @@ erDiagram
   timestamp_with_time_zone snoozed_until
   timestamp_with_time_zone created_at
   timestamp_without_time_zone deleted_at
+  integer delivery_attempts
+  timestamp_with_time_zone next_delivery_at
 }
 "public.reminder_snooze" {
   uuid id
@@ -88,6 +93,7 @@ erDiagram
   timestamp_with_time_zone created_at
   varchar_512_ oidc_iss
   varchar_255_ oidc_sub
+  integer session_version
 }
 "public.contact" {
   uuid id

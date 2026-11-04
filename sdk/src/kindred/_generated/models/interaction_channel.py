@@ -1,7 +1,7 @@
-from enum import StrEnum
+from enum import Enum
 
 
-class InteractionChannel(StrEnum):
+class InteractionChannel(str, Enum):
     CALL = "call"
     EMAIL = "email"
     IN_PERSON = "in_person"

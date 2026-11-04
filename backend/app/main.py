@@ -1,6 +1,7 @@
 import importlib.metadata
 import logging
 import os
+import re
 import subprocess
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -41,7 +42,15 @@ def _git_hash() -> str:
 
 
 def custom_generate_unique_id(route: APIRoute) -> str:
-    return f"{route.tags[0]}-{route.name}"
+    normalized_path = re.sub(r"[^a-z0-9]+", "_", route.path.strip("/").lower()).strip(
+        "_"
+    )
+    methods = sorted(
+        method.lower()
+        for method in (route.methods or {"GET"})
+        if method.lower() != "head"
+    ) or ["get"]
+    return f"{'_'.join(methods)}_{normalized_path}"
 
 
 if settings.SENTRY_DSN and settings.ENVIRONMENT != "local":
