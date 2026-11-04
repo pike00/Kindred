@@ -26,6 +26,8 @@ active-lease@example.com
 lease-recovery@example.com
 inbound@example.com
 owner@example.com
+brisa@example.com
+other@example.com
 gmail-owner@example.com
 untrusted@example.com
 remove-me@example.com
@@ -46,4 +48,4 @@ PROJECT_NAME=audit POSTGRES_SERVER=127.0.0.1
 # False-positive path and release URL fragments matched by private-data rules.
 Path.home
 self.home
-cpython-3.14.10%2B20261026-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz
+python-build-standalone/releases/download/20261026
