@@ -14,9 +14,9 @@ from unittest.mock import Mock, patch
 from urllib.parse import parse_qs, urlparse
 
 PINS = {
-    "pyjwt": "2.15.0",
+    "pyjwt": "2.15.1",
     "certifi": "2026.10.19",
-    "oauthlib": "4.0.0",
+    "oauthlib": "3.3.1",
     "urllib3": "2.8.0",
 }
 

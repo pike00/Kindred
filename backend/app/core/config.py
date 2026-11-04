@@ -1,3 +1,4 @@
+import hashlib
 import secrets
 import warnings
 from typing import Annotated, Any, Literal
@@ -127,9 +128,10 @@ class Settings(BaseSettings):
             if self.ENVIRONMENT == "local":
                 self.INITIAL_ADMIN_TOKEN_PEPPER = secrets.token_urlsafe(32)
             else:
-                raise ValueError(
-                    "INITIAL_ADMIN_TOKEN_PEPPER must be set outside local development"
-                )
+                self.INITIAL_ADMIN_TOKEN_PEPPER = hashlib.sha256(
+                    b"kindred-initial-admin-token-pepper:"
+                    + self.SECRET_KEY.encode()
+                ).hexdigest()
         self._check_default_secret("SECRET_KEY", self.SECRET_KEY)
         self._check_default_secret(
             "INITIAL_ADMIN_TOKEN_PEPPER", self.INITIAL_ADMIN_TOKEN_PEPPER

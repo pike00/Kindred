@@ -1,3 +1,4 @@
+import hashlib
 import re
 import uuid
 from datetime import datetime, timezone
@@ -121,10 +122,19 @@ def update_user(*, session: Session, db_user: User, user_in: UserUpdate) -> Any:
         password = user_data["password"]
         hashed_password = get_password_hash(password)
         extra_data["hashed_password"] = hashed_password
-    db_user.sqlmodel_update(user_data, update=extra_data)
     if "password" in user_data:
-        db_user.session_version += 1
-    session.add(db_user)
+        values = {
+            key: value for key, value in user_data.items() if key != "password"
+        }
+        values.update(extra_data)
+        session.execute(
+            update(User)
+            .where(User.id == db_user.id)
+            .values(**values, session_version=User.session_version + 1)
+        )
+    else:
+        db_user.sqlmodel_update(user_data, update=extra_data)
+        session.add(db_user)
     session.commit()
     session.refresh(db_user)
     return db_user
@@ -722,6 +732,11 @@ def get_chronic_snooze_contacts(
     ]
 
 
+def _oidc_placeholder_email(sub: str) -> str:
+    digest = hashlib.sha256(sub.encode()).hexdigest()[:32]
+    return f"oidc-{digest}@users.kindred.dev"
+
+
 def get_or_create_user_from_claims(
     *, session: Session, claims: dict[str, object]
 ) -> User:
@@ -755,9 +770,9 @@ def get_or_create_user_from_claims(
 
     from app.core.config import settings
 
-    new_email = email or f"{sub}@oidc.invalid"
+    new_email = email or _oidc_placeholder_email(sub)
     if email and session.exec(select(User).where(User.email == email)).first():
-        new_email = f"{sub}@oidc.invalid"
+        new_email = _oidc_placeholder_email(sub)
 
     new_user = User(
         email=new_email,

@@ -1,6 +1,7 @@
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import update
 from sqlmodel import col, func, select
 
 from app import crud
@@ -112,9 +113,20 @@ def update_password_me(
             status_code=400, detail="New password cannot be the same as the current one"
         )
     hashed_password = get_password_hash(body.new_password)
-    current_user.hashed_password = hashed_password
-    current_user.session_version += 1
-    session.add(current_user)
+    result = session.execute(
+        update(User)
+        .where(
+            User.id == current_user.id,
+            User.session_version == current_user.session_version,
+        )
+        .values(
+            hashed_password=hashed_password,
+            session_version=User.session_version + 1,
+        )
+    )
+    if result.rowcount != 1:
+        session.rollback()
+        raise HTTPException(status_code=409, detail="Session has been revoked")
     session.commit()
     return Message(message="Password updated successfully")
 
@@ -122,8 +134,11 @@ def update_password_me(
 @router.post("/me/logout", response_model=Message)
 def logout_me(*, session: SessionDep, current_user: CurrentUser) -> Message:
     """Revoke all local access tokens for the current user."""
-    current_user.session_version += 1
-    session.add(current_user)
+    session.execute(
+        update(User)
+        .where(User.id == current_user.id)
+        .values(session_version=User.session_version + 1)
+    )
     session.commit()
     return Message(message="Logged out")
 

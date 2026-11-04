@@ -48,6 +48,26 @@ def test_production_settings_require_stable_secrets() -> None:
         )
 
 
+def test_production_settings_derive_stable_pepper_from_secret_key() -> None:
+    common = {
+        "_env_file": None,
+        "PROJECT_NAME": "audit",
+        "POSTGRES_SERVER": "localhost",
+        "POSTGRES_USER": "audit",
+        "POSTGRES_PASSWORD": "secure-postgres-password",
+        "POSTGRES_DB": "audit",
+        "FIRST_SUPERUSER_PASSWORD": "secure-first-superuser-password",
+        "SECRET_KEY": "stable-test-signing-key-0123456789-abcdefghijklmnopqrstuvwxyz",
+        "INITIAL_ADMIN_TOKEN_PEPPER": "",
+        "ENVIRONMENT": "production",
+    }
+    first = Settings(**common)
+    second = Settings(**common)
+
+    assert first.INITIAL_ADMIN_TOKEN_PEPPER == second.INITIAL_ADMIN_TOKEN_PEPPER
+    assert len(first.INITIAL_ADMIN_TOKEN_PEPPER) == 64
+
+
 def test_password_change_revokes_old_access_token(
     client: TestClient,
     db: Session,
@@ -123,6 +143,7 @@ def test_oidc_email_link_requires_verified_email(db: Session) -> None:
         },
     )
     assert unverified.id != local_user.id
+    assert unverified.email.endswith("@users.kindred.dev")
     db.refresh(local_user)
     assert local_user.oidc_sub is None
 

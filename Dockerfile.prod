@@ -90,7 +90,8 @@ LABEL org.opencontainers.image.revision=${BUILD_REVISION}
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PATH="/app/.venv/bin:$PATH" \
-    STATIC_DIR=/app/static
+    STATIC_DIR=/app/static \
+    HOME=/home/kindred
 
 # System deps: libpq for psycopg, curl for healthchecks, build-essential for
 # any sdist that needs compiling. Cleaned up to keep the image lean.
@@ -99,9 +100,16 @@ RUN apt-get update && \
       build-essential libpq-dev curl ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
+RUN groupadd --gid 10001 kindred && \
+    useradd --uid 10001 --gid 10001 --create-home \
+      --home-dir /home/kindred --shell /usr/sbin/nologin kindred
+
 COPY --from=ghcr.io/astral-sh/uv:0.9.26 /uv /uvx /bin/
 
 WORKDIR /app
+
+RUN mkdir -p /app/backend/uploads/avatars && \
+    chown -R kindred:kindred /app/backend/uploads
 
 # Workspace metadata first (cached by uv layer)
 COPY pyproject.toml uv.lock ./
@@ -119,6 +127,11 @@ COPY backend/app /app/backend/app
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --package app --no-dev
 
+# Build tooling is only needed while resolving and compiling dependencies.
+RUN apt-get purge -y --auto-remove build-essential libpq-dev && \
+    rm -rf /var/lib/apt/lists/* && \
+    rm -f /bin/uv /bin/uvx
+
 # Built SPA → /app/static (served by FastAPI's StaticFiles when STATIC_DIR is set)
 COPY --from=frontend-builder /build/frontend/dist /app/static
 
@@ -128,8 +141,8 @@ ENV APP_VERSION=${APP_VERSION} \
     GIT_HASH=${GIT_HASH}
 
 WORKDIR /app/backend
-USER 10001:10001
+USER kindred:kindred
 EXPOSE 8000
 
 # Default to web mode. compose.yml's worker service overrides this with arq.
-CMD ["bash", "-c", "fastapi run --workers ${WEB_CONCURRENCY:-2} app/main.py --host 0.0.0.0 --port 8000"]
+CMD ["bash", "-c", "bash scripts/prestart.sh && fastapi run --workers ${WEB_CONCURRENCY:-2} app/main.py --host 0.0.0.0 --port 8000"]

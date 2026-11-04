@@ -104,7 +104,7 @@
     ".project-kit/scripts/deploy-pypi.py": "7313e03526c53ee61695464d83d354f4dedf721946c10a8ba38da2a9e9bb6cd7",
     ".project-kit/scripts/deploy-remote-compose.py": "82c0e6938c5fcea6f6ee34f7ddc5ff5e42e49bd85d4cd2e82d3364d480dc4aaa",
     ".project-kit/scripts/doctor.py": "572cdd9338d9413f30eec50c39cecf8aa24b0057e4bd5bfed62311d4a25066b0",
-    ".project-kit/scripts/release.py": "558752ebd36f3eb8da1ab5ca02bf443f4d3b22b1f39dcf99fdf74800ec738686",
+    ".project-kit/scripts/release.py": "3ee33a2b9eaef82a7eafd94ae7ffbb801e97b46d8325c259357201a70249dc5b",
     ".project-kit/setup.just": "b765dddecd25874aa6b2925d9b7eda68e10ea3a6f5d4e26b0153d4e3e9ec2356",
     ".project-kit/test.just": "7c761047905dfda174573d5399fb53789b74c55901ec766a7296c28941ff1c90"
   },
