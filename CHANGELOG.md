@@ -5,6 +5,11 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.132] - 2026-11-04
+
+### Fixed
+- Fix: complete audit remediation for tenant isolation and auth (#313) (6ffb77c)
+
 ## [0.2.131] - 2026-11-02
 
 ### Fixed
