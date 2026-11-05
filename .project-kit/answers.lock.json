@@ -95,7 +95,7 @@
     ".project-kit/preview.just": "8a4103886c2131298552fe880d11d52a286296893eaccc4def09b2efceb81652",
     ".project-kit/release.just": "beeb244db3785a430c8baf46b91392e6a87335297cf0bfab84dcbe33b61dfc9a",
     ".project-kit/scripts/_runtime.py": "600f658ea913fc24efce29cde79b20ee27f39a2dd25e4857ccf1e60582af4a80",
-    ".project-kit/scripts/build-image.py": "1a8f946f22dd89cac3ff214f88187f784aa788444d05c7637c3e38850980fe10",
+    ".project-kit/scripts/build-image.py": "d707e87b7e98c3cc18ae33f5f3d243ff3aa6c73a9146fba2f38943e659f16e60",
     ".project-kit/scripts/delivery.py": "ae75e798683625149019c5f6b38789a7385de9a299470fdf34b084629dcbf18f",
     ".project-kit/scripts/deploy-cloudflare.py": "f97643c8fd1ba9d8958965d6bbe93f1a24886ffd5fa858ad475ebe91a132d7c0",
     ".project-kit/scripts/deploy-custom.py": "0b5e4c8e5cbd43f46e20b9e4f6ca1492ce7d6f839990e9fe2e35d8dd653dd469",
