@@ -78,11 +78,32 @@ def _revision(ref: str) -> str:
         _fail(f"git ref {ref} is missing or invalid")
 
 
+def _release_remote() -> str:
+    remotes = set(_run(["git", "remote"]).stdout.split())
+    return "github" if "github" in remotes else "origin"
+
+
+def _github_repository() -> str:
+    remote_url = _run(["git", "remote", "get-url", _release_remote()]).stdout.strip()
+    match = re.search(r"github\.com[:/]([^/]+)/([^/]+?)(?:\.git)?$", remote_url)
+    if match is None:
+        _fail(f"release remote is not GitHub: {remote_url}")
+    return f"{match.group(1)}/{match.group(2)}"
+
+
 def _remote_tag_commit(tag: str) -> str | None:
     direct_ref = f"refs/tags/{tag}"
     peeled_ref = f"{direct_ref}^" + "{}"
     result = subprocess.run(
-        ["git", "ls-remote", "--exit-code", "--tags", "origin", direct_ref, peeled_ref],
+        [
+            "git",
+            "ls-remote",
+            "--exit-code",
+            "--tags",
+            _release_remote(),
+            direct_ref,
+            peeled_ref,
+        ],
         capture_output=True,
         check=False,
         text=True,
@@ -102,7 +123,16 @@ def _remote_tag_commit(tag: str) -> str | None:
 
 def _github_release(tag: str) -> GitHubRelease | None:
     result = subprocess.run(
-        ["gh", "release", "view", tag, "--json", "isDraft,tagName,url"],
+        [
+            "gh",
+            "release",
+            "view",
+            tag,
+            "--repo",
+            _github_repository(),
+            "--json",
+            "isDraft,tagName,url",
+        ],
         capture_output=True,
         check=False,
         text=True,
@@ -197,16 +227,22 @@ def _verified_registry_digest(
     revision = labels.get("org.opencontainers.image.revision")
     version = labels.get("org.opencontainers.image.version")
     if revision is None or version is None:
-        _fail(f"immutable image {image}:{tag} is missing required OCI provenance labels")
+        _fail(
+            f"immutable image {image}:{tag} is missing required OCI provenance labels"
+        )
     if revision != head:
-        _fail(f"immutable image {image}:{tag} OCI revision does not match release commit")
+        _fail(
+            f"immutable image {image}:{tag} OCI revision does not match release commit"
+        )
     if version != tag:
         _fail(f"immutable image {image}:{tag} OCI version does not match release tag")
     second_digest = _registry_digest_optional(image, tag)
     if second_digest != first_digest:
         _fail(f"immutable registry tag {image}:{tag} changed during verification")
     if expected_digest is not None and first_digest != expected_digest:
-        _fail(f"immutable registry digest for {image}:{tag} does not match expected digest")
+        _fail(
+            f"immutable registry digest for {image}:{tag} does not match expected digest"
+        )
     return first_digest
 
 
@@ -307,7 +343,9 @@ def _build_invocation(
         try:
             child_env[str(key)] = Template(str(value)).substitute(substitutions)
         except (KeyError, ValueError):
-            _fail(f"build argument {key} has an invalid or unavailable variable reference")
+            _fail(
+                f"build argument {key} has an invalid or unavailable variable reference"
+            )
         command += ["--build-arg", str(key)]
     cache_key = hashlib.sha256(name.encode()).hexdigest()[:16]
     command += [
@@ -331,7 +369,10 @@ def build(tag: str) -> None:
         digest = _verified_registry_digest(name, tag, head, missing_ok=True)
         plans.append(
             ImagePlan(
-                image=image, name=name, digest=digest, action="resumed" if digest else "built"
+                image=image,
+                name=name,
+                digest=digest,
+                action="resumed" if digest else "built",
             )
         )
     missing = [plan for plan in plans if plan.digest is None]
@@ -342,7 +383,9 @@ def build(tag: str) -> None:
                     prefix="project-kit-build-", suffix=".json"
                 ) as metadata:
                     metadata_path = Path(metadata.name)
-                    typer.echo(f"==> building {plan.name} (version {tag}, commit {head})")
+                    typer.echo(
+                        f"==> building {plan.name} (version {tag}, commit {head})"
+                    )
                     command, child_env = _build_invocation(
                         plan.image, tag, head, metadata_path, source_root
                     )
@@ -356,7 +399,9 @@ def build(tag: str) -> None:
                         build_metadata = json.loads(metadata_path.read_text())
                         built_digest = str(build_metadata["containerimage.digest"])
                     except (KeyError, OSError, TypeError, json.JSONDecodeError):
-                        _fail(f"buildx did not emit digest metadata for {plan.name}:{tag}")
+                        _fail(
+                            f"buildx did not emit digest metadata for {plan.name}:{tag}"
+                        )
                 if re.fullmatch(r"sha256:[0-9a-f]{64}", built_digest) is None:
                     _fail(f"buildx emitted an invalid digest for {plan.name}:{tag}")
                 plan.digest = _verified_registry_digest(
@@ -364,8 +409,12 @@ def build(tag: str) -> None:
                 )
     for plan in plans:
         if plan.digest is None:
-            _fail(f"immutable registry digest was not established for {plan.name}:{tag}")
-        plan.digest = _verified_registry_digest(plan.name, tag, head, expected_digest=plan.digest)
+            _fail(
+                f"immutable registry digest was not established for {plan.name}:{tag}"
+            )
+        plan.digest = _verified_registry_digest(
+            plan.name, tag, head, expected_digest=plan.digest
+        )
     for plan in plans:
         assert plan.digest is not None
         _run_visible(
@@ -373,7 +422,9 @@ def build(tag: str) -> None:
             failure=f"could not promote latest for {plan.name}:{tag}",
         )
         if _registry_digest(plan.name, "latest") != plan.digest:
-            _fail(f"latest tag for {plan.name} does not match the verified release digest")
+            _fail(
+                f"latest tag for {plan.name} does not match the verified release digest"
+            )
         typer.echo(
             f"evidence action={plan.action} image={plan.name}:{tag} commit={head} "
             f"digest={plan.digest} release={tag}"
