@@ -16,6 +16,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: Ataraxy-Labs/sem/action@v0.29.0
+      - uses: Ataraxy-Labs/sem/action@v0.29.1
         with:
           sem-version: v0.29.0
