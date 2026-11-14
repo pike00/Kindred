@@ -15,7 +15,7 @@ jobs:
   entity-diff:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: Ataraxy-Labs/sem/action@v0.29.1
         with:
           sem-version: v0.29.0
