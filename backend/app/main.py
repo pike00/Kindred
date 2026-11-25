@@ -15,6 +15,7 @@ from fastapi.staticfiles import StaticFiles
 from radicale import Application as RadicaleApp
 from radicale.config import DEFAULT_CONFIG_SCHEMA  # noqa: E402
 from radicale.config import Configuration as RadicaleConfig
+from sentry_sdk.integrations.logging import LoggingIntegration
 from sqlmodel import Session
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.wsgi import WSGIMiddleware
@@ -54,7 +55,46 @@ def custom_generate_unique_id(route: APIRoute) -> str:
 
 
 if settings.SENTRY_DSN and settings.ENVIRONMENT != "local":
-    sentry_sdk.init(dsn=str(settings.SENTRY_DSN), enable_tracing=True)
+    # Keep pre-3.0 privacy and logging behavior explicit; 3.0 defaults are broader.
+    sentry_sdk.init(
+        dsn=str(settings.SENTRY_DSN),
+        traces_sample_rate=1.0,
+        data_collection={
+            "user_info": False,
+            "http_bodies": [],
+            "graphql": {"document": False, "variables": False},
+            "gen_ai": {"inputs": False, "outputs": False},
+            "mcp": {"inputs": False, "outputs": False},
+            "database_query_data": False,
+            "queues": False,
+            "stack_frame_variables": {"mode": "denylist"},
+            "http_headers": {
+                "request": {
+                    "mode": "denylist",
+                    "terms": ["forwarded", "-ip", "remote-", "via", "-user"],
+                },
+                "response": {
+                    "mode": "denylist",
+                    "terms": ["forwarded", "-ip", "remote-", "via", "-user"],
+                },
+            },
+            "cookies": {
+                "mode": "denylist",
+                "terms": ["forwarded", "-ip", "remote-", "via", "-user"],
+            },
+            "url_query_params": {
+                "mode": "denylist",
+                "terms": ["forwarded", "-ip", "remote-", "via", "-user"],
+            },
+        },
+        integrations=[
+            LoggingIntegration(
+                breadcrumb_level=logging.INFO,
+                level=None,
+                event_level=logging.ERROR,
+            )
+        ],
+    )
 
 
 @asynccontextmanager
