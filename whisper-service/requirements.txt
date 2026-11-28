@@ -8,4 +8,4 @@ pydantic-settings==2.16.3
 requests==2.34.2
 # Required for FastAPI multipart/form-data uploads; version validated in the
 # integrated image build.
-python-multipart==0.0.32
+python-multipart==0.0.34
